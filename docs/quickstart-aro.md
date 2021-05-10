@@ -1,5 +1,9 @@
 # ARO Quickstart
 
+A Quickstart guide to deploying an Azure RedHat OpenShift cluster.
+
+Author: [Paul Czarkowski](https://twitter.com/pczarkowski)
+
 ## Video Walkthrough
 
 If you prefer a more visual medium, you can watch [Paul Czarkowski](https://twitter.com/pczarkowski) walk through this quickstart on [YouTube](https://youtu.be/VYfCltxoh40).
@@ -11,6 +15,8 @@ If you prefer a more visual medium, you can watch [Paul Czarkowski](https://twit
 ## Prerequisites
 
 ### Azure CLI
+
+_Obviously you'll need to have an Azure account to configure the CLI against._
 
 **MacOS**
 
