@@ -186,6 +186,11 @@ Create a virtual network with two empty subnets
 
 ![ARO login page](./images/aro-login.png)
 
+
+1. Deploy an application to OpenShift, see the following video showing how
+
+    <iframe width="910" height="512" src="https://www.youtube.com/embed/8uFUFJS9TA4?start=0:43" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ### Delete Cluster
 
 Once you're done its a good idea to delete the cluster to ensure that you don't get a surprise bill.
@@ -196,6 +201,15 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
     az aro delete -y \
       --resource-group $AZR_RESOURCE_GROUP \
       --name $AZR_CLUSTER
+    ```
+
+1. Delete the Azure resource group
+
+    > Only do this if there's nothing else in the resource group.
+
+    ```bash
+    az group delete -y \
+      --name $AZR_RESOURCE_GROUP
     ```
 
 ## Adendum
