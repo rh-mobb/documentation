@@ -148,6 +148,7 @@ Create a virtual network with two empty subnets
       --resource-group $AZR_RESOURCE_GROUP \
       --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
       --disable-private-link-service-network-policies true
+    ```
 
 1. Create the cluster
 
@@ -201,9 +202,7 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
 
 ### Adding Quota to ARO account
 
-<!-- copy and paste. Modify height and width if desired. -->
-<iframe class="embeddedObject shadow resizable" name="embedded_content" scrolling="no" frameborder="0" type="text/html"
-        style="overflow:hidden;" src="https://www.screencast.com/users/KameshS/folders/Snagit/media/763d085d-22bc-49c5-8861-d8291b9e1d50/embed" height="492" width="896" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+![aro quota support ticket request example](./images/aro-quota.png)
 
 1. [Create an Azure Support Request](https://portal.azure.com/#blade/Microsoft_Azure_Support/HelpAndSupportBlade/newsupportrequest)
 
