@@ -27,12 +27,14 @@
 1. Add the Microsoft Yum Repository
 
     ```bash
-    echo -e "[azure-cli]
+    cat << EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
+    [azure-cli]
     name=Azure CLI
     baseurl=https://packages.microsoft.com/yumrepos/azure-cli
     enabled=1
     gpgcheck=1
-    gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
+    gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+    EOF
     ```
 
 1. Install Azure CLI
