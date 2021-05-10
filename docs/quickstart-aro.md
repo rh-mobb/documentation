@@ -1,5 +1,13 @@
 # ARO Quickstart
 
+## Video Walkthrough
+
+If you prefer a more visual medium, you can watch [Paul Czarkowski](https://twitter.com/pczarkowski) walk through this quickstart on [YouTube](https://youtu.be/VYfCltxoh40).
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/VYfCltxoh40" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+
 ## Prerequisites
 
 ### Azure CLI
@@ -62,12 +70,12 @@
 
 1. Register resource providers
 
-```bash
-az provider register -n Microsoft.RedHatOpenShift --wait
-az provider register -n Microsoft.Compute --wait
-az provider register -n Microsoft.Storage --wait
-az provider register -n Microsoft.Authorization --wait
-```
+    ```bash
+    az provider register -n Microsoft.RedHatOpenShift --wait
+    az provider register -n Microsoft.Compute --wait
+    az provider register -n Microsoft.Storage --wait
+    az provider register -n Microsoft.Authorization --wait
+    ```
 
 ### Get Red Hat pull secret
 
@@ -181,7 +189,7 @@ Create a virtual network with two empty subnets
     az aro list-credentials \
       --name $AZR_CLUSTER \
       --resource-group $AZR_RESOURCE_GROUP \
-      -o tsv --query consoleProfile
+      -o tsv
     ```
 
 1. Use the URL and the credentials provided by the output of the last two commands to log into OpenShift via a web browser.
