@@ -197,9 +197,11 @@ Create a virtual network with two empty subnets
 ![ARO login page](./images/aro-login.png)
 
 
-1. Deploy an application to OpenShift, see the following video showing how
+1. Deploy an application to OpenShift
 
-    <iframe width="910" height="512" src="https://www.youtube.com/embed/8uFUFJS9TA4?start=0:43" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    > See the following video for a guide on easy application deployment on OpenShift.
+
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/8uFUFJS9TA4?start=0:43" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Delete Cluster
 
