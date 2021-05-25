@@ -4,30 +4,15 @@ This assumes you've already got a private ARO cluster installed. You could also 
 
 A default 3-node cluster is a bit small for Astronomer, If you have a three node cluster you can increase it by updating the replicas count machinesets in the `openshift-machine-api` namespace.
 
-## Create a private DNS
-
-1. Log into Azure and click to [private dns](https://portal.azure.com/#blade/HubsExtension/BrowseResource/resourceType/Microsoft.Network%2FprivateDnsZones)
-
-1. Click **+ Add**
-
-1. Set the **Resource Group** to match your ARO Resource Group
-
-1. Set **Name** to your TLD (astro.mobb.ninja in the example)
-
-1. Click **Review and Create** and create the Zone
-
-1. Inside the Domain settings click **Virtual network links** -> **+ Add**
-
-1. **Link Name**: astro-aro
-
-1. Select the correct **Subscription** and **Network** from the dropdown boxes
-
-1. Click **OK**
-
-
 ## Create TLS Secret
 
-1. Next we need a TLS Secret to use. You could create a self-signed certificate using a CA that you own, or use certbot (if you have a valid DNS provider, note records don't need to be public)
+1. set an environment variable containing the DNS you wish to use:
+
+    ```
+    ASTRO_DNS=astro.mobb.ninja
+    ```
+
+1. We need a TLS Secret to use. You could create a self-signed certificate using a CA that you own, or use certbot (if you have a valid DNS provider, note records don't need to be public)
 
     ```
     certbot certonly --manual \
@@ -36,7 +21,7 @@ A default 3-node cluster is a bit small for Astronomer, If you have a three node
           --server https://acme-v02.api.letsencrypt.org/directory \
           --agree-tos \
           --manual-public-ip-logging-ok \
-          -d "*.astro.mobb.ninja"
+          -d "*.${ASTRO_DNS}"
     ```
 
 1. Follow certbot's instructions (something like ):
@@ -71,9 +56,19 @@ A default 3-node cluster is a bit small for Astronomer, If you have a three node
 
     helm repo update
 
-    helm install -f values.yaml --version=0.25.2 \
+    helm install -f values-public.yaml --version=0.25.2 \
       --namespace=astronomer astronomer \
       astronomer/astronomer
+    ```
+
+## Fix SCCs for elasticsearch
+
+1. In another terminal
+
+    ```
+    oc adm policy add-scc-to-user privileged -z astronomer-elasticsearch
+
+    oc patch deployment astronomer-elasticsearch-client -p '{"spec":{"template":{"spec":{ "containers": [{"name": "es-client","securityContext":{"privileged": true,"runAsUser": 0}}]}}}}'
     ```
 
 ## While that's running add our DNS
@@ -86,13 +81,6 @@ A default 3-node cluster is a bit small for Astronomer, If you have a three node
 
 1. Go back to your private DNS zone in Azure and create a record set `*` and copy the contents of `EXTERNAL-IP` from the above command.
 
-## Fix SCCs for elasticsearch
-
-```
-oc adm policy add-scc-to-user privileged -z astronomer-elasticsearch
-
-oc patch deployment astronomer-elasticsearch-client -p '{"spec":{"template":{"spec":{ "containers": [{"name": "es-client","securityContext":{"privileged": true,"runAsUser": 0}}]}}}}'
-```
 
 ## Validate the Install
 
