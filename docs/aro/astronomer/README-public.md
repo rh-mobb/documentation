@@ -1,4 +1,4 @@
-# Installing Astronomer on a private ARO cluster
+# Installing Astronomer on a public ARO cluster
 
 This assumes you've already got a private ARO cluster installed. You could also follow the same instructions to create a public Astronomer, just use a regular DNS zone and skip the private parts.
 
@@ -46,7 +46,7 @@ A default 3-node cluster is a bit small for Astronomer, If you have a three node
 
 ## Deploy Astronomer
 
-1. update the `values.yaml` and set `baseDomain: astro.mobb.ninja`
+1. update the `values-public.yaml` and set `baseDomain: astro.mobb.ninja`
 
 
 1. Install
@@ -79,7 +79,7 @@ A default 3-node cluster is a bit small for Astronomer, If you have a three node
     kubectl get svc -n astronomer astronomer-nginx
     ```
 
-1. Go back to your private DNS zone in Azure and create a record set `*` and copy the contents of `EXTERNAL-IP` from the above command.
+1. Go back to your DNS zone in your DNS registry and create a record set `*` and copy the contents of `EXTERNAL-IP` from the above command.
 
 
 ## Validate the Install
@@ -115,10 +115,10 @@ A default 3-node cluster is a bit small for Astronomer, If you have a three node
     We have guides available at https://www.astronomer.io/guides/ and are always available to help.
     ```
 
-1. Since this is a private LB you'll need to access it from inside the network. The quick hacky way to do this is
+1. Check that you can access the service
 
     ```
-    kubectl exec -ti astronomer-cli-install-6f899c87d5-2c84f -- wget -O -  https://install.astro.mobb.ninja
+    curl -sSO  https://install.astro.mobb.ninja
     ```
 
     and you should see
