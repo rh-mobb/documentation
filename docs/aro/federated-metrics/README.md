@@ -1,5 +1,9 @@
 # Federating System and User metrics to Azure Files in Azure RedHat OpenShift
 
+**Paul Czarkowski**
+
+*04/06/2021*
+
 By default Azure RedHat OpenShift (ARO) stores metrics in Ephemeral volumes, and its advised that users do not change this setting. However its not unreasonable to expect that metrics should be persisted for a set amount of time.
 
 This guide shows how to set up Thanos to federate both System and User Workload Metrics to a Thanos gateway that stores the metrics in Azure Files and makes them available via a Grafana instance (managed by the Grafana Operator).
