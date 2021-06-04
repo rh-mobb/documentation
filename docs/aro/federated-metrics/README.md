@@ -182,3 +182,4 @@ oc apply -f thanos-store-credentials.yaml
 
 1. Once logged in go to **Dashboards->Manage** and expand the **thanos-receiver** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
 
+![screenshot of grafana with federated cluster metrics](./grafana-metrics.png)
