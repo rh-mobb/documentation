@@ -1,0 +1,16 @@
+{
+  "Statement" : [
+      {
+          "Effect":"Allow",
+          "Sid":"1",
+          "Principal" : {
+              "AWS":["arn:aws:iam::660250927410:user/thanos-receiver"]
+          },
+          "Action":["s3:*"],
+          "Resource":[
+            "arn:aws:s3:::my-thanos-metrics/*",
+            "arn:aws:s3:::my-thanos-metrics"
+            ]
+      }
+   ]
+  }

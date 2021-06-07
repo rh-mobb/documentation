@@ -1,34 +1,39 @@
-# Federating System and User metrics to Azure Files in Azure RedHat OpenShift
+# Federating System and User metrics to S3 in RedHat OpenShift for AWS
 
 **Paul Czarkowski**
 
-*06/04/2021*
+*06/07/2021*
 
-By default Azure RedHat OpenShift (ARO) stores metrics in Ephemeral volumes, and its advised that users do not change this setting. However its not unreasonable to expect that metrics should be persisted for a set amount of time.
-
-This guide shows how to set up Thanos to federate both System and User Workload Metrics to a Thanos gateway that stores the metrics in Azure Files and makes them available via a Grafana instance (managed by the Grafana Operator).
+This guide walks through setting up federating Prometheus metrics to S3 storage.
 
 > ToDo - Add Authorization in front of Thanos APIs
 
-## Azure Preperation
+## AWS Preperation
 
-1. Create an Azure storage account
+1. Create IAM user
 
-> modify the arguments to suit your environment
+    ```bash
+    aws iam create-user --user-name thanos-receiver | jq
+    ```
+
+
+1. Update the `s3-policy.json` file with the ARN from the output.
+
+1. Create an S3 storage account
+
+    ```bash
+    aws s3 mb s3://my-thanos-metrics
+    ```
+
+1. Grant access for the thanos user to the s3 bucket
+
+aws s3api put-bucket-policy --bucket my-thanos-metrics \
+  --policy file://s3-policy.json
+
+1. Get the account key and secret and update in `thanos-store-credentials.yaml`
 
 ```bash
-az storage account create \
-  --name thanosreceiver \
-  --resource-group openshift \
-  --location eastus \
-  --sku Standard_RAGRS \
-  --kind StorageV2
-```
-
-1. Get the account key and update the secret in `thanos-store-credentials.yaml`
-
-```bash
-az storage account keys list -g openshift -n thanosreceiver
+aws iam create-access-key --user-name thanos-receiver | jq .
 ```
 
 1. Create the Thanos Store Credentials Secret
@@ -42,13 +47,14 @@ oc apply -f thanos-store-credentials.yaml
 
 > See [docs](https://docs.openshift.com/container-platform/4.7/monitoring/enabling-monitoring-for-user-defined-projects.html) for more indepth details.
 
-1. Check the cluster-monitoring-config ConfigMap object
+1. Check the if user workload is enabled (`enabledUserWorkload: true`)
 
     ```bash
-    oc -n openshift-monitoring get configmap cluster-monitoring-config -o yaml
+    oc -n openshift-monitoring get configmap cluster-monitoring-config  \
+      -o json | jq -r '.data."config.yaml"'
     ```
 
-1. Enable User Workload Monitoring by doing one of the following
+1. If not, enable User Workload Monitoring by doing one of the following
 
     **If the `data.config.yaml` is not `{}` you should edit it and add the `enableUserWorkload: true` line manually.**
 
@@ -86,7 +92,7 @@ oc apply -f thanos-store-credentials.yaml
 1. Deploy the thanos store
 
     ```bash
-    oc apply -f thanos-store.yaml
+    oc apply -n thanos-receiver -f thanos-store.yaml
     ```
 
 1. Deploy Thanos Receiver
@@ -151,7 +157,7 @@ oc apply -f thanos-store-credentials.yaml
 1. Deploy the thanos querier
 
     ```bash
-    oc apply -f thanos-querier.yaml
+    oc apply -n thanos-receiver -f thanos-querier.yaml
     ```
 
 ## Deploy Grafana
@@ -159,7 +165,7 @@ oc apply -f thanos-store-credentials.yaml
 1. create the grafana operator in the thanos-receiver namespace
 
     ```bash
-    oc apply -f thanos-grafana-operator.yaml
+    oc apply -n thanos-receiver -f thanos-grafana-operator.yaml
     ```
 
 1. create grafana instance and datasource for thanos
