@@ -14,29 +14,29 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
 1. Create an Azure storage account
 
-> modify the arguments to suit your environment
+    > modify the arguments to suit your environment
 
-```bash
-az storage account create \
-  --name thanosreceiver \
-  --resource-group openshift \
-  --location eastus \
-  --sku Standard_RAGRS \
-  --kind StorageV2
-```
+    ```bash
+    az storage account create \
+      --name thanosreceiver \
+      --resource-group openshift \
+      --location eastus \
+      --sku Standard_RAGRS \
+      --kind StorageV2
+    ```
 
 1. Get the account key and update the secret in `thanos-store-credentials.yaml`
 
-```bash
-az storage account keys list -g openshift -n thanosreceiver
-```
+    ```bash
+    az storage account keys list -g openshift -n thanosreceiver
+    ```
 
 1. Create the Thanos Store Credentials Secret
 
-```bash
-oc new-project thanos-receiver
-oc apply -f thanos-store-credentials.yaml
-```
+    ```bash
+    oc new-project thanos-receiver
+    oc apply -f thanos-store-credentials.yaml
+    ```
 
 ## Enabling User Workload Monitoring
 
