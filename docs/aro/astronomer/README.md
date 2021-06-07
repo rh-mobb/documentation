@@ -1,5 +1,7 @@
 # Installing Astronomer on a private ARO cluster
 
+> see [here](./README-public) for public clusters.
+
 This assumes you've already got a private ARO cluster installed. You could also follow the same instructions to create a public Astronomer, just use a regular DNS zone and skip the private parts.
 
 A default 3-node cluster is a bit small for Astronomer, If you have a three node cluster you can increase it by updating the replicas count machinesets in the `openshift-machine-api` namespace.
