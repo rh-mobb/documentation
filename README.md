@@ -11,4 +11,4 @@
 
 ## Other
 
-* [Deploying Astronomer to OpenShift](./docs/astronomer)
+* [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
