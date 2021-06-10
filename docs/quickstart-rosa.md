@@ -60,7 +60,6 @@ _You'll need to have an AWS account to configure the CLI against._
     docker run --rm -it amazon/aws-cli command
     ```
 
-
 ### Prepare AWS Account for OpenShift
 
 1. Configure the AWS CLI by running the following command
@@ -95,6 +94,7 @@ _You'll need to have an AWS account to configure the CLI against._
     }
     ```
 
+
 ### Get a Red Hat Offline Access Token
 
 1. Log into cloud.redhat.com
@@ -102,6 +102,16 @@ _You'll need to have an AWS account to configure the CLI against._
 2. Browse to https://cloud.redhat.com/openshift/token/rosa
 
 3. Copy the **Offline Access Token** and save it for the next step
+
+
+### Set up the OpenShift CLI (oc)
+
+1. Download the OS specific OpenShift CLI from [Red Hat](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/)
+
+2. Unzip the downloaded file on your local machine
+
+3. Place the extracted `oc` executable in your OS path or local directory
+
 
 ### Set up the ROSA CLI
 
@@ -122,173 +132,98 @@ _You'll need to have an AWS account to configure the CLI against._
   ```
   Logged in as <email address> on 'https://api.openshift.com'
   ```
+
+### Verify ROSA privileges
+
+Verify that ROSA has the minimal permissions
+
+  ```bash
+  rosa verify permissions
+  ```
+>Expected output: `AWS SCP policies ok`
   
 
-## Deploy Azure OpenShift
+Verify that ROSA has the minimal quota
 
-### Variables and Resource Group
+  ```bash
+  rosa verify quota
+  ```
+>Expected output: `AWS quota ok`
+  
+  
+### Initialize ROSA  
 
-Set some environment variables to use later, and create an Azure Resource Group.
+Initialize the ROSA CLI to complete the remaining validation checks and configurations
 
-1. Set the following environment variables
+  ```bash
+  rosa init
+  ```
 
-    > Change the values to suit your environment, but these defaults should work.
+## Deploy Red Hat OpenShift on AWS (ROSA)
 
-    ```bash
-    AZR_RESOURCE_LOCATION=eastus
-    AZR_RESOURCE_GROUP=openshift
-    AZR_CLUSTER=cluster
-    AZR_PULL_SECRET=~/Downloads/pull-secret.txt
-    ```
+### Interactive Installation
 
-1. Create an Azure resource group
+ROSA can be installed using command line parameters or in interactive mode.  For an interactive installation run the following command
 
-    ```bash
-    az group create \
-      --name $AZR_RESOURCE_GROUP \
-      --location $AZR_RESOURCE_LOCATION
-    ```
+  ```bash
+  rosa create cluster --interactive
+  ```
+  
+  As part of the interactive install you will be required to enter the following parameters or accept the default values (if applicable)
+  
+  ```
+  Cluster name:
+  Multiple availability zones (y/N):
+  AWS region (select):
+  OpenShift version (select):
+  Install into an existing VPC (y/N):
+  Compute nodes instance type (optional):
+  Enable autoscaling (y/N):
+  Compute nodes [2]:
+  Machine CIDR [10.0.0.0/16]:
+  Service CIDR [172.30.0.0/16]:
+  Pod CIDR [10.128.0.0/14]:
+  Host prefix [23]:
+  Private cluster (y/N):
+  ```  
+  >Note: the installation process should take between 30 - 45 minutes
 
+### Get the web console link to the ROSA cluster
 
-### Networking
+To get the web console link run the following command.
 
-Create a virtual network with two empty subnets
+>Substitute your actual cluster name for `<cluster-name>`
 
-1. Create virtual network
+  ```bash
+  rosa describe cluster --cluster=<cluster-name>
+  ```
 
-    ```bash
-    az network vnet create \
-      --address-prefixes 10.0.0.0/22 \
-      --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --resource-group $AZR_RESOURCE_GROUP
-    ```
+### Create cluster-admin user
 
-1. Create control plane subnet
+By default, only the OpenShift SRE team will have access to the ROSA cluster.  To add a local admin user, run the following command to create the `cluster-admin` account in your cluster.
 
-    ```bash
-    az network vnet subnet create \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --address-prefixes 10.0.0.0/23 \
-      --service-endpoints Microsoft.ContainerRegistry
-    ```
+>Substitute your actual cluster name for `<cluster-name>`
 
-1. Create machine subnet
+  ```bash
+  rosa create admin --cluster=<cluster-name>
+  ```
+>Refresh your web browser and you should see the `cluster-admin` option to log in
 
-    ```bash
-    az network vnet subnet create \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-      --address-prefixes 10.0.2.0/23 \
-      --service-endpoints Microsoft.ContainerRegistry
-    ```
+## Delete Red Hat OpenShift on AWS (ROSA)
 
-1. Disable network policies on the control plane subnet
+Deleting a ROSA cluster consists of two parts
 
-    > This is required for the service to be able to connect to and manage the cluster.
+1. Delete the cluster instance, including the removal of AWS resources.  
 
-    ```bash
-    az network vnet subnet update \
-      --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --disable-private-link-service-network-policies true
-    ```
+>Substitute your actual cluster name for `<cluster-name>`
 
-1. Create the cluster
+  ```bash
+  rosa delete cluster --cluster=<cluster-name>
+  ```
 
-    > This will take between 30 and 45 minutes.
+2. Delete the CloudFormation stack, including the removal of the `osdCcsAdmin` user
 
-    ```bash
-    az aro create \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --name $AZR_CLUSTER \
-      --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-      --pull-secret @$AZR_PULL_SECRET
-    ```
-
-1. Get OpenShift console URL
-
-    ```bash
-    az aro show \
-      --name $AZR_CLUSTER \
-      --resource-group $AZR_RESOURCE_GROUP \
-      -o tsv --query consoleProfile
-    ```
-
-1. Get OpenShift credentials
-
-    ```bash
-    az aro list-credentials \
-      --name $AZR_CLUSTER \
-      --resource-group $AZR_RESOURCE_GROUP \
-      -o tsv
-    ```
-
-1. Use the URL and the credentials provided by the output of the last two commands to log into OpenShift via a web browser.
-
-![ARO login page](./images/aro-login.png)
-
-
-1. Deploy an application to OpenShift
-
-    > See the following video for a guide on easy application deployment on OpenShift.
-
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/8uFUFJS9TA4?start=0:43" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-### Delete Cluster
-
-Once you're done its a good idea to delete the cluster to ensure that you don't get a surprise bill.
-
-1. Delete the cluster
-
-    ```bash
-    az aro delete -y \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --name $AZR_CLUSTER
-    ```
-
-1. Delete the Azure resource group
-
-    > Only do this if there's nothing else in the resource group.
-
-    ```bash
-    az group delete -y \
-      --name $AZR_RESOURCE_GROUP
-    ```
-
-## Adendum
-
-### Adding Quota to ARO account
-
-![aro quota support ticket request example](./images/aro-quota.png)
-
-1. [Create an Azure Support Request](https://portal.azure.com/#blade/Microsoft_Azure_Support/HelpAndSupportBlade/newsupportrequest)
-
-1. Set **Issue Type** to "Service and subscription limits (quotas)"
-
-1. Set **Quota Type** to "Compute-VM (cores-vCPUs) subscription limit increases"
-
-1. Click **Next Solutions >>**
-
-1. Click **Enter details**
-
-1. Set **Deployment Model** to "Resource Manager
-
-1. Set **Locations** to "(US) East US"
-
-1. Set **Types** to "Standard"
-
-1. Under **Standard** check "DSv3" and "DSv4"
-
-1. Set **New vCPU Limit** for each (example "60")
-
-1. Click **Save and continue**
-
-1. Click **Review + create >>**
-
-1. Wait until quota is increased.
+  ```bash
+  rosa init --delete-stack
+  ```
+  
