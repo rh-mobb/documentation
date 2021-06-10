@@ -10,6 +10,17 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
 > ToDo - Add Authorization in front of Thanos APIs
 
+## Pre-Prequsites
+
+1. An ARO cluster
+
+1. clone this repo down locally
+
+    ```bash
+    git clone https://github.com/rh-mobb/documentation
+    cd docs/aro/federated-metrics
+    ```
+
 ## Azure Preperation
 
 1. Create an Azure storage account
