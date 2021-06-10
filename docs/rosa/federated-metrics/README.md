@@ -8,6 +8,17 @@ This guide walks through setting up federating Prometheus metrics to S3 storage.
 
 > ToDo - Add Authorization in front of Thanos APIs
 
+## Pre-Prequsites
+
+1. A ROSA cluster
+
+1. clone this repo down locally
+
+    ```bash
+    git clone https://github.com/rh-mobb/documentation
+    cd docs/rosa/federated-metrics
+    ```
+
 ## AWS Preperation
 
 1. Create IAM user
