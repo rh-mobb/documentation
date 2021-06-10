@@ -2,8 +2,8 @@
 
 ## Quickstarts / Getting Started
 
-* [Red Hat OpenShift of AWS](./docs/quickstart-rosa.md)
-* [Azure RedHat OpenShift](./docs/quickstart-aro.md)
+* [Red Hat OpenShift on AWS (ROSA)](./docs/quickstart-rosa.md)
+* [Azure RedHat OpenShift (ARO)](./docs/quickstart-aro.md)
 
 ## Metrics and Monitoring
 
