@@ -157,7 +157,6 @@ ToDo
 
     ```bash
     oc login https://api.private-test.3d1n.p1.openshiftapps.com:6443 --username cluster-admin --password GQSGJ-daqfN-8QNY3-tS9gU
-Login successful
     ```
 
 1. Check that you can access the Console by opening the console url in your browser.
