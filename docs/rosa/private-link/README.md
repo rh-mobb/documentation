@@ -1,5 +1,11 @@
 # Creating a ROSA cluster with Private Link enabled
 
+## Prerequisites
+
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.0.8) v1.0.8
+* [jq](https://stedolan.github.io/jq/download/)
+
 ## Create VPC and Subnets
 
 The following instructions use the AWS CLI to create the necessary networking to deploy a Private Link ROSA cluster into a Single AZ and are intended to be a guide. Ideally you would use an Automation tool like Ansible or Terraform to manage your VPCs.
