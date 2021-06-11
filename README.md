@@ -5,7 +5,7 @@
 * [Red Hat OpenShift on AWS (ROSA)](./docs/quickstart-rosa.md)
 * [Azure RedHat OpenShift (ARO)](./docs/quickstart-aro.md)
 
-## Advanced Cluster Operations
+## Advanced Managed OpenShift
 
 * [Deploying ROSA in Private Link mode](./docs/rosa/private-link)
 
