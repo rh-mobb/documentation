@@ -14,6 +14,8 @@ ToDo
 
 ### Option 3 - VPC with public and private subnets (NAT)
 
+This will create both a Private and Public subnet. All cluster resources will live in the private subnet, the public subnet only exists to NAT the egress traffic to the Internet.
+
 1. Create a VPC to install a ROSA cluster into
 
     ```
