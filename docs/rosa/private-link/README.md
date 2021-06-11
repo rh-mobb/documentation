@@ -14,32 +14,32 @@ ToDo
 
 ### Option 3 - VPC with public and private subnets (NAT)
 
-1. Create a VPC
+1. Create a VPC to install a ROSA cluster into
 
     ```
     VPC_ID=`aws ec2 create-vpc --cidr-block 10.0.0.0/16 | jq -r .Vpc.VpcId`
     ```
 
-1. Create a Public Subnet
+1. Create a Public Subnet for the cluster to NAT egress traffic out of
 
     ```bash
     PUBLIC_SUBNET=`aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.128.0/17 | jq -r .Subnet.SubnetId`
     ```
 
-1. Create a Private Subnet
+1. Create a Private Subnet for the cluster machines to live in
 
     ```bash
     PRIVATE_SUBNET=`aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.0.0/17 | jq -r .Subnet.SubnetId`
     ```
 
-1. Create an Internet Gateway and Route Table
+1. Create an Internet Gateway for NAT egress traffic
 
     ```bash
     I_GW=`aws ec2 create-internet-gateway | jq -r .InternetGateway.InternetGatewayId`
     aws ec2 attach-internet-gateway --vpc-id $VPC_ID --internet-gateway-id $I_GW | jq .
     ```
 
-1. Create a Route Table
+1. Create a Route Table for NAT egress traffic
 
     ```bash
     R_TABLE=`aws ec2 create-route-table --vpc-id $VPC_ID | jq -r .RouteTable.RouteTableId`
@@ -51,14 +51,14 @@ ToDo
     aws ec2 associate-route-table --subnet-id $PUBLIC_SUBNET --route-table-id $R_TABLE | jq .
     ```
 
-1. Create a NAT Gateway
+1. Create a NAT Gateway for the Private network
 
     ```bash
     EIP=`aws ec2 allocate-address --domain vpc | jq -r .AllocationId`
     NAT_GW=`aws ec2 create-nat-gateway --subnet-id $PUBLIC_SUBNET \
       --allocation-id $EIP | jq -r .NatGateway.NatGatewayId`
 
-1. Create a Route Table for the Private subnet
+1. Create a Route Table for the Private subnet to the NAT
 
     ```bash
     R_TABLE_NAT=`aws ec2 create-route-table --vpc-id $VPC_ID | jq -r .RouteTable.RouteTableId`
@@ -114,7 +114,7 @@ ToDo
 
 ## Deploy ROSA
 
-1. Create ROSA cluster
+1. Create ROSA cluster in the private subnet
 
     ```bash
     rosa create cluster --private-link --cluster-name=private-test \
