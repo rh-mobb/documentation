@@ -8,4 +8,4 @@ This demo assumes you have a Managed OpenShift Cluster available and cluster-adm
 
 1. Search for the **OpenShift GitOps** operator and install
 
-
+![screenshot of GitOps install](./gitops_operator.png)
