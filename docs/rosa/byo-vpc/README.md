@@ -13,6 +13,7 @@ This is example Terraform to create a single AZ VPC in which to deploy a single 
     ```bash
     git clone https://github.com/rh-mobb/documentation.git
     cd documentation/docs/rosa/byo-vpc
+    ```
 
 1. Modify main.tf as needed, then run
 
