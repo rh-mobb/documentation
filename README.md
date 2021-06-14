@@ -17,3 +17,8 @@
 ## Applications
 
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
+
+
+## Operations - DevOps/GitOps
+
+* [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
