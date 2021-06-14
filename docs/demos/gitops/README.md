@@ -99,6 +99,12 @@ kubectl apply -f documentation/modules/ROOT/examples/bgd-app/bgd-app.yaml
 ```
 kubectl get all -n bgd
 ```
+**Do not proceed until the rollout is complete**.<br>
+The `kubectl rollout status deploy/bgd -n bgd` should display the deployment status
+```
+deployment "bgd" successfully rolled out
+```
+
 
 Once the rollout is **complete** get the 
 
