@@ -10,4 +10,8 @@ This demo assumes you have a Managed OpenShift Cluster available and cluster-adm
 
 ![screenshot of GitOps install](./gitops_operator.png)
 
+1. Verify the operator installation compeleted successfully
+
+
+
 ## Pull from GitHub
