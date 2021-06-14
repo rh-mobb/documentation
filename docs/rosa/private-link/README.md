@@ -22,6 +22,8 @@ ToDo
 
 This will create both a Private and Public subnet. All cluster resources will live in the private subnet, the public subnet only exists to NAT the egress traffic to the Internet.
 
+> As an alternative use the Terraform instructions provided [here](../byo-vpc) then skip down to the rosa create command.
+
 1. Set a Cluster name
 
     ```
