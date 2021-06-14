@@ -22,22 +22,39 @@ ToDo
 
 This will create both a Private and Public subnet. All cluster resources will live in the private subnet, the public subnet only exists to NAT the egress traffic to the Internet.
 
+1. Set a Cluster name
+
+    ```
+    ROSA_CLUSTER_NAME=private-link
+    ```
+
 1. Create a VPC to install a ROSA cluster into
 
     ```
     VPC_ID=`aws ec2 create-vpc --cidr-block 10.0.0.0/16 | jq -r .Vpc.VpcId`
+
+    aws ec2 create-tags --resources $VPC_ID \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
+
+    # aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames | jq .
     ```
 
 1. Create a Public Subnet for the cluster to NAT egress traffic out of
 
     ```bash
     PUBLIC_SUBNET=`aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.128.0/17 | jq -r .Subnet.SubnetId`
+
+    aws ec2 create-tags --resources $PUBLIC_SUBNET \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME-public | jq .
     ```
 
 1. Create a Private Subnet for the cluster machines to live in
 
     ```bash
     PRIVATE_SUBNET=`aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.0.0/17 | jq -r .Subnet.SubnetId`
+
+    aws ec2 create-tags --resources $PRIVATE_SUBNET \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME-private | jq .
     ```
 
 1. Create an Internet Gateway for NAT egress traffic
@@ -45,6 +62,9 @@ This will create both a Private and Public subnet. All cluster resources will li
     ```bash
     I_GW=`aws ec2 create-internet-gateway | jq -r .InternetGateway.InternetGatewayId`
     aws ec2 attach-internet-gateway --vpc-id $VPC_ID --internet-gateway-id $I_GW | jq .
+
+    aws ec2 create-tags --resources $I_GW \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
     ```
 
 1. Create a Route Table for NAT egress traffic
@@ -57,6 +77,9 @@ This will create both a Private and Public subnet. All cluster resources will li
     aws ec2 describe-route-tables --route-table-id $R_TABLE | jq .
 
     aws ec2 associate-route-table --subnet-id $PUBLIC_SUBNET --route-table-id $R_TABLE | jq .
+
+    aws ec2 create-tags --resources $R_TABLE \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
     ```
 
 1. Create a NAT Gateway for the Private network
@@ -65,6 +88,10 @@ This will create both a Private and Public subnet. All cluster resources will li
     EIP=`aws ec2 allocate-address --domain vpc | jq -r .AllocationId`
     NAT_GW=`aws ec2 create-nat-gateway --subnet-id $PUBLIC_SUBNET \
       --allocation-id $EIP | jq -r .NatGateway.NatGatewayId`
+
+    aws ec2 create-tags --resources $EIP --resources $NAT_GW \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
+    ```
 
 1. Create a Route Table for the Private subnet to the NAT
 
@@ -79,55 +106,18 @@ This will create both a Private and Public subnet. All cluster resources will li
     aws ec2 associate-route-table --subnet-id $PRIVATE_SUBNET --route-table-id $R_TABLE_NAT | jq .
 
     aws ec2 create-tags --resources $R_TABLE_NAT $EIP \
-      --tags Key=Name,Value=rosa-private-link-private | jq .
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME-private | jq .
     ```
-
-<!--  These need more testing before using, the default ACLs are permissive and will work.
-
-1. Create Network ACLs
-
-    ```bash
-    ACL=`aws ec2 create-network-acl --vpc-id $VPC_ID | jq -r .NetworkAcl.NetworkAclId`
-
-    aws ec2 delete-network-acl-entry --network-acl-id $ACL \
-      --rule-number 100
-
-    aws ec2 create-network-acl-entry --network-acl-id $ACL \
-      --ingress --rule-number 100 --protocol tcp \
-      --port-range From=80,To=80 --cidr-block 0.0.0.0/0 \
-      --rule-action allow | jq .
-
-    aws ec2 create-network-acl-entry --network-acl-id $ACL \
-      --ingress --rule-number 200 --protocol tcp \
-      --port-range From=443,To=443 --cidr-block 0.0.0.0/0 \
-      --rule-action allow | jq .
-
-    aws ec2 create-network-acl-entry --network-acl-id $ACL \
-      --ingress --rule-number 300 --protocol tcp \
-      --port-range From=22,To=22 --cidr-block 0.0.0.0/0 \
-      --rule-action allow | jq .
-
-    aws ec2 create-network-acl-entry --network-acl-id $ACL \
-      --egress --rule-number 400 --protocol -1 \
-      --port-range From=0,To=65535 --cidr-block 0.0.0.0/0 \
-      --rule-action allow | jq .
-
-    aws ec2 create-network-acl-entry --network-acl-id $ACL \
-      --ingress --rule-number 500 --protocol -1 \
-      --port-range From=1024,To=65535 --cidr-block 0.0.0.0/0 \
-      --rule-action allow | jq .
-    ```
-
--->
 
 ## Deploy ROSA
 
 1. Create ROSA cluster in the private subnet
 
     ```bash
-    rosa create cluster --private-link --cluster-name=private-test \
-    --machine-cidr=10.0.0.0/16 \
-    --subnet-ids=$PRIVATE_SUBNET
+    rosa create cluster --private-link \
+      --cluster-name=$ROSA_CLUSTER_NAME \
+      --machine-cidr=10.0.0.0/16 \
+      --subnet-ids=$PRIVATE_SUBNET
     ```
 
 ## Test Connectivity
@@ -139,7 +129,7 @@ This will create both a Private and Public subnet. All cluster resources will li
 1. Create a ROSA admin user
 
     ```
-    rosa create admin -c private-test
+    rosa create admin -c $ROSA_CLUSTER_NAME
     ```
 
 1. update /etc/hosts to point the domains to localhost
@@ -168,3 +158,26 @@ This will create both a Private and Public subnet. All cluster resources will li
     ```
 
 1. Check that you can access the Console by opening the console url in your browser.
+
+## Cleanup
+
+1. Delete ROSA
+
+    ```bash
+    rosa delete cluster -c $ROSA_CLUSTER_NAME -y
+    ```
+
+1. Delete AWS resources
+
+    ```bash
+    aws ec2 delete-nat-gateway --nat-gateway-id $NAT_GW | jq .
+    aws ec2 release-address --allocation-id=$EIP | jq .
+    aws ec2 detach-internet-gateway --vpc-id $VPC_ID \
+      --internet-gateway-id $I_GW | jq .
+    aws ec2 delete-subnet --subnet-id=$PRIVATE_SUBNET | jq .
+    aws ec2 delete-subnet --subnet-id=$PUBLIC_SUBNET | jq .
+    aws ec2 delete-route-table --route-table-id=$R_TABLE | jq .
+    aws ec2 delete-route-table --route-table-id=$R_TABLE_NAT | jq .
+    aws ec2 delete-vpc --vpc-id=$VPC_ID | jq .
+    ```
+
