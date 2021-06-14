@@ -36,7 +36,7 @@ This will create both a Private and Public subnet. All cluster resources will li
     aws ec2 create-tags --resources $VPC_ID \
       --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
 
-    # aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames | jq .
+    aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames | jq .
     ```
 
 1. Create a Public Subnet for the cluster to NAT egress traffic out of
