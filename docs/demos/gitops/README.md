@@ -2,42 +2,106 @@
 
 >This demo assumes you have a Managed OpenShift Cluster available and cluster-admin rights.
 
-### GitHub resources referenced in the demo:
+#### GitHub resources referenced in the demo:
 
-1. BGD Application:  https://github.com/rh-mobb/gitops-bgd-app
-2. OpenShift / ArgoCD configuration:  https://github.com/rh-mobb/gitops-demo
+BGD Application: [gitops-bgd-app](https://github.com/rh-mobb/gitops-bgd-app) <br>
+OpenShift / ArgoCD configuration:  [gitops-demo](https://github.com/rh-mobb/gitops-demo)
 
-## Install the OpenShift GitOps operator
+#### Required command line (CLI) tools
 
-1. Log into OpenShift and go to the **Operator Hub**
+- GitHub: [git](https://git-scm.com/download/)
+- OpenShift: [oc](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands)
+- ArgoCD: [argocd](https://argoproj.github.io/argo-cd/cli_installation/)
+- Kustomize: [kam](https://kubectl.docs.kubernetes.io/installation/kustomize/)
 
-2. Search for the **OpenShift GitOps** operator and install
+## Environment Set Up
+
+### Install the OpenShift GitOps operator
+
+Install the **OpenShift GitOps** operator from the **Operator Hub**
 
 ![screenshot of GitOps install](./gitops_operator.png)
 
-## Pull files from GitHub
+### Pull files from GitHub
 
-1. Clone the `gitops-demo` GitHub repository to your local machine
+Clone the `gitops-demo` GitHub repository to your local machine
 ```
 git clone https://github.com/rh-mobb/gitops-demo gitops
 ```
 
-2. Export your local path to the GitHub files
+Export your local path to the GitHub files
 ```
 export GITOPS_HOME="$(pwd)/gitops"
 cd $GITOPS_HOME
 ```
 
-## Log in to OpenShift via the CLI
+### Log in to OpenShift via the CLI
 
-1. Retrieve the login command from the OpenShift console
+Retrieve the login command from the OpenShift console <br>
 ![screenshot of login](./oc_login.png)
 
-2. Enter the command in your terminal to authenticate with the OpenShift CLI (oc)
+Enter the command in your terminal to authenticate with the OpenShift CLI (oc)
 >Output should appear similar to:
 ```
 Logged into "https://<YOUR-INSTANCE>.openshiftapps.com:6443" as "<YOUR-ID>" using the token provided.
 ```
+
+## Deploy the ArgoCD Project
+
+### Create a new OpenShift project
+
+Create a new OpenShift project called *gitops*
+```
+oc new-project gitops
+```
+
+### Edit service account permissions
+
+Add **cluster-admin** rights to the `openshift-gitops-argocd-application-controller` service account in the **openshift-gitops** namespace
+```
+oc adm policy add-cluster-role-to-user cluster-admin -z openshift-gitops-argocd-application-controller -n openshift-gitops
+```
+
+### Log in to ArgoCD
+
+Retrieve ArgoCD URL:
+```
+argoURL=$(oc get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}{"\n"}')
+echo $argoURL
+```
+
+Retrieve ArgoCD Password:
+```
+argoPass=$(oc get secret/openshift-gitops-cluster -n openshift-gitops -o jsonpath='{.data.admin\.password}' | base64 -d)
+echo $argoPass
+```
+
+In a browser, navigate to the ArgoCD console using the `$argoURL` value returned above <br>
+![screenshot of argocd1](./argo1.png)
+
+Log in with the user name **admin** and the password returned as `$argoPass` above <br>
+![screenshot of argocd2](./argo2.png)
+
+>Optional step if you prefer CLI access
+Login to the CLI:
+```
+argocd login --insecure --grpc-web $argoURL  --username admin --password $argoPass
+```
+
+### Deploy the ArgoCD project
+
+Use `kubectl` to apply the `bgd-app.yaml` file
+```
+kubectl apply -f documentation/modules/ROOT/examples/bgd-app/bgd-app.yaml
+```
+
+>The rollout can be check by running the following command
+```
+kubectl get all -n bgd
+```
+
+Once the rollout is **complete** get the 
+
 
 
 
