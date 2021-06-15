@@ -95,12 +95,22 @@ Use `kubectl` to apply the `bgd-app.yaml` file
 kubectl apply -f documentation/modules/ROOT/examples/bgd-app/bgd-app.yaml
 ```
 
->The rollout can be check by running the following command
+>The rollout can be checked by running the following command
 ```
-kubectl get all -n bgd
+kubectl rollout status deploy/bgd -n bgd
 ```
 
-Once the rollout is **complete** get the 
+Once the rollout is **complete** get the route to the application
+```
+oc get route bgd -n bgd -o jsonpath='{.spec.host}{"\n"}'
+```
+
+In your browser, paste the route to open the application <br>
+![screenshot of app_blue](./app_blue.png)
+
+Go back to your ArgoCD window and verify the configuration shows there as well <br>
+![screenshot of argo_app1](./argo_app1.png)
+
 
 
 
