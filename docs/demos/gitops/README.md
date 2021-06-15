@@ -1,4 +1,4 @@
-# Demonstrate GitOps on Managed OpenShift using ArgoCD
+# Demonstrate GitOps on Managed OpenShift with ArgoCD
 
 >This demo assumes you have a Managed OpenShift Cluster available and cluster-admin rights.
 
