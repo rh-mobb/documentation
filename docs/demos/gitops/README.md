@@ -121,13 +121,23 @@ In the terminal, enter the following command which will introduce a chance into 
 kubectl -n bgd patch deploy/bgd --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/env/0/value", "value":"green"}]'
 ```
 
-Go back to your ArgoCD window.  The application should no longer be green <br>
+Go back to your ArgoCD window.  The application should no longer be synchronized <br>
 ![screenshot of argo_sync](./argo_out_of_sync.png)
 
 Refresh the bgd application window and notice the change in box color<br>
 ![screenshot of bgd_green](./bgd_green.png)
 > The new deployment changed the box from blue to green, but only within OpenShift, not in the source code repository
 
+### Synchronize the application
+
+In the ArgoCD console, click the `SYNC` button to re-synchronize the bgd application with the approved configuration in the source code repository <br>
+![screenshot of sync_bgd](./sync_bgd.png)
+
+Refresh the bgd application window and notice the change in box color<br>
+![screenshot of app_blue](./app_blue.png)
+
+### Details from GitHub perspective
+TBD
 
 
 
