@@ -111,6 +111,24 @@ In your browser, paste the route to open the application <br>
 Go back to your ArgoCD window and verify the configuration shows there as well <br>
 ![screenshot of argo_app1](./argo_app1.png)
 
+Exploring the application in ArgoCD, you can see all the components are green (synchronized) <br>
+![screenshot of argo_sync](./argo_sync.png)
+
+### Deploy a change to the application
+
+In the terminal, enter the following command which will introduce a chance into the bgd application
+```
+kubectl -n bgd patch deploy/bgd --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/env/0/value", "value":"green"}]'
+```
+
+Go back to your ArgoCD window.  The application should no longer be green <br>
+![screenshot of argo_sync](./argo_out_of_sync.png)
+
+Refresh the bgd application window and notice the change in box color<br>
+![screenshot of bgd_green](./bgd_green.png)
+> The new deployment changed the box from blue to green, but only within OpenShift, not in the source code repository
+
+
 
 
 
