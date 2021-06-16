@@ -16,7 +16,7 @@ Todo
 
 ### Option 2 - VPC with public and private subnets and AWS Site-to-Site VPN access
 
-ToDo
+Todo
 
 ### Option 3 - VPC with public and private subnets (NAT)
 
