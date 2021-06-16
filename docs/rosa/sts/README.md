@@ -273,7 +273,22 @@ Once the cluster has finished installing we can validate we can access it
     ./clean-roles.sh
     ```
 
+1. delete the OIDC connect provider
+
+    ```bash
+    oidc_arn=$(aws iam list-open-id-connect-providers | \
+      grep $cluster_id | awk -F ": " '{ print $2 }' | \
+      sed 's/"//g')
+
+    aws iam delete-open-id-connect-provider \
+      --open-id-connect-provider-arn=$oidc_arn
+    ```
+
 1. Cleanup the rest of the roles and policies
 
-    > Instructions to come, but probably easier to use the GUI for now.
+    Instructions to come, for now use the AWS Console.
+
+    The rest of the Roles and Policies can be used for other ROSA clusters, so only delete them if you do not have (or plan to install) other ROSA clusters.
+
+
 
