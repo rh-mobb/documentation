@@ -1,5 +1,15 @@
 # Demonstrate GitOps on Managed OpenShift with ArgoCD
 
+Author: [Steve Mirman](https://twitter.com/stevemirman)
+
+## Video Walkthrough
+
+If you prefer a more visual medium, you can watch [Steve Mirman](https://twitter.com/stevemirman) walk through this quickstart on [YouTube](https://www.youtube.com/watch?v=Gi18iemF1yI).
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Gi18iemF1yI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<hr>
+
 The purpose of this document is to help you get  OpenShift GitOps running in your cluster, including deploying a sample application and demonstrating how ArgoCD ensures environment consistency.
 
 >This demo assumes you have a Managed OpenShift Cluster available and cluster-admin rights.
