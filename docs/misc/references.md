@@ -27,6 +27,7 @@
 ### Azure on Red Hat OpenShift ARO
 - [ARO Installation Process](https://docs.openshift.com/container-platform/4.7/installing/index.html)
 - [ARO Support](https://docs.openshift.com/container-platform/4.7/support/getting-support.html)
+- [Azure Compliance](https://docs.microsoft.com/en-us/azure/compliance/)
 - [Monitoring](https://docs.openshift.com/container-platform/4.7/monitoring/understanding-the-monitoring-stack.html)
 - [Authentication](https://docs.openshift.com/container-platform/4.7/authentication/understanding-authentication.html)
 
