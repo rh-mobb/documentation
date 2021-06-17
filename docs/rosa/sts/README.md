@@ -10,6 +10,8 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
 > Note that some commands (OIDC for STS) will be hard coded to US-EAST-1, do not be tempted to change these to use $region instead or you will fail installation.
 
+> Note as the roles created for STS in this guide have a common name (see the `ccoctl` command further down) only one cluster will be installable in a given AWS account.  You'll need to modify the name and resulting role bindings to deploy more than one cluster.
+
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)

@@ -8,6 +8,7 @@
 ## Advanced Managed OpenShift
 
 * [Deploying ROSA in Private Link mode](./docs/rosa/private-link)
+* [Deploying ROSA in STS mode](./docs/rosa/sts)
 
 ## Metrics and Monitoring
 
