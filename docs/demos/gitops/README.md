@@ -1,5 +1,7 @@
 # Demonstrate GitOps on Managed OpenShift with ArgoCD
 
+The purpose of this document is to help you get  OpenShift GitOps running in your cluster, including deploying a somple application and demonstrating how ArgoCD ensures environment consistency.
+
 >This demo assumes you have a Managed OpenShift Cluster available and cluster-admin rights.
 
 #### GitHub resources referenced in the demo:
@@ -94,8 +96,10 @@ Use `kubectl` to apply the `bgd-app.yaml` file
 ```
 kubectl apply -f documentation/modules/ROOT/examples/bgd-app/bgd-app.yaml
 ```
+>The bgd-app.yaml file defines several things, including the repo location for the `gitops-bgd-app` application<br>
+![screenshot of bgd-app-yaml](./bgd-app-yaml.png)
 
->The rollout can be checked by running the following command
+The rollout can be checked by running the following command
 ```
 kubectl rollout status deploy/bgd -n bgd
 ```
