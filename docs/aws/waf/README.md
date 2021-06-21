@@ -1,9 +1,5 @@
 # Examples of using a WAF in front of ROSA / OSD on AWS / OCP on AWS
 
-**This is not endorsed or supported in any way by Red Hat, YMMV**
-
-[Here](https://iamondemand.com/blog/elb-vs-alb-vs-nlb-choosing-the-best-aws-load-balancer-for-your-needs/)'s a good overview of AWS LB types and what they support
-
 ## Problem Statement
 
 1. Operator requires WAF (Web Application Firewall) in front of their workloads running on OpenShift (ROSA)
@@ -13,6 +9,8 @@
 # Solutions
 
 ## Cloud Front -> WAF -> CustomDomain -> $APP
+
+**This is the preferred method and can also work with most third party WAF systems that act as a reverse proxy**
 
 > Uses a custom domain, custom route, LE cert. CloudFront and WAF
 
