@@ -72,7 +72,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
     az vm list-usage --location "East US" -o table
     ```
 
-    see [Addendum - Adding Quota to ARO account](#Adding-Quota-to-ARO-account) if you have less than `36` Quota left for `Total Regional vCPUs`.
+    see [Addendum - Adding Quota to ARO account](#adding-quota-to-aro-account) if you have less than `36` Quota left for `Total Regional vCPUs`.
 
 1. Register resource providers
 
