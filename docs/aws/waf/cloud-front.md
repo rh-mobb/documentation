@@ -1,8 +1,20 @@
 # Using CloudFront + WAF
 
+## Problem Statement
+
+1. Operator requires WAF (Web Application Firewall) in front of their workloads running on OpenShift (ROSA)
+
+1. Operator does not want WAF running on OpenShift to ensure that OCP resources do not experience Denial of Service through handling the WAF
+
+## Proposed Solution
+
+1. Add a CustomDomain resource to the cluster using a wildcard DNS and TLS certificate.
+
+2. Set the Wildcard DNS CNAME's to CloudFront and enable the CloudFront + WAF services to reverse proxy and inspect the traffic before sending it to the cluster.
+
 ![](./cf.drawio.png)
 
-## Prepartion
+## Preparation
 
 1. Create a cluster
 

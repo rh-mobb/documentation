@@ -1,6 +1,6 @@
 # This is a POC of ROSA with a AWS WAF service
 
-**This is not endorsed or supported in any way by Red Hat, YMMV**
+**Note: It is recommended that you use the [Cloud Front based guide](./cloud-front.md) unless you absolutely must use an ALB based solution.**
 
 [Here](https://iamondemand.com/blog/elb-vs-alb-vs-nlb-choosing-the-best-aws-load-balancer-for-your-needs/)'s a good overview of AWS LB types and what they support
 
