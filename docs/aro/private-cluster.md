@@ -286,7 +286,7 @@ To obtain a .cer file from the certificate, open Manage user certificates. Locat
 
 1. Use the URL and the credentials provided by the output of the last two commands to log into OpenShift via a web browser.
 
-![ARO login page](./images/aro-login.png)
+![ARO login page](../images/aro-login.png)
 
 
 1. Deploy an application to OpenShift
