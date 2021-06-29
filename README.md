@@ -7,9 +7,15 @@
 
 ## Advanced Managed OpenShift
 
+### ROSA
+
 * [Deploying ROSA in Private Link mode](./docs/rosa/private-link)
 * [Deploying ROSA in STS mode](./docs/rosa/sts)
 * [Adding AWS WAF in front of ROSA / OSD](./docs/aws/waf)
+
+### ARO
+
+* [Deploying private ARO Cluster with Client VPN](./docs/aro/private-cluster)
 
 ## Metrics and Monitoring
 
