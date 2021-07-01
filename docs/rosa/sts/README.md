@@ -149,6 +149,8 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
 ## Deploy ROSA cluster
 
+> Note, the role ARNs are truncated to 64chars to suit the AWS limits on ARNs. If you change them, you also need to change the script that creates the roles further down.
+
 1. Run the rosa cli to create your cluster
 
     ```bash
