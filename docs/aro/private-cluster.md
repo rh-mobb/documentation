@@ -160,8 +160,9 @@ Create a virtual network with two empty subnets
 
 ### Firewall + Internet Egress
 
-This replaces the routes for the cluster to go through the Firewall for egress vs the Loadbalancer which we can later remove. It does come with
-extra Azure costs of course.
+This replaces the routes for the cluster to go through the Firewall for egress vs the Loadbalancer which we can later remove. It does come with extra Azure costs of course.
+
+> You can skip this step if you don't need to restrict egress.
 
 1. Make sure you have the AZ CLI firewall extensions
 
@@ -366,8 +367,7 @@ With the cluster in a private network, we can create a Jump host in order to con
 
 #### Delete the ARO egress LB
 
-> Note: you should only do this if you plan to use the `egress-ipam-operator` doing this may render your ARO cluster
- **UNSUPPORTED** by Red Hat / Azure, so speak to your support
+> Note: you should only do this if enabled the firewall egress above and you plan to use the [egress-ipam-operator](./egress-operator) doing this may render your ARO cluster **UNSUPPORTED** by Red Hat / Azure, so speak to your support
  team before doing this.
 
 1. Get and Login as Service Principal
