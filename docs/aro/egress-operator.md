@@ -1,4 +1,4 @@
-# Using the egress-ip Operator with a Private ARO Cluster
+# Using the Egressip Ipam Operator with a Private ARO Cluster
 
 ## Prerequisites
 
