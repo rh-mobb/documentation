@@ -13,7 +13,7 @@ do
   cat ${policy} | sed '/RoleName/d' > ${policy}.apply
   policy_arn=$(aws iam list-policies --query "Policies[?PolicyName=='${policy_name}'].Arn" --output text)
   if [[ -z ${policy_arn} ]]; then
-    policy_arn=$(aws iam create-policy --cli-input-json file://$policy.apply | grep Arn | awk '{print $2}' | awk -F '"' '{print $2}')
+    policy_arn=$(aws iam create-policy --output json --cli-input-json file://$policy.apply | grep Arn | awk '{print $2}' | awk -F '"' '{print $2}')
   fi
   aws iam attach-role-policy --role-name $role_name --policy-arn $policy_arn
 
