@@ -16,7 +16,7 @@
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](./docs/aro/private-cluster)
-    * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egressip-operator)
+    * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
 
 ## Metrics and Monitoring
 

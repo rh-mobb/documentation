@@ -367,7 +367,7 @@ With the cluster in a private network, we can create a Jump host in order to con
 
 #### Delete the ARO egress LB
 
-> Note: you should only do this if enabled the firewall egress above and you plan to use the [egress-ipam-operator](./egress-operator) doing this may render your ARO cluster **UNSUPPORTED** by Red Hat / Azure, so speak to your support
+> Note: you should only do this if enabled the firewall egress above and you plan to use the [egress-ipam-operator](./egress-ipam-operator) doing this may render your ARO cluster **UNSUPPORTED** by Red Hat / Azure, so speak to your support
  team before doing this.
 
 1. Get and Login as Service Principal
