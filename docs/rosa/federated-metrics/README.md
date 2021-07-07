@@ -8,6 +8,7 @@ This guide walks through setting up federating Prometheus metrics to S3 storage.
 
 > ToDo - Add Authorization in front of Thanos APIs
 
+
 ## Pre-Prequsites
 
 1. A ROSA cluster
