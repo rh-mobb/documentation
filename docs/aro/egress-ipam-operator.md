@@ -4,6 +4,40 @@
 
 * [A private ARO cluster with a VPN Connection](./private-cluster) and the egress LB removed
 
+
+#### Delete the ARO egress LB
+
+> Note: you should only do this if enabled the firewall egress above and you plan to use the [egress-ipam-operator](./egress-ipam-operator) doing this may render your ARO cluster **UNSUPPORTED** by Red Hat / Azure, so speak to your support
+ team before doing this.
+
+1. Get and Login as Service Principal
+
+    ```bash
+    oc login $APISERVER -u kubeadmin -p $ADMINPW
+
+    SPAPPID="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
+    SPSECRET="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_secret | base64 --decode)"
+    SPTENANT="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_tenant_id | base64 --decode)"
+    CLUSTERRG="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_resourcegroup |base64 --decode)"
+
+    az login --service-principal -u $SPAPPID -p $SPSECRET -t $SPTENANT
+
+    ```
+
+1. get the name of the LB
+
+    ```
+    LB_NAME=$(az network lb list -g $CLUSTERRG --query [].name -o tsv | grep -v 'internal')
+    echo $LB_NAME
+    ```
+
+1. delete the outbound rule
+
+    ```
+    az network lb outbound-rule delete -n outbound-rule-v4 \
+      --lb-name $LB_NAME -g $CLUSTERRG
+    ```
+
 ## Deploy the Operator
 
 ### Via GUI
