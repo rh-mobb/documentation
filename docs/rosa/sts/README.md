@@ -24,7 +24,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
     git clone https://github.com/openshift/cloud-credential-operator.git
     cd cloud-credential-operator/cmd/ccoctl
     go build .
-    mv ccoctl /usr/local/bin/ccoctl
+    ln -s $(pwd)/ccoctl /usr/local/bin/ccoctl
     ccoctl --help
     ```
 
@@ -252,7 +252,7 @@ Once the cluster has finished installing we can validate we can access it
 1. Create an Admin user
 
     ```bash
-    rosa create admin -c $cluster
+    rosa create admin -c $name
     ```
 
 1. Wait a few moments and run the `oc login` command it provides.
@@ -262,13 +262,13 @@ Once the cluster has finished installing we can validate we can access it
 1. Delete the ROSA cluster
 
     ```bash
-    rosa delete cluster -c $cluster
+    rosa delete cluster -c $name
     ```
 
 1. Watch the logs and wait until the cluster is deleted
 
     ```bash
-    rosa logs uninstall -c $cluster --watch
+    rosa logs uninstall -c $name --watch
     ```
 
 1. Clean up the STS roles
