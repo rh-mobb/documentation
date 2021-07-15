@@ -144,6 +144,8 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
 1. Run the rosa cli to create your cluster
 
+    > Add any other arguments to this command to suit your cluster. for example `--private-link` and `--subnet-ids=subnet-12345678,subnet-87654321`.
+
     ```bash
     rosa create cluster --cluster-name ${ROSA_CLUSTER_NAME} \
       --region ${REGION} --version ${VERSION} \
