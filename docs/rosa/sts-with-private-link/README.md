@@ -214,7 +214,7 @@ We have provided a number of scripts, variables, and JSON configuration files to
 
     ```bash
     export version=4.7.19 \
-           name=pl-sts-cluster \
+           ROSA_CLUSTER_NAME=pl-sts-cluster \
            aws_account_id=`aws sts get-caller-identity --query Account --output text` \
            region=us-east-2 \
            AWS_PAGER=""
@@ -345,7 +345,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
     ```bash
     rosa create cluster --private-link --machine-cidr=10.0.0.0/16 \
-      --subnet-ids=$PRIVATE_SUBNET --cluster-name ${name} \
+      --subnet-ids=$PRIVATE_SUBNET --cluster-name ${ROSA_CLUSTER_NAME} \
       --region ${region} --version ${version} \
       --role-arn arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-IAM-Role \
       --support-role-arn arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-Support-Role \
@@ -365,7 +365,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
     ```bash
     while ! \
-    rosa describe cluster -c $name | grep "Waiting for OIDC"; \
+    rosa describe cluster -c $ROSA_CLUSTER_NAME | grep "Waiting for OIDC"; \
     do sleep 1; done
     ```
 
@@ -377,7 +377,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
     - Obtain the cluster ID and store as `cluster_id`
       ```bash
-      cluster_id=$(rosa describe cluster -c $name | grep "^ID:" | awk '{ print $2}')
+      cluster_id=$(rosa describe cluster -c $ROSA_CLUSTER_NAME | grep "^ID:" | awk '{ print $2}')
       ```
 
     - Store the ssl thumbprint as `thumbprint`
@@ -457,7 +457,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     > The State should have moved beyond `pending` and show `installing` or `ready`.
     
     ```bash
-    rosa describe cluster -c $name | grep State
+    rosa describe cluster -c $ROSA_CLUSTER_NAME | grep State
     ```
     ![Route Table check output](./images/sts-pl10.png)
 
@@ -466,7 +466,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 1. Watch the install logs
 
     ```bash
-    rosa logs install -c $name --watch
+    rosa logs install -c $ROSA_CLUSTER_NAME --watch
     ```
 
 ## Validate the cluster
