@@ -42,6 +42,8 @@ If this is your first time deploying ROSA you need to do some preparation as des
 
 ## Creating IAM and OIDC roles for STS
 
+Run through these roles step by step, or simply just run the script found at `./create-infra-roles.sh` and skip to cluster creations.
+
 > Review the roles in the `./roles` directory, they will be the roles that ROSA can assume to perform installation / day 2 operations.
 
 ### Installer access role and policy
@@ -171,15 +173,11 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     ```bash
     cluster_id=$(rosa describe cluster -c $ROSA_CLUSTER_NAME | grep "^ID:" | awk '{ print $2}')
 
-    echo cluster-id - $cluster_id
-
     thumbprint=$(openssl s_client -servername \
       rh-oidc.s3.us-east-1.amazonaws.com/${cluster_id} \
       -showcerts -connect rh-oidc.s3.us-east-1.amazonaws.com:443 \
       </dev/null 2>&1| openssl x509 -fingerprint -noout | tail -n1 \
       | sed 's/SHA1 Fingerprint=//' | sed 's/://g')
-
-    echo thumbprint - $thumbprint
 
     aws iam create-open-id-connect-provider \
     --url "https://rh-oidc.s3.us-east-1.amazonaws.com/${cluster_id}" \
