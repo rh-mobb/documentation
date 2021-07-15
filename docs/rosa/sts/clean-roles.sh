@@ -2,11 +2,11 @@
 
 set -eox
 
-for role in `find ./iam_assets -name "*-role.json"`
+for role in `find ./iam_assets_apply -name "*-role.json"`
 do
   policy=$(sed -e 's/05-/06-/' -e 's/role/policy/' <<< ${role})
-  role_name=$(grep RoleName ${policy} | awk '{print $2}' | awk -F '"' '{print $2}')
-  policy_name=$(grep PolicyName ${policy} | awk '{print $2}' | awk -F '"' '{print $2}')
+  role_name=$(jq -r .RoleName ${role})
+  policy_name=$(jq -r .PolicyName ${policy})
 
   policy_arn=$(aws iam list-policies --query "Policies[?PolicyName=='${policy_name}'].Arn" --output text)
   if [[ -n ${policy_arn} ]]; then

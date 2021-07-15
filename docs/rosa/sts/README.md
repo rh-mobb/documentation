@@ -41,7 +41,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
     ```bash
     export version=4.7.11 \
-           name=<cluster name> \
+           name=mycluster \
            aws_account_id=`aws sts get-caller-identity --query Account --output text` \
            region=us-east-2 \
            AWS_PAGER=""
@@ -195,34 +195,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 1. Generate permissions for OIDC-access-based roles
 
     ```bash
-    mkdir -p credrequests
-
-    oc adm release extract \
-      quay.io/openshift-release-dev/ocp-release:${version:0:3}.0-x86_64 \
-      --credentials-requests \
-      --cloud=aws \
-      --to credrequests
-
-    cat credrequests/0000*.yaml > credrequests/${version:0:3}.yaml
-
-    rm -f credrequests/0000*.yaml
-    ```
-
-1. Prepare the IAM roles
-
-    ```bash
-    mkdir -p iam_assets
-
-    cd iam_assets
-
-    ccoctl aws create-iam-roles \
-      --credentials-requests-dir ../credrequests/ \
-      --identity-provider-arn "arn:aws:iam::${aws_account_id}:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/${cluster_id}" \
-      --name ManagedOpenShift \
-      --region ${region} \
-      --dry-run
-
-    cd ..
+    cp -r iam_assets_source iam_assets_apply
     ```
 
 1. Apply the IAM roles
