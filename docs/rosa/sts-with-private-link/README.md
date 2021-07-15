@@ -193,7 +193,7 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
 - Cloud Credential Operator CLI
 
     ```
-    git clone https://github.com/openshift/cloud-credential-operator.git -b release-4.3
+    git clone https://github.com/openshift/cloud-credential-operator.git -b release-4.8
     cd cloud-credential-operator/cmd/ccoctl
     go build .
     mv ccoctl /usr/local/bin/ccoctl
@@ -599,4 +599,3 @@ Once the cluster has finished installing it is time to validate.  Validation whe
     aws ec2 delete-route-table --route-table-id=$R_TABLE_NAT | jq .
     aws ec2 delete-vpc --vpc-id=$VPC_ID | jq .
     ```
-
