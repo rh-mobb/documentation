@@ -193,7 +193,7 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
 - Cloud Credential Operator CLI
 
     ```
-    git clone https://github.com/openshift/cloud-credential-operator.git
+    git clone https://github.com/openshift/cloud-credential-operator.git -b release-4.3
     cd cloud-credential-operator/cmd/ccoctl
     go build .
     mv ccoctl /usr/local/bin/ccoctl
@@ -321,6 +321,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     aws iam create-policy \
       --policy-name ManagedOpenShift-Support-Access \
       --policy-document file://roles/RH_Support_Policy.json
+    ```
 
 1. List the support policy ARN, saving it as `policy_arn`
 
