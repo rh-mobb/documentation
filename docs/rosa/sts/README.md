@@ -41,7 +41,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
     ```bash
     export version=4.7.11 \
-           name=mycluster \
+           ROSA_CLUSTER_NAME=mycluster \
            aws_account_id=`aws sts get-caller-identity --query Account --output text` \
            region=us-east-2 \
            AWS_PAGER=""
@@ -64,7 +64,7 @@ This role is used to manage the installation and deletion of clusters that use S
 
     ```bash
     aws iam create-role \
-    --role-name ManagedOpenShift-IAM-Role \
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-install \
       --assume-role-policy-document \
       file://roles/ManagedOpenShift_IAM_Role.json
     ```
@@ -73,8 +73,8 @@ This role is used to manage the installation and deletion of clusters that use S
 
     ```bash
     aws iam put-role-policy \
-      --role-name ManagedOpenShift-IAM-Role \
-      --policy-name ManagedOpenShift-IAM-Role-Policy \
+      --role-name ROSA-${ROSA_CLUSTER_NAME}-install \
+      --policy-name ROSA-${ROSA_CLUSTER_NAME}-install \
       --policy-document \
       file://roles/ManagedOpenShift_IAM_Role_Policy.json
     ```
@@ -85,7 +85,7 @@ This role is used to manage the installation and deletion of clusters that use S
 
     ```bash
     aws iam create-role \
-      --role-name ManagedOpenShift-ControlPlane-Role \
+      --role-name ROSA-${ROSA_CLUSTER_NAME}-control \
       --assume-role-policy-document \
       file://roles/ManagedOpenShift_ControlPlane_Role.json
     ```
@@ -94,8 +94,8 @@ This role is used to manage the installation and deletion of clusters that use S
 
     ```bash
     aws iam put-role-policy \
-      --role-name ManagedOpenShift-ControlPlane-Role \
-      --policy-name ManagedOpenShift-ControlPlane-Role-Policy \
+      --role-name ROSA-${ROSA_CLUSTER_NAME}-control \
+      --policy-name ROSA-${ROSA_CLUSTER_NAME}-control \
       --policy-document \
       file://roles/ManagedOpenShift_ControlPlane_Role_Policy.json
     ```
@@ -106,7 +106,7 @@ This role is used to manage the installation and deletion of clusters that use S
 
     ```bash
     aws iam create-role \
-      --role-name ManagedOpenShift-Worker-Role \
+      --role-name ROSA-${ROSA_CLUSTER_NAME}-worker \
       --assume-role-policy-document \
       file://roles/ManagedOpenShift_Worker_Role.json
     ```
@@ -115,8 +115,8 @@ This role is used to manage the installation and deletion of clusters that use S
 
     ```bash
     aws iam put-role-policy \
-      --role-name ManagedOpenShift-Worker-Role \
-      --policy-name ManagedOpenShift-Worker-Role-Policy \
+      --role-name ROSA-${ROSA_CLUSTER_NAME}-worker \
+      --policy-name ROSA-${ROSA_CLUSTER_NAME}-worker \
       --policy-document \
       file://roles/ManagedOpenShift_Worker_Role_Policy.json
     ```
@@ -129,7 +129,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
     ```bash
     aws iam create-role \
-      --role-name ManagedOpenShift-Support-Role \
+      --role-name ROSA-${ROSA_CLUSTER_NAME}-support \
       --assume-role-policy-document file://roles/RH_Support_Role.json
     ```
 
@@ -137,13 +137,13 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
     ```bash
     aws iam create-policy \
-      --policy-name ManagedOpenShift-Support-Access \
+      --policy-name ROSA-${ROSA_CLUSTER_NAME}-support \
       --policy-document file://roles/RH_Support_Policy.json
 
     policy_arn=$(aws iam list-policies --query "Policies[?PolicyName=='ManagedOpenShift-Support-Access'].Arn" --output text)
 
     aws iam attach-role-policy \
-      --role-name ManagedOpenShift-Support-Role \
+      --role-name ROSA-${ROSA_CLUSTER_NAME}-support \
       --policy-arn $policy_arn
     ```
 
@@ -156,15 +156,15 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     ```bash
     rosa create cluster --cluster-name ${name} \
       --region ${region} --version ${version} \
-      --role-arn arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-IAM-Role \
-      --support-role-arn arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-Support-Role \
-      --master-iam-role arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-ControlPlane-Role \
-      --worker-iam-role arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-Worker-Role \
-      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-machine-api-aws-cloud-credentials \
-      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-cloud-credential-operator-cloud-crede \
-      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-image-registry-installer-cloud-creden \
-      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-ingress-operator-cloud-credentials \
-      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-cluster-csi-drivers-ebs-cloud-credent
+      --role-arn arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-install \
+      --support-role-arn arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-support \
+      --master-iam-role arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-control \
+      --worker-iam-role arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-worker \
+      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-mapi \
+      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-cc \
+      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-registry \
+      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-ingress \
+      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-csi-ebs
   ```
 
 1. Wait for cluster status to change to pending
@@ -198,13 +198,25 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     cp -r iam_assets_source iam_assets_apply
     ```
 
+1. Update the roles and policies to match our cluster
+
+    ```bash
+    find ./iam_assets_apply -name "*-role.json" -exec \
+      sed -i -e "s/AWS_ACCOUNT_ID/${aws_account_id}/g" \
+      -e "s/CLUSTER_ID/$cluster_id/g" \
+      -e "s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
+
+    find ./iam_assets_apply -name "*-policy.json" -exec \
+    sed -i -e "s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
+    ```
+
 1. Apply the IAM roles
 
     ```bash
     ./apply-roles.sh
     ```
 
-1. Validate The cluster is now Installing
+1. Validate The cluster is now installing
 
     The State should have moved beyond `pending` and show `installing` or `ready`.
 

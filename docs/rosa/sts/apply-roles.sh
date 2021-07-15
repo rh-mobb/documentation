@@ -7,13 +7,9 @@ if ! jq; then
     exit 1
 fi
 
-find ./iam_assets_apply -name "*-role.json" -exec sed -i -e "s/AWS_ACCOUNT_ID/${aws_account_id}/g" -e "s/CLUSTER_ID/$cluster_id/g" {} ';'
-find ./iam_assets_apply -name "*-policy.json" -exec sed -i -e '/RoleName/d' {} ';'
-
-
 for role in `find ./iam_assets_apply -name "*-role.json"`
 do
-  policy=$(sed -e 's/05-/06-/' -e 's/role/policy/' <<< ${role})
+  policy=$(sed -e 's/role/policy/' <<< ${role})
   role_name=$(jq -r .RoleName ${role})
   policy_name=$(jq -r .PolicyName ${policy})
 
