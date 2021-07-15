@@ -321,6 +321,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     aws iam create-policy \
       --policy-name ManagedOpenShift-Support-Access \
       --policy-document file://roles/RH_Support_Policy.json
+    ```
 
 1. List the support policy ARN, saving it as `policy_arn`
 
