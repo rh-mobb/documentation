@@ -195,9 +195,9 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
     ```bash
     find ./iam_assets_apply -name "*-role.json" -exec \
-      sed -i -e "s/AWS_ACCOUNT_ID/${AWS_ACCOUNT_ID}/g" \
-      -e "s/CLUSTER_ID/$cluster_id/g" \
-      -e "s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
+      sed -i -e "s/AWS_ACCOUNT_ID/${AWS_ACCOUNT_ID}/g
+      s/CLUSTER_ID/$cluster_id/g
+      s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
 
     find ./iam_assets_apply -name "*-policy.json" -exec \
     sed -i -e "s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
