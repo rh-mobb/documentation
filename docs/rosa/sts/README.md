@@ -214,13 +214,13 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     The State should have moved beyond `pending` and show `installing` or `ready`.
 
     ```bash
-    rosa describe cluster -c $name | grep State
+    rosa describe cluster -c $ROSA_CLUSTER_NAME | grep State
     ```
 
 1. Watch the install logs
 
     ```bash
-    rosa logs install -c $name --watch
+    rosa logs install -c $ROSA_CLUSTER_NAME --watch
     ```
 
 ## Validate the cluster
@@ -230,7 +230,7 @@ Once the cluster has finished installing we can validate we can access it
 1. Create an Admin user
 
     ```bash
-    rosa create admin -c $cluster
+    rosa create admin -c $ROSA_CLUSTER_NAME
     ```
 
 1. Wait a few moments and run the `oc login` command it provides.
@@ -240,13 +240,13 @@ Once the cluster has finished installing we can validate we can access it
 1. Delete the ROSA cluster
 
     ```bash
-    rosa delete cluster -c $cluster
+    rosa delete cluster -c $ROSA_CLUSTER_NAME
     ```
 
 1. Watch the logs and wait until the cluster is deleted
 
     ```bash
-    rosa logs uninstall -c $cluster --watch
+    rosa logs uninstall -c $ROSA_CLUSTER_NAME --watch
     ```
 
 1. Clean up the STS roles
