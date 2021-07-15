@@ -193,7 +193,7 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
 - Cloud Credential Operator CLI
 
     ```
-    git clone https://github.com/openshift/cloud-credential-operator.git
+    git clone https://github.com/openshift/cloud-credential-operator.git -b release-4.3
     cd cloud-credential-operator/cmd/ccoctl
     go build .
     mv ccoctl /usr/local/bin/ccoctl
