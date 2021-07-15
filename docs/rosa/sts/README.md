@@ -8,7 +8,7 @@ STS allows us to deploy ROSA without needing a ROSA admin account, instead it us
 
 This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_getting_started/rosa-sts-getting-started-workflow.html) that can be used as a line by line install guide.
 
-> Note that some commands (OIDC for STS) will be hard coded to US-EAST-1, do not be tempted to change these to use $region instead or you will fail installation.
+> Note that some commands (OIDC for STS) will be hard coded to US-EAST-1, do not be tempted to change these to use $REGION instead or you will fail installation.
 
 > Note as the roles created for STS in this guide have a common name (see the `ccoctl` command further down) only one cluster will be installable in a given AWS account.  You'll need to modify the name and resulting role bindings to deploy more than one cluster.
 
@@ -40,10 +40,10 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 1. set some environment variables
 
     ```bash
-    export version=4.7.11 \
+    export VERSION=4.7.11 \
            ROSA_CLUSTER_NAME=mycluster \
-           aws_account_id=`aws sts get-caller-identity --query Account --output text` \
-           region=us-east-2 \
+           AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
+           REGION=us-east-2 \
            AWS_PAGER=""
     ```
 
@@ -140,7 +140,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
       --policy-name ROSA-${ROSA_CLUSTER_NAME}-support \
       --policy-document file://roles/RH_Support_Policy.json
 
-    policy_arn=$(aws iam list-policies --query "Policies[?PolicyName=='ManagedOpenShift-Support-Access'].Arn" --output text)
+    policy_arn=$(aws iam list-policies --query "Policies[?PolicyName=='ROSA-${ROSA_CLUSTER_NAME}-support'].Arn" --output text)
 
     aws iam attach-role-policy \
       --role-name ROSA-${ROSA_CLUSTER_NAME}-support \
@@ -154,37 +154,41 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 1. Run the rosa cli to create your cluster
 
     ```bash
-    rosa create cluster --cluster-name ${name} \
-      --region ${region} --version ${version} \
-      --role-arn arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-install \
-      --support-role-arn arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-support \
-      --master-iam-role arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-control \
-      --worker-iam-role arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-worker \
-      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-mapi \
-      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-cc \
-      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-registry \
-      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-ingress \
-      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${aws_account_id}:role/ROSA-${ROSA_CLUSTER_NAME}-csi-ebs
+    rosa create cluster --cluster-name ${ROSA_CLUSTER_NAME} \
+      --region ${REGION} --version ${VERSION} \
+      --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-install \
+      --support-role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-support \
+      --master-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-control \
+      --worker-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-worker \
+      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-mapi \
+      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-cc \
+      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-registry \
+      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-ingress \
+      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-csi-ebs
   ```
 
 1. Wait for cluster status to change to pending
 
     ```bash
     while ! \
-    rosa describe cluster -c $name | grep "Waiting for OIDC"; \
-    do sleep 1; done
+    rosa describe cluster -c $ROSA_CLUSTER_NAME | grep "Waiting for OIDC"; \
+    do echo -n .; sleep 1; done
     ```
 
 1. Create the OIDC provider.
 
     ```bash
-    cluster_id=$(rosa describe cluster -c $name | grep "^ID:" | awk '{ print $2}')
+    cluster_id=$(rosa describe cluster -c $ROSA_CLUSTER_NAME | grep "^ID:" | awk '{ print $2}')
+
+    echo cluster-id - $cluster_id
 
     thumbprint=$(openssl s_client -servername \
       rh-oidc.s3.us-east-1.amazonaws.com/${cluster_id} \
       -showcerts -connect rh-oidc.s3.us-east-1.amazonaws.com:443 \
       </dev/null 2>&1| openssl x509 -fingerprint -noout | tail -n1 \
       | sed 's/SHA1 Fingerprint=//' | sed 's/://g')
+
+    echo thumbprint - $thumbprint
 
     aws iam create-open-id-connect-provider \
     --url "https://rh-oidc.s3.us-east-1.amazonaws.com/${cluster_id}" \
@@ -202,7 +206,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
     ```bash
     find ./iam_assets_apply -name "*-role.json" -exec \
-      sed -i -e "s/AWS_ACCOUNT_ID/${aws_account_id}/g" \
+      sed -i -e "s/AWS_ACCOUNT_ID/${AWS_ACCOUNT_ID}/g" \
       -e "s/CLUSTER_ID/$cluster_id/g" \
       -e "s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
 

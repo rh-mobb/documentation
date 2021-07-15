@@ -2,7 +2,7 @@
 
 set -eox
 
-if ! jq; then
+if ! jq -h > /dev/null; then
     echo "jq is not installed. Please install it before running this script."
     exit 1
 fi
