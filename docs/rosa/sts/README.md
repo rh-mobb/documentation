@@ -18,15 +18,6 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 * [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.0.8) v1.0.8
 * OpenShift CLI - `rosa download openshift-client`
 * [jq](https://stedolan.github.io/jq/download/)
-* Cloud Credential Operator CLI
-
-    ```bash
-    git clone https://github.com/openshift/cloud-credential-operator.git
-    cd cloud-credential-operator/cmd/ccoctl
-    go build .
-    mv ccoctl /usr/local/bin/ccoctl
-    ccoctl --help
-    ```
 
 ### Prepare local environment
 
@@ -165,7 +156,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
       --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-registry \
       --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-ingress \
       --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-csi-ebs
-  ```
+    ```
 
 1. Wait for cluster status to change to pending
 
