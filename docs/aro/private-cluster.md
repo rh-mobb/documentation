@@ -100,6 +100,11 @@ Set some environment variables to use later, and create an Azure Resource Group.
     AZR_RESOURCE_GROUP=openshift-private
     AZR_CLUSTER=private-cluster
     AZR_PULL_SECRET=~/Downloads/pull-secret.txt
+    NETWORK_SUBNET=10.0.0.0/20
+    CONTROL_SUBNET=10.0.0.0/24
+    MACHINE_SUBNET=10.0.1.0/24
+    FIREWALL_SUBNET=10.0.2.0/24
+    JUMPHOST_SUBNET=10.0.3.0/24
     ```
 
 1. Create an Azure resource group
@@ -119,7 +124,7 @@ Create a virtual network with two empty subnets
 
     ```bash
     az network vnet create \
-      --address-prefixes 10.0.0.0/20 \
+      --address-prefixes $NETWORK_SUBNET \
       --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
       --resource-group $AZR_RESOURCE_GROUP
     ```
@@ -131,7 +136,7 @@ Create a virtual network with two empty subnets
       --resource-group $AZR_RESOURCE_GROUP \
       --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
       --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --address-prefixes 10.0.0.0/24 \
+      --address-prefixes $CONTROL_SUBNET \
       --service-endpoints Microsoft.ContainerRegistry
     ```
 
@@ -142,7 +147,7 @@ Create a virtual network with two empty subnets
       --resource-group $AZR_RESOURCE_GROUP \
       --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
       --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-      --address-prefixes 10.0.1.0/24 \
+      --address-prefixes $MACHINE_SUBNET \
       --service-endpoints Microsoft.ContainerRegistry
     ```
 
@@ -178,7 +183,7 @@ This replaces the routes for the cluster to go through the Firewall for egress v
         -g $AZR_RESOURCE_GROUP \
         --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
         -n "AzureFirewallSubnet" \
-        --address-prefixes 10.0.4.0/24
+        --address-prefixes $FIREWALL_SUBNET
 
     az network public-ip create -g $AZR_RESOURCE_GROUP -n fw-ip \
       --sku "Standard" --location $AZR_RESOURCE_LOCATION
@@ -280,7 +285,7 @@ With the cluster in a private network, we can create a Jump host in order to con
       --resource-group $AZR_RESOURCE_GROUP \
       --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
       --name JumpSubnet \
-      --address-prefixes 10.0.5.0/24 \
+      --address-prefixes $JUMPHOST_SUBNET \
       --service-endpoints Microsoft.ContainerRegistry
     ```
 
@@ -297,12 +302,19 @@ With the cluster in a private network, we can create a Jump host in order to con
         --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
     ```
 
+1. Save the jump host public IP address
+
+    ```bash
+    JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv \
+      --query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
+    echo $JUMP_IP
+
 1. ssh to jump host forwarding port 1337 as a socks proxy.
 
     > replace the IP with the IP of the jump box from the previous step.
 
     ```
-    ssh -D 1337 -C -i $HOME/.ssh/id_rsa aro@52.152.221.4
+    ssh -D 1337 -C -i $HOME/.ssh/id_rsa aro@$JUMP_IP
     ```
 
 1. test the socks proxy
@@ -329,7 +341,8 @@ With the cluster in a private network, we can create a Jump host in order to con
 
     mkdir openshift
     tar -zxvf openshift-client-linux.tar.gz -C openshift
-    echo 'export PATH=$PATH:~/openshift' >> ~/.bashrc && source ~/.bashrc
+    sudo install openshift/oc /usr/local/bin/oc
+    sudo install openshift/kubectl /usr/local/bin/kubectl
     ```
 
 1. Wait until the ARO cluster is fully provisioned.
@@ -436,4 +449,5 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
 1. Click **Review + create >>**
 
 1. Wait until quota is increased.
+
 
