@@ -1,8 +1,28 @@
-# ARO Disaster Recovery Architecture
+# ARO - Considerations for Diasaster Recovery
 
-This is a high level overview of a basic disaster recovery architecture for Azure Red Hat OpenShift. It is not a detailed design, but rather a starting point for a basing a custom disaster recovery solution to suit your needs.
+This is a high level overview of disaster recovery options for Azure Red Hat OpenShift. It is not a detailed design, but rather a starting point for a more detailed design.
 
-## Multi-Region Disaster Recovery
+## What is Disaster Recovery
+
+Disaster Recovery is an umbrella term that includes the following:
+
+1. Backup (and restore!)
+2. Failover (and failback!)
+3. High Availability
+4. Disaster Avoidence
+
+The most important part of Disaster Recovery is the "Recovery". Whatever your DR
+plan it must be tested and ideally performed on a semi-regular basis.
+
+## Backup
+
+In OpenShift it is not necessary to back up the cluster itself, but instead you back up the "active state" of your resources, any Persistent Volumes, and any backing services.
+
+Azure provides documentation on the basic [Backup](https://docs.microsoft.com/en-us/azure/openshift/howto-create-a-backup) and [Restore](https://docs.microsoft.com/en-us/azure/openshift/howto-create-a-restore) of the applications running on your ARO cluster.
+
+Azure also provides documentation on Backing up the various PaaS backing services that you may have connected to your applications such as [Azure PostgreSQL](https://docs.microsoft.com/en-us/azure/postgresql/concepts-backup).
+
+## Failover
 
 An ARO cluster can be deployed into Multiple Availability Zones (AZs) in a single region. To protect your applications from region failure you must deploy your application into multiple ARO clusters across different regions. Here are some considerations:
 
@@ -17,13 +37,13 @@ An ARO cluster can be deployed into Multiple Availability Zones (AZs) in a singl
 * Remove service state from inside containers.
 * Create a storage migration plan.
 
-## Backup and Restore - Manual Cutover ( Hot / Cold )
+### Backup and Restore - Manual Cutover ( Hot / Cold )
 
 Do you currently have the ability to do a point in time restore of Backups of your applications?
 
 1. Create a backup of your Kubernetes cluster
 
-    Using a tool like Velero or Portworx, you can create a backup of the current state of your Kubernetes resources and their persistent volumes. If you restore these backups to a new cluster and manually cutover the DNS, will your applications be full functional?
+    If you restore these backups to a new cluster and manually cutover the DNS, will your applications be full functional?
 
 1. Create backups of any regionally co-located resources (like Redis, Postgres, etc.).
 
@@ -33,14 +53,13 @@ Do you currently have the ability to do a point in time restore of Backups of yo
 
 1. Determine if Non-regionally co-located resources (such as SaaS products) have appropriate failover plans and ensure that any special networking arrangements are available at the DR region.
 
-
-## Failover to an existing cluster in the DR region (Hot / Warm)
+### Failover to an existing cluster in the DR region (Hot / Warm)
 
 In a Hot / Warm situation the destination cluster should be similar to the the source cluster, but for financial reasons may be smaller, or be single AZ. If this is the case you may either run the DR cluster with lower expectations on performance and resiliance with the idea of failing back to the original cluster ASAP, or you will expand the DR cluster to match the original cluster and turn the original cluster into the next DR site.
 
 The following examples assume a Hot / Warm scenario where the clusters are the same size.
 
-### Create a Primary Cluster
+#### Create a Primary Cluster
 
 1. Set the following environment variables:
 
@@ -59,7 +78,7 @@ The following examples assume a Hot / Warm scenario where the clusters are the s
 
 1. Complete the rest of the step to create networks and cluster following the [Private ARO cluster](../private-cluster.md)
 
-### Create a Secondary Cluster
+#### Create a Secondary Cluster
 
 
 1. Set the following environment variables:
@@ -78,7 +97,7 @@ The following examples assume a Hot / Warm scenario where the clusters are the s
 
 1. Complete the rest of the step to create networks and cluster following the [Private ARO cluster](../private-cluster.md)
 
-### Connect the clusters via Virtual Network Peering
+#### Connect the clusters via Virtual Network Peering
 
 Virtual network peering allows two Azure regions to connect to each other via a virtual network. Ideally you will use a [Hub-Spoke](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke?tabs=cli) topology and create appropriate [firewalling in the Hub network](https://docs.microsoft.com/en-us/azure/firewall-manager/secure-hybrid-network) but that is an excercise left for the reader and here we're creating a simple open peering between the two networks.
 
@@ -142,7 +161,7 @@ Virtual network peering allows two Azure regions to connect to each other via a 
 
 From here the two clusters are visible to each other via their frontends. This means they can access eachother's ingress endpoints, routes and Load Balancers, but not pod-to-pod. A PostgreSQL pod in the primary cluster could replicate to a PostgreSQL pod in the secondary cluster via a service of type LoadBalancer.
 
-### Cross Region Registry Replication
+#### Cross Region Registry Replication
 
 Openshift comes with a local registry that is used for local builds etc, but it is likely
 that you use a centralized registry for your own applications and images. Ensure that your registry supports replication to the DR region. Ensure that you understand if it supports active/active replication or if its a one way replication.
@@ -152,7 +171,7 @@ In a Hot/Warm scenario where you'll only ever use the DR region as a backup to t
 * [Redhat Quay](https://access.redhat.com/documentation/en-us/red_hat_quay/2.9/html/manage_red_hat_quay/georeplication-of-storage-in-quay)
 * [Azure Container Registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-geo-replication) (must use Premium SKU for geo-replication)
 
-#### Example - Create a ACR in the Primary Region
+##### Example - Create a ACR in the Primary Region
 
 1. Create a new ACR in the primary region.
 
@@ -182,14 +201,14 @@ In a Hot/Warm scenario where you'll only ever use the DR region as a backup to t
     az acr replication show --name centralus  --registry acrdr1 --query status
     ```
 
-### Red Hat Advanced Cluster Management
+#### Red Hat Advanced Cluster Management
 
 Advanced Cluster Management (ACM) is a set of tools that can be used to manage the lifecycle of multiple OpenShift clusters. ACM gives you a single view into your clusters and provides
 gitops style management of you workloads and also has compliance features.
 
 You can run ACM from a central infrastructure (or your Primary DR) cluster and connect your ARO clusters to it.
 
-### DR for Application Ingress
+#### Failover for Application Ingress
 
 If you want to expose your Applications to the internet you can use Azure's Front Door or Traffic Manager resources which you can use to fail the routing over to the DR site.
 
