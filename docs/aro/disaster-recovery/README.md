@@ -2,7 +2,7 @@
 
 This is a high level overview of disaster recovery options for Azure Red Hat OpenShift. It is not a detailed design, but rather a starting point for a more detailed design.
 
-## What is Disaster Recovery
+## What is Disaster Recovery (DR)
 
 Disaster Recovery is an umbrella term that includes the following:
 
@@ -13,6 +13,22 @@ Disaster Recovery is an umbrella term that includes the following:
 
 The most important part of Disaster Recovery is the "Recovery". Whatever your DR
 plan it must be tested and ideally performed on a semi-regular basis.
+
+You can use RTO (Recovery Time Objective) and RPO (Recovery Point Objective) to help determine what level of DR is right for your company. These Objectives are often application dependent and may mean choosing full HA for one application, and Backup/Restore for another even if they're both on the same OpenShift cluster.
+
+### Recovery Time Objective (RTO)
+
+How long can your application be down without causing significant issues for your business. This can differ from application to application. Some applications may only affect internal staff while others may affect customers and revenue.
+
+In general you will categorize your applications by priority and potential damage to the business and match your DR plans accordingly.
+
+### Recovery Point Objective (RPO)
+
+How much data can you lose before significant damage is done to your business. The traditional backup strategy is Daily. If you can survive a loss of 24 hours of data, or you have an alternative way to restore that data then this is often good enough.
+
+### Combined RTO / RPO
+
+When combined you will account for "how long can the application be offline" and "how much data can I lose". If the answer zero or approaching zero for both then your DR strategy must be focussed around High Availabily and real time data replication.
 
 ## Backup
 
@@ -57,9 +73,17 @@ Do you currently have the ability to do a point in time restore of Backups of yo
 
 In a Hot / Warm situation the destination cluster should be similar to the the source cluster, but for financial reasons may be smaller, or be single AZ. If this is the case you may either run the DR cluster with lower expectations on performance and resiliance with the idea of failing back to the original cluster ASAP, or you will expand the DR cluster to match the original cluster and turn the original cluster into the next DR site.
 
-The following examples assume a Hot / Warm scenario where the clusters are the same size.
+Ideally Your applications and data should be replicated to the DR site and should be ready to switch over within a very short window.
 
-#### Create a Primary Cluster
+### High Availability ( Hot / Hot )
+
+In a Hot / Hot scenario you have two-way synchronous replication of your data. The end user can access the application in either site and have the exact same experience.
+
+## ARO Specific Example
+
+This following example will create two ARO clusters, each in its own Region. Virtual Network Peering is used to make it easier for resources to communicate for replication.
+
+### Create a Primary Cluster
 
 1. Set the following environment variables:
 
@@ -78,7 +102,7 @@ The following examples assume a Hot / Warm scenario where the clusters are the s
 
 1. Complete the rest of the step to create networks and cluster following the [Private ARO cluster](../private-cluster.md)
 
-#### Create a Secondary Cluster
+### Create a Secondary Cluster
 
 
 1. Set the following environment variables:
@@ -97,7 +121,7 @@ The following examples assume a Hot / Warm scenario where the clusters are the s
 
 1. Complete the rest of the step to create networks and cluster following the [Private ARO cluster](../private-cluster.md)
 
-#### Connect the clusters via Virtual Network Peering
+### Connect the clusters via Virtual Network Peering
 
 Virtual network peering allows two Azure regions to connect to each other via a virtual network. Ideally you will use a [Hub-Spoke](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke?tabs=cli) topology and create appropriate [firewalling in the Hub network](https://docs.microsoft.com/en-us/azure/firewall-manager/secure-hybrid-network) but that is an excercise left for the reader and here we're creating a simple open peering between the two networks.
 
@@ -161,7 +185,7 @@ Virtual network peering allows two Azure regions to connect to each other via a 
 
 From here the two clusters are visible to each other via their frontends. This means they can access eachother's ingress endpoints, routes and Load Balancers, but not pod-to-pod. A PostgreSQL pod in the primary cluster could replicate to a PostgreSQL pod in the secondary cluster via a service of type LoadBalancer.
 
-#### Cross Region Registry Replication
+## Cross Region Registry Replication
 
 Openshift comes with a local registry that is used for local builds etc, but it is likely
 that you use a centralized registry for your own applications and images. Ensure that your registry supports replication to the DR region. Ensure that you understand if it supports active/active replication or if its a one way replication.
@@ -171,7 +195,7 @@ In a Hot/Warm scenario where you'll only ever use the DR region as a backup to t
 * [Redhat Quay](https://access.redhat.com/documentation/en-us/red_hat_quay/2.9/html/manage_red_hat_quay/georeplication-of-storage-in-quay)
 * [Azure Container Registry](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-geo-replication) (must use Premium SKU for geo-replication)
 
-##### Example - Create a ACR in the Primary Region
+### Example - Create a ACR in the Primary Region
 
 1. Create a new ACR in the primary region.
 
@@ -201,14 +225,14 @@ In a Hot/Warm scenario where you'll only ever use the DR region as a backup to t
     az acr replication show --name centralus  --registry acrdr1 --query status
     ```
 
-#### Red Hat Advanced Cluster Management
+## Red Hat Advanced Cluster Management
 
 Advanced Cluster Management (ACM) is a set of tools that can be used to manage the lifecycle of multiple OpenShift clusters. ACM gives you a single view into your clusters and provides
 gitops style management of you workloads and also has compliance features.
 
 You can run ACM from a central infrastructure (or your Primary DR) cluster and connect your ARO clusters to it.
 
-#### Failover for Application Ingress
+## Failover for Application Ingress
 
 If you want to expose your Applications to the internet you can use Azure's Front Door or Traffic Manager resources which you can use to fail the routing over to the DR site.
 
