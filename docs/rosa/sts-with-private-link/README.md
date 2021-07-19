@@ -186,20 +186,6 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
 
 > Note that some commands (OIDC for STS) will be hard coded to US-EAST-1, do not be tempted to change these to use $region instead or you will fail installation.
 
-> Note as the roles created for STS in this guide have a common name (see the `ccoctl` command further down) only one cluster will be installable in a given AWS account.  You'll need to modify the name and resulting role bindings to deploy more than one cluster.
-
-### Prerequisites
-
-- Cloud Credential Operator CLI
-
-    ```
-    git clone https://github.com/openshift/cloud-credential-operator.git -b release-4.8
-    cd cloud-credential-operator/cmd/ccoctl
-    go build .
-    mv ccoctl /usr/local/bin/ccoctl
-    ccoctl --help
-    ```
-
 ### Local script and variable configuration
 
 We have provided a number of scripts, variables, and JSON configuration files to simplify the STS configuration process.  
@@ -210,13 +196,13 @@ We have provided a number of scripts, variables, and JSON configuration files to
     cd documentation/docs/rosa/sts
     ```
 
-1. Configure the following environment variables, adjusting for `name`, `version` and `region` as necessary
+1. Configure the following environment variables, adjusting for `ROSA_CLUSTER_NAME`, `VERSION` and `REGION` as necessary
 
     ```bash
-    export version=4.7.19 \
+    export VERSION=4.7.19 \
            ROSA_CLUSTER_NAME=pl-sts-cluster \
-           aws_account_id=`aws sts get-caller-identity --query Account --output text` \
-           region=us-east-2 \
+           AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
+           REGION=us-east-2 \
            AWS_PAGER=""
     ```
 
@@ -242,99 +228,99 @@ RH_Support_Role.json
 
 This role is used to manage the installation and deletion of clusters that use STS.
 
-1. Create the role, changing the `role-name` if required
+1. Create the `ROSA-${ROSA_CLUSTER_NAME}-install` role
 
     ```bash
     aws iam create-role \
-    --role-name ManagedOpenShift-IAM-Role \
-      --assume-role-policy-document \
-      file://roles/ManagedOpenShift_IAM_Role.json
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-install \
+    --assume-role-policy-document \
+    file://roles/ManagedOpenShift_IAM_Role.json
     ```
 
-2. Attach the policy to the role, changing the `policy-name` if required
+2. Attach the `ROSA-${ROSA_CLUSTER_NAME}-install` policy to the role
 
     ```bash
     aws iam put-role-policy \
-      --role-name ManagedOpenShift-IAM-Role \
-      --policy-name ManagedOpenShift-IAM-Role-Policy \
-      --policy-document \
-      file://roles/ManagedOpenShift_IAM_Role_Policy.json
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-install \
+    --policy-name ROSA-${ROSA_CLUSTER_NAME}-install \
+    --policy-document \
+    file://roles/ManagedOpenShift_IAM_Role_Policy.json
     ```
 
 ### Control plane node instance profile role
 
-1. Create the role, changing the `role-name` if required
+1. Create the `ROSA-${ROSA_CLUSTER_NAME}-control` role
 
     ```bash
     aws iam create-role \
-      --role-name ManagedOpenShift-ControlPlane-Role \
-      --assume-role-policy-document \
-      file://roles/ManagedOpenShift_ControlPlane_Role.json
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-control \
+    --assume-role-policy-document \
+    file://roles/ManagedOpenShift_ControlPlane_Role.json
     ```
 
-2. Attach the policy to the role, changing the `policy-name` if required
+2. Attach the `ROSA-${ROSA_CLUSTER_NAME}-control` policy to the role
 
     ```bash
     aws iam put-role-policy \
-      --role-name ManagedOpenShift-ControlPlane-Role \
-      --policy-name ManagedOpenShift-ControlPlane-Role-Policy \
-      --policy-document \
-      file://roles/ManagedOpenShift_ControlPlane_Role_Policy.json
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-control \
+    --policy-name ROSA-${ROSA_CLUSTER_NAME}-control \
+    --policy-document \
+    file://roles/ManagedOpenShift_ControlPlane_Role_Policy.json
     ```
 
 ### Worker node instance profile role
 
-1. Create the role, changing the `role-name` if required
+1. Create the `ROSA-${ROSA_CLUSTER_NAME}-worker` role
 
     ```bash
     aws iam create-role \
-      --role-name ManagedOpenShift-Worker-Role \
-      --assume-role-policy-document \
-      file://roles/ManagedOpenShift_Worker_Role.json
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-worker \
+    --assume-role-policy-document \
+    file://roles/ManagedOpenShift_Worker_Role.json
     ```
 
-1. Attach the policy to the role, changing the `policy-name` if required
+1. Attach the `ROSA-${ROSA_CLUSTER_NAME}-worker` policy to the role
 
     ```bash
     aws iam put-role-policy \
-      --role-name ManagedOpenShift-Worker-Role \
-      --policy-name ManagedOpenShift-Worker-Role-Policy \
-      --policy-document \
-      file://roles/ManagedOpenShift_Worker_Role_Policy.json
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-worker \
+    --policy-name ROSA-${ROSA_CLUSTER_NAME}-worker \
+    --policy-document \
+    file://roles/ManagedOpenShift_Worker_Role_Policy.json
     ```
 
 ### STS support role
 
 The STS support role is designed to give Red Hat site reliability engineering (SRE) read-only access to support a given cluster and troubleshoot issues.
 
-1. Create the role, changing the `role-name` if required
+1. Create the `ROSA-${ROSA_CLUSTER_NAME}-support` role
 
     ```bash
     aws iam create-role \
-      --role-name ManagedOpenShift-Support-Role \
-      --assume-role-policy-document file://roles/RH_Support_Role.json
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-support \
+    --assume-role-policy-document file://roles/RH_Support_Role.json
     ```
 
-1. Create the support policy, changing the `policy-name` if required
+1. Create the `ROSA-${ROSA_CLUSTER_NAME}-support` policy
 
     ```bash
     aws iam create-policy \
-      --policy-name ManagedOpenShift-Support-Access \
-      --policy-document file://roles/RH_Support_Policy.json
+    --policy-name ROSA-${ROSA_CLUSTER_NAME}-support \
+    --policy-document file://roles/RH_Support_Policy.json
     ```
 
 1. List the support policy ARN, saving it as `policy_arn`
 
     ```
-    policy_arn=$(aws iam list-policies --query "Policies[?PolicyName=='ManagedOpenShift-Support-Access'].Arn" --output text)
+    policy_arn=$(aws iam list-policies --query "Policies[?PolicyName=='ROSA-${ROSA_CLUSTER_NAME}-support'].Arn" --output text)
     ```
 
-1. Attach the policy to the support role, changing the `policy-name` if required
+1. Attach the policy to the support role
 
     ```bash   
     aws iam attach-role-policy \
-      --role-name ManagedOpenShift-Support-Role \
-      --policy-arn $policy_arn
+    --role-name ROSA-${ROSA_CLUSTER_NAME}-support \
+    --policy-arn $policy_arn
     ```
 
 ## Deploy ROSA cluster
@@ -346,16 +332,16 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     ```bash
     rosa create cluster --private-link --machine-cidr=10.0.0.0/16 \
       --subnet-ids=$PRIVATE_SUBNET --cluster-name ${ROSA_CLUSTER_NAME} \
-      --region ${region} --version ${version} \
-      --role-arn arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-IAM-Role \
-      --support-role-arn arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-Support-Role \
-      --master-iam-role arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-ControlPlane-Role \
-      --worker-iam-role arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-Worker-Role \
-      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-machine-api-aws-cloud-credentials \
-      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-cloud-credential-operator-cloud-crede \
-      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-image-registry-installer-cloud-creden \
-      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-ingress-operator-cloud-credentials \
-      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${aws_account_id}:role/ManagedOpenShift-openshift-cluster-csi-drivers-ebs-cloud-credent
+      --region ${REGION} --version ${VERSION} \
+      --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-IAM-Role \
+      --support-role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-Support-Role \
+      --master-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-ControlPlane-Role \
+      --worker-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-Worker-Role \
+      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-machine-api-aws-cloud-credentials \
+      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-cloud-credential-operator-cloud-crede \
+      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-image-registry-installer-cloud-creden \
+      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-ingress-operator-cloud-credentials \
+      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-cluster-csi-drivers-ebs-cloud-credent
     ```
 
     > Confirm the Private Link set up
@@ -397,53 +383,25 @@ The STS support role is designed to give Red Hat site reliability engineering (S
         --thumbprint-list "${thumbprint}"
       ```
 
-1. Generate permissions for OIDC-access-based roles
+1. Prepare the IAM role and policy files
 
-    - Create a local directory for YAML files
+    - Copy the `iam_assets_source` directory to `iam_assets_source`
+      ```
+      cp -r iam_assets_source iam_assets_apply
+      ```
+
+    - Insert the cluster specific variables into the role files
       ```bash
-        mkdir -p credrequests
+      find ./iam_assets_apply -name "*-role.json" -exec \
+      sed -i -e "s/AWS_ACCOUNT_ID/${AWS_ACCOUNT_ID}/g
+      s/CLUSTER_ID/$cluster_id/g
+      s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
       ```
 
-    - Extract credentials to the `credrequests` directory
+    - Insert the cluster specific variables into the policy files
       ```bash
-        oc adm release extract \
-        quay.io/openshift-release-dev/ocp-release:${version:0:3}.0-x86_64 \
-        --credentials-requests \
-        --cloud=aws \
-        --to credrequests
-      ```
-
-    - Combine the YAML files into a single file 
-      ```bash
-        cat credrequests/0000*.yaml > credrequests/${version:0:3}.yaml
-      ```
-
-    - Remove the individual YAML files 
-      ```bash
-      rm -f credrequests/0000*.yaml
-      ```
-
-1. Prepare the IAM roles
-
-    - Create a local directory and `cd` into it
-      ```
-      mkdir -p iam_assets
-      cd iam_assets
-      ```
-
-    - Use the Cloud Credential Operator CLI (CCOCTL) to create local JSON and YAML files
-      ```bash
-      ccoctl aws create-iam-roles \
-      --credentials-requests-dir ../credrequests/ \
-      --identity-provider-arn "arn:aws:iam::${aws_account_id}:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/${cluster_id}" \
-      --name ManagedOpenShift \
-      --region ${region} \
-      --dry-run
-      ```
-
-    - Switch back to the `sts` directory
-      ```
-      cd ..
+      find ./iam_assets_apply -name "*-policy.json" -exec \
+      sed -i -e "s/CLUSTER_NAME/$ROSA_CLUSTER_NAME/g" {} ';'
       ```
 
 1. Apply the IAM roles
@@ -591,8 +549,7 @@ Once the cluster has finished installing it is time to validate.  Validation whe
     ```bash
     aws ec2 delete-nat-gateway --nat-gateway-id $NAT_GW | jq .
     aws ec2 release-address --allocation-id=$EIP | jq .
-    aws ec2 detach-internet-gateway --vpc-id $VPC_ID \
-      --internet-gateway-id $I_GW | jq .
+    aws ec2 detach-internet-gateway --vpc-id $VPC_ID --internet-gateway-id $I_GW | jq .
     aws ec2 delete-subnet --subnet-id=$PRIVATE_SUBNET | jq .
     aws ec2 delete-subnet --subnet-id=$PUBLIC_SUBNET | jq .
     aws ec2 delete-route-table --route-table-id=$R_TABLE | jq .
