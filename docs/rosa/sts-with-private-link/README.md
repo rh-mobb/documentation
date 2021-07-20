@@ -2,7 +2,7 @@
 
 **Steve Mirman**
 
-*07/12/2021*
+*07/20/2021*
 
 > This is a combination of the [private-link](../private-link) and [sts](../sts) setup documents to show the full picture
 
@@ -333,15 +333,15 @@ The STS support role is designed to give Red Hat site reliability engineering (S
     rosa create cluster --private-link --machine-cidr=10.0.0.0/16 \
       --subnet-ids=$PRIVATE_SUBNET --cluster-name ${ROSA_CLUSTER_NAME} \
       --region ${REGION} --version ${VERSION} \
-      --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-IAM-Role \
-      --support-role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-Support-Role \
-      --master-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-ControlPlane-Role \
-      --worker-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-Worker-Role \
-      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-machine-api-aws-cloud-credentials \
-      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-cloud-credential-operator-cloud-crede \
-      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-image-registry-installer-cloud-creden \
-      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-ingress-operator-cloud-credentials \
-      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-openshift-cluster-csi-drivers-ebs-cloud-credent
+      --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-install \
+      --support-role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-support \
+      --master-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-control \
+      --worker-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-worker \
+      --operator-iam-roles aws-cloud-credentials,openshift-machine-api,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-mapi \
+      --operator-iam-roles cloud-credential-operator-iam-ro-creds,openshift-cloud-credential-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-cc \
+      --operator-iam-roles installer-cloud-credentials,openshift-image-registry,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-registry \
+      --operator-iam-roles cloud-credentials,openshift-ingress-operator,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-ingress \
+      --operator-iam-roles ebs-cloud-credentials,openshift-cluster-csi-drivers,arn:aws:iam::${AWS_ACCOUNT_ID}:role/ROSA-${ROSA_CLUSTER_NAME}-csi-ebs
     ```
 
     > Confirm the Private Link set up
@@ -495,7 +495,7 @@ Once the cluster has finished installing it is time to validate.  Validation whe
 1. From your EC2 jump instances, download the OC CLI and install it locally
     - Download the OC CLI for Linux
       ```
-      wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/  openshift-client-linux.tar.gz
+      wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz
       ```
     - Unzip and untar the binary
       ```
