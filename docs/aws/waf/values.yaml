@@ -1,17 +1,17 @@
 env:
   AWS_REGION: us-east-2
-  AWS_ACCESS_KEY_ID: # CHANGE ME
-  AWS_SECRET_ACCESS_KEY: # CHANGE ME
+  AWS_ACCESS_KEY_ID: REPLACE_ME
+  AWS_SECRET_ACCESS_KEY: REPLACE_ME
 
 # see doc
-vpcId: # CHANGE ME
+vpcId: REPLACE_ME
 
 clusterName: poc-waf
 enableShield: true
 enableWafv2: true
 image:
   repository: amazon/aws-alb-ingress-controller
-  tag: v2.1.3
+  tag: v2.2.0
 podSecurityContext:
   fsGroup: null
 region: us-east-2
