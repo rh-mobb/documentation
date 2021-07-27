@@ -1,5 +1,7 @@
 # Shipping logs to Azure Log Analytics
 
+Author: [Aaron Aldrich](https://twitter.com/crayzeigh)
+
 This document follows the steps outlined by Microsoft in [their documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-azure-redhat4-setup)
 
 Follow docs.
