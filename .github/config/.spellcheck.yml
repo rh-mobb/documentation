@@ -17,6 +17,8 @@ matrix:
     ignores:
     - code
     - pre
+    - json
+    - yaml
   sources:
   - '**/*.md'
   default_encoding: utf-8
