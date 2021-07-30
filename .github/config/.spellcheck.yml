@@ -11,8 +11,6 @@ matrix:
   - pyspelling.filters.markdown:
   - pyspelling.filters.html:
     comments: false
-    attributes:
-    - li
     ignores:
     - code
     - pre
