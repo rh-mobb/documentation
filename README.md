@@ -33,3 +33,4 @@
 ## Operations - DevOps/GitOps
 
 * [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
+* [Migrate Kubernetes Applications with Konveyer Crane](./docs/demos/crane/)
