@@ -1,5 +1,6 @@
 name: Spellcheck Action
 on: push
+continue-on-error: true
 jobs:
   build:
     name: Spellcheck
