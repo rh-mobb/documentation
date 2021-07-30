@@ -97,4 +97,11 @@ subnets
 subnetid
 sed
 nlb
-
+aldrich
+operatorgroup
+installplanapproval
+csv
+namespaces
+namespace
+kibana
+fluentd
