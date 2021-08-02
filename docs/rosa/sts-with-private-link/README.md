@@ -385,7 +385,7 @@ The STS support role is designed to give Red Hat site reliability engineering (S
 
 1. Prepare the IAM role and policy files
 
-    - Copy the `iam_assets_source` directory to `iam_assets_source`
+    - Copy the `iam_assets_source` directory to `iam_assets_apply`
       ```
       cp -r iam_assets_source iam_assets_apply
       ```
