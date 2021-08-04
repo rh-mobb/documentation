@@ -25,7 +25,7 @@ data:
         Match           *.*
         Customer_ID     ${WorkspaceId}
         Shared_Key      ${SharedKey}
-        Log_Type        ${LogName}
+        Log_Type        fluentbit
 
   input-kubernetes.conf: |
     [INPUT]
