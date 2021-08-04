@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: fluent-bit
-  namespace: log-test
+  namespace: azure-log-forwarding
   labels:
     k8s-app: fluent-bit-logging
     version: v1

@@ -7,7 +7,7 @@ spec:
   outputs:
    - name: fluentbit
      type: fluentdForward
-     url: 'tcp://fluent-bit.log-test:24224'
+     url: 'tcp://fluent-bit.azure-log-forwarding:24224'
   pipelines:
    - name: forward-to-fluentbit
      inputRefs:

@@ -20,10 +20,11 @@
     * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 
-## Metrics and Monitoring
+## Observability
 
 * [Federating ROSA metrics to S3](./docs/rosa/federated-metrics)
 * [Federating ARO metrics to Azure Files](./docs/aro/federated-metrics)
+* [Sending ARO cluster logs to Azure Log Analytics](./docs/aro/clf-to-azure)
 
 ## Applications
 
