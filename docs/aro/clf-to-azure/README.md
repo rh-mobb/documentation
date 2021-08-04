@@ -35,6 +35,8 @@ Based on [docs](https://github.com/microsoft/fluent-bit-azure-log-analytics)
       -g $LogAppRG -n $LogAppName -l $LogAppLoc
     ```
 
+## Configure OpenShift
+
 1. Create Namespace
 
     ```bash
@@ -65,4 +67,17 @@ Based on [docs](https://github.com/microsoft/fluent-bit-azure-log-analytics)
 
     ```bash
     kubectl apply -f manifests/clf.yaml
+    ```
+
+## Check for logs in Azure
+
+1. Log into [Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs)
+
+1. Find the "LogAppLogs" workspace
+
+1. Run the Query
+
+    ```
+    fluentbit_CL
+      | take 10
     ```
