@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logapp-loop
+  labels:
+    app: logapp-loop
+
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: app
+    imagePullPolicy: Always
+    image: ghcr.io/bartr/logapp:latest
+    args:
+    - --loop
+    - --sleep
+    - "1000"

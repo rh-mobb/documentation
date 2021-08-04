@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logapp
+  labels:
+    app: logapp
+
+spec:
+  restartPolicy: Never
+  containers:
+  - name: app
+    imagePullPolicy: Always
+    image: ghcr.io/bartr/logapp:latest
+    args:
+    - --iterations
+    - "5"
