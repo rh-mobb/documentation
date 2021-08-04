@@ -13,6 +13,7 @@ matrix:
     comments: false
     ignores:
     - code
+    - bash
     - pre
   sources:
   - '**/*.md'
