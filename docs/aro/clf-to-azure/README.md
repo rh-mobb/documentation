@@ -17,6 +17,40 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
     ![screenshot of installed operators](./images/operator-hub.png)
 
+1. Deploy a Cluster Logging resource
+
+    > Note - we're setting Elastic and Kibana replicas to zero, as all we really need in this scenario is Fluentd.
+
+    ```bash
+    cat << "EOF | kubectl apply -f -
+    apiVersion: logging.openshift.io/v1
+    kind: ClusterLogging
+    metadata:
+      name: instance
+      namespace: openshift-logging
+    spec:
+      collection:
+        logs:
+          fluentd: {}
+          type: fluentd
+      logStore:
+        elasticsearch:
+          nodeCount: 0
+          redundancyPolicy: SingleRedundancy
+          storage:
+            size: 200G
+            storageClassName: gp2
+        retentionPolicy:
+          application:
+            maxAge: 7d
+        type: elasticsearch
+      managementState: Managed
+      visualization:
+        kibana:
+          replicas: 0
+        type: kibana
+    EOF
+    ```
 
 ## Set up ARO Monitor workspace
 
