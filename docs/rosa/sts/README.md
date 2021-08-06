@@ -42,8 +42,6 @@ If this is your first time deploying ROSA you need to do some preparation as des
 
 ## Deploy ROSA cluster
 
-> Note, the role ARNs are truncated to 64chars to suit the AWS limits on ARNs. If you change them, you also need to change the script that creates the roles further down.
-
 1. Make you your ROSA CLI version is correct (v1.1.0 or higher)
 
     ```bash
