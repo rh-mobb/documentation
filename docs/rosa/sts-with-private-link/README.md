@@ -1,8 +1,8 @@
 # Creating a ROSA cluster with Private Link enabled (custom VPC) and STS
 
-**Steve Mirman**
+**Steve Mirman, Paul Czarkowski**
 
-*07/20/2021*
+*08/06/2021*
 
 > This is a combination of the [private-link](../private-link) and [sts](../sts) setup documents to show the full picture
 
