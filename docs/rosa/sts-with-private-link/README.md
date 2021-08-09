@@ -12,6 +12,15 @@
 * [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.0.8) v1.0.8
 * [jq](https://stedolan.github.io/jq/download/)
 
+## AWS Preparation
+
+1. If this is a brand new AWS account that has never had a AWS Load Balancer installed in it, you should run the following
+
+    ```bash
+    aws iam create-service-linked-role --aws-service-name \
+    "elasticloadbalancing.amazonaws.com"
+    ```
+
 ## Create the AWS Virtual Private Cloud (VPC) and Subnets
 
 For this scenario, we will be using a newly created VPC with both public and private subnets.  All of the cluster resources will reside in the private subnet. The plublic subnet will be used for traffic to the Internet (egress)
