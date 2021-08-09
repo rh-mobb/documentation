@@ -38,7 +38,15 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
 ### Prepare AWS and Red Hat accounts
 
-If this is your first time deploying ROSA you need to do some preparation as described [here](../../quickstart-rosa.md#Prerequisites). Stop just before running `rosa init` we don't need to do that for STS mode.
+1. If this is your first time deploying ROSA you need to do some preparation as described [here](../../quickstart-rosa.md#Prerequisites). Stop just before running `rosa init` we don't need to do that for STS mode.
+
+
+1. If this is a brand new AWS account that has never had a AWS Load Balancer installed in it, you should run the following
+
+    ```bash
+    aws iam create-service-linked-role --aws-service-name \
+    "elasticloadbalancing.amazonaws.com"
+    ```
 
 ## Deploy ROSA cluster
 
