@@ -320,6 +320,6 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
     1. Run the Query
 
         ```
-        fluentbit_CL
+        openshift_CL
           | take 10
         ```
