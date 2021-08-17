@@ -7,7 +7,7 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@master
-    - uses: rojopolis/spellcheck-github-actions@0.14.0
+    - uses: rojopolis/spellcheck-github-actions@0.16.0
       name: Spellcheck
       with:
         config_path: .github/config/.spellcheck.yml
