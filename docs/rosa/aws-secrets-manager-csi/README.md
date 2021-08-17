@@ -20,7 +20,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 
 ## Prerequisites
 
-* A ROSA cluster deployed with STS
+* [A ROSA cluster deployed with STS](/docs/rosa/sts/)
 * Helm 3
 * aws CLI
 * jq
