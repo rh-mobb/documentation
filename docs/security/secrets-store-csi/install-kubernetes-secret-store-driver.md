@@ -1,22 +1,16 @@
 ## Installing the Kubernetes Secret Store CSI
 
-1. Check you have permission to create resources in `kube-system`
+1. Create an OpenShift Project to deploy the CSI into
 
     ```bash
-    kubectl auth can-i -n kube-system create daemonset
-    ```
-
-    you should see the response
-
-    ```bash
-    yes
+    oc new-project k8s-secrets-store-csi
     ```
 
 1. Set SecurityContextConstraints to allow the CSI driver to run (otherwise the DaemonSet will not be able to create Pods)
 
     ```bash
     oc adm policy add-scc-to-user privileged \
-      system:serviceaccount:kube-system:secrets-store-csi-driver
+      system:serviceaccount:k8s-secrets-store-csi:secrets-store-csi-driver
     ```
 
 1. Add the Secrets Store CSI Driver to your Helm Repositories
@@ -35,14 +29,14 @@
 1. Install the secrets store csi driver
 
     ```bash
-    helm install -n kube-system csi-secrets-store \
+    helm install -n k8s-secrets-store-csi csi-secrets-store \
       secrets-store-csi-driver/secrets-store-csi-driver
     ```
 
 1. Check that the Daemonsets is running
 
     ```bash
-    kubectl --namespace=kube-system get pods -l "app=secrets-store-csi-driver"
+    kubectl --namespace=k8s-secrets-store-csi get pods -l "app=secrets-store-csi-driver"
     ```
 
     You should see the following
