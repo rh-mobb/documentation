@@ -28,6 +28,15 @@
 * [Federating ARO metrics to Azure Files](./docs/aro/federated-metrics)
 * [Sending ARO cluster logs to Azure Log Analytics](./docs/aro/clf-to-azure)
 
+## Security
+
+### Kubernetes Secret Store CSI Driver
+
+* [Just the CSI itself](./docs/security/secrets-store-csi)
+    * [+ HashiCorp CSI](./docs/security/secrets-store-csi/hashicorp-vault)
+    * [+ AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
+    * [+ Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
+
 ## Applications
 
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
