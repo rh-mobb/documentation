@@ -65,7 +65,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 
 1. Patch the CSI daemonset
 
-> Currently the CSI has a bug in its manifest which we need to patch
+    > Currently the CSI has a bug in its manifest which we need to patch
 
     ```bash
     kubectl patch daemonset vault-csi-provider --type='json' \
@@ -96,7 +96,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 
     ```bash
     oc get authentication.config cluster \
-      -o template="{{ .spec.serviceAccountIssuer }}"
+      -o json | jq -r .spec.serviceAccountIssuer
     ```
 
 1. Configure Kubernetes auth method
@@ -214,6 +214,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
     ```bash
     kubectl delete -n default pod webapp
     kubectl delete -n default secretproviderclass vault-database
+    kubectl delete -n default serviceaccount webapp-sa
     ```
 
 1. Delete the Hashicorp Vault Helm
