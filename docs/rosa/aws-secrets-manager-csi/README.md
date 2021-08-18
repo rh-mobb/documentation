@@ -176,23 +176,24 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
     ```bash
     oc annotate -n my-application serviceaccount default \
       eks.amazonaws.com/role-arn=$ROLE_ARN
+    ```
 
 1. Create a secret provider class to access our secret
 
-```bash
-cat << EOF | kubectl apply -f -
-apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
-kind: SecretProviderClass
-metadata:
-  name: my-application-aws-secrets
-spec:
-  provider: aws
-  parameters:
-    objects: |
-        - objectName: "MySecret"
-          objectType: "secretsmanager"
-EOF
-```
+    ```bash
+    cat << EOF | kubectl apply -f -
+    apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+    kind: SecretProviderClass
+    metadata:
+      name: my-application-aws-secrets
+    spec:
+      provider: aws
+      parameters:
+        objects: |
+            - objectName: "MySecret"
+              objectType: "secretsmanager"
+    EOF
+    ```
 
 1. Create a Deployment using our secret
 
