@@ -13,9 +13,9 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
 1. [Deploy](/docs/quickstart-aro) an ARO cluster
 
-1. Deploy the Elasticsearch Operator and the Cluster Logging Operator from OpenShift's Operator Hub
+1. Deploy the OpenShift Elasticsearch Operator and the Red Hat OpenShift Logging Operator from OpenShift's Operator Hub
 
-    ![screenshot of installed operators](./images/operator-hub.png)
+    ![screenshot of installed operators](./images/operator_hub_new.png)
 
 1. Deploy a Cluster Logging resource
 
@@ -312,11 +312,12 @@ EOF
 
   1. Log into [Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs)
 
-  1. Find the your workspace
-
+  1. Select your workspace
+      ![screenshot of installed operators](./images/select_scope.png)
   1. Run the Query
 
       ```
       openshift_CL
         | take 10
       ```
+      ![screenshot of installed operators](./images/query_results.png)
