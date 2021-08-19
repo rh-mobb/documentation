@@ -22,34 +22,34 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
     > Note - we're setting Elastic and Kibana replicas to zero, as all we really need in this scenario is Fluentd.
 
     ```bash
-    cat << "EOF | kubectl apply -f -
-    apiVersion: logging.openshift.io/v1
-    kind: ClusterLogging
-    metadata:
-      name: instance
-      namespace: openshift-logging
-    spec:
-      collection:
-        logs:
-          fluentd: {}
-          type: fluentd
-      logStore:
-        elasticsearch:
-          nodeCount: 0
-          redundancyPolicy: SingleRedundancy
-          storage:
-            size: 200G
-            storageClassName: gp2
-        retentionPolicy:
-          application:
-            maxAge: 7d
-        type: elasticsearch
-      managementState: Managed
-      visualization:
-        kibana:
-          replicas: 0
-        type: kibana
-    EOF
+cat << EOF | kubectl apply -f -
+apiVersion: logging.openshift.io/v1
+kind: ClusterLogging
+metadata:
+  name: instance
+  namespace: openshift-logging
+spec:
+  collection:
+    logs:
+      fluentd: {}
+      type: fluentd
+  logStore:
+    elasticsearch:
+      nodeCount: 0
+      redundancyPolicy: SingleRedundancy
+      storage:
+        size: 200G
+        storageClassName: gp2
+    retentionPolicy:
+      application:
+        maxAge: 7d
+    type: elasticsearch
+  managementState: Managed
+  visualization:
+    kibana:
+      replicas: 0
+    type: kibana
+EOF
     ```
 
 ## Set up ARO Monitor workspace
@@ -65,7 +65,6 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
     ```bash
     export AZR_RESOURCE_LOCATION=eastus
     export AZR_RESOURCE_GROUP=openshift
-
     # this value must be unique
     export AZR_LOG_APP_NAME=$AZR_RESOURCE_GROUP-$AZR_RESOURCE_LOCATION
     ```
@@ -91,45 +90,45 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 1. Create Namespace and RBAC
 
     ```bash
-    cat << EOF | kubectl apply -f -
-    apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: azure-log-forwarder
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: fluent-bit
-      namespace: azure-log-forwarder
-    ---
-    kind: ClusterRole
-    apiVersion: rbac.authorization.k8s.io/v1
-    metadata:
-      name: fluent-bit-read
-    rules:
-    - apiGroups: [ "" ]
-      resources:
-      - namespaces
-      - pods
-      verbs:
-      - get
-      - watch
-      - list
-    ---
-    kind: ClusterRoleBinding
-    apiVersion: rbac.authorization.k8s.io/v1
-    metadata:
-      name: fluent-bit-read
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: fluent-bit-read
-    subjects:
-    - kind: ServiceAccount
-      name: fluent-bit
-      namespace: azure-log-forwarder
-    EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: azure-log-forwarder
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluent-bit
+  namespace: azure-log-forwarder
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: fluent-bit-read
+rules:
+- apiGroups: [ "" ]
+  resources:
+  - namespaces
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: fluent-bit-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fluent-bit-read
+subjects:
+- kind: ServiceAccount
+  name: fluent-bit
+  namespace: azure-log-forwarder
+EOF
     ```
 
 1. Create a secret for your Azure workspace
@@ -153,151 +152,149 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 1. Create fluent-bit config
 
     ```bash
-    cat << "EOF" | kubectl apply -f -
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: fluent-bit-config
-      namespace: azure-log-forwarder
-      labels:
-        k8s-app: fluent-bit
-    data:
-      fluent-bit.conf: |
-        [SERVICE]
-            Flush         1
-            Log_Level     info
-            Daemon        off
-            Parsers_File  parsers.conf
-            HTTP_Server   On
-            HTTP_Listen   0.0.0.0
-            HTTP_Port     2020
-        @INCLUDE input.conf
-        @INCLUDE output.conf
-
-      output.conf: |
-        [OUTPUT]
-            Name            azure
-            Match           *.*
-            Customer_ID     ${WorkspaceId}
-            Shared_Key      ${SharedKey}
-            Log_Type        openshift
-
-      input.conf: |
-        [INPUT]
-            Name              forward
-            Listen            0.0.0.0
-            Port              24224
-            Buffer_Chunk_Size 1M
-            Buffer_Max_Size   10M
-    EOF
+cat << "EOF" | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: azure-log-forwarder
+  labels:
+    k8s-app: fluent-bit
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Log_Level     info
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+    @INCLUDE input.conf
+    @INCLUDE output.conf
+  output.conf: |
+    [OUTPUT]
+        Name            azure
+        Match           *.*
+        Customer_ID     ${WorkspaceId}
+        Shared_Key      ${SharedKey}
+        Log_Type        openshift
+  input.conf: |
+    [INPUT]
+        Name              forward
+        Listen            0.0.0.0
+        Port              24224
+        Buffer_Chunk_Size 1M
+        Buffer_Max_Size   10M
+EOF
     ```
 
 1. Create fluent-bit daemonset
 
     ```bash
-    cat << EOF | kubectl apply -f -
-    apiVersion: apps/v1
-    kind: DaemonSet
+cat << EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: azure-log-forwarder
+  labels:
+    k8s-app: fluent-bit-logging
+    version: v1
+    kubernetes.io/cluster-service: "true"
+spec:
+  selector:
+    matchLabels:
+      k8s-app: fluent-bit-logging
+  template:
     metadata:
-      name: fluent-bit
-      namespace: azure-log-forwarder
       labels:
         k8s-app: fluent-bit-logging
         version: v1
         kubernetes.io/cluster-service: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2020"
+        prometheus.io/path: /api/v1/metrics/prometheus
     spec:
-      selector:
-        matchLabels:
-          k8s-app: fluent-bit-logging
-      template:
-        metadata:
-          labels:
-            k8s-app: fluent-bit-logging
-            version: v1
-            kubernetes.io/cluster-service: "true"
-          annotations:
-            prometheus.io/scrape: "true"
-            prometheus.io/port: "2020"
-            prometheus.io/path: /api/v1/metrics/prometheus
-        spec:
-          serviceAccountName: fluent-bit
-          terminationGracePeriodSeconds: 10
-          containers:
-          - name: fluent-bit
-            image: fluent/fluent-bit:1.6
-            imagePullPolicy: Always
-            ports:
-              - containerPort: 2020
-              - containerPort: 24224
-            env:
-            - name: WorkspaceId
-              valueFrom:
-                secretKeyRef:
-                  name: fluentbit-secrets
-                  key: WorkspaceId
-            - name: SharedKey
-              valueFrom:
-                secretKeyRef:
-                  name: fluentbit-secrets
-                  key: SharedKey
-            - name: LogName
-              value: logapp
-            volumeMounts:
-              - name: fluent-bit-etc
-                mountPath: /fluent-bit/etc/
-          volumes:
+      serviceAccountName: fluent-bit
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: fluent-bit
+        image: fluent/fluent-bit:1.6
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 2020
+          - containerPort: 24224
+        env:
+        - name: WorkspaceId
+          valueFrom:
+            secretKeyRef:
+              name: fluentbit-secrets
+              key: WorkspaceId
+        - name: SharedKey
+          valueFrom:
+            secretKeyRef:
+              name: fluentbit-secrets
+              key: SharedKey
+        - name: LogName
+          value: logapp
+        volumeMounts:
           - name: fluent-bit-etc
-            configMap:
-                name: fluent-bit-config
-    EOF
+            mountPath: /fluent-bit/etc/
+      volumes:
+      - name: fluent-bit-etc
+        configMap:
+            name: fluent-bit-config
+EOF
     ```
 
 1. Create a fluent-bit service
 
     ```bash
-    cat << EOF | kubectl apply -f -
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: fluent-bit
-      namespace: azure-log-forwarder
-      labels:
-        k8s-app: fluent-bit-logging
-        version: v1
-        kubernetes.io/cluster-service: "true"
-    spec:
-      selector:
-        k8s-app: fluent-bit-logging
-      ports:
-        - protocol: TCP
-          port: 24224
-          targetPort: 24224
-    EOF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluent-bit
+  namespace: azure-log-forwarder
+  labels:
+    k8s-app: fluent-bit-logging
+    version: v1
+    kubernetes.io/cluster-service: "true"
+spec:
+  selector:
+    k8s-app: fluent-bit-logging
+  ports:
+    - protocol: TCP
+      port: 24224
+      targetPort: 24224
+EOF
     ```
 
 1. Configure cluster logging forwarder
 
     ```bash
-    cat << EOF | kubectl apply -f -
-    apiVersion: logging.openshift.io/v1
-    kind: ClusterLogForwarder
-    metadata:
-      name: instance
-      namespace: openshift-logging
-    spec:
-      outputs:
-        - name: fluentbit
-          type: fluentdForward
-          url: 'tcp://fluent-bit.azure-log-forwarder:24224'
-      pipelines:
-        - name: forward-to-fluentbit
-          inputRefs:
-            - infrastructure
-            - application
-            - audit
-          outputRefs:
-            - fluentbit
-    EOF
+cat << EOF | kubectl apply -f -
+apiVersion: logging.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+  name: instance
+  namespace: openshift-logging
+spec:
+  outputs:
+    - name: fluentbit
+      type: fluentdForward
+      url: 'tcp://fluent-bit.azure-log-forwarder:24224'
+  pipelines:
+    - name: forward-to-fluentbit
+      inputRefs:
+        - infrastructure
+        - application
+        - audit
+      outputRefs:
+        - fluentbit
+EOF
     ```
 
 ## Check for logs in Azure
@@ -313,13 +310,13 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
   or
 
-    1. Log into [Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs)
+  1. Log into [Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs)
 
-    1. Find the your workspace
+  1. Find the your workspace
 
-    1. Run the Query
+  1. Run the Query
 
-        ```
-        openshift_CL
-          | take 10
-        ```
+      ```
+      openshift_CL
+        | take 10
+      ```
