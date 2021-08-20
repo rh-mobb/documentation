@@ -24,6 +24,8 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     export AZ_TENANT_ID=$(az account show -o tsv --query tenantId)
     ```
 
+{% include_relative install-kubernetes-secret-store-driver.md %}
+
 ## Deploy Azure Key Store CSI
 
 1. Add the Azure Helm Repository
@@ -39,28 +41,19 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     helm repo update
     ```
 
-1. Create an OpenShift Project for the CSI driver
+1. Install the Azure Key Vault CSI provider
 
     ```bash
-    oc new-project azure-secrets-store-csi
-    ```
-
-
-1. Install the CSI driver
-
-    ```bash
-    helm install -n azure-secrets-store-csi csi \
+    helm install -n k8s-secrets-store-csi azure-csi-provider \
       csi-secrets-store-provider-azure/csi-secrets-store-provider-azure \
-      --set linux.privileged=true
+      --set linux.privileged=true --set secrets-store-csi-driver.install=false
     ```
 
 1. Set SecurityContextConstraints to allow the CSI driver to run
 
     ```bash
     oc adm policy add-scc-to-user privileged \
-      system:serviceaccount:azure-secrets-store-csi:secrets-store-csi-driver
-    oc adm policy add-scc-to-user privileged \
-      system:serviceaccount:azure-secrets-store-csi:csi-secrets-store-provider-azure
+      system:serviceaccount:k8s-secrets-store-csi:csi-secrets-store-provider-azure
     ```
 
 ## Create Keyvault and a Secret
@@ -120,59 +113,59 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 1. Create a Secret Provider Class to give access to this secret
 
     ```bash
-    cat <<EOF | kubectl apply -f -
-    apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
-    kind: SecretProviderClass
-    metadata:
-      name: azure-kvname
-      namespace: my-application
-    spec:
-      provider: azure
-      parameters:
-        usePodIdentity: "false"
-        useVMManagedIdentity: "false"
-        userAssignedIdentityID: ""
-        keyvaultName: "${KEYVAULT_NAME}"
-        objects: |
-          array:
-            - |
-              objectName: secret1
-              objectType: secret
-              objectVersion: ""
-        tenantId: "${AZ_TENANT_ID}"
-    EOF
+cat <<EOF | kubectl apply -f -
+apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+kind: SecretProviderClass
+metadata:
+  name: azure-kvname
+  namespace: my-application
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: "false"
+    useVMManagedIdentity: "false"
+    userAssignedIdentityID: ""
+    keyvaultName: "${KEYVAULT_NAME}"
+    objects: |
+      array:
+        - |
+          objectName: secret1
+          objectType: secret
+          objectVersion: ""
+    tenantId: "${AZ_TENANT_ID}"
+EOF
     ```
 
 1. Create a Pod that uses the above Secret Provider Class
 
     ```bash
-    cat <<EOF | kubectl apply -f -
-    kind: Pod
-    apiVersion: v1
-    metadata:
-      name: busybox-secrets-store-inline
-      namespace: my-application
-    spec:
-      containers:
-      - name: busybox
-        image: k8s.gcr.io/e2e-test-images/busybox:1.29
-        command:
-          - "/bin/sleep"
-          - "10000"
-        volumeMounts:
-        - name: secrets-store-inline
-          mountPath: "/mnt/secrets-store"
-          readOnly: true
-      volumes:
-        - name: secrets-store-inline
-          csi:
-            driver: secrets-store.csi.k8s.io
-            readOnly: true
-            volumeAttributes:
-              secretProviderClass: "azure-kvname"
-            nodePublishSecretRef:
-              name: secrets-store-creds
-    EOF
+cat <<EOF | kubectl apply -f -
+kind: Pod
+apiVersion: v1
+metadata:
+  name: busybox-secrets-store-inline
+  namespace: my-application
+spec:
+  containers:
+  - name: busybox
+    image: k8s.gcr.io/e2e-test-images/busybox:1.29
+    command:
+      - "/bin/sleep"
+      - "10000"
+    volumeMounts:
+    - name: secrets-store-inline
+      mountPath: "/mnt/secrets-store"
+      readOnly: true
+  volumes:
+    - name: secrets-store-inline
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: "azure-kvname"
+        nodePublishSecretRef:
+          name: secrets-store-creds
+EOF
     ```
 
 1. Check the Secret is mounted
@@ -202,14 +195,28 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
 ## Cleanup
 
-1. Delete the app and csi Projects
+1. Uninstall Helm
 
     ```bash
-    oc delete project my-application azure-secrets-store-csi
+    helm uninstall -n k8s-secrets-store-csi azure-csi-provider
+    ```
+
+1. Delete the app
+
+    ```bash
+    oc delete project my-application
     ```
 
 1. Delete the Azure Key Vault
 
     ```bash
-    az keyvault delete -n ${KEYVAULT_NAME} \
+    az keyvault delete -n ${KEYVAULT_NAME}
     ```
+
+1. Delete the Service Principal
+
+    ```bash
+    az ad sp delete --id ${SERVICE_PRINCIPAL_CLIENT_ID}
+    ```
+
+{% include_relative uninstall-kubernetes-secret-store-driver.md %}

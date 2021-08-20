@@ -35,7 +35,7 @@
 * [Just the CSI itself](./docs/security/secrets-store-csi)
     * [+ HashiCorp CSI](./docs/security/secrets-store-csi/hashicorp-vault)
     * [+ AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
-    * [+ Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
+    * [+ Azure Key Vault CSI Driver](./docs/security/secrets-store-csi/azure-key-vault)
 
 ## Applications
 
