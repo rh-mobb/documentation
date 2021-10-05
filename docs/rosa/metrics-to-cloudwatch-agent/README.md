@@ -1,5 +1,11 @@
 # Using the AWS Cloud Watch agent to publish metrics to CloudWatch in ROSA
 
+This document shows how you can use the AWS Cloud Watch agent to scrape Prometheus endpoints and publish metrics to CloudWatch in a Red Hat OpenShift Container Platform (ROSA) cluster.
+
+It pulls from The AWS documentation for installing the CloudWatch agent to Kubernetes and collections and publishes metrics for the Kubernetes API Server and provides a simple Dashboard to view the results.
+
+Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/amazon-cloudwatch-agent/issues/187) pulling all metrics from the Prometheus federated endpoint, but the hope is that when it does we can ship all Cluster and User Workload metrics to CloudWatch.
+
 ## Prerequisites
 
 1. [AWS CLI](https://aws.amazon.com/cli/)
@@ -19,7 +25,7 @@
     Change these to suit your environment.
 
     ```bash
-    export CLUSTER_NAME=thanos-s3
+    export CLUSTER_NAME=metrics
     export CLUSTER_REGION=us-east-2
     export SCRATCH_DIR=/tmp/scratch
     mkdir -p $SCRATCH_DIR
@@ -49,7 +55,7 @@
       --policy-arn "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
     ```
 
-## Deploy Cloud Watch Agent
+## Deploy Cloud Watch Prometheus Agent
 
 1. Create a namespace for Cloud Watch:
 
@@ -57,27 +63,10 @@
     kubectl create namespace amazon-cloudwatch
     ```
 
-1. Fetch the Openshift Monitoring Cluster Serving CA:
-
-    ```bash
-    oc get configmap serving-certs-ca-bundle \
-      -o yaml -n openshift-monitoring \
-      > $SCRATCH_DIR/serving-certs-ca-bundle.yaml
-    ```
-
-1. Add the Cluster Monitoring Cluster Serving CA to the `amazon-cloudwatch` namespace:
-
-    ```bash
-    sed -i 's/namespace: openshift-monitoring/namespace: amazon-cloudwatch/g' $SCRATCH_DIR/serving-certs-ca-bundle.yaml
-
-    oc -n amazon-cloudwatch apply \
-    -f $SCRATCH_DIR/serving-certs-ca-bundle.yaml
-    ```
-
 1. Download the Cloud Watch Agent Kubernetes manifests:
 
     ```bash
-    wget -O $SCRATCH_DIR/cloud-watch.yaml https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/service/cwagent-prometheus/prometheus-k8s.yaml
+    cp cloud-watch.yaml $SCRATCH_DIR/cloud-watch.yaml
     ```
 
 1. Update the Cloud Watch Agent Kubernetes manifests:
@@ -119,14 +108,14 @@
 1. Download the Sample Dashboard:
 
     ```bash
-    wget -O $SCRATCH_DIR/dashboard.json https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/service/cwagent-prometheus/sample_cloudwatch_dashboards/kubernetes_api_server/cw_dashboard_kubernetes_api_server.json
+    cp dashboard.json $SCRATCH_DIR/dashboard.json
     ```
 
 1. Update the Sample Dashboard:
 
     ```bash
-    sed -i "s/{{YOUR_CLUSTER_NAME}}/$CLUSTER_NAME/" $SCRATCH_DIR/dashboard.json
-    sed -i "s/{{YOUR_AWS_REGION}}/$AWS_REGION/" $SCRATCH_DIR/dashboard.json
+    sed -i "s/{{YOUR_CLUSTER_NAME}}/$CLUSTER_NAME/g" $SCRATCH_DIR/dashboard.json
+    sed -i "s/{{YOUR_AWS_REGION}}/$CLUSTER_REGION/g" $SCRATCH_DIR/dashboard.json
     ```
 
 1. Browse to https://us-east-2.console.aws.amazon.com/cloudwatch

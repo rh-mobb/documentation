@@ -18,7 +18,8 @@ data:
   cwagentconfig.json: |
     {
       "agent": {
-        "region": "{{region_name}}"
+        "region": "{{region_name}}",
+        "debug": true
       },
       "logs": {
         "metrics_collected": {
