@@ -20,7 +20,7 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
     export AWS_PAGER=""
     ```
 
-1. Set some environment variables:
+1. Set some environment variables
 
     Change these to suit your environment.
 
@@ -31,7 +31,7 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
     mkdir -p $SCRATCH_DIR
     ```
 
-1. Create an AWS IAM User for Cloud Watch:
+1. Create an AWS IAM User for Cloud Watch
 
     ```bash
     aws iam create-user \
@@ -39,7 +39,7 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
       > $SCRATCH_DIR/aws-user.json
     ```
 
-1. Fetch Access and Secret Keys for IAM User:
+1. Fetch Access and Secret Keys for IAM User
 
     ```bash
     aws iam create-access-key \
@@ -47,7 +47,7 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
       > $SCRATCH_DIR/aws-access-key.json
     ```
 
-1. Attach Policy to AWS IAM User:
+1. Attach Policy to AWS IAM User
 
     ```bash
     aws iam attach-user-policy \
@@ -57,26 +57,26 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
 
 ## Deploy Cloud Watch Prometheus Agent
 
-1. Create a namespace for Cloud Watch:
+1. Create a namespace for Cloud Watch
 
     ```bash
     kubectl create namespace amazon-cloudwatch
     ```
 
-1. Download the Cloud Watch Agent Kubernetes manifests:
+1. Download the Cloud Watch Agent Kubernetes manifests
 
     ```bash
-    cp cloud-watch.yaml $SCRATCH_DIR/cloud-watch.yaml
+    wget -O $SCRATCH_DIR/cloud-watch.yaml https://github.com/rh-mobb/documentation/tree/main/docs/rosa/metrics-to-cloudwatch-agent/cloud-watch.yaml?raw=true
     ```
 
-1. Update the Cloud Watch Agent Kubernetes manifests:
+1. Update the Cloud Watch Agent Kubernetes manifests
 
     ```bash
     sed -i "s/{{cluster_name}}/$CLUSTER_NAME/g" $SCRATCH_DIR/cloud-watch.yaml
     sed -i "s/{{region_name}}/$CLUSTER_REGION/g" $SCRATCH_DIR/cloud-watch.yaml
     ```
 
-1. Provide AWS Creds to the Cloud Watch Agent:
+1. Provide AWS Creds to the Cloud Watch Agent
 
     ```bash
     AWS_ID=`cat $SCRATCH_DIR/aws-access-key.json | jq -r '.AccessKey.AccessKeyId'`
@@ -90,28 +90,41 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
       --from-file=credentials=$SCRATCH_DIR/credentials
     ```
 
-1. Allow Cloud Watch Agent to run as Root user (inside the container):
+1. Allow Cloud Watch Agent to run as Root user (inside the container)
 
     ```bash
     oc -n amazon-cloudwatch adm policy \
       add-scc-to-user anyuid -z cwagent-prometheus
     ```
 
-1. Apply the Cloud Watch Agent Kubernetes manifests:
+1. Apply the Cloud Watch Agent Kubernetes manifests
 
     ```bash
     kubectl apply -f $SCRATCH_DIR/cloud-watch.yaml
     ```
 
-## Create Sample Dashboard
-
-1. Download the Sample Dashboard:
+1. Check the Pod is running
 
     ```bash
-    cp dashboard.json $SCRATCH_DIR/dashboard.json
+    kubectl get pods -n amazon-cloudwatch
     ```
 
-1. Update the Sample Dashboard:
+    You should see:
+
+    ```
+    NAME                                  READY   STATUS    RESTARTS   AGE
+    cwagent-prometheus-54cd498c9c-btmjm   1/1     Running   0          60m
+    ```
+
+## Create Sample Dashboard
+
+1. Download the Sample Dashboard
+
+    ```bash
+    wget -O $SCRATCH_DIR/dashboard.json https://github.com/rh-mobb/documentation/tree/main/docs/rosa/metrics-to-cloudwatch-agent/dashboard.json?raw=true
+    ```
+
+1. Update the Sample Dashboard
 
     ```bash
     sed -i "s/{{YOUR_CLUSTER_NAME}}/$CLUSTER_NAME/g" $SCRATCH_DIR/dashboard.json
