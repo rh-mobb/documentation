@@ -15,6 +15,7 @@
 * [Adding AWS WAF in front of ROSA / OSD](./docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
+* [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 
 ### ARO
 
@@ -25,9 +26,11 @@
 
 ## Observability
 
+* [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Federating ROSA metrics to S3](./docs/rosa/federated-metrics)
 * [Federating ARO metrics to Azure Files](./docs/aro/federated-metrics)
 * [Sending ARO cluster logs to Azure Log Analytics](./docs/aro/clf-to-azure)
+* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 
 ## Security
 
