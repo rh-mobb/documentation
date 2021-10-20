@@ -154,8 +154,8 @@ EOF
 
 1. Browse to http://localhost:9093/#/alerts to see the alert "ExampleAlert"
 
-![Screenshot of Alert Manager](./alert-manager.png)
+    ![Screenshot of Alert Manager](./alert-manager.png)
 
 1. Check the Alert was sent to Slack
 
-![Screenshot of Alert in Slack](./slack.png)
+    ![Screenshot of Alert in Slack](./slack.png)
