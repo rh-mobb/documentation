@@ -9,6 +9,8 @@ The OpenShift Administrator can use the Prometheus Operator to create a custom A
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 * A Red Hat OpenShift for AWS (ROSA) cluster 4.9.0 or higher
 
+## Create Environment Variables
+
 1. Before we get started we need to set some environment variables to be used throughout the guide.
 
     ```bash
@@ -21,7 +23,7 @@ export PROM_NAMESPACE=custom-alert-manager
 
 1. Create a OperatorGroup and Subscription for the Prometheus Operator
 
-    ```bash
+```bash
 cat << EOF | kubectl apply -f -
 ---
 apiVersion: v1
@@ -50,7 +52,7 @@ spec:
   source: community-operators
   sourceNamespace: openshift-marketplace
 EOF
-    ```
+```
 
 ## Deploy AlertManager
 
@@ -58,7 +60,7 @@ EOF
 
 > This will create a basic AlertManager configuration to send alerts to a slack channel. Configuring slack is outside the scope of this document. Update the variables to suit your slack integration.
 
-    ```bash
+```bash
 SLACK_API_URL=https://hooks.slack.com/services/XXX/XXX/XXX
 SLACK_CHANNEL='#paultest'
 cat << EOF | kubectl apply -n ${PROM_NAMESPACE} -f -
@@ -71,7 +73,6 @@ stringData:
   alertmanager.yaml: |
     global:
       slack_api_url: "${SLACK_API_URL}"
-
     route:
       receiver: slack-notifications
       group_by: [alertname]
@@ -106,7 +107,7 @@ spec:
   selector:
     alertmanager: custom-alertmanager
 EOF
-    ```
+```
 
 ## Configure User Workload Monitoring to use the custom AlertManager
 
@@ -114,7 +115,7 @@ EOF
 
 > Note: This next command assumes the existing `config.yaml` in the `user-workload-monitoring-config` config map is empty. You should verify it with `kubectl get -n openshift-user-workload-monitoring get cm user-workload-monitoring-config -o yaml` and simply edit in the differences if its not.
 
-    ```bash
+```bash
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
@@ -131,7 +132,7 @@ data:
         apiVersion: v1
         staticConfigs: ["custom-alertmanager.$PROM_NAMESPACE.svc.cluster.local:9093"]
 EOF
-    ```
+```
 
 ## Create an Example Alert
 
