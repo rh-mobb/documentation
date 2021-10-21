@@ -17,6 +17,8 @@ This guide is heavily influenced by Tommer Amber's [guide](https://medium.com/@t
 * htpasswd
 * A Red Hat OpenShift for AWS (ROSA) cluster 4.8 or higher
 
+## Environment Variables
+
 Before we get started we need to set some environment variables to be used throughout the guide.
 
 ```bash
