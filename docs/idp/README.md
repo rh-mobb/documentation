@@ -6,7 +6,7 @@
 
 An identity provider in OpenShift can be configured in different ways
 
-Managed OpenShift allows to configure one or more indentity provider in a single step through the [OpenShift Cluster Manager (OCM)](https://cloud.redhat.com/openshift)
+Managed OpenShift allows to configure one or more indentity providers in a single step through the [OpenShift Cluster Manager (OCM)](https://cloud.redhat.com/openshift)
 
 The identity providers available for the configuration are:
 
@@ -15,6 +15,6 @@ The identity providers available for the configuration are:
 + Google 
 + LDAP
 + OpenID 
-+ HTPasswdr
++ HTPasswd
 
 [Configure Azure AD using OpenID](./azuread)
