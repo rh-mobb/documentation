@@ -44,6 +44,9 @@
     * [+ AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
     * [+ Azure Key Vault CSI Driver](./docs/security/secrets-store-csi/azure-key-vault)
 
+### Configure Identity provider
+* [OpenShift - Configuring Identity Providers](./docs/idp/README.md)
+
 ## Applications
 
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
