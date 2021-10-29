@@ -6,7 +6,7 @@
 
 An identity provider in OpenShift can be configured in different ways
 
-Managed OpenShift allows to configure one or more indentity providers in a single step through the [OpenShift Cluster Manager (OCM)](https://cloud.redhat.com/openshift)
+RedHat OpenShift on AWS (ROSA) and OpenShift Dedicated (OSD) provide a simple way for the cluster administrator to configure one or more indentity providers for their cluster[s]  through the [OpenShift Cluster Manager (OCM)](https://cloud.redhat.com/openshift)
 
 The identity providers available for the configuration are:
 
