@@ -121,6 +121,6 @@ Once the cluster is deleted we can delete the STS roles.
     > Note you can get the correct commands with the ID filled in from the output of the previous step.
 
     ```bash
-    rosa delete operator-roles -c <id>
-    rosa delete oidc-provider -c <id>
+    rosa delete operator-roles -c <id> --yes --mode auto
+    rosa delete oidc-provider -c <id>  --yes --mode auto
     ```

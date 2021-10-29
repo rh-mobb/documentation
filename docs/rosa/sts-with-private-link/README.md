@@ -404,15 +404,8 @@ Once the cluster has finished installing it is time to validate.  Validation whe
     > Note you can get the correct commands with the ID filled in from the output of the previous step.
 
     ```bash
-    rosa delete operator-roles -c <id>
-    ```
-
-1. Clean up the OIDC provider
-
-    > Note you can get the correct commands with the ID filled in from the output of the previous step.
-
-    ```bash
-    rosa delete oidc-provider -c <id>
+    rosa delete operator-roles -c <id> --mode auto --yes
+    rosa delete oidc-provider -c <id> --mode auto --yes
     ```
 
 
