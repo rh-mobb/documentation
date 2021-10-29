@@ -2,7 +2,7 @@
 
 **Paul Czarkowski**
 
-*08/6/2021*
+*Last updated 10/29/2021*
 
 > **Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
 
