@@ -2,14 +2,14 @@
 
 **Steve Mirman, Paul Czarkowski**
 
-*08/06/2021*
+*Last updated 10/29/2021*
 
 > This is a combination of the [private-link](../private-link) and [sts](../sts) setup documents to show the full picture
 
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.1.0) v1.1.0
+* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.1.5) v1.1.5
 * [jq](https://stedolan.github.io/jq/download/)
 
 ## AWS Preparation
@@ -28,7 +28,7 @@ For this scenario, we will be using a newly created VPC with both public and pri
 1. Configure the following environment variables, adjusting for `ROSA_CLUSTER_NAME`, `VERSION` and `REGION` as necessary
 
     ```bash
-    export VERSION=4.8.2 \
+    export VERSION=4.9.0 \
            ROSA_CLUSTER_NAME=pl-sts-cluster \
            AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
            REGION=us-east-2 \
@@ -254,7 +254,7 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
 1. Create the IAM Account Roles
 
     ```
-    rosa create account-roles --mode auto --version "${VERSION%.*}" -y
+    rosa create account-roles --mode auto --yes
     ```
 
 
@@ -267,25 +267,11 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
       --region ${REGION} --version ${VERSION} \
       --subnet-ids=$PRIVATE_SUBNET \
       --private-link --machine-cidr=10.0.0.0/16 \
-      --support-role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-Support-Role \
-        --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-Installer-Role \
-        --master-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-ControlPlane-Role \
-        --worker-iam-role arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-Worker-Role
+      --sts
     ```
 
     > Confirm the Private Link set up
     ![Route Table check output](./images/sts-pl8.png)
-
-1. Wait for cluster status to change to pending
-
-    ```bash
-    while ! \
-    rosa describe cluster -c $ROSA_CLUSTER_NAME | grep "Waiting for OIDC"; \
-    do echo -n .; sleep 1; done
-    ```
-
-    > Proceed when `pending` message appears
-    ![Route Table check output](./images/sts-pl9.png)
 
 1. Create the Operator Roles
 
@@ -415,20 +401,13 @@ Once the cluster has finished installing it is time to validate.  Validation whe
 
 1. Clean up the STS roles
 
-    ```bash
-    ./clean-roles.sh
-    ```
-
-1. delete the OIDC connect provider
+    > Note you can get the correct commands with the ID filled in from the output of the previous step.
 
     ```bash
-    oidc_arn=$(aws iam list-open-id-connect-providers | \
-      grep $cluster_id | awk -F ": " '{ print $2 }' | \
-      sed 's/"//g')
-
-    aws iam delete-open-id-connect-provider \
-      --open-id-connect-provider-arn=$oidc_arn
+    rosa delete operator-roles -c <id> --mode auto --yes
+    rosa delete oidc-provider -c <id> --mode auto --yes
     ```
+
 
 1. Delete AWS resources
 

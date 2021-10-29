@@ -1,14 +1,17 @@
-name: Spellcheck Action
-on: push
-jobs:
-  build:
-    name: Spellcheck
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@master
-    - uses: rojopolis/spellcheck-github-actions@0.16.0
-      name: Spellcheck
-      with:
-        config_path: .github/config/.spellcheck.yml
-        task_name: Markdown
+# name: Spellcheck Action
+# on:
+#   pull_request:
+#     paths:
+#     - '**.md'
+# jobs:
+#   build:
+#     name: Spellcheck
+#     runs-on: ubuntu-latest
+#     continue-on-error: true
+#     steps:
+#     - uses: actions/checkout@master
+#     - uses: rojopolis/spellcheck-github-actions@0.16.0
+#       name: Spellcheck
+#       with:
+#         config_path: .github/config/.spellcheck.yml
+#         task_name: Markdown
