@@ -127,3 +127,55 @@ EOF
             remoteWrite:
               - url: "http://aws-sigv4-proxy.aws-prometheus-proxy.svc.cluster.local:8005/workspaces/ws-0d99e6d0-ab1d-41b8-b706-3b1c2306757b/api/v1/remote_write"
     ```
+
+## Grafana
+
+1. Create a values file
+
+    ```bash
+cat << EOF > grafana-values.yaml
+serviceAccount:
+    create: false
+    name: "${SERVICE_ACCOUNT_AMP_INGEST_NAME}"
+grafana.ini:
+  auth:
+    sigv4_auth_enabled: true
+EOF
+    ```
+
+1. Load the Grafana Helm Repo
+
+    ```bash
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo update
+    ```
+
+1. Allow Grafana to be evil
+
+    ```bash
+    oc -n $SERVICE_ACCOUNT_NAMESPACE adm policy \
+          add-scc-to-user privileged -z $SERVICE_ACCOUNT_AMP_INGEST_NAME
+    ```
+
+1. Install Grafana
+
+    ```bash
+    helm upgrade --install grafana grafana/grafana \
+      -n $SERVICE_ACCOUNT_NAMESPACE -f ./grafana-values.yaml
+    ```
+
+1. Create a Grafana Datasource
+
+    1. log into Grafana using the instructions from Helm
+
+    1. Create a new Datasource.
+
+      **URL:** https://aps-workspaces.us-east-2.amazonaws.com/workspaces/<workspace id>
+
+      **Auth SigV4 Auth:** Enabled
+
+      **Save & test**
+
+1. Explore Metrics
+
+    1. use PromQL `prometheus_tsdb_head_series` to see if the Grafana datasource is working.
