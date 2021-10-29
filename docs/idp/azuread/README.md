@@ -2,13 +2,13 @@
 
 The steps to add Azure AD as an identity provider for managed OpenShift are:
 
-1. Determine the OAuth callback URL
-1. A new App registration on Azure AD
-1. Creation of a client secret
-1. The Token configuration 
-1. Configuration of the OAuth identity provider in OCM
+1. Define the OAuth callback URL
+1. Register a new Webapp on Azure AD
+1. Create the client secret
+1. Configure the Token 
+1. Configure the OAuth identity provider in OCM
 
-## Determine the OAuth callback URL ##
+## Define the OAuth callback URL ##
 To determine the OAuth callback URL there are different ways. 
 
 The callback URL has the following format:
@@ -27,7 +27,7 @@ It is possible to find quickly the callback URL in the OCM:
 ![ocm set a name to the OpenID indenity provider](../images/ocm_indentity_providers_callback_url.png)
 1. Keep the OAuth callback URL to use later.
 
-## A new App registrations on Azure AD ##
+## Register a new Webapp on Azure AD ##
 Access your Azure account and select the Azure Active Directory service and execute the following steps:
 
 1. From the main menu add a new Webapp  
@@ -41,13 +41,13 @@ Access your Azure account and select the Azure Active Directory service and exec
 
     ![azuread display the Webapp info registration](../images/azuread_webapp_info.png) 
 
-## Creation of a client secret ##
+## Create the client secret ##
 1. Create a new Secret for the Webapp  
 ![azuread create a new Webapp secret](../images/azuread_new_client_secret.png)   
 Once the secret is created the SecretID has to be saved to be used later in the OCM OAuth configuration 
 ![azuread secret id](../images/azuread_secret_id.png)
 
-## The Token configuration  ##
+## Configure the Token ##
 1. Create a new token configuration  
 ![azuread create a new token configuration](../images/azuread_token_configuration.png)
 1. Add the minimum claims that has to be in the token:
@@ -58,7 +58,7 @@ Once the secret is created the SecretID has to be saved to be used later in the 
 1. Specify that the claim must be returned in the token.  
 ![azuread add token claim check](../images/azuread_add_token_claims_2.png)
 
-## Configuration the OAuth identity provider in OCM ##
+## Configure the OAuth identity provider in OCM ##
 In the OCM fill all the fields with the values collected during the registration of the new Webapp in the Azure AD  
 ![ocm fill the oauth fields](../images/ocm_oauth_id_filled.png)
 and click the 'Add' button. 
