@@ -18,7 +18,6 @@
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 
-
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](./docs/aro/private-cluster)
@@ -56,3 +55,9 @@
 
 * [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
 * [Migrate Kubernetes Applications with Konveyer Crane](./docs/demos/crane/)
+
+## Fixes / Workarounds
+
+**Here be dragons - use at your own risk**
+
+* [Fix Cluster Logging Operator Add-n for ROSA STS Clusters](./docs/rosa/sts-cluster-logging-addon)
