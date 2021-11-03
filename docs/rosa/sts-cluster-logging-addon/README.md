@@ -28,11 +28,14 @@ cat << EOF > /tmp/trust-policy.json
             "Action": [
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
+                "logs:DescribeLogGroups",
                 "logs:DescribeLogStreams",
                 "logs:PutLogEvents",
-                "logs:DescribeLogGroups"
+                "logs:GetLogEvents",
+                "logs:PutRetentionPolicy",
+                "logs:GetLogRecord"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:logs:*:*:*"
         }
     ]
 }
