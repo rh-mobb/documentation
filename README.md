@@ -60,4 +60,4 @@
 
 **Here be dragons - use at your own risk**
 
-* [Fix Cluster Logging Operator Add-n for ROSA STS Clusters](./docs/rosa/sts-cluster-logging-addon)
+* [Fix Cluster Logging Operator Addon for ROSA STS Clusters](./docs/rosa/sts-cluster-logging-addon)
