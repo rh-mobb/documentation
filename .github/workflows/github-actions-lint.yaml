@@ -4,11 +4,9 @@ on:
     paths:
     - '**.md'
 jobs:
-  lint:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Check out code
-          uses: actions/checkout@v2
-        - uses: nosborn/github-action-markdown-cli@v2.0.0
+    markdownlint-cli:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: nosborn/github-action-markdown-cli@v1.1.1
           with:
             files: .

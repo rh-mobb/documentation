@@ -12,13 +12,3 @@ preview:
 		--publish 4000:4000 \
 		jekyll/jekyll \
 		jekyll serve
-
-spellcheck:
-  # https://github.com/nektos/act/releases/tag/v0.2.24
-	act -j spellcheck
-
-lint:
-  # https://github.com/nektos/act/releases/tag/v0.2.24
-	act -j lint
-
-test: lint spellcheck
