@@ -21,4 +21,4 @@ The identity providers available for the configuration are:
 
 ## Configuring Group Synchronization
 
-* [Configure Azure AD with ROSA](./az-ad-grp-sync)
+* [Configure Azure AD with ROSA/OSD](./az-ad-grp-sync)

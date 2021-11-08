@@ -1,4 +1,4 @@
-# Using Group Sync Operator with Azure Active Directory and ROSA #
+# Using Group Sync Operator with Azure Active Directory and ROSA/OSD #
 
 **Steve Mirman**
 
@@ -6,7 +6,7 @@
 
 This guide focuses on how to synchronize Identity Provider (IDP) groups and users after configuring authentication in OpenShift Cluster Manager (OCM). For an IDP configuration example, please reference the [Configure Azure AD as an OIDC identity provider for ROSA/OSD](https://mobb.ninja/docs/idp/azuread/) guide.
 
-To set up group synchronization from Azure Active Directory (AD) to ROSA you must:
+To set up group synchronization from Azure Active Directory (AD) to ROSA/OSD you must:
 
 1. Define groups and assign users in Azure AD
 1. Install the Group Sync Operator from the OpenShift Operator Hub
@@ -16,13 +16,13 @@ To set up group synchronization from Azure Active Directory (AD) to ROSA you mus
 
 ## Define groups and assign users in Azure AD ##
 
-To synchronize groups and users with ROSA they must exist in Azure AD
+To synchronize groups and users with ROSA/OSD they must exist in Azure AD
 
-1. Create groups to syncronize with ROSA if they do not already exist
+1. Create groups to syncronize with ROSA/OSD if they do not already exist
 
     ![Azure AD Groups](./images/az-ad-grp.png)
 
-1. Create user IDs to synchronize with ROSA if they do not already exist 
+1. Create user IDs to synchronize with ROSA/OSD if they do not already exist 
     
     ![Azure AD Users](./images/az-ad-usr.png)
 
@@ -102,11 +102,11 @@ The schedule setting of `schedule: * * * * *` would result in synchronization oc
 
     ![Successful Sync](./images/grp-sync-success.png)
 
-1. Check to see that all the groups specified in the configuration YAML file show up in the ROSA Groups list
+1. Check to see that all the groups specified in the configuration YAML file show up in the ROSA/OSD Groups list
 
     ![Groups added](./images/grp-sync-success-grp.png)
 
-1. Validate that all users specified in Azure AD also show up as members of the associated group in ROSA
+1. Validate that all users specified in Azure AD also show up as members of the associated group in ROSA/OSD
 
     ![Users added](./images/grp-sync-success-usr.png)
 
@@ -114,7 +114,7 @@ The schedule setting of `schedule: * * * * *` would result in synchronization oc
 
     ![New User added](./images/grp-sync-new-usr.png)
 
-1. Verify that the user now appears in ROSA (after the specified synchronization time)
+1. Verify that the user now appears in ROSA/OSD (after the specified synchronization time)
 
     ![New admin added](./images/grp-sync-new-admin.png)
 
@@ -122,6 +122,6 @@ The schedule setting of `schedule: * * * * *` would result in synchronization oc
 
     ![Delete admin user](./images/grp-sync-del-admin.png)
 
-1. Verify the user has been deleted from the ROSA admin group
+1. Verify the user has been deleted from the ROSA/OSD admin group
 
     ![Verify Delete admin user](./images/grp-sync-verify-del-admin.png)
