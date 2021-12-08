@@ -28,6 +28,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
 ## Deploy Azure Key Store CSI
 
+<!--
 1. Add the Azure Helm Repository
 
     ```bash
@@ -40,13 +41,15 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     ```bash
     helm repo update
     ```
+-->
 
 1. Install the Azure Key Vault CSI provider
 
     ```bash
     helm install -n k8s-secrets-store-csi azure-csi-provider \
-      csi-secrets-store-provider-azure/csi-secrets-store-provider-azure \
-      --set linux.privileged=true --set secrets-store-csi-driver.install=false
+      https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/security/secrets-store-csi/csi-secrets-store-provider-azure-1.1.0.tgz \
+      --set linux.privileged=true --set secrets-store-csi-driver.install=false \
+      --set "linux.providersDir=/var/run/secrets-store-csi-providers"
     ```
 
 1. Set SecurityContextConstraints to allow the CSI driver to run
@@ -59,8 +62,6 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 ## Create Keyvault and a Secret
 
 1. Create a namespace for your application
-
-    > This service principal will be used by your application
 
     ```bash
     oc new-project my-application
@@ -84,9 +85,11 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
 1. Create a Service Principal for the keyvault
 
+  > Note: If this gives you an error, you may need upgrade your Azure CLI to the latest version.
+
     ```bash
-    export SERVICE_PRINCIPAL_CLIENT_SECRET="$(az ad sp create-for-rbac --skip-assignment --name http://secrets-store-test --query 'password' -otsv)"
-    export SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp show --id http://secrets-store-test --query 'appId' -otsv)"
+    export SERVICE_PRINCIPAL_CLIENT_SECRET="$(az ad sp create-for-rbac --skip-assignment --name http://$KEYVAULT_NAME --query 'password' -otsv)"
+    export SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list --display-name http://$KEYVAULT_NAME --query '[0].appId' -otsv)"
     ```
 
 1. Set an Access Policy for the Service Principal

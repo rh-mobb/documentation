@@ -45,6 +45,8 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
       openshift: true
     csi:
       enabled: true
+      daemonSet:
+        providersDir: /var/run/secrets-store-csi-providers
     injector:
       enabled: false
     server:
