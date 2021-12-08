@@ -68,14 +68,15 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 
     ```bash
     helm install -n kube-system csi-secrets-store \
-      secrets-store-csi-driver/secrets-store-csi-driver
+      secrets-store-csi-driver/secrets-store-csi-driver \
+      --set "linux.providersDir=/var/run/secrets-store-csi-providers"
     ```
 
 1. Deploy the AWS provider
 
     ```bash
     kubectl -n kube-system apply -f \
-      https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
+      https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/security/secrets-store-csi/aws-provider-installer.yaml
     ```
 
 1. Check that both Daemonsets are running

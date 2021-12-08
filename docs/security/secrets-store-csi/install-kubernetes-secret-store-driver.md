@@ -30,7 +30,8 @@
 
     ```bash
     helm install -n k8s-secrets-store-csi csi-secrets-store \
-      secrets-store-csi-driver/secrets-store-csi-driver
+      secrets-store-csi-driver/secrets-store-csi-driver \
+      --set "linux.providersDir=/var/run/secrets-store-csi-providers"
     ```
 
 1. Check that the Daemonsets is running
