@@ -12,30 +12,27 @@
 
 1. Get and Login as Service Principal
 
-    ```bash
+```bash
     oc login $APISERVER -u kubeadmin -p $ADMINPW
-
     SPAPPID="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
     SPSECRET="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_secret | base64 --decode)"
     SPTENANT="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_tenant_id | base64 --decode)"
     CLUSTERRG="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_resourcegroup |base64 --decode)"
-
     az login --service-principal -u $SPAPPID -p $SPSECRET -t $SPTENANT
-
-    ```
+```
 
 1. get the name of the LB
 
     ```
-    LB_NAME=$(az network lb list -g $CLUSTERRG --query [].name -o tsv | grep -v 'internal')
-    echo $LB_NAME
+LB_NAME=$(az network lb list -g $CLUSTERRG --query [].name -o tsv | grep -v 'internal')
+echo $LB_NAME
     ```
 
 1. delete the outbound rule
 
     ```
-    az network lb outbound-rule delete -n outbound-rule-v4 \
-      --lb-name $LB_NAME -g $CLUSTERRG
+az network lb outbound-rule delete -n outbound-rule-v4 \
+  --lb-name $LB_NAME -g $CLUSTERRG
     ```
 
 ## Deploy the Operator
@@ -58,7 +55,7 @@ or
 
 1. Deploy the `egress-ipam-operator`
 
-```bash
+    ```bash
 cat << EOF | kubectl apply -f -
 ---
 apiVersion: v1
@@ -81,13 +78,13 @@ spec:
   sourceNamespace: openshift-marketplace
   startingCSV: egressip-ipam-operator.v1.0.8
 EOF
-```
+    ```
 
 ## Configure EgressIP
 
 1. Create an EgressIPAM resource for your cluster.  Update the CIDR to reflect the worker node subnet.
 
-```
+    ```bash
 cat << EOF | kubectl apply -f -
 apiVersion: redhatcop.redhat.io/v1alpha1
 kind: EgressIPAM
@@ -104,11 +101,11 @@ spec:
     matchLabels:
       node-role.kubernetes.io/worker: ""
 EOF
-```
+    ```
 
 1. Create test namespaces
 
-```
+    ```bash
 cat << EOF | kubectl apply -f -
 ---
 apiVersion: v1
@@ -125,13 +122,13 @@ metadata:
   annotations:
     egressip-ipam-operator.redhat-cop.io/egressipam:  egressipam-azure
 EOF
-```
+    ```
 
 1. Check the namespaces have IPs assigned
 
     ```bash
-    kubectl get namespace egressipam-azure-test \
-      egressipam-azure-test-1 -o yaml | grep egressips
+kubectl get namespace egressipam-azure-test \
+  egressipam-azure-test-1 -o yaml | grep egressips
     ```
 
     The output should look like:
@@ -144,7 +141,7 @@ EOF
 1. Check they're actually set as Egress IPs
 
     ```bash
-     oc get netnamespaces | egrep 'NAME|egress'
+oc get netnamespaces | egrep 'NAME|egress'
     ```
 
     The output should look like:
@@ -159,7 +156,7 @@ EOF
 1. Finally check the Host Subnets for Egress IPS
 
     ```bash
-    oc get hostsubnets
+oc get hostsubnets
     ```
 
     The output should look like:
@@ -177,5 +174,7 @@ EOF
 1. If any of these do not give the correct output, it could be because you haven't removed the `egress-lb` from the cluster. Check the logs of the `egress-ipam` operator for errors
 
     ```bash
-     kubectl -n openshift-operators logs deployment/egressip-ipam-operator-controller-manager -c manager -f
+kubectl -n openshift-operators logs \
+  deployment/egressip-ipam-operator-controller-manager \
+  -c manager -f
      ```

@@ -19,7 +19,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 1. Install Azure CLI using homebrew
 
     ```bash
-    brew update && brew install azure-cli
+brew update && brew install azure-cli
     ```
 
 **Linux**
@@ -29,26 +29,26 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 1. Import the Microsoft Keys
 
     ```bash
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
     ```
 
 1. Add the Microsoft Yum Repository
 
     ```bash
-    cat << EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
-    [azure-cli]
-    name=Azure CLI
-    baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-    EOF
+cat << EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
+[azure-cli]
+name=Azure CLI
+baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+EOF
     ```
 
 1. Install Azure CLI
 
     ```bash
-    sudo dnf install -y azure-cli
+sudo dnf install -y azure-cli
     ```
 
 
@@ -57,13 +57,13 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 1. Log into the Azure CLI by running the following and then authorizing through your Web Browser
 
     ```bash
-    az login
+az login
     ```
 
 1. Make sure you have enough Quota (change the location if you're not using `East US`)
 
     ```bash
-    az vm list-usage --location "East US" -o table
+az vm list-usage --location "East US" -o table
     ```
 
     see [Addendum - Adding Quota to ARO account](#Adding-Quota-to-ARO-account) if you have less than `36` Quota left for `Total Regional vCPUs`.
@@ -71,10 +71,10 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 1. Register resource providers
 
     ```bash
-    az provider register -n Microsoft.RedHatOpenShift --wait
-    az provider register -n Microsoft.Compute --wait
-    az provider register -n Microsoft.Storage --wait
-    az provider register -n Microsoft.Authorization --wait
+az provider register -n Microsoft.RedHatOpenShift --wait
+az provider register -n Microsoft.Compute --wait
+az provider register -n Microsoft.Storage --wait
+az provider register -n Microsoft.Authorization --wait
     ```
 
 ### Get Red Hat pull secret
@@ -96,23 +96,23 @@ Set some environment variables to use later, and create an Azure Resource Group.
     > Change the values to suit your environment, but these defaults should work.
 
     ```bash
-    AZR_RESOURCE_LOCATION=eastus
-    AZR_RESOURCE_GROUP=openshift-private
-    AZR_CLUSTER=private-cluster
-    AZR_PULL_SECRET=~/Downloads/pull-secret.txt
-    NETWORK_SUBNET=10.0.0.0/20
-    CONTROL_SUBNET=10.0.0.0/24
-    MACHINE_SUBNET=10.0.1.0/24
-    FIREWALL_SUBNET=10.0.2.0/24
-    JUMPHOST_SUBNET=10.0.3.0/24
+AZR_RESOURCE_LOCATION=eastus
+AZR_RESOURCE_GROUP=openshift-private
+AZR_CLUSTER=private-cluster
+AZR_PULL_SECRET=~/Downloads/pull-secret.txt
+NETWORK_SUBNET=10.0.0.0/20
+CONTROL_SUBNET=10.0.0.0/24
+MACHINE_SUBNET=10.0.1.0/24
+FIREWALL_SUBNET=10.0.2.0/24
+JUMPHOST_SUBNET=10.0.3.0/24
     ```
 
 1. Create an Azure resource group
 
     ```bash
-    az group create \
-      --name $AZR_RESOURCE_GROUP \
-      --location $AZR_RESOURCE_LOCATION
+az group create \
+  --name $AZR_RESOURCE_GROUP \
+  --location $AZR_RESOURCE_LOCATION
     ```
 
 
@@ -123,32 +123,32 @@ Create a virtual network with two empty subnets
 1. Create virtual network
 
     ```bash
-    az network vnet create \
-      --address-prefixes $NETWORK_SUBNET \
-      --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --resource-group $AZR_RESOURCE_GROUP
+az network vnet create \
+  --address-prefixes $NETWORK_SUBNET \
+  --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --resource-group $AZR_RESOURCE_GROUP
     ```
 
 1. Create control plane subnet
 
     ```bash
-    az network vnet subnet create \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --address-prefixes $CONTROL_SUBNET \
-      --service-endpoints Microsoft.ContainerRegistry
+az network vnet subnet create \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  --address-prefixes $CONTROL_SUBNET \
+  --service-endpoints Microsoft.ContainerRegistry
     ```
 
 1. Create machine subnet
 
     ```bash
-    az network vnet subnet create \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-      --address-prefixes $MACHINE_SUBNET \
-      --service-endpoints Microsoft.ContainerRegistry
+az network vnet subnet create \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+  --address-prefixes $MACHINE_SUBNET \
+  --service-endpoints Microsoft.ContainerRegistry
     ```
 
 1. Disable network policies on the control plane subnet
@@ -156,11 +156,11 @@ Create a virtual network with two empty subnets
     > This is required for the service to be able to connect to and manage the cluster.
 
     ```bash
-    az network vnet subnet update \
-      --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --disable-private-link-service-network-policies true
+az network vnet subnet update \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --disable-private-link-service-network-policies true
     ```
 
 ### Firewall + Internet Egress
@@ -172,24 +172,22 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 1. Make sure you have the AZ CLI firewall extensions
 
     ```bash
-    az extension add -n azure-firewall
-    az extension update -n azure-firewall
+az extension add -n azure-firewall
+az extension update -n azure-firewall
     ```
 
 1. Create a firewall network, IP, and firewall
 
     ```bash
-    az network vnet subnet create \
-        -g $AZR_RESOURCE_GROUP \
-        --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-        -n "AzureFirewallSubnet" \
-        --address-prefixes $FIREWALL_SUBNET
-
-    az network public-ip create -g $AZR_RESOURCE_GROUP -n fw-ip \
-      --sku "Standard" --location $AZR_RESOURCE_LOCATION
-
-    az network firewall create -g $AZR_RESOURCE_GROUP \
-      -n aro-private -l $AZR_RESOURCE_LOCATION
+az network vnet subnet create \
+    -g $AZR_RESOURCE_GROUP \
+    --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+    -n "AzureFirewallSubnet" \
+    --address-prefixes $FIREWALL_SUBNET
+az network public-ip create -g $AZR_RESOURCE_GROUP -n fw-ip \
+  --sku "Standard" --location $AZR_RESOURCE_LOCATION
+az network firewall create -g $AZR_RESOURCE_GROUP \
+  -n aro-private -l $AZR_RESOURCE_LOCATION
     ```
 
 1. Configure the firewall
@@ -197,63 +195,65 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 > this may take 15 minutes
 
     ```bash
-    az network firewall ip-config create -g $AZR_RESOURCE_GROUP \
-      -f aro-private -n fw-config --public-ip-address fw-ip \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
-
-    FWPUBLIC_IP=$(az network public-ip show -g $AZR_RESOURCE_GROUP -n fw-ip --query "ipAddress" -o tsv)
-    FWPRIVATE_IP=$(az network firewall show -g $AZR_RESOURCE_GROUP -n aro-private --query "ipConfigurations[0].privateIpAddress" -o tsv)
-
-    echo $FWPUBLIC_IP
-    echo $FWPRIVATE_IP
+az network firewall ip-config create -g $AZR_RESOURCE_GROUP \
+  -f aro-private -n fw-config --public-ip-address fw-ip \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
+FWPUBLIC_IP=$(az network public-ip show -g $AZR_RESOURCE_GROUP -n fw-ip --query "ipAddress" -o tsv)
+FWPRIVATE_IP=$(az network firewall show -g $AZR_RESOURCE_GROUP -n aro-private --query "ipConfigurations[0].privateIpAddress" -o tsv)
+echo $FWPUBLIC_IP
+echo $FWPRIVATE_IP
     ```
 
 1. Create and configure a route table
 
     ```bash
-    az network route-table create -g $AZR_RESOURCE_GROUP --name aro-udr
-
-    az network route-table route create -g $AZR_RESOURCE_GROUP --name aro-udr --route-table-name aro-udr --address-prefix 0.0.0.0/0 --next-hop-type VirtualAppliance --next-hop-ip-address $FWPRIVATE_IP
+az network route-table create -g $AZR_RESOURCE_GROUP --name aro-udr
+az network route-table route create -g $AZR_RESOURCE_GROUP \
+  --name aro-vnet --route-table-name aro-udr \
+  --address-prefix 10.0.0.0/16 --next-hop-type VirtualNetworkGateway
+az network route-table route create -g $AZR_RESOURCE_GROUP \
+  --name aro-udr --route-table-name aro-udr \
+  --address-prefix 0.0.0.0/0 --next-hop-type VirtualAppliance \
+  --next-hop-ip-address $FWPRIVATE_IP
     ```
 
 1. Create application rules for ARO resources
 
     ```bash
-    az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
-      --collection-name 'ARO' \
-      --action allow \
-      --priority 100 \
-      -n 'required' \
-      --source-addresses '*' \
-      --protocols 'http=80' 'https=443' \
-      --target-fqdns 'registry.redhat.io' '*.quay.io' 'sso.redhat.com' 'management.azure.com' 'mirror.openshift.com' 'api.openshift.com' 'quay.io' '*.blob.core.windows.net' 'gcs.prod.monitoring.core.windows.net' 'registry.access.redhat.com' 'login.microsoftonline.com' '*.servicebus.windows.net' '*.table.core.windows.net' 'grafana.com'
+az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
+  --collection-name 'ARO' \
+  --action allow \
+  --priority 100 \
+  -n 'required' \
+  --source-addresses '*' \
+  --protocols 'http=80' 'https=443' \
+  --target-fqdns 'registry.redhat.io' '*.quay.io' 'sso.redhat.com' 'management.azure.com' 'mirror.openshift.com' 'api.openshift.com' 'quay.io' '*.blob.core.windows.net' 'gcs.prod.monitoring.core.windows.net' 'registry.access.redhat.com' 'login.microsoftonline.com' '*.servicebus.windows.net' '*.table.core.windows.net' 'grafana.com'
     ```
 
 1. Create application rules for dockerhub
 
     ```bash
-    az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
-    --collection-name 'Docker' \
-    --action allow \
-    --priority 200 \
-    -n 'docker' \
-    --source-addresses '*' \
-    --protocols 'http=80' 'https=443' \
-    --target-fqdns '*cloudflare.docker.com' '*registry-1.docker.io' 'apt.dockerproject.org' 'auth.docker.io'
+az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
+--collection-name 'Docker' \
+--action allow \
+--priority 200 \
+-n 'docker' \
+--source-addresses '*' \
+--protocols 'http=80' 'https=443' \
+--target-fqdns '*cloudflare.docker.com' '*registry-1.docker.io' 'apt.dockerproject.org' 'auth.docker.io'
     ```
 
 1. Update the subnets to use the Firewall
 
     ```bash
-    az network vnet subnet update -g $AZR_RESOURCE_GROUP \
-      --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
-      --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --route-table aro-udr
-
-    az network vnet subnet update -g $AZR_RESOURCE_GROUP \
-      --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
-      --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-      --route-table aro-udr
+az network vnet subnet update -g $AZR_RESOURCE_GROUP \
+  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  --route-table aro-udr
+az network vnet subnet update -g $AZR_RESOURCE_GROUP \
+  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
+  --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+  --route-table aro-udr
     ```
 
 ### The cluster itself
@@ -263,15 +263,15 @@ This replaces the routes for the cluster to go through the Firewall for egress v
     > This will take between 30 and 45 minutes.
 
     ```bash
-    az aro create \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --name $AZR_CLUSTER \
-      --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-      --apiserver-visibility Private \
-      --ingress-visibility Private \
-      --pull-secret @$AZR_PULL_SECRET
+az aro create \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --name $AZR_CLUSTER \
+  --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+  --apiserver-visibility Private \
+  --ingress-visibility Private \
+  --pull-secret @$AZR_PULL_SECRET
       ```
 
 ### Jump Host
@@ -281,46 +281,47 @@ With the cluster in a private network, we can create a Jump host in order to con
 1. Create jump subnet
 
     ```bash
-    az network vnet subnet create \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --name JumpSubnet \
-      --address-prefixes $JUMPHOST_SUBNET \
-      --service-endpoints Microsoft.ContainerRegistry
+az network vnet subnet create \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --name JumpSubnet \
+  --address-prefixes $JUMPHOST_SUBNET \
+  --service-endpoints Microsoft.ContainerRegistry
     ```
 
 1. Create a jump host
 
     ```
-    az vm create --name jumphost \
-        --resource-group $AZR_RESOURCE_GROUP \
-        --ssh-key-values $HOME/.ssh/id_rsa.pub \
-        --admin-username aro \
-        --image "RedHat:RHEL:8.2:8.2.2021040911" \
-        --subnet JumpSubnet \
-        --public-ip-address jumphost-ip \
-        --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
+az vm create --name jumphost \
+    --resource-group $AZR_RESOURCE_GROUP \
+    --ssh-key-values $HOME/.ssh/id_rsa.pub \
+    --admin-username aro \
+    --image "RedHat:RHEL:8.2:8.2.2021040911" \
+    --subnet JumpSubnet \
+    --public-ip-address jumphost-ip \
+    --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
     ```
 
 1. Save the jump host public IP address
 
     ```bash
-    JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv \
-      --query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
-    echo $JUMP_IP
+JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv \
+  --query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
+echo $JUMP_IP
+    ```
 
 1. ssh to jump host forwarding port 1337 as a socks proxy.
 
     > replace the IP with the IP of the jump box from the previous step.
 
     ```
-    ssh -D 1337 -C -i $HOME/.ssh/id_rsa aro@$JUMP_IP
+ssh -D 1337 -C -i $HOME/.ssh/id_rsa aro@$JUMP_IP
     ```
 
 1. test the socks proxy
 
     ```bash
-    curl --socks5-hostname localhost:1337 http://www.google.com/
+curl --socks5-hostname localhost:1337 http://www.google.com/
     ```
 
 1. Install tools
@@ -358,24 +359,23 @@ With the cluster in a private network, we can create a Jump host in order to con
     > set these variables to match the ones you set at the start.
 
     ```bash
-    AZR_RESOURCE_GROUP=openshift-private
-    AZR_CLUSTER=private-cluster
-
-    APISERVER=$(az aro show \
-      --name $AZR_CLUSTER \
-      --resource-group $AZR_RESOURCE_GROUP \
-      -o tsv --query apiserverProfile.url)
-    echo $APISERVER
+AZR_RESOURCE_GROUP=openshift-private
+AZR_CLUSTER=private-cluster
+APISERVER=$(az aro show \
+  --name $AZR_CLUSTER \
+  --resource-group $AZR_RESOURCE_GROUP \
+  -o tsv --query apiserverProfile.url)
+echo $APISERVER
     ```
 
 1. Get OpenShift credentials
 
     ```bash
-    ADMINPW=$(az aro list-credentials \
-      --name $AZR_CLUSTER \
-      --resource-group $AZR_RESOURCE_GROUP \
-      --query kubeadminPassword \
-      -o tsv)
+ADMINPW=$(az aro list-credentials \
+  --name $AZR_CLUSTER \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --query kubeadminPassword \
+  -o tsv)
     ```
 
 ### Test Access
