@@ -33,10 +33,11 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Set SecurityContextConstraints to allow the CSI driver to run
 
     ```bash
+    oc new-project csi-secrets-store
     oc adm policy add-scc-to-user privileged \
-      system:serviceaccount:kube-system:secrets-store-csi-driver
+      system:serviceaccount:csi-secrets-store:secrets-store-csi-driver
     oc adm policy add-scc-to-user privileged \
-      system:serviceaccount:kube-system:csi-secrets-store-provider-aws
+      system:serviceaccount:csi-secrets-store:csi-secrets-store-provider-aws
     ```
 
 1. Create some environment variables to refer to later
@@ -67,7 +68,8 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Install the secrets store csi driver
 
     ```bash
-    helm install -n kube-system csi-secrets-store \
+    helm upgrade --install --create-namespace -n csi-secrets-store \
+      csi-secrets-store-driver \
       secrets-store-csi-driver/secrets-store-csi-driver \
       --set "linux.providersDir=/var/run/secrets-store-csi-providers"
     ```
@@ -75,7 +77,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Deploy the AWS provider
 
     ```bash
-    kubectl -n kube-system apply -f \
+    kubectl -n csi-secrets-store apply -f \
       https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/security/secrets-store-csi/aws-provider-installer.yaml
     ```
 

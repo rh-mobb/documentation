@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: csi-secrets-store-provider-aws
-  namespace: kube-system
+  namespace: csi-secrets-store
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -34,12 +34,12 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: csi-secrets-store-provider-aws
-  namespace: kube-system
+  namespace: csi-secrets-store
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  namespace: kube-system
+  namespace: csi-secrets-store
   name: csi-secrets-store-provider-aws
   labels:
     app: csi-secrets-store-provider-aws
