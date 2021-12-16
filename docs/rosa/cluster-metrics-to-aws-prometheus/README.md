@@ -18,26 +18,23 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
     ```bash
     export CLUSTER=my-cluster
+    export REGION=us-east-2
     export PROM_NAMESPACE=custom-metrics
     export PROM_SA=aws-prometheus-proxy
-    oc new-project $PROM_NAMESPACE
     export SCRATCH_DIR=/tmp/scratch
+    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
+    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    export AWS_PAGER=""
     mkdir -p $SCRATCH_DIR
     ```
 
 1. Create namespace
 
     ```bash
-    kubectl create namespace $PROM_NAMESPACE
+    oc new-project $PROM_NAMESPACE
     ```
 
 ## Deploy Operators
-
-1. Create namespaces
-
-    ```bash
-    kubectl create resource-locker-operator
-    ```
 
 1. Add the MOBB chart repository to your Helm
 
@@ -55,16 +52,8 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
     ```bash
     helm upgrade -n $PROM_NAMESPACE custom-metrics-operators \
-      mobb/operatorhub --version 0.1.0 --install \
+      mobb/operatorhub --version 0.1.1 --install \
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/rosa-aws-prometheus/files/operatorhub.yaml
-    ```
-
-1. Update the Grafana Operator image
-
-    > Note: This is a temporary fix for the Grafana Operator image until [#609](https://github.com/grafana-operator/grafana-operator/pull/609) is cut into a release.
-
-    ```bash
-    oc -n $PROM_NAMESPACE patch ClusterServiceVersion grafana-operator.v4.0.1 --type merge --patch '{"spec":{"install":{"spec":{"deployments":[{"spec":{"template":{"spec":{"containers":[{"name": "manager","image":"paulczar/grafana-operator:v4.0.1"}]}}}}]}}}}'
     ```
 
 ### Deploy and Configure the AWS Sigv4 Proxy and the Grafana Agent
@@ -93,9 +82,10 @@ EOF
 1. Apply the Policy
 
     ```bash
-    $PROM_POLICY=$(aws iam create-policy --policy-name $PROM_SA-prom \
+    PROM_POLICY=$(aws iam create-policy --policy-name $PROM_SA-prom \
       --policy-document file://$SCRATCH_DIR/PermissionPolicyIngest.json \
       --query 'Policy.Arn' --output text)
+    echo $PROM_POLICY
     ```
 1. Create a Policy for access to AWS CloudWatch
 
@@ -154,9 +144,10 @@ EOF
 1. Apply the Policy
 
     ```bash
-    $CW_POLICY=$(aws iam create-policy --policy-name $PROM_SA-cw \
+    CW_POLICY=$(aws iam create-policy --policy-name $PROM_SA-cw \
       --policy-document file://$SCRATCH_DIR/PermissionPolicyIngest.json \
       --query 'Policy.Arn' --output text)
+    echo $CW_POLICY
     ```
 
 
@@ -177,7 +168,7 @@ cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
         "StringEquals": {
           "${OIDC_PROVIDER}:sub": [
             "system:serviceaccount:${PROM_NAMESPACE}:${PROM_SA}",
-            "system:serviceaccount:${PROM_NAMESPACE}:grafana-serviceaccount",
+            "system:serviceaccount:${PROM_NAMESPACE}:grafana-serviceaccount"
           ]
         }
       }
@@ -202,7 +193,7 @@ EOF
     ```bash
     aws iam attach-role-policy \
       --role-name "prometheus-$CLUSTER" \
-      --policy-arn $PROM_POLICY
+      --policy-arn arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess
 
     aws iam attach-role-policy \
       --role-name "prometheus-$CLUSTER" \
@@ -212,15 +203,17 @@ EOF
 1. Create an AWS Prometheus Workspace
 
     ```bash
-    $PROM_WS=$(aws amp create-workspace --alias $CLUSTER \
-      --query "workspaceId" -- output text)
+    PROM_WS=$(aws amp create-workspace --alias $CLUSTER \
+      --query "workspaceId" --output text)
     echo $PROM_WS
     ```
 
 1. Deploy AWS Prometheus Proxy Helm Chart
 
     ```bash
-    helm upgrade --install -n $PROM_NAMESPACE --set "aws.region=$CLUSTER_REGION" --set "aws.roleArn=$PROM_ROLE" --set "fullnameOverride=$PROM_SA" --set "aws.workspaceId=$PROM_WS" \
+    helm upgrade --install -n $PROM_NAMESPACE --set "aws.region=$REGION" \
+    --set "aws.roleArn=$PROM_ROLE" --set "fullnameOverride=$PROM_SA" \
+    --set "aws.workspaceId=$PROM_WS" \
     --set "grafana-cr.serviceAccountAnnotations.eks\.amazonaws\.com/role-arn=$PROM_ROLE" \
      aws-prometheus-proxy mobb/rosa-aws-prometheus
     ```
@@ -242,5 +235,84 @@ data:
 EOF
     ```
 
+## Verify Metrics are being collected
 
-Access Grafana and check for metrics.
+1. Access Grafana and check for metrics
+
+    ```bash
+    oc get route -n custom-metrics grafana-route -o jsonpath='{.status.ingress[0].host}'
+    ```
+
+1. Browse to the URL provided in the above command and log in with your OpenShift Credentials
+
+1. Enable Admin by hitting sign in and user `admin` and `password`
+
+1. Browse to `/datasources` and verify that `cloudwatch` and `prometheus` are present
+
+    If not, you may have hit a race condition that can be fixed by running the following then trying again
+
+    ```bash
+    kubectl delete grafanadatasources.integreatly.org aws-prometheus-proxy-prometheus
+    helm upgrade --install -n $PROM_NAMESPACE --set "aws.region=$REGION" \
+      --set "aws.roleArn=$PROM_ROLE" --set "fullnameOverride=$PROM_SA" \
+      --set "aws.workspaceId=$PROM_WS" \
+      --set "grafana-cr.serviceAccountAnnotations.eks\.amazonaws\.com/role-arn=$PROM_ROLE" \
+      aws-prometheus-proxy mobb/rosa-aws-prometheus
+    ```
+
+1. Browse to `/dashboards` and select the **custom-metrics**->**NodeExporter / Use Method / Cluster** dashboard
+
+    ![example cluster metrics dashboard](./dashboard.png)
+
+
+## Cleanup
+
+1. Delete the `aws-prometheus-proxy` Helm Release
+
+    ```bash
+    helm delete -n custom-metrics aws-prometheus-proxy
+    ```
+
+1. Delete the `custom-metrics-operators` Helm Release
+
+    ```bash
+    helm delete -n custom-metrics custom-metrics-operators
+    ```
+
+1. Delete the `custom-metrics` namespace
+
+    ```bash
+    kubectl delete namespace custom-metrics
+    ```
+
+1. Detach AWS Role Policies
+
+    ```bash
+    aws iam detach-role-policy \
+      --role-name "prometheus-$CLUSTER" \
+      --policy-arn arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess
+
+    aws iam detach-role-policy \
+      --role-name "prometheus-$CLUSTER" \
+      --policy-arn $CW_POLICY
+    ```
+
+1. Delete the custom Cloud Watch Policy
+
+    ```bash
+    aws iam delete-policy --policy-arn $CW_POLICY
+    ```
+
+1. Delete the AWS Prometheus Role
+
+    ```bash
+    aws iam delete-role --role-name "prometheus-$CLUSTER"
+    ```
+
+
+1. Delete AWS Prometheus Workspace
+
+    ```bash
+    aws amp delete-workspace --workspace-id $PROM_WS
+    ```
+
