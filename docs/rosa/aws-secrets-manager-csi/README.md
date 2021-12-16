@@ -24,7 +24,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
     | jq .spec.serviceAccountIssuer
     ```
 
-    You should see something like the following, if not, you could try adding support yourself like [this](https://cloud.redhat.com/blog/fine-grained-iam-roles-for-openshift-applications), but YMMV.
+    You should see something like the following, if not you should not proceed, instead look to the [Red Hat documentation on creating an STS cluster](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa_creating_a_cluster_with_sts/rosa-sts-creating-a-cluster-quickly.html).
 
     ```
     "https://rh-oidc.s3.us-east-1.amazonaws.com/xxxxxx"
