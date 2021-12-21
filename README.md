@@ -30,6 +30,7 @@
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Federating ROSA metrics to S3](./docs/rosa/federated-metrics)
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
+* [Federating ROSA metrics to AWS Prometheus](./docs/rosa/cluster-metrics-to-aws-prometheus)
 * [Federating ARO metrics to Azure Files](./docs/aro/federated-metrics)
 * [Sending ARO cluster logs to Azure Log Analytics](./docs/aro/clf-to-azure)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
