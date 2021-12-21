@@ -8,126 +8,162 @@ This guide walks through setting up federating Prometheus metrics to S3 storage.
 
 > ToDo - Add Authorization in front of Thanos APIs
 
-## Pre-Prequsites
+## Prerequisites
 
-1. A ROSA cluster
+* [A ROSA cluster deployed with STS](/docs/rosa/sts/)
+* aws CLI
 
-1. clone this repo down locally
+## Set up environment
+
+1. Create environment variables
 
     ```bash
-    git clone https://github.com/rh-mobb/documentation
-    cd docs/rosa/federated-metrics
+    export CLUSTER_NAME=my-cluster
+    export S3_BUCKET=my-thanos-bucket
+    export REGION=us-east-2
+    export NAMESPACE=federated-metrics
+    export SA=aws-prometheus-proxy
+    export SCRATCH_DIR=/tmp/scratch
+    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
+    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    export AWS_PAGER=""
+    rm -rf $SCRATCH_DIR
+    mkdir -p $SCRATCH_DIR
+    ```
+
+1. Create namespace
+
+    ```bash
+    oc new-project $NAMESPACE
     ```
 
 ## AWS Preperation
 
-1. Create IAM user
+1. Create an S3 bucket
 
     ```bash
-    aws iam create-user --user-name thanos-receiver | jq
+    aws s3 mb s3://$S3_BUCKET
     ```
 
-
-1. Update the `s3-policy.json` file with the ARN from the output.
-
-1. Create an S3 storage account
+1. Create a Policy for access to S3
 
     ```bash
-    aws s3 mb s3://my-thanos-metrics
+cat <<EOF > $SCRATCH_DIR/s3-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Statement",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": [
+                "arn:aws:s3:::$S3_BUCKET/*",
+                "arn:aws:s3:::$S3_BUCKET"
+            ]
+        }
+    ]
+}
+EOF
     ```
 
+1. Apply the Policy
+
+    ```bash
+    S3_POLICY=$(aws iam create-policy --policy-name $CLUSTER_NAME-thanos \
+      --policy-document file://$SCRATCH_DIR/s3-policy.json \
+      --query 'Policy.Arn' --output text)
+    echo $S3_POLICY
+    ```
+
+1. Create a Trust Policy
+
+    ```bash
+cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${OIDC_PROVIDER}:sub": [
+            "system:serviceaccount:${NAMESPACE}:${SA}"
+          ]
+        }
+      }
+    }
+  ]
+}
+EOF
+    ```
+
+1. Create Role for AWS Prometheus and CloudWatch
+
+    ```bash
+    S3_ROLE=$(aws iam create-role \
+      --role-name "$CLUSTER-thanos-s3" \
+      --assume-role-policy-document file://$SCRATCH_DIR/TrustPolicy.json \
+      --query "Role.Arn" --output text)
+    echo $S3_ROLE
+    ```
+
+1. Attach the Policies to the Role
+
+    ```bash
+    aws iam attach-role-policy \
+      --role-name "$CLUSTER-thanos-s3" \
+      --policy-arn $S3_POLICY
+    ```
+
+<!--
 1. Grant access for the thanos user to the s3 bucket
 
 aws s3api put-bucket-policy --bucket my-thanos-metrics \
   --policy file://s3-policy.json
 
 1. Get the account key and secret and update in `thanos-store-credentials.yaml`
+-->
 
-```bash
-aws iam create-access-key --user-name thanos-receiver | jq .
-```
+## Deploy Operators
 
-1. Create the Thanos Store Credentials Secret
-
-```bash
-oc new-project thanos-receiver
-oc apply -f thanos-store-credentials.yaml
-```
-
-## Enabling User Workload Monitoring
-
-> See [docs](https://docs.openshift.com/container-platform/4.7/monitoring/enabling-monitoring-for-user-defined-projects.html) for more indepth details.
-
-1. Check the if user workload is enabled (`enabledUserWorkload: true`)
+1. Add the MOBB chart repository to your Helm
 
     ```bash
-    oc -n openshift-monitoring get configmap cluster-monitoring-config  \
-      -o json | jq -r '.data."config.yaml"'
+    helm repo add mobb https://rh-mobb.github.io/helm-charts/
     ```
 
-1. If not, enable User Workload Monitoring by doing one of the following
-
-    **If the `data.config.yaml` is not `{}` you should edit it and add the `enableUserWorkload: true` line manually.**
+1. Update your repositories
 
     ```bash
-    oc -n openshift-monitoring edit configmap cluster-monitoring-config
+    helm repo update
     ```
 
-    **Otherwise if its `{}` then you can run the following command safely.**
+1. Use the `mobb/operatorhub` chart to deploy the needed operators
 
     ```bash
-    oc patch configmap cluster-monitoring-config -n openshift-monitoring \
-       -p='{"data":{"config.yaml": "enableUserWorkload: true\n"}}'
-    ```
-
-1. Check that the User workload monitoring is starting up
-
-    ```bash
-    oc -n openshift-user-workload-monitoring get pods
+    helm upgrade -n $echNAMESPACE custom-metrics-operators \
+      mobb/operatorhub --version 0.1.1 --install \
+      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/rosa-thanos-s3/files/operatorhub.yaml
     ```
 
 ## Deploy Thanos Store Gateway
 
-<!--
+1. Deploy ROSA Thanos S3 Helm Chart
 
-> we should be able to skip this because its in the yaml now.
-
-1. Create a service account for the Thanos Store Gateway
-
-    ```bash
-    oc -n thanos-receiver create serviceaccount thanos-store-gateway
-    oc -n thanos-receiver adm policy add-scc-to-user anyuid -z thanos-store-gateway
     ```
--->
-
-1. Deploy the thanos store
-
-    ```bash
-    oc apply -n thanos-receiver -f thanos-store.yaml
-    ```
-
-1. Deploy Thanos Receiver
-
-    > Note we should be securing this via [OIDC / Bearer Tokens](https://www.openshift.com/blog/federated-prometheus-with-thanos-receive)
-
-    ```bash
-    oc -n thanos-receiver apply -f thanos-receive.yaml
-    ```
-
-1. Append remoteWrite settings to the cluster-monitoring config to forward cluster metrics to Thanos.
-
-    ```bash
-    oc -n openshift-monitoring edit configmaps cluster-monitoring-config
-    ```
-
-    ```yaml
-      data:
-        config.yaml: |
-          ...
-          prometheusK8s:
-          ...
-            remoteWrite:
-              - url: "http://thanos-receive.thanos-receiver.svc.cluster.local:9091/api/v1/receive"
+    helm upgrade -n $NAMESPACE rosa-thanos-s3 --install mobb/rosa-thanos-s3 \
+      --set "aws.roleArn=$ROLE_ARN" \
+      --set "rosa.clusterName=$CLUSTER_NAME"
     ```
 
 1. Append remoteWrite settings to the user-workload-monitoring config to forward user workload metrics to Thanos.
@@ -142,7 +178,18 @@ oc apply -f thanos-store-credentials.yaml
     **If the config doesn't exist run:**
 
     ```bash
-    oc apply -f user-workload-monitoring-config.yaml
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+data:
+  config.yaml: |
+    kubernetes:
+      remoteWrite:
+        - url: "http://thanos-receive.${NAMESPACE}.svc.cluster.local:9091/api/v1/receive"
+EOF
     ```
 
     **Otherwise update it with the following:**
@@ -162,38 +209,7 @@ oc apply -f thanos-store-credentials.yaml
               - url: "http://thanos-receive.thanos-receiver.svc.cluster.local:9091/api/v1/receive"
     ```
 
-
-## Deploy Thanos Queryier
-
-1. Deploy the thanos querier
-
-    ```bash
-    oc apply -n thanos-receiver -f thanos-querier.yaml
-    ```
-
-## Deploy Grafana
-
-1. create the grafana operator in the thanos-receiver namespace
-
-    ```bash
-    oc apply -n thanos-receiver -f thanos-grafana-operator.yaml
-    ```
-
-1. create grafana instance and datasource for thanos
-
-    > Change the password to something less default.
-
-    ```bash
-    oc -n thanos-receiver apply -f thanos-grafana.yaml
-    ```
-
-1. load up cluster metrics dashboards
-
-    > Note: these were generated by the [generate-dashboards.sh](generate-dashboards.sh) script.
-
-    ```bash
-    oc -n thanos-receiver apply -f dashboards.yaml
-    ```
+## Check metrics are flowing by logging into Grafana
 
 1. get the Route URL for Grafana (remember its https) and login using username `root` and the password you updated to (or the default of `secret`).
 
@@ -201,6 +217,6 @@ oc apply -f thanos-store-credentials.yaml
     oc -n thanos-receiver get route grafana-route
     ```
 
-1. Once logged in go to **Dashboards->Manage** and expand the **thanos-receiver** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
+1. Once logged in go to **Dashboards->Manage** and expand the **federated-metrics** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
 
 ![screenshot of grafana with federated cluster metrics](./grafana-metrics.png)
