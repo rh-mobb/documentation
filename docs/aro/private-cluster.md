@@ -207,56 +207,54 @@ echo $FWPRIVATE_IP
 1. Create and configure a route table
 
     ```bash
-az network route-table create -g $AZR_RESOURCE_GROUP --name aro-udr
-az network route-table route create -g $AZR_RESOURCE_GROUP \
-  --name aro-vnet --route-table-name aro-udr \
-  --address-prefix 10.0.0.0/16 --next-hop-type VirtualNetworkGateway
-az network route-table route create -g $AZR_RESOURCE_GROUP \
-  --name aro-udr --route-table-name aro-udr \
-  --address-prefix 0.0.0.0/0 --next-hop-type VirtualAppliance \
-  --next-hop-ip-address $FWPRIVATE_IP
+    az network route-table create -g $AZR_RESOURCE_GROUP --name aro-udr
+
+    sleep 10
+
+    az network route-table route create -g $AZR_RESOURCE_GROUP --name aro-udr \
+      --route-table-name aro-udr --address-prefix 0.0.0.0/0 \
+      --next-hop-type VirtualAppliance --next-hop-ip-address $FWPRIVATE_IP
+
+    az network route-table route create -g $AZR_RESOURCE_GROUP --name aro-vnet \
+      --route-table-name aro-udr --address-prefix 10.0.0.0/16 --name local-route \
+      --next-hop-type VirtualNetworkGateway
     ```
 
-1. Create application rules for ARO resources
+1. Create firewall rules for ARO resources
 
-    ```bash
-az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
-  --collection-name 'ARO' \
-  --action allow \
-  --priority 100 \
-  -n 'required' \
-  --source-addresses '*' \
-  --protocols 'http=80' 'https=443' \
-  --target-fqdns 'registry.redhat.io' '*.quay.io' 'sso.redhat.com' 'management.azure.com' 'mirror.openshift.com' 'api.openshift.com' 'quay.io' '*.blob.core.windows.net' 'gcs.prod.monitoring.core.windows.net' 'registry.access.redhat.com' 'login.microsoftonline.com' '*.servicebus.windows.net' '*.table.core.windows.net' 'grafana.com'
-    ```
+    Pick one of the following:
 
-1. Create application rules for dockerhub
+    * Create a Network Rule to allow all egress traffic
 
-    ```bash
-az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
---collection-name 'Docker' \
---action allow \
---priority 200 \
--n 'docker' \
---source-addresses '*' \
---protocols 'http=80' 'https=443' \
---target-fqdns '*cloudflare.docker.com' '*registry-1.docker.io' 'apt.dockerproject.org' 'auth.docker.io'
-    ```
+        ```bash
+        az network firewall network-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
+            --collection-name 'allow-https' --name allow-all \
+            --action allow --priority 100 \
+            --source-addresses '*' --dest-addr '*' \
+            --protocols 'Any' --destination-ports 1-65535
+        ```
 
-1. Update the subnets to use the Firewall
+    * Create Application Rules to allow to a restricted set of destinations
 
-    ```bash
-az network vnet subnet update -g $AZR_RESOURCE_GROUP \
-  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-  --route-table aro-udr
-az network vnet subnet update -g $AZR_RESOURCE_GROUP \
-  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
-  --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-  --route-table aro-udr
-    ```
+        ```bash
+        az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
+        --collection-name 'ARO' \
+        --action allow \
+        --priority 100 \
+        -n 'required' \
+        --source-addresses '*' \
+        --protocols 'http=80' 'https=443' \
+        --target-fqdns 'registry.redhat.io' '*.quay.io' 'sso.redhat.com' 'management.azure.com' 'mirror.openshift.com' 'api.openshift.com' 'quay.io' '*.blob.core.windows.net' 'gcs.prod.monitoring.core.windows.net' 'registry.access.redhat.com' 'login.microsoftonline.com' '*.servicebus.windows.net' '*.table.core.windows.net' 'grafana.com'
 
-### The cluster itself
+        az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
+        --collection-name 'Docker' \
+        --action allow \
+        --priority 200 \
+        -n 'docker' \
+        --source-addresses '*' \
+        --protocols 'http=80' 'https=443' \
+        --target-fqdns '*cloudflare.docker.com' '*registry-1.docker.io' 'apt.dockerproject.org' 'auth.docker.io'
+        ```
 
 1. Create the cluster
 
@@ -273,6 +271,21 @@ az aro create \
   --ingress-visibility Private \
   --pull-secret @$AZR_PULL_SECRET
       ```
+
+1. Update the subnets to use the Firewall
+
+    Once the cluster is deployed successfully you can update the subnets to use the firewall instead of the default outbound loadbalancer rule.
+
+    ```bash
+az network vnet subnet update -g $AZR_RESOURCE_GROUP \
+  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  --route-table aro-udr
+az network vnet subnet update -g $AZR_RESOURCE_GROUP \
+  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
+  --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+  --route-table aro-udr
+    ```
 
 ### Jump Host
 
@@ -327,23 +340,20 @@ curl --socks5-hostname localhost:1337 http://www.google.com/
 1. Install tools
 
     ```bash
-    sudo yum install -y gcc libffi-devel python3-devel openssl-devel jq
-
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    echo -e "[azure-cli]
-    name=Azure CLI
-    baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
-    sudo dnf install -y microsoft-azure-cli
-
-    wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-
-    mkdir openshift
-    tar -zxvf openshift-client-linux.tar.gz -C openshift
-    sudo install openshift/oc /usr/local/bin/oc
-    sudo install openshift/kubectl /usr/local/bin/kubectl
+sudo yum install -y gcc libffi-devel python3-devel openssl-devel jq
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+echo -e "[azure-cli]
+name=Azure CLI
+baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
+sudo yum install -y azure-cli
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+mkdir openshift
+tar -zxvf openshift-client-linux.tar.gz -C openshift
+sudo install openshift/oc /usr/local/bin/oc
+sudo install openshift/kubectl /usr/local/bin/kubectl
     ```
 
 1. Wait until the ARO cluster is fully provisioned.
@@ -418,7 +428,7 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
       --name $AZR_RESOURCE_GROUP
     ```
 
-## Adendum
+## Addendum
 
 ### Adding Quota to ARO account
 
