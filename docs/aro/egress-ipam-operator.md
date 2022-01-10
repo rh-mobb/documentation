@@ -12,19 +12,19 @@
 
 1. Get and Login as Service Principal
 
-```bash
+    ```bash
     oc login $APISERVER -u kubeadmin -p $ADMINPW
     SPAPPID="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
     SPSECRET="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_secret | base64 --decode)"
     SPTENANT="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_tenant_id | base64 --decode)"
     CLUSTERRG="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_resourcegroup |base64 --decode)"
     az login --service-principal -u $SPAPPID -p $SPSECRET -t $SPTENANT
-```
+    ```
 
 1. get the name of the LB
 
     ```
-LB_NAME=$(az network lb list -g $CLUSTERRG --query [].name -o tsv | grep -v 'internal')
+LB_NAME=$(az network lb list --query '[].name' -o tsv | grep -v 'internal')
 echo $LB_NAME
     ```
 
@@ -76,7 +76,7 @@ spec:
   name: egressip-ipam-operator
   source: community-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: egressip-ipam-operator.v1.0.8
+  startingCSV: egressip-ipam-operator.v1.2.2
 EOF
     ```
 
@@ -113,14 +113,14 @@ kind: Namespace
 metadata:
   name: egressipam-azure-test
   annotations:
-    egressip-ipam-operator.redhat-cop.io/egressipam:  egressipam-azure
+    egressip-ipam-operator.redhat-cop.io/egressipam: egressipam-azure
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: egressipam-azure-test-1
   annotations:
-    egressip-ipam-operator.redhat-cop.io/egressipam:  egressipam-azure
+    egressip-ipam-operator.redhat-cop.io/egressipam: egressipam-azure
 EOF
     ```
 

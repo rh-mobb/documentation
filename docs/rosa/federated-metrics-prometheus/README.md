@@ -23,75 +23,52 @@ This guide is heavily influenced by Tommer Amber's [guide](https://medium.com/@t
     export NAMESPACE=custom-monitoring
     ```
 
-## Create a Namespace to work in
+## Prepare Environment
 
-```bash
-kubectl create namespace ${NAMESPACE}
-```
+1. Set the following environment variables
 
-## Install Prometheus Operator
+    ```bash
+    export NAMESPACE=federated-metrics
+    ```
 
-> If you prefer you can do this from the Operator Hub in the cluster console itself.
+1. Create the namespace
 
-### Create a OperatorGroup and Subscription for the Prometheus Operator
+    ```bash
+    oc new-project $NAMESPACE
+    ```
 
-```bash
-cat << EOF | kubectl apply -f -
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: federated-metrics
-  namespace: ${NAMESPACE}
-spec:
-  targetNamespaces:
-  - ${NAMESPACE}
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: prometheus
-  namespace: ${NAMESPACE}
-spec:
-  channel: beta
-  installPlanApproval: Automatic
-  name: prometheus
-  source: community-operators
-  sourceNamespace: openshift-marketplace
-EOF
-```
+1. Add the MOBB chart repository to your Helm
 
-## Install Grafana Operator
+    ```bash
+    helm repo add mobb https://rh-mobb.github.io/helm-charts/
+    ```
 
-> If you prefer you can do this from the Operator Hub in the cluster console itself.
+1. Update your repositories
 
-### Create a Subscription for the Grafana Operator
+    ```bash
+    helm repo update
+    ```
 
-```bash
-cat << EOF | kubectl apply -f -
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: operatorhubio-catalog
-  namespace: ${NAMESPACE}
-spec:
-  sourceType: grpc
-  image: quay.io/operator-framework/upstream-community-operators:latest
-  displayName: Community Operators
-  publisher: OperatorHub.io
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: grafana-operator
-  namespace: ${NAMESPACE}
-spec:
-  channel: v4
-  name: grafana-operator
-  installPlanApproval: Automatic
-  source: operatorhubio-catalog
-  sourceNamespace: ${NAMESPACE}
-EOF
-```
+1. Use the `mobb/operatorhub` chart to deploy the needed operators
+
+    ```bash
+    helm upgrade -n $NAMESPACE federated-metrics-operators \
+      mobb/operatorhub --version 0.1.0 --install \
+      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/rosa-federated-prometheus/files/operatorhub.yaml
+    ```
+
+1. Wait until the two operators are running
+
+    ```bash
+    watch kubectl get pods -n $NAMESPACE
+    ```
+
+    ```
+    NAME                                                   READY   STATUS    RESTARTS   AGE
+    grafana-operator-controller-manager-775f8d98c9-822h7   2/2     Running   0          7m33s
+    operatorhubio-dtb2v                                    1/1     Running   0          8m32s
+    prometheus-operator-5cb6844699-t7wfd                   1/1     Running   0          7m29s
+    ```
 
 ## Deploy the monitoring stack
 
@@ -110,22 +87,10 @@ EOF
     prometheus-operator-fc85b9bd-9klsq                     1/1     Running   0          3m10s
     ```
 
-1. Add The mobb.ninja repository to your local Helm
-
-    ```bash
-    helm repo add mobb https://rh-mobb.github.io/helm-charts/
-    ```
-
-1. Update your Repositories
-
-    ```bash
-    helm repo update
-    ```
-
 1. Install the `mobb/rosa-federated-prometheus` Helm Chart
 
     ```bash
-    helm install -n $NAMESPACE monitoring \
+    helm upgrade --install -n $NAMESPACE monitoring \
       --set grafana-cr.basicAuthPassword='mypassword' \
       --set fullnameOverride='monitoring' \
       --version 0.5.1 \
