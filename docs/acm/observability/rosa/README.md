@@ -14,7 +14,7 @@ This document will take you through deploying ACM Observability on an STS enable
 1. Set environment variables
 
 ```bash
-    export CLUSTER_NAME=mobb-infra
+    export CLUSTER_NAME=my-cluster
     export S3_BUCKET=$CLUSTER_NAME-acm-observability
     export REGION=us-east-2
     export NAMESPACE=open-cluster-management-observability
