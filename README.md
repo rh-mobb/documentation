@@ -25,6 +25,10 @@
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
 
+## Advanced Cluster Manager (ACM)
+
+* [Deploy ACM Observability to a ROSA cluster](./docs/acm/observability/rosa)
+
 ## Observability
 
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
