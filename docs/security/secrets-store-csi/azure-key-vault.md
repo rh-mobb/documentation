@@ -28,7 +28,6 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
 ## Deploy Azure Key Store CSI
 
-<!--
 1. Add the Azure Helm Repository
 
     ```bash
@@ -41,15 +40,15 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     ```bash
     helm repo update
     ```
--->
 
 1. Install the Azure Key Vault CSI provider
 
     ```bash
     helm install -n k8s-secrets-store-csi azure-csi-provider \
-      https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/security/secrets-store-csi/csi-secrets-store-provider-azure-1.1.0.tgz \
+      csi-secrets-store-provider-azure/csi-secrets-store-provider-azure \
       --set linux.privileged=true --set secrets-store-csi-driver.install=false \
-      --set "linux.providersDir=/var/run/secrets-store-csi-providers"
+      --set "linux.providersDir=/var/run/secrets-store-csi-providers" \
+      --version=v1.0.1
     ```
 
 1. Set SecurityContextConstraints to allow the CSI driver to run
