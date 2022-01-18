@@ -94,6 +94,12 @@ _You'll need to have an AWS account to configure the CLI against._
     }
     ```
 
+4. If this is a brand new AWS account that has never had a AWS Load Balancer installed in it, you should run the following
+
+    ```bash
+    aws iam create-service-linked-role --aws-service-name \
+    "elasticloadbalancing.amazonaws.com"
+    ```
 
 ### Get a Red Hat Offline Access Token
 
