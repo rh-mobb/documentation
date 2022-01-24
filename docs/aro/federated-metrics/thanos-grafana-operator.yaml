@@ -7,9 +7,16 @@ metadata:
     operators.coreos.com/grafana-operator.thanos-receiver: ''
 spec:
   name: grafana-operator
-  channel: alpha
+  channel: v4
   source: community-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: grafana-operator.v3.10.1
   installPlanGeneration: 1
   installPlanApproval: Automatic
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: grafana-operator
+spec:
+  targetNamespaces:
+    - thanos-receiver
