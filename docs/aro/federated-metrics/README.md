@@ -21,6 +21,17 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     cd docs/aro/federated-metrics
     ```
 
+1. Set some environment variables to use throughout
+
+    > **Note: AZR_STORAGE_ACCOUNT_NAME must be unique**
+
+    ```bash
+    export AZR_RESOURCE_LOCATION=eastus
+    export AZR_RESOURCE_GROUP=openshift
+    export AZR_STORAGE_ACCOUNT_NAME=arofederatedmetrics
+    export NAMESPACE=aro-thanos-af
+    ```
+
 ## Azure Preperation
 
 1. Create an Azure storage account
@@ -29,9 +40,9 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     ```bash
     az storage account create \
-      --name thanosreceiver \
-      --resource-group openshift \
-      --location eastus \
+      --name $AZR_STORAGE_ACCOUNT_NAME \
+      --resource-group $AZR_RESOURCE_GROUP \
+      --location $AZR_RESOURCE_LOCATION \
       --sku Standard_RAGRS \
       --kind StorageV2
     ```
@@ -39,14 +50,55 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 1. Get the account key and update the secret in `thanos-store-credentials.yaml`
 
     ```bash
-    az storage account keys list -g openshift -n thanosreceiver
+    AZR_STORAGE_KEY=$(az storage account keys list -g $AZR_RESOURCE_GROUP \
+      -n $AZR_STORAGE_ACCOUNT_NAME --query "[0].value" -o tsv)
     ```
 
-1. Create the Thanos Store Credentials Secret
+1. Create a namespace to use
 
     ```bash
-    oc new-project thanos-receiver
-    oc apply -f thanos-store-credentials.yaml
+    oc new-project $NAMESPACE
+    ```
+
+1. Add the MOBB chart repository to your Helm
+
+    ```bash
+    helm repo add mobb https://rh-mobb.github.io/helm-charts/
+    ```
+
+1. Update your repositories
+
+    ```bash
+    helm repo update
+    ```
+
+1. Use the `mobb/operatorhub` chart to deploy the needed operators
+
+    ```bash
+    helm upgrade -n $NAMESPACE federated-metrics-operators \
+      mobb/operatorhub --version 0.1.0 --install \
+      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/operatorhub.yaml
+    ```
+
+1. wait until both `community-operators` and `grafana-operator-controller-mananger` pods are running:
+
+    ```bash
+    oc get pods -n $NAMESPACE
+    ```
+
+    ```
+NAME                                                   READY   STATUS    RESTARTS   AGE
+community-operators-6ql9s                              1/1     Running   0          87s
+grafana-operator-controller-manager-76dbc474b6-nhh97   2/2     Running   0          71s
+    ```
+
+1. Deploy ROSA Thanos S3 Helm Chart (mobb/aro-thanos-af)
+
+    ```bash
+helm upgrade -n $NAMESPACE aro-thanos-af --install mobb/aro-thanos-af \
+  --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
+  --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
+  --set "aro.storageContainer=$CLUSTER_NAME"
     ```
 
 ## Enabling User Workload Monitoring
@@ -80,50 +132,6 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     oc -n openshift-user-workload-monitoring get pods
     ```
 
-## Deploy Thanos Store Gateway
-
-<!--
-
-> we should be able to skip this because its in the yaml now.
-
-1. Create a service account for the Thanos Store Gateway
-
-    ```bash
-    oc -n thanos-receiver create serviceaccount thanos-store-gateway
-    oc -n thanos-receiver adm policy add-scc-to-user anyuid -z thanos-store-gateway
-    ```
--->
-
-1. Deploy the thanos store
-
-    ```bash
-    oc apply -f thanos-store.yaml
-    ```
-
-1. Deploy Thanos Receiver
-
-    > Note we should be securing this via [OIDC / Bearer Tokens](https://www.openshift.com/blog/federated-prometheus-with-thanos-receive)
-
-    ```bash
-    oc -n thanos-receiver apply -f thanos-receive.yaml
-    ```
-
-1. Append remoteWrite settings to the cluster-monitoring config to forward cluster metrics to Thanos.
-
-    ```bash
-    oc -n openshift-monitoring edit configmaps cluster-monitoring-config
-    ```
-
-    ```yaml
-      data:
-        config.yaml: |
-          ...
-          prometheusK8s:
-          ...
-            remoteWrite:
-              - url: "http://thanos-receive.thanos-receiver.svc.cluster.local:9091/api/v1/receive"
-    ```
-
 1. Append remoteWrite settings to the user-workload-monitoring config to forward user workload metrics to Thanos.
 
     **Check if the User Workload Config Map exists:**
@@ -136,7 +144,18 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     **If the config doesn't exist run:**
 
     ```bash
-    oc apply -f user-workload-monitoring-config.yaml
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+data:
+  config.yaml: |
+    kubernetes:
+      remoteWrite:
+        - url: "http://thanos-receive.$NAMESPACE.svc.cluster.local:9091/api/v1/receive"
+EOF
     ```
 
     **Otherwise update it with the following:**
@@ -156,45 +175,44 @@ This guide shows how to set up Thanos to federate both System and User Workload 
               - url: "http://thanos-receive.thanos-receiver.svc.cluster.local:9091/api/v1/receive"
     ```
 
-
-## Deploy Thanos Queryier
-
-1. Deploy the thanos querier
-
-    ```bash
-    oc apply -f thanos-querier.yaml
-    ```
-
-## Deploy Grafana
-
-1. create the grafana operator in the thanos-receiver namespace
-
-    ```bash
-    oc apply -f thanos-grafana-operator.yaml
-    ```
-
-1. create grafana instance and datasource for thanos
-
-    > Change the password to something less default.
-
-    ```bash
-    oc -n thanos-receiver apply -f thanos-grafana.yaml
-    ```
-
-1. load up cluster metrics dashboards
-
-    > Note: these were generated by the [generate-dashboards.sh](generate-dashboards.sh) script.
-
-    ```bash
-    oc -n thanos-receiver apply -f dashboards.yaml
-    ```
+## Validate Grafana is installed and seeing metrics from Azure Files
 
 1. get the Route URL for Grafana (remember its https) and login using username `root` and the password you updated to (or the default of `secret`).
 
     ```bash
-    oc -n thanos-receiver get route grafana-route
+    oc -n $NAMESPACE get route grafana-route
     ```
 
 1. Once logged in go to **Dashboards->Manage** and expand the **thanos-receiver** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
 
 ![screenshot of grafana with federated cluster metrics](./grafana-metrics.png)
+
+> **Note:   If it complains about a missing datasource run the following: `oc annotate -n $NAMESPACE grafanadatasource aro-thanos-af-prometheus "retry=1"`**
+
+## Cleanup
+
+1. Uninstall the `rosa-thanos-af` chart
+
+    ```bash
+    helm delete -n $NAMESPACE rosa-thanos-af
+    ```
+
+1. Uninstall the `federated-metrics-operators` chart
+
+    ```bash
+    helm delete -n $NAMESPACE federated-metrics-operators
+    ```
+
+1. Delete the `rosa-thanos-af` namespace
+
+    ```bash
+    oc delete namespace $NAMESPACE
+    ```
+
+1. Delete the storage account
+
+    ```bash
+az storage account delete \
+  --name $AZR_STORAGE_ACCOUNT_NAME \
+  --resource-group $AZR_RESOURCE_GROUP
+    ```
