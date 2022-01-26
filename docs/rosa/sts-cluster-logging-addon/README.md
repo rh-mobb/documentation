@@ -2,7 +2,7 @@
 
 Currently, the logging-addon is not working on ROSA STS clusters. This is due to permissions missing from the Operator itself. This is a work around to provide credentials to the addon.
 
-> **Note:** This is not a Red Hat SRE approved workaround, please consult Red Hat support before using this outside of testing purposes.
+> **Note:** Please see the official [Red Hat KCS](https://access.redhat.com/solutions/6485391) for more information.
 
 ## Prerequisites
 
@@ -86,10 +86,6 @@ metadata:
 stringData:
   aws_access_key_id: ${AWS_ID}
   aws_secret_access_key: ${AWS_KEY}
-  credentials: |
-    [default]
-    aws_access_key_id = ${AWS_ID}
-    aws_secret_access_key = ${AWS_KEY}
 EOF
     ```
 
