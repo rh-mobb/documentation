@@ -26,6 +26,17 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     export NAMESPACE=aro-thanos-af
     ```
 
+1. Set some environment variables to use throughout
+
+    > **Note: AZR_STORAGE_ACCOUNT_NAME must be unique**
+
+    ```bash
+    export AZR_RESOURCE_LOCATION=eastus
+    export AZR_RESOURCE_GROUP=openshift
+    export AZR_STORAGE_ACCOUNT_NAME=arofederatedmetrics
+    export NAMESPACE=aro-thanos-af
+    ```
+
 ## Azure Preperation
 
 1. Create an Azure storage account
@@ -34,9 +45,9 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     ```bash
     az storage account create \
-      --name thanosreceiver \
-      --resource-group openshift \
-      --location eastus \
+      --name $AZR_STORAGE_ACCOUNT_NAME \
+      --resource-group $AZR_RESOURCE_GROUP \
+      --location $AZR_RESOURCE_LOCATION \
       --sku Standard_RAGRS \
       --kind StorageV2
     ```
@@ -144,34 +155,33 @@ az storage account delete \
 
 ### Enabling User Workload Monitoring
 
-1. Deploy the thanos store
+> See [docs](https://docs.openshift.com/container-platform/4.7/monitoring/enabling-monitoring-for-user-defined-projects.html) for more indepth details.
+
+1. Check the cluster-monitoring-config ConfigMap object
 
     ```bash
-    oc apply -f thanos-store.yaml
+    oc -n openshift-monitoring get configmap cluster-monitoring-config -o yaml
     ```
 
-1. Deploy Thanos Receiver
+1. Enable User Workload Monitoring by doing one of the following
 
-    > Note we should be securing this via [OIDC / Bearer Tokens](https://www.openshift.com/blog/federated-prometheus-with-thanos-receive)
+    **If the `data.config.yaml` is not `{}` you should edit it and add the `enableUserWorkload: true` line manually.**
 
     ```bash
-    oc -n thanos-receiver apply -f thanos-receive.yaml
+    oc -n openshift-monitoring edit configmap cluster-monitoring-config
     ```
 
-1. Append remoteWrite settings to the cluster-monitoring config to forward cluster metrics to Thanos.
+    **Otherwise if its `{}` then you can run the following command safely.**
 
     ```bash
-    oc -n openshift-monitoring edit configmaps cluster-monitoring-config
+    oc patch configmap cluster-monitoring-config -n openshift-monitoring \
+       -p='{"data":{"config.yaml": "enableUserWorkload: true\n"}}'
     ```
 
-    ```yaml
-      data:
-        config.yaml: |
-          ...
-          prometheusK8s:
-          ...
-            remoteWrite:
-              - url: "http://thanos-receive.thanos-receiver.svc.cluster.local:9091/api/v1/receive"
+1. Check that the User workload monitoring is starting up
+
+    ```bash
+    oc -n openshift-user-workload-monitoring get pods
     ```
 
 1. Append remoteWrite settings to the user-workload-monitoring config to forward user workload metrics to Thanos.
@@ -186,7 +196,18 @@ az storage account delete \
     **If the config doesn't exist run:**
 
     ```bash
-    oc apply -f user-workload-monitoring-config.yaml
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+data:
+  config.yaml: |
+    kubernetes:
+      remoteWrite:
+        - url: "http://thanos-receive.$NAMESPACE.svc.cluster.local:9091/api/v1/receive"
+EOF
     ```
 
     **Otherwise update it with the following:**

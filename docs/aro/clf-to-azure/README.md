@@ -75,6 +75,8 @@ EOF
 
 1. Create resource group
 
+    > **If you want to reuse the same group as your cluster skip this step**
+
     ```bash
     az group create -n $AZR_RESOURCE_GROUP -l $AZR_RESOURCE_LOCATION
     ```

@@ -11,7 +11,6 @@ If you prefer a more visual medium, you can watch [Paul Czarkowski](https://twit
 <iframe width="560" height="315" src="https://www.youtube.com/embed/VYfCltxoh40" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
-
 ## Prerequisites
 
 ### Azure CLI
@@ -87,9 +86,9 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 > This step is optional, but highly recommended
 
-1. Log into cloud.redhat.com
+1. Log into <https://console.redhat.com>
 
-1. Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned
+1. Browse to <https://console.redhat.com/openshift/install/azure/aro-provisioned>
 
 1. click the **Download pull secret** button and remember where you saved it, you'll reference it later.
 
