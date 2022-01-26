@@ -54,6 +54,7 @@
 ## Applications
 
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
+* [Deploying 3scale API Management to ROSA/OSD](./docs/app-services/3scale)
 
 
 ## Operations - DevOps/GitOps
