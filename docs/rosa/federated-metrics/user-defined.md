@@ -1,6 +1,6 @@
-# User Workload Monitoring on Azure RedHat OpenShift
+# User Workload Monitoring on Azure Red Hat OpenShift
 
-In Azure RedHat OpenShift (ARO) Monitoring for User Defined Projects is disabled by default. Follow these instructions to enable it.
+In Azure Red Hat OpenShift (ARO) Monitoring for User Defined Projects is disabled by default. Follow these instructions to enable it.
 
 ## Enabling
 

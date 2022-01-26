@@ -1,6 +1,6 @@
 # ARO Quickstart - Private Cluster with JumpHost
 
-A Quickstart guide to deploying a Private Azure RedHat OpenShift cluster.
+A Quickstart guide to deploying a Private Azure Red Hat OpenShift cluster.
 
 > Once the cluster is running you will need a way to access the private network that ARO is deployed into.
 

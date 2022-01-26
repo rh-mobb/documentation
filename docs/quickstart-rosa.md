@@ -1,6 +1,6 @@
 # ROSA Quickstart
 
-A Quickstart guide to deploying a RedHat OpenShift cluster on AWS.
+A Quickstart guide to deploying a Red Hat OpenShift cluster on AWS.
 
 Author: [Steve Mirman](https://twitter.com/stevemirman)
 
