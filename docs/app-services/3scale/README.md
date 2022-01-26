@@ -29,7 +29,7 @@ export WILDCARD_DOMAIN=<your-wildcard-domain-here>
 
     For my example, I'll be using the following variables:
 
-```bash
+    ```bash
     export S3_BUCKET=mobb-3scale-bucket
     export REGION=us-east-1
     export S3_IAM_USER_NAME=mobb-3scale-user
@@ -37,13 +37,13 @@ export WILDCARD_DOMAIN=<your-wildcard-domain-here>
     export AWS_PAGER=""
     export PROJECT_NAME=3scale-example
     export WILDCARD_DOMAIN=3scale.example.com
-```
+    ```
 
 2. Create an S3 bucket
 
-```bash
-    aws s3 mb s3://$S3_BUCKET
-```
+    ```bash
+aws s3 mb s3://$S3_BUCKET
+    ```
 
 3. Apply the proper S3 bucket CORS configuration
 
@@ -123,9 +123,9 @@ oc new-project $PROJECT_NAME
 
 10. Click "Install" and select the project you wish to install the operator into.
 
-    ![Operator Installation Flow](./Operator-Install.png)
-
     > For this example, I'm deploying into the "3scale-example" project that I have just created.
+
+    ![Operator Installation Flow](./Operator-Install.png)
 
 11. Once the 3Scale operator successfully installs, return to your terminal.
 
@@ -134,7 +134,7 @@ oc new-project $PROJECT_NAME
 12. Create a secret that contains the Amazon S3 configuration.
 
     ```bash
-echo << EOF | oc create -f -
+echo << EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -152,7 +152,7 @@ EOF
 13. Create an APIManager custom resource
 
     ```bash
-cat << EOF | oc create -f -
+cat << EOF | oc apply -f -
 echo 'apiVersion: apps.3scale.net/v1alpha1
 kind: APIManager
 metadata:
@@ -170,8 +170,8 @@ EOF
 14. Once the APIManager instance becomes available, you can login to the 3Scale Admin (located at https://3scale-admin.$WILDCARD_DOMAIN) using the credentials from the below commands:
 
     ```bash
-oc get secret system-seed --template={{.data.ADMIN_USER}} | base64 -d
-oc get secret system-seed --template={{.data.ADMIN_PASSWORD}} | base64 -d
+oc get secret system-seed -o jsonpath={.data.ADMIN_USER} | base64 -d
+oc get secret system-seed -o jsonpath={.data.ADMIN_PASSWORD} | base64 -d
     ```
 
 15. Congratulations! You've successfully deployed 3Scale API Management to ROSA/OSD.
