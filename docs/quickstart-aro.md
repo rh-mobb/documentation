@@ -1,6 +1,6 @@
 # ARO Quickstart
 
-A Quickstart guide to deploying an Azure RedHat OpenShift cluster.
+A Quickstart guide to deploying an Azure Red Hat OpenShift cluster.
 
 Author: [Paul Czarkowski](https://twitter.com/pczarkowski)
 

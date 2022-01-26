@@ -1,4 +1,4 @@
-# Federating System and User metrics to S3 in RedHat OpenShift for AWS
+# Federating System and User metrics to S3 in Red Hat OpenShift for AWS
 
 **Paul Czarkowski**
 
