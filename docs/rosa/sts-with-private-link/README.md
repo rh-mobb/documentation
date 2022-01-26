@@ -25,6 +25,8 @@
 
 For this scenario, we will be using a newly created VPC with both public and private subnets.  All of the cluster resources will reside in the private subnet. The plublic subnet will be used for traffic to the Internet (egress)
 
+> When creating subnets, make sure that subnet(s) are created to availability zone that has ROSA instances types available. If AZ is not "forced", subnet is created to random AZ in the region. Force AZ using `--availability-zone` argument in `create-subnet` command. Use `rosa list instance-types` to list ROSA instance types and check available types availability in AZ with `aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values=AZ_NAME_HERE --region REGION_HERE --output text | egrep "YOU_PREFERRED_INSTANCE_TYPE"`. As an example, you cannot install ROSA to `us-east-1e` AZ, but `us-east-1b` works fine.
+
 1. Configure the following environment variables, adjusting for `ROSA_CLUSTER_NAME`, `VERSION` and `REGION` as necessary
 
     ```bash

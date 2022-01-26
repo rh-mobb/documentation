@@ -10,6 +10,8 @@
 
 The following instructions use the AWS CLI to create the necessary networking to deploy a Private Link ROSA cluster into a Single AZ and are intended to be a guide. Ideally you would use an Automation tool like Ansible or Terraform to manage your VPCs.
 
+> When creating subnets, make sure that subnet(s) are created to availability zone that has ROSA instances types available. If AZ is not "forced", subnet is created to random AZ in the region. Force AZ using `--availability-zone` argument in `create-subnet` command. Use `rosa list instance-types` to list ROSA instance types and check available types availability in AZ with `aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values=AZ_NAME_HERE --region REGION_HERE --output text | egrep "YOU_PREFERRED_INSTANCE_TYPE"`. As an example, you cannot install ROSA to `us-east-1e` AZ, but `us-east-1b` works fine.
+
 ### Option 1 - VPC with a private subnet and AWS Site-to-Site VPN access.
 
 Todo
