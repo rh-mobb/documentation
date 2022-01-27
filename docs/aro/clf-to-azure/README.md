@@ -17,43 +17,14 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
 1. [Deploy](/docs/quickstart-aro) an ARO cluster
 
-1. Deploy the OpenShift Elasticsearch Operator and the Red Hat OpenShift Logging Operator from OpenShift's Operator Hub
-
-    ![screenshot of installed operators](./images/operator-hub.png)
-
-1. Deploy a Cluster Logging resource
-
-    > Note - we're setting Elastic and Kibana replicas to zero, as all we really need in this scenario is Fluentd.
+1. Set some environment variables
 
     ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: logging.openshift.io/v1
-kind: ClusterLogging
-metadata:
-  name: instance
-  namespace: openshift-logging
-spec:
-  collection:
-    logs:
-      fluentd: {}
-      type: fluentd
-  logStore:
-    elasticsearch:
-      nodeCount: 0
-      redundancyPolicy: SingleRedundancy
-      storage:
-        size: 200G
-        storageClassName: gp2
-    retentionPolicy:
-      application:
-        maxAge: 7d
-    type: elasticsearch
-  managementState: Managed
-  visualization:
-    kibana:
-      replicas: 0
-    type: kibana
-EOF
+    export NAMESPACE=aro-clf-am
+    export AZR_RESOURCE_LOCATION=eastus
+    export AZR_RESOURCE_GROUP=openshift
+    # this value must be unique
+    export AZR_LOG_APP_NAME=$AZR_RESOURCE_GROUP-$AZR_RESOURCE_LOCATION
     ```
 
 ## Set up ARO Monitor workspace
@@ -64,18 +35,9 @@ EOF
     az extension add --name log-analytics
     ```
 
-1. Set some environment variables to use (these should match your ARO cluster)
-
-    ```bash
-    export AZR_RESOURCE_LOCATION=eastus
-    export AZR_RESOURCE_GROUP=openshift
-    # this value must be unique
-    export AZR_LOG_APP_NAME=$AZR_RESOURCE_GROUP-$AZR_RESOURCE_LOCATION
-    ```
-
 1. Create resource group
 
-    > **If you want to reuse the same group as your cluster skip this step**
+    > **If you plan to reuse the same group as your cluster skip this step**
 
     ```bash
     az group create -n $AZR_RESOURCE_GROUP -l $AZR_RESOURCE_LOCATION
@@ -84,223 +46,65 @@ EOF
 1. Create workspace
 
     ```bash
-    az monitor log-analytics workspace create \
-      -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-      -l $AZR_RESOURCE_LOCATION
-    ```
-
-## Configure OpenShift
-
-> Note if you prefer not to copy and paste, manifests containing these resources can be found in our [github repository](https://github.com/rh-mobb/documentation/tree/main/docs/aro/clf-to-azure).
-
-1. Create Namespace and RBAC
-
-    ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: azure-log-forwarder
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: fluent-bit
-  namespace: azure-log-forwarder
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: fluent-bit-read
-rules:
-- apiGroups: [ "" ]
-  resources:
-  - namespaces
-  - pods
-  verbs:
-  - get
-  - watch
-  - list
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: fluent-bit-read
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: fluent-bit-read
-subjects:
-- kind: ServiceAccount
-  name: fluent-bit
-  namespace: azure-log-forwarder
-EOF
+az monitor log-analytics workspace create \
+  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+  -l $AZR_RESOURCE_LOCATION
     ```
 
 1. Create a secret for your Azure workspace
 
     ```bash
-    WORKSPACE_ID=$(az monitor log-analytics workspace show \
-      -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-      --query customerId -o tsv)
-    SHARED_KEY=$(az monitor log-analytics workspace get-shared-keys \
-      -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-      --query primarySharedKey -o tsv)
-
-    kubectl delete secret fluentbit-secrets -n azure-log-forwarder
-    kubectl create secret generic fluentbit-secrets -n azure-log-forwarder \
-      --from-literal=WorkspaceId=$WORKSPACE_ID \
-      --from-literal=SharedKey=$SHARED_KEY
-
-    kubectl get secret fluentbit-secrets -n azure-log-forwarder -o jsonpath='{.data}'
+WORKSPACE_ID=$(az monitor log-analytics workspace show \
+  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+  --query customerId -o tsv)
+SHARED_KEY=$(az monitor log-analytics workspace get-shared-keys \
+  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+  --query primarySharedKey -o tsv)
     ```
 
-1. Create fluent-bit config
+## Configure OpenShift
+
+1. Create a Project to run the log forwarding in
 
     ```bash
-cat << "EOF" | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: azure-log-forwarder
-  labels:
-    k8s-app: fluent-bit
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         1
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
-    @INCLUDE input.conf
-    @INCLUDE output.conf
-  output.conf: |
-    [OUTPUT]
-        Name            azure
-        Match           *.*
-        Customer_ID     ${WorkspaceId}
-        Shared_Key      ${SharedKey}
-        Log_Type        openshift
-  input.conf: |
-    [INPUT]
-        Name              forward
-        Listen            0.0.0.0
-        Port              24224
-        Buffer_Chunk_Size 1M
-        Buffer_Max_Size   10M
-EOF
+    oc new-project $NAMESPACE
     ```
 
-1. Create fluent-bit daemonset
+1. Create namespaces for logging operators
 
     ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: azure-log-forwarder
-  labels:
-    k8s-app: fluent-bit-logging
-    version: v1
-    kubernetes.io/cluster-service: "true"
-spec:
-  selector:
-    matchLabels:
-      k8s-app: fluent-bit-logging
-  template:
-    metadata:
-      labels:
-        k8s-app: fluent-bit-logging
-        version: v1
-        kubernetes.io/cluster-service: "true"
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "2020"
-        prometheus.io/path: /api/v1/metrics/prometheus
-    spec:
-      serviceAccountName: fluent-bit
-      terminationGracePeriodSeconds: 10
-      containers:
-      - name: fluent-bit
-        image: fluent/fluent-bit:1.6
-        imagePullPolicy: Always
-        ports:
-          - containerPort: 2020
-          - containerPort: 24224
-        env:
-        - name: WorkspaceId
-          valueFrom:
-            secretKeyRef:
-              name: fluentbit-secrets
-              key: WorkspaceId
-        - name: SharedKey
-          valueFrom:
-            secretKeyRef:
-              name: fluentbit-secrets
-              key: SharedKey
-        - name: LogName
-          value: logapp
-        volumeMounts:
-          - name: fluent-bit-etc
-            mountPath: /fluent-bit/etc/
-      volumes:
-      - name: fluent-bit-etc
-        configMap:
-            name: fluent-bit-config
-EOF
+    kubectl create ns openshift-logging
+    kubectl create ns openshift-operators-redhat
     ```
 
-1. Create a fluent-bit service
+1. Add the MOBB chart repository to Helm
 
     ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: fluent-bit
-  namespace: azure-log-forwarder
-  labels:
-    k8s-app: fluent-bit-logging
-    version: v1
-    kubernetes.io/cluster-service: "true"
-spec:
-  selector:
-    k8s-app: fluent-bit-logging
-  ports:
-    - protocol: TCP
-      port: 24224
-      targetPort: 24224
-EOF
+    helm repo add mobb https://rh-mobb.github.io/helm-charts/
+    ```
+
+1. Update your Helm repositories
+
+    ```bash
+    helm repo update
+    ```
+
+1. Deploy the OpenShift Elasticsearch Operator and the Red Hat OpenShift Logging Operator
+
+    **> Note: You can skip this if you already have them installed, or install them via the OpenShift Console.**
+
+    ```bash
+helm upgrade -n $NAMESPACE clf-operators \
+  mobb/operatorhub --version 0.1.1 --install \
+  --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-clf-am/files/operators.yaml
     ```
 
 1. Configure cluster logging forwarder
 
     ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: logging.openshift.io/v1
-kind: ClusterLogForwarder
-metadata:
-  name: instance
-  namespace: openshift-logging
-spec:
-  outputs:
-    - name: fluentbit
-      type: fluentdForward
-      url: 'tcp://fluent-bit.azure-log-forwarder:24224'
-  pipelines:
-    - name: forward-to-fluentbit
-      inputRefs:
-        - infrastructure
-        - application
-        - audit
-      outputRefs:
-        - fluentbit
-EOF
+  helm upgrade -n $NAMESPACE clf \
+    mobb/aro-clf-am --version 0.1.0 --install \
+    --set "azure.workspaceId=$WORKSPACE_ID" --set "azure.sharedKey=$SHARED_KEY"
     ```
 
 ## Check for logs in Azure
