@@ -2,14 +2,14 @@
 
 **Steve Mirman, Paul Czarkowski**
 
-*Last updated 10/29/2021*
+*Last updated 1/28/2022*
 
 > This is a combination of the [private-link](../private-link) and [sts](../sts) setup documents to show the full picture
 
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.1.5) v1.1.5
+* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.1.7) v1.1.7
 * [jq](https://stedolan.github.io/jq/download/)
 
 ## AWS Preparation
@@ -23,17 +23,27 @@
 
 ## Create the AWS Virtual Private Cloud (VPC) and Subnets
 
-For this scenario, we will be using a newly created VPC with both public and private subnets.  All of the cluster resources will reside in the private subnet. The plublic subnet will be used for traffic to the Internet (egress)
+For this scenario, we will be using a newly created VPC with both public and private subnets.  All of the cluster resources will reside in the private subnet. The public subnet will be used for traffic to the Internet (egress)
 
-> When creating subnets, make sure that subnet(s) are created to availability zone that has ROSA instances types available. If AZ is not "forced", subnet is created to random AZ in the region. Force AZ using `--availability-zone` argument in `create-subnet` command. Use `rosa list instance-types` to list ROSA instance types and check available types availability in AZ with `aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values=AZ_NAME_HERE --region REGION_HERE --output text | egrep "YOU_PREFERRED_INSTANCE_TYPE"`. As an example, you cannot install ROSA to `us-east-1e` AZ, but `us-east-1b` works fine.
+> **Note**: If you already have a Transit Gateway (TGW) or similar, you can skip the public subnet configuration
+
+> **Note**: When creating subnets, make sure that subnet(s) are created in availability zones that have ROSA instances types available. If AZ is not "forced", the subnet is created in a random AZ in the region. Force AZ using the `--availability-zone` argument in the `create-subnet` command. 
+>
+>1. Use `rosa list instance-types` to list the ROSA instance types
+>
+>1. Use `aws ec2 describe-instance-type-offerings` to check that your desired AZ supports your desired instance type
+> 
+>Example using ***us-east-1***, ***us-east-1b***, and ***m5.xlarge***:  `aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values=us-east-1b --region us-east-1 --output text | egrep m5.xlarge`
+>
+>Result should display **INSTANCETYPEOFFERINGS [instance-type] [az] availability-zone** if your selected region supports your desired instance type
 
 1. Configure the following environment variables, adjusting for `ROSA_CLUSTER_NAME`, `VERSION` and `REGION` as necessary
 
     ```bash
-    export VERSION=4.9.0 \
+    export VERSION=4.9.15 \
            ROSA_CLUSTER_NAME=pl-sts-cluster \
            AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
-           REGION=us-east-2 \
+           REGION=us-east-1 \
            AWS_PAGER=""
     ```
 
