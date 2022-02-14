@@ -35,7 +35,8 @@ VPC=$(aws ec2 describe-instances \
 1. Get subnets in your VPC
 
     ```bash
-SUBNET=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC Name=tag:kubernetes.io/role/internal-elb,Values='' \
+SUBNET=$(aws ec2 describe-subnets \
+  --filters Name=vpc-id,Values=$VPC Name=tag:kubernetes.io/role/internal-elb,Values='' \
   --query 'Subnets[*].{SubnetId:SubnetId}' \
   | jq -r '.[0].SubnetId')
     ```
@@ -70,6 +71,9 @@ aws ec2 authorize-security-group-ingress \
 
 1. Create EFS File System
 
+    > *Note: You may want to create separate/additional access-points for each application/shared vol.*
+
+
     ```bash
 EFS=$(aws efs create-file-system --creation-token efs-token-1 \
   --encrypted | jq -r '.FileSystemId')
@@ -77,11 +81,11 @@ EFS=$(aws efs create-file-system --creation-token efs-token-1 \
 
 1. Configure Mount Target for EFS
 
-      ```bash
+    ```bash
 MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
   --subnet-id $SUBNET --security-groups $SG \
   | jq -r '.MountTargetId')
-
+    ```
 1. Create Access Point for EFS
 
     ```bash
