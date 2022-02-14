@@ -17,6 +17,7 @@
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
+* [Using Amazon Web Services Elastic File System (EFS) on ROSA](./docs/rosa/aws-efs-operator-on-rosa)
 
 ### ARO
 

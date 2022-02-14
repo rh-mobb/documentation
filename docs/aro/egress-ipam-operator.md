@@ -90,6 +90,8 @@ apiVersion: redhatcop.redhat.io/v1alpha1
 kind: EgressIPAM
 metadata:
   name: egressipam-azure
+  annotations:
+      egressip-ipam-operator.redhat-cop.io/azure-egress-load-balancer: none
 spec:
   # Add fields here
   cidrAssignments:
@@ -178,3 +180,66 @@ kubectl -n openshift-operators logs \
   deployment/egressip-ipam-operator-controller-manager \
   -c manager -f
      ```
+
+## Test Egress
+
+1. Log into your jumpbox and allow http into firewall
+
+    ```bash
+    sudo firewall-cmd --zone=public --add-service=http
+    ```
+
+1. Install and start apache httpd
+
+    ```bash
+    sudo yum -y install httpd
+    sudo systemctl start httpd
+    ```
+
+1. Create a index.html
+
+    ```bash
+    echo HELLO | sudo tee /var/www/html/index.html
+    ```
+
+1. tail apache logs
+
+    ```bash
+    sudo tail -f /var/log/httpd/access_log
+    ```
+
+1. Start an interactive pod in one of your new namespaces
+
+    ```bash
+    kubectl run -n egressipam-azure-test -i \
+      --tty --rm debug --image=alpine \
+      --restart=Never -- wget -O - 10.0.3.4
+    ```
+
+    The output should look the following (the IP should match the egress IP of your namespace):
+
+    ```bash
+    10.0.1.7 - - [03/Feb/2022:19:33:54 +0000] "GET / HTTP/1.1" 200 6 "-" "Wget"
+    ```
+
+1. Deploy a hello world pod
+
+    ```bash
+oc new-project hello
+oc new-app --docker-image=docker.io/openshift/hello-openshift
+oc expose service/hello-openshift
+    ```
+
+1. Create an interactive pod in one of the new namespaces
+
+    ```bash
+kubectl run -n egressipam-azure-test -i --tty --rm debug --image=fedora --restart=Never
+    ```
+
+1. Create
+
+
+oc new-project hello
+    oc new-app --docker-image=docker.io/openshift/hello-openshift
+    oc create route edge --service=hello-openshift hello-openshift-tls \
+        --hostname hello.apps.reinvent.aws.mobb.ninja
