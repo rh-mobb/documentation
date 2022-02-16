@@ -45,7 +45,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
     ```bash
     export ROSA_CLUSTER_NAME=my-cluster
     export ROSA_CLUSTER_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME --output json | jq -r .id)
-    export REGION=us-east-2 \
+    export REGION=us-east-2 
     export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq .spec.serviceAccountIssuer)
     export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
     export AWS_PAGER=""
@@ -84,9 +84,9 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Check that both Daemonsets are running
 
     ```bash
-    kubectl -n kube-system get ds \
+    kubectl -n csi-secrets-store get ds \
       csi-secrets-store-provider-aws \
-      csi-secrets-store-secrets-store-csi-driver
+      csi-secrets-store-driver-secrets-store-csi-driver
     ```
 
 ## Creating a Secret and IAM Access Policies
