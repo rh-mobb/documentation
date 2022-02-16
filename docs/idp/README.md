@@ -2,7 +2,7 @@
 
 **Andrea Bozzoni, Steve Mirman**
 
-*8 November 2021*
+*16 February 2022*
 
 Red Hat OpenShift on AWS (ROSA) and OpenShift Dedicated (OSD) provide a simple way for the cluster administrator to configure one or more indentity providers for their cluster[s]  through the [OpenShift Cluster Manager (OCM)](https://cloud.redhat.com/openshift).
 
@@ -17,6 +17,7 @@ The identity providers available for the configuration are:
 
 ## Configuring Specific Identity Providers
 
+* [Configure GitLab as an identity provider for ROSA/OSD](./gitlab)
 * [Configure Azure AD using OpenID](./azuread)
 
 ## Configuring Group Synchronization
