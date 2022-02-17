@@ -28,7 +28,7 @@ Log in to the [OpenShift Cluster Manager](https://console.redhat.com/openshift/)
 
     ![ocm set a name to the OpenID identity provider](images/idp_name.png)
 
-1. Copy the OAuth callback URL. It will be needed later
+1. Copy the **OAuth callback URL**. It will be needed later
 
     ![ocm set a name to the OpenID identity provider](images/callback_url.png)
 
