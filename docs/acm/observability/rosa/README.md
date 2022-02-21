@@ -1,5 +1,8 @@
 # Advanced Cluster Management Observability on ROSA
 
+<!-- commented sections enable STS support which isn't fully working as
+the operator will on occasion wipe out the service account annotations -->
+
 This document will take you through deploying ACM Observability on an STS enabled ROSA cluster. see [here](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.4/html/observability/observing-environments-intro#enabling-observability) for the original documentation.
 
 **Note:** This guide uses an unsupported (by ACM) method to utilize ROSA's STS authentication back into AWS S3 and is not advised for production use at this time.
@@ -20,12 +23,15 @@ This document will take you through deploying ACM Observability on an STS enable
     export NAMESPACE=open-cluster-management-observability
     export SA=tbd
     export SCRATCH_DIR=/tmp/scratch
-    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
     export AWS_PAGER=""
     rm -rf $SCRATCH_DIR
     mkdir -p $SCRATCH_DIR
 ```
+
+<!--
+    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
+-->
 
 ## Prepare AWS Account
 
@@ -73,6 +79,29 @@ EOF
     echo $S3_POLICY
     ```
 
+1. Create service account
+
+    ```bash
+    aws iam create-user --user-name $CLUSTER_NAME-acm-obs  \
+      --query User.Arn --output text
+    ```
+
+1. Attach policy to user
+
+    ```bash
+    aws iam attach-user-policy --user-name $CLUSTER_NAME-acm-obs \
+      --policy-arn ${S3_POLICY}
+    ```
+
+1. Create Access Keys
+
+    ```bash
+read -r ACCESS_KEY_ID ACCESS_KEY < <(aws iam create-access-key \
+  --user-name $CLUSTER_NAME-acm-obs \
+  --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)
+    ```
+
+<!--
 1. Create a Trust Policy
 
     ```bash
@@ -101,6 +130,7 @@ cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
 EOF
     ```
 
+
 1. Create Role for AWS Prometheus and CloudWatch
 
     ```bash
@@ -118,6 +148,7 @@ EOF
       --role-name "$CLUSTER_NAME-acm-obs-s3" \
       --policy-arn $S3_POLICY
     ```
+-->
 
 ## ACM Hub
 
@@ -157,6 +188,8 @@ stringData:
       bucket: $S3_BUCKET
       endpoint: s3.$REGION.amazonaws.com
       signature_version2: false
+      access_key: $ACCESS_KEY_ID
+      secret_key: $ACCESS_KEY
 EOF
     ```
 
@@ -177,6 +210,7 @@ spec:
 EOF
     ```
 
+<!--
 1. Annotate the service accounts to use STS
 
     ```bash
@@ -209,6 +243,9 @@ kubectl rollout restart statefulset/observability-thanos-store-shard-2
     ```bash
     kubectl delete pods $(kubectl get pods --field-selector status.phase!=Running -o name | xargs)
     ```
+-->
+
+## Access ACM Observability
 
 1. Log into Advanced Cluster management and access the new Grafana dashboard
 
