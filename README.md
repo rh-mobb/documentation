@@ -12,6 +12,7 @@
 * [Deploying ROSA in Private Link mode](./docs/rosa/private-link)
 * [Deploying ROSA in STS mode](./docs/rosa/sts)
 * [Deploying ROSA in STS mode with Private Link](./docs/rosa/sts-with-private-link)
+* [Installing the AWS Load Balancer Controller (ALB) on ROSA](./docs/rosa/alb-sts)
 * [Adding AWS WAF in front of ROSA / OSD](./docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
