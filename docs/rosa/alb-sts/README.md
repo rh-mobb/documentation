@@ -1,5 +1,7 @@
 # Installing the AWS Load Balancer Controller (ALB) on ROSA
 
+*Updated: 02/22/2022*
+
 In most situations you will want to stick with the OpenShift native Ingress Controller in order to use the native Ingress and Route resources to provide access to your applications.  However if you absolutely require an ALB or NLB based Load Balancer then running the AWS Load Balancer Controller (ALB) may be worth looking at.
 
 ## Prerequisites
