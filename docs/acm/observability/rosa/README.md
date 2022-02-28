@@ -3,13 +3,14 @@
 <!-- commented sections enable STS support which isn't fully working as
 the operator will on occasion wipe out the service account annotations -->
 
-This document will take you through deploying ACM Observability on an STS enabled ROSA cluster. see [here](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.4/html/observability/observing-environments-intro#enabling-observability) for the original documentation.
+This document will take you through deploying ACM Observability on a ROSA cluster. see [here](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.4/html/observability/observing-environments-intro#enabling-observability) for the original documentation.
 
-**Note:** This guide uses an unsupported (by ACM) method to utilize ROSA's STS authentication back into AWS S3 and is not advised for production use at this time.
+<!--
+**Note:** This guide uses an unsupported (by ACM) method to utilize ROSA's STS authentication back into AWS S3 and is not advised for production use at this time. -->
 
 ## Prerequisites
 
-* An existing ROSA cluster with STS mode
+* An existing ROSA cluster
 * An Advanced Cluster Management (ACM) deployment
 
 ## Set up environment
