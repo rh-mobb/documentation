@@ -1,19 +1,19 @@
-# Azure Key Vault CSI on Azure Red Hat OpenShift
+# Azure Key Vault CSI on Azure Red Hat OpenShift (ARO)
 
-**Author: Paul Czarkowski**
-*Modified: 08/16/2021*
+**Author: [Paul Czarkowski](https://github.com/paulczar) (Red Hat) on 08/16/2021**<br>
+Updated by: [Stuart Kirk](https://github.com/stuartatmicrosoft) (Microsoft) on 03/13/2022<br>
 
-This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
+This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough) specifically to run with Azure Red Hat OpenShift (ARO).
 
 ## Prerequisites
 
-1. [An ARO cluster](/docs/quickstart-aro)
-2. The AZ CLI (logged in)
+1. [A pre-existing ARO cluster](/docs/quickstart-aro)
+2. Be logged in to the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 3. Helm 3.x CLI
 
 ### Environment Variables
 
-1. Run this command to set some environment variables to use throughout
+1. Run this command to set environment variables to use throughout:
 
     > Note if you created the cluster from the instructions linked [above](/docs/quickstart-aro) these will re-use the same environment variables, or default them to `openshift` and `eastus`.
 
@@ -26,29 +26,13 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
 {% include_relative install-kubernetes-secret-store-driver.md %}
 
-## Deploy Azure Key Store CSI
+## Deploy the Azure CSI driver
 
-1. Add the Azure Helm Repository
-
-    ```bash
-    helm repo add csi-secrets-store-provider-azure \
-      https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/charts
-    ```
-
-1. Update your local Helm Repositories
+1. Deploy the Azure CSI provider to ARO
 
     ```bash
-    helm repo update
-    ```
-
-1. Install the Azure Key Vault CSI provider
-
-    ```bash
-    helm install -n k8s-secrets-store-csi azure-csi-provider \
-      csi-secrets-store-provider-azure/csi-secrets-store-provider-azure \
-      --set linux.privileged=true --set secrets-store-csi-driver.install=false \
-      --set "linux.providersDir=/var/run/secrets-store-csi-providers" \
-      --version=v1.0.1
+    oc apply -n k8s-secrets-store-csi -f \
+      https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/deployment/provider-azure-installer.yaml
     ```
 
 1. Set SecurityContextConstraints to allow the CSI driver to run
@@ -58,40 +42,38 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
       system:serviceaccount:k8s-secrets-store-csi:csi-secrets-store-provider-azure
     ```
 
-## Create Keyvault and a Secret
+## Create an Azure Key Vault and populate it with a secret
 
-1. Create a namespace for your application
+1. Create a new ARO project for your test application
 
     ```bash
     oc new-project my-application
     ```
 
-1. Create an Azure Keyvault in your Resource Group that contains ARO
+1. Create a new Azure Key Vault in the Azure Resource Group which contains ARO
 
     ```bash
     az keyvault create -n ${KEYVAULT_NAME} \
-      -g ${KEYVAULT_RESOURCE_GROUP} \
+      --resource-group ${KEYVAULT_RESOURCE_GROUP} \
       --location ${KEYVAULT_LOCATION}
     ```
 
-1. Create a secret in the Keyvault
+1. Create a new secret named **secret1** in the Azure Key Vault
 
     ```bash
     az keyvault secret set \
       --vault-name ${KEYVAULT_NAME} \
-      --name secret1 --value "Hello"
+      --name secret1 --value "Azure Red Hat OpenShift rocks!"
     ```
 
-1. Create a Service Principal for the keyvault
-
-  > Note: If this gives you an error, you may need upgrade your Azure CLI to the latest version.
+1. Create a new Service Principal to allow ARO to access the Azure Key Vault
 
     ```bash
-    export SERVICE_PRINCIPAL_CLIENT_SECRET="$(az ad sp create-for-rbac --skip-assignment --name http://$KEYVAULT_NAME --query 'password' -otsv)"
-    export SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list --display-name http://$KEYVAULT_NAME --query '[0].appId' -otsv)"
+    export SERVICE_PRINCIPAL_CLIENT_SECRET="$(az ad sp create-for-rbac --skip-assignment --name http://$KEYVAULT_NAME --query 'password' -o tsv)"
+    export SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list --display-name http://$KEYVAULT_NAME --query '[0].appId' -o tsv)"
     ```
 
-1. Set an Access Policy for the Service Principal
+1. Set the required access policy for the Azure Service Principal
 
     ```bash
     az keyvault set-policy -n ${KEYVAULT_NAME} \
@@ -99,14 +81,14 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
       --spn ${SERVICE_PRINCIPAL_CLIENT_ID}
     ```
 
-1. Create and label a secret for Kubernetes to use to access the Key Vault
+1. Create and label a secret for ARO to use to access the Azure Key Vault
 
     ```bash
-    kubectl create secret generic secrets-store-creds \
+    oc create secret generic secrets-store-creds \
       -n my-application \
       --from-literal clientid=${SERVICE_PRINCIPAL_CLIENT_ID} \
       --from-literal clientsecret=${SERVICE_PRINCIPAL_CLIENT_SECRET}
-    kubectl -n my-application label secret \
+    oc -n my-application label secret \
       secrets-store-creds secrets-store.csi.k8s.io/used=true
     ```
 
@@ -114,9 +96,9 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
 1. Create a Secret Provider Class to give access to this secret
 
-    ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+```bash
+cat <<EOF | oc apply -f -
+apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
   name: azure-kvname
@@ -126,7 +108,6 @@ spec:
   parameters:
     usePodIdentity: "false"
     useVMManagedIdentity: "false"
-    userAssignedIdentityID: ""
     keyvaultName: "${KEYVAULT_NAME}"
     objects: |
       array:
@@ -136,28 +117,29 @@ spec:
           objectVersion: ""
     tenantId: "${AZ_TENANT_ID}"
 EOF
-    ```
+```
 
 1. Create a Pod that uses the above Secret Provider Class
 
-    ```bash
-cat <<EOF | kubectl apply -f -
+```bash
+cat <<EOF | oc apply -f -
 kind: Pod
 apiVersion: v1
 metadata:
   name: busybox-secrets-store-inline
-  namespace: my-application
+  namespace: keyvault-app
 spec:
   containers:
   - name: busybox
-    image: k8s.gcr.io/e2e-test-images/busybox:1.29
+    image: busybox:latest
+    imagePullPolicy: IfNotPresent
     command:
-      - "/bin/sleep"
-      - "10000"
+    - "/bin/sleep"
+    - "10000"
     volumeMounts:
-    - name: secrets-store-inline
-      mountPath: "/mnt/secrets-store"
-      readOnly: true
+      - name: secrets-store-inline
+        mountPath: "/mnt/secrets-store"
+        readOnly: true
   volumes:
     - name: secrets-store-inline
       csi:
@@ -168,12 +150,12 @@ spec:
         nodePublishSecretRef:
           name: secrets-store-creds
 EOF
-    ```
+```
 
 1. Check the Secret is mounted
 
     ```bash
-    kubectl exec busybox-secrets-store-inline -- ls /mnt/secrets-store/
+    oc exec busybox-secrets-store-inline -- ls /mnt/secrets-store/
     ```
 
     Output should match:
@@ -185,37 +167,36 @@ EOF
 1. Print the Secret
 
     ```bash
-    kubectl exec busybox-secrets-store-inline \
-      -- cat /mnt/secrets-store/secret1
+    oc exec busybox-secrets-store-inline -- cat /mnt/secrets-store/secret1
     ```
 
     Output should match:
 
     ```
-    Hello
+    Azure Red Hat OpenShift rocks!
     ```
 
 ## Cleanup
 
-1. Uninstall Helm
-
-    ```bash
-    helm uninstall -n k8s-secrets-store-csi azure-csi-provider
-    ```
-
-1. Delete the app
+1. Delete the test application
 
     ```bash
     oc delete project my-application
     ```
 
-1. Delete the Azure Key Vault
+1. Remove the Azure CSI provider
+    ```bash
+    oc delete -n k8s-secrets-store-csi -f \
+      https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/deployment/provider-azure-installer.yaml
+    ```
+
+1. Remove the Azure Key Vault
 
     ```bash
     az keyvault delete -n ${KEYVAULT_NAME}
     ```
 
-1. Delete the Service Principal
+1. Delete the Azure Service Principal
 
     ```bash
     az ad sp delete --id ${SERVICE_PRINCIPAL_CLIENT_ID}
