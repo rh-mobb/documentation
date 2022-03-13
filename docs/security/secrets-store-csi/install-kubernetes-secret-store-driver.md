@@ -17,7 +17,7 @@
 
     ```bash
     helm repo add secrets-store-csi-driver \
-      https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/master/charts
+      https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
     ```
 
 1. Update your Helm Repositories
@@ -29,15 +29,16 @@
 1. Install the secrets store csi driver
 
     ```bash
-    helm install -n k8s-secrets-store-csi csi-secrets-store \
-      secrets-store-csi-driver/secrets-store-csi-driver \
-      --set "linux.providersDir=/var/run/secrets-store-csi-providers"
+    helm install -n k8s-secrets-store-csi csi secrets-store-csi-driver/secrets-store-csi-driver \
+      --set enableSecretRotation=true \
+      --set rotationPollInterval=5s \
+      --set syncSecret.enabled=true
     ```
 
 1. Check that the Daemonsets is running
 
     ```bash
-    kubectl --namespace=k8s-secrets-store-csi get pods -l "app=secrets-store-csi-driver"
+    oc --namespace=k8s-secrets-store-csi get pods -l "app=secrets-store-csi-driver"
     ```
 
     You should see the following
