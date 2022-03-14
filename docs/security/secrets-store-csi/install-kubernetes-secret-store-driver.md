@@ -17,7 +17,7 @@
 
     ```bash
     helm repo add secrets-store-csi-driver \
-      https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/master/charts
+      https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
     ```
 
 1. Update your Helm Repositories
@@ -31,6 +31,7 @@
     ```bash
     helm install -n k8s-secrets-store-csi csi-secrets-store \
       secrets-store-csi-driver/secrets-store-csi-driver \
+      --version v1.0.1 \
       --set "linux.providersDir=/var/run/secrets-store-csi-providers"
     ```
 
