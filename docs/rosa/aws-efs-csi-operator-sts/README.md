@@ -1,5 +1,8 @@
 # Enabling the AWS EFS CSI Driver Operator on ROSA
 
+**Author: Paul Czarkowski**
+*Modified: 03/16/2022*
+
 The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
 
 This is a guide to quickly enable the EFS Operator on ROSA to a Red Hat OpenShift on AWS (ROSA) cluster with STS enabled.
@@ -120,7 +123,7 @@ EOF
 1. Install the EFS Operator
 
     ```bash
-cat <<EOF | oc apply -f -
+cat <<EOF | oc create -f -
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
@@ -144,6 +147,12 @@ spec:
 EOF
     ```
 
+1. Wait until the Operator is running
+
+    ```bash
+watch oc get deployment aws-efs-csi-driver-controller
+    ```
+
 1. Install the AWS EFS CSI Driver
 
     ```bash
@@ -156,6 +165,13 @@ spec:
   managementState: Managed
 EOF
     ```
+
+1. Wait until the CSI driver is running
+
+    ```bash
+watch oc get daemonset aws-efs-csi-driver-node
+    ```
+
 
 1. Create a storage class
 
@@ -176,50 +192,31 @@ EOF
 ## Prepare an AWS EFS Volume
 
 
-1. Get the Instance Name of one of your worker nodes
+1. Run this set of commands to update the VPC to allow EFS access
 
     ```bash
 NODE=$(oc get nodes --selector=node-role.kubernetes.io/worker \
   -o jsonpath='{.items[0].metadata.name}')
-    ```
-
-1. Get the VPC ID of your worker nodes
-
-    ```bash
 VPC=$(aws ec2 describe-instances \
   --filters "Name=private-dns-name,Values=$NODE" \
   --query 'Reservations[*].Instances[*].{VpcId:VpcId}' \
   | jq -r '.[0][0].VpcId')
-    ```
-
-1. Get subnets in your VPC
-
-    ```bash
 SUBNET=$(aws ec2 describe-subnets \
   --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private' \
   --query 'Subnets[*].{SubnetId:SubnetId}' \
   | jq -r '.[0].SubnetId')
-    ```
-
-1. Get the CIDR block of your worker nodes
-
-    ```bash
 CIDR=$(aws ec2 describe-vpcs \
   --filters "Name=vpc-id,Values=$VPC" \
   --query 'Vpcs[*].CidrBlock' \
   | jq -r '.[0]')
-    ```
-
-1. Get the Security Group of your worker nodes
-
-    ```bash
 SG=$(aws ec2 describe-instances --filters \
   "Name=private-dns-name,Values=$NODE" \
   --query 'Reservations[*].Instances[*].{SecurityGroups:SecurityGroups}' \
   | jq -r '.[0][0].SecurityGroups[0].GroupId')
+echo "CIDR - $CIDR,  SG - $SG"
     ```
 
-1. Add EFS to security group
+1. Assuming the CIDR and SG are correct, update the security group
 
     ```bash
 aws ec2 authorize-security-group-ingress \
@@ -230,9 +227,6 @@ aws ec2 authorize-security-group-ingress \
     ```
 
 1. Create EFS File System
-
-    > *Note: You may want to create separate/additional access-points for each application/shared vol.*
-
 
     ```bash
 EFS=$(aws efs create-file-system --creation-token efs-token-1 \
@@ -274,7 +268,7 @@ EOF
 1. Create a namespace
 
     ```bash
-    oc new-project efs-demo
+oc new-project efs-demo
     ```
 
 1. Create a PVC
@@ -295,7 +289,7 @@ spec:
 EOF
     ```
 
-1. Create a POD to write to the EFS Volume
+1. Create a Pod to write to the EFS Volume
 
     ```bash
 cat <<EOF | oc apply -f -
@@ -319,7 +313,15 @@ spec:
 EOF
     ```
 
-1. Create a POD to read from the EFS Volume
+    > It may take a few minutes for the pod to be ready.  If you see errors such as `Output: Failed to resolve "fs-XXXX.efs.us-east-2.amazonaws.com"` it likely means its still setting up the EFS volume, just wait longer.
+
+1. Wait for the Pod to be ready
+
+    ```bash
+watch oc get pod test-efs
+```
+
+1. Create a Pod to read from the EFS Volume
 
     ```bash
 cat <<EOF | oc apply -f -
@@ -396,3 +398,5 @@ oc logs test-efs-read
 aws efs delete-mount-target --mount-target-id $MOUNT_TARGET
 aws efs delete-file-system --file-system-id $EFS
     ```
+
+    > Note if you receive the error `An error occurred (FileSystemInUse)` wait a few minutes and try again.
