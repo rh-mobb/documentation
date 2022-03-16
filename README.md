@@ -19,6 +19,7 @@
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Using Amazon Web Services Elastic File System (EFS) on ROSA](./docs/rosa/aws-efs-operator-on-rosa)
+* [Using the AWS EFS CSI Driver Operator on ROSA 4.10.x](./docs/rosa/aws-efs-csi-operator-sts)
 
 ### ARO
 
