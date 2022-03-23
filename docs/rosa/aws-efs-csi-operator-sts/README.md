@@ -22,6 +22,10 @@ See [here](https://docs.openshift.com/container-platform/4.10/storage/container_
 1. export some environment variables
 
     ```bash
+    export CLUSTER_NAME="sts-cluster"
+    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json \
+      | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
+    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
     export SCRATCH_DIR=/tmp/scratch
     export AWS_PAGER=""
     mkdir -p $SCRATCH_DIR
@@ -29,7 +33,7 @@ See [here](https://docs.openshift.com/container-platform/4.10/storage/container_
 
 ## Prepare AWS Account
 
-1. Download the IAM Policy
+1. Create an IAM Policy
 
     ```bash
 cat << EOF > $SCRATCH_DIR/efs-policy.json
@@ -77,30 +81,56 @@ EOF
     ```bash
     POLICY=$(aws iam create-policy --policy-name rosa-efs-csi \
       --policy-document file://$SCRATCH_DIR/efs-policy.json \
-      --query 'Policy.Arn' --output text)
+      --query 'Policy.Arn' --output text) || \
+      POLICY=$(aws iam list-policies \
+      --query 'Policies[?PolicyName==`rosa-efs-csi`].Arn' \
+      --output text)
     echo $POLICY
     ```
 
-1. Create service account
+1. Create a Trust Policy
 
     ```bash
-    aws iam create-user --user-name rosa-efs-csi  \
-      --query User.Arn --output text
+cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${OIDC_PROVIDER}:sub": [
+            "system:serviceaccount:openshift-cluster-csi-drivers:aws-efs-csi-driver-operator",
+            "system:serviceaccount:openshift-cluster-csi-drivers:aws-efs-csi-driver-controller-sa"
+          ]
+        }
+      }
+    }
+  ]
+}
+EOF
     ```
 
-1. Attach policy to user
+1. Create Role for ALB Controller
 
     ```bash
-    aws iam attach-user-policy --user-name rosa-efs-csi \
-      --policy-arn ${POLICY}
+    ROLE=$(aws iam create-role \
+      --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" \
+      --assume-role-policy-document file://$SCRATCH_DIR/TrustPolicy.json \
+      --query "Role.Arn" --output text)
+    echo $ROLE
     ```
 
-1. Create Access Keys
+1. Attach the Policies to the Role
 
     ```bash
-read -r ACCESS_KEY_ID ACCESS_KEY < <(aws iam create-access-key \
-  --user-name rosa-efs-csi \
-  --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)
+    aws iam attach-role-policy \
+      --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" \
+      --policy-arn $POLICY
     ```
 
 ## Deploy and test the AWS EFS Operator
@@ -115,8 +145,28 @@ metadata:
  name: aws-efs-cloud-credentials
  namespace: openshift-cluster-csi-drivers
 stringData:
-  aws_access_key_id: $ACCESS_KEY_ID
-  aws_secret_access_key: $ACCESS_KEY
+  credentials: |-
+    [default]
+    role_arn = $ROLE
+    web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
+---
+apiVersion: cloudcredential.openshift.io/v1
+kind: CredentialsRequest
+metadata:
+  name: openshift-aws-efs-csi-driver
+  namespace: openshift-cloud-credential-operator
+spec:
+  secretRef:
+    name: aws-efs-cloud-credentials
+    namespace: openshift-cluster-csi-drivers
+  providerSpec:
+    apiVersion: cloudcredential.openshift.io/v1
+    kind: AWSProviderSpec
+    statementEntries:
+    - effect: Allow
+      action:
+      - elasticfilesystem:*
+      resource: "*"
 EOF
     ```
 
@@ -143,7 +193,6 @@ spec:
   name: aws-efs-csi-driver-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: aws-efs-csi-driver-operator.4.10.0-202202221641
 EOF
     ```
 
@@ -202,7 +251,7 @@ VPC=$(aws ec2 describe-instances \
   --query 'Reservations[*].Instances[*].{VpcId:VpcId}' \
   | jq -r '.[0][0].VpcId')
 SUBNET=$(aws ec2 describe-subnets \
-  --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private' \
+  --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private*' \
   --query 'Subnets[*].{SubnetId:SubnetId}' \
   | jq -r '.[0].SubnetId')
 CIDR=$(aws ec2 describe-vpcs \
@@ -240,6 +289,7 @@ echo $EFS
 MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
   --subnet-id $SUBNET --security-groups $SG \
   | jq -r '.MountTargetId')
+echo $MOUNT_TARGET
     ```
 
 1. Create a Storage Class for the EFS volume
@@ -400,3 +450,18 @@ aws efs delete-file-system --file-system-id $EFS
     ```
 
     > Note if you receive the error `An error occurred (FileSystemInUse)` wait a few minutes and try again.
+
+1. Attach the Policies to the Role
+
+    ```bash
+    aws iam detach-role-policy \
+      --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" \
+      --policy-arn $POLICY
+    ```
+
+1. Delete the Role
+
+    ```bash
+    aws iam delete-role --role-name \
+      ${CLUSTER_NAME}-aws-efs-csi-operator
+    ```
