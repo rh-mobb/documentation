@@ -76,10 +76,10 @@ EOF
     ```
 
 
-1. Apply the Policy
+1. Create the Policy
 
     ```bash
-    POLICY=$(aws iam create-policy --policy-name rosa-efs-csi \
+    POLICY=$(aws iam create-policy --policy-name "${CLUSTER_NAME}-rosa-efs-csi" \
       --policy-document file://$SCRATCH_DIR/efs-policy.json \
       --query 'Policy.Arn' --output text) || \
       POLICY=$(aws iam list-policies \
@@ -138,7 +138,7 @@ EOF
 1. Create a Secret to store the Access Keys
 
     ```bash
-cat << EOF | kubectl apply -f -
+cat << EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -149,24 +149,6 @@ stringData:
     [default]
     role_arn = $ROLE
     web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
----
-apiVersion: cloudcredential.openshift.io/v1
-kind: CredentialsRequest
-metadata:
-  name: openshift-aws-efs-csi-driver
-  namespace: openshift-cloud-credential-operator
-spec:
-  secretRef:
-    name: aws-efs-cloud-credentials
-    namespace: openshift-cluster-csi-drivers
-  providerSpec:
-    apiVersion: cloudcredential.openshift.io/v1
-    kind: AWSProviderSpec
-    statementEntries:
-    - effect: Allow
-      action:
-      - elasticfilesystem:*
-      resource: "*"
 EOF
     ```
 
@@ -199,7 +181,7 @@ EOF
 1. Wait until the Operator is running
 
     ```bash
-watch oc get deployment aws-efs-csi-driver-controller
+watch oc get deployment aws-efs-csi-driver-operator -n openshift-cluster-csi-drivers
     ```
 
 1. Install the AWS EFS CSI Driver
@@ -218,7 +200,7 @@ EOF
 1. Wait until the CSI driver is running
 
     ```bash
-watch oc get daemonset aws-efs-csi-driver-node
+watch oc get daemonset aws-efs-csi-driver-node -n openshift-cluster-csi-drivers
     ```
 
 
@@ -451,7 +433,7 @@ aws efs delete-file-system --file-system-id $EFS
 
     > Note if you receive the error `An error occurred (FileSystemInUse)` wait a few minutes and try again.
 
-1. Attach the Policies to the Role
+1. Detach the Policies to the Role
 
     ```bash
     aws iam detach-role-policy \
@@ -465,3 +447,10 @@ aws efs delete-file-system --file-system-id $EFS
     aws iam delete-role --role-name \
       ${CLUSTER_NAME}-aws-efs-csi-operator
     ```
+
+1. Delete the Policy
+
+    ```bash
+    aws iam delete-policy --policy-arn \
+      $POLICY
+    ```    
