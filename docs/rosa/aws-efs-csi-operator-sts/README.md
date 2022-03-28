@@ -349,9 +349,9 @@ EOF
 
 1. Wait for the Pod to be ready
 
-  ```bash
+     ```bash
       watch oc get pod test-efs
-  ```
+     ```
 
 1. Create a Pod to read from the EFS Volume
 
@@ -427,8 +427,8 @@ EOF
 1. Delete the EFS Shared Volume via AWS
 
     ```bash
-aws efs delete-mount-target --mount-target-id $MOUNT_TARGET
-aws efs delete-file-system --file-system-id $EFS
+   aws efs delete-mount-target --mount-target-id $MOUNT_TARGET
+   aws efs delete-file-system --file-system-id $EFS
     ```
 
     > Note if you receive the error `An error occurred (FileSystemInUse)` wait a few minutes and try again.
