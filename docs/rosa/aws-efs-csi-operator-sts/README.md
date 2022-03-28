@@ -137,20 +137,20 @@ EOF
 
 1. Create a Secret to store the Access Keys
 
-    ```bash
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
- name: aws-efs-cloud-credentials
- namespace: openshift-cluster-csi-drivers
-stringData:
-  credentials: |-
-    [default]
-    role_arn = $ROLE
-    web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
-EOF
-    ```
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: v1
+   kind: Secret
+   metadata:
+    name: aws-efs-cloud-credentials
+    namespace: openshift-cluster-csi-drivers
+   stringData:
+     credentials: |-
+       [default]
+       role_arn = $ROLE
+       web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
+   EOF
+   ```
 
 1. Install the EFS Operator
 
