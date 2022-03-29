@@ -5,37 +5,7 @@
 * [A private ARO cluster with a VPN Connection](./private-cluster) and the egress LB removed
 
 
-#### Delete the ARO egress LB
-
-> Note: you should only do this if enabled the firewall egress above and you plan to use the [egress-ipam-operator](./egress-ipam-operator) doing this may render your ARO cluster **UNSUPPORTED** by Red Hat / Azure, so speak to your support
- team before doing this.
-
-1. Get and Login as Service Principal
-
-    ```bash
-    oc login $APISERVER -u kubeadmin -p $ADMINPW
-    SPAPPID="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
-    SPSECRET="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_secret | base64 --decode)"
-    SPTENANT="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_tenant_id | base64 --decode)"
-    CLUSTERRG="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_resourcegroup |base64 --decode)"
-    az login --service-principal -u $SPAPPID -p $SPSECRET -t $SPTENANT
-    ```
-
-1. get the name of the LB
-
-    ```
-LB_NAME=$(az network lb list --query '[].name' -o tsv | grep -v 'internal')
-echo $LB_NAME
-    ```
-
-1. delete the outbound rule
-
-    ```
-az network lb outbound-rule delete -n outbound-rule-v4 \
-  --lb-name $LB_NAME -g $CLUSTERRG
-    ```
-
-## Deploy the Operator
+## Deploy the Egressip Ipam Operator
 
 ### Via GUI
 
@@ -172,14 +142,6 @@ oc get hostsubnets
     private-cluster-bj275-worker-eastus2-bfrwt   private-cluster-bj275-worker-eastus2-bfrwt   10.0.1.5   10.129.2.0/23                  ["10.0.1.7"]
     private-cluster-bj275-worker-eastus3-fgjzk   private-cluster-bj275-worker-eastus3-fgjzk   10.0.1.6   10.131.0.0/23
     ```
-
-1. If any of these do not give the correct output, it could be because you haven't removed the `egress-lb` from the cluster. Check the logs of the `egress-ipam` operator for errors
-
-    ```bash
-kubectl -n openshift-operators logs \
-  deployment/egressip-ipam-operator-controller-manager \
-  -c manager -f
-     ```
 
 ## Test Egress
 
