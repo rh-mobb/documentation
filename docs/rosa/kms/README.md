@@ -1,15 +1,15 @@
-# Creating a ROSA cluster in STS mode with customer provided KMS key
+# Creating a ROSA cluster in STS mode with custom KMS key
 
 **Byron Miller**
 
 *Last updated 3/30/2022*
 
-> **Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
+> **Tip** The official documentation [for installing a ROSA cluster in STS mode](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
 
 
 STS allows us to deploy ROSA without needing a ROSA admin account, instead it uses roles and policies with Amazon STS (secure token service) to gain access to the AWS resources needed to install and operate the cluster.
 
-Providing a customer provided KMS key and modifying the key to include the STS installer role will use the customer KMS for worker node root disk encryption as well as for encrypting PV Claims.
+Providing a custom provided KMS key and modifying the key to include the STS installer role will use the custom KMS for worker and control plane root disk encryption as well as for encrypting PV Claims.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Providing a customer provided KMS key and modifying the key to include the STS i
 
 ### Prepare AWS Account for OpenShift
 
-Recommended Read: Official Documentation [ROSA pre requisites](../../quickstart-rosa.md#Prerequisites)
+Recommended Read: Official Documentation [ROSA STS with custom KMS key](https://docs.openshift.com/rosa/rosa_getting_started/rosa-sts-creating-a-cluster-with-customizations.html#rosa-sts-creating-cluster-customizations_rosa-sts-creating-a-cluster-with-customizations)
 
 1. Configure the AWS CLI by running the following command
 
@@ -73,10 +73,10 @@ I can't presume to know what your KMS key is, so we'll walk through the AWS cons
     aws kms create-key --region us-east-2 --description "Custom Encryption Key"
     ```
 
-   > You will need to save the ARN output of this custom key for further steps
+   You will need to save the ARN output of this custom key for further steps
 
    ```bash
-   KMS_ARN="arn:aws:kms:us-east-2:660250927410:key/7b80db67-3ebb-435c-9462-7fa30b7d6509"
+   KMS_ARN="arn:aws:kms:us-east-2:<insert accountid>:key/6b79db67-3bbb-435c-8352-7fa20b7d6518"
    ```
 
 1. Save the key output
@@ -87,33 +87,33 @@ I can't presume to know what your KMS key is, so we'll walk through the AWS cons
 
 1. Add the installer role to your key
 
-Modify kms key to add installer role
+   Modify kms key to add installer role
 
     ```bash
     vim kms-key-policy.json
     ```
 
-   ```json
-   {
-       "Version": "2012-10-17",
-       "Id": "key-default-1",
-       "Statement": [
-           {
-               "Sid": "Enable IAM User Permissions",
-               "Effect": "Allow",
-               "Principal": {
-                   "AWS": [
-                       "arn:aws:iam::<insert accountid>:root",
-                       "arn:aws:iam::<insert accountid>/ManagedOpenShift-Installer-Role"
-                  		]
+      ```json
+      {
+          "Version": "2012-10-17",
+          "Id": "key-default-1",
+          "Statement": [
+              {
+                  "Sid": "Enable IAM User Permissions",
+                  "Effect": "Allow",
+                  "Principal": {
+                      "AWS": [
+                          "arn:aws:iam::<insert accountid>:root",
+                          "arn:aws:iam::<insert accountid>/ManagedOpenShift-Installer-Role"
+                     		]
 
-               },
-               "Action": "kms:*",
-               "Resource": "*"
-           }
-       ]
-   }
-   ```
+                  },
+                  "Action": "kms:*",
+                  "Resource": "*"
+              }
+          ]
+      }
+      ```
 
 1. Apply modified KMS key
 
@@ -201,13 +201,14 @@ Once the cluster has finished installing we can validate we can access it
     ```bash
     rosa delete cluster -c $ROSA_CLUSTER_NAME
     ```
+
 1. Clean up the STS roles
 
-Once the cluster is deleted we can delete the STS roles.
+    Once the cluster is deleted we can delete the STS roles.
 
-    > Note you can get the correct commands with the ID filled in from the output of the previous step.
+   > Note you can get the correct commands with the ID filled in from the output of the previous step.
 
-    ```bash
-    rosa delete operator-roles -c <id> --yes --mode auto
-    rosa delete oidc-provider -c <id>  --yes --mode auto
-    ```
+   ```bash
+   rosa delete operator-roles -c <id> --yes --mode auto
+   rosa delete oidc-provider -c <id>  --yes --mode auto
+   ```
