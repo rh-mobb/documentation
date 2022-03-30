@@ -102,11 +102,9 @@ I can't presume to know what your KMS key is, so we'll walk through the AWS cons
                   "Sid": "Enable IAM User Permissions",
                   "Effect": "Allow",
                   "Principal": {
-                      "AWS": [
-                          "arn:aws:iam::<insert accountid>:root",
-                          "arn:aws:iam::<insert accountid>/ManagedOpenShift-Installer-Role"
-                     		]
-
+                      "AWS": [ 
+                          "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Installer-Role", "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-ControlPlane-Role","arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Worker-Role", "arn:aws:iam::<insert accountid>:root" 
+                          ]
                   },
                   "Action": "kms:*",
                   "Resource": "*"
@@ -206,9 +204,7 @@ Once the cluster has finished installing we can validate we can access it
 
     Once the cluster is deleted we can delete the STS roles.
 
-   > Note you can get the correct commands with the ID filled in from the output of the previous step.
-
    ```bash
-   rosa delete operator-roles -c <id> --yes --mode auto
-   rosa delete oidc-provider -c <id>  --yes --mode auto
+   rosa delete operator-roles -c $ROSA_CLUSTER_NAME --yes --mode auto
+   rosa delete oidc-provider -c $ROSA_CLUSTER_NAME  --yes --mode auto
    ```
