@@ -52,7 +52,7 @@ metadata:
   name: custom
   namespace: openshift-ingress-operator
 spec:
-  domain: custom.azure.mobb.ninja
+  domain: $DOMAIN
   nodePlacement:
     nodeSelector:
       matchLabels:
