@@ -14,8 +14,8 @@
 1. Create some environment variables
 
     ```bash
-DOMAIN=custom.azure.mobb.ninja
-EMAIL=example@email.com
+    DOMAIN=custom.azure.mobb.ninja
+    EMAIL=example@email.com
     SCRATCH_DIR=/tmp/aro
 ```
 
