@@ -14,10 +14,10 @@
 1. Create some environment variables
 
     ```bash
-    DOMAIN=custom.azure.mobb.ninja
-    EMAIL=example@email.com
-    SCRATCH_DIR=/tmp/aro
-```
+DOMAIN=custom.azure.mobb.ninja
+EMAIL=example@email.com
+SCRATCH_DIR=/tmp/aro
+    ```
 
 1. Create a certificate for the ingress controller
 
@@ -32,7 +32,7 @@ certbot certonly --manual \
   --config-dir "$SCRATCH_DIR/config" \
   --work-dir "$SCRATCH_DIR/work" \
   --logs-dir "$SCRATCH_DIR/logs"
-    ````
+    ```
 
 1. Create a secret for the certificate
 
@@ -44,30 +44,31 @@ oc create secret tls custom-tls \
 
 1. Create an ingress controller
 
-    ```bash
-cat <<EOF | oc apply -f -
-apiVersion: operator.openshift.io/v1
-kind: IngressController
-metadata:
-  name: custom
-  namespace: openshift-ingress-operator
-spec:
-  domain: $DOMAIN
-  nodePlacement:
-    nodeSelector:
-      matchLabels:
-        node-role.kubernetes.io/worker: ""
-  routeSelector:
-    matchLabels:
-      type: custom
-  defaultCertificate:
-    name: custom-tls
-  httpEmptyRequestsPolicy: Respond
-  httpErrorCodePages:
-    name: ""
-  replicas: 3
-EOF
-    ```
+   ```bash
+   cat <<EOF | oc apply -f -
+   apiVersion: operator.openshift.io/v1
+   kind: IngressController
+   metadata:
+     name: custom
+     namespace: openshift-ingress-operator
+   spec:
+     domain: $DOMAIN
+     nodePlacement:
+       nodeSelector:
+         matchLabels:
+           node-role.kubernetes.io/worker: ""
+     routeSelector:
+       matchLabels:
+         type: custom
+     defaultCertificate:
+       name: custom-tls
+     httpEmptyRequestsPolicy: Respond
+     httpErrorCodePages:
+       name: ""
+     replicas: 3
+   EOF
+   ```
+
 
 1. Wait a few moments then get the `EXTERNAL-IP` of the new ingress controller
 
@@ -110,29 +111,29 @@ oc get -n openshift-ingress svc router-custom
 
 1. Expose
 
-    ```bash
-cat << EOF | oc apply -f -
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  labels:
-    app: hello-openshift
-    app.kubernetes.io/component: hello-openshift
-    app.kubernetes.io/instance: hello-openshift
-    type: custom
-  name: hello-openshift-tls
-spec:
-  host: hello.$DOMAIN
-  port:
-    targetPort: 8080-tcp
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
-  to:
-    kind: Service
-    name: hello-openshift
-EOF
-    ```
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: route.openshift.io/v1
+   kind: Route
+   metadata:
+     labels:
+       app: hello-openshift
+       app.kubernetes.io/component: hello-openshift
+       app.kubernetes.io/instance: hello-openshift
+       type: custom
+     name: hello-openshift-tls
+   spec:
+     host: hello.$DOMAIN
+     port:
+       targetPort: 8080-tcp
+     tls:
+       termination: edge
+       insecureEdgeTerminationPolicy: Redirect
+     to:
+       kind: Service
+       name: hello-openshift
+   EOF
+   ```
 
 1. Verify it works
 
