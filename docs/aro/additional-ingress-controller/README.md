@@ -38,6 +38,7 @@ certbot certonly --manual \
 
     ```bash
 oc create secret tls custom-tls \
+  -n openshift-ingress \
   --cert=$SCRATCH_DIR/config/live/$DOMAIN/fullchain.pem \
   --key=$SCRATCH_DIR/config/live/$DOMAIN/privkey.pem
     ```
