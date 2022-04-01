@@ -1,0 +1,13 @@
+{
+  "Version" : "2012-10-17",
+  "Id" : "key-default-1",
+  "Statement" : [ {
+    "Sid" : "Enable IAM User Permissions",
+    "Effect" : "Allow",
+    "Principal" : {
+      "AWS" : [ "arn:aws:iam::660250927410:root", "arn:aws:iam::660250927410:role/ManagedOpenShift-Worker-Role", "arn:aws:iam::660250927410:role/ManagedOpenShift-ControlPlane-Role", "arn:aws:iam::660250927410:role/ManagedOpenShift-Installer-Role" ]
+    },
+    "Action" : "kms:*",
+    "Resource" : "*"
+  } ]
+}
