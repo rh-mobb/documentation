@@ -113,7 +113,7 @@ EOF
 
 1. Create an AlertManagerConfig for User Workload Monitoring
 
-> Note: This next command assumes the existing `config.yaml` in the `user-workload-monitoring-config` config map is empty. You should verify it with `kubectl get -n openshift-user-workload-monitoring get cm user-workload-monitoring-config -o yaml` and simply edit in the differences if its not.
+> Note: This next command assumes the existing `config.yaml` in the `user-workload-monitoring-config` config map is empty. You should verify it with `kubectl get -n openshift-user-workload-monitoring cm user-workload-monitoring-config -o yaml` and simply edit in the differences if its not.
 
 ```bash
 cat << EOF | kubectl apply -f -
