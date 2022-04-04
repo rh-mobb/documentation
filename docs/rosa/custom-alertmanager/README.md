@@ -13,9 +13,9 @@ The OpenShift Administrator can use the Prometheus Operator to create a custom A
 
 1. Before we get started we need to set some environment variables to be used throughout the guide.
 
-    ```bash
-export PROM_NAMESPACE=custom-alert-manager
-    ```
+   ```bash
+   export PROM_NAMESPACE=custom-alert-manager
+   ```
 
 ## Install Prometheus Operator
 
@@ -23,36 +23,36 @@ export PROM_NAMESPACE=custom-alert-manager
 
 1. Create a OperatorGroup and Subscription for the Prometheus Operator
 
-```bash
-cat << EOF | kubectl apply -f -
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ${PROM_NAMESPACE}
----
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: federated-metrics
-  namespace: ${PROM_NAMESPACE}
-spec:
-  targetNamespaces:
-  - ${PROM_NAMESPACE}
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: prometheus
-  namespace: ${PROM_NAMESPACE}
-spec:
-  channel: beta
-  installPlanApproval: Automatic
-  name: prometheus
-  source: community-operators
-  sourceNamespace: openshift-marketplace
-EOF
-```
+   ```bash
+   cat << EOF | kubectl apply -f -
+   ---
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: ${PROM_NAMESPACE}
+   ---
+   apiVersion: operators.coreos.com/v1
+   kind: OperatorGroup
+   metadata:
+     name: federated-metrics
+     namespace: ${PROM_NAMESPACE}
+   spec:
+     targetNamespaces:
+     - ${PROM_NAMESPACE}
+   ---
+   apiVersion: operators.coreos.com/v1alpha1
+   kind: Subscription
+   metadata:
+     name: prometheus
+     namespace: ${PROM_NAMESPACE}
+   spec:
+     channel: beta
+     installPlanApproval: Automatic
+     name: prometheus
+     source: community-operators
+     sourceNamespace: openshift-marketplace
+   EOF
+   ```
 
 ## Deploy AlertManager
 
@@ -60,54 +60,54 @@ EOF
 
 > This will create a basic AlertManager configuration to send alerts to a slack channel. Configuring slack is outside the scope of this document. Update the variables to suit your slack integration.
 
-```bash
-SLACK_API_URL=https://hooks.slack.com/services/XXX/XXX/XXX
-SLACK_CHANNEL='#paultest'
-cat << EOF | kubectl apply -n ${PROM_NAMESPACE} -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: custom-alertmanager
-  namespace: ${PROM_NAMESPACE}
-stringData:
-  alertmanager.yaml: |
-    global:
-      slack_api_url: "${SLACK_API_URL}"
-    route:
-      receiver: slack-notifications
-      group_by: [alertname]
-
-    receivers:
-    - name: slack-notifications
-      slack_configs:
-      - channel: ${SLACK_CHANNEL}
-        send_resolved: true
----
-apiVersion: monitoring.coreos.com/v1
-kind: Alertmanager
-metadata:
-  name: custom-alertmanager
-  namespace: ${PROM_NAMESPACE}
-spec:
-  securityContext: {}
-  replicas: 3
-  configSecret: custom-alertmanager
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: custom-alertmanager
-spec:
-  type: ClusterIP
-  ports:
-  - name: web
-    port: 9093
-    protocol: TCP
-    targetPort: web
-  selector:
-    alertmanager: custom-alertmanager
-EOF
-```
+   ```bash
+   SLACK_API_URL=https://hooks.slack.com/services/XXX/XXX/XXX
+   SLACK_CHANNEL='#paultest'
+   cat << EOF | kubectl apply -n ${PROM_NAMESPACE} -f -
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: custom-alertmanager
+     namespace: ${PROM_NAMESPACE}
+   stringData:
+     alertmanager.yaml: |
+       global:
+         slack_api_url: "${SLACK_API_URL}"
+       route:
+         receiver: slack-notifications
+         group_by: [alertname]
+       receivers:
+       - name: slack-notifications
+         slack_configs:
+         - channel: ${SLACK_CHANNEL}
+           send_resolved: true
+   ---
+   apiVersion: monitoring.coreos.com/v1
+   kind: Alertmanager
+   metadata:
+     name: custom-alertmanager
+     namespace: ${PROM_NAMESPACE}
+   spec:
+     securityContext: {}
+     replicas: 3
+     configSecret: custom-alertmanager
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: custom-alertmanager
+     namespace: ${PROM_NAMESPACE}
+   spec:
+     type: ClusterIP
+     ports:
+     - name: web
+       port: 9093
+       protocol: TCP
+       targetPort: web
+     selector:
+       alertmanager: custom-alertmanager
+   EOF
+   ```
 
 ## Configure User Workload Monitoring to use the custom AlertManager
 
@@ -115,42 +115,49 @@ EOF
 
 > Note: This next command assumes the existing `config.yaml` in the `user-workload-monitoring-config` config map is empty. You should verify it with `kubectl get -n openshift-user-workload-monitoring cm user-workload-monitoring-config -o yaml` and simply edit in the differences if its not.
 
-```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: user-workload-monitoring-config
-  namespace: openshift-user-workload-monitoring
-data:
-  config.yaml: |
-    thanosRuler:
-      additionalAlertmanagerConfigs:
-      - scheme: http
-        pathPrefix: /
-        timeout: "30s"
-        apiVersion: v1
-        staticConfigs: ["custom-alertmanager.$PROM_NAMESPACE.svc.cluster.local:9093"]
-EOF
-```
+   ```bash
+   cat << EOF | kubectl apply -f -
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: user-workload-monitoring-config
+     namespace: openshift-user-workload-monitoring
+   data:
+     config.yaml: |
+       thanosRuler:
+         additionalAlertmanagerConfigs:
+         - scheme: http
+           pathPrefix: /
+           timeout: "30s"
+           apiVersion: v1
+           staticConfigs: ["custom-alertmanager.$PROM_NAMESPACE.svc.cluster.   local:9093"]
+   EOF
+   ```
 
 ## Create an Example Alert
 
 1. Verify it works by creating a Prometheus Rule that will fire off an alert
 
-    ```bash
-cat << EOF | kubectl apply -n $PROM_NAMESPACE -f -
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: prometheus-example-rules
-spec:
-  groups:
-  - name: example.rules
-    rules:
-    - alert: ExampleAlert
-      expr: vector(1)
-EOF
+   ```bash
+   cat << EOF | kubectl apply -n $PROM_NAMESPACE -f -
+   apiVersion: monitoring.coreos.com/v1
+   kind: PrometheusRule
+   metadata:
+     name: prometheus-example-rules
+     namespace: ${PROM_NAMESPACE}
+   spec:
+     groups:
+     - name: example.rules
+       rules:
+       - alert: ExampleAlert
+         expr: vector(1)
+   EOF
+   ```
+
+1. Forward a port to the alert manager service
+
+   ```bash
+    kubectl port-forward -n ${PROM_NAMESPACE} svc/custom-alertmanager 9093:9093
     ```
 
 1. Browse to http://localhost:9093/#/alerts to see the alert "ExampleAlert"
