@@ -1,10 +1,8 @@
-# Enable the Managed Upgrade Operator and schedule Upgrades
+# Enable the Managed Upgrade Operator in ARO and schedule Upgrades
 
 **Paul Czarkowski**
 
-*03/13/2022*
-
-> This document is a work in progress and should be relied on even less than the usual mobb.ninja disclaimer.
+*04/12/2022*
 
 ## Prerequisites
 
@@ -12,7 +10,7 @@
 
 ## Get Started
 
-1. Run this oc command to enable the MUO operator
+1. Run this oc command to enable the Managed Upgrade Operator (MUO)
 
    ```
    oc patch cluster.aro.openshift.io cluster --patch \
@@ -110,8 +108,43 @@
      capacityReservation: false
      desired:
        channel: "stable-4.9"
-       version: "4.9.9"
+       version: "4.9.27"
    EOF
    ```
 
+1. Check the status of the scheduled upgrade
 
+   ```bash
+   oc -n openshift-managed-upgrade-operator get \
+     upgradeconfigs.upgrade.managed.openshift.io \
+     managed-upgrade-config -o jsonpath='{.status}' | jq
+   ```
+
+    *The output of this command should show upgrades in progress*
+
+    ```
+    {
+    "history": [
+      {
+        "conditions": [
+          {
+            "lastProbeTime": "2022-04-12T14:42:02Z",
+            "lastTransitionTime": "2022-04-12T14:16:44Z",
+            "message": "ControlPlaneUpgraded still in progress",
+            "reason": "ControlPlaneUpgraded not done",
+            "startTime": "2022-04-12T14:16:44Z",
+            "status": "False",
+            "type": "ControlPlaneUpgraded"
+          },
+    ```
+
+1. You can verify the upgrade has completed successfully via the following
+
+   ```
+   oc get clusterversion version
+   ```
+
+   ```
+   NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
+   version   4.9.27    True        False         161m    Cluster version is 4.9.27
+   ```
