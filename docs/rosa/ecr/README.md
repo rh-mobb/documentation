@@ -17,7 +17,7 @@ There are two options to use to authenticate wth Amazon ECR to pull images.
    oc create secret docker-registry ecr-pull-secret  --docker-server=<registry id>.dkr.ecr.<region>.amazonaws.com  --docker-username=AWS --docker-password=$(aws ecr get-login-password)  --namespace=hello-world
    ```
 
-   Amazon ECR tokens expire every 12 hours which will mean you will need to re-authenticate every 12 hours either through scriping or manually. <br/><br/>
+   Amazon ECR tokens expire every 12 hours which will mean you will need to re-authenticate every 12 hours either through scriping or do so manually. <br/><br/>
 
 
 2. A second, and preferred method, is to attach an ECR Policy Role to your cluster which this guide will walk you through.
