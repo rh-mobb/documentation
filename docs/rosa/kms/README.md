@@ -99,6 +99,7 @@ I can't presume to know what your KMS key is, so we'll walk through the AWS cons
                "Effect": "Allow",
                "Principal": {
                    "AWS": [ 
+                       "arn:aws:iam::<insert accountid>:root",
                        "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Installer-Role"
                        ]
                },
