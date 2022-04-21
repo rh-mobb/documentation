@@ -2,14 +2,11 @@
 
 **Byron Miller**
 
-*Last updated 3/30/2022*
+*Last updated 4/21/2022*
 
-> **Tip** The official documentation [for installing a ROSA cluster in STS mode](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
+> **Tip** Official Documentation [ROSA STS with custom KMS key](https://docs.openshift.com/rosa/rosa_getting_started/rosa-sts-creating-a-cluster-with-customizations.html#rosa-sts-creating-cluster-customizations_rosa-sts-creating-a-cluster-with-customizations)
 
-
-STS allows us to deploy ROSA without needing a ROSA admin account, instead it uses roles and policies with Amazon STS (secure token service) to gain access to the AWS resources needed to install and operate the cluster.
-
-Providing a custom provided KMS key and modifying the key to include the STS installer role will use the custom KMS for worker and control plane root disk encryption as well as for encrypting PV Claims.
+This guide will walk you through installing ROSA (Red Hat OpenShift on AWS) with a customer provided KMS Key that will be used to encrypt both the root volumes of nodes as well as PV Claims for mounted EBS claims.
 
 ## Prerequisites
 
@@ -20,7 +17,6 @@ Providing a custom provided KMS key and modifying the key to include the STS ins
 
 ### Prepare AWS Account for OpenShift
 
-Recommended Read: Official Documentation [ROSA STS with custom KMS key](https://docs.openshift.com/rosa/rosa_getting_started/rosa-sts-creating-a-cluster-with-customizations.html#rosa-sts-creating-cluster-customizations_rosa-sts-creating-a-cluster-with-customizations)
 
 1. Configure the AWS CLI by running the following command
 
@@ -103,7 +99,7 @@ I can't presume to know what your KMS key is, so we'll walk through the AWS cons
                "Effect": "Allow",
                "Principal": {
                    "AWS": [ 
-                       "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Installer-Role", "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-ControlPlane-Role","arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Worker-Role", "arn:aws:iam::<insert accountid>:root" 
+                       "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Installer-Role"
                        ]
                },
                "Action": "kms:*",
