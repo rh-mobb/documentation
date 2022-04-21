@@ -100,7 +100,9 @@ I can't presume to know what your KMS key is, so we'll walk through the AWS cons
                "Principal": {
                    "AWS": [ 
                        "arn:aws:iam::<insert accountid>:root",
-                       "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Installer-Role"
+                       "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Installer-Role",
+                       "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-ControlPlane-Role",
+                       "arn:aws:iam::<insert accountid>:role/ManagedOpenShift-Worker-Role"
                        ]
                },
                "Action": "kms:*",
