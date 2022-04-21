@@ -29,6 +29,7 @@
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
 * [Deploy and use the Azure Service Operator (ASO)](./docs/aro/azure-service-operator)
+* [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 
 ## Advanced Cluster Manager (ACM)
 

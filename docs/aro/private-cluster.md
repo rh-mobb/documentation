@@ -222,9 +222,9 @@ echo $FWPRIVATE_IP
 
 1. Create firewall rules for ARO resources
 
-    Pick one of the following:
+    > Note: ARO clusters do not need access to the internet, however your own workloads running on them may. You can skip this step if you don't need any egress at all.
 
-    * Create a Network Rule to allow all egress traffic
+    * Create a Network Rule to allow all http/https egress traffic (not recommended)
 
         ```bash
         az network firewall network-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
@@ -236,15 +236,17 @@ echo $FWPRIVATE_IP
 
     * Create Application Rules to allow to a restricted set of destinations
 
+        > repliace the target-fqdns with your desired destinations
+
         ```bash
         az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
-        --collection-name 'ARO' \
+        --collection-name 'Allow Egress' \
         --action allow \
         --priority 100 \
         -n 'required' \
         --source-addresses '*' \
         --protocols 'http=80' 'https=443' \
-        --target-fqdns 'registry.redhat.io' '*.quay.io' 'sso.redhat.com' 'management.azure.com' 'mirror.openshift.com' 'api.openshift.com' 'quay.io' '*.blob.core.windows.net' 'gcs.prod.monitoring.core.windows.net' 'registry.access.redhat.com' 'login.microsoftonline.com' '*.servicebus.windows.net' '*.table.core.windows.net' 'grafana.com'
+        --target-fqdns '*.google.com' '*.bing.com'
 
         az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private \
         --collection-name 'Docker' \
@@ -255,6 +257,21 @@ echo $FWPRIVATE_IP
         --protocols 'http=80' 'https=443' \
         --target-fqdns '*cloudflare.docker.com' '*registry-1.docker.io' 'apt.dockerproject.org' 'auth.docker.io'
         ```
+
+1. Update the subnets to use the Firewall
+
+    Once the cluster is deployed successfully you can update the subnets to use the firewall instead of the default outbound loadbalancer rule.
+
+    ```bash
+az network vnet subnet update -g $AZR_RESOURCE_GROUP \
+  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  --route-table aro-udr
+az network vnet subnet update -g $AZR_RESOURCE_GROUP \
+  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
+  --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+  --route-table aro-udr
+    ```
 
 1. Create the cluster
 
@@ -271,21 +288,6 @@ az aro create \
   --ingress-visibility Private \
   --pull-secret @$AZR_PULL_SECRET
       ```
-
-1. Update the subnets to use the Firewall
-
-    Once the cluster is deployed successfully you can update the subnets to use the firewall instead of the default outbound loadbalancer rule.
-
-    ```bash
-az network vnet subnet update -g $AZR_RESOURCE_GROUP \
-  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-  --route-table aro-udr
-az network vnet subnet update -g $AZR_RESOURCE_GROUP \
-  --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION \
-  --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-  --route-table aro-udr
-    ```
 
 ### Jump Host
 
@@ -399,7 +401,6 @@ ADMINPW=$(az aro list-credentials \
       --name $AZR_CLUSTER \
       --resource-group $AZR_RESOURCE_GROUP \
       -o tsv --query consoleProfile)
-
     echo $CONSOLE
 
     curl --socks5-hostname localhost:1337 $CONSOLE
