@@ -189,8 +189,23 @@ Once the cluster has finished installing we can validate we can access it
    ```bash
    rosa create admin -c $ROSA_CLUSTER_NAME
    ```
+   Run the resulting login statement from output. May take 2-3 minutes before authentication is fully synced
 
-1. Wait a few moments and run the `oc login` command it provides.
+2. Verify PV Claims
+
+   ```bash
+   oc get pv
+   ```
+
+   Output: 
+      NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM
+                                          STORAGECLASS       REASON   AGE
+      pvc-00dac374-a45e-43fa-a313-ae0491e8edf1   10Gi       RWO            Delete           Bound    openshift-monitoring/alertmanager-data-alertmanager-main-1   gp2-customer-kms            26m
+      pvc-7d211496-4ddf-4200-921c-1404b754afa5   10Gi       RWO            Delete           Bound    openshift-monitoring/alertmanager-data-alertmanager-main-0   gp2-customer-kms            26m
+      pvc-b5243cef-ec30-4e5c-a348-aeb8136a908c   100Gi      RWO            Delete           Bound    openshift-monitoring/prometheus-data-prometheus-k8s-0        gp2-customer-kms            26m
+      pvc-ec60c1cf-72cf-4ac6-ab12-8e9e5afdc15f   100Gi      RWO            Delete           Bound    openshift-monitoring/prometheus-data-prometheus-k8s-1        gp2-customer-kms            26m
+
+You should see the storage class show gp2-customer-kms which shows the pv claims encrypted by customer provided key.
 
 ## Cleanup
 
