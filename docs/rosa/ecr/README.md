@@ -9,34 +9,33 @@
 ### Background
 There are two options to use to authenticate wth Amazon ECR to pull images.  
 
-1. The traditional method is to create a pull secret for ecr.
+The traditional method is to create a pull secret for ecr.
 
-   Example:
+Example:
 
-   ```
-   oc create secret docker-registry ecr-pull-secret  --docker-server=<registry id>.dkr.ecr.<region>.amazonaws.com  --docker-username=AWS --docker-password=$(aws ecr get-login-password)  --namespace=hello-world
-   ```
+```
+oc create secret docker-registry ecr-pull-secret  --docker-server=<registry id>.dkr.ecr.<region>.amazonaws.com  \
+  --docker-username=AWS --docker-password=$(aws ecr get-login-password)  --namespace=hello-world
+```
 
-   Amazon ECR tokens expire every 12 hours which will mean you will need to re-authenticate every 12 hours either through scriping or do so manually. <br/><br/>
+However Amazon ECR tokens expire every 12 hours which will mean you will need to re-authenticate every 12 hours either through scripting or do so manually. 
 
-
-2. A second, and preferred method, is to attach an ECR Policy Role to your cluster which this guide will walk you through.
+A second, and preferred method, is to attach an ECR Policy to your cluster's worker machine profiles which this guide will walk you through.
 
 
 ### Attach ECR Policy Role
 
-You can attach an ECR policy role to your cluster giving the cluster permissions to pull images from your registries.  ROSA comes with pre-defined policy roles one for STS clusters and one for non-STS clusters. 
+You can attach an ECR policy to your cluster giving the cluster permissions to pull images from your registries.  ROSA worker machine instances comes with pre-defined IAM roles, named differently depending on whether its a STS cluster or a non-STS cluster.
 
 ##### STS Cluster Role
 
-`ManagedOpenShift-Worker-Role` is an IAM role used by ROSA STS compute instances.
+`ManagedOpenShift-Worker-Role` is the IAM role attached to ROSA STS compute instances.
 
 ##### non-STS Cluster Role
 
-`<cluster name>-<identifier>-worker-role` is an IAM role used by ROSA non-STS compute instances.
+`<cluster name>-<identifier>-worker-role` is the IAM role attached to ROSA non-STS compute instances.
 
-Tip:
-To find the non-STS cluster role run the following command with your cluster name:
+> Tip: To find the non-STS cluster role run the following command with your cluster name:
 
 ```
 aws iam list-roles | grep <cluster_name>
@@ -48,7 +47,7 @@ aws iam list-roles | grep <cluster_name>
 
 ECR has several pre-defined policies that give permissions to interact with the service.  In the case of ROSA, we will be pulling images from ECR and will only need to add the `AmazonEC2ContainerRegistryReadOnly` policy.  
 
-1. Add the `AmazonEC2ContainerRegistryReadOnly` policy to the `ManagedOpenShift-Worker-Role` for STS clusters or the `<cluster name>-<identifier>-worker-role` for non-STS clusters.<br/><br/>
+1. Add the `AmazonEC2ContainerRegistryReadOnly` policy to the `ManagedOpenShift-Worker-Role` for STS clusters or the `<cluster name>-<identifier>-worker-role` for non-STS clusters.
   
    STS Example:
 
@@ -63,7 +62,8 @@ ECR has several pre-defined policies that give permissions to interact with the 
 1. Log into ECR  
 
    ```
-   aws ecr get-login-password --region region | docker login --username AWS --password-stdin aws_account_id.dkr.ecr.region.amazonaws.com
+   aws ecr get-login-password --region region | docker login --username AWS \
+     --password-stdin aws_account_id.dkr.ecr.region.amazonaws.com
    ```
 
 2. Create a repository   
@@ -113,12 +113,10 @@ ECR has several pre-defined policies that give permissions to interact with the 
    oc new-app --name hello-world --image <registry id>.dkr.ecr.<region>.amazonaws.com/hello-world:latest
    ```
 
-8. Expected Output  
-
-   View a list of pods in the namespace you created:
+8. View a list of pods in the namespace you created:
     
    ```
-     oc get pods 
+   oc get pods 
    ```
 
    Expected output:
@@ -127,10 +125,12 @@ ECR has several pre-defined policies that give permissions to interact with the 
 
    If you see the hello-world pod running ... congratulations!  You can now pull images from your ECR repository.<br/><br/>
    
-9. Clean up    
+## Clean up    
 
-    Simply delete the project you created to test pulling images:
+1. Simply delete the project you created to test pulling images:
 
     ```
     oc delete project hello-world
     ```
+    
+10. You may also want to remove the `arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly` policy from the worker nodes if you do no want them to continue to have access to the ECR.
