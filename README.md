@@ -21,6 +21,7 @@
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Using Amazon Web Services Elastic File System (EFS) on ROSA](./docs/rosa/aws-efs-operator-on-rosa)
 * [Using the AWS EFS CSI Driver Operator on ROSA 4.10.x](./docs/rosa/aws-efs-csi-operator-sts)
+* [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](./docs/rosa/ecr)
 
 ### ARO
 
@@ -30,6 +31,7 @@
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
 * [Deploy and use the Azure Service Operator (ASO)](./docs/aro/azure-service-operator)
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
+* [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 
 ## Advanced Cluster Manager (ACM)
 
