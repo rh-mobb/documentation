@@ -1,6 +1,6 @@
 # Create Filestore Storage for OSD in GCP
 
-Author: [Roberto Carratalá](https://github.com/rcarrata), [Andrea Bozzoni](https://github.com/abozzoni)
+Author: [Roberto Carratalá](https://github.com/rcarrata), [Paul Czarkowski](https://twitter.com/pczarkowski), [Andrea Bozzoni](https://github.com/abozzoni)
 
 By default, within OSD in GCP only the [GCE-PD StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/#gce-pd) is available in the cluster. With this StorageClass, only ReadWriteOnce mode is permitted, and the gcePersistentDisks can only be mounted by a [single consumer in read-write mode](https://kubernetes.io/docs/concepts/storage/volumes/#gcepersistentdisk).
 
