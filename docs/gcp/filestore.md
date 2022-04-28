@@ -33,7 +33,7 @@ Because of that, and for provide Storage with Shared Access (RWX) Access Mode to
     export TIER_FS="BASIC_HDD"
     export VOL_NAME_FS="osd4"
     export CAPACITY="1TB"
-    export VPC_NETWORK="projects/mobb-demo/global/networks/poc-orange-vpc-demo"
+    export VPC_NETWORK="projects/my-project/global/networks/demo-vpc"
 
     gcloud filestore instances create $NAME_FS --zone=$ZONE_FS --tier=$TIER_FS --file-share=name="$VOL_NAME_FS",capacity=$CAPACITY --network=name="$VPC_NETWORK"
     ```
@@ -166,7 +166,7 @@ Because of that, and for provide Storage with Shared Access (RWX) Access Mode to
 
     ```sh
     for i in $(oc get pod --no-headers | awk '{ print $1 }'); do echo "POD -> $i"; oc exec -ti $i -- df -h | grep nginx; echo ""; done
-    
+
     POD -> nfs-web2-54f9fb5cd8-8dcgh
     10.124.186.98:/osd4 1007G     0  956G   0% /usr/share/nginx/html
 
