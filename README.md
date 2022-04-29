@@ -33,6 +33,10 @@
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 
+### GCP
+
+* [Using Filestore with OpenShift Dedicated in GCP](./docs/gcp/filestore.md)
+
 ## Advanced Cluster Manager (ACM)
 
 * [Deploy ACM Observability to a ROSA cluster](./docs/acm/observability/rosa)
