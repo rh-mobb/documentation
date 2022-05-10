@@ -6,6 +6,8 @@
 
 > This is a combination of the [private-link](../private-link) and [sts](../sts) setup documents to show the full picture
 
+![architecture diagram showing privatelink with public subnet](../private-link/images/architecture-pl.png)
+
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
@@ -27,12 +29,12 @@ For this scenario, we will be using a newly created VPC with both public and pri
 
 > **Note**: If you already have a Transit Gateway (TGW) or similar, you can skip the public subnet configuration
 
-> **Note**: When creating subnets, make sure that subnet(s) are created in availability zones that have ROSA instances types available. If AZ is not "forced", the subnet is created in a random AZ in the region. Force AZ using the `--availability-zone` argument in the `create-subnet` command. 
+> **Note**: When creating subnets, make sure that subnet(s) are created in availability zones that have ROSA instances types available. If AZ is not "forced", the subnet is created in a random AZ in the region. Force AZ using the `--availability-zone` argument in the `create-subnet` command.
 >
 >1. Use `rosa list instance-types` to list the ROSA instance types
 >
 >1. Use `aws ec2 describe-instance-type-offerings` to check that your desired AZ supports your desired instance type
-> 
+>
 >Example using ***us-east-1***, ***us-east-1b***, and ***m5.xlarge***:  `aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values=us-east-1b --region us-east-1 --output text | egrep m5.xlarge`
 >
 >Result should display **INSTANCETYPEOFFERINGS [instance-type] [az] availability-zone** if your selected region supports your desired instance type

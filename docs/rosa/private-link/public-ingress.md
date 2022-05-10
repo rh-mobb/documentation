@@ -2,6 +2,8 @@
 
 The is an example guide for creating a public ingress endpoint for a ROSA Private-Link cluster. Be aware of the security implications of creating a public subnet in your ROSA VPC this way.
 
+![architecture diagram showing privatelink with public ingress](./images/arch-pl-ingress.png)
+
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
