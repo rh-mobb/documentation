@@ -24,6 +24,8 @@ Todo
 
 This will create both a Private and Public subnet. All cluster resources will live in the private subnet, the public subnet only exists to NAT the egress traffic to the Internet.
 
+![architecture diagram showing privatelink with public subnet](./images/architecture-pl.png)
+
 > As an alternative use the Terraform instructions provided [here](../byo-vpc) then skip down to the rosa create command.
 
 1. Set a Cluster name
@@ -131,27 +133,27 @@ This will create both a Private and Public subnet. All cluster resources will li
     **TODO: CLI instructions**
 
     **Through the GUI:**
-      
+
       1. Navigate to the EC2 console and launch a new instance
 
       1. Select the AMI for your instance, if you don't have a standard, the Amazon Linux 2 AMI works just fine
 
       1. Choose your instance type, the t2.micro/free tier is sufficient for our needs, and click **Next: Configure Instance Details**
 
-      1. Change the **Network** settings to setup this host inside your _private-link_ VPC  
+      1. Change the **Network** settings to setup this host inside your _private-link_ VPC
       ![select the private link vpc from dropdown](./images/rosa-private-link-bastion-network.png)
 
-      1. Change the **Subnet** setting to use the _private-link-public_ subnet  
+      1. Change the **Subnet** setting to use the _private-link-public_ subnet
       ![select the subnet named private-link-public from the dropdown](./images/rosa-private-link-bastion-subnet.png)
 
-      1. Change **Auto-assign Public IP** to _Enable_  
+      1. Change **Auto-assign Public IP** to _Enable_
       ![select Enable from dropdown](./images/rosa-private-linke-bastion-PublicIP.png)
 
       1. Default settings for Storage and Tags are OK, if you do not need to change them for your own reasons, select **6. Configure Security Group** from the top navigation or click through using the **Next** buttons
 
       1. If you already have a security group created to allow access from your computer to AWS, choose **Select an existing security group** and choose that group from the list and skip to **Review and Launch**. Otherwise, select **Create a new security group** and continue.
 
-      1. To allow access only from your current public IP, change the **Source** heading to use _My IP_  
+      1. To allow access only from your current public IP, change the **Source** heading to use _My IP_
       ![use the MY IP option from the Source dropdown](./images/rosa-private-linke-bastion-securityGroup.png)
 
       1. Click **Review and Launch**, verify all settings are correct and follow the standard AWS instructions for finalizing the setup and selecting/creating the security keys.

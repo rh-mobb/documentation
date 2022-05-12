@@ -10,6 +10,7 @@
 ### ROSA
 
 * [Deploying ROSA in Private Link mode](./docs/rosa/private-link)
+  * [Add Public Ingress to Private Link Cluster](./docs/rosa/private-link/public-ingress)
 * [Deploying ROSA in STS mode](./docs/rosa/sts)
 * [Deploying ROSA in STS mode with Private Link](./docs/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](./docs/rosa/kms)
