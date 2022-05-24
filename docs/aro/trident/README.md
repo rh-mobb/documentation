@@ -191,11 +191,11 @@ FYI - Sample files for review are in sample-input/backends-samples/azure-netapp-
 4. Replace subscriptionID with your azure SubscriptionID
 5. Ensure location matches your Azure Region
 
+Note: I have used nfsv3 for basic compatibility. You can remove that line and use NetApp files defaults.
+
 ```bash
 vi backend.json
 ```
-
-Note: I have used nfsv3 for basic compatibility. You can remove that line and use NetApp files defaults.
 
 Add the following snippet
 
