@@ -187,6 +187,8 @@ vi backend.json
 
 Add the following snippet
 
+Please note: I haven't tested nfs 4 or 4.1, they should work though. (you can remove nfsMountOptions parameter to accept defaults)
+
 ```json
 {
         "version": 1,
