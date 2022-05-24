@@ -273,6 +273,14 @@ storageclass.storage.k8s.io/standard created
 
 ### Provision volume
 
+Let's create a new project and set up a persistent volume claim.
+
+```bash
+oc new-project netappdemo
+```
+
+Now we'll create a PV claim in this netappdemo project.
+
 ```bash
 cat <<EOF | kubectl apply -f -
 kind: PersistentVolumeClaim
@@ -284,7 +292,7 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 4000Gi
+      storage: 1000Gi
   storageClassName: standard
 EOF
 ```
@@ -317,3 +325,100 @@ Storage Class
 
 Persisent Volumes
 ![Persistent Volumes](persistent-volumes.png)
+
+
+## Create Pods to test Azure NetApp 
+
+We'll create two pods here to exercise the Azure NetApp file mount. One to write data and another to read data to show that it is mounted as "read write many" and correctly working.
+
+### Writer Pod
+
+This pod will write data to a mount
+
+```yaml
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-netapp
+  labels:
+    app: test-aznetapp
+    deploymethod: trident
+spec:
+  containers:
+    - name: aznetapp
+      image: centos:latest
+      command: ["/bin/bash", "-c", "--"]
+      resources:
+        limits:
+          cpu: 1
+          memory: "4Gi"
+      args:
+        [
+          "while true; do echo 'hello netapp' | tee -a /mnt/netapp-data/verify-netapp && sleep 5; done;",
+        ]
+      volumeMounts:
+        - name: disk01
+          mountPath: "/mnt/netapp-data"
+  volumes:
+    - name: disk01
+      persistentVolumeClaim:
+        claimName: standard
+EOF
+```
+
+You can watch for this container to be ready
+
+```bash
+watch oc get pod test-netapp
+```
+
+Or view it in the OpenShift POD console for the netappdemo namespace
+
+![Netapp Trident Demo Container](netapp-demo-pod.png)
+
+### Reader Pod
+
+This pod will read back the data from the mount
+
+```yaml
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-netapp-read
+spec:
+  containers:
+    - name: test-netapp-read
+      image: centos:latest
+      command: ["/bin/bash", "-c", "--"]
+      resources:
+        limits:
+          cpu: 1
+          memory: "4Gi"
+      args: ["tail -f /mnt/netapp-data/verify-netapp"]
+      volumeMounts:
+        - name: disk01
+          mountPath: "/mnt/netapp-data"
+  volumes:
+    - name: disk01
+      persistentVolumeClaim:
+        claimName: standard
+EOF
+```
+
+Now let's verify the container is reading from the writer
+
+```bash
+oc logs test-netapp-read
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+```
