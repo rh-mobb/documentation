@@ -13,7 +13,7 @@ spec:
       resources:
         limits:
           cpu: 1
-          memory: "4Gi"
+          memory: "1Gi"
       args:
         [
           "while true; do echo 'hello netapp' | tee -a /mnt/netapp-data/verify-netapp && sleep 5; done;",
