@@ -15,14 +15,15 @@ This guide a simple "happy path" to show the path of least friction to showcasin
   * [helm 3 cli](https://helm.sh/docs/intro/install/){:target="_blank"}
   * [Review official trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator){:target="_blank"}
 
-In this guide, you will need to use your:
+In this guide, you will need service principal and region details. Please have these handy.
 
-Azure SubscriptionID
-Azure tenantID
-Azure clientID (Service Principal)
-Azure clientSecret (Service Principal Secret)
-Region
+* Azure SubscriptionID
+* Azure tenantID
+* Azure clientID (Service Principal)
+* Azure clientSecret (Service Principal Secret)
+* Azure Region
 
+If you don't have your existing ARO service principal credentials, you can create your own service principal and grant it contributor to be able to manage the required resources. Please review the Official Trident Documentation regarding Azure NetApp files and required permissions.
 
 ## Configure Azure
 
