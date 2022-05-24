@@ -15,6 +15,14 @@ This guide a simple "happy path" to show the path of least friction to showcasin
   * [helm 3 cli](https://helm.sh/docs/intro/install/){:target="_blank"}
   * [Review official trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator){:target="_blank"}
 
+In this guide, you will need to use your:
+
+Azure SubscriptionID
+Azure tenantID
+Azure clientID (Service Principal)
+Azure clientSecret (Service Principal Secret)
+Region
+
 
 ## Configure Azure
 
@@ -175,18 +183,21 @@ which tridentctl
 
 ## Create trident backend
 
-Sample files for review are in sample-input/backends-samples/azure-netapp-files
+FYI - Sample files for review are in sample-input/backends-samples/azure-netapp-files directory from the trident tgz we extracted earlier.
 
 Replace client ID with service principal ID
 Replace clientSecret with Service Principal Secret
+Replace tenantID with your account tenant ID
+Replace subscriptionID with your azure SubscriptionID
+Ensure location matches your Azure Region
 
 ```bash
 vi backend.json
 ```
 
-Add the following snippet
+Note: I have used nfsv3 for basic compatibility. You can remove that line and use NetApp files defaults.
 
-Please note: I haven't tested nfs 4 or 4.1, they should work though. (you can remove nfsMountOptions parameter to accept defaults)
+Add the following snippet
 
 ```json
 {
