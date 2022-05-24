@@ -182,7 +182,7 @@ Replace client ID with service principal ID
 Replace clientSecret with Service Principal Secret
 
 ```bash
-vi backend.yjson
+vi backend.json
 ```
 
 Add the following snippet
