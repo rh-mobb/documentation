@@ -33,6 +33,7 @@
 * [Deploy and use the Azure Service Operator (ASO)](./docs/aro/azure-service-operator)
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
+* [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
 
 ### GCP
 
