@@ -292,7 +292,7 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 1000Gi
+      storage: 4000Gi
   storageClassName: standard
 EOF
 ```
@@ -352,7 +352,7 @@ spec:
       resources:
         limits:
           cpu: 1
-          memory: "4Gi"
+          memory: "1Gi"
       args:
         [
           "while true; do echo 'hello netapp' | tee -a /mnt/netapp-data/verify-netapp && sleep 5; done;",
@@ -395,7 +395,7 @@ spec:
       resources:
         limits:
           cpu: 1
-          memory: "4Gi"
+          memory: "1Gi"
       args: ["tail -f /mnt/netapp-data/verify-netapp"]
       volumeMounts:
         - name: disk01
@@ -422,3 +422,7 @@ hello netapp
 hello netapp
 hello netapp
 ```
+
+You can also see the pod details in OpenShift for the reader
+
+![OpenShift Netapp Reader Pod](netapp-demo-reader.png)
