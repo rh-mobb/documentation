@@ -168,7 +168,7 @@ I put all my cli's in /usr/local/bin
 ```bash
 sudo install tridentctl /usr/local/bin
 ```
-
+example output:
 ```bash
 which tridentctl
 /usr/local/bin/tridentctl
@@ -219,7 +219,7 @@ run
 tridentctl -n openshift create backend -f backend.json
 ```
 
-Should see some output like
+example output:
 
 ```bash
 +------------------------+--------------------+--------------------------------------+--------+---------+
