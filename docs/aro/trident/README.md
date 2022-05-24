@@ -246,7 +246,7 @@ if you get a failure here, you can run
 
  To view log output that may help steer you in the right direction.
 
-### create storage class
+### Create storage class
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -270,7 +270,7 @@ output:
 storageclass.storage.k8s.io/standard created
 ```
 
-### provision volume
+### Provision volume
 
 ```bash
 cat <<EOF | kubectl apply -f -
