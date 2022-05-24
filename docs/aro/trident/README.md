@@ -1,11 +1,10 @@
-# Enable trident NetApp operator for Azure NetApp files
+# Trident NetApp operator setup for Azure NetApp files
 
 **Byron Miller**
 
 *05/23/2022*
 
-Note: (Work in Progress)
-
+Note:
 This guide a simple "happy path" to show the path of least friction to showcasing how to use NetApp files with Azure Red Hat OpenShift. This may not be the best behavior for any system beyond demonstration purposes.
 
 ## Prerequisites
