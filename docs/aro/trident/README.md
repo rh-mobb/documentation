@@ -185,11 +185,11 @@ which tridentctl
 
 FYI - Sample files for review are in sample-input/backends-samples/azure-netapp-files directory from the trident tgz we extracted earlier.
 
-Replace client ID with service principal ID
-Replace clientSecret with Service Principal Secret
-Replace tenantID with your account tenant ID
-Replace subscriptionID with your azure SubscriptionID
-Ensure location matches your Azure Region
+1. Replace client ID with service principal ID
+2. Replace clientSecret with Service Principal Secret
+3. Replace tenantID with your account tenant ID
+4. Replace subscriptionID with your azure SubscriptionID
+5. Ensure location matches your Azure Region
 
 ```bash
 vi backend.json
