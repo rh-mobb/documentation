@@ -10,20 +10,26 @@ This guide a simple "happy path" to show the path of least friction to showcasin
 ## Prerequisites
 
   * An Azure Red Hat OpenShift cluster installed with Service Principal role/credentials.
-  * kubectl cli
-  * oc cli
+  * [kubectl cli](https://kubernetes.io/releases/download/#kubectl) 
+  * [oc cli](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html)
   * [helm 3 cli](https://helm.sh/docs/intro/install/){:target="_blank"}
   * [Review official trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator){:target="_blank"}
 
 In this guide, you will need service principal and region details. Please have these handy.
 
-* Azure SubscriptionID
+* Azure subscriptionID
 * Azure tenantID
 * Azure clientID (Service Principal)
 * Azure clientSecret (Service Principal Secret)
 * Azure Region
 
-If you don't have your existing ARO service principal credentials, you can create your own service principal and grant it contributor to be able to manage the required resources. Please review the Official Trident Documentation regarding Azure NetApp files and required permissions.
+If you don't have your existing ARO service principal credentials, you can create your own service principal and grant it contributor to be able to manage the required resources. Please review the [official Trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator){:target="_blank"} regarding Azure NetApp files and required permissions.
+
+### Important Concepts
+
+Persistent Volume Claims are [namespaced objects](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#a-note-on-namespaces){:target="_blank"}.  Mounting RWX/ROX is only possible within the same namespace.
+
+NetApp files must be have a delegated subnet within your ARO Vnet's and you must assign it to the Microsoft.Netapp/volumes service.
 
 ## Configure Azure
 
@@ -129,7 +135,7 @@ Helm install
 helm install trident-operator trident-operator-22.04.0.tgz
 ```
 
-Output should look like
+Example output from installation: 
 
 ```bash
 W0523 17:45:22.189592   30478 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+
@@ -198,7 +204,7 @@ Note: I have used nfsv3 for basic compatibility. You can remove that line and us
 vi backend.json
 ```
 
-Add the following snippet
+Add the following snippet:
 
 ```json
 {
@@ -239,7 +245,7 @@ example output:
 | azurenetappfiles_eb177 | azure-netapp-files | f7f211afe-d7f5-41a5-a356-fa67f25ee96b | online |       0 |
 +------------------------+--------------------+--------------------------------------+--------+---------+
 ```
-if you get a failure here, you can run
+if you get a failure here, you can run to following command to review logs:
 
 ```bash
  tridentctl logs
@@ -272,6 +278,14 @@ storageclass.storage.k8s.io/standard created
 ```
 
 ### Provision volume
+
+Let's create a new project and set up a persistent volume claim. Remember that PV Claims are namespaced objects and you must create the pvc in the namespace where it will be allocated. I'll use the project "netappdemo".
+
+```bash
+oc new-project netappdemo
+```
+
+Now we'll create a PV claim in the "netappdemo" project we just created.
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -317,3 +331,104 @@ Storage Class
 
 Persisent Volumes
 ![Persistent Volumes](persistent-volumes.png)
+
+
+## Create Pods to test Azure NetApp 
+
+We'll create two pods here to exercise the Azure NetApp file mount. One to write data and another to read data to show that it is mounted as "read write many" and correctly working.
+
+### Writer Pod
+
+This pod will write "hello netapp" to a shared NetApp mount.
+
+```yaml
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-netapp
+  labels:
+    app: test-aznetapp
+    deploymethod: trident
+spec:
+  containers:
+    - name: aznetapp
+      image: centos:latest
+      command: ["/bin/bash", "-c", "--"]
+      resources:
+        limits:
+          cpu: 1
+          memory: "1Gi"
+      args:
+        [
+          "while true; do echo 'hello netapp' | tee -a /mnt/netapp-data/verify-netapp && sleep 5; done;",
+        ]
+      volumeMounts:
+        - name: disk01
+          mountPath: "/mnt/netapp-data"
+  volumes:
+    - name: disk01
+      persistentVolumeClaim:
+        claimName: standard
+EOF
+```
+
+You can watch for this container to be ready:
+
+```bash
+watch oc get pod test-netapp
+```
+
+Or view it in the OpenShift Pod console for the netappdemo project.
+
+![Netapp Trident Demo Container](netapp-demo-pod.png)
+
+### Reader Pod
+
+This pod will read back the data from the shared NetApp mount.
+
+```yaml
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-netapp-read
+spec:
+  containers:
+    - name: test-netapp-read
+      image: centos:latest
+      command: ["/bin/bash", "-c", "--"]
+      resources:
+        limits:
+          cpu: 1
+          memory: "1Gi"
+      args: ["tail -f /mnt/netapp-data/verify-netapp"]
+      volumeMounts:
+        - name: disk01
+          mountPath: "/mnt/netapp-data"
+  volumes:
+    - name: disk01
+      persistentVolumeClaim:
+        claimName: standard
+EOF
+```
+
+Now let's verify the POD is reading from shared volume.
+
+```bash
+oc logs test-netapp-read
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+hello netapp
+```
+
+You can also see the pod details in OpenShift for the reader:
+
+![OpenShift Netapp Reader Pod](netapp-demo-reader.png)
