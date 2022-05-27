@@ -47,8 +47,9 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 1. Associate your AWS account   
 
    To perform ROSA cluster provisioning tasks, you must create ocm-role and user-role IAM resources in your AWS account and link them to your Red Hat organization.
+   
    <br>
-   <b>OCM Role</b>
+   <b>OCM Role</b><br>
    The first role you will create is the ocm-role which the OpenShift Cluster Manager will use to be able to administer and Create ROSA clusters. 
    
    If you have already created the ocm-role, you can just link the ocm-role to your Red Hat organization.  
@@ -70,7 +71,8 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
    > **Tip** If you have multiple AWS accounts that you want to associate with your Red Hat Organization, you can use the `--profile` option to specify the AWS profile you would like to associate.
 
-   <b> User Role </b>
+   <br>
+   <b>User Role</b><br>
    The second is the user-role that allows OCM to verify that users creating a cluster have access to the current AWS account.
 
    If you have already created the user-role, you can just link the user-role to your Red Hat organization.
