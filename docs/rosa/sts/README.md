@@ -2,7 +2,7 @@
 
 **Paul Czarkowski**
 
-*Last updated 10/29/2021*
+*Last updated 05/27/2022*
 
 > **Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
 
@@ -44,6 +44,49 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
     "elasticloadbalancing.amazonaws.com"
     ```
 
+1. Associate your AWS account   
+
+   To perform ROSA cluster provisioning tasks, you must create ocm-role and user-role IAM resources in your AWS account and link them to your Red Hat organization.
+   <br>
+   <b>OCM Role</b>
+   The first role you will create is the ocm-role which the OpenShift Cluster Manager will use to be able to administer and Create ROSA clusters. 
+   
+   If you have already created the ocm-role, you can just link the ocm-role to your Red Hat organization.  
+
+    ```bash
+    rosa link ocm-user --role-arm <arn>
+    ```
+
+
+   > **Tip** You can get your OCM role arn from AWS IAM: 
+    ```bash
+    aws iam list-roles | grep OCM
+    ```
+
+   If you haven't already created the ocm-role, you can create and link the role with one command.
+    ```bash
+    rosa create ocm-role
+    ```
+
+   > **Tip** If you have multiple AWS accounts that you want to associate with your Red Hat Organization, you can use the `--profile` option to specify the AWS profile you would like to associate.
+
+   <b> User Role </b>
+   The second is the user-role that allows OCM to verify that users creating a cluster have access to the current AWS account.
+
+   If you have already created the user-role, you can just link the user-role to your Red Hat organization.
+    ```bash
+    rosa link user-role --role-arn <arn>
+    ```
+
+   > **Tip** You can get your User role arn from the ROSA cli: `rosa whoami`
+   
+   look for the `AWS ARN:` field
+   <br>
+   If you haven't already created the user-role, you can create and link the role with one command.
+   ```bash
+   rosa create user-role
+   ```
+   > **Tip** If you have multiple AWS accounts that you want to associate with your Red Hat Organization, you can use the `--profile` option to specify the AWS profile you would like to associate.
 ## Deploy ROSA cluster
 
 1. Make you your ROSA CLI version is correct (v1.1.5 or higher)
