@@ -2,7 +2,7 @@
 
 **Paul Czarkowski**
 
-*Last updated 05/27/2022*
+*Last updated 05/31/2022*
 
 > **Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
 
@@ -16,7 +16,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.1.5) v1.1.5
+* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.2.2) v1.2.2
 * OpenShift CLI - `rosa download openshift-client`
 * [jq](https://stedolan.github.io/jq/download/)
 
@@ -25,7 +25,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 1. set some environment variables
 
     ```bash
-    export VERSION=4.9.0 \
+    export VERSION=4.10.15 \
            ROSA_CLUSTER_NAME=mycluster \
            AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
            REGION=us-east-2 \
@@ -95,18 +95,11 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
 ## Deploy ROSA cluster
 
-1. Make you your ROSA CLI version is correct (v1.1.5 or higher)
+1. Make you your ROSA CLI version is correct (v1.2.2 or higher)
 
     ```bash
     rosa version
     ```
-
-1. Create the IAM Account Roles
-
-    ```
-    rosa create account-roles --mode auto -y
-    ```
-
 1. Run the rosa cli to create your cluster
 
     > You can run the command as provided in the ouput of the previous step to deploy in interactive mode.
@@ -115,19 +108,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
     ```bash
     rosa create cluster --sts --cluster-name ${ROSA_CLUSTER_NAME} \
-      --region ${REGION} --version ${VERSION}
-    ```
-
-1. Create the Operator Roles
-
-    ```bash
-    rosa create operator-roles -c $ROSA_CLUSTER_NAME --mode auto --yes
-    ```
-
-1. Create the OIDC provider.
-
-    ```bash
-    rosa create oidc-provider -c $ROSA_CLUSTER_NAME --mode auto --yes
+      --region ${REGION} --version ${VERSION} --mode auto -y
     ```
 
 1. Validate The cluster is now installing
