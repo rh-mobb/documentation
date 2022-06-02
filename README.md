@@ -24,6 +24,7 @@
 * [Using the AWS EFS CSI Driver Operator on ROSA 4.10.x](./docs/rosa/aws-efs-csi-operator-sts)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](./docs/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](./docs/rosa/ecr-secret-operator)
+* [Deploy and use the AWS Kubernetes Controller S3 controller](./docs/rosa/ack)
 
 ### ARO
 
