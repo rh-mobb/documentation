@@ -67,6 +67,10 @@
 ### Configure Identity provider
 * [OpenShift - Configuring Identity Providers](./docs/idp/README.md)
 
+### Stop default router from serving custom domain routes
+
+* [Route labels](./docs/ingress/default-router-custom-domain/README.md)
+
 ## Applications
 
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
