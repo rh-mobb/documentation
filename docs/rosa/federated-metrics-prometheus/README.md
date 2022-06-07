@@ -17,127 +17,108 @@ This guide is heavily influenced by Tommer Amber's [guide](https://medium.com/@t
 * [Helm 3](https://helm.sh/docs/intro/install/)
 * A Red Hat OpenShift for AWS (ROSA) cluster 4.8 or higher
 
-1. Before we get started we need to set some environment variables to be used throughout the guide.
-
-    ```bash
-    export NAMESPACE=custom-monitoring
-    ```
-
 ## Prepare Environment
 
 1. Set the following environment variables
 
-    ```bash
-    export NAMESPACE=federated-metrics
-    ```
+   ```bash
+   export NAMESPACE=federated-metrics
+   ```
 
 1. Create the namespace
 
-    ```bash
-    oc new-project $NAMESPACE
-    ```
+   ```bash
+   oc new-project $NAMESPACE
+   ```
 
 1. Add the MOBB chart repository to your Helm
 
-    ```bash
-    helm repo add mobb https://rh-mobb.github.io/helm-charts/
-    ```
+   ```bash
+   helm repo add mobb https://rh-mobb.github.io/helm-charts/
+   ```
 
 1. Update your repositories
 
-    ```bash
-    helm repo update
-    ```
+   ```bash
+   helm repo update
+   ```
 
 1. Use the `mobb/operatorhub` chart to deploy the needed operators
 
-    ```bash
-    helm upgrade -n $NAMESPACE federated-metrics-operators \
-      mobb/operatorhub --version 0.1.0 --install \
-      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/rosa-federated-prometheus/files/operatorhub.yaml
-    ```
+   ```bash
+   helm upgrade -n $NAMESPACE federated-metrics-operators \
+   mobb/operatorhub --version 0.1.1 --install \
+   --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/rosa-federated-prometheus/files/operatorhub.yaml
+   ```
 
 1. Wait until the two operators are running
 
-    ```bash
-    watch kubectl get pods -n $NAMESPACE
-    ```
+   ```bash
+   watch kubectl get pods -n $NAMESPACE
+   ```
 
-    ```
-    NAME                                                   READY   STATUS    RESTARTS   AGE
-    grafana-operator-controller-manager-775f8d98c9-822h7   2/2     Running   0          7m33s
-    operatorhubio-dtb2v                                    1/1     Running   0          8m32s
-    prometheus-operator-5cb6844699-t7wfd                   1/1     Running   0          7m29s
-    ```
+   ```
+   NAME                                                   READY   STATUS    RESTARTS   AGE
+   grafana-operator-controller-manager-775f8d98c9-822h7   2/2     Running   0          7m33s
+   operatorhubio-dtb2v                                    1/1     Running   0          8m32s
+   prometheus-operator-5cb6844699-t7wfd                   1/1     Running   0          7m29s
+   ```
 
 ## Deploy the monitoring stack
 
-1. Wait until the Operators are running
-
-    ```bash
-    watch kubectl -n $NAMESPACE get pods
-    ```
-
-    You should see both operators and the catalog pods running:
-
-    ```
-    NAME                                                   READY   STATUS    RESTARTS   AGE
-    grafana-operator-controller-manager-7f945d45d8-ggzk4   2/2     Running   0          87s
-    operatorhubio-catalog-lmgt6                            1/1     Running   0          2m35s
-    prometheus-operator-fc85b9bd-9klsq                     1/1     Running   0          3m10s
-    ```
 
 1. Install the `mobb/rosa-federated-prometheus` Helm Chart
 
-    ```bash
-    helm upgrade --install -n $NAMESPACE monitoring \
-      --set grafana-cr.basicAuthPassword='mypassword' \
-      --set fullnameOverride='monitoring' \
-      --version 0.5.1 \
-      mobb/rosa-federated-prometheus
-    ```
+   ```bash
+   helm upgrade --install -n $NAMESPACE monitoring \
+   --set grafana-cr.basicAuthPassword='mypassword' \
+   --set fullnameOverride='monitoring' \
+   --version 0.5.3 \
+   mobb/rosa-federated-prometheus
+   ```
+
 ### Validate Prometheus
 
 1. Ensure the new Prometheus instance's Pods are running
 
-    ```bash
-    kubectl get pods -n ${NAMESPACE} -l app=prometheus -o wide
-    ```
+   ```bash
+   kubectl get pods -n ${NAMESPACE} -l app=prometheus -o wide
+   ```
 
-    You should see the following:
+   You should see the following:
 
-    ```bash
-    NAME                                 READY   STATUS    RESTARTS   AGE     IP             NODE                                        NOMINATED NODE   READINESS GATES
-    prometheus-federation-prometheus-0   3/3     Running   1          7m58s   10.131.0.104   ip-10-0-215-84.us-east-2.compute.internal   <none>           <none>
-    prometheus-federation-prometheus-1   3/3     Running   1          7m58s   10.128.2.21    ip-10-0-146-85.us-east-2.compute.internal   <none>           <none>
-    ```
+   ```bash
+   NAME                                 READY   STATUS    RESTARTS   AGE     IP             NODE                                        NOMINATED NODE   READINESS GATES
+   prometheus-federation-prometheus-0   3/3     Running   1          7m58s   10.131.0.104   ip-10-0-215-84.us-east-2.compute.internal   <none>           <none>
+   prometheus-federation-prometheus-1   3/3     Running   1          7m58s   10.128.2.21    ip-10-0-146-85.us-east-2.compute.internal   <none>           <none>
+   ```
 
 1. Log into the new Prometheus instance
 
     Fetch the Route:
 
-    ```bash
-    kubectl -n ${NAMESPACE} get route prometheus-route
-    ```
+   ```bash
+   kubectl -n ${NAMESPACE} get route prometheus-route
+   ```
 
-    You should see the following:
+   You should see the following:
 
-    ```bash
-    NAME               HOST/PORT                                                                     PATH   SERVICES                   PORT            TERMINATION   WILDCARD
+   ```bash
+   NAME               HOST/PORT                                                                     PATH   SERVICES                   PORT            TERMINATION   WILDCARD
 prometheus-route   prometheus-route-custom-prometheus.apps.mycluster.jnmf.p1.openshiftapps.com          monitoring-prometheus-cr   web-proxy       reencrypt     None
-    ```
+   ```
 
-    Open the Prometheus Route in your browser (the `HOST/PATH` field from above)
+   Open the Prometheus Route in your browser (the `HOST/PATH` field from above)
 
-    It should take you through authorization and then you should see the Prometheus UI.
+   It should take you through authorization and then you should see the Prometheus UI.
 
 1. add `/targets` to the end of the URL to see the list of available targets
 
-    ![screenshot of prometheus targets screen](./prom-targets.png)
+   ![screenshot of prometheus targets screen](./prom-targets.png)
 
 1. Switch out the trailing path to be `graph?g0.range_input=1h&g0.expr=kubelet_running_containers&g0.tab=0` to see the graph of the number of running containers fetched from cluster monitoring.
 
-    ![screenshot of prometheus graph screen](./prom-graph.png)
+   ![screenshot of prometheus graph screen](./prom-graph.png)
 
 1. click on **Alerts** in the menu to see our example Alert
 
@@ -146,26 +127,26 @@ prometheus-route   prometheus-route-custom-prometheus.apps.mycluster.jnmf.p1.ope
 
 1. forward a port to Alert Manager
 
-    ```bash
-    kubectl -n ${NAMESPACE} port-forward svc/monitoring-alertmanager-cr 9093:9093
-    ```
+   ```bash
+   kubectl -n ${NAMESPACE} port-forward svc/monitoring-alertmanager-cr 9093:9093
+   ```
 
 1. Browse to http://localhost:9093/#/alerts to see the alert "ExampleAlert"
 
-    ![Screenshot of Alert Manager](./alert-manager.png)
+   ![Screenshot of Alert Manager](./alert-manager.png)
 
 ### Validate Grafana and Dashboards
 
 1. Find the Grafana Route
 
-    ```bash
-    kubectl get route grafana-route
-    ```
+   ```bash
+   kubectl get route grafana-route
+   ```
 
-    ```bash
-    NAME            HOST/PORT                                                                PATH   SERVICES          PORT            TERMINATION   WILDCARD
+   ```bash
+   NAME            HOST/PORT                                                                PATH   SERVICES          PORT            TERMINATION   WILDCARD
 grafana-route   grafana-route-federated-metrics.apps.metrics.9l1z.p1.openshiftapps.com   /      grafana-service   grafana-proxy   reencrypt     None
-    ```
+   ```
 
 1. Log into grafana using your cluster's idp
 
@@ -173,22 +154,22 @@ grafana-route   grafana-route-federated-metrics.apps.metrics.9l1z.p1.openshiftap
 
 1. Click on **Configuration** -> **Datasources** and check that the prometheus data source is loaded.
 
-    Sometimes due to Kubernetes resource ordering the Data Source may not be loaded. We can force the Operator to reload it by running `kubectl annotate -n $NAMESPACE grafanadatasources.integreatly.org federated reroll=true`
+   Sometimes due to Kubernetes resource ordering the Data Source may not be loaded. We can force the Operator to reload it by running `kubectl annotate -n $NAMESPACE grafanadatasources.integreatly.org federated reroll=true`
 
 1. Click on **Dashboards** -> **Manage** and click on the "Use Method / Cluster" dashboard.
 
-    ![Screenshot of Grafana USE Dashboard](./grafana-use.png)
+   ![Screenshot of Grafana USE Dashboard](./grafana-use.png)
 
 ## Cleanup
 
 1. Delete the helm release
 
-    ```bash
-    helm -n $NAMESPACE delete monitoring
-    ```
+   ```bash
+   helm -n $NAMESPACE delete monitoring
+   ```
 
 1. Delete the namespace
 
-    ```bash
-    kubectl delete namespace $NAMESPACE
-    ```
+   ```bash
+   kubectl delete namespace $NAMESPACE
+   ```
