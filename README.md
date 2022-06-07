@@ -38,7 +38,7 @@
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
 
 ### GCP
-
+* [Deploy OSD in GCP using Pre-Existent VPC and Subnets](./docs/gcp/osd_preexisting_vpc.md)
 * [Using Filestore with OpenShift Dedicated in GCP](./docs/gcp/filestore.md)
 
 ## Advanced Cluster Manager (ACM)
