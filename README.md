@@ -36,7 +36,7 @@
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
-* [IBM Cloud Paks for Data](./docs/aro/ibm-cloud-paks-for-data)
+* [IBM Cloud Paks for Data Operator Setup](./docs/aro/ibm-cloud-paks-for-data)
 
 ### GCP
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](./docs/gcp/osd_preexisting_vpc.md)
