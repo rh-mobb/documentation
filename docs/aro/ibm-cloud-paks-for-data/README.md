@@ -212,7 +212,7 @@ Create a virtual network with two empty subnets
 
 1. Paste this resource definition into the dialog box:
 
-    ```bash
+```bash
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
@@ -226,7 +226,7 @@ spec:
   updateStrategy:
     registryPoll:
       interval: 45m
-    ```
+  ```
 1. Click **Create**.    
 
 ### IBM Cloud Paks 4 Data Operator Install
@@ -254,7 +254,7 @@ spec:
 
 ### Successful Install
 
-![aro quota support ticket request example](./images/cloud-paks-operator.PNG)
+![Cloud Paks Operators](./images/cloud-paks-operator.PNG)
 
 ### Delete Cluster
 
