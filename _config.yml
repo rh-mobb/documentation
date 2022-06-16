@@ -2,3 +2,4 @@ theme: jekyll-theme-cayman
 google_analytics: G-WM5QQ0P3P1
 site:
   google_analytics: G-WM5QQ0P3P1
+markdown: kramdown
