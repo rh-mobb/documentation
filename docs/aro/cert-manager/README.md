@@ -240,11 +240,11 @@ For ease of management, we're using the same resource group for domain as we hav
 
 1. Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.
 
-   >AZURE_CERT_MANAGER_NEW_SP_NAME = the name of the service principal to create that will manage the DNS zone automation for cert-manager
-
+   >AZURE_CERT_MANAGER_NEW_SP_NAME = the name of the service principal to create that will manage the DNS zone automation for cert-manager.
 
    ```bash
-   AZURE_CERT_MANAGER_NEW_SP_NAME=aro-lab-dns-sp
+   AZURE_CERT_MANAGER_NEW_SP_NAME=aro-dns-sp
+   LETSENCRYPTEMAIL=youremail@work.com
    DNS_SP=$(az ad sp create-for-rbac --name $AZURE_CERT_MANAGER_NEW_SP_NAME --output json)
    AZURE_CERT_MANAGER_SP_APP_ID=$(echo $DNS_SP | jq -r '.appId')
    AZURE_CERT_MANAGER_SP_PASSWORD=$(echo $DNS_SP | jq -r '.password')
@@ -358,20 +358,6 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
 We're going to set up cert-manager to use DNS verification for letsencrypt certificates. We'll need to generate a service principal that can update the DNS zone and create short term records needed to validate certificate requests and associate this service principal with the cluster issuer.
 
 ### Configure Certificate Requestor
-
-1. Set ENV
-
-   >AZURE_CERT_MANAGER_NEW_SP_NAME = the name of the service principal that we'll create to manage the Letsencrypt zone automation.  Please ensure you use a valid email address that will be used by letsencrypt for email notifications.
-
-   ```bash
-   AZURE_CERT_MANAGER_NEW_SP_NAME=aro-dns-sp
-   LETSENCRYPTEMAIL=your@work.com
-   DNS_SP=$(az ad sp create-for-rbac --name $AZURE_CERT_MANAGER_NEW_SP_NAME --output json)
-   AZURE_CERT_MANAGER_SP_APP_ID=$(echo $DNS_SP | jq -r '.appId')
-   AZURE_CERT_MANAGER_SP_PASSWORD=$(echo $DNS_SP | jq -r '.password')
-   AZURE_TENANT_ID=$(echo $DNS_SP | jq -r '.tenant')
-   AZURE_SUBSCRIPTION_ID=$(az account show --output json | jq -r '.id')
-   ```
 
 1. Switch openshift-cert-manager project (namespace)
 
