@@ -98,7 +98,6 @@ Set some environment variables to use later, and create an Azure Resource Group.
    PULL_SECRET=./pull-secret.txt  # the path to pull-secret
    LOCATION=southcentralus        # the location of your cluster
    RESOURCEGROUP=aro-rg           # the name of the resource group where you want to create your cluster
-   DNSRESOURCEGROUP=aro-dns       # the name of the resource group where you want your DNS zones created.
    CLUSTER=aro-cluster            # the name of your cluster
    DOMAIN=lab.domain.com          # Domain or subdomain zone for cluster & cluster api
    ```
@@ -196,16 +195,14 @@ In order for cert-manager to work with AzureDNS, we need to create the zone and 
 
 This zone should be a public zone since letsencrypt will need to be able to read records created here.
 
-1. Create Resource Group for zone
+>If you use a subdomain, please be sure to [create the NS records](https://docs.microsoft.com/en-us/azure/dns/delegate-subdomain) in your primary domain to the subdomain. 
 
-   ```bash
-   az group create --name $DNSRESOURCEGROUP --location $LOCATION
-   ```
+For ease of management, we're using the same resource group for domain as we have the cluster in.
 
 1. Create Zone
 
    ```bash
-   az network dns zone create -g $DNSRESOURCEGROUP -n $DOMAIN
+   az network dns zone create -g $RESOURCEGROUP -n $DOMAIN
    ```
 
     >You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar. 
@@ -214,7 +211,7 @@ This zone should be a public zone since letsencrypt will need to be able to read
 
    ```bash
    APIREC=$(az aro show -g $RESOURCEGROUP -n $CLUSTER --query apiserverProfile.ip -o tsv)
-   az network dns record-set a add-record -g $DNSRESOURCEGROUP -z $DOMAIN \
+   az network dns record-set a add-record -g $RESOURCEGROUP -z $DOMAIN \
    -n api -a $APIREC
    ```
 
@@ -222,14 +219,16 @@ This zone should be a public zone since letsencrypt will need to be able to read
 
    ```bash
    WILDCARDREC=$(az aro show -n $CLUSTER -g $RESOURCEGROUP --query '{ingress:ingressProfiles[0].ip}' -o tsv)
-   az network dns record-set a add-record -g $DNSRESOURCEGROUP -z $DOMAIN \
+   az network dns record-set a add-record -g $RESOURCEGROUP -z $DOMAIN \
    -n "*.apps" -a $WILDCARDREC
    ```
 
 1. Add CAA Record
 
+   >[CAA is a type of DNS record](https://letsencrypt.org/docs/caa/) that allows owners to specify which Certificate Authorities are allowed to issue certificates containing their domain names.  
+
    ```bash
-   az network dns record-set caa add-record -g $DNSRESOURCEGROUP -z $DOMAIN \
+   az network dns record-set caa add-record -g $RESOURCEGROUP -z $DOMAIN \
    -n @ --flags 0 --tag "issuewild" --value "letsencrypt.org"
    ```
 
@@ -239,7 +238,7 @@ This zone should be a public zone since letsencrypt will need to be able to read
 
    >Note - You may have to create NS records in your root zone for a subdomain if you use a subdomain zone to point to the subdomains name servers.
 
-1. Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.
+2. Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.
 
    >AZURE_CERT_MANAGER_NEW_SP_NAME = the name of the service principal to create that will manage the DNS zone automation for cert-manager
 
@@ -253,22 +252,24 @@ This zone should be a public zone since letsencrypt will need to be able to read
    AZURE_SUBSCRIPTION_ID=$(az account show --output json | jq -r '.id')
    ```
 
-1. Restrict service principal - remove contributor role.
+3. Restrict service principal - remove contributor role.
 
    ```bash
    az role assignment delete --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role Contributor
    ```
 
-1. Assign service principal to DNS zone
+4. Assign service principal to DNS zone
 
    ```bash
-   DNS_ID=$(az network dns zone show --name $DOMAIN --resource-group $DNSRESOURCEGROUP --query "id" --output tsv)
+   DNS_ID=$(az network dns zone show --name $DOMAIN --resource-group $RESOURCEGROUP --query "id" --output tsv)
    az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role "DNS Zone Contributor" --scope $DNS_ID
    ```
 
 ## Login to Cluster
 
 1. Login to your cluster through oc cli
+
+   >You may need to flush your local dns resolver/cache before you can see the DNS/Hostnames. On Windows you can open up a command prompt as administrator and type "ipconfig /flushdns"
 
    ```bash
    apiServer=$(az aro show -g $RESOURCEGROUP -n $CLUSTER --query apiserverProfile.url -o tsv)
@@ -281,7 +282,7 @@ This zone should be a public zone since letsencrypt will need to be able to read
 
 ## Set up Cert-Manager
 
-We'll install cert-manager and configure the DNS01 authorization for certificate automation. We use DNS01 authorization so we don't have to manage or expose a public web service, but rely on a public DNS zone. All of these commands are ran from your shell.
+We'll install cert-manager from operatorhub. If you experience any issues installing here, it probably means that you didn't [provide a pull-secret](https://docs.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret) when you installed your ARO cluster. 
 
 1. Create namespace
 
@@ -290,59 +291,61 @@ We'll install cert-manager and configure the DNS01 authorization for certificate
    apiVersion: v1
    kind: Namespace
    metadata:
-   annotations:
-      openshift.io/display-name:  Red Hat Certificate Manager Operator
-   labels:
-      openshift.io/cluster-monitoring: 'true'
-   name: openshift-cert-manager-operator
+     annotations:
+       openshift.io/display-name:  Red Hat Certificate Manager Operator
+     labels:
+       openshift.io/cluster-monitoring: 'true'
+     name: openshift-cert-manager-operator
    EOF
    ```
 
-1. Switch openshift-cert-manager-operator project (namespace)
+2. Switch openshift-cert-manager-operator project (namespace)
 
    ```bash
    oc project openshift-cert-manager-operator
    ```
 
-1. Create Group
+3. Create Group
 
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1
    kind: OperatorGroup
    metadata:
-   name: openshift-cert-manager-operator
+     name: openshift-cert-manager-operator
    spec: {}
    EOF
    ```
 
-1. Create subscription for cert-manager operator
+4. Create subscription for cert-manager operator
 
    ```yaml
    cat <<EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
-   name: openshift-cert-manager-operator
-   namespace: openshift-cert-manager-operator
+     name: openshift-cert-manager-operator
+     namespace: openshift-cert-manager-operator
    spec:
-   channel: tech-preview
-   installPlanApproval: Automatic
-   name: openshift-cert-manager-operator
-   source: redhat-operators
-   sourceNamespace: openshift-marketplace
+     channel: tech-preview
+     installPlanApproval: Automatic
+     name: openshift-cert-manager-operator
+     source: redhat-operators
+     sourceNamespace: openshift-marketplace
    EOF
    ```
 
    > *It will take a few minutes for this operator to install and complete it's set up. May be a good time to take a coffee break :)*
 
-## Create cert-manager Secret
+5. Wait for cert-manager operator to finish installing.
 
-1. Create azuredns-config secret for storing service principal credentials to manage zone.
+   Our next steps can't complete until the operator has finished installing. I recommend that you login to your cluster with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.
 
-   ```bash
-   oc create secret generic azuredns-config --from-literal=client-secret=$AZURE_CERT_MANAGER_SP_PASSWORD -n openshift-cert-manager
-   ```
+   ![View cert-manager Operator for Red Hat OpenShift](cert-manager-operator.png)
+
+## Configure cert-manager LetsEncrypt
+
+We're going to set up cert-manager to use DNS verification for letsencrypt certificates. We'll need to generate a service principal that can update the DNS zone and create short term records needed to validate certificate requests and associate this service principal with the cluster issuer.
 
 ### Configure Certificate Requestor
 
@@ -366,40 +369,47 @@ We'll install cert-manager and configure the DNS01 authorization for certificate
    oc project openshift-cert-manager
    ```
 
-1. Create Cluster Issuer
+1. Create azuredns-config secret for storing service principal credentials to manage zone.
 
    ```bash
+   oc create secret generic azuredns-config --from-literal=client-secret=$AZURE_CERT_MANAGER_SP_PASSWORD -n openshift-cert-manager
+   ```
+
+1. Create Cluster Issuer
+
+   ```yaml
    envsubst  <<EOF | oc apply -f -
    apiVersion: cert-manager.io/v1
    kind: ClusterIssuer
    metadata:
-   name: letsencrypt-prod
+     name: letsencrypt-prod
    spec:
-   acme:
-      server: https://acme-v02.api.letsencrypt.org/directory
-      email: $LETSENCRYPTEMAIL
-      # This key doesn't exist, cert-manager creates it
-      privateKeySecretRef:
-         name: prod-openshiftdemo-issuer-account-key
-      solvers:
-         - dns01:
-            azureDNS:
-               clientID: $AZURE_CERT_MANAGER_SP_APP_ID
-               clientSecretSecretRef:
+     acme:
+       server: https://acme-v02.api.letsencrypt.org/directory
+       email: $LETSENCRYPTEMAIL
+       # This key doesn't exist, cert-manager creates it
+       privateKeySecretRef:
+         name: prod-letsencrypt-issuer-account-key
+       solvers:
+       - dns01:
+           azureDNS:
+             clientID: $AZURE_CERT_MANAGER_SP_APP_ID
+             clientSecretSecretRef:
                name: azuredns-config
                key: client-secret
-               subscriptionID: $AZURE_SUBSCRIPTION_ID
-               tenantID: $AZURE_TENANT_ID
-               resourceGroupName: $DNSRESOURCEGROUP
-               hostedZoneName: $DOMAIN
-               # Azure Cloud Environment, default to AzurePublicCloud
-               environment: AzurePublicCloud
+             subscriptionID: $AZURE_SUBSCRIPTION_ID
+             tenantID: $AZURE_TENANT_ID
+             resourceGroupName: $DNSRESOURCEGROUP
+             hostedZoneName: $DOMAIN
+             environment: AzurePublicCloud
    EOF
    ```
 
    Once the above command is ran, you should be able to login to openshift, click view operators and make sure you're in the "openshift-cert-manager-operator" project and you should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.  
 
    ![cluster issuer](cluster-issuer.png)
+
+### Create & Install API Certificate 
 
 1. Switch openshift-config project
 
@@ -414,15 +424,15 @@ We'll install cert-manager and configure the DNS01 authorization for certificate
    apiVersion: cert-manager.io/v1
    kind: Certificate
    metadata:
-      name: openshift-api
-      namespace: openshift-config
+     name: openshift-api
+     namespace: openshift-config
    spec:
-   secretName: openshift-api-certificate
-   issuerRef:
-      name: letsencrypt-prod
-      kind: ClusterIssuer
-   dnsNames:
-   - api.$DOMAIN
+     secretName: openshift-api-certificate
+     issuerRef:
+       name: letsencrypt-prod
+       kind: ClusterIssuer
+     dnsNames:
+     - api.$DOMAIN
    EOF
    ```
 
@@ -432,7 +442,90 @@ We'll install cert-manager and configure the DNS01 authorization for certificate
    oc describe certificate openshift-api -n openshift-config
    ```
 
-1. Switch openshift-config project (namespace)
+1. Create cluster api cert job
+
+   This job will install the certificate 
+
+   ```yaml
+   envsubst  <<EOF | oc apply -f -
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   metadata:
+     name: patch-cluster-api-cert
+   rules:
+     - apiGroups:
+         - ""
+       resources:
+         - secrets
+       verbs:
+         - get
+         - list
+     - apiGroups:
+         - config.openshift.io
+       resources:
+         - apiservers
+       verbs:
+         - get
+         - list
+         - patch
+         - update
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   metadata:
+     name: patch-cluster-api-cert
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: patch-cluster-api-cert
+   subjects:
+     - kind: ServiceAccount
+       name: patch-cluster-api-cert
+       namespace: openshift-config
+   ---
+   apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: patch-cluster-api-cert
+   ---
+   apiVersion: batch/v1
+   kind: Job
+   metadata:
+     name: patch-cluster-api-cert
+     annotations:
+       argocd.argoproj.io/hook: PostSync
+       argocd.argoproj.io/hook-delete-policy: HookSucceeded
+   spec:
+     template:
+       spec:
+         containers:
+           - image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+             env:
+               - name: API_HOST_NAME
+                 value: api.$DOMAIN
+             command:
+               - /bin/bash
+               - -c
+               - |
+                 #!/usr/bin/env bash
+                 if oc get secret openshift-api-certificate -n openshift-config; then
+                   oc patch apiserver cluster --type=merge -p '{"spec":{"servingCerts": {"namedCertificates": [{"names": ["'$API_HOST_NAME'"], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}'
+                 else
+                   echo "Could not execute sync as secret 'openshift-api-certificate' in namespace 'openshift-config' does not exist, check status of CertificationRequest"
+                   exit 1
+                 fi
+             name: patch-cluster-api-cert
+         dnsPolicy: ClusterFirst
+         restartPolicy: Never
+         terminationGracePeriodSeconds: 30
+         serviceAccount: patch-cluster-api-cert
+         serviceAccountName: patch-cluster-api-cert
+   EOF
+   ```
+
+### Create & Install APPS Wildcard Certificate
+
+1. Switch openshift-ingress project (namespace)
 
    ```bash
    oc project openshift-ingress
@@ -445,102 +538,27 @@ We'll install cert-manager and configure the DNS01 authorization for certificate
    apiVersion: cert-manager.io/v1
    kind: Certificate
    metadata:
-   name: openshift-wildcard
-   namespace: openshift-ingress
+     name: openshift-wildcard
+     namespace: openshift-ingress
    spec:
-   secretName: openshift-wildcard-certificate
-   issuerRef:
-      name: letsencrypt-prod
-      kind: ClusterIssuer
-   commonName: "*.apps.$DOMAIN"
-   dnsNames:
-   - "*.apps.$DOMAIN"
+     secretName: openshift-wildcard-certificate
+     issuerRef:
+        name: letsencrypt-prod
+        kind: ClusterIssuer
+     commonName: "*.apps.$DOMAIN"
+     dnsNames:
+     - "*.apps.$DOMAIN"
    EOF
    ```
 
    This will generate our API and wildcard certificate requests.  We'll now create two jobs that will install these certificates.
 
-### Install API certificate job
+1. View certificate status
 
->These jobs will fail to run until the above steps have completed and a certificate is ready to implement. You can customize these jobs to fit your specific requirements.
-
-1. Create cluster api cert job
-
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: ClusterRole
-   metadata:
-   name: patch-cluster-api-cert
-   rules:
-   - apiGroups:
-      - ""
-      resources:
-      - secrets
-      verbs:
-      - get
-      - list
-   - apiGroups:
-      - config.openshift.io
-      resources:
-      - apiservers
-      verbs:
-      - get
-      - list
-      - patch
-      - update
-   ---
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: ClusterRoleBinding
-   metadata:
-   name: patch-cluster-api-cert
-   roleRef:
-   apiGroup: rbac.authorization.k8s.io
-   kind: ClusterRole
-   name: patch-cluster-api-cert
-   subjects:
-   - kind: ServiceAccount
-      name: patch-cluster-api-cert
-   ---
-   apiVersion: v1
-   kind: ServiceAccount
-   metadata:
-   name: patch-cluster-api-cert
-   ---
-   apiVersion: batch/v1
-   kind: Job
-   metadata:
-   name: patch-cluster-api-cert
-   annotations:
-      argocd.argoproj.io/hook: PostSync
-      argocd.argoproj.io/hook-delete-policy: HookSucceeded
-   spec:
-   template:
-      spec:
-      containers:
-         - image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
-         env:
-               - name: API_HOST_NAME
-               value: api.home.ocplab.com
-         command:
-               - /bin/bash
-               - -c
-               - |
-               #!/usr/bin/env bash
-               if oc get secret openshift-api-certificate -n openshift-config; then
-                  oc patch apiserver cluster --type=merge -p '{"spec":{"servingCerts": {"namedCertificates": [{"names": ["'$API_HOST_NAME'"], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}'
-               else
-                  echo "Could not execute sync as secret 'openshift-api-certificate' in namespace 'openshift-config' does not exist, check status of CertificationRequest"
-                  exit 1
-               fi
-         name: patch-cluster-api-cert
-      dnsPolicy: ClusterFirst
-      restartPolicy: Never
-      terminationGracePeriodSeconds: 30
-      serviceAccount: patch-cluster-api-cert
-      serviceAccountName: patch-cluster-api-cert
-   EOF
+   ```bash
+   oc describe certificate openshift-wildcard -n openshift-ingress
    ```
+
 
 1. Install Wildcard Certificate Job
 
@@ -549,76 +567,94 @@ We'll install cert-manager and configure the DNS01 authorization for certificate
    apiVersion: rbac.authorization.k8s.io/v1
    kind: ClusterRole
    metadata:
-   name: patch-cluster-wildcard-cert
+     name: patch-cluster-wildcard-cert
    rules:
-   - apiGroups:
-      - operator.openshift.io
-      resources:
-      - ingresscontrollers
-      verbs:
-      - get
-      - list
-      - patch
-   - apiGroups:
-      - ""
-      resources:
-      - secrets
-      verbs:
-      - get
-      - list
+     - apiGroups:
+         - operator.openshift.io
+       resources:
+         - ingresscontrollers
+       verbs:
+         - get
+         - list
+         - patch
+     - apiGroups:
+         - ""
+       resources:
+         - secrets
+       verbs:
+         - get
+         - list
    ---
    apiVersion: rbac.authorization.k8s.io/v1
    kind: ClusterRoleBinding
    metadata:
-   name: patch-cluster-wildcard-cert
+     name: patch-cluster-wildcard-cert
    roleRef:
-   apiGroup: rbac.authorization.k8s.io
-   kind: ClusterRole
-   name: patch-cluster-wildcard-cert
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: patch-cluster-wildcard-cert
    subjects:
-   - kind: ServiceAccount
-      name: patch-cluster-wildcard-cert
+     - kind: ServiceAccount
+       name: patch-cluster-wildcard-cert
+       namespace: openshift-ingress
    ---
    apiVersion: v1
    kind: ServiceAccount
    metadata:
-   name: patch-cluster-wildcard-cert
+     name: patch-cluster-wildcard-cert
    ---
    apiVersion: batch/v1
    kind: Job
    metadata:
-   name: patch-cluster-wildcard-cert
-   annotations:
-      argocd.argoproj.io/hook: PostSync
-      argocd.argoproj.io/hook-delete-policy: HookSucceeded
+     name: patch-cluster-wildcard-cert
+     annotations:
+       argocd.argoproj.io/hook: PostSync
+       argocd.argoproj.io/hook-delete-policy: HookSucceeded
    spec:
-   template:
-      spec:
-      containers:
-         - image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
-         command:
+     template:
+       spec:
+         containers:
+           - image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+             command:
                - /bin/bash
                - -c
                - |
-               #!/usr/bin/env bash
-               if oc get secret openshift-wildcard-certificate -n openshift-ingress; then
-                  oc patch ingresscontroller default -n openshift-ingress-operator --type=merge --patch='{"spec": { "defaultCertificate": { "name": "openshift-wildcard-certificate" }}}'
-               else
-                  echo "Could not execute sync as secret 'openshift-wildcard-certificate' in namespace 'openshift-config' does not exist, check status of CertificationRequest"
-                  exit 1
-               fi
-         name: patch-cluster-wildcard-cert
-      dnsPolicy: ClusterFirst
-      restartPolicy: Never
-      terminationGracePeriodSeconds: 30
-      serviceAccount: patch-cluster-wildcard-cert
-      serviceAccountName: patch-cluster-wildcard-cert
+                 #!/usr/bin/env bash
+                 if oc get secret openshift-wildcard-certificate -n openshift-ingress; then
+                   oc patch ingresscontroller default -n openshift-ingress-operator --type=merge --patch='{"spec": { "defaultCertificate": { "name": "openshift-wildcard-certificate" }}}'
+                 else
+                   echo "Could not execute sync as secret 'openshift-wildcard-certificate' in namespace 'openshift-ingress' does not exist, check status of CertificationRequest"
+                   exit 1
+                 fi
+             name: patch-cluster-wildcard-cert
+         dnsPolicy: ClusterFirst
+         restartPolicy: Never
+         terminationGracePeriodSeconds: 30
+         serviceAccount: patch-cluster-wildcard-cert
+         serviceAccountName: patch-cluster-wildcard-cert
    EOF
    ```
 
+
 ## Validate Certificates
 
-Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser.
+It will take a few minutes for the jobs to successfully complete. 
+
+Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser and no more warnings about SSL on cli.
+
+If you have openssl installed on your OS, you can see the certificates through the cli.
+
+1. Verify Console
+
+   ```bash
+   openssl s_client -connect $(az aro show -g $RESOURCEGROUP -n $CLUSTER --query "consoleProfile.url" -o tsv)
+   ```
+
+1. Verify API
+
+   ```bash
+   openssl s_client -connect api.$DOMAIN:443
+   ```
 
 ## Delete Cluster
 
@@ -639,8 +675,4 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
     ```bash
    az group delete -y \
       --name $RESOURCEGROUP
-    ```
-    
-    ```bash
-   az group delete -y --name $DNSRESOURCEGROUP
     ```
