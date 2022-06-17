@@ -238,7 +238,7 @@ For ease of management, we're using the same resource group for domain as we hav
 
    >Note - You may have to create NS records in your root zone for a subdomain if you use a subdomain zone to point to the subdomains name servers.
 
-2. Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.
+1. Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.
 
    >AZURE_CERT_MANAGER_NEW_SP_NAME = the name of the service principal to create that will manage the DNS zone automation for cert-manager
 
@@ -252,13 +252,23 @@ For ease of management, we're using the same resource group for domain as we hav
    AZURE_SUBSCRIPTION_ID=$(az account show --output json | jq -r '.id')
    ```
 
-3. Restrict service principal - remove contributor role.
+1. Restrict service principal - remove contributor role.
+
+   >Note: This may not exist, safe to proceed. We're going to grant the DNS Management Role to it next.
 
    ```bash
    az role assignment delete --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role Contributor
    ```
 
-4. Assign service principal to DNS zone
+1. Grant DNS Zone Contributor to our Service Principal
+
+   We'll grant [DNS Zone Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#dns-zone-contributor) to our DNS Service principal. 
+
+   ```bash
+   az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role befefa01-2a29-4197-83a8-272ff33ce314
+   ```
+
+1. Assign service principal to DNS zone
 
    ```bash
    DNS_ID=$(az network dns zone show --name $DOMAIN --resource-group $RESOURCEGROUP --query "id" --output tsv)
@@ -299,13 +309,13 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
    EOF
    ```
 
-2. Switch openshift-cert-manager-operator project (namespace)
+1. Switch openshift-cert-manager-operator project (namespace)
 
    ```bash
    oc project openshift-cert-manager-operator
    ```
 
-3. Create Group
+1. Create OperatorGroup
 
    ```bash
    cat <<EOF | oc apply -f -
@@ -317,7 +327,7 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
    EOF
    ```
 
-4. Create subscription for cert-manager operator
+1. Create subscription for cert-manager operator
 
    ```yaml
    cat <<EOF | oc apply -f -
@@ -337,7 +347,7 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
 
    > *It will take a few minutes for this operator to install and complete it's set up. May be a good time to take a coffee break :)*
 
-5. Wait for cert-manager operator to finish installing.
+1. Wait for cert-manager operator to finish installing.
 
    Our next steps can't complete until the operator has finished installing. I recommend that you login to your cluster with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.
 
@@ -399,13 +409,32 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
                key: client-secret
              subscriptionID: $AZURE_SUBSCRIPTION_ID
              tenantID: $AZURE_TENANT_ID
-             resourceGroupName: $DNSRESOURCEGROUP
+             resourceGroupName: $RESOURCEGROUP
              hostedZoneName: $DOMAIN
              environment: AzurePublicCloud
    EOF
    ```
 
-   Once the above command is ran, you should be able to login to openshift, click view operators and make sure you're in the "openshift-cert-manager-operator" project and you should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.  
+1. Describe issuer
+
+   ```bash
+   oc describe clusterissuer letsencrypt-prod
+   ```
+
+   You should see some output that the issuer is Registered/Ready
+
+   ```
+   Conditions:
+    Last Transition Time:  2022-06-17T17:29:37Z
+    Message:               The ACME account was registered with the ACME server
+    Observed Generation:   1
+    Reason:                ACMEAccountRegistered
+    Status:                True
+    Type:                  Ready
+   Events:                    <none>
+   ```
+
+   Once the above command is complete, you should be able to login to openshift, click view operators and make sure you're in the "openshift-cert-manager-operator" project and you should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.  
 
    ![cluster issuer](cluster-issuer.png)
 
@@ -636,25 +665,23 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    ```
 
 
+## Debugging
+
+One of the most helpful commands i've seen for debugging is in regards to challenges failing. The order says pending in perpetuity and you can run this to see why.
+
+```bash
+oc describe challenges
+```
+
+This is a very [helpful guide in debugging certificates](https://cert-manager.io/docs/faq/acme/) as well.
+
 ## Validate Certificates
 
 It will take a few minutes for the jobs to successfully complete. 
 
 Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser and no more warnings about SSL on cli.
 
-If you have openssl installed on your OS, you can see the certificates through the cli.
-
-1. Verify Console
-
-   ```bash
-   openssl s_client -connect $(az aro show -g $RESOURCEGROUP -n $CLUSTER --query "consoleProfile.url" -o tsv)
-   ```
-
-1. Verify API
-
-   ```bash
-   openssl s_client -connect api.$DOMAIN:443
-   ```
+You may want to open an InPrivate/Private browser tab to visit the console/api so you can see the new SSL cert without having to expire your cache.
 
 ## Delete Cluster
 
