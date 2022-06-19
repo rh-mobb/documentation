@@ -36,6 +36,7 @@
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
+* [Install ARO with Custom Domain using LetsEncrypt with cert manager](./docs/aro/cert-manager)
 
 ### GCP
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](./docs/gcp/osd_preexisting_vpc.md)
