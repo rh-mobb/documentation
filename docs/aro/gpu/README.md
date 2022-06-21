@@ -12,7 +12,7 @@ Author: [Byron Miller](https://twitter.com/byron_miller)
 ## Prerequisites
 
 * oc cli
-* jq & gettext package
+* jq, moreutils, and gettext package
 * ARO 4.10
 
 If you need to install an ARO cluster, please read our install guide.  In order to keep some of our docs "DRY" we're going to start from an existing ARO 4.10 or higher cluster.
@@ -129,40 +129,86 @@ If you don't have any RHEL entitlements on your account, please [register for fr
 
 This free entitlement will allow you to compile the nvidia operator.
 
-## Add GPU Machine Set
+## Generate GPU Machine Set JSON
+
+>I'm exporting a machienset config as json, you can manually do these edits or run the following commands to modify the json file via CLI.
 
 1. View existing machinesets
 
+   >For ease of set up, I'm going to grab the first machineset and use that as the one I will clone to create our GPU machineset.
+
    ```bash
-   oc get machineset -n openshift-machine-api
+   MACHINESET=$(oc get machineset -n openshift-machine-api -o=jsonpath='{.items[0]}' | jq -r '[.metadata.name] | @tsv')
    ```
 
 1. Save a copy of example machineset
 
    ```bash
-   oc get machineset -n openshift-machine-api <machineset name> -o yaml > gpu_machineset.yaml
+   oc get machineset -n openshift-machine-api $MACHINESET -o json > gpu_machineset.json
    ```
 
-1. Edit gpu_machineset.yaml file
+1. Change the .metadata.name field to a new unique name
 
-   * Change the .metadata.name field to a new unique name
-   * Ensure spec.replicas matches the desired replica count for the MachineSet
-   * Change the .spec.selector.matchLabels.machine.openshift.io/cluster-api-machineset field to match the .metadata.name field
-   * Change the .spec.template.metadata.labels.machine.openshift.io/cluster-api-machineset to match the .metadata.name field
-   * Change the spec.template.spec.providerSpec.value.vmSize to match the desired GPU instance type from Azure
-   * Change the spec.template.spec.providerSpec.value.zone to match the desired zone from Azure
-   * Delete the .status section of the yaml file
-   * Verify the other data in the yaml file.
+   I'm going to echo out the $MACHINESET from command above and modify it for the name that I want to use here of "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1" that matches some of the other machinesets but gives it an nvidia name.
+
+   ```bash
+   echo $MACHINESET
+   jq '.metadata.name = "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
+   ```
+
+1. Ensure spec.replicas matches the desired replica count for the MachineSet
+
+    ```bash
+    jq '.spec.replicas = 1' gpu_machineset.json| sponge gpu_machineset.json
+    ```
+   
+1. Change the .spec.selector.matchLabels.machine.openshift.io/cluster-api-machineset field to match the .metadata.name field
+   
+   ```bash
+   jq '.spec.selector.matchLabels."machine.openshift.io/cluster-api-machineset" = "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
+   ```
+  
+1. Change the .spec.template.metadata.labels.machine.openshift.io/cluster-api-machineset to match the .metadata.name field
+
+   ```bash
+   jq '.spec.template.metadata.labels."machine.openshift.io/cluster-api-machineset" = "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
+   ```
+
+1. Change the spec.template.spec.providerSpec.value.vmSize to match the desired GPU instance type from Azure.
+
+   >The machine we're using is Standard_NC4as_T4_v3.
+
+   ```bash
+   jq '.spec.template.spec.providerSpec.value.vmSize = "Standard_NC4as_T4_v3"' gpu_machineset.json | sponge gpu_machineset.json
+   ```
+
+1.  Change the spec.template.spec.providerSpec.value.zone to match the desired zone from Azure
+
+    ```bash
+    jq '.spec.template.spec.providerSpec.value.zone = "1"' gpu_machineset.json | sponge gpu_machineset.json
+    ```
+
+1. Delete the .status section of the yaml file
+
+   ```bash
+   jq 'del(.status)' gpu_machineset.json | sponge gpu_machineset.json
+   ```
+
+1. Verify the other data in the yaml file.
 
    >ARO is not managed by OCM yet, so you must create a machine set to add GPU workers.
 
-2. Create GPU machine set
+### Create GPU machine set
+
+1. Create GPU Machine set
 
    ```bash
-   oc create -f gpu_machineset.yaml
+   oc create -f gpu_machineset.json
    ```
 
-3. Verify GPU machine set
+   >This command will take a few minutes to complete.
+
+1. Verify GPU machine set
 
    Machines should be getting deployed. You can view the status of the machine set with the following commands
 
@@ -177,6 +223,8 @@ This free entitlement will allow you to compile the nvidia operator.
    oc get nodes
    ```
 
+   You should see a node with the "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1" name it we created earlier.
+
 ## Install Node Feature Discovery Operator
 
 Official Documentation for Installing [Node Feature Discovery Operator](https://docs.openshift.com/container-platform/4.10/hardware_enablement/psap-node-feature-discovery-operator.html)
@@ -188,7 +236,7 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
    apiVersion: v1
    kind: Namespace
    metadata:
-   name: openshift-nfd
+     name: openshift-nfd
    EOF
    ```
 
@@ -224,6 +272,13 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
      source: redhat-operators
      sourceNamespace: openshift-marketplace
    EOF
+   ```
+1. Wait for Node Feature discovery to complete installation
+
+   You can login to your openshift console and view operators or simply wait a few minutes. The next step will error until the operator has finished installing.
+
+   ```bash
+   oc get subs -n openshift-nfd
    ```
 
 1. Create NFD Instance
@@ -343,14 +398,18 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
    EOF
    ```
 
-
 1. Get latest nvidia channel
 
    ```bash
    CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
    ```
 
-1. Create Subscription
+1. Get latest nvidia package
+
+   ```bash
+   PACKAGE=$(oc get packagemanifests/gpu-operator-certified -n openshift-marketplace -ojson | jq -r '.status.channels[] | select(.name == "'$CHANNEL'") | .currentCSV')
+  
+2. Create Subscription
 
    ```yaml
    envsubst  <<EOF | oc apply -f -
@@ -360,13 +419,46 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
      name: gpu-operator-certified
      namespace: nvidia-gpu-operator
    spec:
-     channel: "v1.10"
+     channel: "$CHANNEL"
      installPlanApproval: Manual
      name: gpu-operator-certified
      source: certified-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: "$CHANNEL"
+     startingCSV: "$PACKAGE"
    EOF
+   ```
+
+1. Verify install plan has been created.
+
+   ```bash
+   oc get installplan -n nvidia-gpu-operator
+   ```
+
+2. Approve install plan
+
+   ```bash
+   INSTALL_PLAN=$(oc get installplan -n nvidia-gpu-operator -oname)
+   oc patch $INSTALL_PLAN -n nvidia-gpu-operator --type merge --patch '{"spec":{"approved":true }}'
+   ```
+
+
+3. Wait for Operator to finish installing
+
+   >Don't proceed until you have verified that the operator has finished installing.
+
+   ![Verify Operator](nvidia-installed.png)
+
+4. Generate Nvidia Config
+
+   We're going to use the default config.  Please feel free to modify if you need to modify. You can also generate this from the console if you want to walk through the GUI approach.
+
+   ```bash
+   oc get csv -n nvidia-gpu-operator gpu-operator-certified.v1.10.1 -ojsonpath={.metadata.annotations.alm-examples} | jq .[0] > clusterpolicy.json
+
+5. Apply cluster config
+
+   ```bash
+   oc apply -f clusterpolicy.json
    ```
 
 ## Validate GPU
