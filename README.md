@@ -37,6 +37,7 @@
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
 * [IBM Cloud Paks for Data Operator Setup](./docs/aro/ibm-cloud-paks-for-data)
+* [Install ARO with Custom Domain using LetsEncrypt with cert manager](./docs/aro/cert-manager)
 
 ### GCP
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](./docs/gcp/osd_preexisting_vpc.md)
