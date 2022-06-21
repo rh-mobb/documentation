@@ -6,7 +6,7 @@
 
 > **Tip** The official documentation for installing a OSD cluster in GCP can be found [here](https://docs.openshift.com/dedicated/osd_cluster_create/creating-a-gcp-cluster.html).
 
-For deploy an OSD cluster in GCP using existing Virtual Private Cloud (VPC) you need to implement some prerequisites that you must create before starting the OpenShift Dedicated installation though the OCM:
+For deploy an OSD cluster in GCP using existing Virtual Private Cloud (VPC) you need to implement some prerequisites that you must create before starting the OpenShift Dedicated installation though the OCM.
 
 ## Prerequisites
 
@@ -16,11 +16,14 @@ For deploy an OSD cluster in GCP using existing Virtual Private Cloud (VPC) you 
 NOTE: Also the GCloud Shell can be used, and have the gcloud cli among other tools preinstalled.
 
 ## Generate GCP VPC and Subnets
+This is a diagram showing the GCP infra prerequisites that are needed for the OSD installation:
+
+![GCP Prereqs](./images/osd-prereqs.png){: width="750" }
 
 To deploy the GCP VPC and subnets among other prerequisites for install the OSD in GCP using the preexisting VPCs you have two options:
 
-* Option 1 - GCloud CLI
-* Option 2 - Terraform Automation
+* **Option 1** - GCloud CLI
+* **Option 2** - Terraform Automation
 
 Please select one of these two options and proceed with the OSD install steps.
 
@@ -121,7 +124,14 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
 ### Option 2 - Deploy OSD VPC and Subnets using Terraform
 
-You can use also automation code in Terraform to deploy all the GCP infrastructure required to deploy the OSD in preexistent VPCs.
+You can use also [automation code in Terraform](https://github.com/rh-mobb/tf-osd-gcp) to deploy all the GCP infrastructure required to deploy the OSD in preexistent VPCs.
+
+* Clone the tf-osd-gcp repository:
+
+```bash
+git clone https://github.com/rh-mobb/tf-osd-gcp.git
+cd tf-osd-gcp
+```
 
 * Copy and modify the tfvars file in order to custom to your scenario:
 
