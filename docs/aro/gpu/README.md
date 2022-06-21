@@ -21,6 +21,11 @@ If you need to install an ARO cluster, please read our install guide.  In order 
 
 1. Login to OpenShift - we'll use the kubeadmin account here but you can login with your user account as long as you have cluster-admin.
 
+   ```bash
+   apiServer=$(az aro show -g $RESOURCEGROUP -n $CLUSTER --query apiserverProfile.url -o tsv)
+   loginCred=$(az aro list-credentials --name $CLUSTER --resource-group $RESOURCEGROUP --query "kubeadminPassword" -o tsv)
+   oc login $apiServer -u kubeadmin -p $loginCred
+   ```
 
 ## GPU Quota
 
@@ -34,9 +39,13 @@ ARO supports the following GPU workers
 
 >Please remember that when you request quota that Azure is per core.  To request a single NC4as T4 v3 node, you will need to request quota in groups of 4.
 
-Login to portal.azure.com, type "quotas" in search by, click on Compute and in the search box type "NCAsv3_T4". Select the region your cluster is in (select checkbox) and then click Request quota increase and ask for quota (I chose 8 so i can build two demo clusters).
+1. Login to azure 
 
-![GPU Quota Request on Azure](gpu-quota-azure.png)
+   Login to [portal.azure.com](portal.azure.com), type "quotas" in search by, click on Compute and in the search box type "NCAsv3_T4". Select the region your cluster is in (select checkbox) and then click Request quota increase and ask for quota (I chose 8 so i can build two demo clusters).
+
+2. Configure quota
+   
+   ![GPU Quota Request on Azure](gpu-quota-azure.png)
 
 ## OCM and Software Collections Set up
 
@@ -44,23 +53,25 @@ We're going to connect our ARO cluster to cloud.redhat.com and enable the full p
 
 ### Enable SCA on Customer Portal Account
 
-Login to [access.redhat.com](https://access.redhat.com) as your organizations administrator
+1. Login to [access.redhat.com](https://access.redhat.com) as your organizations administrator
 
-Click login
+1. Click login
 
-![Access.redhat.com login](access-login.png)
+   ![Access.redhat.com login](access-login.png)
 
-Login with our Red Hat account.
+1. Login with our Red Hat account.
 
-Once logged in click on "Subscriptions"
+1. Once logged in click on "Subscriptions"
 
-![Access.redhat.com subscriptions](access-subscriptions.png)
+   ![Access.redhat.com subscriptions](access-subscriptions.png)
 
-Ensure Enable SCA is set to "Enabled"
+1. Ensure Enable SCA is set to "Enabled"
 
-![Enable SCA](accesss-enable-sca.png)
+   ![Enable SCA](accesss-enable-sca.png)
 
-### Re-create pull secret
+### Re-create pull secret (Conditional)
+
+   >If you have already re-created a full pull secret with cloud.redhat.com enabled you can skip this step
 
 1. Log into [cloud.redhat.com](cloud.redhat.com)
 
