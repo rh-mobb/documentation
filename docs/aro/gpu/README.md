@@ -32,7 +32,7 @@ ARO supports the following GPU workers
 * NC16as T4 v3
 * NC464as T4 v3
 
-Please remember that when you request quota that Azure is per core.  To request a single NC4as T4 v3 node, you will need to request quota in groups of 4.
+>Please remember that when you request quota that Azure is per core.  To request a single NC4as T4 v3 node, you will need to request quota in groups of 4.
 
 Login to portal.azure.com, type "quotas" in search by, click on Compute and in the search box type "NCAsv3_T4". Select the region your cluster is in (select checkbox) and then click Request quota increase and ask for quota (I chose 8 so i can build two demo clusters).
 
@@ -73,8 +73,7 @@ Ensure Enable SCA is set to "Enabled"
 1. Export existing pull secret 
 
    ```bash 
-   oc get secret pull-secret -n openshift-config -o json | jq -r '.data.".dockerconfigjson"' | base64 --decode 
-   > export-pull.json
+   oc get secret pull-secret -n openshift-config -o json | jq -r '.data.".dockerconfigjson"' | base64 --decode > export-pull.json
    ```
 
 1. Merge downloaded pull secret with system pull secret to add cloud.redhat.com 
@@ -107,7 +106,7 @@ Ensure Enable SCA is set to "Enabled"
    oc project openshift-config
    ```
 
-1. Create secret
+1. Create secret for Simple Content Access refresh interval.
 
    ```bash
    oc create secret generic my-secret --from-literal=scaInterval=1h
@@ -115,8 +114,9 @@ Ensure Enable SCA is set to "Enabled"
 
 ###  Optional: If you don't have any RHEL entitlements
 
-If you don't have any RHEL entitlements on your account, please register for free Developer entitlement.
+If you don't have any RHEL entitlements on your account, please [register for free Developer entitlement](https://developers.redhat.com/register).
 
+This free entitlement will allow you to compile the nvidia operator.
 
 ## Add GPU Machine Set
 
@@ -134,32 +134,33 @@ If you don't have any RHEL entitlements on your account, please register for fre
 
 1. Edit gpu_machineset.yaml file
 
-   >Change the .metadata.name field to a new unique name
-   Ensure spec.replicas matches the desired replica count for the MachineSet
-   Change the .spec.selector.matchLabels.machine.openshift.io/cluster-api-machineset field to match the .metadata.name field
-   Change the .spec.template.metadata.labels.machine.openshift.io/cluster-api-machineset to match the .metadata.name field
-   Change the spec.template.spec.providerSpec.value.vmSize to match the desired GPU instance type from Azure
-   Change the spec.template.spec.providerSpec.value.zone to match the desired zone from Azure
-   Delete the .status section of the yaml file
-   Verify the other data in the yaml file.
+   * Change the .metadata.name field to a new unique name
+   * Ensure spec.replicas matches the desired replica count for the MachineSet
+   * Change the .spec.selector.matchLabels.machine.openshift.io/cluster-api-machineset field to match the .metadata.name field
+   * Change the .spec.template.metadata.labels.machine.openshift.io/cluster-api-machineset to match the .metadata.name field
+   * Change the spec.template.spec.providerSpec.value.vmSize to match the desired GPU instance type from Azure
+   * Change the spec.template.spec.providerSpec.value.zone to match the desired zone from Azure
+   * Delete the .status section of the yaml file
+   * Verify the other data in the yaml file.
 
+   >ARO is not managed by OCM yet, so you must create a machine set to add GPU workers.
 
-1. Create GPU machine set
+2. Create GPU machine set
 
    ```bash
    oc create -f gpu_machineset.yaml
    ```
 
-1. Verify GPU machine set
+3. Verify GPU machine set
 
-Machines should be getting deployed. You can view the status of the machine set with the following commands
+   Machines should be getting deployed. You can view the status of the machine set with the following commands
 
    ```bash
    oc get machineset -n openshift-machine-api
    oc get machine -n openshift-machine-api
    ```
 
-Once the machines are provisioned, which could take 5-15 minutes, machines will show as nodes in the node list.
+   Once the machines are provisioned, which could take 5-15 minutes, machines will show as nodes in the node list.
 
    ```bash
    oc get nodes
