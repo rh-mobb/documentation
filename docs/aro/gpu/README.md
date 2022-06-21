@@ -113,11 +113,9 @@ Ensure Enable SCA is set to "Enabled"
    oc create secret generic my-secret --from-literal=scaInterval=1h
    ```
 
-
 ###  Optional: If you don't have any RHEL entitlements
 
 If you don't have any RHEL entitlements on your account, please register for free Developer entitlement.
-
 
 
 ## Add GPU Machine Set
@@ -161,7 +159,7 @@ Machines should be getting deployed. You can view the status of the machine set 
    oc get machine -n openshift-machine-api
    ```
 
-Once the machines are provisioned, which could take 5-15 minutes, machines will show as nodes in the node list:
+Once the machines are provisioned, which could take 5-15 minutes, machines will show as nodes in the node list.
 
    ```bash
    oc get nodes
@@ -174,14 +172,18 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
 1. Set up Name Space
 
    ```yaml
+   cat <<EOF | oc apply -f -
    apiVersion: v1
    kind: Namespace
    metadata:
    name: openshift-nfd
+   EOF
    ```
 
 1. Create OperatorGroup
 
+   ```yaml
+   cat <<EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1
    kind: OperatorGroup
    metadata:
@@ -191,9 +193,13 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
    spec:
      targetNamespaces:
      - openshift-nfd
+   EOF
+   ```
 
 1. Create Subscription
 
+   ```yaml
+   cat <<EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
@@ -205,10 +211,14 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
      name: nfd
      source: redhat-operators
      sourceNamespace: openshift-marketplace
-
+   EOF
+   ```
 
 1. Create NFD Instance
 
+
+   ```yaml
+   cat <<EOF | oc apply -f -
    apiVersion: nfd.openshift.io/v1
    kind: NodeFeatureDiscovery
    metadata:
@@ -289,19 +299,27 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
              - name: "more.kernel.features"
                matchOn:
                - loadedKMod: ["example_kmod3"]
+   EOF
+   ```
 
 
 ## Install Nvidia GPU Operator
 
 1. Create Nvidia namespace
 
+   ```yaml
+   cat <<EOF | oc apply -f -
    apiVersion: v1
    kind: Namespace
    metadata:
      name: nvidia-gpu-operator
+   EOF
+   ```
 
 1. Create Operator Group
 
+   ```yaml
+   cat <<EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1
    kind: OperatorGroup
    metadata:
@@ -310,14 +328,20 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
    spec:
     targetNamespaces:
     - nvidia-gpu-operator
+   EOF
+   ```
 
 
 1. Get latest nvidia channel
 
+   ```bash
    CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
+   ```
 
 1. Create Subscription
 
+   ```yaml
+   envsubst  <<EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
@@ -330,12 +354,15 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
      source: certified-operators
      sourceNamespace: openshift-marketplace
      startingCSV: "$CHANNEL"
-
+   EOF
+   ```
 
 ## Validate GPU
 
 Create Pod to run a GPU workload
 
+   ```yaml
+   cat <<EOF | oc apply -f -
    apiVersion: v1
    kind: Pod
    metadata:
@@ -350,13 +377,18 @@ Create Pod to run a GPU workload
              nvidia.com/gpu: 1
          nodeSelector:
            nvidia.com/gpu.present: true
+   EOF
+   ```
 
 
 View logs
 
-oc logs cuda-vector-add
+   ```bash
+   oc logs cuda-vector-add
+   ```
 
 If successful, the pod can be deleted
 
-
-oc delete pod cuda-vector-add
+   ```bash
+   oc delete pod cuda-vector-add
+   ```
