@@ -371,7 +371,7 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
 
 ## Validate GPU
 
-Create Pod to run a GPU workload
+1. Create Pod to run a GPU workload
 
    ```yaml
    cat <<EOF | oc apply -f -
@@ -393,13 +393,13 @@ Create Pod to run a GPU workload
    ```
 
 
-View logs
+1. View logs
 
    ```bash
    oc logs cuda-vector-add
    ```
 
-If successful, the pod can be deleted
+1. If successful, the pod can be deleted
 
    ```bash
    oc delete pod cuda-vector-add
