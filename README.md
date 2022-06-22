@@ -29,16 +29,19 @@
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](./docs/aro/private-cluster)
-    * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
+  * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
 * [Deploy and use the Azure Service Operator (ASO)](./docs/aro/azure-service-operator)
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
+* [IBM Cloud Paks for Data Operator Setup](./docs/aro/ibm-cloud-paks-for-data)
+* [Install ARO with Custom Domain using LetsEncrypt with cert manager](./docs/aro/cert-manager)
 
 ### GCP
 
+* [Deploy OSD in GCP using Pre-Existent VPC and Subnets](./docs/gcp/osd_preexisting_vpc.md)
 * [Using Filestore with OpenShift Dedicated in GCP](./docs/gcp/filestore.md)
 
 ## Advanced Cluster Manager (ACM)
@@ -60,22 +63,22 @@
 ### Kubernetes Secret Store CSI Driver
 
 * [Just the CSI itself](./docs/security/secrets-store-csi)
-    * [+ HashiCorp CSI](./docs/security/secrets-store-csi/hashicorp-vault)
-    * [+ AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
-    * [+ Azure Key Vault CSI Driver](./docs/security/secrets-store-csi/azure-key-vault)
+  * [+ HashiCorp CSI](./docs/security/secrets-store-csi/hashicorp-vault)
+  * [+ AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
+  * [+ Azure Key Vault CSI Driver](./docs/security/secrets-store-csi/azure-key-vault)
 
 ### Configure Identity provider
+
 * [OpenShift - Configuring Identity Providers](./docs/idp/README.md)
 
-### Stop default router from serving custom domain routes
+### Deploying Advanced Security for Kubernetes in ROSA/ARO
 
-* [Route labels](./docs/ingress/default-router-custom-domain/README.md)
+* [OpenShift - Configuring Identity Providers](./docs/security/rhacs.md)
 
 ## Applications
 
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
 * [Deploying 3scale API Management to ROSA/OSD](./docs/app-services/3scale)
-
 
 ## Operations - DevOps/GitOps
 
@@ -87,3 +90,4 @@
 **Here be dragons - use at your own risk**
 
 * [Fix Cluster Logging Operator Addon for ROSA STS Clusters](./docs/rosa/sts-cluster-logging-addon)
+* [Stop default router from serving custom domain routes](./docs/ingress/default-router-custom-domain/README.md)
