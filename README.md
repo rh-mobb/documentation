@@ -38,6 +38,7 @@
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
 * [IBM Cloud Paks for Data Operator Setup](./docs/aro/ibm-cloud-paks-for-data)
 * [Install ARO with Custom Domain using LetsEncrypt with cert manager](./docs/aro/cert-manager)
+* [Configure ARO for Nvidia GPU Workloads](./docs/aro/gpu)
 
 ### GCP
 
