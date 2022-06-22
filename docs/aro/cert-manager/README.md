@@ -51,7 +51,7 @@ I'm going to be running this setup through Fedora in WSL2. Be sure to always use
 
 1. Install jq & gettext
 
-    I'm going to reply on using shell variables interpolated into Kubernetes config and jq to build variables. Installing or ensuring the gettext & jq package is installed will allow us to use envsubst to simplify some of our configuration so we can use output of CLI's as input into Yamls to reduce the complexity of manual editing.
+    I'm going to rely on using shell variables interpolated into Kubernetes config and jq to build variables. Installing or ensuring the gettext & jq package is installed will allow us to use envsubst to simplify some of our configuration so we can use output of CLI's as input into Yamls to reduce the complexity of manual editing.
 
 
    ```bash
