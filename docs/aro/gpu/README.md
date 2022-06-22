@@ -15,7 +15,7 @@ Author: [Byron Miller](https://twitter.com/byron_miller)
 * jq, moreutils, and gettext package
 * ARO 4.10
 
-If you need to install an ARO cluster, please read our install guide.  In order to keep some of our docs "DRY" we're going to start from an existing ARO 4.10 or higher cluster.
+If you need to install an ARO cluster, please read our [ARO Quick start guide](https://mobb.ninja/docs/quickstart-aro.html). Please be sure if you're installing or using an existing ARO cluster that it is 4.10.x or higher.
 
 >As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator. This has greatly simplified the setup of the cluster for GPU workloads.
 
@@ -32,8 +32,7 @@ brew install jq moreutils gettext
 
 ## GPU Quota
 
-All GPU quotas in Azure are 0 by default. You will need to login to the azure portal and request GPU quota. There is a lot of competition for GPUS, so you may have to provision an ARO cluster in a region where you can actually reserve GPU.
-
+All GPU quotas in Azure are 0 by default. You will need to login to the azure portal and request GPU quota. There is a lot of competition for GPU workers, so you may have to provision an ARO cluster in a region where you can actually reserve GPU.
 ARO supports the following GPU workers:
 * NC4as T4 v3
 * NC8as T4 v3
