@@ -90,3 +90,4 @@
 **Here be dragons - use at your own risk**
 
 * [Fix Cluster Logging Operator Addon for ROSA STS Clusters](./docs/rosa/sts-cluster-logging-addon)
+* [Stop default router from serving custom domain routes](./docs/ingress/default-router-custom-domain/README.md)
