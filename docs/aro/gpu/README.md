@@ -232,6 +232,7 @@ This will create the nvidia-gpu-operator name space, set up the operator group a
 
    ```bash
    PACKAGE=$(oc get packagemanifests/gpu-operator-certified -n openshift-marketplace -ojson | jq -r '.status.channels[] | select(.name == "'$CHANNEL'") | .currentCSV')
+   ```
   
 1. Create Subscription
 
