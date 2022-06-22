@@ -17,59 +17,50 @@ Author: [Byron Miller](https://twitter.com/byron_miller)
 
 If you need to install an ARO cluster, please read our install guide.  In order to keep some of our docs "DRY" we're going to start from an existing ARO 4.10 or higher cluster.
 
-## Log in to your ARO cluster
+>As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator. This has greatly simplified the setup of the cluster for GPU workloads.
 
-1. Login to OpenShift - we'll use the kubeadmin account here but you can login with your user account as long as you have cluster-admin.
+Linux:
 
-   ```bash
-   apiServer=$(az aro show -g $RESOURCEGROUP -n $CLUSTER --query apiserverProfile.url -o tsv)
-   loginCred=$(az aro list-credentials --name $CLUSTER --resource-group $RESOURCEGROUP --query "kubeadminPassword" -o tsv)
-   oc login $apiServer -u kubeadmin -p $loginCred
-   ```
+```bash
+sudo dnf install jq moreutils gettext
+```
+
+MacOS
+```bash
+brew install jq moreutils gettext
+```
 
 ## GPU Quota
 
-All GPU quotas in Azure are 0 by default. You will need to login to the azure portal and request GPU quota.
+All GPU quotas in Azure are 0 by default. You will need to login to the azure portal and request GPU quota. There is a lot of competition for GPUS, so you may have to provision an ARO cluster in a region where you can actually reserve GPU.
 
-ARO supports the following GPU workers
+ARO supports the following GPU workers:
 * NC4as T4 v3
 * NC8as T4 v3
 * NC16as T4 v3
 * NC464as T4 v3
 
->Please remember that when you request quota that Azure is per core.  To request a single NC4as T4 v3 node, you will need to request quota in groups of 4.
+>Please remember that when you request quota that Azure is per core.  To request a single NC4as T4 v3 node, you will need to request quota in groups of 4. If you wish to request an NC16as T4 v3 you will need to request quota of 16.
 
 1. Login to azure 
 
-   Login to [portal.azure.com](portal.azure.com), type "quotas" in search by, click on Compute and in the search box type "NCAsv3_T4". Select the region your cluster is in (select checkbox) and then click Request quota increase and ask for quota (I chose 8 so i can build two demo clusters).
+   Login to [portal.azure.com](portal.azure.com), type "quotas" in search by, click on Compute and in the search box type "NCAsv3_T4". Select the region your cluster is in (select checkbox) and then click Request quota increase and ask for quota (I chose 8 so i can build two demo clusters of NC4as T4s). 
 
 2. Configure quota
    
    ![GPU Quota Request on Azure](gpu-quota-azure.png)
 
-## OCM and Software Collections Set up
+## Log in to your ARO cluster
 
-We're going to connect our ARO cluster to cloud.redhat.com and enable the full pull-secret functionality so we can use Software Collections to authorize our worker nodes for libraries needed to compile the Nvidia operator dependencies.
+1. Login to OpenShift - we'll use the kubeadmin account here but you can login with your user account as long as you have cluster-admin.
 
-### Enable SCA on Customer Portal Account
+   ```bash
+   oc login <apiserver> -u kubeadmin -p <kubeadminpass>
+   ```
 
-1. Login to [access.redhat.com](https://access.redhat.com) as your organizations administrator
+## Pull secret (Conditional)
 
-1. Click login
-
-   ![Access.redhat.com login](access-login.png)
-
-1. Login with our Red Hat account.
-
-1. Once logged in click on "Subscriptions"
-
-   ![Access.redhat.com subscriptions](access-subscriptions.png)
-
-1. Ensure Enable SCA is set to "Enabled"
-
-   ![Enable SCA](accesss-enable-sca.png)
-
-### Re-create pull secret (Conditional)
+We'll update our pull secret to make sure that we can install operators as well as connect to cloud.redhat.com.
 
    >If you have already re-created a full pull secret with cloud.redhat.com enabled you can skip this step
 
@@ -107,74 +98,51 @@ We're going to connect our ARO cluster to cloud.redhat.com and enable the full p
    rm pull-secret.txt export-pull.json new-pull-secret.json 
    ```
 
-### Setup Simple Content Access  
+## GPU Machine Set
 
-[Simple Content Access](https://docs.openshift.com/container-platform/4.10/support/remote_health_monitoring/insights-operator-simple-access.html) is a way to automate the GPU worker node entitlements necessary to build the Nvidia operator libraries.
+ARO still uses Kubernetes Machinsets to create a machine set.  I'm going to export the first machine set in my cluster (az 1) and use that as a template to build a single GPU machine in southcentralus region 1. 
 
-1. Switch to openshift-config project.
+1. View existing machine sets
 
-   ```bash
-   oc project openshift-config
-   ```
-
-1. Create secret for Simple Content Access refresh interval.
-
-   ```bash
-   oc create secret generic my-secret --from-literal=scaInterval=1h
-   ```
-
-###  Optional: If you don't have any RHEL entitlements
-
-If you don't have any RHEL entitlements on your account, please [register for free Developer entitlement](https://developers.redhat.com/register).
-
-This free entitlement will allow you to compile the nvidia operator.
-
-## Generate GPU Machine Set JSON
-
->I'm exporting a machienset config as json, you can manually do these edits or run the following commands to modify the json file via CLI.
-
-1. View existing machinesets
-
-   >For ease of set up, I'm going to grab the first machineset and use that as the one I will clone to create our GPU machineset.
+   >For ease of set up, I'm going to grab the first machine set and use that as the one I will clone to create our GPU machine set.
 
    ```bash
    MACHINESET=$(oc get machineset -n openshift-machine-api -o=jsonpath='{.items[0]}' | jq -r '[.metadata.name] | @tsv')
    ```
 
-1. Save a copy of example machineset
+2. Save a copy of example machine set
 
    ```bash
    oc get machineset -n openshift-machine-api $MACHINESET -o json > gpu_machineset.json
    ```
 
-1. Change the .metadata.name field to a new unique name
+3. Change the .metadata.name field to a new unique name
 
-   I'm going to echo out the $MACHINESET from command above and modify it for the name that I want to use here of "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1" that matches some of the other machinesets but gives it an nvidia name.
+   >I'm going to create a unique name for this single node machine set that shows nvidia-worker-<region><az> that follows a similar pattern as all the other machine sets.
 
    ```bash
-   echo $MACHINESET
-   jq '.metadata.name = "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
+   jq '.metadata.name = "nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
    ```
 
-1. Ensure spec.replicas matches the desired replica count for the MachineSet
+4. Ensure spec.replicas matches the desired replica count for the MachineSet
 
     ```bash
     jq '.spec.replicas = 1' gpu_machineset.json| sponge gpu_machineset.json
     ```
    
-1. Change the .spec.selector.matchLabels.machine.openshift.io/cluster-api-machineset field to match the .metadata.name field
+5. Change the .spec.selector.matchLabels.machine.openshift.io/cluster-api-machineset field to match the .metadata.name field
    
    ```bash
-   jq '.spec.selector.matchLabels."machine.openshift.io/cluster-api-machineset" = "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
+   jq '.spec.selector.matchLabels."machine.openshift.io/cluster-api-machineset" = "nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
    ```
   
-1. Change the .spec.template.metadata.labels.machine.openshift.io/cluster-api-machineset to match the .metadata.name field
+6. Change the .spec.template.metadata.labels.machine.openshift.io/cluster-api-machineset to match the .metadata.name field
 
    ```bash
-   jq '.spec.template.metadata.labels."machine.openshift.io/cluster-api-machineset" = "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
+   jq '.spec.template.metadata.labels."machine.openshift.io/cluster-api-machineset" = "nvidia-worker-southcentralus1"' gpu_machineset.json| sponge gpu_machineset.json
    ```
 
-1. Change the spec.template.spec.providerSpec.value.vmSize to match the desired GPU instance type from Azure.
+7. Change the spec.template.spec.providerSpec.value.vmSize to match the desired GPU instance type from Azure.
 
    >The machine we're using is Standard_NC4as_T4_v3.
 
@@ -182,23 +150,25 @@ This free entitlement will allow you to compile the nvidia operator.
    jq '.spec.template.spec.providerSpec.value.vmSize = "Standard_NC4as_T4_v3"' gpu_machineset.json | sponge gpu_machineset.json
    ```
 
-1.  Change the spec.template.spec.providerSpec.value.zone to match the desired zone from Azure
+8.  Change the spec.template.spec.providerSpec.value.zone to match the desired zone from Azure
 
     ```bash
     jq '.spec.template.spec.providerSpec.value.zone = "1"' gpu_machineset.json | sponge gpu_machineset.json
     ```
 
-1. Delete the .status section of the yaml file
+9. Delete the .status section of the yaml file
 
    ```bash
    jq 'del(.status)' gpu_machineset.json | sponge gpu_machineset.json
    ```
 
-1. Verify the other data in the yaml file.
+10. Verify the other data in the yaml file.
 
    >ARO is not managed by OCM yet, so you must create a machine set to add GPU workers.
 
 ### Create GPU machine set
+
+These steps will create the new GPU machine. It may take 10-15 minutes to provision a new GPU machine. If this step fails, please login to the azure portal and ensure you didn't run across availability issues. You can go "Virtual Machines" and search for the worker name you created above to see the status of VMs.
 
 1. Create GPU Machine set
 
@@ -223,9 +193,136 @@ This free entitlement will allow you to compile the nvidia operator.
    oc get nodes
    ```
 
-   You should see a node with the "aro-lab-gpu-mwpgc-nvidia-worker-southcentralus1" name it we created earlier.
+   You should see a node with the "nvidia-worker-southcentralus1" name it we created earlier.
+
+## Install Nvidia GPU Operator
+
+This will create the nvidia-gpu-operator name space, set up the operator group and install the Nvidia GPU Operator.
+
+1. Create Nvidia namespace
+
+   ```yaml
+   cat <<EOF | oc apply -f -
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: nvidia-gpu-operator
+   EOF
+   ```
+
+1. Create Operator Group
+
+   ```yaml
+   cat <<EOF | oc apply -f -
+   apiVersion: operators.coreos.com/v1
+   kind: OperatorGroup
+   metadata:
+     name: nvidia-gpu-operator-group
+     namespace: nvidia-gpu-operator
+   spec:
+    targetNamespaces:
+    - nvidia-gpu-operator
+   EOF
+   ```
+
+1. Get latest nvidia channel
+
+   ```bash
+   CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
+   ```
+
+1. Get latest nvidia package
+
+   ```bash
+   PACKAGE=$(oc get packagemanifests/gpu-operator-certified -n openshift-marketplace -ojson | jq -r '.status.channels[] | select(.name == "'$CHANNEL'") | .currentCSV')
+  
+1. Create Subscription
+
+   ```yaml
+   envsubst  <<EOF | oc apply -f -
+   apiVersion: operators.coreos.com/v1alpha1
+   kind: Subscription
+   metadata:
+     name: gpu-operator-certified
+     namespace: nvidia-gpu-operator
+   spec:
+     channel: "$CHANNEL"
+     installPlanApproval: Automatic
+     name: gpu-operator-certified
+     source: certified-operators
+     sourceNamespace: openshift-marketplace
+     startingCSV: "$PACKAGE"
+   EOF
+   ```
+
+1. Wait for Operator to finish installing
+
+   >Don't proceed until you have verified that the operator has finished installing.
+
+   ![Verify Operator](nvidia-installed.png)
+
+1. Apply cluster config
+
+   ```yaml
+   cat <<EOF | oc apply -f -
+   apiVersion: nvidia.com/v1
+   kind: ClusterPolicy
+   metadata:
+     name: gpu-cluster-policy
+   spec:
+     migManager:
+       enabled: true
+     operator:
+       defaultRuntime: crio
+       initContainer: {}
+       runtimeClass: nvidia
+       deployGFD: true
+     dcgm:
+       enabled: true
+     gfd: {}
+     dcgmExporter:
+       config:
+         name: ''
+     driver:
+       licensingConfig:
+         nlsEnabled: false
+         configMapName: ''
+       certConfig:
+         name: ''
+       kernelModuleConfig:
+         name: ''
+       repoConfig:
+         configMapName: ''
+       virtualTopology:
+         config: ''
+       enabled: true
+       use_ocp_driver_toolkit: true
+     devicePlugin: {}
+     mig:
+       strategy: single
+     validator:
+       plugin:
+         env:
+           - name: WITH_WORKLOAD
+             value: 'true'
+     nodeStatusExporter:
+       enabled: true
+     daemonsets: {}
+     toolkit:
+       enabled: true
+   EOF
+   ```
+
+1. Verify Cluster Policy
+
+   > Login to OpenShift console and browse to operators and make sure you're in nvidia-gpu-operator namespace
+
+   ![cluster policy](nvidia-cluster-policy.png)
+
 
 ## Install Node Feature Discovery Operator
+
+The node feature discovery operator will discover the GPU on your nodes and appropriately label the nodes so you can target them for workloads.  We'll install the NFD operator into the opneshift-ndf namespace and create the "subscription" which is the configuration for NFD.
 
 Official Documentation for Installing [Node Feature Discovery Operator](https://docs.openshift.com/container-platform/4.10/hardware_enablement/psap-node-feature-discovery-operator.html)
 
@@ -250,9 +347,6 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
      generateName: openshift-nfd-
      name: openshift-nfd
      namespace: openshift-nfd
-   spec:
-     targetNamespaces:
-     - openshift-nfd
    EOF
    ```
 
@@ -276,10 +370,6 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
 1. Wait for Node Feature discovery to complete installation
 
    You can login to your openshift console and view operators or simply wait a few minutes. The next step will error until the operator has finished installing.
-
-   ```bash
-   oc get subs -n openshift-nfd
-   ```
 
 1. Create NFD Instance
 
@@ -369,103 +459,34 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
    EOF
    ```
 
+It may take some time for node discovery to complete and have the GPU show up. 
 
-## Install Nvidia GPU Operator
+You can see the node labels by logging into the OpenShift console -> Compute -> Nodes -> nvidia-worker-southcentralus1-<id>
 
-1. Create Nvidia namespace
+![NFD Node labels](node-labels.png)
 
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: nvidia-gpu-operator
-   EOF
-   ```
-
-1. Create Operator Group
-
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: operators.coreos.com/v1
-   kind: OperatorGroup
-   metadata:
-     name: nvidia-gpu-operator-group
-     namespace: nvidia-gpu-operator
-   spec:
-    targetNamespaces:
-    - nvidia-gpu-operator
-   EOF
-   ```
-
-1. Get latest nvidia channel
-
-   ```bash
-   CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
-   ```
-
-1. Get latest nvidia package
-
-   ```bash
-   PACKAGE=$(oc get packagemanifests/gpu-operator-certified -n openshift-marketplace -ojson | jq -r '.status.channels[] | select(.name == "'$CHANNEL'") | .currentCSV')
-  
-2. Create Subscription
-
-   ```yaml
-   envsubst  <<EOF | oc apply -f -
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     name: gpu-operator-certified
-     namespace: nvidia-gpu-operator
-   spec:
-     channel: "$CHANNEL"
-     installPlanApproval: Manual
-     name: gpu-operator-certified
-     source: certified-operators
-     sourceNamespace: openshift-marketplace
-     startingCSV: "$PACKAGE"
-   EOF
-   ```
-
-1. Verify install plan has been created.
-
-   ```bash
-   oc get installplan -n nvidia-gpu-operator
-   ```
-
-2. Approve install plan
-
-   ```bash
-   INSTALL_PLAN=$(oc get installplan -n nvidia-gpu-operator -oname)
-   oc patch $INSTALL_PLAN -n nvidia-gpu-operator --type merge --patch '{"spec":{"approved":true }}'
-   ```
-
-
-3. Wait for Operator to finish installing
-
-   >Don't proceed until you have verified that the operator has finished installing.
-
-   ![Verify Operator](nvidia-installed.png)
-
-4. Generate Nvidia Config
-
-   We're going to use the default config.  Please feel free to modify if you need to modify. You can also generate this from the console if you want to walk through the GUI approach.
-
-   ```bash
-   oc get csv -n nvidia-gpu-operator gpu-operator-certified.v1.10.1 -ojsonpath={.metadata.annotations.alm-examples} | jq .[0] > clusterpolicy.json
-
-5. Apply cluster config
-
-   ```bash
-   oc apply -f clusterpolicy.json
-   ```
 
 ## Validate GPU
 
-1. Create Pod to run a GPU workload
+It may take some time for the nVidia Operator and NFD to completely install and self-identify the machines. These commands can be ran to help validate that everything is running as expected.
+
+1.  Verify NFD can see your GPU(s)
+
+    ```bash
+    oc describe node | egrep 'Roles|pci-10de' | grep -v master
+    ```
+
+      You should see output like:
+
+    ```bash
+    Roles:              worker
+                    feature.node.kubernetes.io/pci-10de.present=true
+    ```
+
+2. Create Pod to run a GPU workload
 
    ```yaml
+   oc project nvidia-gpu-operator
    cat <<EOF | oc apply -f -
    apiVersion: v1
    kind: Pod
@@ -484,14 +505,24 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
    EOF
    ```
 
-
-1. View logs
+3. View logs
 
    ```bash
-   oc logs cuda-vector-add
+   oc logs cuda-vector-add --tail=-1
    ```
 
-1. If successful, the pod can be deleted
+   Output:
+
+   ```bash
+   Begin
+   Allocating device memory on host..
+   Copying to device..
+   Doing GPU Vector add
+   Doing CPU Vector add
+   10000000 0.000078 0.044028
+   ```
+
+4. If successful, the pod can be deleted
 
    ```bash
    oc delete pod cuda-vector-add
