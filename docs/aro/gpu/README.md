@@ -164,11 +164,9 @@ ARO still uses Kubernetes Machinsets to create a machine set.  I'm going to expo
 
 10. Verify the other data in the yaml file.
 
-   >ARO is not managed by OCM yet, so you must create a machine set to add GPU workers.
-
 ### Create GPU machine set
 
-These steps will create the new GPU machine. It may take 10-15 minutes to provision a new GPU machine. If this step fails, please login to the azure portal and ensure you didn't run across availability issues. You can go "Virtual Machines" and search for the worker name you created above to see the status of VMs.
+These steps will create the new GPU machine. It may take 10-15 minutes to provision a new GPU machine. If this step fails, please login to the [azure portal](https://portal.azure.com) and ensure you didn't run across availability issues. You can go "Virtual Machines" and search for the worker name you created above to see the status of VMs.
 
 1. Create GPU Machine set
 
@@ -257,67 +255,9 @@ This will create the nvidia-gpu-operator name space, set up the operator group a
 
 1. Wait for Operator to finish installing
 
-   >Don't proceed until you have verified that the operator has finished installing.
+   >Don't proceed until you have verified that the operator has finished installing. It's also a good point to ensure that your GPU worker is online.
 
    ![Verify Operator](nvidia-installed.png)
-
-1. Apply cluster config
-
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: nvidia.com/v1
-   kind: ClusterPolicy
-   metadata:
-     name: gpu-cluster-policy
-   spec:
-     migManager:
-       enabled: true
-     operator:
-       defaultRuntime: crio
-       initContainer: {}
-       runtimeClass: nvidia
-       deployGFD: true
-     dcgm:
-       enabled: true
-     gfd: {}
-     dcgmExporter:
-       config:
-         name: ''
-     driver:
-       licensingConfig:
-         nlsEnabled: false
-         configMapName: ''
-       certConfig:
-         name: ''
-       kernelModuleConfig:
-         name: ''
-       repoConfig:
-         configMapName: ''
-       virtualTopology:
-         config: ''
-       enabled: true
-       use_ocp_driver_toolkit: true
-     devicePlugin: {}
-     mig:
-       strategy: single
-     validator:
-       plugin:
-         env:
-           - name: WITH_WORKLOAD
-             value: 'true'
-     nodeStatusExporter:
-       enabled: true
-     daemonsets: {}
-     toolkit:
-       enabled: true
-   EOF
-   ```
-
-1. Verify Cluster Policy
-
-   > Login to OpenShift console and browse to operators and make sure you're in nvidia-gpu-operator namespace
-
-   ![cluster policy](nvidia-cluster-policy.png)
 
 
 ## Install Node Feature Discovery Operator
@@ -373,20 +313,27 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
 
 1. Create NFD Instance
 
-
    ```yaml
    cat <<EOF | oc apply -f -
-   apiVersion: nfd.openshift.io/v1
    kind: NodeFeatureDiscovery
+   apiVersion: nfd.openshift.io/v1
    metadata:
      name: nfd-instance
      namespace: openshift-nfd
    spec:
-     instance: "" # instance is empty by default
-     topologyupdater: false # False by default
+     customConfig:
+       configData: |
+         #    - name: "more.kernel.features"
+         #      matchOn:
+         #      - loadedKMod: ["example_kmod3"]
+         #    - name: "more.features.by.nodename"
+         #      value: customValue
+         #      matchOn:
+         #      - nodename: ["special-.*-node-.*"]
      operand:
-       image: registry.redhat.io/openshift4/ose-node-feature-discovery:v4.10
-       imagePullPolicy: Always
+       image: >-
+         registry.redhat.io/openshift4/ose-node-feature-discovery@sha256:07658ef3df4b264b02396e67af813a52ba416b47ab6e1d2d08025a350ccd2b7b
+       servicePort: 12000
      workerConfig:
        configData: |
          core:
@@ -403,68 +350,168 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
          #    stderrthreshold: 2
          #    v: 0
          #    vmodule:
-         ##   NOTE: the following options are not dynamically run-time configurable
-         ##         and require a nfd-worker restart to take effect after being changed
+         ##   NOTE: the following options are not dynamically run-time 
+         ##          configurable and require a nfd-worker restart to take effect
+         ##          after being changed
          #    logDir:
          #    logFile:
          #    logFileMaxSize: 1800
          #    skipLogHeaders: false
          sources:
-           cpu:
-             cpuid:
-         #     NOTE: whitelist has priority over blacklist
-               attributeBlacklist:
-                 - "BMI1"
-                 - "BMI2"
-                 - "CLMUL"
-                 - "CMOV"
-                 - "CX16"
-                 - "ERMS"
-                 - "F16C"
-                 - "HTT"
-                 - "LZCNT"
-                 - "MMX"
-                 - "MMXEXT"
-                 - "NX"
-                 - "POPCNT"
-                 - "RDRAND"
-                 - "RDSEED"
-                 - "RDTSCP"
-                 - "SGX"
-                 - "SSE"
-                 - "SSE2"
-                 - "SSE3"
-                 - "SSE4.1"
-                 - "SSE4.2"
-                 - "SSSE3"
-               attributeWhitelist:
-           kernel:
-             kconfigFile: "/path/to/kconfig"
-             configOpts:
-               - "NO_HZ"
-               - "X86"
-               - "DMI"
+         #  cpu:
+         #    cpuid:
+         ##     NOTE: whitelist has priority over blacklist
+         #      attributeBlacklist:
+         #        - "BMI1"
+         #        - "BMI2"
+         #        - "CLMUL"
+         #        - "CMOV"
+         #        - "CX16"
+         #        - "ERMS"
+         #        - "F16C"
+         #        - "HTT"
+         #        - "LZCNT"
+         #        - "MMX"
+         #        - "MMXEXT"
+         #        - "NX"
+         #        - "POPCNT"
+         #        - "RDRAND"
+         #        - "RDSEED"
+         #        - "RDTSCP"
+         #        - "SGX"
+         #        - "SSE"
+         #        - "SSE2"
+         #        - "SSE3"
+         #        - "SSE4.1"
+         #        - "SSE4.2"
+         #        - "SSSE3"
+         #      attributeWhitelist:
+         #  kernel:
+         #    kconfigFile: "/path/to/kconfig"
+         #    configOpts:
+         #      - "NO_HZ"
+         #      - "X86"
+         #      - "DMI"
            pci:
              deviceClassWhitelist:
                - "0200"
                - "03"
                - "12"
              deviceLabelFields:
-               - "class"
-     customConfig:
-       configData: |
-             - name: "more.kernel.features"
-               matchOn:
-               - loadedKMod: ["example_kmod3"]
+         #      - "class"
+               - "vendor"
+         #      - "device"
+         #      - "subsystem_vendor"
+         #      - "subsystem_device"
+         #  usb:
+         #    deviceClassWhitelist:
+         #      - "0e"
+         #      - "ef"
+         #      - "fe"
+         #      - "ff"
+         #    deviceLabelFields:
+         #      - "class"
+         #      - "vendor"
+         #      - "device"
+         #  custom:
+         #    - name: "my.kernel.feature"
+         #      matchOn:
+         #        - loadedKMod: ["example_kmod1", "example_kmod2"]
+         #    - name: "my.pci.feature"
+         #      matchOn:
+         #        - pciId:
+         #            class: ["0200"]
+         #            vendor: ["15b3"]
+         #            device: ["1014", "1017"]
+         #        - pciId :
+         #            vendor: ["8086"]
+         #            device: ["1000", "1100"]
+         #    - name: "my.usb.feature"
+         #      matchOn:
+         #        - usbId:
+         #          class: ["ff"]
+         #          vendor: ["03e7"]
+         #          device: ["2485"]
+         #        - usbId:
+         #          class: ["fe"]
+         #          vendor: ["1a6e"]
+         #          device: ["089a"]
+         #    - name: "my.combined.feature"
+         #      matchOn:
+         #        - pciId:
+         #            vendor: ["15b3"]
+         #            device: ["1014", "1017"]
+         #          loadedKMod : ["vendor_kmod1", "vendor_kmod2"]
+   EOF
+   ```
+   
+1. Verify NFD is ready.
+
+   This operator should say Available in the status
+
+   ![NFD Operator Ready](nfd-ready-for-use.png)
+
+## Apply nVidia Cluster Config
+
+We'll now apply the nvidia cluster config. Please read the [nvidia documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/openshift/install-gpu-ocp.html) on customizing this if you have your own private repos or specific settings. This will be another process that takes a few minutes to complete.
+
+1. Apply cluster config
+
+   ```yaml
+   cat <<EOF | oc apply -f -
+   apiVersion: nvidia.com/v1
+   kind: ClusterPolicy
+   metadata:
+     name: gpu-cluster-policy
+   spec:
+     migManager:
+       enabled: true
+     operator:
+       defaultRuntime: crio
+       initContainer: {}
+       runtimeClass: nvidia
+       deployGFD: true
+     dcgm:
+       enabled: true
+     gfd: {}
+     dcgmExporter:
+       config:
+         name: ''
+     driver:
+       licensingConfig:
+         nlsEnabled: false
+         configMapName: ''
+       certConfig:
+         name: ''
+       kernelModuleConfig:
+         name: ''
+       repoConfig:
+         configMapName: ''
+       virtualTopology:
+         config: ''
+       enabled: true
+       use_ocp_driver_toolkit: true
+     devicePlugin: {}
+     mig:
+       strategy: single
+     validator:
+       plugin:
+         env:
+           - name: WITH_WORKLOAD
+             value: 'true'
+     nodeStatusExporter:
+       enabled: true
+     daemonsets: {}
+     toolkit:
+       enabled: true
    EOF
    ```
 
-It may take some time for node discovery to complete and have the GPU show up. 
+1. Verify Cluster Policy
 
-You can see the node labels by logging into the OpenShift console -> Compute -> Nodes -> nvidia-worker-southcentralus1-<id>
+   Login to OpenShift console and browse to operators and make sure you're in nvidia-gpu-operator namespace. You should see it say State: Ready once everything is complete.
 
-![NFD Node labels](node-labels.png)
-
+   ![cluster policy](nvidia-cluster-policy.png)
 
 ## Validate GPU
 
@@ -482,6 +529,12 @@ It may take some time for the nVidia Operator and NFD to completely install and 
     Roles:              worker
                     feature.node.kubernetes.io/pci-10de.present=true
     ```
+
+1. Verify node labels
+
+   You can see the node labels by logging into the OpenShift console -> Compute -> Nodes -> nvidia-worker-southcentralus1-<id>.  You should see a bunch of nvidia GPU labels and the pci-10de device from above.
+
+   ![NFD Node labels](node-labels.png)
 
 2. Create Pod to run a GPU workload
 
@@ -510,6 +563,8 @@ It may take some time for the nVidia Operator and NFD to completely install and 
    ```bash
    oc logs cuda-vector-add --tail=-1
    ```
+
+   >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating" try running "oc delete pod cuda-vector-add" and then re-run the create statement above. I've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
 
    Output:
 
