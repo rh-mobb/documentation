@@ -100,7 +100,7 @@ We need this Service Principal to be an Enterprise Application to be able to add
    ```
    az ad sp update --id $app_id --add tags WindowsAzureActiveDirectoryIntegratedApp
    ```
-   > **Note** in case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
+   > **NOTE** in case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
 
 ## Create the client secret ##
 The password for the app created is retrieved by resetting the same:
@@ -137,8 +137,7 @@ Add permission for the Azure Active Directory as follows:
    --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
    --id $app_id
    ```
-   > **Note** If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
-
+   > **NOTE** If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
 
 ## Get Tenant ID ##
 We do need the Tenant ID for setting up the Oauth provider later on:
@@ -165,7 +164,7 @@ Create an OpenShift secret to store the Azure Active Directory application secre
 
    ```
    oc create secret generic openid-client-secret-azuread \
-   --n openshift-config \
+   -n openshift-config \
    --from-literal=clientSecret=$PASSWD
    ```
 
