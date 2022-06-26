@@ -56,7 +56,7 @@ To simplly follow along, first define the following variables according to your 
 ### Get oauthCallbackURL ###
 To get the `oauthCallbackURL` for the Azure AD integration, run the following commands:
    ```
-   DOMAIN=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query clusterProfile.DOMAIN -o tsv)
+   DOMAIN=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query clusterProfile.domain -o tsv)
    APISERVER=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query apiserverProfile.url -o tsv)
 
    oauthCallbackURL=https://oauth-openshift.apps.$DOMAIN/oauth2callback/AAD
