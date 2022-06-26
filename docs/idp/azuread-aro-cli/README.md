@@ -40,7 +40,7 @@ To get the `oauthCallbackURL` for the Azure AD integration, run the following co
    oauthCallbackURL=https://oauth-openshift.apps.$domain/oauth2callback/AAD
    echo $oauthCallbackURL
    ```
-   **NOTE**: `oauthCallbackURL`, in particular `AAD` can be changed but **must** match the name in the oauth providerwhen creating the OpenShift OpenID authentication   
+   **NOTE** `oauthCallbackURL`, in particular `AAD` can be changed but **must** match the name in the oauth providerwhen creating the OpenShift OpenID authentication   
 
 ## Create `manifest.json` file to configure the Azure Active Directory application ##
 Configure OpenShift to use the `email` claim and fall back to `upn` to set the Preferred Username by adding the `upn` as part of the ID token returned by Azure Active Directory.
