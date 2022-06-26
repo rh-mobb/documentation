@@ -54,8 +54,8 @@ If you're logging in from a system you have no access to your browser you can au
 To simplly follow along, first define the following variables according to your set-up:
 
    ```
-   RESOURCEGROUP=<your ARO cluster RG>
-   CLUSTERNAME=<your ARO cluster NAME>
+   RESOURCEGROUP=<cluster-dmoessne-aro01> # replave with your name
+   CLUSTERNAME=<rg-dmoessne-aro01>  # replave with your name
    ```
 
 ### Get oauthCallbackURL ###
@@ -133,8 +133,8 @@ We need this Service Principal to be an Enterprise Application to be able to add
 > ```
 > podman run -it mcr.microsoft.com/azure-cli:2.36.0
 > az login
-> APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
 > DISPLAYNAME=<auth-dmoessne-aro01>
+> APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
 > az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp
 > exit
 >```
