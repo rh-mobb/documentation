@@ -6,23 +6,26 @@
 
 The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (ARO) via cli are:
 
-1. Define needed variables
-1. Get oauthCallbackURL
-1. Create `manifest.json` file 
-1. Register/create app
-1. Add Servive Principal for the new app 
-1. Make Service Principal and Enterprise Application
-1. Create the client secret
-1. Update the Azure AD application scope permissions
-1. Get Tenant ID
-1. Login to OpenShift as kubeadmin 
-1. Create an OpenShift secret 
-1. Apply OpenShift OpenID authentication 
-1. Wait for authentication operator to roll out
-1. Verify login through Azure Active Directory
-1. Last steps
+   * [Azure](#azure)
+      * [Define needed variables](#define-needed-variables)
+      * [Get oauthCallbackURL](#get-oauthcallbackurl)
+      * [Create manifest.json file to configure the Azure Active Directory application](#create-manifestjson-file-to-configure-the-azure-active-directory-application)
+      * [Register/create app](#registercreate-app)
+      * [Add Servive Principal for the new app](#add-servive-principal-for-the-new-app)
+      * [Make Service Principal and Enterprise Application](#make-service-principal-and-enterprise-application)
+      * [Create the client secret](#create-the-client-secret)
+      * [Update the Azure AD application scope permissions](#update-the-azure-ad-application-scope-permissions)
+      * [Get Tenant ID](#get-tenant-id)
+   * [OpenShift](#openshift)
+      * [Login to OpenShift as kubeadmin](#login-to-openshift-as-kubeadmin)
+      * [Create an OpenShift](#create-an-openshift)
+      * [Apply OpenShift OpenID authentication](#apply-openshift-openid-authentication)
+      * [Wait for authentication operator to roll out](#wait-for-authentication-operator-to-roll-out)
+      * [Verify login through Azure Active Directory](#verify-login-through-azure-active-directory)
+      * [Last steps](#last-steps)
 
-## Define needed variables ##
+## Azure ##
+### Define needed variables ###
 To simplly follow along, first define the following variables according to your set-up:
 
    ```
@@ -30,7 +33,7 @@ To simplly follow along, first define the following variables according to your 
    CLUSTERNAME=<your ARO cluster NAME>
    ```
 
-## Get oauthCallbackURL ##
+### Get oauthCallbackURL ###
 To get the `oauthCallbackURL` for the Azure AD integration, run the following commands:
    ```
    DOMAIN=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query clusterProfile.DOMAIN -o tsv)
@@ -42,7 +45,7 @@ To get the `oauthCallbackURL` for the Azure AD integration, run the following co
 > **Note** 
 `oauthCallbackURL`, in particular `AAD` can be changed but **must** match the name in the oauth providerwhen creating the OpenShift OpenID authentication   
 
-## Create `manifest.json` file to configure the Azure Active Directory application ##
+### Create `manifest.json` file to configure the Azure Active Directory application ###
 Configure OpenShift to use the `email` claim and fall back to `upn` to set the Preferred Username by adding the `upn` as part of the ID token returned by Azure Active Directory.
 
 Create a `manifest.json` file to configure the Azure Active Directory application.
@@ -69,7 +72,7 @@ Create a `manifest.json` file to configure the Azure Active Directory applicatio
    ```
 
 
-## Register/create app ##
+### Register/create app ###
 Create an Azure AD application and retrieve app id:
 
    ```
@@ -86,14 +89,14 @@ Create an Azure AD application and retrieve app id:
    APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
    ```
 
-## Add Servive Principal for the new app ##
+### Add Servive Principal for the new app ###
 Create Pervice Principal for the app created:
 
    ```
    az ad sp create --id $APPID
    ```
 
-## Make Service Principal and Enterprise Application ##
+### Make Service Principal and Enterprise Application ###
 We need this Service Principal to be an Enterprise Application to be able to add users and groups, so we add the needed tag
 
    ```
@@ -102,14 +105,14 @@ We need this Service Principal to be an Enterprise Application to be able to add
 > **Note** 
 > In case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
 
-## Create the client secret ##
+### Create the client secret ###
 The password for the app created is retrieved by resetting the same:
 
    ```
    PASSWD=$(az ad app credential reset --id $APPID --query password -o tsv)
    ``` 
 
-## Update the Azure AD application scope permissions ##
+### Update the Azure AD application scope permissions ###
 To be able to read the user information from Azure Active Directory, we need to add the following Azure Active Directory Graph permissions
 
 Add permission for the Azure Active Directory as follows:
@@ -140,7 +143,7 @@ Add permission for the Azure Active Directory as follows:
 > **Note**
 > If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standar domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
 
-## Get Tenant ID ##
+### Get Tenant ID ###
 We do need the Tenant ID for setting up the Oauth provider later on:
 
    ```
@@ -149,8 +152,8 @@ We do need the Tenant ID for setting up the Oauth provider later on:
 > **Note**
 > Now we can switch over to our OpenShift installation and apply the needed configuraion:
 
-
-## Login to OpenShift as kubeadmin ##
+## OpenShift ##
+### Login to OpenShift as kubeadmin ###
 Fetch kubeadmin password and login to your cluster via `oc` cli (you can use any other cluster-admin user in case you have already created/added other oauth providers)
 
    ```
@@ -161,7 +164,7 @@ Fetch kubeadmin password and login to your cluster via `oc` cli (you can use any
 
    oc login $APISERVER -u kubeadmin -p $KUBEPW
    ``` 
-## Create an OpenShift ##
+### Create an OpenShift ###
 Create an OpenShift secret to store the Azure Active Directory application secret from the application password we created/reset earlier:
 
    ```
@@ -171,7 +174,7 @@ Create an OpenShift secret to store the Azure Active Directory application secre
    ```
 
 
-## Apply OpenShift OpenID authentication ##
+### Apply OpenShift OpenID authentication ###
 As a last step we need to apply the OpenShift OpenID authentication for Azure Active Directory:
 
    ```
@@ -206,7 +209,7 @@ As a last step we need to apply the OpenShift OpenID authentication for Azure Ac
    EOF
    ```
 
-## Wait for authentication operator to roll out ##
+### Wait for authentication operator to roll out ###
 Before we move over to the OpenShift login, let's wait for the new version of the authentication cluster operator to be rolled out
 
 
@@ -217,7 +220,7 @@ Before we move over to the OpenShift login, let's wait for the new version of th
 > **Note**
 > it may take some time until the rollout starts 
 
-## Verify login through Azure Active Directory ##
+### Verify login through Azure Active Directory ###
 Now we can see the login to Azure AD is available
 
    ![AADLoginPage](./AAD_enabled.png)
@@ -226,7 +229,7 @@ At first login you may have to accept application permissions
 
    ![AcceptPerms](./accept_permissions.png)
 
-## Last steps ##
+### Last steps ###
 As a last step you may want to grant a user or group cluster-admin permissions and remove kubeadmin user, see
 - https://docs.openshift.com/container-platform/4.10/authentication/using-rbac.html#cluster-role-binding-commands_using-rbac
 - https://docs.openshift.com/container-platform/4.10/authentication/remove-kubeadmin.html
