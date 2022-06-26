@@ -184,8 +184,8 @@ We do need the Tenant ID for setting up the Oauth provider later on:
    TENANTID=$(az account show --query tenantId -o tsv)
    ```
 > **Note**
-> Now we can switch over to our OpenShift installation and apply the needed configuraion:
-
+> Now we can switch over to our OpenShift installation and apply the needed configuraion.
+> Please refer to https://docs.openshift.com/container-platform/4.7/cli_reference/openshift_cli/getting-started-cli.html to get the latest `oc` cli
 ## OpenShift ##
 ### Login to OpenShift as kubeadmin ###
 Fetch kubeadmin password and login to your cluster via `oc` cli (you can use any other cluster-admin user in case you have already created/added other oauth providers)
