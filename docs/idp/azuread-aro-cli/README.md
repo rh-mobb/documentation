@@ -31,6 +31,10 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
 ### Have Azure cli installed ###
 Follow the Microsoft instuctions: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
 
+> **Note**
+> Preferably have a az version below `2.37.0` because of https://github.com/Azure/azure-cli/issues/23027
+> on linux you could use for example a container image, e.g. `podman run -it mcr.microsoft.com/azure-cli:2.36.0`
+
 ### Login to Azure ###
 
 Login to Azure as follows:
