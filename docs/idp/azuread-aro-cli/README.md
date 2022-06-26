@@ -253,7 +253,13 @@ Before we move over to the OpenShift login, let's wait for the new version of th
 > it may take some time until the rollout starts 
 
 ### Verify login through Azure Active Directory ###
-Now we can see the login to Azure AD is available
+Get Console url to login:
+
+   ```
+   az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query apiserverProfile.url -o tsv
+   ```
+
+Opening the url in a browser, we can see the login to Azure AD is available
 
    ![AADLoginPage](./AAD_enabled.png)
 
