@@ -137,7 +137,7 @@ Add permission for the Azure Active Directory as follows:
    --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
    --id $app_id
    ```
-   > **Note**: If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
+   > **Note** If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
 
 
 ## Get Tenant ID ##
