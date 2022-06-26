@@ -20,6 +20,7 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
 1. Apply OpenShift OpenID authentication 
 1. Wait for authentication operator to roll out
 1. Verify login through Azure Active Directory
+1. Last steps
 
 ## Define needed variables ##
 To simplly follow along, first define the following variables according to your set-up:
@@ -227,7 +228,7 @@ At first login you may have to accept application permissions
 
    ![AcceptPerms](./accept_permissions.png)
 
-## Last Steps ##
+## Last steps ##
 As a last step you may want to grant a user or group cluster-admin permissions and remove kubeadmin user, see
 - https://docs.openshift.com/container-platform/4.10/authentication/using-rbac.html#cluster-role-binding-commands_using-rbac
 - https://docs.openshift.com/container-platform/4.10/authentication/remove-kubeadmin.html
