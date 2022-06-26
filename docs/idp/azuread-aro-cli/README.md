@@ -83,21 +83,21 @@ Create an Azure AD application and retrieve app id:
    ```
 
    ```
-   app_id=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
+   APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
    ```
 
 ## Add Servive Principal for the new app ##
 Create Pervice Principal for the app created:
 
    ```
-   az ad sp create --id $app_id
+   az ad sp create --id $APPID
    ```
 
 ## Make Service Principal and Enterprise Application ##
 We need this Service Principal to be an Enterprise Application to be able to add users and groups, so we add the needed tag
 
    ```
-   az ad sp update --id $app_id --add tags WindowsAzureActiveDirectoryIntegratedApp
+   az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp
    ```
 > **Note** 
 > In case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
@@ -106,7 +106,7 @@ We need this Service Principal to be an Enterprise Application to be able to add
 The password for the app created is retrieved by resetting the same:
 
    ```
-   PASSWD=$(az ad app credential reset --id $app_id --query password -o tsv)
+   PASSWD=$(az ad app credential reset --id $APPID --query password -o tsv)
    ``` 
 
 ## Update the Azure AD application scope permissions ##
@@ -119,7 +119,7 @@ Add permission for the Azure Active Directory as follows:
    az ad app permission add \
    --api 00000003-0000-0000-c000-000000000000 \
    --api-permissions 64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0=Scope \
-   --id $app_id
+   --id $APPID
    ```
 
    * read profile
@@ -127,7 +127,7 @@ Add permission for the Azure Active Directory as follows:
    az ad app permission add \
    --api 00000003-0000-0000-c000-000000000000 \
    --api-permissions 14dad69e-099b-42c9-810b-d002981feec1=Scope \
-   --id $app_id
+   --id $APPID
    ```
 
    * User.Read
@@ -135,7 +135,7 @@ Add permission for the Azure Active Directory as follows:
    az ad app permission add \
    --api 00000003-0000-0000-c000-000000000000 \
    --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
-   --id $app_id
+   --id $APPID
    ```
 > **Note**
 > If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standar domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
@@ -144,7 +144,7 @@ Add permission for the Azure Active Directory as follows:
 We do need the Tenant ID for setting up the Oauth provider later on:
 
    ```
-   tenant_id=$(az account show --query tenantId -o tsv)
+   TENANTID=$(az account show --query tenantId -o tsv)
    ```
 > **Note**
 > Now we can switch over to our OpenShift installation and apply the needed configuraion:
@@ -154,12 +154,12 @@ We do need the Tenant ID for setting up the Oauth provider later on:
 Fetch kubeadmin password and login to your cluster via `oc` cli (you can use any other cluster-admin user in case you have already created/added other oauth providers)
 
    ```
-   kubeadmin_password=$(az aro list-credentials \
+   KUBEPW=$(az aro list-credentials \
    --name $CLUSTERNAME \
    --resource-group $RESOURCEGROUP \
    --query kubeadminPassword --output tsv)
 
-   oc login $APISERVER -u kubeadmin -p $kubeadmin_password
+   oc login $APISERVER -u kubeadmin -p $KUBEPW
    ``` 
 ## Create an OpenShift ##
 Create an OpenShift secret to store the Azure Active Directory application secret from the application password we created/reset earlier:
@@ -186,7 +186,7 @@ As a last step we need to apply the OpenShift OpenID authentication for Azure Ac
        mappingMethod: claim
        type: OpenID
        openID:
-         clientID: $app_id
+         clientID: $APPID
          clientSecret:
            name: openid-client-secret-azuread
          extraScopes:
@@ -202,7 +202,7 @@ As a last step we need to apply the OpenShift OpenID authentication for Azure Ac
            - name
            email:
            - email
-         issuer: https://login.microsoftonline.com/$tenant_id
+         issuer: https://login.microsoftonline.com/$TENANTID
    EOF
    ```
 
