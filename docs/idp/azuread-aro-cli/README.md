@@ -31,6 +31,9 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
 ### Have Azure cli installed ###
 Follow the Microsoft instuctions: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
 
+> **Note**
+> This has been written for az cli verion `2.37.0` some commands will not work with previous versions, however, there is a known issue https://github.com/Azure/azure-cli/issues/23027 where we will use an older version via `podman run -it mcr.microsoft.com/azure-cli:2.36.0`
+
 ### Login to Azure ###
 
 Login to Azure as follows:
@@ -124,6 +127,12 @@ We need this Service Principal to be an Enterprise Application to be able to add
    ```
 > **Note** 
 > In case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
+> To overcome that issue until fixed, we'll do the following
+> `podman run -it mcr.microsoft.com/azure-cli:2.36.0`
+> `az login`
+> `APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)`
+> `az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp`
+> `exit`
 
 ### Create the client secret ###
 The password for the app created is retrieved by resetting the same:
