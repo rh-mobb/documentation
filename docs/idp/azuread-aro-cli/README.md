@@ -6,7 +6,7 @@
 
 The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (ARO) via cli are:
 
-   * [Prerewuisites](#prerewuisites)
+   * [Prerequisites](#prerewuisites)
       * [Have Azure cli installed](#have-azure-cli-installed)
       * [Login to Azure](#login-to-azure)
    * [Azure](#azure)
@@ -27,7 +27,7 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
       * [Verify login through Azure Active Directory](#verify-login-through-azure-active-directory)
       * [Last steps](#last-steps)
 
-## Prerewuisites ##
+## Prerequisites ##
 ### Have Azure cli installed ###
 Follow the Microsoft instuctions: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
 
