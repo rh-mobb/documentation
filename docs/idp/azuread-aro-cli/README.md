@@ -256,7 +256,7 @@ Before we move over to the OpenShift login, let's wait for the new version of th
 Get console url to login:
 
    ```
-   az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query apiserverProfile.url -o tsv
+   az aro show     --name $CLUSTERNAME     --resource-group $RESOURCEGROUP     --query "consoleProfile.url" -o tsv
    ```
 
 Opening the url in a browser, we can see the login to Azure AD is available
