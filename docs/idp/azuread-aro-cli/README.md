@@ -100,7 +100,8 @@ We need this Service Principal to be an Enterprise Application to be able to add
    ```
    az ad sp update --id $app_id --add tags WindowsAzureActiveDirectoryIntegratedApp
    ```
-   > **NOTE** in case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
+> **Note** 
+> In case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
 
 ## Create the client secret ##
 The password for the app created is retrieved by resetting the same:
@@ -137,7 +138,8 @@ Add permission for the Azure Active Directory as follows:
    --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
    --id $app_id
    ```
-   > **NOTE** If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
+> **Note**
+> If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
 
 ## Get Tenant ID ##
 We do need the Tenant ID for setting up the Oauth provider later on:
@@ -145,7 +147,8 @@ We do need the Tenant ID for setting up the Oauth provider later on:
    ```
    tenant_id=$(az account show --query tenantId -o tsv)
    ```
-   > **NOTE** now we can switch over to our OpenShift installation and apply the needed configuraion:
+> **Note**
+> Now we can switch over to our OpenShift installation and apply the needed configuraion:
 
 
 ## Login to OpenShift as kubeadmin ##
@@ -212,7 +215,8 @@ Before we move over to the OpenShift login, let's wait for the new version of th
    watch -n 5 oc get co authentication
    ```
 
-   > **Note:** it may take some time until the rollout starts 
+> **Note**
+> it may take some time until the rollout starts 
 
 ## Verify login through Azure Active Directory ##
 Now we can see the login to Azure AD is available
