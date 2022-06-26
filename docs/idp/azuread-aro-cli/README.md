@@ -221,4 +221,8 @@ Before we move over to the OpenShift login, let's wait for the new version of th
 ## Verify login through Azure Active Directory ##
 Now we can see the login to Azure AD is available
 
+   ![AADLoginPage](./AAD_enabled.png)
+
 At first login you may have to agree 
+
+   ![AcceptPerms](./accept_permissions.png)
