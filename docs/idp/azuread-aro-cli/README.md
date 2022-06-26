@@ -132,6 +132,7 @@ We need this Service Principal to be an Enterprise Application to be able to add
 > podman run -it mcr.microsoft.com/azure-cli:2.36.0
 > az login
 > APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
+> DISPLAYNAME=<auth-dmoessne-aro01>
 > az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp
 > exit
 >```
