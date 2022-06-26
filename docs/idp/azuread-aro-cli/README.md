@@ -2,7 +2,7 @@
 
 **Daniel Moessner**
 
-*27 October 2021*
+*26 June 2022*
 
 The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (ARO) via cli are:
 
@@ -11,7 +11,7 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
 1. Create `manifest.json` file 
 1. Register/create app
 1. Add Servive Principal for the new app 
-1. Make Servive Principal and Enterprise Application
+1. Make Service Principal and Enterprise Application
 1. Create the client secret
 1. Update the Azure AD application scope permissions
 1. Get Tenant ID
@@ -41,7 +41,7 @@ To get the `oauthCallbackURL` for the Azure AD integration, run the following co
    echo $oauthCallbackURL
    ```
 
-   > **NOTE:** `oauthCallbackURL`, in particular `AAD` can be changed but **must** match the name in the oauth providerwhen creating the OpenShift OpenID authentication   
+  **NOTE:** `oauthCallbackURL`, in particular `AAD` can be changed but **must** match the name in the oauth providerwhen creating the OpenShift OpenID authentication   
 
 ## Create `manifest.json` file to configure the Azure Active Directory application ##
 Configure OpenShift to use the `email` claim and fall back to `upn` to set the Preferred Username by adding the `upn` as part of the ID token returned by Azure Active Directory.
@@ -94,13 +94,13 @@ Create Pervice Principal for the app created:
    az ad sp create --id $app_id
    ```
 
-## Make Servive Principal and Enterprise Application ##
+## Make Service Principal and Enterprise Application ##
 We need this Service Principal to be an Enterprise Application to be able to add users and groups, so we add the needed tag
 
    ```
-   az ad sp update --id "service_principal_object_id" --add tags WindowsAzureActiveDirectoryIntegratedApp
+   az ad sp update --id $app_id --add tags WindowsAzureActiveDirectoryIntegratedApp
    ```
-    > **Note**: in case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
+   > **Note** in case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
 
 ## Create the client secret ##
 The password for the app created is retrieved by resetting the same:
@@ -146,9 +146,7 @@ We do need the Tenant ID for setting up the Oauth provider later on:
    ```
    tenant_id=$(az account show --query tenantId -o tsv)
    ```
-
-
-**NOTE** now we can switch over to our OpenShift installation and apply the needed configuraion:
+   > **NOTE** now we can switch over to our OpenShift installation and apply the needed configuraion:
 
 
 ## Login to OpenShift as kubeadmin ##
