@@ -128,11 +128,13 @@ We need this Service Principal to be an Enterprise Application to be able to add
 > **Note** 
 > In case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
 > To overcome that issue until fixed, we'll do the following
-> `podman run -it mcr.microsoft.com/azure-cli:2.36.0`
-> `az login`
-> `APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)`
-> `az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp`
-> `exit`
+> ```
+> podman run -it mcr.microsoft.com/azure-cli:2.36.0
+> az login
+> APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
+> az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp
+> exit
+>```
 
 ### Create the client secret ###
 The password for the app created is retrieved by resetting the same:
