@@ -253,7 +253,7 @@ Before we move over to the OpenShift login, let's wait for the new version of th
 > it may take some time until the rollout starts 
 
 ### Verify login through Azure Active Directory ###
-Get Console url to login:
+Get console url to login:
 
    ```
    az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query apiserverProfile.url -o tsv
