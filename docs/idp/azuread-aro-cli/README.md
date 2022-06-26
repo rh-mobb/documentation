@@ -33,12 +33,10 @@ To simplly follow along, first define the following variables according to your 
 ## Get oauthCallbackURL ##
 To get the `oauthCallbackURL` for the Azure AD integration, run the following commands:
    ```
-   domain=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query clusterProfile.domain -o tsv)
-   location=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query location -o tsv)
-   apiServer=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query apiserverProfile.url -o tsv)
-   webConsole=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query consoleProfile.url -o tsv)
+   DOMAIN=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query clusterProfile.DOMAIN -o tsv)
+   APISERVER=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query apiserverProfile.url -o tsv)
 
-   oauthCallbackURL=https://oauth-openshift.apps.$domain/oauth2callback/AAD
+   oauthCallbackURL=https://oauth-openshift.apps.$DOMAIN/oauth2callback/AAD
    echo $oauthCallbackURL
    ```
 > **Note** 
@@ -140,7 +138,7 @@ Add permission for the Azure Active Directory as follows:
    --id $app_id
    ```
 > **Note**
-> If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
+> If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standar domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
 
 ## Get Tenant ID ##
 We do need the Tenant ID for setting up the Oauth provider later on:
@@ -161,7 +159,7 @@ Fetch kubeadmin password and login to your cluster via `oc` cli (you can use any
    --resource-group $RESOURCEGROUP \
    --query kubeadminPassword --output tsv)
 
-   oc login $apiServer -u kubeadmin -p $kubeadmin_password
+   oc login $APISERVER -u kubeadmin -p $kubeadmin_password
    ``` 
 ## Create an OpenShift ##
 Create an OpenShift secret to store the Azure Active Directory application secret from the application password we created/reset earlier:
