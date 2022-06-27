@@ -175,7 +175,7 @@ Add permission for the Azure Active Directory as follows:
    --id $APPID
    ```
 > **Note**
-> If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standar domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
+> If you see message to grant the consent unless you are authenticated as a Global Administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.
 
 ### Get Tenant ID ###
 We do need the Tenant ID for setting up the Oauth provider later on:
