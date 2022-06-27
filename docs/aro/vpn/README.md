@@ -4,12 +4,13 @@
 
 *06/20/2022*
 
-When you configure an Azure Red Hat OpenShift (ARO) with a private only configuration, you will need connectivity to this private network in order to access yoru cluster. This guide will show you how to configute a point to site VPN connection so you won't need to setup and configure Jump Boxes.
+When you configure an Azure Red Hat OpenShift (ARO) cluster with a private only configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute a point-to0-site VPN connection so you won't need to setup and configure Jump Boxes.
 
 ## Prerequisites
 
 * a private ARO Cluster
 * git
+* openssl
 
 ## Create certificates to use for your VPN Connection
 There are many ways and methods to create certificates for VPN, the guide below is one of the ways that works well.  Note, that whatever method you use, make sure it supports "X509v3 Extended Key Usage".
@@ -60,7 +61,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ./easyrsa build-ca nopass
    ```
 
-1. Generate Server Certificate and Key
+1. Generate the Server Certificate and Key
    ```bash
    ./easyrsa build-server-full server nopass
    ```
@@ -75,7 +76,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ./easyrsa build-client-full azure nopass
    ```
 
-1. Set environment variables for the certificates you just created.
+1. Set environment variables for the CA certificate you just created.
    ```bash
     CACERT=$(openssl x509 -in pki/ca.crt -outform der | base64)
    ``` 
@@ -147,14 +148,9 @@ VPN_PREFIX=172.18.0.0/24
    From the Azure Portal - navigate to your Virtual Network Gateway, point to site configuration, and then click Download VPN Client.
    ![screenshot of download VPN client](./images/p2s.png)
    This will download a zip file containing the VPN Client
+ 
+1. Create a VPN Client Configuration
 
-
-1. Get the VPN Server URL
-   From the download zip file, open Generic/VPNSettings.xml
-   Copy the address contained in \<VpnServer\>
-   ![screenshot of VpnSettings.xml](./images/vpn-settings.png)  
-
-2. Create a VPN Client Configuration
    Uncompress the file you downloaded in the previous step and edit the OpenVPN\vpnconfig.ovpn file.
    >Note: The next two commands assume you are still in the easyrsa3 directory. 
 
@@ -175,4 +171,5 @@ VPN_PREFIX=172.18.0.0/24
    > mac users - just double click on the vpnserver.ovpn file and it will be automatically imported. 
 
 1. Connect your VPN.
+
    ![screenshot of Vpn Connected](./images/connect-vpn-settings.png) 

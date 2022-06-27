@@ -206,6 +206,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Update DNS
+
    Get a validation token from Front Door so Front Door can validate your domain 
 
    ```bash
@@ -264,7 +265,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
    ```
 
 
-1. Create a private endpoint connecction for the database
+1. Create a private endpoint connection for the database
    ```bash
    az network vnet subnet create \
    --resource-group $ARORG \
@@ -348,9 +349,9 @@ We will be deploying a Java based application called [microsweeper](https://gith
    ```
 
 1. Log into your openshift cluster
-   > Before you deploy your application, you will need to be connected to a private network that has access to a the cluster.
+   > Before you deploy your application, you will need to be connected to a private network that has access to the cluster.
 
-   A great way to establish this connectity with with a VPN connection.  Follow this [guide](../vpn/README.md) to setup a VPN connection with your Azure account.
+   A great way to establish this connectity is with a VPN connection.  Follow this [guide](../vpn/README.md) to setup a VPN connection with your Azure account.
 
    ```bash
    kubeadmin_password=$(az aro list-credentials --name $AROCLUSTER --resource-group $ARORG --query kubeadminPassword --output tsv)
@@ -372,7 +373,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 
 1. Edit microsweeper-quarkus/src/main/resources/application.properties
 
-   Make sure your file looks like the one below, changing the IP address on line 3 to private ip address of your postgres instance.
+   Make sure your file looks like the one below, changing the IP address on line 3 to the private ip address of your postgres instance.
  
    To find your Postgres private IP address run the following commands:
    
@@ -399,14 +400,14 @@ We will be deploying a Java based application called [microsweeper](https://gith
    %prod.quarkus.kubernetes.deployment-target=openshift
    #%prod.quarkus.kubernetes.deployment-target=knative
    %prod.quarkus.openshift.build-strategy=docker
-   %prod.quarkus.openshift.expose=true
+   #%prod.quarkus.openshift.expose=true
 
    # Serverless configurations
    #%prod.quarkus.container-image.group=microsweeper-%prod.quarkus
    #%prod.quarkus.container-image.registry=image-registry.openshift-image-registry.svc:5000
 
    # macOS configurations
-   %prod.quarkus.native.container-build=true
+   #%prod.quarkus.native.container-build=true
    ```
 
 1. Build and deploy the quarkus application to OpenShift
@@ -437,7 +438,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
      wildcardPolicy: None
    EOF
    ```
-1. Check the dns settings of your app.
+1. Check the dns settings of your application.
    > notice that the application URL is routed through Azure Front Door at the edge.  The only way this application that is running on your cluster can be access is through Azure Front Door which is connected to your cluster through a private endpoint.
    ```bash
    nslookup $ARO_APP_FQDN
@@ -460,7 +461,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
    ```
 
 ## Test the application
-Point your browswer to your domain!!
+Point your broswer to your domain!!
 <img src="images/minesweeper.png">
 
 ## Clean up
