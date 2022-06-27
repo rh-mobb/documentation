@@ -1,11 +1,12 @@
 # Prerequisites
+You will need the following prerequistes in order to run a basic Jupyter notebook with GPU on OpenShift
 
-#### 1. A OpenShift Cluster
+### 1. A OpenShift Cluster
 This will assume you have already provisioned a OpenShift cluster succesfully and are able to use it.
 
 You will need to log in as cluster admin to deploy [GPU Operator](https://github.com/rh-mobb/documentation/tree/main/docs/aro/gpu).
 
-#### 2. OpenShift Command Line Interface
+### 2. OpenShift Command Line Interface
 Please see the [OpenShift Command Line section](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html) for more information on installing.
 
 The following guides through a step by step procedure in deploying Jupyter Notebook in OpenShift.
@@ -27,7 +28,7 @@ The GitHub repository used to create these is:
 
 * https://github.com/jupyter/docker-stacks
 
-### 4. Basic Concepts
+# Basic Concepts
 
 ### Source-To-Image (S2I)
 
@@ -60,7 +61,7 @@ Dockerfiles are run without many of the normal operational controls of container
 ### Routes
 An OpenShift Route exposes a service at a host name, like www.example.com, so that external clients can reach it by name. When a Route object is created on OpenShift, it gets picked up by the built-in HAProxy load balancer in order to expose the requested service and make it externally available with the given configuration. You might be familiar with the Kubernetes Ingress object and might already be asking "what's the difference?". Red Hat created the concept of Route in order to fill this need and then contributed the design principles behind this to the community; which heavily influenced the Ingress design.  Though a Route does have some additional features as can be seen in the chart below.
 
-![routes vs ingress](/docs/images/1-routes_vs_ingress.png)
+![routes vs ingress](/docs/jup/images/1-routes_vs_ingress.png)
 
 > **NOTE:** DNS resolution for a host name is handled separately from routing; your administrator may have configured a cloud domain that will always correctly resolve to the router, or if using an unrelated host name you may need to modify its DNS records independently to resolve to the router.
 

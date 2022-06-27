@@ -83,8 +83,8 @@
 
 ## Data Science on Jupyter Notebook on OpenShift
 * [Prerequistes and Concepts](./docs/jup/1-Prereq-concept.md)
-* [Build minimal notebook](./docs/jup/2-BuildNotebook.md)
-* [JupyterHub notebook with GPU](./docs/jup/3-OpenDataHub-GPU.md)
+  * [Build minimal notebook](./docs/jup/2-BuildNotebook.md)
+  * [JupyterHub notebook with GPU](./docs/jup/3-OpenDataHub-GPU.md)
 
 ## Operations - DevOps/GitOps
 

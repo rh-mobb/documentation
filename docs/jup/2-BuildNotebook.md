@@ -5,7 +5,7 @@ Retrieve the login command
 
 If you are not logged in via the CLI, [access your cluster via the web console](/rosa/6-access_cluster/#accessing-the-cluster-via-the-web-console), then click on the dropdown arrow next to your name in the top-right and select *Copy Login Command*.
 
-![CLI Login](/docs/images/2-cli-login.png)
+![CLI Login](/docs/jup/images/2-cli-login.png)
 
 A new tab will open and select the authentication method you are using (in our case it's *github*)
 
@@ -42,7 +42,7 @@ Create a new project called "notebook-demo" in your cluster by entering the foll
 
 Equivalently you can also create this new project using the web console UI by clicking on "Projects" under "Home" on the left menu, and then click "Create Project" button on the right.
 
-![UI Create Project](/docs/images/2-createnewproj.png)
+![UI Create Project](/docs/jup/images/2-createnewproj.png)
 Importing the Minimal Notebook
 ------------------------------
 
