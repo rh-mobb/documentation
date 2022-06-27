@@ -169,13 +169,13 @@ This command will return the "appID" and "Password" information of the service p
 
     ```
     {
-    "appId": "8fcbe6c7-ee29-4061-bdea-9fbddc4f1a41",
+    "appId": "xxxxx-xxx-xxxx-xxxx-xxxxxxxxxxx",
     "displayName": "all-in-one-sp",
-    "password": "q6w8Q~RFsjdrWgLP2s9LeL9czVF84PAuLvWtucx_",
-    "tenant": "64dc69e4-d083-49fc-9569-ebece1dd1408"
+    "password": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tenant": "xxxxxx-xxx-xxxx-xxxxxx"
     }
     ```
-2. Add API permission to the service principal
+1. Add API permission to the service principal
 
     - Log in to Azure Portal
     - Go to Azure Active Directory
