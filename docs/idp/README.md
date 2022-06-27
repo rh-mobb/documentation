@@ -19,6 +19,7 @@ The identity providers available for the configuration are:
 
 * [Configure GitLab as an identity provider for ROSA/OSD](./gitlab)
 * [Configure GitLab as an identity provider for ARO](./gitlab-aro)
+* [Configure Azure AD as an identity provider for ARO](./azuread-aro)
 * [Configure Azure AD using OpenID](./azuread)
 
 ## Configuring Group Synchronization
