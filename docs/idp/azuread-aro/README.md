@@ -162,7 +162,8 @@ Create a virtual network with two empty subnets
 1. Create service principal
 
     ```bash
-    az ad sp create-for-rbac --role Contributor --name all-in-one-sp --scopes /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP
+    az ad sp create-for-rbac --role Contributor --name all-in-one-sp \
+    --scopes /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP
     ```
 This command will return the "appID" and "Password" information of the service principal that we will need for the ARO4 create command later.
 
@@ -259,7 +260,7 @@ AAD is the name of the identity provider when configuring OAuth on OpenShift
     --id <Service Principal appId>
     ```
 
-5. Create a secret to stroe Service Principal Password
+5. Create a secret to store Service Principal Password
     ```
     oc create secret generic openid-client-secret-azuread \
     --namespace openshift-config \
@@ -309,15 +310,18 @@ AAD is the name of the identity provider when configuring OAuth on OpenShift
     oc apply -f oauth
     ```
 
-8. Login Openshift console VIA ADD
+8. Login OpenShift console VIA ADD
+
 ![](../images/ARO%2BADD.png)
 
-### Grant users admin privilages.
+### Grant users admin privileges.
 
-Openshift cluster comes with a preconfigured role called "cluster-admin". You can create rolebinding to assign "cluster-admin" role to a Azure AD
+OpenShift cluster comes with a pre-configured role called "cluster-admin". You can create rolebinding to assign "cluster-admin" role to a Azure AD
 
     ```
-    oc create clusterrolebinding azure-ad-cluster-admin --clusterrole=cluster-admin --user=<<Azure AD username>>
+    oc create clusterrolebinding azure-ad-cluster-admin \
+    --clusterrole=cluster-admin \
+    --user=<<Azure AD username>>
     ```
 
 ## Delete Cluster
