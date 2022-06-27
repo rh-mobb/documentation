@@ -21,7 +21,7 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
       * [Get Tenant ID](#get-tenant-id)
    * [OpenShift](#openshift)
       * [Login to OpenShift as kubeadmin](#login-to-openshift-as-kubeadmin)
-      * [Create an OpenShift](#create-an-openshift)
+      * [Create an OpenShift Secret](#create-an-openshift)
       * [Apply OpenShift OpenID authentication](#apply-openshift-openid-authentication)
       * [Wait for authentication operator to roll out](#wait-for-authentication-operator-to-roll-out)
       * [Verify login through Azure Active Directory](#verify-login-through-azure-active-directory)
@@ -198,7 +198,7 @@ Fetch kubeadmin password and login to your cluster via `oc` cli (you can use any
 
    oc login $APISERVER -u kubeadmin -p $KUBEPW
    ``` 
-### Create an OpenShift ###
+### Create an OpenShift secret###
 Create an OpenShift secret to store the Azure Active Directory application secret from the application password we created/reset earlier:
 
    ```
