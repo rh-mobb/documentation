@@ -15,7 +15,7 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
       * [Create manifest.json file to configure the Azure Active Directory application](#create-manifestjson-file-to-configure-the-azure-active-directory-application)
       * [Register/create app](#registercreate-app)
       * [Add Servive Principal for the new app](#add-servive-principal-for-the-new-app)
-      * [Make Service Principal and Enterprise Application](#make-service-principal-and-enterprise-application)
+      * [Make Service Principal an Enterprise Application](#make-service-principal-and-enterprise-application)
       * [Create the client secret](#create-the-client-secret)
       * [Update the Azure AD application scope permissions](#update-the-azure-ad-application-scope-permissions)
       * [Get Tenant ID](#get-tenant-id)
@@ -121,7 +121,7 @@ Create Pervice Principal for the app created:
    az ad sp create --id $APPID
    ```
 
-### Make Service Principal and Enterprise Application ###
+### Make Service Principal an Enterprise Application ###
 We need this Service Principal to be an Enterprise Application to be able to add users and groups, so we add the needed tag
 
    ```
