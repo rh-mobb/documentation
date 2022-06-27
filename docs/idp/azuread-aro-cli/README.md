@@ -21,7 +21,7 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
       * [Get Tenant ID](#get-tenant-id)
    * [OpenShift](#openshift)
       * [Login to OpenShift as kubeadmin](#login-to-openshift-as-kubeadmin)
-      * [Create an OpenShift Secret](#create-an-openshift)
+      * [Create an OpenShift secret](#create-an-openshift)
       * [Apply OpenShift OpenID authentication](#apply-openshift-openid-authentication)
       * [Wait for authentication operator to roll out](#wait-for-authentication-operator-to-roll-out)
       * [Verify login through Azure Active Directory](#verify-login-through-azure-active-directory)
