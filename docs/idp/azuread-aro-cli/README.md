@@ -145,9 +145,13 @@ The password for the app created is retrieved by resetting the same:
    ```
    PASSWD=$(az ad app credential reset --id $APPID --query password -o tsv)
    ``` 
-   ```
 > **Note** 
-> The password generated with above command is supposed to be valid for one year and you may want to change that by ading either and end date via `--end-date` or set validity in years with `--years`. For details consult the [documentation](https://docs.microsoft.com/en-us/cli/azure/ad/app/credential?view=azure-cli-latest#az-ad-app-credential-reset))
+> The password generated with above command is supposed to be valid for one year and you may want to change that by adding either and end date via 
+> `--end-date` or set validity in years with `--years`. 
+> For details consult the [documentation](https://docs.microsoft.com/en-us/cli/azure/ad/app/credential?view=azure-cli-latest#az-ad-app-credential-reset)
+
+
+
 
 ### Update the Azure AD application scope permissions ###
 To be able to read the user information from Azure Active Directory, we need to add the following Azure Active Directory Graph permissions
