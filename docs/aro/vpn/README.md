@@ -16,17 +16,20 @@ When you configure an Azure Red Hat OpenShift (ARO) cluster with a private only 
 There are many ways and methods to create certificates for VPN, the guide below is one of the ways that works well.  Note, that whatever method you use, make sure it supports "X509v3 Extended Key Usage".
 
 1. Clone OpenVPN/easy-rsa
+
    ```bash
    git clone https://github.com/OpenVPN/easy-rsa.git 
    ```
 
 1. Change to the easyrsa directory
+
    ```bash
    cd easy-rsa-3.1.0/easyrsa3
    ```
 
 1. Edit certificate parameters
    Copy the provided template
+
    ```bash
    cp vars.example vars
    ```
@@ -36,7 +39,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    vim vars
    ```
 
-   ```bash
+   ```
    #set_var EASYRSA_REQ_COUNTRY   "US"
    #set_var EASYRSA_REQ_PROVINCE  "California"
    #set_var EASYRSA_REQ_CITY      "San Francisco"
@@ -46,11 +49,12 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```
 
    Uncomment (remove the #) the folowing field
-   ```bash
-    #set_var EASYRSA_KEY_SIZE        2048
+   ```
+   #set_var EASYRSA_KEY_SIZE        2048
    ```
 
 1. Initialize the PKI 
+
    ```bash
    ./easyrsa init-pki
    ```
@@ -62,28 +66,32 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```
 
 1. Generate the Server Certificate and Key
+
    ```bash
    ./easyrsa build-server-full server nopass
    ```
 
 1. Generate Diffie-Hellman (DH) parameters
+
    ```bash
    ./easyrsa gen-dh
    ```
 
 1. Generate client credentials
+
    ```bash
    ./easyrsa build-client-full azure nopass
    ```
 
 1. Set environment variables for the CA certificate you just created.
+
    ```bash
-    CACERT=$(openssl x509 -in pki/ca.crt -outform der | base64)
+   CACERT=$(openssl x509 -in pki/ca.crt -outform der | base64)
    ``` 
 
 
 ## Set Envrionment Variables
-```bash
+```
 AROCLUSTER=<cluster name>
 
 ARORG=<resource group the cluster is in>
@@ -94,7 +102,7 @@ LOCATION=$(az aro show --name $AROCLUSTER --resource-group $ARORG --query LOCATI
 
 VNET_NAME=$(az network vnet list -g $ARORG --query '[0].name' -o tsv)
 
-GW_NAME=$USER_$VNET_NAME
+GW_NAME=${USER}_${VNET_NAME}
 
 GW_SUBNET_PREFIX=e.g. 10.0.7.0/24 choose a new available subnet in the VNET your cluster is in.
 
@@ -103,6 +111,7 @@ VPN_PREFIX=172.18.0.0/24
 
 ## Create an Azure Virtual Network Gateway
 1. Request a public IP Address
+
    ```bash
    az network public-ip create \
    -n $USER-pip-$UNIQUEID \
@@ -115,6 +124,7 @@ VPN_PREFIX=172.18.0.0/24
    ```
  
 1. Create a Gateway Subnet
+
    ```bash
    az network vnet subnet create \
    --vnet-name $VNET_NAME \
@@ -124,6 +134,7 @@ VPN_PREFIX=172.18.0.0/24
    ```
 
 1. Create a virtual network gateway
+
    ```bash
    az network vnet-gateway create \
    --name  $GW_NAME \

@@ -39,7 +39,7 @@ Make sure to use the same terminal session while going through guide for all com
 
 1. Manually set environment variables
 
-   ```bash
+   ```
    AROCLUSTER=<cluster name>
 
    ARORG=<resource group for the cluster>
@@ -95,6 +95,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Create a private link service targeting the worker subnets
+
    ```bash
    az network private-link-service create \
    --name $AROCLUSTER-pls \
@@ -110,6 +111,7 @@ After we have the cluster up and running, we need to create a private link servi
 
 ## Create and Configure an instance of Azure Front Door
 1. Create a Front Door Instance  
+
    ```bash
    az afd profile create \
    --resource-group $ARORG \
@@ -120,6 +122,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Create an endpoint for the ARO Internal Load Balancer
+
    ```bash
    az afd endpoint create \
    --resource-group $ARORG \
@@ -129,6 +132,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Create a Front Door Origin Group that will point to the ARO Internal Loadbalancer
+
    ```bash
    az afd origin-group create \
    --origin-group-name 'afdorigin' \
@@ -145,6 +149,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Create a Front Door Origin with the above Origin Group that will point to the ARO Internal Loadbalancer
+
    ```bash
    az afd origin create \
    --enable-private-link true \
@@ -164,6 +169,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Approve the private link connection
+
    ```bash
    privatelink_pe_id=$(az network private-link-service show -n $AROCLUSTER-pls -g $ARORG --query 'privateEndpointConnections[0].id' -o tsv)
 
@@ -173,6 +179,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Add your custom domain to Azure Front Door
+
    ```bash
    az afd custom-domain create \
    --certificate-type ManagedCertificate \
@@ -182,7 +189,9 @@ After we have the cluster up and running, we need to create a private link servi
    --profile-name $AFD_NAME \
    --resource-group $ARORG
    ```
+
 1. Create an Azure Front Door endpoint for your custom domain
+
    ```bash
    az afd endpoint create \
    --resource-group $ARORG \
@@ -190,7 +199,9 @@ After we have the cluster up and running, we need to create a private link servi
    --endpoint-name 'aro-mine-'$UNIQUEID \
    --profile-name $AFD_NAME
    ```
+
 1. Add an Azure Front Door route for your custom domain
+
    ```bash
    az afd route create \
    --endpoint-name 'aro-mine-'$UNIQUEID \
@@ -218,6 +229,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Create a DNS Zone
+
    ```bash
     az network dns zone create -g $ARORG -n $DOMAIN
    ```
@@ -230,9 +242,6 @@ After we have the cluster up and running, we need to create a private link servi
     az network dns record-set txt add-record -g $ARORG -z $DOMAIN -n _dnsauth.$(echo $ARO_APP_FQDN | sed 's/\..*//') --value $afdToken --record-set-name _dnsauth.$(echo $ARO_APP_FQDN | sed 's/\..*//')
    ```
 
- 
-
-
 1. Check if the domain has been validated:
    >Note this can take several hours 
    Your FQDN will not resolve until Front Door validates your domain.
@@ -244,12 +253,14 @@ After we have the cluster up and running, we need to create a private link servi
 1. Add a CNAME record to DNS
 
    Get the Azure Front Door endpoint:
-   ```
+
+   ```bash
    afdEndpoint=$(az afd endpoint show -g $ARORG --profile-name $AFD_NAME --endpoint-name aro-mine-$UNIQUEID --query "hostName" -o tsv)
    ```
    
    Create a cname record for the application
-   ```
+
+   ```bash
    az network dns record-set cname set-record -g $ARORG -z $DOMAIN \
     -n $(echo $ARO_APP_FQDN | sed 's/\..*//') -z $DOMAIN -c $afdEndpoint
    ```
@@ -258,6 +269,7 @@ Now the fun part, let's deploy an application!
 We will be deploying a Java based application called [microsweeper](https://github.com/redhat-mw-demos/microsweeper-quarkus/tree/ARO).  This is an application that runs on OpenShift and uses a PostgreSQL database to store scores.  With ARO being a first class service on Azure, we will create an Azure Database for PostgreSQL service and connect it to our cluster with a private endpoint.
 
 1. Create a Azure Database for PostgreSQL servers service
+
    ```bash
    az postgres server create --name microsweeper-database --resource-group $ARORG --location $LOCATION --admin-user quarkus --admin-password r3dh4t1! --sku-name GP_Gen5_2
 
@@ -266,6 +278,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 
 
 1. Create a private endpoint connection for the database
+
    ```bash
    az network vnet subnet create \
    --resource-group $ARORG \
@@ -284,6 +297,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
    --connection-name 'postgresdbConnection'
    ```
 1. Create and configure a private DNS Zone for the Postgres database
+
    ```bash
    az network private-dns zone create \
    --resource-group $ARORG \
@@ -313,6 +327,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
    ```
 
 1. Create a postgres database that will contain scores for the minesweeper application
+
    ```bash
    az postgres db create \
    --resource-group $ARORG \
@@ -320,30 +335,35 @@ We will be deploying a Java based application called [microsweeper](https://gith
    --server-name microsweeper-database
    ```
 
-
 ## Deploy the [minesweeper application](https://github.com/redhat-mw-demos/microsweeper-quarkus/tree/ARO)
 
 1. Clone the git repository
+
    ```bash
    git clone -b ARO https://github.com/redhat-mw-demos/microsweeper-quarkus.git
    ```
 
 1. change to the root directory
+
    ```bash
    cd microsweeper-quarkus
    ```
 
 1. Ensure Java 1.8 is set at your Java version
+
    ```bash
    mvn --version
    ``` 
 
    Look for Java version - 1.8XXXX
    if not set to Java 1.8 you will need to set your JAVA_HOME variable to Java 1.8 you have installed.  To find your java versions run:
+
    ```bash
    java -version
    ```
+
    then export your JAVA_HOME variable
+
    ```bash
    export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_332`
    ```
@@ -362,12 +382,14 @@ We will be deploying a Java based application called [microsweeper](https://gith
    ```
 
 1. Create a new OpenShift Project
-   ```
+
+   ```bash
    oc new-project minesweeper
    ```
 
 1. add the openshift extension to quarkus
-   ```
+
+   ```bash
    quarkus ext add openshift
    ```
 
@@ -377,13 +399,14 @@ We will be deploying a Java based application called [microsweeper](https://gith
  
    To find your Postgres private IP address run the following commands:
    
-   ```
+   ```bash
    NETWORK_INTERFACE_ID=$(az network private-endpoint show --name postgresPvtEndpoint --resource-group $ARORG --query 'networkInterfaces[0].id' -o tsv)
 
    az resource show --ids $NETWORK_INTERFACE_ID --api-version 2019-04-01 --query 'properties.ipConfigurations[0].properties.privateIPAddress' -o tsv
    ```
 
    Sample microsweeper-quarkus/src/main/resources/application.properties
+
    ```
    # Database configurations
    %prod.quarkus.datasource.db-kind=postgresql
@@ -411,12 +434,15 @@ We will be deploying a Java based application called [microsweeper](https://gith
    ```
 
 1. Build and deploy the quarkus application to OpenShift
-   ```
+
+   ```bash
    quarkus build --no-tests
    ```
+
 1. Create a route to your custom domain
    <B>Change the snippet below replacing your hostname for the host:</B>
-   ```
+
+   ```bash
    cat << EOF | oc apply -f -
    apiVersion: route.openshift.io/v1
    kind: Route
@@ -438,13 +464,16 @@ We will be deploying a Java based application called [microsweeper](https://gith
      wildcardPolicy: None
    EOF
    ```
+
 1. Check the dns settings of your application.
    > notice that the application URL is routed through Azure Front Door at the edge.  The only way this application that is running on your cluster can be access is through Azure Front Door which is connected to your cluster through a private endpoint.
+
    ```bash
    nslookup $ARO_APP_FQDN
    ```
 
    sample output:
+
    ```
    Server:		2600:1700:850:d220::1
    Address:	2600:1700:850:d220::1#53
@@ -466,6 +495,7 @@ Point your broswer to your domain!!
 
 ## Clean up
 To clean up everything you created, simply delete the resource group
-```
+
+```bash
 az group delete -g $ARORG
 ```
