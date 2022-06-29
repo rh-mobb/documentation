@@ -1,0 +1,85 @@
+{
+  "apiVersion": "machine.openshift.io/v1beta1",
+  "kind": "MachineSet",
+  "metadata": {
+    "annotations": {
+      "machine.openshift.io/GPU": "0",
+      "machine.openshift.io/memoryMb": "16384",
+      "machine.openshift.io/vCPU": "4"
+    },
+    "creationTimestamp": "2022-06-29T12:34:29Z",
+    "generation": 1,
+    "labels": {
+      "machine.openshift.io/cluster-api-cluster": "aro-kmobb-7zff2",
+      "machine.openshift.io/cluster-api-machine-role": "worker",
+      "machine.openshift.io/cluster-api-machine-type": "worker"
+    },
+    "name": "odf-worker-1",
+    "namespace": "openshift-machine-api",
+    "resourceVersion": "31720",
+    "uid": "98ebfaba-99dc-4fd5-8c41-2ff3df1e58a7"
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "machine.openshift.io/cluster-api-cluster": "aro-kmobb-7zff2",
+        "machine.openshift.io/cluster-api-machineset": "odf-worker-1"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "machine.openshift.io/cluster-api-cluster": "aro-kmobb-7zff2",
+          "machine.openshift.io/cluster-api-machine-role": "worker",
+          "machine.openshift.io/cluster-api-machine-type": "worker",
+          "machine.openshift.io/cluster-api-machineset": "odf-worker-1"
+        }
+      },
+      "spec": {
+        "lifecycleHooks": {},
+        "metadata": {},
+        "providerSpec": {
+          "value": {
+            "apiVersion": "machine.openshift.io/v1beta1",
+            "credentialsSecret": {
+              "name": "azure-cloud-credentials",
+              "namespace": "openshift-machine-api"
+            },
+            "image": {
+              "offer": "aro4",
+              "publisher": "azureopenshift",
+              "resourceID": "",
+              "sku": "aro_410",
+              "version": "410.84.20220125"
+            },
+            "kind": "AzureMachineProviderSpec",
+            "location": "eastus",
+            "metadata": {
+              "creationTimestamp": null
+            },
+            "networkResourceGroup": "kevincollins-openshift",
+            "osDisk": {
+              "diskSettings": {},
+              "diskSizeGB": 128,
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              },
+              "osType": "Linux"
+            },
+            "publicIP": false,
+            "publicLoadBalancer": "aro-kmobb-7zff2",
+            "resourceGroup": "aro-ncgum01j",
+            "subnet": "worker-subnet",
+            "userDataSecret": {
+              "name": "worker-user-data"
+            },
+            "vmSize": "Standard_D16s_v3",
+            "vnet": "aro-vnet",
+            "zone": "1"
+          }
+        }
+      }
+    }
+  }
+}
