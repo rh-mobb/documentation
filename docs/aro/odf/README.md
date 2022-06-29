@@ -13,6 +13,7 @@ This guide demonstrates how to setup and configure self-managed OpenShift Data F
   * [kubectl cli](https://kubernetes.io/releases/download/#kubectl) 
   * [oc cli](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html)
   * moreutils (sponge)
+  * jq
   
 ## Install compute nodes for ODF
    A best practice for optimal performance is to run ODF on dedicated nodes with a minimum of one per zone.  In this guide, we will be provisioning 3 additional compute nodes, one per zone.  Run the following script to create the additional nodes:    
