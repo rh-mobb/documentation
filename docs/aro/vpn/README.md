@@ -98,7 +98,7 @@ ARORG=<resource group the cluster is in>
 
 UNIQUEID=$RANDOM
 
-LOCATION=$(az aro show --name $AROCLUSTER --resource-group $ARORG --query LOCATION -o tsv)
+LOCATION=$(az aro show --name $AROCLUSTER --resource-group $ARORG --query location -o tsv)
 
 VNET_NAME=$(az network vnet list -g $ARORG --query '[0].name' -o tsv)
 
