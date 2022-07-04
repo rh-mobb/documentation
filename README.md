@@ -74,7 +74,7 @@
 
 ### Deploying Advanced Security for Kubernetes in ROSA/ARO
 
-* [OpenShift - Configuring Identity Providers](./docs/security/rhacs.md)
+* [Deploying ACS in ROSA/ARO](./docs/security/rhacs.md)
 
 ## Applications
 
@@ -89,7 +89,7 @@
 ## Operations - DevOps/GitOps
 
 * [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
-* [Migrate Kubernetes Applications with Konveyer Crane](./docs/demos/crane/)
+* [Migrate Kubernetes Applications with Konveyor Crane](./docs/demos/crane/)
 
 ## Fixes / Workarounds
 
