@@ -36,6 +36,9 @@
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
+* [IBM Cloud Paks for Data Operator Setup](./docs/aro/ibm-cloud-paks-for-data)
+* [Install ARO with Custom Domain using LetsEncrypt with cert manager](./docs/aro/cert-manager)
+* [Configure ARO for Nvidia GPU Workloads](./docs/aro/gpu)
 
 ### GCP
 
@@ -78,6 +81,11 @@
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
 * [Deploying 3scale API Management to ROSA/OSD](./docs/app-services/3scale)
 
+## Data Science on Jupyter Notebook on OpenShift
+* [Prerequistes and Concepts](./docs/jup/1-Prereq-concept.md)
+  * [Build minimal notebook](./docs/jup/2-BuildNotebook.md)
+  * [JupyterHub notebook with GPU](./docs/jup/3-OpenDataHub-GPU.md)
+
 ## Operations - DevOps/GitOps
 
 * [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
@@ -88,3 +96,4 @@
 **Here be dragons - use at your own risk**
 
 * [Fix Cluster Logging Operator Addon for ROSA STS Clusters](./docs/rosa/sts-cluster-logging-addon)
+* [Stop default router from serving custom domain routes](./docs/ingress/default-router-custom-domain/README.md)
