@@ -31,22 +31,22 @@ or
    apiVersion: v1
    kind: Namespace
    metadata:
-   name: egressip-ipam-operator
+     name: egressip-ipam-operator
    ---
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
-   name: egressip-ipam-operator
-   namespace: openshift-operators
-   labels:
-      operators.coreos.com/egressip-ipam-operator.egressip-ipam-operator: ''
+     name: egressip-ipam-operator
+     namespace: openshift-operators
+     labels:
+       operators.coreos.com/egressip-ipam-operator.egressip-ipam-operator: ''
    spec:
-   channel: alpha
-   installPlanApproval: Automatic
-   name: egressip-ipam-operator
-   source: community-operators
-   sourceNamespace: openshift-marketplace
-   startingCSV: egressip-ipam-operator.v1.2.2
+     channel: alpha
+     installPlanApproval: Automatic
+     name: egressip-ipam-operator
+     source: community-operators
+     sourceNamespace: openshift-marketplace
+     startingCSV: egressip-ipam-operator.v1.2.2
    EOF
    ```
 
@@ -59,18 +59,17 @@ or
    apiVersion: redhatcop.redhat.io/v1alpha1
    kind: EgressIPAM
    metadata:
-   name: egressipam-azure
-   annotations:
-         egressip-ipam-operator.redhat-cop.io/azure-egress-load-balancer: none
+     name: egressipam-azure
+     annotations:
+       egressip-ipam-operator.redhat-cop.io/azure-egress-load-balancer: none
    spec:
-   # Add fields here
-   cidrAssignments:
-      - labelValue: ""
+     cidrAssignments:
+       - labelValue: ""
          CIDR: 10.0.1.0/24
          reservedIPs: []
-   topologyLabel: "node-role.kubernetes.io/worker"
-   nodeSelector:
-      matchLabels:
+     topologyLabel: "node-role.kubernetes.io/worker"
+     nodeSelector:
+       matchLabels:
          node-role.kubernetes.io/worker: ""
    EOF
    ```
@@ -83,16 +82,16 @@ or
    apiVersion: v1
    kind: Namespace
    metadata:
-   name: egressipam-azure-test
-   annotations:
-      egressip-ipam-operator.redhat-cop.io/egressipam: egressipam-azure
+     name: egressipam-azure-test
+     annotations:
+       egressip-ipam-operator.redhat-cop.io/egressipam: egressipam-azure
    ---
    apiVersion: v1
    kind: Namespace
    metadata:
-   name: egressipam-azure-test-1
-   annotations:
-      egressip-ipam-operator.redhat-cop.io/egressipam: egressipam-azure
+     name: egressipam-azure-test-1
+     annotations:
+       egressip-ipam-operator.redhat-cop.io/egressipam: egressipam-azure
    EOF
    ```
 
@@ -100,7 +99,7 @@ or
 
    ```bash
    kubectl get namespace egressipam-azure-test \
-   egressipam-azure-test-1 -o yaml | grep egressips
+     egressipam-azure-test-1 -o yaml | grep egressips
    ```
 
     The output should look like:

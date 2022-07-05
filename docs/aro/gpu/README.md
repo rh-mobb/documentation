@@ -2,7 +2,8 @@
 
 ARO guide to running Nvidia GPU workloads.
 
-Author: [Byron Miller](https://twitter.com/byron_miller)
+Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/stuartatmicrosoft)
+
 
 ## Table of Contents
 
@@ -536,6 +537,17 @@ It may take some time for the nVidia Operator and NFD to completely install and 
 
    ![NFD Node labels](node-labels.png)
 
+1. Nvidia SMI tool verification
+
+   ```bash
+   oc project nvidia-gpu-operator
+   for i in $(oc get pod -lopenshift.driver-toolkit=true --no-headers |awk '{print $1}'); do echo $i; oc exec -it $i -- nvidia-smi ; echo -e '\n' ;  done
+   ```
+
+   You should see output that shows the GPUs available on the host such as this example screenshot. (Varies depending on GPU worker type)
+
+   ![Nvidia SMI](test-gpu.png)
+
 2. Create Pod to run a GPU workload
 
    ```yaml
@@ -566,15 +578,15 @@ It may take some time for the nVidia Operator and NFD to completely install and 
 
    >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating" try running "oc delete pod cuda-vector-add" and then re-run the create statement above. I've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
 
-   Output:
+   You should see Output like the following (mary vary depending on GPU):
 
    ```bash
-   Begin
-   Allocating device memory on host..
-   Copying to device..
-   Doing GPU Vector add
-   Doing CPU Vector add
-   10000000 0.000078 0.044028
+   [Vector addition of 5000 elements]
+   Copy input data from the host memory to the CUDA device
+   CUDA kernel launch with 196 blocks of 256 threads
+   Copy output data from the CUDA device to the host memory
+   Test PASSED
+   Done
    ```
 
 4. If successful, the pod can be deleted
