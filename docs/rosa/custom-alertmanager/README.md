@@ -58,7 +58,7 @@ The OpenShift Administrator can use the Prometheus Operator to create a custom A
 
 1. Create an Alert Manager Configuration file
 
-> This will create a basic AlertManager configuration to send alerts to a slack channel. Configuring slack is outside the scope of this document. Update the variables to suit your slack integration.
+   > This will create a basic AlertManager configuration to send alerts to a slack channel. Configuring slack is outside the scope of this document. Update the variables to suit your slack integration.
 
    ```bash
    SLACK_API_URL=https://hooks.slack.com/services/XXX/XXX/XXX
@@ -113,7 +113,7 @@ The OpenShift Administrator can use the Prometheus Operator to create a custom A
 
 1. Create an AlertManagerConfig for User Workload Monitoring
 
-> Note: This next command assumes the existing `config.yaml` in the `user-workload-monitoring-config` config map is empty. You should verify it with `kubectl get -n openshift-user-workload-monitoring cm user-workload-monitoring-config -o yaml` and simply edit in the differences if its not.
+   > Note: This next command assumes the existing `config.yaml` in the `user-workload-monitoring-config` config map is empty. You should verify it with `kubectl get -n openshift-user-workload-monitoring cm user-workload-monitoring-config -o yaml` and simply edit in the differences if its not.
 
    ```bash
    cat << EOF | kubectl apply -f -
@@ -130,7 +130,7 @@ The OpenShift Administrator can use the Prometheus Operator to create a custom A
            pathPrefix: /
            timeout: "30s"
            apiVersion: v1
-           staticConfigs: ["custom-alertmanager.$PROM_NAMESPACE.svc.cluster.   local:9093"]
+           staticConfigs: ["custom-alertmanager.$PROM_NAMESPACE.svc.cluster.local:9093"]
    EOF
    ```
 
