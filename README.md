@@ -39,6 +39,10 @@
 * [IBM Cloud Paks for Data Operator Setup](./docs/aro/ibm-cloud-paks-for-data)
 * [Install ARO with Custom Domain using LetsEncrypt with cert manager](./docs/aro/cert-manager)
 * [Configure ARO for Nvidia GPU Workloads](./docs/aro/gpu)
+* [Configure ARO with Azure Front Door](./docs/aro/frontdoor)
+* [Create a point to site VPN connection for an ARO Cluster](./docs/aro/vpn)
+* [Configure access to ARO Image Registry](./docs/aro/registry)
+* [Configure ARO with OpenShift Data Foundation](./docs/aro/odf)
 
 ### GCP
 
