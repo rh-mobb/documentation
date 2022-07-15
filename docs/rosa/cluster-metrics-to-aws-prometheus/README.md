@@ -229,7 +229,7 @@ metadata:
   namespace: openshift-user-workload-monitoring
 data:
   config.yaml: |
-    kubernetes:
+    prometheus:
       remoteWrite:
         - url: "http://aws-prometheus-proxy.$PROM_NAMESPACE.svc.cluster.local:8005/workspaces/$PROM_WS/api/v1/remote_write"
 EOF

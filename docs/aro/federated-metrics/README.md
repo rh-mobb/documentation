@@ -204,7 +204,7 @@ metadata:
   namespace: openshift-user-workload-monitoring
 data:
   config.yaml: |
-    kubernetes:
+    prometheus:
       remoteWrite:
         - url: "http://thanos-receive.$NAMESPACE.svc.cluster.local:9091/api/v1/receive"
 EOF
