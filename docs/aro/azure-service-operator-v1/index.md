@@ -1,10 +1,12 @@
-# Installing and Using the Azure Service Operator (ASO) in Azure Red Hat OpenShift (ARO)
+# Installing and Using the Azure Service Operator (ASO) V1 in Azure Red Hat OpenShift (ARO)
 
 **Paul Czarkowski**
 
 *last edit - 02/16/2022*
 
 The Azure Service Operator (ASO) provides Custom Resource Definitions (CRDs) for Azure resources that can be used to create, update, and delete Azure services from an OpenShift cluster.
+
+> This example uses ASO V1, which has now been replaced by ASO V2. ASO V2 does not (as of 5/19/2022) yet have an entry in the OCP OperatorHub, but is functional and should be preferred for use, especially if V1 isn't already installed on a cluster. MOBB has documented the [install of ASO V2 on ROSA]. MOBB has **not** tested running the two in parallel.
 
 ## Prerequisites
 
@@ -74,7 +76,7 @@ spec:
 EOF
     ```
 
-## Deploy an Azure PostgreSQL Server
+## Deploy an Azure Redis Cache
 
 1. Create a Project:
 
