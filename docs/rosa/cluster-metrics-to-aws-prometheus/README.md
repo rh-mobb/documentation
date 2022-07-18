@@ -145,7 +145,7 @@ EOF
 
     ```bash
     CW_POLICY=$(aws iam create-policy --policy-name $PROM_SA-cw \
-      --policy-document file://$SCRATCH_DIR/PermissionPolicyIngest.json \
+      --policy-document file://$SCRATCH_DIR/PermissionPolicyCloudWatch.json \
       --query 'Policy.Arn' --output text)
     echo $CW_POLICY
     ```

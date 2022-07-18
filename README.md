@@ -32,13 +32,18 @@
   * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
-* [Deploy and use the Azure Service Operator (ASO)](./docs/aro/azure-service-operator)
+* [Deploy and use the Azure Service Operator V1(ASO)](./docs/aro/azure-service-operator-v1)
+* [Deploy and use the Azure Service Operator V2(ASO)](./docs/aro/azure-service-operator-v2)
 * [Create an additional Ingress Controller for ARO](./docs/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](./docs/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](./docs/aro/trident)
 * [IBM Cloud Paks for Data Operator Setup](./docs/aro/ibm-cloud-paks-for-data)
 * [Install ARO with Custom Domain using LetsEncrypt with cert manager](./docs/aro/cert-manager)
 * [Configure ARO for Nvidia GPU Workloads](./docs/aro/gpu)
+* [Configure ARO with Azure Front Door](./docs/aro/frontdoor)
+* [Create a point to site VPN connection for an ARO Cluster](./docs/aro/vpn)
+* [Configure access to ARO Image Registry](./docs/aro/registry)
+* [Configure ARO with OpenShift Data Foundation](./docs/aro/odf)
 
 ### GCP
 
