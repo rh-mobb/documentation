@@ -6,6 +6,8 @@ This guide will walk you through using the MOBB Helm Chart to deploy the necessa
 
 As a bonus it will set up a CloudWatch datasource to view any metrics or logs you have in Cloud Watch.
 
+> Make sure to use a region where Amazon Prometheus service is supported
+
 ## Prerequisites
 
 * [A ROSA cluster deployed with STS](/docs/rosa/sts/)
