@@ -128,8 +128,8 @@ We need this Service Principal to be an Enterprise Application to be able to add
    az ad sp update --id $APPID --set 'tags=["WindowsAzureActiveDirectoryIntegratedApp"]'
    ```
 > **Note** 
-> In case you get a trace back (az cli = `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
-> To overcome that issue, we'll do the following
+>  In case you get a trace back (az cli = `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
+>  To overcome that issue, we'll do the following
 > ```
 > # APP_ID=$(az ad app list --display-name $DISPLAYNAME --query [].id -o tsv)
 > # az rest --method PATCH --url https://graph.microsoft.com/v1.0/applications/$APP_ID --body '{"tags":["WindowsAzureActiveDirectoryIntegratedApp"]}'
