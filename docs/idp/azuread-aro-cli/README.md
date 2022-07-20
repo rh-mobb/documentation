@@ -122,21 +122,17 @@ Create Pervice Principal for the app created:
    ```
 
 ### Make Service Principal an Enterprise Application ###
-We need this Service Principal to be an Enterprise Application to be able to add users and groups, so we add the needed tag
+We need this Service Principal to be an Enterprise Application to be able to add users and groups, so we add the needed tag (az cli >= `2.38.0`)
 
    ```
-   az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp
+   az ad sp update --id $APPID --set 'tags=["WindowsAzureActiveDirectoryIntegratedApp"]'
    ```
 > **Note** 
-> In case you get a trace back (az cli >= `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
-> To overcome that issue until fixed, we'll do the following
+> In case you get a trace back (az cli = `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
+> To overcome that issue, we'll do the following
 > ```
-> podman run -it mcr.microsoft.com/azure-cli:2.36.0
-> az login
-> DISPLAYNAME=<auth-dmoessne-aro01> # Replave with the name given before
-> APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
-> az ad sp update --id $APPID --add tags WindowsAzureActiveDirectoryIntegratedApp
-> exit
+> # APP_ID=$(az ad app list --display-name $DISPLAYNAME --query [].id -o tsv)
+> # az rest --method PATCH --url https://graph.microsoft.com/v1.0/applications/$APP_ID --body '{"tags":["WindowsAzureActiveDirectoryIntegratedApp"]}'
 >```
 
 ### Create the client secret ###
