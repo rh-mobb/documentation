@@ -129,3 +129,17 @@ The schedule setting of `schedule: "* * * * *"` would result in synchronization 
 1. Verify the user has been deleted from the ROSA/OSD admin group
 
     ![Verify Delete admin user](./images/grp-sync-verify-del-admin.png)
+
+## Binding Groups to Roles
+
+The preceding steps provide a method to get group membership information into OpenShift, but the final step in translating that into user authorization control requires binding each group to a role or roles on the cluster. This can be done via the OCP web console by opening the Group detail, or by applying YAML via the CLI. 
+
+## Additional Okta Config Options
+
+1. There are also other options that are provider-specific that are covered in the [operator documentation](https://github.com/redhat-cop/group-sync-operator#okta) that should be kept in mind:
+
+- Pruning groups that cease to exist on Okta
+- A numeric limit on the number of groups to sync
+- A list of groups against which to match
+
+1. If there is a need to have multiple GroupSync configurations against multiple providers, note that there is no "merge" functionality in the operator when it comes to group membership. If a group named `ocp-admins` is present in two directories with sync jobs, they will effectively overwrite each other each time the sync job runs. It is recommended to name groups intended for use on OCP such that they indicate from which directory they originate (e.g., `okta-ocp-admins` or something like `okta-contoso-ocp-admins` in the case of multiple Okta providers). Bind multiple groups with the same permissions needs to the same `Role` or `ClusterRole` as needed.
