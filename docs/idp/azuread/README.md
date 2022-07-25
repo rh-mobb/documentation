@@ -58,7 +58,7 @@ Access your Azure account and select the Azure Active Directory service and exec
 
     ![azuread create a new Webapp secret](../images/azuread_new_client_secret.png)
 
-1. Remember the **Secret ID** to be used later in the OCM OAuth configuration
+1. Remember the **Secret Value** to be used later in the OCM OAuth configuration
 
     ![azuread secret id](../images/azuread_secret_id.png)
 

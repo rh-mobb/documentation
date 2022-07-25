@@ -77,6 +77,11 @@
 
 * [OpenShift - Configuring Identity Providers](./docs/idp/README.md)
 
+### Sync Groups With An Identity Provider
+
+* [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](.docs/idp/az-ad-grp-sync)
+* [Using Group Sync Operator with Okta and ROSA/OSD](.docs/idp/okta-grp-sync)
+
 ### Deploying Advanced Security for Kubernetes in ROSA/ARO
 
 * [Deploying ACS in ROSA/ARO](./docs/security/rhacs.md)
