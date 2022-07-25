@@ -34,7 +34,8 @@
 1. Login to your cluster's OCM
 2. Create a sub.yaml file with this template to install the quay operator
 
-    `apiVersion: operators.coreos.com/v1alpha1
+    ```yaml
+    apiVersion: operators.coreos.com/v1alpha1
     kind: Subscription
     metadata:
         name: quay-operator
@@ -45,7 +46,7 @@
         source: redhat-operators
         sourceNamespace: openshift-marketplace
         startingCSV: quay-operator.<version>
-    `
+    ```
 
     ```bash
     oc apply -f sub.yaml
@@ -53,7 +54,7 @@
 3. Create the Quay Registry
     1. Create the Azure Storage Secret Bundle
         - Create a config.yaml file that injects the azure resource info from the storage container created in step 2 of Create Azure Resources
-        `
+        ```yaml
         DISTRIBUTED_STORAGE_CONFIG:
             local_us:
             - AzureStorage
@@ -65,14 +66,14 @@
         - local_us
         DISTRIBUTED_STORAGE_PREFERENCE:
         - local_us
-        `
+        ```
     
         ```bash
         oc create secret generic --from-file config.yaml=./config.yaml -n <namespace> <config_bundle_secret_name>
         ```
     2. Create the Quay Registry with the Secret
         - Create a `quayregistry.yaml` file with this format
-            `
+            ```yaml
             apiVersion: quay.redhat.com/v1
             kind: QuayRegistry
             metadata:
@@ -105,7 +106,7 @@
                     - kind: quay
                     managed: true
                     - kind: clairpostgres
-                    managed: true`
+                    managed: true```
         ```bash
         oc create -n <namespace> -f quayregistry.yaml
         ```
