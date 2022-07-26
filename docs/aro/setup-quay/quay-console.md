@@ -242,7 +242,38 @@ Create a virtual network with two empty subnets
 
 1. YAML View ![Red Hat Quay YAML View](./images/quay-yaml-view.PNG)
 
-1. In the Install Operator pane:
+1. Set managed **objectstorage to false**
+    '''bash
+    apiVersion: quay.redhat.com/v1
+kind: QuayRegistry
+metadata:
+  name: example-registry
+  namespace: openshift-operators
+spec:
+  components:
+    - managed: true
+      kind: clair
+    - managed: true
+      kind: postgres
+    - managed: false
+      kind: objectstorage
+    - managed: true
+      kind: redis
+    - managed: true
+      kind: horizontalpodautoscaler
+    - managed: true
+      kind: route
+    - managed: true
+      kind: mirror
+    - managed: true
+      kind: monitoring
+    - managed: true
+      kind: tls
+    - managed: true
+      kind: quay
+    - managed: true
+      kind: clairpostgres
+    '''
 
 1. Select the latest update channel.
 
