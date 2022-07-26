@@ -253,7 +253,7 @@ Create a virtual network with two empty subnets
 1. **Name** Resource Group > Click **Review + Create** > Click **Create** > Click **Resource Group**
 1. Search/Click **Create Storage Accounts**
 1. Choose Resource Group > Name Storage Account > Choose Region > Choose Performance > Choose Redundancy > Click **Review + Create** > Click **Create** Click **Go To Resource**
-1. ![Storage Account View](./images/storage-account-view.PNG)
+1. ![Storage Account View](./images/storage-account-viewv2.PNG)
 1. 
 1. 
 1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
