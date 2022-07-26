@@ -219,7 +219,7 @@ Create a virtual network with two empty subnets
 
 1. ![Storage Account View](./images/storage-account-viewv2.PNG)
 
-1. Go to **Data Storage** > Click **Container** > Click **New Container** > **Name** Container > Privacy **Public Access Blob** > Click **Create**
+1. Go to **Data Storage** > Click **Container** > Click **New Container** > **Name** Container > Set Privacy to **Public Access Blob** > Click **Create**
 
 1. Go to **Storage Account** > Click **Access Keys** > Go to key 1 > Click **Show Key**
 
@@ -262,7 +262,7 @@ Create a virtual network with two empty subnets
 
 1. YAML View ![Red Hat Quay YAML View](./images/quay-yaml-view.PNG)
 
-1. Click **Create > Click Registry**
+1. Click **Create** > Click **Registry**
 
 1. Successful Registry Deployment ![Pre Storage](./images/quay-pre-storage-view.PNG)
 
