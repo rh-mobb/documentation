@@ -205,6 +205,18 @@ Create a virtual network with two empty subnets
 
 ## Red Hat Quay Setup
 
+### Backend Storage Setup
+
+1. **Login** to Azure
+1. Search/Click **Create Resource Groups**
+1. **Name** Resource Group > Click **Review + Create** > Click **Create**
+1. Search/Click **Create Storage Accounts**
+1. Choose Resource Group > Name Storage Account > Choose Region > Choose Performance > Choose Redundancy > Click **Review + Create** > Click **Create** Click **Go To Resource**
+1. ![Storage Account View](./images/storage-account-viewv2.PNG)
+1. Go to **Data Storage** > Click **Container** > Click **New Container** > **Name** Container > Privacy **Public Access Blob** > Click **Create**
+1. Go to **Storage Account** > Click **Access Keys** > Go to key 1 > Click **Show Key**
+1. **Storage Account Name**, **Container Name**, and **Access Keys** will be used to configure quay registry storage.
+
 ### Red Hat Quay Operator Install
 ![Admin View](./images/admin-view.png)
 
@@ -246,25 +258,13 @@ Create a virtual network with two empty subnets
 
 1. Successful Registry Deployment ![Pre Storage](./images/quay-pre-storage-view.PNG)
 
-### Backend Storage Setup
+1.
 
-1. **Login** to Azure
-1. Search/Click **Create Resource Groups**
-1. **Name** Resource Group > Click **Review + Create** > Click **Create** > Click **Resource Group**
-1. Search/Click **Create Storage Accounts**
-1. Choose Resource Group > Name Storage Account > Choose Region > Choose Performance > Choose Redundancy > Click **Review + Create** > Click **Create** Click **Go To Resource**
-1. ![Storage Account View](./images/storage-account-viewv2.PNG)
-1. 
-1. 
-1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
+1.
 
 1. Select the **Automatic** approval strategy.
 
-1. Click **Install**.
-
-### Successful Install
-
-![Red Hat Quay Operator](./images/successful-quay-installv2.PNG)   
+1. Click **Install**.   
 
 
 ### Delete Cluster
