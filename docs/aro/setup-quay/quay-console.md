@@ -276,6 +276,8 @@ Create a virtual network with two empty subnets
 
 1. Scroll down to **Registry Storage** > Click **Edit Fields** > Go to **Storage Engine** click the drop down and select **Azure Blob Storage** > Fill in **Azure Storage Container** with **Storage Container Name** > Fill in **Azure Account Name** with **Azure Storage Account Name** > Fill in **Azure Account Key** with **Azure Storage Account Access Key**
 
+1. ![Quay Registry Storage Config](./images/quay-registry-storagev2.png)
+
 1. Click **Validate Configuration Changes**
 
 1. Click **Reconfigure Quay** ![Reconfiure Quay](./images/reconfig-quay.PNG)
