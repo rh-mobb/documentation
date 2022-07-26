@@ -208,13 +208,21 @@ Create a virtual network with two empty subnets
 ### Backend Storage Setup
 
 1. **Login** to Azure
+
 1. Search/Click **Create Resource Groups**
+
 1. **Name** Resource Group > Click **Review + Create** > Click **Create**
+
 1. Search/Click **Create Storage Accounts**
+
 1. Choose Resource Group > Name Storage Account > Choose Region > Choose Performance > Choose Redundancy > Click **Review + Create** > Click **Create** Click **Go To Resource**
+
 1. ![Storage Account View](./images/storage-account-viewv2.PNG)
+
 1. Go to **Data Storage** > Click **Container** > Click **New Container** > **Name** Container > Privacy **Public Access Blob** > Click **Create**
+
 1. Go to **Storage Account** > Click **Access Keys** > Go to key 1 > Click **Show Key**
+
 1. **Storage Account Name**, **Container Name**, and **Access Keys** will be used to configure quay registry storage.
 
 ### Red Hat Quay Operator Install
