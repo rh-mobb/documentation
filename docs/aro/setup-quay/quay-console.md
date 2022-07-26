@@ -244,8 +244,18 @@ Create a virtual network with two empty subnets
 
 1. Click **Create > Click Registry**
 
-1. Successful Segistry Deployment Pre Storage ![Pre Storage](./images/quay-pre-storage-view.PNG)
+1. Successful Registry Deployment ![Pre Storage](./images/quay-pre-storage-view.PNG)
 
+### Backend Storage Setup
+
+1. **Login** to Azure
+1. Search/Click **Create Resource Groups**
+1. **Name** Resource Group > Click **Review + Create** > Click **Create** > Click **Resource Group**
+1. Search/Click **Create Storage Accounts**
+1. Choose Resource Group > Name Storage Account > Choose Region > Choose Performance > Choose Redundancy > Click **Review + Create** > Click **Create** Click **Go To Resource**
+1. 
+1. 
+1. 
 1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
 
 1. Select the **Automatic** approval strategy.
