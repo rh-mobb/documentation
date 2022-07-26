@@ -277,7 +277,7 @@ spec:
       managed: true
 ```
 
-1. Select the latest update channel.
+1. Click **Create**.
 
 1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
 
