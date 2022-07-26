@@ -1,6 +1,4 @@
-![ARO Logo v2](./images/aro-logov2.png)
-# ARO Red Hat Quay
-
+                                                            ![Quay Logo](./images/redhat-quay-logo.png)
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster with Red Hat Quay.
 
 Author: [Kristopher White x Connor Wooley]
