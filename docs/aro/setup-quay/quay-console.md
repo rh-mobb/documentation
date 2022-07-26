@@ -280,13 +280,13 @@ Create a virtual network with two empty subnets
 
 1. Click **Reconfigure Quay** ![Reconfiure Quay](./images/reconfig-quay.PNG)
 
-1. Go to **Reistry Console** > Click **Registry Endpoint**
+1. Go to **Registry Console** > Click **Registry Endpoint**
 
 1. ![Quay Registry Login](./images/quay-registry-login.PNG)
 
 1. Click **Create Account**
 
-1. Login **Quay**. 
+1. Login to **Quay**. 
 
 1. Click **Create Repository**
 
