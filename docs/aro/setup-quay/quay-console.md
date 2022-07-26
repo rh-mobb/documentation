@@ -245,7 +245,7 @@ Create a virtual network with two empty subnets
 1. Set managed **objectstorage to false**
     
 
-    ```bash
+```bash
 kind: QuayRegistry
 apiVersion: quay.redhat.com/v1
 metadata:
@@ -275,7 +275,7 @@ spec:
       managed: true
     - kind: clairpostgres
       managed: true
-    ```
+```
 
 1. Select the latest update channel.
 
