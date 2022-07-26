@@ -203,43 +203,18 @@ Create a virtual network with two empty subnets
 
 ![ARO login page](./images/aro-login.png)
 
-## Cloud Paks 4 Data Operator Setup
+## Red Hat Quay Setup
 
-### Adding IBM Operator Catalog to Openshift
-
-1. Log into the OpenShift web console with your OpenShift cluster admin credentials.
-
-1. In the top banner, click the plus (+) icon to open the **Import YAML** dialog box.
-
-1. Paste this resource definition into the dialog box:
-
-```bash
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: ibm-operator-catalog
-  namespace: openshift-marketplace
-spec:
-  displayName: IBM Operator Catalog
-  image: 'icr.io/cpopen/ibm-operator-catalog:latest'
-  publisher: IBM
-  sourceType: grpc
-  updateStrategy:
-    registryPoll:
-      interval: 45m
-  ```
-1. Click **Create**.    
-
-### IBM Cloud Paks 4 Data Operator Install
+### Red Hat Quay Operator Install
 ![Admin View](./images/admin-view.png)
 
 1. Log into the OpenShift web console with your OpenShift cluster admin credentials.
 
 1. Make sure you have selected the **Administrator** view.
 
-1. Click **Operators > OperatorHub > Integration & Delivery**.
+1. Click **Operators > OperatorHub > Red Hat Quay**.
 
-1. Search for and click the tile for the **IBM Cloud Pak for Integration** operator.
+1. Search for and click the tile for the **Red Hat Quay** operator.
 
 1. Click **Install**.
 
@@ -247,7 +222,7 @@ spec:
 
 1. Select the latest update channel.
 
-1. Select the option to install Cloud Pak for Integration in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
+1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
 
 1. Select the **Automatic** approval strategy.
 
@@ -255,7 +230,18 @@ spec:
 
 ### Successful Install
 
-![Cloud Paks Operators](./images/cloud-paks-operator.PNG)
+![Red Hat Quay Operator](./images/successful-quay-installv2.PNG)
+
+### Redhat Quay Registry Deployment
+
+1. Log into the OpenShift web console with your OpenShift cluster admin credentials.
+
+1. In the top banner, click the plus (+) icon to open the **Import YAML** dialog box.
+
+1. Paste this resource definition into the dialog box:
+
+1. Click **Create**.    
+
 
 ### Delete Cluster
 
