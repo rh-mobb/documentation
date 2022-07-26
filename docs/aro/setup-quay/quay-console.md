@@ -274,11 +274,11 @@ Create a virtual network with two empty subnets
 
 1. ![Registry Config Editor Login](./images/registry-config-editor-sign-in.PNG)
 
-1. 
+1. Scroll down to **Registry Storage** > Click **Edit Fields** > Go to **Storage Engine** > Fill in **Azure Storage Container** > Fill in **Azure Account Name** with **Azure Storage Account Name** > Fill in **Azure Account Key** with **Azur Storage Account Access Key**
 
-1.
+1. Click **Validate Configuration Changes**
 
-1.
+1. Click **Reconfigure Quay** ![Reconfiure Quay](./images/reconfig-quay.PNG)
 
 1.
 
