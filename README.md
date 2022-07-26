@@ -44,6 +44,7 @@
 * [Create a point to site VPN connection for an ARO Cluster](./docs/aro/vpn)
 * [Configure access to ARO Image Registry](./docs/aro/registry)
 * [Configure ARO with OpenShift Data Foundation](./docs/aro/odf)
+* [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 
 ### GCP
 
