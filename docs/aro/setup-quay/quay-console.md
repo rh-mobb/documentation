@@ -1,4 +1,5 @@
 ![Quay Logo](./images/redhat-quay-logo.png)
+
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster with Red Hat Quay.
 
 Author: [Kristopher White x Connor Wooley]
