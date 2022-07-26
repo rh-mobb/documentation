@@ -280,14 +280,17 @@ Create a virtual network with two empty subnets
 
 1. Click **Reconfigure Quay** ![Reconfiure Quay](./images/reconfig-quay.PNG)
 
-1.
+1. Go to **Reistry Console** > Click **Registry Endpoint**
 
-1.
+1. ![Quay Registry Login](./images/quay-registry-login.PNG)
 
-1. Select the **Automatic** approval strategy.
+1. Click **Create Account**
 
-1. Click **Install**.   
+1. Login **Quay**. 
 
+1. Click **Create Repository**
+
+1. ![New Quay Repo](./images/quay-new-repo.PNG)
 
 ### Delete Cluster
 
