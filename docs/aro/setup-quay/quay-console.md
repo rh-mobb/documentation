@@ -242,42 +242,9 @@ Create a virtual network with two empty subnets
 
 1. YAML View ![Red Hat Quay YAML View](./images/quay-yaml-view.PNG)
 
-1. Set managed **objectstorage to false**
-    
+1. Click **Create**
 
-```bash
-kind: QuayRegistry
-apiVersion: quay.redhat.com/v1
-metadata:
-  name: example-registry
-  namespace: openshift-operators
-spec:
-  components:
-    - kind: clair
-      managed: true
-    - kind: postgres
-      managed: false
-    - kind: objectstorage
-      managed: true
-    - kind: redis
-      managed: true
-    - kind: horizontalpodautoscaler
-      managed: true
-    - kind: route
-      managed: true
-    - kind: mirror
-      managed: true
-    - kind: monitoring
-      managed: true
-    - kind: tls
-      managed: true
-    - kind: quay
-      managed: true
-    - kind: clairpostgres
-      managed: true
-```
-
-1. Click **Create**.
+1. Clic
 
 1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
 
