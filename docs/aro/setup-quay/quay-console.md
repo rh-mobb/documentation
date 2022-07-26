@@ -242,9 +242,9 @@ Create a virtual network with two empty subnets
 
 1. YAML View ![Red Hat Quay YAML View](./images/quay-yaml-view.PNG)
 
-1. Click **Create**
+1. Click **Create > Click Registry**
 
-1. Clic
+1. Successful Segistry Deployment Pre Storage ![Pre Storage](./images/quay-pre-storage-view.PNG)
 
 1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
 
