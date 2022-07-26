@@ -234,13 +234,27 @@ Create a virtual network with two empty subnets
 
 ### Redhat Quay Registry Deployment
 
-1. Log into the OpenShift web console with your OpenShift cluster admin credentials.
+1. Make sure you have selected the **Administrator** view.
 
-1. In the top banner, click the plus (+) icon to open the **Import YAML** dialog box.
+1. Click **Operators > Installed Operators > Red Hat Quay > Quay Registry > Create QuayRegistry**.
 
-1. Paste this resource definition into the dialog box:
+1. Form View ![Red Hat Quay Form View](./images/quay-form-view.PNG)
 
-1. Click **Create**.    
+1. YAML View ![Red Hat Quay YAML View](./images/quay-yaml-view.PNG)
+
+1. In the Install Operator pane:
+
+1. Select the latest update channel.
+
+1. Select the option to install Red Hat Quay in one namespace or for **all namespaces on your cluster**. If in doubt, choose the All namespaces on the cluster installation mode, and accept the default **Installed Namespace**.
+
+1. Select the **Automatic** approval strategy.
+
+1. Click **Install**.
+
+### Successful Install
+
+![Red Hat Quay Operator](./images/successful-quay-installv2.PNG)   
 
 
 ### Delete Cluster
