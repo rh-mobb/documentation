@@ -1,13 +1,9 @@
-# Setting up Quay on an ARO cluster using Azure Container Storage 
-
-**Kristopher White x Connor Wooley**
-
 *07/25/2022*
-# ARO IBM Cloud Paks 4 Data
+# ARO Red Hat Quay
 
-A Quickstart guide to deploying an Azure Red Hat OpenShift cluster with IBM Cloud Paks 4 Data.
+A Quickstart guide to deploying an Azure Red Hat OpenShift cluster with Red Hat Quay.
 
-Author: [Kristopher White]
+Author: [Kristopher White x Connor Wooley]
 
 ## Video Walkthrough
 
