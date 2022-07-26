@@ -266,6 +266,20 @@ Create a virtual network with two empty subnets
 
 1. Successful Registry Deployment ![Pre Storage](./images/quay-pre-storage-view.PNG)
 
+1. Click **Config Editor Credentials Secret**
+
+1. Go to **Data** > **Reveal Values** (These values are used to login to **Config Editor Endpoint**)
+
+1. Go to **Registry Console** > Click **Config Editor Endpoint** >
+
+1. ![Registry Config Editor Login](./images/registry-config-editor-sign-in.PNG)
+
+1. 
+
+1.
+
+1.
+
 1.
 
 1.
