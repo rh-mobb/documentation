@@ -1,4 +1,4 @@
-*07/25/2022*
+![ARO Logo v2](./images/aro-logov2.png)
 # ARO Red Hat Quay
 
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster with Red Hat Quay.
