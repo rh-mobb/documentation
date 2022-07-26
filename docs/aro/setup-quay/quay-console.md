@@ -274,7 +274,7 @@ Create a virtual network with two empty subnets
 
 1. ![Registry Config Editor Login](./images/registry-config-editor-sign-in.PNG)
 
-1. Scroll down to **Registry Storage** > Click **Edit Fields** > Go to **Storage Engine** > Fill in **Azure Storage Container** > Fill in **Azure Account Name** with **Azure Storage Account Name** > Fill in **Azure Account Key** with **Azur Storage Account Access Key**
+1. Scroll down to **Registry Storage** > Click **Edit Fields** > Go to **Storage Engine** click the drop down and select **Azure Blob Storage** > Fill in **Azure Storage Container** with **Storage Container Name** > Fill in **Azure Account Name** with **Azure Storage Account Name** > Fill in **Azure Account Key** with **Azure Storage Account Access Key**
 
 1. Click **Validate Configuration Changes**
 
