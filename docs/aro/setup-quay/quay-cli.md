@@ -112,8 +112,6 @@
         ```
 4. Login to your Quay Registry and begin pushing images to it!
 
-TODO:
-
-* Creating users in the registry (how do we tie this into the cluster RBAC or AAD)
+> Note: This configuration does not support in-cluster authentication integration with the quay deployment. User Management with the registry is handled by the registry.
 
 
