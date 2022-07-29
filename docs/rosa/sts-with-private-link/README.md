@@ -360,7 +360,7 @@ Once the cluster has finished installing it is time to validate. Validation when
     - Grab the Security Group Id generated in the previous step
 
       ```bash
-      PublicSecurityGroupId=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=${ROSA_CLUSTER_NAME}-jumphost-sg" | jq -r '.SecurityGroups[0].GroupId')
+      PublicSecurityGroupId=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=${ROSA_CLUSTER_NAME}-jumphost-sg" | jq -r '.SecurityGroups[0].GroupId')"
       echo $PublicSecurityGroupId
       ```
 
