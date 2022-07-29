@@ -7,9 +7,9 @@ Author: [Kristopher White x Connor Wooley]
 
 ## Video Walkthrough
 
-If you prefer a more visual medium, you can watch [Kristopher White] walk through this quickstart on [YouTube](https://youtu.be/iifsB-uuEFc).
+If you prefer a more visual medium, you can watch [Kristopher White] walk through Quay Registry Storage Setup on [YouTube]([https://youtu.be/iifsB-uuEFc](https://youtu.be/yMmSrx4hN70)).
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/iifsB-uuEFc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/yMmSrx4hN70" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
 ## Prerequisites
