@@ -16,6 +16,8 @@ This guide will walk through the following steps:
 
 Create a set of security groups and assign users by following [the Microsoft documentation](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-groups-create-azure-portal).
 
+In addition, if you are using `zsh` as your shell (which is the default shell on macOS) you may need to run `set -k` to get the below commands to run without errors. [This is because `zsh` disables comments in interactive shells from being used](https://zsh.sourceforge.io/Doc/Release/Options.html). 
+
 ## 1. Register a new application in Azure AD for authenitcation
 
 ### Capture the OAuth callback URL
@@ -24,26 +26,26 @@ First, construct the cluster's OAuth callback URL and make note of it. To do so,
 The "AAD" directory at the end of the the OAuth callback URL should match the OAuth identity provider name you'll setup later.
 
 ```bash
-RESOURCE_GROUPO=example-rg # Replace this with the name of your ARO cluster's resource group
+RESOURCE_GROUP=example-rg # Replace this with the name of your ARO cluster's resource group
 CLUSTER_NAME=example-cluster # Replace this with the name of your ARO cluster
-domain=$(az aro show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query clusterProfile.domain -o tsv)
-location=$(az aro show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query location -o tsv)
-echo "OAuth callback URL: https://oauth-openshift.apps.$domain.$location.aroapp.io/oauth2callback/AAD"
+echo 'OAuth callback URL: '$(az aro show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query consoleProfile.url -o tsv | sed 's/console-openshift-console/oauth-openshift/')'oauth2callback/AAD'
 ```
 
 ### Register a new application in Azure AD
 
 Second, you need to create the Azure AD application itself. To do so, login to the Azure portal, and navigate to [App registrations blade](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade), then click on "New registration" to create a new application.
 
-[IMAGE]
+![Azure Portal - App registrations blade](../images/azure-portal_app-registrations-blade.png)
 
-Provide a name for the application, for example `openshift-auth`, and fill in the Redirect URI using the value of the OAuth callback URL you retrieved in step 1a earlier. Once you fill in the necessary information, click "Register" to create the application.
+Provide a name for the application, for example `openshift-auth`. Select "Web" from the Redirect URI dropdown and fill in the Redirect URI using the value of the OAuth callback URL you retrieved in the previous step. Once you fill in the necessary information, click "Register" to create the application.
 
-[IMAGE]
+![Azure Portal - Register an application page](../images/azure-portal_register-an-application-page.png)
 
 Then, click on the "Certificates & secrets" sub-blade and select "New client secret". Fill in the details request and make note of the generated secret key, as you'll use it in a later step. You won't be able to retrieve it again.
 
-[IMAGE]
+![Azure Portal - Certificates & secrets page](../images/azure-portal_certificates-secrets-page.png)
+![Azure Portal - Add a Client Secret page](../images/azure-portal_add-a-client-secret-page.png)
+![Azure Portal - Copy Client Secret page](../images/azure-portal_copy-client-secret-page.png)
 
 Then, click on the "Overview" sub-blade and make note of the "Application (client) ID" and "Directory (tenant) ID". You'll need those values in a later step as well.
 
@@ -53,21 +55,27 @@ In order to provide OpenShift with enough information about the user to create t
 
 Click on the "Token configuration" sub-blade and select the "Add optional claim" button. 
 
-[IMAGE]
+![Azure Portal - Add Optional Claims Page](../images/azure-portal_optional-group-claims-page.png)
 
 Select ID then check the "email" and "upn" claims and click the "Add" button to configure them for your Azure AD application. 
 
-[IMAGE]
+![Azure Portal - Add Optional Claims - Token Type](../images/azure-portal_add-optional-claims-page.png)
+![Azure Portal - Add Optional Claims - email](../images/azure-portal_add-optional-email-claims-page.png)
+![Azure Portal - Add Optional Claims - upn](../images/azure-portal_add-optional-upn-claims-page.png)
+
+When prompted, follow the prompt to enable the necessary Microsoft Graph permissions.
+
+![Azure Portal - Add Optional Claims - Graph Permissions Prompt](../images/azure-portal_add-optional-claims-graph-permissions-prompt.png)
 
 Next, select the "Add groups claim" button. 
 
-[IMAGE]
+![Azure Portal - Add Groups Claim Page](../images/azure-portal_optional-group-claims-page.png)
 
 Select the "Security groups" option and click the "Add" button to configure group claims for your Azure AD application. 
 
 > **Note:** In this example, we are providing all security groups a user is a member of via the group claim. In a real production environment, we highly recommend _scoping the groups provided by the group claim to _only those groups which are applicable to OpenShift_.
 
-[IMAGE]
+![Azure Portal - Edit Groups Claim Page](../images/azure-portal_edit-group-claims-page.png)
 
 ## 3. Configure the OpenShift cluster to use Azure AD as the identity provider
 
@@ -124,6 +132,7 @@ spec:
     type: OpenID
 EOF
 ```
+
 
 Feel free to further modify this output (which is saved in your current directory as `cluster-oauth-config.yaml`).
 
