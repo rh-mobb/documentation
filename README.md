@@ -74,11 +74,17 @@
   * [+ AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
   * [+ Azure Key Vault CSI Driver](./docs/security/secrets-store-csi/azure-key-vault)
 
-### Configure Identity provider
+## Configuring Specific Identity Providers
 
-* [OpenShift - Configuring Identity Providers](./docs/idp/README.md)
+* [Configure GitLab as an identity provider for ROSA/OSD](./gitlab)
+* [Configure GitLab as an identity provider for ARO](./gitlab-aro)
+* [Configure Azure AD as an identity provider for ARO](./azuread-aro)
+* [Configure Azure AD as an identitiy provider for ARO with group claims](./group-claims/aro/)
+* [Configure Azure AD as an identitiy provider for ROSA with group claims](./group-claims/rosa/)
+* [Configure Azure AD as an identity provider for ROSA/OSD](./azuread)
+* [Configure Azure AD as an identity provider for ARO via the CLI](./azuread-aro-cli)
 
-### Sync Groups With An Identity Provider
+## Configuring Group Synchronization
 
 * [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](./docs/idp/az-ad-grp-sync)
 * [Using Group Sync Operator with Okta and ROSA/OSD](./docs/idp/okta-grp-sync)
