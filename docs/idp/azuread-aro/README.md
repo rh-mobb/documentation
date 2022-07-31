@@ -1,346 +1,148 @@
-# ARO Integration with Azure AD
+# Configure ARO to use Azure AD #
 
-A Quickstart guide to deploying an Azure Red Hat OpenShift cluster and integrating it with Azure AD.
+**Michael McNeill, Sohaib Azed**
 
-Author: [Sohaib Azed]
+*28 July 2022*
 
-## Prerequisites
+This guide demonstrates how to configure Azure AD as the cluster identity provider in Azure Red Hat OpenShift. This guide will walk through the creation of an Azure Active Directory (Azure AD) application and configure Azure Red Hat OpenShift (ARO) to authenticate using Azure AD. 
 
-### Azure CLI
+This guide will walk through the following steps:
 
-**MacOS**
+1. Register a new application in Azure AD for authentication. 
+2. Configure the application registration in Azure AD to include optional claims in tokens.
+3. Configure the Azure Red Hat OpenShift (ARO) cluster to use Azure AD as the identity provider.
+4. Grant additional permissions to individual users.
 
-> See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-macos) for alternative install options.
+## Before you Begin
 
-1. Install Azure CLI using homebrew
+If you are using `zsh` as your shell (which is the default shell on macOS) you may need to run `set -k` to get the below commands to run without errors. [This is because `zsh` disables comments in interactive shells from being used](https://zsh.sourceforge.io/Doc/Release/Options.html). 
 
-    ```bash
-    brew update && brew install azure-cli
-    ```
+## 1. Register a new application in Azure AD for authenitcation
 
-**Linux**
+### Capture the OAuth callback URL
+First, construct the cluster's OAuth callback URL and make note of it. To do so, run the following command, making sure to replace the variables specified:
 
-> See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf) for alternative install options.
+The "AAD" directory at the end of the the OAuth callback URL should match the OAuth identity provider name you'll setup later.
 
-1. Import the Microsoft Keys
+```bash
+RESOURCE_GROUP=example-rg # Replace this with the name of your ARO cluster's resource group
+CLUSTER_NAME=example-cluster # Replace this with the name of your ARO cluster
+echo 'OAuth callback URL: '$(az aro show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query consoleProfile.url -o tsv | sed 's/console-openshift-console/oauth-openshift/')'oauth2callback/AAD'
+```
 
-    ```bash
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    ```
+### Register a new application in Azure AD
 
-1. Add the Microsoft Yum Repository
+Second, you need to create the Azure AD application itself. To do so, login to the Azure portal, and navigate to [App registrations blade](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade), then click on "New registration" to create a new application.
 
-    ```bash
-    cat << EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
-    [azure-cli]
-    name=Azure CLI
-    baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-    EOF
-    ```
+![Azure Portal - App registrations blade](./images/azure-portal_app-registrations-blade.png)
 
-1. Install Azure CLI
+Provide a name for the application, for example `openshift-auth`. Select "Web" from the Redirect URI dropdown and fill in the Redirect URI using the value of the OAuth callback URL you retrieved in the previous step. Once you fill in the necessary information, click "Register" to create the application.
 
-    ```bash
-    sudo dnf install -y azure-cli
-    ```
+![Azure Portal - Register an application page](./images/azure-portal_register-an-application-page.png)
 
+Then, click on the "Certificates & secrets" sub-blade and select "New client secret". Fill in the details request and make note of the generated client secret value, as you'll use it in a later step. You won't be able to retrieve it again.
 
-### Prepare Azure Account for Azure OpenShift
+![Azure Portal - Certificates & secrets page](./images/azure-portal_certificates-secrets-page.png)
+![Azure Portal - Add a Client Secret page](./images/azure-portal_add-a-client-secret-page.png)
+![Azure Portal - Copy Client Secret page](./images/azure-portal_copy-client-secret-page.png)
 
-1. Log into the Azure CLI by running the following and then authorizing through your Web Browser
+Then, click on the "Overview" sub-blade and make note of the "Application (client) ID" and "Directory (tenant) ID". You'll need those values in a later step as well.
 
-    ```bash
-    az login
-    ```
+## 2. Configure optional claims
 
-1. Make sure you have enough Quota (change the location if you're not using `East US`)
+In order to provide OpenShift with enough information about the user to create their account, we will configure Azure AD to provide two optional claims, specifically "email" and "upn" when a user logs in. For more information on optional claims in Azure AD, see [the Microsoft documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-optional-claims).
 
-    ```bash
-    az vm list-usage --location "East US" -o table
-    ```
+Click on the "Token configuration" sub-blade and select the "Add optional claim" button. 
 
-    see [Addendum - Adding Quota to ARO account](#adding-quota-to-aro-account) if you have less than `36` Quota left for `Total Regional vCPUs`.
+![Azure Portal - Add Optional Claims Page](./images/azure-portal_optional-claims-page.png)
 
-1. Register resource providers
+Select ID then check the "email" and "upn" claims and click the "Add" button to configure them for your Azure AD application. 
 
-    ```bash
-    az provider register -n Microsoft.RedHatOpenShift --wait
-    az provider register -n Microsoft.Compute --wait
-    az provider register -n Microsoft.Storage --wait
-    az provider register -n Microsoft.Authorization --wait
-    ```
+![Azure Portal - Add Optional Claims - Token Type](./images/azure-portal_add-optional-claims-page.png)
+![Azure Portal - Add Optional Claims - email](./images/azure-portal_add-optional-email-claims-page.png)
+![Azure Portal - Add Optional Claims - upn](./images/azure-portal_add-optional-upn-claims-page.png)
 
-### Get Red Hat pull secret
+When prompted, follow the prompt to enable the necessary Microsoft Graph permissions.
 
-> This step is optional, but highly recommended
+![Azure Portal - Add Optional Claims - Graph Permissions Prompt](./images/azure-portal_add-optional-claims-graph-permissions-prompt.png)
 
-1. Log into <https://console.redhat.com>
+## 3. Configure the OpenShift cluster to use Azure AD as the identity provider
 
-1. Browse to <https://console.redhat.com/openshift/install/azure/aro-provisioned>
+Finally, we need to configure OpenShift to use Azure AD as its identity provider. 
 
-1. click the **Download pull secret** button and remember where you saved it, you'll reference it later.
+To do so, ensure you are logged in to the OpenShift command line interface (`oc`) by running the following command, making sure to replace the variables specified:
 
-## Deploy Azure OpenShift
+```bash
+RESOURCE_GROUP=example-rg # Replace this with the name of your ARO cluster's resource group
+CLUSTER_NAME=example-cluster # Replace this with the name of your ARO cluster
+oc login \
+    $(az aro show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query apiserverProfile.url -o tsv) \
+    -u $(az aro list-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME --query kubeadminUsername -o tsv) \
+    -p $(az aro list-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME --query kubeadminPassword -o tsv)
+```
 
-### Variables and Resource Group
+Next, create a secret that contains the client secret that you captured in step 2 above. To do so, run the following command, making sure to replace the variable specified:
 
-Set some environment variables to use later, and create an Azure Resource Group.
+```bash
+CLIENT_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx # Replace this with the Client Secret
+oc create secret generic openid-client-secret --from-literal=clientSecret=${CLIENT_SECRET} -n openshift-config
+```
 
-1. Set the following environment variables
+Next, generate the necessary YAML for the cluster's OAuth provider to use Azure AD as its identity provider. To do so, run the following command, making sure to replace the variables specified:
 
-    > Change the values to suit your environment, but these defaults should work.
-
-    ```bash
-    RESOURCE_LOCATION=eastus
-    RESOURCE_GROUP=openshift
-    CLUSTER_NAME=cluster
-    PULL_SECRET=~/pull-secret.txt
-    SUBSCRIPTION_ID=xxxx-xxxx-xxxx-xxxx
-    ```
-
-1. Create an Azure resource group
-
-    ```bash
-    az group create \
-    --name $RESOURCE_GROUP \
-    --location $RESOURCE_LOCATION
-    ```
-
-
-### Networking
-
-Create a virtual network with two empty subnets
-
-1. Create virtual network
-
-    ```bash
-    az network vnet create \
-      --address-prefixes 10.0.0.0/22 \
-      --name "$CLUSTER_NAME-aro-vnet-$RESOURCE_LOCATION" \
-      --resource-group $RESOURCE_GROUP
-    ```
-
-1. Create control plane subnet
-
-    ```bash
-    az network vnet subnet create \
-      --resource-group $RESOURCE_GROUP \
-      --vnet-name "$CLUSTER_NAME-aro-vnet-$AZR_RESOURCE_LOCATION" \
-      --name "$CLUSTER_NAME-aro-control-subnet-$RESOURCE_LOCATION" \
-      --address-prefixes 10.0.0.0/23 \
-      --service-endpoints Microsoft.ContainerRegistry
-    ```
-
-1. Create machine subnet
-
-    ```bash
-    az network vnet subnet create \
-      --resource-group $RESOURCE_GROUP \
-      --vnet-name "$CLUSTER_NAME-aro-vnet-$RESOURCE_LOCATION" \
-      --name "$CLUSTER_NAME-aro-machine-subnet-$RESOURCE_LOCATION" \
-      --address-prefixes 10.0.2.0/23 \
-      --service-endpoints Microsoft.ContainerRegistry
-    ```
-
-1. Disable network policies on the control plane subnet
-
-    > This is required for the service to be able to connect to and manage the cluster.
-
-    ```bash
-    az network vnet subnet update \
-      --name "$CLUSTER_NAME-aro-control-subnet-$RESOURCE_LOCATION" \
-      --resource-group $RESOURCE_GROUP \
-      --vnet-name "$CLUSTER_NAME-aro-vnet-$RESOURCE_LOCATION" \
-      --disable-private-link-service-network-policies true
-    ```
-
-### Create a Service Principal
-
-1. Create service principal
-
-    ```bash
-    az ad sp create-for-rbac --role Contributor --name all-in-one-sp \
-    --scopes /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP
-    ```
-This command will return the "appID" and "Password" information of the service principal that we will need for the ARO4 create command later.
-
-    ```
-    {
-    "appId": "xxxxx-xxx-xxxx-xxxx-xxxxxxxxxxx",
-    "displayName": "all-in-one-sp",
-    "password": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "tenant": "xxxxxx-xxx-xxxx-xxxxxx"
-    }
-    ```
-1. Add API permission to the service principal
-
-    - Log in to Azure Portal
-    - Go to Azure Active Directory
-    - Click App registrations
-    - Click "All applications"
-    - Search for "all-in-one-sp"
-    - Click "API permission"
-    - Click "Add a permission"
-    - Click "Microsoft Graph"
-    - Click "Delegated Permissions"
-    - Check "User.Read"
-    - Click the "Add permission" button at the bottom.
-    - Click "Grant admin consent ..."
-
-### Create Cluster
-1. Create the cluster
-
-    > This will take between 30 and 45 minutes.
-
-    ```bash
-    az aro create \
-      --resource-group $RESOURCE_GROUP \
-      --name $CLUSTER_NAME \
-      --vnet "$CLUSTER_NAME-aro-vnet-$RESOURCE_LOCATION" \
-      --master-subnet "$CLUSTER_NAME-aro-control-subnet-$RESOURCE_LOCATION" \
-      --worker-subnet "$CLUSTER_NAME-aro-machine-subnet-$RESOURCE_LOCATION" \
-      --pull-secret @$PULL_SECRET
-    ```
-
-2. Get OpenShift console URL
-
-    ```bash
-    az aro show \
-      --name $CLUSTER_NAME \
-      --resource-group $RESOURCE_GROUP \
-      -o tsv --query consoleProfile
-    ```
-
-3. Get OpenShift credentials
-
-    ```bash
-    az aro list-credentials \
-      --name $CLUSTER_NAME \
-      --resource-group $RESOURCE_GROUP \
-      -o tsv
-    ```
-
-4. Use the URL and the credentials provided by the output of the last two commands to log into OpenShift via a web browser.
-
-
-## Azure Active Driectory Integration 
-
-1. Login to ARO via CLI
-    ```bash
-    oc login -u kubeadmin -p <password> https://api.<DNS domain>:6443/
-    ```
-
-2. Getting OAUTH callback URL
-    ```bash
-    oauthCallBack=`oc get route oauth-openshift -n openshift-authentication -o jsonpath='{.spec.host}'`
-    oauthCallBackURL=https://$oauthCallBack/oauth2callback/AAD
-    echo $oauthCallBackURL
-    ```
-
-**NOTE** 
-AAD is the name of the identity provider when configuring OAuth on OpenShift
-
-
-3. Add OAUTH Callback URL to the same service principal
-    - Go to Azure Active Directory
-    - Click App registration
-    - Click on "all-in-one-sp" under all applications
-    - Under Overview, click right top corner link for "Add a Redirect URI"
-    - Click Web Application from the list of Configure platforms
-    - Enter the value of the $oauthCallBackURL from the previous step to the "Redirect URIs"
-    - Click configure
-
-4. Update Service Principal with manifest
-    ```
-    az ad app update \
-    --set optionalClaims.idToken=@manifest.json \
-    --id <Service Principal appId>
-    ```
-
-5. Create a secret to store Service Principal Password
-    ```
-    oc create secret generic openid-client-secret-azuread \
-    --namespace openshift-config \
-    --from-literal=clientSecret=<service principal password>
-    ```
-
-6. Create an OAUTH configuration
-    ```
-    apiVersion: config.openshift.io/v1
-    kind: OAuth
-    metadata:
-      name: cluster
-    spec:
-    identityProviders:
-    - name: AAD
-        mappingMethod: claim
-        type: OpenID
-        openID:
-        clientID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        clientSecret:
-            name: openid-client-secret-azuread
-        extraScopes:
+```bash
+IDP_NAME=AAD # Replace this with the name you used in the OAuth callback URL
+APP_ID=yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy # Replace this with the Application (client) ID
+TENANT_ID=zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz # Replace this with the Directory (tenant) ID
+cat << EOF > cluster-oauth-config.yaml
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - mappingMethod: claim
+    name: ${IDP_NAME}
+    openID:
+      claims:
+        email:
         - email
-        - profile
-        extraAuthorizeParameters:
-            include_granted_scopes: "true"
-        claims:
-            preferredUsername:
-            - email
-            - upn
-            name:
-            - name
-            email:
-            - email
-        issuer: https://login.microsoftonline.com/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    ```
+        name:
+        - name
+        preferredUsername:
+        - upn
+      clientID: ${APP_ID}
+      clientSecret:
+        name: openid-client-secret
+      extraScopes: []
+      issuer: https://login.microsoftonline.com/${TENANT_ID}/v2.0
+    type: OpenID
+EOF
+```
 
-**NOTE**
+Feel free to further modify this output (which is saved in your current directory as `cluster-oauth-config.yaml`).
 
-    - The clientID is the AppId of your registered application.
-    - Issuer URL is https://login.microsoftonline.com/<tenant id>.
-    - The clientSecret is using the secret (openid-client-secret-azuread) that you created from the previous step.
+Finally, apply the new configuration to the cluster's OAuth provider by running the following command:
 
+```bash
+oc apply -f ./cluster-oauth-config.yaml
+```
 
-7. Update ARO OAUTH configuration
-    ```
-    oc apply -f oauth
-    ```
+> **Note:** It is normal to receive an error that says an annotation is missing when you run `oc apply` for the first time. This can be safely ignored.
 
-8. Login OpenShift console VIA ADD
+## 4. Grant additional permissions to individual users
 
-![](../images/ARO%2BADD.png)
+Once the cluster authentication operator reconciles your changes (generally within a few minutes), you will be able to login to the cluster using Azure AD. 
 
-### Grant users admin privileges.
+Once you login, you will notice that you have very limited permissions. This is because, by default, OpenShift only grants you the ability to create new projects (namespaces) in the cluster. Other projects (namespaces) are restricted from view. 
 
-OpenShift cluster comes with a pre-configured role called "cluster-admin". You can create rolebinding to assign "cluster-admin" role to a Azure AD
+OpenShift includes a signifcant number of pre-configured roles, including the `cluster-admin` role that grants full access and control over the clster. To grant your user access to the `cluster-admin` role, you must create a ClusterRoleBinding to your user account.
 
-    ```
-    oc create clusterrolebinding azure-ad-cluster-admin \
+```bash
+USERNAME=example@redhat.com # Replace with your Azure AD username
+oc create clusterrolebinding cluster-admin-user \
     --clusterrole=cluster-admin \
-    --user=<<Azure AD username>>
-    ```
+    --user=$USERNAME
+```
 
-## Delete Cluster
-
-Once you're done its a good idea to delete the cluster to ensure that you don't get a surprise bill.
-
-1. Delete the cluster
-
-    ```bash
-    az aro delete -y \
-      --resource-group $RESOURCE_GROUP \
-      --name $CLUSTER_NAME
-    ```
-
-1. Delete the Azure resource group
-
-    > Only do this if there's nothing else in the resource group.
-
-    ```bash
-    az group delete -y \
-      --name $RESOURCE_GROUP
-    ```
+For more information on how to use RBAC to define and apply permissions in OpenShift, see [the OpenShift documentation](https://docs.openshift.com/container-platform/latest/authentication/using-rbac.html).
