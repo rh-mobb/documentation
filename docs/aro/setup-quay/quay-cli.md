@@ -7,7 +7,8 @@
 ## Pre Requisites
 
 * [An ARO cluster](/docs/quickstart-aro.html)
-* oc/azure cli
+* oc cli
+* azure cli
 
 ## Steps
 
