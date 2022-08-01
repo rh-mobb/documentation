@@ -15,7 +15,7 @@ If you prefer a more visual medium, you can watch [Kristopher White] walk throug
 
 ### Backend Storage Setup
 
-1. **Login** to Azure https://portal.azure.com/ 
+1. Login to [Azure](https://portal.azure.com/)
 
 1. Search/Click **Create Resource Groups**
 
