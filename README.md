@@ -44,6 +44,9 @@
 * [Create a point to site VPN connection for an ARO Cluster](./docs/aro/vpn)
 * [Configure access to ARO Image Registry](./docs/aro/registry)
 * [Configure ARO with OpenShift Data Foundation](./docs/aro/odf)
+* Setting Up Quay on an ARO Cluster using Azure Container Storage
+  * [via CLI ](./docs/aro/setup-quay/quay-cli.md)
+  * [via GUI ](./docs/aro/setup-quay/quay-console.md)
 * [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 
 ### GCP
