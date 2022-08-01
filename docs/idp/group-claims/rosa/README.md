@@ -11,6 +11,7 @@ This guide will walk through the following steps:
 1. Register a new application in Azure AD for authentication. 
 2. Configure the application registration in Azure AD to include optional and group claims in tokens.
 3. Configure the OpenShift cluster to use Azure AD as the identity provider.
+4. Grant additional permissions to individual groups.
 
 ## Before you Begin
 
@@ -41,7 +42,7 @@ Provide a name for the application, for example `openshift-auth`. Select "Web" f
 
 ![Azure Portal - Register an application page](../images/azure-portal_register-an-application-page.png)
 
-Then, click on the "Certificates & secrets" sub-blade and select "New client secret". Fill in the details request and make note of the generated secret key, as you'll use it in a later step. You won't be able to retrieve it again.
+Then, click on the "Certificates & secrets" sub-blade and select "New client secret". Fill in the details request and make note of the generated client secret value, as you'll use it in a later step. You won't be able to retrieve it again.
 
 ![Azure Portal - Certificates & secrets page](../images/azure-portal_certificates-secrets-page.png)
 ![Azure Portal - Add a Client Secret page](../images/azure-portal_add-a-client-secret-page.png)
@@ -55,7 +56,7 @@ In order to provide OpenShift with enough information about the user to create t
 
 Click on the "Token configuration" sub-blade and select the "Add optional claim" button. 
 
-![Azure Portal - Add Optional Claims Page](../images/azure-portal_optional-group-claims-page.png)
+![Azure Portal - Add Optional Claims Page](../images/azure-portal_optional-claims-page.png)
 
 Select ID then check the "email" and "upn" claims and click the "Add" button to configure them for your Azure AD application. 
 
@@ -100,4 +101,21 @@ rosa create idp \
     --groups-claims groups
 ```
 
-Once the cluster authentication operator reconciles your changes (generally within a few minutes), you will be able to login to the cluster using Azure AD. In addition, the cluster OAuth provider will automatically create or update the membership of groups the user is a member of (using the group ID). The provider **does not** automatically create RoleBindings and ClusterRoleBindings for the groups that are created, you are responsible for creating those via your own processes. 
+## 4. Grant additional permissions to individual groups
+
+Once the cluster authentication operator reconciles your changes (generally within a few minutes), you will be able to login to the cluster using Azure AD. In addition, the cluster OAuth provider will automatically create or update the membership of groups the user is a member of (using the group ID). 
+
+Once you login, you will notice that you have very limited permissions. This is because, by default, OpenShift only grants you the ability to create new projects (namespaces) in the cluster. Other projects (namespaces) are restricted from view. The cluster OAth provider **does not** automatically create RoleBindings and ClusterRoleBindings for the groups that are created, you are responsible for creating those via your own processes. 
+
+OpenShift includes a signifcant number of pre-configured roles, including the `cluster-admin` role that grants full access and control over the clster. To grant an automatically generated group access to the `cluster-admin` role, you must create a ClusterRoleBinding to the group ID.
+
+```bash
+GROUP_ID=wwwwwwww-wwww-wwww-wwww-wwwwwwwwwwww # Replace with your Azure AD Group ID that you would like to have cluster admin permissions
+oc create clusterrolebinding cluster-admin-group \
+    --clusterrole=cluster-admin \
+    --group=$GROUP_ID
+```
+
+Now, any user in the specified group will automatically be granted `cluster-admin` access.
+
+For more information on how to use RBAC to define and apply permissions in OpenShift, see [the OpenShift documentation](https://docs.openshift.com/container-platform/latest/authentication/using-rbac.html).
