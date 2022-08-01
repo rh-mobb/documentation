@@ -76,13 +76,13 @@
 
 ## Configuring Specific Identity Providers
 
-* [Configure GitLab as an identity provider for ROSA/OSD](./gitlab)
-* [Configure GitLab as an identity provider for ARO](./gitlab-aro)
-* [Configure Azure AD as an identity provider for ARO](./azuread-aro)
-* [Configure Azure AD as an identitiy provider for ARO with group claims](./group-claims/aro/)
-* [Configure Azure AD as an identitiy provider for ROSA with group claims](./group-claims/rosa/)
-* [Configure Azure AD as an identity provider for ROSA/OSD](./azuread)
-* [Configure Azure AD as an identity provider for ARO via the CLI](./azuread-aro-cli)
+* [Configure GitLab as an identity provider for ROSA/OSD](./docs/idp/gitlab)
+* [Configure GitLab as an identity provider for ARO](./docs/idp/gitlab-aro)
+* [Configure Azure AD as an identity provider for ARO](./docs/idp/azuread-aro)
+* [Configure Azure AD as an identitiy provider for ARO with group claims](./docs/idp/group-claims/aro/)
+* [Configure Azure AD as an identitiy provider for ROSA with group claims](./docs/idp/group-claims/rosa/)
+* [Configure Azure AD as an identity provider for ROSA/OSD](./docs/idp//azuread)
+* [Configure Azure AD as an identity provider for ARO via the CLI](./docs/idp//azuread-aro-cli)
 
 ## Configuring Group Synchronization
 
