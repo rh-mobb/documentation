@@ -16,6 +16,7 @@ For deploy an OSD cluster in GCP using existing Virtual Private Cloud (VPC) you 
 NOTE: Also the GCloud Shell can be used, and have the gcloud cli among other tools preinstalled.
 
 ## Generate GCP VPC and Subnets
+
 This is a diagram showing the GCP infra prerequisites that are needed for the OSD installation:
 
 ![GCP Prereqs](./images/osd-prereqs.png){: width="750" }
@@ -147,6 +148,8 @@ make all
 
 ## Install the OSD cluster using pre-existent VPCs
 
+### Option 1 - Create the OSD cluster using OCM UI
+
 These steps are based in the [official OSD installation documentation](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html#osd-create-gcp-cluster-ccs_osd-creating-a-cluster-on-gcp).
 
 1. Log in to OpenShift Cluster Manager and click Create cluster.
@@ -188,11 +191,58 @@ On the Cluster details page, provide a name for your cluster and specify the clu
 14. Review the summary of your selections and click Create cluster to start the cluster installation. Check that the **Install into Existing VPC** is enabled and the VPC and Subnets are properly selected and defined:
 ![OSD Install](./images/osd-gcp13.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
 
+### Option 2 - Create OSD cluster using OCM-CLI
+
+[OCM CLI](https://github.com/openshift-online/ocm-cli) is a command line tool that simplifies the use of the OCM API available at <https://api.openshift.com>.
+
+1. Define the variables needed for the OSD in GCP cluster creation:
+
+```bash
+export CLUSTER_NAME=<cluster name>
+export REGION=<region name>
+export OSD_VPC=<vpc name>
+export MASTER_SUBNET=<master subnet name>
+export WORKER_SUBNET=<worker subnet name>
+```
+
+2. You need to generate a [GCP Service Account and generate a new key](https://cloud.google.com/sdk/docs/authorizing#authorize_with_a_service_account). Then download the json file and export the path where is located:
+
+```bash
+export GCP_SA_FILE=<location of the gcp sa json file>
+```
+
+> If the Service Account is generated beforehand (look for osd-ccs-admin service account), then you only need to generate a new key and download the json gcp Service Account file file.
+
+3. Create the cluster using the OCM-CLI:
+
+```bash
+ocm create cluster $CLUSTER_NAME --provider gcp \
+   --vpc-name $OSD_VPC --region $REGION \
+   --control-plane-subnet $MASTER_SUBNET \ 
+   --compute-subnet $WORKER_SUBNET 
+   --service-account-file $GCP_SA_FILE --ccs
+```
+
+4. Check the cluster status using OCM-CLI:
+
+```bash
+GCP_OSD_ID=$(ocm list clusters | grep $CLUSTER_NAME | awk '{ print $1 }')
+ocm cluster status $GCP_OSD_ID
+```
+
 ## Cleanup
 
 Deleting a ROSA cluster consists of two parts:
 
-1. Deleting the OSD cluster can be done using the OCM console described in the [official OSD docs](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
+1. Delete the OSD cluster using option 1 or option 2:
+
+   * Option 1: Deleting the OSD cluster can be done using the OCM console described in the [official OSD docs](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
+
+   * Option 2: Delete OSD from CLI:
+
+   ```bash
+   ocm delete cluster $GCP_OSD_ID
+   ```
 
 2. Deleting the GCP infrastructure resources (VPC, Subnets, Cloud NAT, Cloud Router).
 Depending of which option you selected you must perform:
