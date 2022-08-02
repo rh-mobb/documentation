@@ -56,9 +56,12 @@ Ideally, a user would be created inside the Okta organization that was specifica
 
 1. Create a new secret named `okta-group-sync` in the **group-sync-operator** namespace. This will contain the Okta API key that was just created.
 
+
 1. Using the OpenShift CLI, create the secret using the following format:
 
         oc create secret generic okta-api-token --from-literal='okta-api-token=${API_TOKEN}' -n group-sync-operator
+
+    If there is a need to have multiple Okta group sync jobs running, the **name** of the secret can be different (e.g. `okta-group-sync-from-app-1`), but the **key** (the first part of the `--from-literal` argument) needs to remain `okta-api-token`.
 
 1. Obtain values from Okta for the AppId and URL. The AppId is the client ID under the application created to support OpenID for the OCP Cluster(s). The URL is the same as the one used to admin Okta, without the `-admin` in the first term and should look something like this:
 
