@@ -6,6 +6,8 @@ This guide will walk you through using the MOBB Helm Chart to deploy the necessa
 
 As a bonus it will set up a CloudWatch datasource to view any metrics or logs you have in Cloud Watch.
 
+> Make sure to use a region where Amazon Prometheus service is supported
+
 ## Prerequisites
 
 * [A ROSA cluster deployed with STS](/docs/rosa/sts/)
@@ -145,7 +147,7 @@ EOF
 
     ```bash
     CW_POLICY=$(aws iam create-policy --policy-name $PROM_SA-cw \
-      --policy-document file://$SCRATCH_DIR/PermissionPolicyIngest.json \
+      --policy-document file://$SCRATCH_DIR/PermissionPolicyCloudWatch.json \
       --query 'Policy.Arn' --output text)
     echo $CW_POLICY
     ```
@@ -229,7 +231,7 @@ metadata:
   namespace: openshift-user-workload-monitoring
 data:
   config.yaml: |
-    kubernetes:
+    prometheus:
       remoteWrite:
         - url: "http://aws-prometheus-proxy.$PROM_NAMESPACE.svc.cluster.local:8005/workspaces/$PROM_WS/api/v1/remote_write"
 EOF

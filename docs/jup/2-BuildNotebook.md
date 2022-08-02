@@ -3,7 +3,7 @@
 Retrieve the login command
 --------------------------
 
-If you are not logged in via the CLI, [access your cluster via the web console](/rosa/6-access_cluster/#accessing-the-cluster-via-the-web-console), then click on the dropdown arrow next to your name in the top-right and select *Copy Login Command*.
+If you are not logged in via the CLI, access your cluster via the web console, then click on the dropdown arrow next to your name in the top-right and select *Copy Login Command*.
 
 ![CLI Login](/docs/jup/images/2-cli-login.png)
 
@@ -110,8 +110,8 @@ Creating Custom Notebook Images
 
 To create custom notebooks images, you can use the ``s2i-minimal-notebook:3.6`` image as an S2I builder. This repository contains two examples for extending the minimal notebook. These can be found in:
 
-* [scipy-notebook](./scipy-notebook)
-* [tensorflow-notebook](./tensorflow-notebook)
+* [scipy-notebook](https://github.com/jupyter-on-openshift/jupyter-notebooks/tree/develop/scipy-notebook)
+* [tensorflow-notebook](https://github.com/jupyter-on-openshift/jupyter-notebooks/tree/develop/tensorflow-notebook)
 
 These are intended to mimic the images of the same name available from the Jupyter project.
 
