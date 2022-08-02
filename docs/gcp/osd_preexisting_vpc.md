@@ -217,9 +217,9 @@ export GCP_SA_FILE=<location of the gcp sa json file>
 
 ```bash
 ocm create cluster $CLUSTER_NAME --provider gcp \
-   --vpc-name $OSD_VPC --region $REGION \
-   --control-plane-subnet $MASTER_SUBNET \ 
-   --compute-subnet $WORKER_SUBNET 
+   --vpc-name $OSD_VPC --region $REGION         \
+   --control-plane-subnet $MASTER_SUBNET        \ 
+   --compute-subnet $WORKER_SUBNET              \
    --service-account-file $GCP_SA_FILE --ccs
 ```
 
