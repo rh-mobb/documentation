@@ -56,7 +56,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Use Helm to register the secrets store csi driver
 
     ```bash
-    helm repo add secrets-store-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/master/charts
+    helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
     ```
 
 1. Update your Helm Repositories
@@ -68,10 +68,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Install the secrets store csi driver
 
     ```bash
-    helm upgrade --install --create-namespace -n csi-secrets-store \
-      csi-secrets-store-driver \
-      secrets-store-csi-driver/secrets-store-csi-driver \
-      --set "linux.providersDir=/var/run/secrets-store-csi-providers"
+    helm upgrade --install -n csi-secrets-store csi-secrets-store-driver secrets-store-csi-driver/secrets-store-csi-driver
     ```
 
 1. Deploy the AWS provider
@@ -185,7 +182,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 
     ```bash
     cat << EOF | kubectl apply -f -
-    apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+    apiVersion: secrets-store.csi.x-k8s.io/v1
     kind: SecretProviderClass
     metadata:
       name: my-application-aws-secrets
