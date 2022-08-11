@@ -24,39 +24,34 @@ There are many ways and methods to create certificates for VPN, the guide below 
 1. Change to the easyrsa directory
 
    ```bash
-   cd easy-rsa-3.1.0/easyrsa3
-   ```
-
-1. Edit certificate parameters
-   Copy the provided template
-
-   ```bash
-   cp vars.example vars
-   ```
-
-   Edit the copied template with your values
-   ```bash
-   vim vars
-   ```
-
-   ```
-   #set_var EASYRSA_REQ_COUNTRY   "US"
-   #set_var EASYRSA_REQ_PROVINCE  "California"
-   #set_var EASYRSA_REQ_CITY      "San Francisco"
-   #set_var EASYRSA_REQ_ORG       "Copyleft Certificate Co"
-   #set_var EASYRSA_REQ_EMAIL     "me@example.net"
-   #set_var EASYRSA_REQ_OU        "My Organizational Unit"
-   ```
-
-   Uncomment (remove the #) the folowing field
-   ```
-   #set_var EASYRSA_KEY_SIZE        2048
+   cd easy-rsa/easyrsa3
    ```
 
 1. Initialize the PKI 
 
    ```bash
    ./easyrsa init-pki
+   ```
+
+1. Edit certificate parameters
+   
+   Uncomment and edit the copied template with your values
+   ```bash
+   vim pki/vars
+   ```
+
+   ```
+   set_var EASYRSA_REQ_COUNTRY   "US"
+   set_var EASYRSA_REQ_PROVINCE  "California"
+   set_var EASYRSA_REQ_CITY      "San Francisco"
+   set_var EASYRSA_REQ_ORG       "Copyleft Certificate Co"
+   set_var EASYRSA_REQ_EMAIL     "me@example.net"
+   set_var EASYRSA_REQ_OU        "My Organizational Unit"
+   ```
+
+   Uncomment (remove the #) the folowing field
+   ```
+   #set_var EASYRSA_KEY_SIZE        2048
    ```
 
 1. Create the CA:
