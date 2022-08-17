@@ -1,12 +1,8 @@
 # Configuring Identity Providers for ROSA and OSD #
 
-**Andrea Bozzoni, Steve Mirman**
+Red Hat OpenShift on AWS (ROSA) and OpenShift Dedicated (OSD) provide a simple way for the cluster administrator to configure one or more identity providers for their cluster[s] via the [OpenShift Cluster Manager (OCM)](https://console.redhat.com/openshift), while Azure Red Hat OpenShift relies on the internal cluster OAuth provider.
 
-*16 February 2022*
-
-Red Hat OpenShift on AWS (ROSA) and OpenShift Dedicated (OSD) provide a simple way for the cluster administrator to configure one or more indentity providers for their cluster[s]  through the [OpenShift Cluster Manager (OCM)](https://cloud.redhat.com/openshift).
-
-The identity providers available for the configuration are:
+The identity providers available for use are:
 
 + GitHub
 + GitLab
@@ -17,11 +13,19 @@ The identity providers available for the configuration are:
 
 ## Configuring Specific Identity Providers
 
-* [Configure GitLab as an identity provider for ROSA/OSD](./gitlab)
-* [Configure GitLab as an identity provider for ARO](./gitlab-aro)
-* [Configure Azure AD as an identity provider for ARO](./azuread-aro)
-* [Configure Azure AD using OpenID](./azuread)
+### ARO
+* [GitLab](./gitlab-aro)
+* [Azure AD](./azuread-aro)
+* [Azure AD with Group Claims](./group-claims/aro)
+* [Azure AD via CLI](./azuread-aro-cli)
+
+### ROSA/OSD
+
+* [GitLab](./gitlab)
+* [Azure AD](./azuread)
+* [Azure AD with Group Claims](./group-claims/rosa) (ROSA Only)
 
 ## Configuring Group Synchronization
 
-* [Configure Azure AD with ROSA/OSD](./az-ad-grp-sync)
+* [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](./docs/idp/az-ad-grp-sync)
+* [Using Group Sync Operator with Okta and ROSA/OSD](./docs/idp/okta-grp-sync)

@@ -44,6 +44,10 @@
 * [Create a point to site VPN connection for an ARO Cluster](./docs/aro/vpn)
 * [Configure access to ARO Image Registry](./docs/aro/registry)
 * [Configure ARO with OpenShift Data Foundation](./docs/aro/odf)
+* Setting Up Quay on an ARO Cluster using Azure Container Storage
+  * [via CLI ](./docs/aro/setup-quay/quay-cli.md)
+  * [via GUI ](./docs/aro/setup-quay/quay-console.md)
+* [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 
 ### GCP
 
@@ -73,13 +77,24 @@
   * [+ AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
   * [+ Azure Key Vault CSI Driver](./docs/security/secrets-store-csi/azure-key-vault)
 
-### Configure Identity provider
+## Configuring Specific Identity Providers
 
-* [OpenShift - Configuring Identity Providers](./docs/idp/README.md)
+* [Configure GitLab as an identity provider for ROSA/OSD](./docs/idp/gitlab)
+* [Configure GitLab as an identity provider for ARO](./docs/idp/gitlab-aro)
+* [Configure Azure AD as an identity provider for ARO](./docs/idp/azuread-aro)
+* [Configure Azure AD as an identitiy provider for ARO with group claims](./docs/idp/group-claims/aro/)
+* [Configure Azure AD as an identitiy provider for ROSA with group claims](./docs/idp/group-claims/rosa/)
+* [Configure Azure AD as an identity provider for ROSA/OSD](./docs/idp//azuread)
+* [Configure Azure AD as an identity provider for ARO via the CLI](./docs/idp//azuread-aro-cli)
+
+## Configuring Group Synchronization
+
+* [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](./docs/idp/az-ad-grp-sync)
+* [Using Group Sync Operator with Okta and ROSA/OSD](./docs/idp/okta-grp-sync)
 
 ### Deploying Advanced Security for Kubernetes in ROSA/ARO
 
-* [OpenShift - Configuring Identity Providers](./docs/security/rhacs.md)
+* [Deploying ACS in ROSA/ARO](./docs/security/rhacs.md)
 
 ## Applications
 
@@ -94,7 +109,7 @@
 ## Operations - DevOps/GitOps
 
 * [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
-* [Migrate Kubernetes Applications with Konveyer Crane](./docs/demos/crane/)
+* [Migrate Kubernetes Applications with Konveyor Crane](./docs/demos/crane/)
 
 ## Fixes / Workarounds
 
