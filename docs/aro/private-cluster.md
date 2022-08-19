@@ -240,7 +240,7 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 
         ```bash
         az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private     \
-            --collection-name 'Allow Egress'                                                  \
+            --collection-name 'Allow_Egress'                                                  \
             --action allow                                                                    \
             --priority 100                                                                    \
             -n 'required'                                                                     \
