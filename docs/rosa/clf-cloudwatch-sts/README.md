@@ -4,7 +4,7 @@
 
 *Author: Paul Czarkowski*
 
-*last edited: 2022-08-23*
+*last edited: 2022-08-24*
 
 This guide shows how to deploy the Cluster Log Forwarder operator and configure it to use STS authentication to forward logs to CloudWatch.
 
@@ -96,26 +96,7 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
 
 ## Deploy Operators
 
-<!--
-1. Create OperatorGroup
-
-```bash
-cat << EOF | oc apply -f -
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  labels:
-    hive.openshift.io/managed: "true"
-  name: openshift-logging
-  namespace: openshift-logging
-spec:
-  targetNamespaces:
-  - openshift-logging
-  upgradeStrategy: Default
-```
--->
-
-1. Deploy the cluster logging operator
+1. Deploy the Cluster Logging operator
 
    ```bash
    cat << EOF | oc apply -f -
@@ -137,6 +118,8 @@ spec:
    ```
 
 1. Deploy the Elasticsearch operator
+
+   > Note: This is only needed for CRDs and won't actually deploy a Elasticsearch cluster.
 
    ```bash
    cat << EOF | oc apply -f -
@@ -251,17 +234,17 @@ spec:
    {
       "logGroups": [
          {
-               "logGroupName": "rosa-cz-logging-sts.audit",
+               "logGroupName": "rosa-xxxx.audit",
                "creationTime": 1661286368369,
                "metricFilterCount": 0,
-               "arn": "arn:aws:logs:us-east-2:660250927410:log-group:rosa-cz-logging-sts.audit:*",
+               "arn": "arn:aws:logs:us-east-2:xxxx:log-group:rosa-xxxx.audit:*",
                "storedBytes": 0
          },
          {
-               "logGroupName": "rosa-cz-logging-sts.infrastructure",
+               "logGroupName": "rosa-xxxx.infrastructure",
                "creationTime": 1661286369821,
                "metricFilterCount": 0,
-               "arn": "arn:aws:logs:us-east-2:660250927410:log-group:rosa-cz-logging-sts.infrastructure:*",
+               "arn": "arn:aws:logs:us-east-2:xxxx:log-group:rosa-xxxx.infrastructure:*",
                "storedBytes": 0
          }
       ]
@@ -270,7 +253,7 @@ spec:
 
 ### Cleanup
 
-1. Delete the Cluster Log Forwarding r
+1. Delete the Cluster Log Forwarding resource
 
    ```bash
    oc delete -n openshift-logging clusterlogforwarder instance
@@ -301,4 +284,11 @@ spec:
 
    ```bash
    aws iam delete-policy --policy-arn $POLICY_ARN
+   ```
+
+1. Delete the CloudWatch Log Groups
+
+   ```bash
+   aws logs delete-log-group --log-group-name rosa-$ROSA_CLUSTER_NAME.audit
+   aws logs delete-log-group --log-group-name rosa-$ROSA_CLUSTER_NAME.infrastructure
    ```
