@@ -60,7 +60,9 @@
 
 ## Observability
 
-* [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
+* Configuring Alerts for User Workloads
+  * [ROSA 4.9.x, 4.10.x](./docs/rosa/custom-alertmanager-4.9)
+  * [ROSA 4.11+](./docs/rosa/custom-alertmanager)
 * [Federating ROSA metrics to S3](./docs/rosa/federated-metrics)
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Federating ROSA metrics to AWS Prometheus](./docs/rosa/cluster-metrics-to-aws-prometheus)
