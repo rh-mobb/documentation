@@ -1,14 +1,14 @@
-# Adding Infra nodes to an ARO cluster
+# Adding infrastructure nodes to an ARO cluster
 
 **Paul Czarkowski**
 
 *08/17/2022*
 
-This document shows how to set up Infrastructure nodes in an ARO cluster and move infrastructure related workloads to them. This can help with larger clusters that have resource contention between user workloads and infrastructure workloads such as Prometheus.
+This document shows how to set up infrastructure nodes in an ARO cluster and move infrastructure related workloads to them. This can help with larger clusters that have resource contention between user workloads and infrastructure workloads such as Prometheus.
 
-> Note: Infra nodes are billed at the same rates as your existing ARO worker nodes.
+> **Important note:** Infrastructure nodes are billed at the same rates as your existing ARO worker nodes.
 
-You can find the original (and more detailed) document describing the process for a generic OpenShift Cluster [here](https://docs.openshift.com/container-platform/4.10/machine_management/creating-infrastructure-machinesets.html#creating-infra-machines_creating-infrastructure-machinesets)
+You can find the original (and more detailed) document describing the process for a self-managed OpenShift Container Platform cluster [here](https://docs.openshift.com/container-platform/latest/machine_management/creating-infrastructure-machinesets.html#creating-infra-machines_creating-infrastructure-machinesets)
 
 ## Prerequisites
 

@@ -48,7 +48,7 @@
   * [via CLI ](./docs/aro/setup-quay/quay-cli.md)
   * [via GUI ](./docs/aro/setup-quay/quay-console.md)
 * [Configure ARO with Azure Policy](./docs/aro/azure-policy)
-* [Create Infra nodes on an ARO Cluster](./docs/aro/add-infra-nodes)
+* [Create infrastructure nodes on an ARO Cluster](./docs/aro/add-infra-nodes)
 
 ### GCP
 
