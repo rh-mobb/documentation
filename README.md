@@ -102,6 +102,9 @@
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
 * [Deploying 3scale API Management to ROSA/OSD](./docs/app-services/3scale)
 
+## Ingress
+* [Configure a custom ingress TLS profile for ROSA/OSD](./docs/ingress/tls-cipher-customization/)
+
 ## Data Science on Jupyter Notebook on OpenShift
 * [Prerequistes and Concepts](./docs/jup/1-Prereq-concept.md)
   * [Build minimal notebook](./docs/jup/2-BuildNotebook.md)
@@ -118,3 +121,4 @@
 
 * [Fix Cluster Logging Operator Addon for ROSA STS Clusters](./docs/rosa/sts-cluster-logging-addon)
 * [Stop default router from serving custom domain routes](./docs/ingress/default-router-custom-domain/README.md)
+
