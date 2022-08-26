@@ -2,7 +2,7 @@
 
 ARO guide to running Nvidia GPU workloads.
 
-Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/stuartatmicrosoft)
+Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart)
 
 
 ## Table of Contents
