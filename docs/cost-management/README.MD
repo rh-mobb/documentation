@@ -19,12 +19,12 @@ In this document, I will show you how to connect your OpenShift and Cloud provid
 
 ## Prerequisites
 * An OpenShift Cluster <br>
-To create a Red Hat OpenShift for AWS (ROSA) cluster, click [here](https://mobb.ninja/docs/quickstart-rosa.html) <br>
+
 To create an Azure Red Hat OpenShift (ARO) cluster, click [here](https://mobb.ninja/docs/quickstart-aro.html)
 
 You will need **cluster administrator access** in order to install and configure Cost Management Metrics Operator from the cluster web console 
 
-* A Public Cloud subscritption (Azure, AWS, GCP)
+* A Public Cloud subscritption (Azure Subscription)
 
 
 ## Adding your OpenShift source to Cost Management
@@ -67,11 +67,6 @@ Change **INSERT-SOURCE-NAME** to the new name of your source eg **my-openshift-c
 
 
 ## Adding your Microsoft Azure source to Cost Management
-
-*For steps on how to add your **Amazon Web Services (AWS)** source to Cost Management, click [here](https://access.redhat.com/documentation/en-us/cost_management_service/2022/html/adding_an_amazon_web_services_aws_source_to_cost_management/assembly-adding-aws-sources)* <br>
-
-*For steps on how to add your **Google Cloud** source to Cost Management, click [here](https://access.redhat.com/documentation/en-us/cost_management_service/2022/html-single/adding_a_google_cloud_source_to_cost_management/index)*
-
 
 ### **1. Creating a Microsoft Azure Source in your Red Hat account**
 
