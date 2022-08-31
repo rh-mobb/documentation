@@ -4,7 +4,7 @@
 
 *Author: Paul Czarkowski*
 
-*last edited: 2022-08-24*
+*last edited: 2022-08-31*
 
 This guide shows how to deploy the Cluster Log Forwarder operator and configure it to use STS authentication to forward logs to CloudWatch.
 
@@ -68,18 +68,21 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
 
    ```bash
    cat <<EOF > trust-policy.json
-   {
-   "Version": "2012-10-17",
-   "Statement": [
-   {
-   "Effect": "Allow",
-   "Principal": {
-      "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/$ROSA_CLUSTER_ID"
-   },
-   "Action": "sts:AssumeRoleWithWebIdentity"
-   }
-   ]
-   }
+    {
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Principal": {
+          "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/$ROSA_CLUSTER_ID"
+        },
+        "Action": "sts:AssumeRoleWithWebIdentity",
+        "Condition": {
+          "StringEquals": {
+            "rh-oidc.s3.us-east-1.amazonaws.com/$ROSA_CLUSTER_ID:sub": "system:serviceaccount:openshift-logging:logcollector"
+          }
+        }
+      }]
+    }
    EOF
    ROLE_ARN=$(aws iam create-role --role-name "${ROSA_CLUSTER_NAME}-RosaCloudWatch" \
       --assume-role-policy-document file://trust-policy.json \
