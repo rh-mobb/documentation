@@ -22,14 +22,14 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
 
    ```bash
    export ROSA_CLUSTER_NAME=my-cluster
-   export ROSA_CLUSTER_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME --output json | jq -r .id)
-   export REGION=$(rosa describe cluster -c $ROSA_CLUSTER_NAME --output json | jq -r .region.id)
+   export ROSA_CLUSTER_ID=$(rosa describe cluster -c ${ROSA_CLUSTER_NAME} --output json | jq -r .id)
+   export REGION=$(rosa describe cluster -c ${ROSA_CLUSTER_NAME} --output json | jq -r .region.id)
    export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer)
    export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
    export AWS_PAGER=""
-   export SCRATCH="/tmp/$ROSA_CLUSTER_NAME/clf-cloudwatch-sts"
-   mkdir -p $SCRATCH
-   echo "Cluster ID: $ROSA_CLUSTER_ID, Region: $REGION, OIDC Endpoint: $OIDC_ENDPOINT, AWS Account ID: $AWS_ACCOUNT_ID"
+   export SCRATCH="/tmp/${ROSA_CLUSTER_NAME}/clf-cloudwatch-sts"
+   mkdir -p ${SCRATCH}
+   echo "Cluster ID: ${ROSA_CLUSTER_ID}, Region: ${REGION}, OIDC Endpoint: ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
    ```
 
 ## Prepare AWS Account
@@ -39,7 +39,7 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
    ```bash
    POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaCloudWatch'].{ARN:Arn}" --output text)
    if [[ -z "${POLICY_ARN}" ]]; then
-   cat << EOF > $SCRATCH/policy.json
+   cat << EOF > ${SCRATCH}/policy.json
    {
    "Version": "2012-10-17",
    "Statement": [
@@ -59,42 +59,42 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
    }
    EOF
    POLICY_ARN=$(aws iam create-policy --policy-name "RosaCloudWatch" \
-   --policy-document file:///$SCRATCH/policy.json --query Policy.Arn --output text)
+   --policy-document file:///${SCRATCH}/policy.json --query Policy.Arn --output text)
    fi
-   echo $POLICY_ARN
+   echo ${POLICY_ARN}
    ```
 
 1. Create an IAM Role trust policy for the cluster
 
    ```bash
-   cat <<EOF > trust-policy.json
-    {
+   cat <<EOF > ${SCRATCH}/trust-policy.json
+   {
       "Version": "2012-10-17",
       "Statement": [{
         "Effect": "Allow",
         "Principal": {
-          "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/$ROSA_CLUSTER_ID"
+          "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/${ROSA_CLUSTER_ID}"
         },
         "Action": "sts:AssumeRoleWithWebIdentity",
         "Condition": {
           "StringEquals": {
-            "rh-oidc.s3.us-east-1.amazonaws.com/$ROSA_CLUSTER_ID:sub": "system:serviceaccount:openshift-logging:logcollector"
+            "rh-oidc.s3.us-east-1.amazonaws.com/${ROSA_CLUSTER_ID}:sub": "system:serviceaccount:openshift-logging:logcollector"
           }
         }
       }]
-    }
+   }
    EOF
    ROLE_ARN=$(aws iam create-role --role-name "${ROSA_CLUSTER_NAME}-RosaCloudWatch" \
-      --assume-role-policy-document file://trust-policy.json \
+      --assume-role-policy-document file://${SCRATCH}/trust-policy.json \
       --query Role.Arn --output text)
-   echo $ROLE_ARN
+   echo ${ROLE_ARN}
    ```
 
 1. Attach the IAM Policy to the IAM Role
 
    ```bash
    aws iam attach-role-policy --role-name "${ROSA_CLUSTER_NAME}-RosaCloudWatch" \
-   --policy-arn $POLICY_ARN
+   --policy-arn ${POLICY_ARN}
    ```
 
 ## Deploy Operators
@@ -124,35 +124,6 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
 
    > Note: This is only needed for CRDs and won't actually deploy a Elasticsearch cluster.
 
-   ```bash
-   cat << EOF | oc apply -f -
-   apiVersion: operators.coreos.com/v1
-   kind: OperatorGroup
-   metadata:
-     annotations:
-       olm.providedAPIs: Elasticsearch.v1.logging.openshift.io,Kibana.v1.logging.openshift.io
-     name: openshift-operators-redhat
-     namespace: openshift-operators-redhat
-     spec:
-       upgradeStrategy: Default
-   ---
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     labels:
-       operators.coreos.com/elasticsearch-operator.openshift-operators-redhat: ""
-     name: elasticsearch-operator
-     namespace: openshift-operators-redhat
-   spec:
-     channel: stable
-     installPlanApproval: Automatic
-     name: elasticsearch-operator
-     source: redhat-operators
-     sourceNamespace: openshift-marketplace
-     startingCSV: elasticsearch-operator.5.5.0
-   EOF
-   ```
-
 1. Create a secret
 
    ```bash
@@ -168,30 +139,6 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
    ```
 
 ## Configure Cluster Logging
-
-1. Create a cluster logging resource
-
-   ```bash
-   cat << EOF | oc apply -f -
-   apiVersion: logging.openshift.io/v1
-   kind: ClusterLogging
-   metadata:
-     name: instance
-     namespace: openshift-logging
-   spec:
-     collection:
-       type: fluentd
-     logStore:
-       elasticsearch:
-         nodeCount: 0
-       type: elasticsearch
-     visualization:
-       kibana:
-         replicas: 0
-       type: kibana
-     managementState: Managed
-   EOF
-   ```
 
 1. Create a cluster log forwarding resource
 
@@ -222,6 +169,24 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
             - cw
    EOF
    ```
+
+1. Create a cluster logging resource
+
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: logging.openshift.io/v1
+   kind: ClusterLogging
+   metadata:
+     name: instance
+     namespace: openshift-logging
+   spec:
+     collection:
+       type: fluentd
+    forwarder:
+     managementState: Managed
+   EOF
+   ```
+
 
 ## Check AWS CloudWatch for logs
 
@@ -272,7 +237,7 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
 
    ```bash
    aws iam detach-role-policy --role-name "${ROSA_CLUSTER_NAME}-RosaCloudWatch" \
-   --policy-arn $POLICY_ARN
+   --policy-arn "${POLICY_ARN}"
    ```
 
 1. Delete the IAM Role
@@ -286,12 +251,12 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
    > Only run this command if there are no other resources using the Policy
 
    ```bash
-   aws iam delete-policy --policy-arn $POLICY_ARN
+   aws iam delete-policy --policy-arn "${POLICY_ARN}"
    ```
 
 1. Delete the CloudWatch Log Groups
 
    ```bash
-   aws logs delete-log-group --log-group-name rosa-$ROSA_CLUSTER_NAME.audit
-   aws logs delete-log-group --log-group-name rosa-$ROSA_CLUSTER_NAME.infrastructure
+   aws logs delete-log-group --log-group-name "rosa-${ROSA_CLUSTER_NAME}.audit"
+   aws logs delete-log-group --log-group-name "rosa-${ROSA_CLUSTER_NAME}.infrastructure"
    ```
