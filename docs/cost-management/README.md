@@ -181,6 +181,7 @@ Cost management will begin polling Azure for cost data, which will appear on the
 After adding your Openshift Container Platform and Cloud Provider sources, Cost management will show cost data by 
 
 1. Source
+
 1. Cloud provider cost and usage related to running your OpenShift Container Platform clusters on their platform 
 
    > See the following video for a quick overview of Cost Management for OpenShift followed by a demo of the product
