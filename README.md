@@ -113,10 +113,11 @@
   * [Build minimal notebook](./docs/jup/2-BuildNotebook.md)
   * [JupyterHub notebook with GPU](./docs/jup/3-OpenDataHub-GPU.md)
 
-## Operations - DevOps/GitOps
+## Miscellaneous
 
 * [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
 * [Migrate Kubernetes Applications with Konveyor Crane](./docs/demos/crane/)
+* [Red Hat Cost Management for Cloud Services](./docs/misc/cost-management/)
 
 ## Fixes / Workarounds
 
