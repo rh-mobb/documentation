@@ -343,3 +343,4 @@
    ```bash
    oc delete cloudstorage ${CLUSTER_NAME}-oadp
    ```
+
