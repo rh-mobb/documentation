@@ -118,6 +118,7 @@
 * [Demonstrating GitOps - ArgoCD](./docs/demos/gitops/)
 * [Migrate Kubernetes Applications with Konveyor Crane](./docs/demos/crane/)
 * [Red Hat Cost Management for Cloud Services](./docs/misc/cost-management/)
+* [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](./docs/misc/oadp/rosa-sts/)
 
 ## Fixes / Workarounds
 
