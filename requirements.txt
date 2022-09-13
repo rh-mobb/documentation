@@ -1,4 +1,0 @@
-pip3 install 
-    mkdocs-material
-    docums-print-site-plugin
-    mkdocs-print-site-pligin
