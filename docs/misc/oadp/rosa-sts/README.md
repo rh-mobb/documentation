@@ -16,7 +16,7 @@
    export REGION=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .region.id)
    export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer)
    export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
-   export CLUSTER_VERSION=`rosa describe cluster -c pczarkow-sts -o json | jq -r .version.raw_id | cut -f -2 -d '.'`
+   export CLUSTER_VERSION=`rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r .version.raw_id | cut -f -2 -d '.'`
    export ROLE_NAME="${CLUSTER_NAME}-openshift-oadp-aws-cloud-credentials"
    export AWS_PAGER=""
    export SCRATCH="/tmp/${CLUSTER_NAME}/oadp"
@@ -256,7 +256,7 @@
 1. Wait until backup is done
 
    ```bash
-   watch "oc get backup hello-world -o json | jq .status"
+   watch "oc -n openshift-adp get backup hello-world -o json | jq .status"
    ```
 
    ```json
@@ -297,7 +297,7 @@
 1. Wait for the Restore to finish
 
    ```bash
-   watch "oc get restore hello-world -o json | jq .status"
+   watch "oc -n openshift-adp get restore hello-world -o json | jq .status"
    ```
 
    ```
