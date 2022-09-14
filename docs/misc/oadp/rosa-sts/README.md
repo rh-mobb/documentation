@@ -26,7 +26,7 @@
 
 ## Prepare AWS Account
 
-1. Create an IAM Policy for OpenShift Log Forwarding
+1. Create an IAM Policy to allow for S3 Access
 
    ```bash
    POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaOadp'].{ARN:Arn}" --output text)
@@ -110,7 +110,7 @@
      --policy-arn ${POLICY_ARN}
    ```
 
-## Deploy OAPD on cluster
+## Deploy OADP on cluster
 
 1. Create a namespace for OADP
 
