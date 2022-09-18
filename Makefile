@@ -6,4 +6,4 @@
 # 		jekyll build
 
 preview:
-	hugo server -D
+	hugo server --minify --theme relearn -D
