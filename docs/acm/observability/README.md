@@ -1,1 +1,0 @@
-# Advanced Cluster Management - Observability
