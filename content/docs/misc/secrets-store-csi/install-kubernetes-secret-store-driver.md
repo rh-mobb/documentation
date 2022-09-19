@@ -1,7 +1,3 @@
----
-date: '2022-09-14T22:07:09.804151'
-title: Installing the Kubernetes Secret Store CSI
----
 ## Installing the Kubernetes Secret Store CSI
 
 1. Create an OpenShift Project to deploy the CSI into

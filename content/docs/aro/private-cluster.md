@@ -1,8 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.554151'
-title: ARO Quickstart - Private Cluster with JumpHost
+title: Private ARO Cluster with access via JumpHost
 ---
-# ARO Quickstart - Private Cluster with JumpHost
 
 A Quickstart guide to deploying a Private Azure Red Hat OpenShift cluster.
 
@@ -200,7 +199,7 @@ This replaces the routes for the cluster to go through the Firewall for egress v
     az network firewall ip-config create -g $AZR_RESOURCE_GROUP    \
       -f aro-private -n fw-config --public-ip-address fw-ip        \
       --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
-    
+
     FWPUBLIC_IP=$(az network public-ip show -g $AZR_RESOURCE_GROUP -n fw-ip --query "ipAddress" -o tsv)
     FWPRIVATE_IP=$(az network firewall show -g $AZR_RESOURCE_GROUP -n aro-private --query "ipConfigurations[0].privateIpAddress" -o tsv)
 
@@ -271,7 +270,7 @@ This replaces the routes for the cluster to go through the Firewall for egress v
     --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION        \
     --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
     --route-table aro-udr
-    
+
     az network vnet subnet update -g $AZR_RESOURCE_GROUP            \
     --vnet-name $AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION        \
     --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
@@ -346,24 +345,26 @@ With the cluster in a private network, we can create a Jump host in order to con
 
 1. Install tools
 
-    ```bash
-    sudo yum install -y gcc libffi-devel python3-devel openssl-devel jq
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+   ```bash
+   sudo yum install -y gcc libffi-devel python3-devel openssl-devel jq
+   sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
 
-    echo -e "[azure-cli]
-name=Azure CLI
-baseurl=<https://packages.microsoft.com/yumrepos/azure-cli>
-enabled=1
-gpgcheck=1
-gpgkey=<https://packages.microsoft.com/keys/microsoft.asc>" | sudo tee /etc/yum.repos.d/azure-cli.repo
+   cat << EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
+   [azure-cli]
+   name=Azure CLI
+   baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+   enabled=1
+   gpgcheck=1
+   gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+   EOF
 
-    sudo yum install -y azure-cli
-    wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-    mkdir openshift
-    tar -zxvf openshift-client-linux.tar.gz -C openshift
-    sudo install openshift/oc /usr/local/bin/oc
-    sudo install openshift/kubectl /usr/local/bin/kubectl
-    ```
+   sudo yum install -y azure-cli
+   wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+   mkdir openshift
+   tar -zxvf openshift-client-linux.tar.gz -C openshift
+   sudo install openshift/oc /usr/local/bin/oc
+   sudo install openshift/kubectl /usr/local/bin/kubectl
+   ```
 
 1. Wait until the ARO cluster is fully provisioned.
 
@@ -440,7 +441,7 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
 
 ### Adding Quota to ARO account
 
-![aro quota support ticket request example](../images/aro-quota.png)
+![aro quota support ticket request example](../../images/aro-quota.png)
 
 1. [Create an Azure Support Request](https://portal.azure.com/#blade/Microsoft_Azure_Support/HelpAndSupportBlade/newsupportrequest)
 

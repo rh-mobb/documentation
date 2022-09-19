@@ -2,16 +2,10 @@
 date: '2022-09-14T22:07:08.564151'
 title: ARO Custom domain with cert-manager and LetsEncrypt
 ---
-# ARO Custom domain with cert-manager and LetsEncrypt
 
 ARO guide to deploying an ARO cluster with custom domain and automating certificate management with cert-manager and letsencrypt certificates to manage the *.apps and api endpoints.
 
 Author: [Byron Miller](https://twitter.com/byron_miller)
-
-## Table of Contents
-
-* Do not remove this line (it will not be displayed)
-{:toc}
 
 ## Prerequisites
 
@@ -199,7 +193,7 @@ In order for cert-manager to work with AzureDNS, we need to create the zone and 
 
 This zone should be a public zone since letsencrypt will need to be able to read records created here.
 
->If you use a subdomain, please be sure to [create the NS records](https://docs.microsoft.com/en-us/azure/dns/delegate-subdomain) in your primary domain to the subdomain. 
+>If you use a subdomain, please be sure to [create the NS records](https://docs.microsoft.com/en-us/azure/dns/delegate-subdomain) in your primary domain to the subdomain.
 
 For ease of management, we're using the same resource group for domain as we have the cluster in.
 
@@ -209,7 +203,7 @@ For ease of management, we're using the same resource group for domain as we hav
    az network dns zone create -g $RESOURCEGROUP -n $DOMAIN
    ```
 
-    >You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar. 
+    >You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar.
 
 1. Create API DNS record
 
@@ -229,7 +223,7 @@ For ease of management, we're using the same resource group for domain as we hav
 
 1. Add CAA Record
 
-   >[CAA is a type of DNS record](https://letsencrypt.org/docs/caa/) that allows owners to specify which Certificate Authorities are allowed to issue certificates containing their domain names.  
+   >[CAA is a type of DNS record](https://letsencrypt.org/docs/caa/) that allows owners to specify which Certificate Authorities are allowed to issue certificates containing their domain names.
 
    ```bash
    az network dns record-set caa add-record -g $RESOURCEGROUP -z $DOMAIN \
@@ -266,7 +260,7 @@ For ease of management, we're using the same resource group for domain as we hav
 
 1. Grant DNS Zone Contributor to our Service Principal
 
-   We'll grant [DNS Zone Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#dns-zone-contributor) to our DNS Service principal. 
+   We'll grant [DNS Zone Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#dns-zone-contributor) to our DNS Service principal.
 
    ```bash
    az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role befefa01-2a29-4197-83a8-272ff33ce314
@@ -296,7 +290,7 @@ For ease of management, we're using the same resource group for domain as we hav
 
 ## Set up Cert-Manager
 
-We'll install cert-manager from operatorhub. If you experience any issues installing here, it probably means that you didn't [provide a pull-secret](https://docs.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret) when you installed your ARO cluster. 
+We'll install cert-manager from operatorhub. If you experience any issues installing here, it probably means that you didn't [provide a pull-secret](https://docs.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret) when you installed your ARO cluster.
 
 1. Create namespace
 
@@ -424,11 +418,11 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    Events:                    <none>
    ```
 
-   Once the above command is complete, you should be able to login to openshift, click view operators and make sure you're in the "openshift-cert-manager-operator" project and you should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.  
+   Once the above command is complete, you should be able to login to openshift, click view operators and make sure you're in the "openshift-cert-manager-operator" project and you should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.
 
    ![cluster issuer](cluster-issuer.png)
 
-### Create & Install API Certificate 
+### Create & Install API Certificate
 
 1. Switch openshift-config project
 
@@ -463,7 +457,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
 
 1. Create cluster api cert job
 
-   This job will install the certificate 
+   This job will install the certificate
 
    ```yaml
    envsubst  <<EOF | oc apply -f -
@@ -667,7 +661,7 @@ This is a very [helpful guide in debugging certificates](https://cert-manager.io
 
 ## Validate Certificates
 
-It will take a few minutes for the jobs to successfully complete. 
+It will take a few minutes for the jobs to successfully complete.
 
 Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser and no more warnings about SSL on cli.
 

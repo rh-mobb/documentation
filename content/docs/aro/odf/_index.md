@@ -2,8 +2,6 @@
 date: '2022-09-14T22:07:08.574151'
 title: OpenShift Data Foundation with ARO
 ---
-# OpenShift Data Foundation with ARO 
-
 **Kevin Collins**
 
 *06/28/2022*
@@ -14,13 +12,13 @@ This guide demonstrates how to setup and configure self-managed OpenShift Data F
 ## Prerequisites
 
   * An Azure Red Hat OpenShift cluster ( verion 4.10+ )
-  * [kubectl cli](https://kubernetes.io/releases/download/#kubectl) 
+  * [kubectl cli](https://kubernetes.io/releases/download/#kubectl)
   * [oc cli](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html)
   * moreutils (sponge)
   * jq
-  
+
 ## Install compute nodes for ODF
-   A best practice for optimal performance is to run ODF on dedicated nodes with a minimum of one per zone.  In this guide, we will be provisioning 3 additional compute nodes, one per zone.  Run the following script to create the additional nodes:    
+   A best practice for optimal performance is to run ODF on dedicated nodes with a minimum of one per zone.  In this guide, we will be provisioning 3 additional compute nodes, one per zone.  Run the following script to create the additional nodes:
 
 1. Log into your ARO Cluster
 
@@ -44,7 +42,7 @@ This guide demonstrates how to setup and configure self-managed OpenShift Data F
    ```
 1. Label new compute nodes
 
-   It takes just a couple of minutes for new nodes to appear.  
+   It takes just a couple of minutes for new nodes to appear.
 
    Check if the nodes are ready:
    ```bash
@@ -269,7 +267,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
    test-odf-47p2g   1/1     Running   0          107s   10.128.2.15   aro-kmobb-7zff2-worker-eastus1-xgksq   <none>           <none>
    test-odf-p5xk6   1/1     Running   0          107s   10.131.0.18   aro-kmobb-7zff2-worker-eastus3-h4gv7   <none>           <none>
    test-odf-ss8b5   1/1     Running   0          107s   10.129.2.32   aro-kmobb-7zff2-worker-eastus2-sbfpm   <none>           <none>
-   ``` 
+   ```
 1. Create a reader pod
    The reader pod will simply log data written by the writer pods.
    ```bash

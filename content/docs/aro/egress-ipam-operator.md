@@ -2,11 +2,10 @@
 date: '2022-09-14T22:07:08.554151'
 title: Using the Egressip Ipam Operator with a Private ARO Cluster
 ---
-# Using the Egressip Ipam Operator with a Private ARO Cluster
 
 ## Prerequisites
 
-* [A private ARO cluster with a VPN Connection](./private-cluster) and the egress LB removed
+* [A private ARO cluster](../private-cluster)
 
 
 ## Deploy the Egressip Ipam Operator

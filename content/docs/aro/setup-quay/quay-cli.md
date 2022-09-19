@@ -1,8 +1,8 @@
 ---
 date: '2022-09-14T22:07:08.584151'
-title: Setting up Quay on an ARO cluster using Azure Container Storage
+title: Setting up Quay on an ARO cluster via CLI
+aliases: ['/docs/aro/setup-quay/quay-cli.md']
 ---
-# Setting up Quay on an ARO cluster using Azure Container Storage 
 
 **Kristopher White x Connor Wooley**
 
@@ -28,7 +28,7 @@ title: Setting up Quay on an ARO cluster using Azure Container Storage
     az storage account keys list --account-name <storage_account_name> --resource-group <resource_group> --output yaml
     ```
     Note: this command returns a json by default with your keyName and Values, command above specifies yaml
-    
+
     ```bash
     az storage container create --name <container_name> --public-access blob \ --account-name <AZURE_STORAGE_ACCOUNT> --account-key <AZURE_STORAGE_ACCOUNT_KEY>
     ```
@@ -72,7 +72,7 @@ title: Setting up Quay on an ARO cluster using Azure Container Storage
         DISTRIBUTED_STORAGE_PREFERENCE:
         - local_us
         ```
-    
+
         ```bash
         oc create secret generic --from-file config.yaml=./config.yaml -n <namespace> <config_bundle_secret_name>
         ```

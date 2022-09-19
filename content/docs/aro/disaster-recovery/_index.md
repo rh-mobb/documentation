@@ -1,8 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.554151'
-title: ARO - Considerations for Diasaster Recovery
+title: ARO - Considerations for Disaster Recovery
 ---
-# ARO - Considerations for Diasaster Recovery
 
 This is a high level overview of disaster recovery options for Azure Red Hat OpenShift. It is not a detailed design, but rather a starting point for a more detailed design.
 

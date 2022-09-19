@@ -2,11 +2,10 @@
 date: '2022-09-14T22:07:08.574151'
 title: ARO IBM Cloud Paks 4 Data
 ---
-# ARO IBM Cloud Paks 4 Data
 
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster with IBM Cloud Paks 4 Data.
 
-Author: [Kristopher White]
+*Author: Kristopher White*
 
 ## Video Walkthrough
 
@@ -231,7 +230,7 @@ spec:
     registryPoll:
       interval: 45m
   ```
-1. Click **Create**.    
+1. Click **Create**.
 
 ### IBM Cloud Paks 4 Data Operator Install
 ![Admin View](./images/admin-view.png)

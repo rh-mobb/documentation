@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:08.574151'
 title: Setup a VPN Connection into an ARO Cluster with OpenVPN
 ---
-# Setup a VPN Connection into an ARO Cluster with OpenVPN
 
 **Kevin Collins**
 
@@ -22,7 +21,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 1. Clone OpenVPN/easy-rsa
 
    ```bash
-   git clone https://github.com/OpenVPN/easy-rsa.git 
+   git clone https://github.com/OpenVPN/easy-rsa.git
    ```
 
 1. Change to the easyrsa directory
@@ -31,14 +30,14 @@ There are many ways and methods to create certificates for VPN, the guide below 
    cd easy-rsa/easyrsa3
    ```
 
-1. Initialize the PKI 
+1. Initialize the PKI
 
    ```bash
    ./easyrsa init-pki
    ```
 
 1. Edit certificate parameters
-   
+
    Uncomment and edit the copied template with your values
    ```bash
    vim pki/vars
@@ -86,7 +85,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
    ```bash
    CACERT=$(openssl x509 -in pki/ca.crt -outform der | base64)
-   ``` 
+   ```
 
 
 ## Set Envrionment Variables
@@ -121,7 +120,7 @@ VPN_PREFIX=172.18.0.0/24
 
    pip=$(az network public-ip show -g $ARORG --name $USER-pip-$UNIQUEID --query "ipAddress" -o tsv)
    ```
- 
+
 1. Create a Gateway Subnet
 
    ```bash
@@ -149,7 +148,7 @@ VPN_PREFIX=172.18.0.0/24
    --vpn-type RouteBased \
    --vpn-gateway-generation Generation2 \
    --client-protocol IkeV2 OpenVPN
-   ```  
+   ```
 > go grab a coffee, this takes about 15 - 20 minutes
 
 ## Configure your OpenVPN Client
@@ -158,14 +157,14 @@ VPN_PREFIX=172.18.0.0/24
    From the Azure Portal - navigate to your Virtual Network Gateway, point to site configuration, and then click Download VPN Client.
    ![screenshot of download VPN client](./images/p2s.png)
    This will download a zip file containing the VPN Client
- 
+
 1. Create a VPN Client Configuration
 
    Uncompress the file you downloaded in the previous step and edit the OpenVPN\vpnconfig.ovpn file.
-   >Note: The next two commands assume you are still in the easyrsa3 directory. 
+   >Note: The next two commands assume you are still in the easyrsa3 directory.
 
    In the vpnconfig.ovpn replace the $CLIENTCERTIFICATE line with the entire contents of:
-   
+
    ```bash
    openssl x509 -in pki/issued/azure.crt
    ```
@@ -176,10 +175,10 @@ VPN_PREFIX=172.18.0.0/24
    cat pki/private/azure.key
    ```
    Make sure to copy the -----BEGIN PRIVATE KEY----- and the -----END PRIVATE KEY----- lines.
-   
-1. add the new OpenVPN configuration file to your OpenVPN client. 
-   > mac users - just double click on the vpnserver.ovpn file and it will be automatically imported. 
+
+1. add the new OpenVPN configuration file to your OpenVPN client.
+   > mac users - just double click on the vpnserver.ovpn file and it will be automatically imported.
 
 1. Connect your VPN.
 
-   ![screenshot of Vpn Connected](./images/connect-vpn-settings.png) 
+   ![screenshot of Vpn Connected](./images/connect-vpn-settings.png)

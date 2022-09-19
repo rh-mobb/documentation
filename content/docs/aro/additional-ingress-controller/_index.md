@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:08.574151'
 title: Adding an additional ingress controller to an ARO cluster
 ---
-# Adding an additional ingress controller to an ARO cluster
 
 **Paul Czarkowski, Stuart Kirk**
 
@@ -17,39 +16,39 @@ title: Adding an additional ingress controller to an ARO cluster
 
 1. Create some environment variables
 
-    ```bash
-DOMAIN=custom.azure.mobb.ninja
-EMAIL=example@email.com
-SCRATCH_DIR=/tmp/aro
-    ```
+   ```bash
+   DOMAIN=custom.azure.mobb.ninja
+   EMAIL=example@email.com
+   SCRATCH_DIR=/tmp/aro
+   ```
 
 1. Create a certificate for the ingress controller
 
-    ```bash
-certbot certonly --manual \
-  --preferred-challenges=dns \
-  --email $EMAIL \
-  --server https://acme-v02.api.letsencrypt.org/directory \
-  --agree-tos \
-  --manual-public-ip-logging-ok \
-  -d "*.$DOMAIN" \
-  --config-dir "$SCRATCH_DIR/config" \
-  --work-dir "$SCRATCH_DIR/work" \
-  --logs-dir "$SCRATCH_DIR/logs"
-    ```
+   ```bash
+   certbot certonly --manual \
+     --preferred-challenges=dns \
+     --email $EMAIL \
+     --server https://acme-v02.api.letsencrypt.org/directory \
+     --agree-tos \
+     --manual-public-ip-logging-ok \
+     -d "*.$DOMAIN" \
+     --config-dir "$SCRATCH_DIR/config" \
+     --work-dir "$SCRATCH_DIR/work" \
+     --logs-dir "$SCRATCH_DIR/logs"
+   ```
 
 1. Create a secret for the certificate
 
-    ```bash
-oc create secret tls custom-tls \
-  -n openshift-ingress \
-  --cert=$SCRATCH_DIR/config/live/$DOMAIN/fullchain.pem \
-  --key=$SCRATCH_DIR/config/live/$DOMAIN/privkey.pem
-    ```
+   ```bash
+   oc create secret tls custom-tls \
+     -n openshift-ingress \
+     --cert=$SCRATCH_DIR/config/live/$DOMAIN/fullchain.pem \
+     --key=$SCRATCH_DIR/config/live/$DOMAIN/privkey.pem
+   ```
 
 1. Create an ingress controller
 
-   ```bash
+   ```yaml
    cat <<EOF | oc apply -f -
    apiVersion: operator.openshift.io/v1
    kind: IngressController
@@ -77,46 +76,46 @@ oc create secret tls custom-tls \
 
 1. Wait a few moments then get the `EXTERNAL-IP` of the new ingress controller
 
-    ```bash
-oc get -n openshift-ingress svc router-custom
-    ```
+   ```bash
+   oc get -n openshift-ingress svc router-custom
+   ```
 
     The output should look like:
 
-    ```
+   ```
     NAME            TYPE           CLUSTER-IP     EXTERNAL-IP    PORT(S)                      AGE
     router-custom   LoadBalancer   172.30.90.84   20.120.48.78   80:32160/TCP,443:32511/TCP   49s
-    ```
+   ```
 
 1. Create a wildcard DNS record pointing at the `EXTERNAL-IP`
 
 1. Test that the Ingress is working
 
-    ```bash
-    curl -s https://test.$DOMAIN | head
-    ```
+   ```bash
+   curl -s https://test.$DOMAIN | head
+   ```
 
-    ```
+   ```
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-    ```
+   ```
 
 1. Create a new project to deploy an application to
 
-    ```bash
-    oc new-project demo
-    ```
+   ```bash
+   oc new-project demo
+   ```
 
 1. Create a new application
 
-    ```bash
-    oc new-app --docker-image=docker.io/openshift/hello-openshift
-    ```
+   ```bash
+   oc new-app --docker-image=docker.io/openshift/hello-openshift
+   ```
 
 1. Expose
 
-   ```bash
+   ```yaml
    cat << EOF | oc apply -f -
    apiVersion: route.openshift.io/v1
    kind: Route
@@ -142,10 +141,10 @@ oc get -n openshift-ingress svc router-custom
 
 1. Verify it works
 
-    ```bash
-    curl https://hello.custom.azure.mobb.ninja
-    ```
+   ```bash
+   curl https://hello.custom.azure.mobb.ninja
+   ```
 
-    ```bash
+   ```bash
     Hello OpenShift!
-    ```
+   ```

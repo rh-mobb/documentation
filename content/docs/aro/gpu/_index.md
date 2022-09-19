@@ -2,17 +2,11 @@
 date: '2022-09-14T22:07:08.564151'
 title: ARO with Nvidia GPU Workloads
 ---
-# ARO with Nvidia GPU Workloads
 
 ARO guide to running Nvidia GPU workloads.
 
 Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart)
 
-
-## Table of Contents
-
-* Do not remove this line (it will not be displayed)
-{:toc}
 
 ## Prerequisites
 

@@ -2,9 +2,8 @@
 date: '2022-09-14T22:07:08.574151'
 title: Apply Azure Policy to Azure Policy
 ---
-# Apply Azure Policy to Azure Policy
 
-[Azure Policy](https://docs.microsoft.com/en-us/azure/governance/policy/overview) helps to enforce organizational standards and to assess compliance at-scale. Azure Policy supports [arc enabled kubernetes cluster](https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/overview) with both build-in and custom policies to ensure kubernetes resources are compliant. This article demonstrates how to make Azure Redhat Openshift cluster compliant with azure policy. 
+[Azure Policy](https://docs.microsoft.com/en-us/azure/governance/policy/overview) helps to enforce organizational standards and to assess compliance at-scale. Azure Policy supports [arc enabled kubernetes cluster](https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/overview) with both build-in and custom policies to ensure kubernetes resources are compliant. This article demonstrates how to make Azure Redhat Openshift cluster compliant with azure policy.
 
 ## Prerequisites
 
@@ -49,7 +48,7 @@ gatekeeper-controller-manager-59864c84f4-sztck   1/1     Running   0          3h
 
 ## Demo a simple policy
 
-This policy will allow only images from a specific registry. 
+This policy will allow only images from a specific registry.
 
 * Open Azure Portal Policy Services
 * Click on Assign Policy
@@ -57,7 +56,7 @@ This policy will allow only images from a specific registry.
 * Select "Kubernetes cluster containers should only use allowed images" in the "policy definition" field
 * Click Next -> fill out namespace inclusion as ["test-policy"] -> Allowed Registry Regex as "index.docker.io.+$"
 ![policy_assignment](./images/policy_assignment.png)
-* Save the result. The policy will take effect after around 30 minutes. 
+* Save the result. The policy will take effect after around 30 minutes.
 
 ```
 oc get K8sAzureContainerAllowedImages #Get the latest policy

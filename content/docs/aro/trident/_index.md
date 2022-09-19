@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:08.564151'
 title: Trident NetApp operator setup for Azure NetApp files
 ---
-# Trident NetApp operator setup for Azure NetApp files
 
 **Byron Miller**
 
@@ -14,10 +13,10 @@ This guide a simple "happy path" to show the path of least friction to showcasin
 ## Prerequisites
 
   * An Azure Red Hat OpenShift cluster installed with Service Principal role/credentials.
-  * [kubectl cli](https://kubernetes.io/releases/download/#kubectl) 
+  * [kubectl cli](https://kubernetes.io/releases/download/#kubectl)
   * [oc cli](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html)
-  * [helm 3 cli](https://helm.sh/docs/intro/install/){:target="_blank"}
-  * [Review official trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator){:target="_blank"}
+  * [helm 3 cli](https://helm.sh/docs/intro/install/)
+  * [Review official trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator)
 
 In this guide, you will need service principal and region details. Please have these handy.
 
@@ -27,11 +26,11 @@ In this guide, you will need service principal and region details. Please have t
 * Azure clientSecret (Service Principal Secret)
 * Azure Region
 
-If you don't have your existing ARO service principal credentials, you can create your own service principal and grant it contributor to be able to manage the required resources. Please review the [official Trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator){:target="_blank"} regarding Azure NetApp files and required permissions.
+If you don't have your existing ARO service principal credentials, you can create your own service principal and grant it contributor to be able to manage the required resources. Please review the [official Trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator) regarding Azure NetApp files and required permissions.
 
 ### Important Concepts
 
-Persistent Volume Claims are [namespaced objects](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#a-note-on-namespaces){:target="_blank"}.  Mounting RWX/ROX is only possible within the same namespace.
+Persistent Volume Claims are [namespaced objects](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#a-note-on-namespaces).  Mounting RWX/ROX is only possible within the same namespace.
 
 NetApp files must be have a delegated subnet within your ARO Vnet's and you must assign it to the Microsoft.Netapp/volumes service.
 
@@ -41,7 +40,7 @@ You must first register the Microsoft.NetApp provider and Create a NetApp accoun
 
 ### Register NetApp files
 
-[Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-register){:target="_blank"}
+[Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-register)
 
 or az cli
 
@@ -53,7 +52,7 @@ az provider register --namespace Microsoft.NetApp --wait
 
 Again, for brevity I am using the same RESOURCE_GROUP and Service Principal that the cluster was created with.
 
-[Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-create-netapp-account){:target="_blank"}
+[Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-create-netapp-account)
 
 or az cli
 
@@ -74,7 +73,7 @@ az netappfiles account create \
 
 Creating one pool for now. The common pattern is to expose all three levels with unique pool names respective of each service level.
 
-[Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-set-up-capacity-pool){:target="_blank"}
+[Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-set-up-capacity-pool)
 
 or az cli:
 
@@ -139,7 +138,7 @@ Helm install
 helm install trident-operator trident-operator-22.04.0.tgz
 ```
 
-Example output from installation: 
+Example output from installation:
 
 ```bash
 W0523 17:45:22.189592   30478 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+
@@ -164,7 +163,7 @@ online at https://github.com/NetApp/trident.
 To learn more about the release, try:
 
   $ helm status trident-operator
-  $ helm get all trident-operator 
+  $ helm get all trident-operator
 ```
 
 Validate
@@ -275,7 +274,7 @@ mountOptions:
   - nconnect=16
 EOF
 ```
-output: 
+output:
 
 ```bash
 storageclass.storage.k8s.io/standard created
@@ -322,7 +321,7 @@ Quick verification of storage, volumes and services.
 ➜  kubectl get storageclass
 NAME                        PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGEmanaged-premium (default)   kubernetes.io/azure-disk   Delete          WaitForFirstConsumer true                   3h26m
 standard                    csi.trident.netapp.io      Delete          Immediate              true                   5m5s
-➜ 
+➜
 ```
 
 ### Verify OpenShift
@@ -337,7 +336,7 @@ Persisent Volumes
 ![Persistent Volumes](persistent-volumes.png)
 
 
-## Create Pods to test Azure NetApp 
+## Create Pods to test Azure NetApp
 
 We'll create two pods here to exercise the Azure NetApp file mount. One to write data and another to read data to show that it is mounted as "read write many" and correctly working.
 

@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:08.564151'
 title: Accessing the Internal Registry from ARO
 ---
-# Accessing the Internal Registry from ARO
 
 **Kevin Collins**
 
@@ -13,13 +12,13 @@ One of the advantages of using OpenShift is the internal registry that comes wit
 ## Prerequisites
 
 * an ARO Cluster
-* oc cli 
+* oc cli
 * podman or docker cli
 
 ## Expose the Registry
 1. Expose the registry service
    ```bash
-   oc create route reencrypt --service=image-registry -n openshift-image-registry 
+   oc create route reencrypt --service=image-registry -n openshift-image-registry
    ```
 
 1. Annotate the route
@@ -38,9 +37,9 @@ One of the advantages of using OpenShift is the internal registry that comes wit
 ## Test it out
    ```bash
    podman pull openshift/hello-openshift
-   
-   podman images 
-   ``` 
+
+   podman images
+   ```
 
    expected output
    ```bash

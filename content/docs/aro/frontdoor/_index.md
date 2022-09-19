@@ -2,19 +2,16 @@
 date: '2022-09-14T22:07:08.574151'
 title: Azure Front Door with ARO ( Azure Red Hat OpenShift )
 ---
-# Azure Front Door with ARO ( Azure Red Hat OpenShift )
-Securing exposing an Internet facing application with a private ARO Cluster.  
+Securing exposing an Internet facing application with a private ARO Cluster.
 
-When you create a cluster on ARO you have several options in making the cluster public or private.  With a public cluster you are allowing Internet traffic to the api and *.apps endpoints.  With a private cluster you can make either or both the api and .apps endpoints private.  
+When you create a cluster on ARO you have several options in making the cluster public or private.  With a public cluster you are allowing Internet traffic to the api and *.apps endpoints.  With a private cluster you can make either or both the api and .apps endpoints private.
 
 How can you allow Internet access to an application running on your private cluster where the .apps endpoint is private?  This document will guide you through using Azure Frontdoor to expose your applications to the Internet.  There are several advantages of this approach, namely your cluster and all the resources in your Azure account can remain private, providing you an extra layer of security.  Azure FrontDoor operates at the edge so we are controlling traffic before it even gets into your Azure account.  On top of that, Azure FrontDoor also offers WAF and DDoS protection, certificate management and SSL Offloading just to name a few benefits.
 
 
-**Kevin Collins**
-*Adopted from [ARO Reference Architecture](https://github.com/UmarMohamedUsman/aro-reference-architecture)
+**Kevin Collins** *06/16/2022*
 
-*06/16/2022*
-
+*Adopted from [ARO Reference Architecture](https://github.com/UmarMohamedUsman/aro-reference-architecture)*
 
 
 ## Prerequisites
@@ -27,13 +24,13 @@ How can you allow Internet access to an application running on your private clus
 To build and deploy the application
 * [maven cli](https://maven.apache.org/install.html)
 * [quarkus cli](https://quarkus.io/guides/cli-tooling)
-* [OpenJDK Java 8](https://www.azul.com/downloads/?package=jdk) 
+* [OpenJDK Java 8](https://www.azul.com/downloads/?package=jdk)
 
 Make sure to use the same terminal session while going through guide for all commands as we will reference envrionment variables set or created through the guide.
 
 ## Get Started
 
-  * Create a private ARO cluster.<br>
+  * Create a private ARO cluster.
 
     Follow this guide to [Create a private ARO cluster](https://mobb.ninja/docs/aro/private-cluster)
     or simply run this [bash script](
@@ -58,7 +55,7 @@ Make sure to use the same terminal session while going through guide for all com
    AFD_MINE_CUSTOM_DOMAIN_NAME='minesweeper-aro-kmobb-com'
    (note - this should be your domain name without and .'s for example minesweeper-aro-kmobb-com)
 
-   PRIVATEENDPOINTSUBNET_PREFIX= subnet in the VNET you cluster is in.  If you following the example above to create a custer where you virtual network is 10.0.0.0/20 then you can use '10.0.6.0/24' 
+   PRIVATEENDPOINTSUBNET_PREFIX= subnet in the VNET you cluster is in.  If you following the example above to create a custer where you virtual network is 10.0.0.0/20 then you can use '10.0.6.0/24'
 
    PRIVATEENDPOINTSUBNET_NAME='PrivateEndpoint-subnet'
    ```
@@ -67,7 +64,7 @@ Make sure to use the same terminal session while going through guide for all com
 
    ```bash
    UNIQUEID=$RANDOM
-   
+
    ARO_RGNAME=$(az aro show -n $AROCLUSTER -g $ARORG --query "clusterProfile.resourceGroupId" -o tsv | sed 's/.*\///')
 
    LOCATION=$(az aro show --name $AROCLUSTER --resource-group $ARORG --query location -o tsv)
@@ -114,7 +111,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 ## Create and Configure an instance of Azure Front Door
-1. Create a Front Door Instance  
+1. Create a Front Door Instance
 
    ```bash
    az afd profile create \
@@ -222,7 +219,7 @@ After we have the cluster up and running, we need to create a private link servi
 
 1. Update DNS
 
-   Get a validation token from Front Door so Front Door can validate your domain 
+   Get a validation token from Front Door so Front Door can validate your domain
 
    ```bash
    afdToken=$(az afd custom-domain show \
@@ -238,7 +235,7 @@ After we have the cluster up and running, we need to create a private link servi
     az network dns zone create -g $ARORG -n $DOMAIN
    ```
 
-    >You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar. 
+    >You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar.
 
    Create a new text record in your DNS server
 
@@ -247,7 +244,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```
 
 1. Check if the domain has been validated:
-   >Note this can take several hours 
+   >Note this can take several hours
    Your FQDN will not resolve until Front Door validates your domain.
 
    ```bash
@@ -261,7 +258,7 @@ After we have the cluster up and running, we need to create a private link servi
    ```bash
    afdEndpoint=$(az afd endpoint show -g $ARORG --profile-name $AFD_NAME --endpoint-name aro-mine-$UNIQUEID --query "hostName" -o tsv)
    ```
-   
+
    Create a cname record for the application
 
    ```bash
@@ -269,7 +266,7 @@ After we have the cluster up and running, we need to create a private link servi
     -n $(echo $ARO_APP_FQDN | sed 's/\..*//') -z $DOMAIN -c $afdEndpoint
    ```
 ## Deploy an application
-Now the fun part, let's deploy an application!  
+Now the fun part, let's deploy an application!
 We will be deploying a Java based application called [microsweeper](https://github.com/redhat-mw-demos/microsweeper-quarkus/tree/ARO).  This is an application that runs on OpenShift and uses a PostgreSQL database to store scores.  With ARO being a first class service on Azure, we will create an Azure Database for PostgreSQL service and connect it to our cluster with a private endpoint.
 
 1. Create a Azure Database for PostgreSQL servers service
@@ -325,7 +322,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 
    POSTGRES_IP=$(az resource show --ids $NETWORK_INTERFACE_ID --api-version 2019-04-01 --query 'properties.ipConfigurations[0].properties.privateIPAddress' -o tsv)
 
-   az network private-dns record-set a create --name $UNIQUEID-microsweeper-database --zone-name privatelink.postgres.database.azure.com --resource-group $ARORG  
+   az network private-dns record-set a create --name $UNIQUEID-microsweeper-database --zone-name privatelink.postgres.database.azure.com --resource-group $ARORG
 
    az network private-dns record-set a add-record --record-set-name $UNIQUEID-microsweeper-database --zone-name privatelink.postgres.database.azure.com --resource-group $ARORG -a $POSTGRES_IP
    ```
@@ -357,7 +354,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 
    ```bash
    mvn --version
-   ``` 
+   ```
 
    Look for Java version - 1.8XXXX
    if not set to Java 1.8 you will need to set your JAVA_HOME variable to Java 1.8 you have installed.  To find your java versions run:
@@ -379,7 +376,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 
    ```bash
    kubeadmin_password=$(az aro list-credentials --name $AROCLUSTER --resource-group $ARORG --query kubeadminPassword --output tsv)
-   
+
    apiServer=$(az aro show -g $ARORG -n $AROCLUSTER --query apiserverProfile.url -o tsv)
 
    oc login $apiServer -u kubeadmin -p $kubeadmin_password
@@ -400,9 +397,9 @@ We will be deploying a Java based application called [microsweeper](https://gith
 1. Edit microsweeper-quarkus/src/main/resources/application.properties
 
    Make sure your file looks like the one below, changing the IP address on line 3 to the private ip address of your postgres instance.
- 
+
    To find your Postgres private IP address run the following commands:
-   
+
    ```bash
    NETWORK_INTERFACE_ID=$(az network private-endpoint show --name postgresPvtEndpoint --resource-group $ARORG --query 'networkInterfaces[0].id' -o tsv)
 
