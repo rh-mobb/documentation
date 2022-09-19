@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:10.004151'
 title: Using Group Sync Operator with Okta and ROSA/OSD
 ---
-# Using Group Sync Operator with Okta and ROSA/OSD #
 
 **Thatcher Hubbard**
 
@@ -26,12 +25,12 @@ To synchronize groups and users with ROSA/OSD they must exist in Okta
 
     ![Okta Groups](./images/okta-grp.png)
 
-1. Create user IDs to synchronize with ROSA/OSD if they do not already exist 
-    
+1. Create user IDs to synchronize with ROSA/OSD if they do not already exist
+
     ![Okta Users](./images/okta-usr.png)
 
-1. Assign newly created users to the appropriate group  
-    
+1. Assign newly created users to the appropriate group
+
     ![Okta add user to group](./images/okta-assign.png)
 
 ## Install the Group Sync Operator from the OpenShift Operator Hub ##
@@ -67,7 +66,7 @@ Ideally, a user would be created inside the Okta organization that was specifica
 1. Obtain values from Okta for the AppId and URL. The AppId is the client ID under the application created to support OpenID for the OCP Cluster(s). The URL is the same as the one used to admin Okta, without the `-admin` in the first term and should look something like this:
 
         https://dev-34278011.okta.com/
-    
+
 1. Create a new Group Sync instance in the `group-sync-operator` namespace
 
     ![Group Sync instance](./images/grp-sync-instance.png)
@@ -136,7 +135,7 @@ The schedule setting of `schedule: "* * * * *"` would result in synchronization 
 
 ## Binding Groups to Roles
 
-The preceding steps provide a method to get group membership information into OpenShift, but the final step in translating that into user authorization control requires binding each group to a role or roles on the cluster. This can be done via the OCP web console by opening the Group detail, or by applying YAML via the CLI. 
+The preceding steps provide a method to get group membership information into OpenShift, but the final step in translating that into user authorization control requires binding each group to a role or roles on the cluster. This can be done via the OCP web console by opening the Group detail, or by applying YAML via the CLI.
 
 ## Additional Okta Config Options
 

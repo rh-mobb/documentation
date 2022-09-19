@@ -1,13 +1,10 @@
 ---
 date: '2022-09-14T22:07:10.024151'
 title: Stop default router from serving custom domain routes
-alias: /ingress/default-router-custom-domain
+aliases: [/docs/ingress/default-router-custom-domain/README.md]
 ---
 
-# Stop default router from serving custom domain routes
-
 OSD and ROSA supports [custom domain operator](https://docs.openshift.com/rosa/applications/deployments/osd-config-custom-domains-applications.html) to serve application custom domain, which provisions openshift ingress controller and cloud load balancers. However, when a route with custom domain is created, both default router and custom domain router serve routes. This article describes how to use route labels to stop default router from serving custom domain routes.
-
 
 ## Prerequisites
 

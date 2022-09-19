@@ -1,8 +1,8 @@
 ---
 date: '2022-09-14T22:07:09.804151'
 title: Deploying Red Hat Advanced Cluster Security in ARO/ROSA
+aliases: ['/docs/security/rhacs.md']
 ---
-# Deploying Red Hat Advanced Cluster Security in ARO/ROSA
 
 **Author: Roberto Carratalá**
 

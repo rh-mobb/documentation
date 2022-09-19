@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:09.954151'
 title: Configure Azure AD as an OIDC identity provider for ARO with cli
 ---
-# Configure Azure AD as an OIDC identity provider for ARO with cli  #
 
 **Daniel Moessner**
 
@@ -36,8 +35,8 @@ The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (A
 Follow the Microsoft instuctions: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
 
 > **Note**
-> This has been written for az cli verion `2.37.0` some commands will not work with previous versions, however, there is a known issue https://github.com/Azure/azure-cli/issues/23027 where we will use an older version via `podman run -it mcr.microsoft.com/azure-cli:2.36.0` . 
-> In case you're using `docker`, just replace `podman` command by `docker` . 
+> This has been written for az cli verion `2.37.0` some commands will not work with previous versions, however, there is a known issue https://github.com/Azure/azure-cli/issues/23027 where we will use an older version via `podman run -it mcr.microsoft.com/azure-cli:2.36.0` .
+> In case you're using `docker`, just replace `podman` command by `docker` .
 > For podman installation on  Mac, Windows & Linux, please refer to https://podman.io/getting-started/installation
 
 ### Login to Azure ###
@@ -52,7 +51,7 @@ If you're logging in from a system you have no access to your browser you can au
 
    ```
    az login --use-device-code
-   ``` 
+   ```
 ## Azure ##
 ### Define needed variables ###
 To simplly follow along, first define the following variables according to your set-up:
@@ -71,8 +70,8 @@ To get the `oauthCallbackURL` for the Azure AD integration, run the following co
    oauthCallbackURL=https://oauth-openshift.apps.$DOMAIN/oauth2callback/AAD
    echo $oauthCallbackURL
    ```
-> **Note** 
-`oauthCallbackURL`, in particular `AAD` can be changed but **must** match the name in the oauth providerwhen creating the OpenShift OpenID authentication   
+> **Note**
+`oauthCallbackURL`, in particular `AAD` can be changed but **must** match the name in the oauth providerwhen creating the OpenShift OpenID authentication
 
 ### Create `manifest.json` file to configure the Azure Active Directory application ###
 Configure OpenShift to use the `email` claim and fall back to `upn` to set the Preferred Username by adding the `upn` as part of the ID token returned by Azure Active Directory.
@@ -96,7 +95,7 @@ Create a `manifest.json` file to configure the Azure Active Directory applicatio
        "additionalProperties": []
       }
      ]
-   }  
+   }
    EOF
    ```
 
@@ -105,7 +104,7 @@ Create a `manifest.json` file to configure the Azure Active Directory applicatio
 Create an Azure AD application and retrieve app id:
 
    ```
-   DISPLAYNAME=<auth-dmoessne-aro01> # set you name accordingly 
+   DISPLAYNAME=<auth-dmoessne-aro01> # set you name accordingly
 
    az ad app create \
    --display-name $DISPLAYNAME \
@@ -131,7 +130,7 @@ We need this Service Principal to be an Enterprise Application to be able to add
    ```
    az ad sp update --id $APPID --set 'tags=["WindowsAzureActiveDirectoryIntegratedApp"]'
    ```
-> **Note** 
+> **Note**
 >  In case you get a trace back (az cli = `2.37.0`) check out https://github.com/Azure/azure-cli/issues/23027
 >  To overcome that issue, we'll do the following
 > ```
@@ -144,10 +143,10 @@ The password for the app created is retrieved by resetting the same:
 
    ```
    PASSWD=$(az ad app credential reset --id $APPID --query password -o tsv)
-   ``` 
-> **Note** 
-> The password generated with above command is by default valid for one year and you may want to change that by adding either and end date via 
-> `--end-date` or set validity in years with `--years`. 
+   ```
+> **Note**
+> The password generated with above command is by default valid for one year and you may want to change that by adding either and end date via
+> `--end-date` or set validity in years with `--years`.
 > For details consult the [documentation](https://docs.microsoft.com/en-us/cli/azure/ad/app/credential?view=azure-cli-latest#az-ad-app-credential-reset)
 
 
@@ -204,7 +203,7 @@ Fetch kubeadmin password and login to your cluster via `oc` cli (you can use any
    --query kubeadminPassword --output tsv)
 
    oc login $APISERVER -u kubeadmin -p $KUBEPW
-   ``` 
+   ```
 ### Create an OpenShift secret###
 Create an OpenShift secret to store the Azure Active Directory application secret from the application password we created/reset earlier:
 
@@ -259,7 +258,7 @@ Before we move over to the OpenShift login, let's wait for the new version of th
    ```
 
 > **Note**
-> it may take some time until the rollout starts 
+> it may take some time until the rollout starts
 
 ### Verify login through Azure Active Directory ###
 Get console url to login:

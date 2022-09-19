@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:08.554151'
 title: Installing Astronomer on a private ARO cluster
 ---
-# Installing Astronomer on a private ARO cluster
 
 > see [here](./README-public) for public clusters.
 

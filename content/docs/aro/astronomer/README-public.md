@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:08.554151'
 title: Installing Astronomer on a public ARO cluster
 ---
-# Installing Astronomer on a public ARO cluster
 
 This assumes you've already got an ARO cluster installed.
 

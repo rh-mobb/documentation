@@ -1,8 +1,8 @@
 ---
 date: '2022-09-14T22:07:08.584151'
 title: Create Filestore Storage for OSD in GCP
+aliases: ['/docs/gcp/filestore.md']
 ---
-# Create Filestore Storage for OSD in GCP
 
 Author: [Roberto Carratalá](https://github.com/rcarrata), [Paul Czarkowski](https://twitter.com/pczarkowski), [Andrea Bozzoni](https://github.com/abozzoni)
 
@@ -63,7 +63,7 @@ Because of that, and for provide Storage with Shared Access (RWX) Access Mode to
 6. Create a Persistent Volume using the NFS_IP of the Filestore as the nfs server into the PV definition, specifying the path of the shared Filestore:
 
 
-    ```sh
+    ```yaml
     cat <<EOF | oc apply -f -
     apiVersion: v1
     kind: PersistentVolume
@@ -92,7 +92,7 @@ Because of that, and for provide Storage with Shared Access (RWX) Access Mode to
 
 8. Create a PersistentVolumeClaim for this PersistentVolume:
 
-    ```sh
+    ```yaml
     cat <<EOF | oc apply -f -
     apiVersion: v1
     kind: PersistentVolumeClaim
@@ -120,7 +120,7 @@ Because of that, and for provide Storage with Shared Access (RWX) Access Mode to
 
 10. Generate an example app with more than replicas sharing the same Filestore NFS volume share:
 
-    ```sh
+    ```yaml
     cat <<EOF | oc apply -f -
     apiVersion: apps/v1
     kind: Deployment

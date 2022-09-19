@@ -1,8 +1,8 @@
 ---
 date: '2022-09-14T22:07:08.594151'
 title: Creating a OSD in GCP with Existing VPCs
+aliases: ['/docs/gcp/osd_preexisting_vpc.md']
 ---
-# Creating a OSD in GCP with Existing VPCs
 
 **Roberto Carratalá, Andrea Bozzoni**
 
@@ -22,7 +22,7 @@ NOTE: Also the GCloud Shell can be used, and have the gcloud cli among other too
 ## Generate GCP VPC and Subnets
 This is a diagram showing the GCP infra prerequisites that are needed for the OSD installation:
 
-![GCP Prereqs](./images/osd-prereqs.png){: width="750" }
+![GCP Prereqs](../images/osd-prereqs.png)
 
 To deploy the GCP VPC and subnets among other prerequisites for install the OSD in GCP using the preexisting VPCs you have two options:
 
@@ -79,7 +79,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
    --network=$OSD_VPC --range=10.0.128.0/17 --region=$REGION
    ```
 
-   ![GCP VPC and Subnets](./images/osd-gcp1.png){: width="750" }
+   ![GCP VPC and Subnets](../images/osd-gcp1.png)
 
 6. Once the VPC and the two subnets are provided it is needed to create one [GCP Cloud Router](https://cloud.google.com/network-connectivity/docs/router/how-to/create-router-vpc-on-premises-network):
 
@@ -90,7 +90,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
    --project=$PROJECT_NAME --network=$OSD_VPC --region=$REGION
    ```
 
-   ![GCP Routers](./images/osd-gcp2.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Routers](../images/osd-gcp2.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
 
 7. Then, we will deploy two [GCP Cloud NATs](https://cloud.google.com/nat/docs/set-up-manage-network-address-translation#gcloud) and attach them within the GCP Router:
 
@@ -106,7 +106,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
    --nat-custom-subnet-ip-ranges=$MASTER_SUBNET
     ```
 
-   ![GCP Nat Master](./images/osd-gcp3.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Nat Master](../images/osd-gcp3.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
 
     * Generate the GCP Cloud NAT for the Worker Subnets:
 
@@ -120,11 +120,11 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
        --nat-custom-subnet-ip-ranges=$WORKER_SUBNET
    ```
 
-   ![GCP Nat Worker](./images/osd-gcp4.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Nat Worker](../images/osd-gcp4.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
 
 8. As you can check the Cloud NATs GW are attached now to the Cloud Router:
 
-   ![GCP Nat Master](./images/osd-gcp5.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Nat Master](../images/osd-gcp5.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
 
 ### Option 2 - Deploy OSD VPC and Subnets using Terraform
 
@@ -158,39 +158,39 @@ These steps are based in the [official OSD installation documentation](https://d
 2. In the Cloud tab, click Create cluster in the Red Hat OpenShift Dedicated row.
 
 3. Under Billing model, configure the subscription type and infrastructure type
-![OSD Install](./images/osd-gcp6.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="750" }
+![OSD Install](../images/osd-gcp6.png){:style="display:block; margin-left:auto; margin-right:auto"}
 
 4. Select Run on Google Cloud Platform.
 
 5. Click Prerequisites to review the prerequisites for installing OpenShift Dedicated on GCP with CCS.
 
 6. Provide your GCP service account private key in JSON format. You can either click Browse to locate and attach a JSON file or add the details in the Service account JSON field.
-![OSD Install](./images/osd-gcp7.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="750" }
+![OSD Install](../images/osd-gcp7.png){:style="display:block; margin-left:auto; margin-right:auto"}
 
 7. Validate your cloud provider account and then click Next.
 On the Cluster details page, provide a name for your cluster and specify the cluster details:
-![OSD Install](./images/osd-gcp8.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="750" }
+![OSD Install](../images/osd-gcp8.png){:style="display:block; margin-left:auto; margin-right:auto"}
 
 > NOTE: the Region used to be installed needs to be the same as the VPC and Subnets deployed in the early step.
 
 8. On the Default machine pool page, select a Compute node instance type and a Compute node count:
-![OSD Install](./images/osd-gcp9.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+![OSD Install](../images/osd-gcp9.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
 
 9. In the Cluster privacy section, select **Public** endpoints and application routes for your cluster.
 
 10. Select Install into an existing VPC to install the cluster in an existing GCP Virtual Private Cloud (VPC):
-![OSD Install](./images/osd-gcp10.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+![OSD Install](../images/osd-gcp10.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
 
 11. Provide your Virtual Private Cloud (VPC) subnet settings, that you deployed as prerequisites in the previous section:
-![OSD Install](./images/osd-gcp11.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+![OSD Install](../images/osd-gcp11.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
 
 12. In the CIDR ranges dialog, configure custom classless inter-domain routing (CIDR) ranges or use the defaults that are provided:
-![OSD Install](./images/osd-gcp12.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+![OSD Install](../images/osd-gcp12.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
 
 13. On the Cluster update strategy page, configure your update preferences.
 
 14. Review the summary of your selections and click Create cluster to start the cluster installation. Check that the **Install into Existing VPC** is enabled and the VPC and Subnets are properly selected and defined:
-![OSD Install](./images/osd-gcp13.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+![OSD Install](../images/osd-gcp13.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
 
 ## Cleanup
 

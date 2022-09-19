@@ -1,8 +1,8 @@
 ---
 date: '2022-09-14T22:07:09.774151'
 title: Deploying 3scale API Management to ROSA and OSD
+aliases: ['/docs/app-services/3scale']
 ---
-# Deploying 3scale API Management to ROSA and OSD
 
 **Michael McNeill**
 
@@ -22,18 +22,6 @@ This document will take you through deploying 3scale in any OSD or ROSA cluster.
 1. Set environment variables (ensuring you update the variables appropriately!)
 
     ```bash
-export S3_BUCKET=<your-bucket-name-here>
-export REGION=us-east-1
-export S3_IAM_USER_NAME=<your-s3-user-name-here>
-export S3_IAM_POLICY_NAME=<your-s3-policy-name-here>
-export AWS_PAGER=""
-export PROJECT_NAME=<your-project-name-here>
-export WILDCARD_DOMAIN=<your-wildcard-domain-here>
-    ```
-
-    For my example, I'll be using the following variables:
-
-    ```bash
     export S3_BUCKET=mobb-3scale-bucket
     export REGION=us-east-1
     export S3_IAM_USER_NAME=mobb-3scale-user
@@ -46,69 +34,69 @@ export WILDCARD_DOMAIN=<your-wildcard-domain-here>
 2. Create an S3 bucket
 
     ```bash
-aws s3 mb s3://$S3_BUCKET
+    aws s3 mb s3://$S3_BUCKET
     ```
 
 3. Apply the proper S3 bucket CORS configuration
 
     ```bash
-aws s3api put-bucket-cors --bucket $S3_BUCKET --cors-configuration \
-'{
-	"CORSRules": [{
-		"AllowedMethods": [
-			"GET"
-		],
-		"AllowedOrigins": [
-			"https://*"
-		]
-	}]
-}'
+    aws s3api put-bucket-cors --bucket $S3_BUCKET --cors-configuration \
+    '{
+        "CORSRules": [{
+            "AllowedMethods": [
+                "GET"
+            ],
+            "AllowedOrigins": [
+                "https://*"
+            ]
+        }]
+    }'
     ```
 
 4. Create an IAM policy for access to the S3 bucket
 
     ```bash
-POLICY_ARN=$(aws iam create-policy --policy-name "$S3_IAM_POLICY_NAME" \
---output text --query "Policy.Arn" \
---policy-document \
-'{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": "s3:ListAllMyBuckets",
-            "Resource": "arn:aws:s3:::*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "s3:*",
-            "Resource": [
-                "arn:aws:s3:::'$S3_BUCKET'",
-                "arn:aws:s3:::'$S3_BUCKET'/*"
-            ]
-        }
-    ]
-}')
+    POLICY_ARN=$(aws iam create-policy --policy-name "$S3_IAM_POLICY_NAME" \
+    --output text --query "Policy.Arn" \
+    --policy-document \
+    '{
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "arn:aws:s3:::*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": "s3:*",
+                "Resource": [
+                    "arn:aws:s3:::'$S3_BUCKET'",
+                    "arn:aws:s3:::'$S3_BUCKET'/*"
+                ]
+            }
+        ]
+    }')
     ```
 
 5. Create an IAM user to access the S3 bucket
 
     ```bash
-aws iam create-user --user-name $S3_IAM_USER_NAME
+    aws iam create-user --user-name $S3_IAM_USER_NAME
     ```
 
 6. Generate an access key for the newly created S3 user
 
     ```bash
-ACCESS_CREDS=$(aws iam create-access-key --user-name $S3_IAM_USER_NAME \
---output text --query "AccessKey.[AccessKeyId, SecretAccessKey]")
+    ACCESS_CREDS=$(aws iam create-access-key --user-name $S3_IAM_USER_NAME \
+      --output text --query "AccessKey.[AccessKeyId, SecretAccessKey]")
     ```
 
 7. Apply the IAM policy to the newly created S3 user
 
     ```bash
-aws iam attach-user-policy --user-name $S3_IAM_USER_NAME \
---policy-arn $POLICY_ARN
+    aws iam attach-user-policy --user-name $S3_IAM_USER_NAME \
+      --policy-arn $POLICY_ARN
     ```
 
 ## Install the 3Scale API Management Operator
@@ -116,7 +104,7 @@ aws iam attach-user-policy --user-name $S3_IAM_USER_NAME \
 8. Create a new project to install 3Scale API Management into.
 
     ```bash
-oc new-project $PROJECT_NAME
+    oc new-project $PROJECT_NAME
     ```
 
 1. Inside of the OpenShift Web Console, navigate to Operators -> OperatorHub.
@@ -138,44 +126,44 @@ oc new-project $PROJECT_NAME
 12. Create a secret that contains the Amazon S3 configuration.
 
     ```bash
-echo << EOF | oc apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  creationTimestamp: null
-  name: aws-auth
-stringData:
-  AWS_ACCESS_KEY_ID: "$(echo $ACCESS_CREDS | cut -f 1)"
-  AWS_SECRET_ACCESS_KEY: "$(echo $ACCESS_CREDS | cut -f 2)"
-  AWS_BUCKET: "$S3_BUCKET"
-  AWS_REGION: "$REGION"
-type: Opaque
-EOF
+    cat << EOF | oc apply -f -
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      name: aws-auth
+    stringData:
+      AWS_ACCESS_KEY_ID: "$(echo $ACCESS_CREDS | cut -f 1)"
+      AWS_SECRET_ACCESS_KEY: "$(echo $ACCESS_CREDS | cut -f 2)"
+      AWS_BUCKET: "$S3_BUCKET"
+      AWS_REGION: "$REGION"
+    type: Opaque
+    EOF
     ```
 
 13. Create an APIManager custom resource
 
     ```bash
-cat << EOF | oc apply -f -
-echo 'apiVersion: apps.3scale.net/v1alpha1
-kind: APIManager
-metadata:
-  name: example-apimanager
-spec:
-  wildcardDomain: '$WILDCARD_DOMAIN'
-  system:
-    fileStorage:
-      simpleStorageService:
-        configurationSecretRef:
-          name: aws-auth
-EOF
+    cat << EOF | oc apply -f -
+    echo 'apiVersion: apps.3scale.net/v1alpha1
+    kind: APIManager
+    metadata:
+      name: example-apimanager
+    spec:
+      wildcardDomain: '$WILDCARD_DOMAIN'
+      system:
+        fileStorage:
+          simpleStorageService:
+            configurationSecretRef:
+              name: aws-auth
+    EOF
     ```
 
 14. Once the APIManager instance becomes available, you can login to the 3Scale Admin (located at https://3scale-admin.$WILDCARD_DOMAIN) using the credentials from the below commands:
 
     ```bash
-oc get secret system-seed -o jsonpath={.data.ADMIN_USER} | base64 -d
-oc get secret system-seed -o jsonpath={.data.ADMIN_PASSWORD} | base64 -d
+    oc get secret system-seed -o jsonpath={.data.ADMIN_USER} | base64 -d
+    oc get secret system-seed -o jsonpath={.data.ADMIN_PASSWORD} | base64 -d
     ```
 
 15. Congratulations! You've successfully deployed 3Scale API Management to ROSA/OSD.

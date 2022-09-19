@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:09.764151'
 title: ROSA - Federating Metrics to AWS Prometheus
 ---
-# ROSA - Federating Metrics to AWS Prometheus
 
 Federating Metrics from ROSA/OSD is a bit tricky as the cluster metrics require pulling from its `/federated` endpoint while the user workload metrics require using the prometheus `remoteWrite` configuration.
 
@@ -66,24 +65,24 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
 1. Create a Policy for access to AWS Prometheus
 
-    ```bash
-cat <<EOF > $SCRATCH_DIR/PermissionPolicyIngest.json
-{
-  "Version": "2012-10-17",
-   "Statement": [
-       {"Effect": "Allow",
-        "Action": [
-           "aps:RemoteWrite",
-           "aps:GetSeries",
-           "aps:GetLabels",
-           "aps:GetMetricMetadata"
-        ],
-        "Resource": "*"
-      }
-   ]
-}
-EOF
-    ```
+   ```json
+   cat <<EOF > $SCRATCH_DIR/PermissionPolicyIngest.json
+   {
+     "Version": "2012-10-17",
+      "Statement": [
+          {"Effect": "Allow",
+           "Action": [
+              "aps:RemoteWrite",
+              "aps:GetSeries",
+              "aps:GetLabels",
+              "aps:GetMetricMetadata"
+           ],
+           "Resource": "*"
+         }
+      ]
+   }
+   EOF
+   ```
 
 1. Apply the Policy
 
@@ -93,59 +92,60 @@ EOF
       --query 'Policy.Arn' --output text)
     echo $PROM_POLICY
     ```
+
 1. Create a Policy for access to AWS CloudWatch
 
-    ```bash
-cat <<EOF > $SCRATCH_DIR/PermissionPolicyCloudWatch.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowReadingMetricsFromCloudWatch",
-            "Effect": "Allow",
-            "Action": [
-                "cloudwatch:DescribeAlarmsForMetric",
-                "cloudwatch:DescribeAlarmHistory",
-                "cloudwatch:DescribeAlarms",
-                "cloudwatch:ListMetrics",
-                "cloudwatch:GetMetricStatistics",
-                "cloudwatch:GetMetricData"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "AllowReadingLogsFromCloudWatch",
-            "Effect": "Allow",
-            "Action": [
-                "logs:DescribeLogGroups",
-                "logs:GetLogGroupFields",
-                "logs:StartQuery",
-                "logs:StopQuery",
-                "logs:GetQueryResults",
-                "logs:GetLogEvents"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeTags",
-                "ec2:DescribeInstances",
-                "ec2:DescribeRegions"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "AllowReadingResourcesForTags",
-            "Effect": "Allow",
-            "Action": "tag:GetResources",
-            "Resource": "*"
-        }
-    ]
-}
-EOF
-    ```
+   ```json
+   cat <<EOF > $SCRATCH_DIR/PermissionPolicyCloudWatch.json
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Sid": "AllowReadingMetricsFromCloudWatch",
+               "Effect": "Allow",
+               "Action": [
+                   "cloudwatch:DescribeAlarmsForMetric",
+                   "cloudwatch:DescribeAlarmHistory",
+                   "cloudwatch:DescribeAlarms",
+                   "cloudwatch:ListMetrics",
+                   "cloudwatch:GetMetricStatistics",
+                   "cloudwatch:GetMetricData"
+               ],
+               "Resource": "*"
+           },
+           {
+               "Sid": "AllowReadingLogsFromCloudWatch",
+               "Effect": "Allow",
+               "Action": [
+                   "logs:DescribeLogGroups",
+                   "logs:GetLogGroupFields",
+                   "logs:StartQuery",
+                   "logs:StopQuery",
+                   "logs:GetQueryResults",
+                   "logs:GetLogEvents"
+               ],
+               "Resource": "*"
+           },
+           {
+               "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
+               "Effect": "Allow",
+               "Action": [
+                   "ec2:DescribeTags",
+                   "ec2:DescribeInstances",
+                   "ec2:DescribeRegions"
+               ],
+               "Resource": "*"
+           },
+           {
+               "Sid": "AllowReadingResourcesForTags",
+               "Effect": "Allow",
+               "Action": "tag:GetResources",
+               "Resource": "*"
+           }
+       ]
+   }
+   EOF
+   ```
 
 1. Apply the Policy
 
@@ -159,30 +159,30 @@ EOF
 
 1. Create a Trust Policy
 
-    ```bash
-cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": [
-            "system:serviceaccount:${PROM_NAMESPACE}:${PROM_SA}",
-            "system:serviceaccount:${PROM_NAMESPACE}:grafana-serviceaccount"
-          ]
-        }
-      }
-    }
-  ]
-}
-EOF
-    ```
+   ```json
+   cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+         },
+         "Action": "sts:AssumeRoleWithWebIdentity",
+         "Condition": {
+           "StringEquals": {
+             "${OIDC_PROVIDER}:sub": [
+               "system:serviceaccount:${PROM_NAMESPACE}:${PROM_SA}",
+               "system:serviceaccount:${PROM_NAMESPACE}:grafana-serviceaccount"
+             ]
+           }
+         }
+       }
+     ]
+   }
+   EOF
+   ```
 
 1. Create Role for AWS Prometheus and CloudWatch
 
@@ -226,20 +226,20 @@ EOF
 
 1. Configure remoteWrite for user workloads
 
-    ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: user-workload-monitoring-config
-  namespace: openshift-user-workload-monitoring
-data:
-  config.yaml: |
-    prometheus:
-      remoteWrite:
-        - url: "http://aws-prometheus-proxy.$PROM_NAMESPACE.svc.cluster.local:8005/workspaces/$PROM_WS/api/v1/remote_write"
-EOF
-    ```
+   ```bash
+   cat << EOF | kubectl apply -f -
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: user-workload-monitoring-config
+     namespace: openshift-user-workload-monitoring
+   data:
+     config.yaml: |
+       prometheus:
+         remoteWrite:
+           - url: "http://aws-prometheus-proxy.$PROM_NAMESPACE.svc.cluster.local:8005/workspaces/$PROM_WS/api/v1/remote_write"
+   EOF
+  ```
 
 ## Verify Metrics are being collected
 

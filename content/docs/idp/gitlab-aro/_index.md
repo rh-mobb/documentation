@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:09.944151'
 title: Configure GitLab as an identity provider for ARO
 ---
-# Configure GitLab as an identity provider for ARO #
 
 **Steve Mirman**
 

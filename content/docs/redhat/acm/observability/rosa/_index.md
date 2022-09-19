@@ -1,8 +1,8 @@
 ---
 date: '2022-09-14T22:07:09.774151'
 title: Advanced Cluster Management Observability on ROSA
+aliases: ['/docs/acm/observability/rosa']
 ---
-# Advanced Cluster Management Observability on ROSA
 
 <!-- commented sections enable STS support which isn't fully working as
 the operator will on occasion wipe out the service account annotations -->
@@ -21,18 +21,18 @@ This document will take you through deploying ACM Observability on a ROSA cluste
 
 1. Set environment variables
 
-```bash
-    export CLUSTER_NAME=my-cluster
-    export S3_BUCKET=$CLUSTER_NAME-acm-observability
-    export REGION=us-east-2
-    export NAMESPACE=open-cluster-management-observability
-    export SA=tbd
-    export SCRATCH_DIR=/tmp/scratch
-    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-    export AWS_PAGER=""
-    rm -rf $SCRATCH_DIR
-    mkdir -p $SCRATCH_DIR
-```
+   ```bash
+   export CLUSTER_NAME=my-cluster
+   export S3_BUCKET=$CLUSTER_NAME-acm-observability
+   export REGION=us-east-2
+   export NAMESPACE=open-cluster-management-observability
+   export SA=tbd
+   export SCRATCH_DIR=/tmp/scratch
+   export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+   export AWS_PAGER=""
+   rm -rf $SCRATCH_DIR
+   mkdir -p $SCRATCH_DIR
+   ```
 
 <!--
     export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
@@ -42,69 +42,69 @@ This document will take you through deploying ACM Observability on a ROSA cluste
 
 1. Create an S3 bucket
 
-    ```bash
-    aws s3 mb s3://$S3_BUCKET
-    ```
+   ```bash
+   aws s3 mb s3://$S3_BUCKET
+   ```
 
 1. Create a Policy for access to S3
 
-    ```bash
-cat <<EOF > $SCRATCH_DIR/s3-policy.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "Statement",
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket",
-                "s3:GetObject",
-                "s3:DeleteObject",
-                "s3:PutObject",
-                "s3:PutObjectAcl",
-                "s3:CreateBucket",
-                "s3:DeleteBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::$S3_BUCKET/*",
-                "arn:aws:s3:::$S3_BUCKET"
-            ]
-        }
-    ]
-}
-EOF
-    ```
+   ```bash
+   cat <<EOF > $SCRATCH_DIR/s3-policy.json
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Sid": "Statement",
+               "Effect": "Allow",
+               "Action": [
+                   "s3:ListBucket",
+                   "s3:GetObject",
+                   "s3:DeleteObject",
+                   "s3:PutObject",
+                   "s3:PutObjectAcl",
+                   "s3:CreateBucket",
+                   "s3:DeleteBucket"
+               ],
+               "Resource": [
+                   "arn:aws:s3:::$S3_BUCKET/*",
+                   "arn:aws:s3:::$S3_BUCKET"
+               ]
+           }
+       ]
+   }
+   EOF
+   ```
 
 1. Apply the Policy
 
-    ```bash
-    S3_POLICY=$(aws iam create-policy --policy-name $CLUSTER_NAME-acm-obs \
-      --policy-document file://$SCRATCH_DIR/s3-policy.json \
-      --query 'Policy.Arn' --output text)
-    echo $S3_POLICY
-    ```
+   ```bash
+   S3_POLICY=$(aws iam create-policy --policy-name $CLUSTER_NAME-acm-obs \
+     --policy-document file://$SCRATCH_DIR/s3-policy.json \
+     --query 'Policy.Arn' --output text)
+   echo $S3_POLICY
+   ```
 
 1. Create service account
 
-    ```bash
-    aws iam create-user --user-name $CLUSTER_NAME-acm-obs  \
-      --query User.Arn --output text
-    ```
+   ```bash
+   aws iam create-user --user-name $CLUSTER_NAME-acm-obs  \
+     --query User.Arn --output text
+   ```
 
 1. Attach policy to user
 
-    ```bash
-    aws iam attach-user-policy --user-name $CLUSTER_NAME-acm-obs \
-      --policy-arn ${S3_POLICY}
-    ```
+   ```bash
+   aws iam attach-user-policy --user-name $CLUSTER_NAME-acm-obs \
+     --policy-arn ${S3_POLICY}
+   ```
 
 1. Create Access Keys
 
-    ```bash
-read -r ACCESS_KEY_ID ACCESS_KEY < <(aws iam create-access-key \
-  --user-name $CLUSTER_NAME-acm-obs \
-  --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)
-    ```
+   ```bash
+   read -r ACCESS_KEY_ID ACCESS_KEY < <(aws iam create-access-key \
+     --user-name $CLUSTER_NAME-acm-obs \
+     --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)
+   ```
 
 <!--
 1. Create a Trust Policy
@@ -161,59 +161,59 @@ Log into the OpenShift cluster that is running your ACM Hub.  We'll set up Obser
 
 1. Create a namespace for the observability
 
-    ```bash
-    oc new-project $NAMESPACE
-    ```
+   ```bash
+   oc new-project $NAMESPACE
+   ```
 
 1. Generate a pull secret (this will check if the pull secret exists, if not, it will create it)
 
-    ```bash
-DOCKER_CONFIG_JSON=`oc extract secret/multiclusterhub-operator-pull-secret -n open-cluster-management --to=-` || \
-    DOCKER_CONFIG_JSON=`oc extract secret/pull-secret -n openshift-config --to=-` && \
-    oc create secret generic multiclusterhub-operator-pull-secret \
-    -n open-cluster-management-observability \
-    --from-literal=.dockerconfigjson="$DOCKER_CONFIG_JSON" \
-    --type=kubernetes.io/dockerconfigjson
-    ```
+   ```bash
+   DOCKER_CONFIG_JSON=`oc extract secret/multiclusterhub-operator-pull-secret -n open-cluster-management --to=-` || \
+     DOCKER_CONFIG_JSON=`oc extract secret/pull-secret -n openshift-config --to=-` && \
+     oc create secret generic multiclusterhub-operator-pull-secret \
+     -n open-cluster-management-observability \
+     --from-literal=.dockerconfigjson="$DOCKER_CONFIG_JSON" \
+     --type=kubernetes.io/dockerconfigjson
+   ```
 
 1. Create a Secret containing your S3 details
 
-    ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: thanos-object-storage
-  namespace: open-cluster-management-observability
-type: Opaque
-stringData:
-  thanos.yaml: |
-    type: s3
-    config:
-      bucket: $S3_BUCKET
-      endpoint: s3.$REGION.amazonaws.com
-      signature_version2: false
-      access_key: $ACCESS_KEY_ID
-      secret_key: $ACCESS_KEY
-EOF
-    ```
+   ```yaml
+   cat << EOF | kubectl apply -f -
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: thanos-object-storage
+     namespace: open-cluster-management-observability
+   type: Opaque
+   stringData:
+     thanos.yaml: |
+       type: s3
+       config:
+         bucket: $S3_BUCKET
+         endpoint: s3.$REGION.amazonaws.com
+         signature_version2: false
+         access_key: $ACCESS_KEY_ID
+         secret_key: $ACCESS_KEY
+   EOF
+   ```
 
 1. Create a CR for `MulticlusterHub`
 
-    ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: observability.open-cluster-management.io/v1beta2
-kind: MultiClusterObservability
-metadata:
-  name: observability
-spec:
-  observabilityAddonSpec: {}
-  storageConfig:
-    metricObjectStorage:
-      name: thanos-object-storage
-      key: thanos.yaml
-EOF
-    ```
+   ```yaml
+   cat << EOF | kubectl apply -f -
+   apiVersion: observability.open-cluster-management.io/v1beta2
+   kind: MultiClusterObservability
+   metadata:
+     name: observability
+   spec:
+     observabilityAddonSpec: {}
+     storageConfig:
+       metricObjectStorage:
+         name: thanos-object-storage
+         key: thanos.yaml
+   EOF
+   ```
 
 <!--
 1. Annotate the service accounts to use STS

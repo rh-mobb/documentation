@@ -1,8 +1,8 @@
 ---
 date: '2022-09-14T22:07:09.764151'
 title: Demonstrate GitOps on Managed OpenShift with ArgoCD
+aliases: ['/docs/demos/gitops/']
 ---
-# Demonstrate GitOps on Managed OpenShift with ArgoCD
 
 Author: [Steve Mirman](https://twitter.com/stevemirman)
 
@@ -38,7 +38,7 @@ The purpose of this document is to help you get  OpenShift GitOps running in you
 ### Install the OpenShift GitOps operator
 
 1. Install the **OpenShift GitOps** operator from the **Operator Hub**
-    
+
     ![screenshot of GitOps install](./gitops_operator.png)
 
 ### Pull files from GitHub
@@ -70,7 +70,7 @@ The purpose of this document is to help you get  OpenShift GitOps running in you
 
 ### Create a new OpenShift project
 
-1. Create a new OpenShift project called *gitops*   
+1. Create a new OpenShift project called *gitops*
     ```
     oc new-project gitops
     ```

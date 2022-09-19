@@ -1,9 +1,8 @@
 ---
 date: '2022-09-14T22:07:09.804151'
 title: Installing the Kubernetes Secret Store CSI on OpenShift
-alias: /security/secrets-store-csi
+alias: /docs/security/secrets-store-csi
 ---
-# Installing the Kubernetes Secret Store CSI on OpenShift
 
 The Kubernetes Secret Store CSI is a storage driver that allows you to mount secrets from external secret management systems like HashiCorp Vault and AWS Secrets.
 
@@ -15,10 +14,9 @@ It comes in two parts, the Secret Store CSI, and a Secret provider driver. This 
 1. kubectl
 1. helm v3
 
-{% include_relative install-kubernetes-secret-store-driver.md %}
+{{< readfile file="/docs/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
 
-
-{% include_relative uninstall-kubernetes-secret-store-driver.md %}
+{{< readfile file="/docs/misc/secrets-store-csi/uninstall-kubernetes-secret-store-driver.md" markdown="true" >}}
 
 ## Provider Specifics
 

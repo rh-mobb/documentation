@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:09.804151'
 title: Deploying OpenShift Advanced Data Protection on a ROSA cluster
 ---
-# Deploying OpenShift Advanced Data Protection on a ROSA cluster
 
 ## Prerequisites
 

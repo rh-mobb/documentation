@@ -1,10 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.564151'
-title: 'Federating System and User metrics to Azure Files in Azure Red Hat
-
-  OpenShift'
+title: 'Federating System and User metrics to Azure Files in Azure Red Hat OpenShift'
 ---
-# Federating System and User metrics to Azure Files in Azure Red Hat OpenShift
 
 **Paul Czarkowski**
 
@@ -106,14 +103,14 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     **> Note: `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics, remove it from the helm command below if you already have custom settings.  The Addendum at the end of this doc will explain the changes you'll need to make instead.**
 
-    ```bash
-helm upgrade -n $NAMESPACE aro-thanos-af
-  --install mobb/aro-thanos-af --version 0.2.0 \
-  --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
-  --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
-  --set "aro.storageContainer=$CLUSTER_NAME" \
-  --set "enableUserWorkloadMetrics=true"
-    ```
+   ```bash
+   helm upgrade -n $NAMESPACE aro-thanos-af
+     --install mobb/aro-thanos-af --version 0.2.0 \
+     --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
+     --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
+     --set "aro.storageContainer=$CLUSTER_NAME" \
+     --set "enableUserWorkloadMetrics=true"
+   ```
 
 ## Validate Grafana is installed and seeing metrics from Azure Files
 
@@ -152,9 +149,9 @@ helm upgrade -n $NAMESPACE aro-thanos-af
 1. Delete the storage account
 
     ```bash
-az storage account delete \
-  --name $AZR_STORAGE_ACCOUNT_NAME \
-  --resource-group $AZR_RESOURCE_GROUP
+    az storage account delete \
+      --name $AZR_STORAGE_ACCOUNT_NAME \
+      --resource-group $AZR_RESOURCE_GROUP
     ```
 
 ## Addendum

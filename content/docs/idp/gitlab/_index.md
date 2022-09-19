@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:09.904151'
 title: Configure GitLab as an identity provider for ROSA/OSD
 ---
-# Configure GitLab as an identity provider for ROSA/OSD #
 
 **Steve Mirman**
 
@@ -37,7 +36,7 @@ Log in to the [OpenShift Cluster Manager](https://console.redhat.com/openshift/)
     ![ocm set a name to the OpenID identity provider](images/callback_url.png)
 
     > **Note:** the OAuth Callback has the following format:
-    
+
     ```
     https://oauth-openshift.apps.<cluster_name>.<cluster_domain>/oauth2callback/<idp_name>
     ```

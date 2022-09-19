@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:09.894151'
 title: Using Group Sync Operator with Azure Active Directory and ROSA/OSD
 ---
-# Using Group Sync Operator with Azure Active Directory and ROSA/OSD #
 
 **Steve Mirman**
 
@@ -27,12 +26,12 @@ To synchronize groups and users with ROSA/OSD they must exist in Azure AD
 
     ![Azure AD Groups](./images/az-ad-grp.png)
 
-1. Create user IDs to synchronize with ROSA/OSD if they do not already exist 
-    
+1. Create user IDs to synchronize with ROSA/OSD if they do not already exist
+
     ![Azure AD Users](./images/az-ad-usr.png)
 
-1. Assign newly created users to the appropriate group  
-    
+1. Assign newly created users to the appropriate group
+
     ![Azure AD add user to group](./images/az-ad-assign.png)
 
 ## Add API Permissions to Azure AD App Registration
@@ -70,12 +69,12 @@ The GroupSync job requires permissions on the Azure AD tenant beyond those of th
         --from-literal=AZURE_TENANT_ID=<insert-id> \
         --from-literal=AZURE_CLIENT_ID=<insert-id> \
         --from-literal=AZURE_CLIENT_SECRET=<insert-secret>
-    
+
 1. Create a new Group Sync instance in the `group-sync-operator` namespace
 
     ![Group Sync instance](./images/grp-sync-instance.png)
 
-1. Select all the default YAML and replace is with a modified version of the the example below, customizingthe YAML to match the group names and save the configuration. 
+1. Select all the default YAML and replace is with a modified version of the the example below, customizingthe YAML to match the group names and save the configuration.
 
     ![Instance YAML modification](./images/grp-sync-yaml.png)
 
@@ -139,7 +138,7 @@ The schedule setting of `schedule: * * * * *` would result in synchronization oc
 
 ## Binding Groups to Roles
 
-The preceding steps provide a method to get group membership information into OpenShift, but the final step in translating that into user authorization control requires binding each group to a role or roles on the cluster. This can be done via the OCP web console by opening the Group detail, or by applying YAML via the CLI. 
+The preceding steps provide a method to get group membership information into OpenShift, but the final step in translating that into user authorization control requires binding each group to a role or roles on the cluster. This can be done via the OCP web console by opening the Group detail, or by applying YAML via the CLI.
 
 ## Additional Notes
 

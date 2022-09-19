@@ -2,8 +2,6 @@
 date: '2022-09-14T22:07:08.554151'
 title: Using Cluster Logging Forwarder in ARO with Azure Monitor
 ---
-# Using Cluster Logging Forwarder in ARO with Azure Monitor
-
 **Paul Czarkowski, Steve Mirman**
 
 *08/19/2021*
@@ -50,20 +48,20 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 1. Create workspace
 
     ```bash
-az monitor log-analytics workspace create \
-  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-  -l $AZR_RESOURCE_LOCATION
+    az monitor log-analytics workspace create \
+      -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+      -l $AZR_RESOURCE_LOCATION
     ```
 
 1. Create a secret for your Azure workspace
 
     ```bash
-WORKSPACE_ID=$(az monitor log-analytics workspace show \
-  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-  --query customerId -o tsv)
-SHARED_KEY=$(az monitor log-analytics workspace get-shared-keys \
-  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-  --query primarySharedKey -o tsv)
+    WORKSPACE_ID=$(az monitor log-analytics workspace show \
+      -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+      --query customerId -o tsv)
+    SHARED_KEY=$(az monitor log-analytics workspace get-shared-keys \
+      -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+      --query primarySharedKey -o tsv)
     ```
 
 ## Configure OpenShift
@@ -98,17 +96,17 @@ SHARED_KEY=$(az monitor log-analytics workspace get-shared-keys \
     **> Note: You can skip this if you already have them installed, or install them via the OpenShift Console.**
 
     ```bash
-helm upgrade -n $NAMESPACE clf-operators \
-  mobb/operatorhub --version 0.1.1 --install \
-  --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-clf-am/files/operators.yaml
+    helm upgrade -n $NAMESPACE clf-operators \
+      mobb/operatorhub --version 0.1.1 --install \
+      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-clf-am/files/operators.yaml
     ```
 
 1. Configure cluster logging forwarder
 
     ```bash
-  helm upgrade -n $NAMESPACE clf \
-    mobb/aro-clf-am --version 0.1.0 --install \
-    --set "azure.workspaceId=$WORKSPACE_ID" --set "azure.sharedKey=$SHARED_KEY"
+    helm upgrade -n $NAMESPACE clf \
+      mobb/aro-clf-am --version 0.1.0 --install \
+      --set "azure.workspaceId=$WORKSPACE_ID" --set "azure.sharedKey=$SHARED_KEY"
     ```
 
 ## Check for logs in Azure
@@ -128,6 +126,7 @@ helm upgrade -n $NAMESPACE clf-operators \
 
   1. Select your workspace
       ![screenshot of scope selection](./images/select_scope.png)
+
   1. Run the Query
 
       ```

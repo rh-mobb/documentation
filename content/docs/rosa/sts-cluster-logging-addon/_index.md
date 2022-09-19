@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:09.764151'
 title: Work Around to fix the issue with the logging-addon on ROSA STS Clusters
 ---
-# Work Around to fix the issue with the logging-addon on ROSA STS Clusters
 
 Currently, the logging-addon is not working on ROSA STS clusters. This is due to permissions missing from the Operator itself. This is a work around to provide credentials to the addon.
 
@@ -23,27 +22,27 @@ Currently, the logging-addon is not working on ROSA STS clusters. This is due to
 1. Create a IAM Trust Policy document
 
     ```bash
-cat << EOF > /tmp/trust-policy.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:DescribeLogGroups",
-                "logs:DescribeLogStreams",
-                "logs:PutLogEvents",
-                "logs:GetLogEvents",
-                "logs:PutRetentionPolicy",
-                "logs:GetLogRecord"
-            ],
-            "Resource": "arn:aws:logs:*:*:*"
-        }
-    ]
-}
-EOF
+    cat << EOF > /tmp/trust-policy.json
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:PutLogEvents",
+                    "logs:GetLogEvents",
+                    "logs:PutRetentionPolicy",
+                    "logs:GetLogRecord"
+                ],
+                "Resource": "arn:aws:logs:*:*:*"
+            }
+        ]
+    }
+    EOF
     ```
 
 1. Create IAM Policy
@@ -81,16 +80,16 @@ EOF
 1. Create a secret for the addon to use
 
     ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
- name: instance
- namespace: openshift-logging
-stringData:
-  aws_access_key_id: ${AWS_ID}
-  aws_secret_access_key: ${AWS_KEY}
-EOF
+    cat << EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: Secret
+    metadata:
+     name: instance
+     namespace: openshift-logging
+    stringData:
+      aws_access_key_id: ${AWS_ID}
+      aws_secret_access_key: ${AWS_KEY}
+    EOF
     ```
 
 1. Install the logging-addon from the cluster
