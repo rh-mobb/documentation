@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: django-ex
+  namespace: demo
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: instance
+    # if alb logs show `"couldn't auto-discover subnets: unable to discover at least one subnet"`
+    # then uncomment the following line and add in the subnets
+    # alb.ingress.kubernetes.io/subnets: subnet-0982bb73ca67d61de,subnet-0aa9967e8767d792f,subnet-0fd57669a80eb7596
+    alb.ingress.kubernetes.io/shield-advanced-protection: "true"
+    # wafv2 arn to use
+    # alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-2:660250927410:regional/webacl/waf-demo/6565d2a1-6d26-4b6b-b56f-1e996c7e9e8f
+  labels:
+    app: django-ex
+spec:
+  rules:
+    - host: foo.bar
+      http:
+        paths:
+          - pathType: Prefix
+            path: /*
+            backend:
+              service:
+                name: django-ex
+                port:
+                  number: 8080

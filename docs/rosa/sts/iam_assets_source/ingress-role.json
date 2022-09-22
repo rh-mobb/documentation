@@ -1,0 +1,5 @@
+{
+	"RoleName": "ROSA-CLUSTER_NAME-ingress",
+	"AssumeRolePolicyDocument": "{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"Federated\": \"arn:aws:iam::AWS_ACCOUNT_ID:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/CLUSTER_ID\" }, \"Action\": \"sts:AssumeRoleWithWebIdentity\", \"Condition\": { \"StringEquals\": { \"rh-oidc.s3.us-east-1.amazonaws.com/CLUSTER_ID:aud\": \"openshift\" } } } ] }",
+	"Description": "OpenShift role for openshift-ingress-operator/cloud-credentials"
+}

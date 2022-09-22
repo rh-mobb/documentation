@@ -1,0 +1,43 @@
+{
+  "Statement" : [
+      {
+          "Effect":"Allow",
+          "Sid":"1",
+          "Principal" : {
+              "AWS":["arn:aws:iam::660250927410:user/thanos-receiver"]
+          },
+          "Action":["s3:*"],
+          "Resource":[
+            "arn:aws:s3:::my-thanos-metrics/*",
+            "arn:aws:s3:::my-thanos-metrics"
+            ]
+      }
+   ]
+  }
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets"
+      ],
+      "Resource": "arn:aws:s3:::*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::$S3_BUCKET"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": ["arn:aws:s3:::$S3_BUCKET/*"]
+    }
+  ]
+}

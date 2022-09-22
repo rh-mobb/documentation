@@ -1,0 +1,165 @@
+# create amazon-cloudwatch namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: amazon-cloudwatch
+  labels:
+    name: amazon-cloudwatch
+
+---
+# create configmap for prometheus cwagent config
+kind: ConfigMap
+metadata:
+  name: cwagentconfig-ds
+  namespace: amazon-cloudwatch
+apiVersion: v1
+data:
+  # cwagent json config
+  cwagentconfig.json: |
+    {
+      "agent": {
+        "region": "{{region_name}}",
+        "debug": true
+      },
+      "logs": {
+        "metrics_collected": {
+          "kubernetes": {
+            "cluster_name": "{{cluster_name}}",
+            "metrics_collection_interval": 60
+          }
+        },
+        "force_flush_interval": 5
+      }
+    }
+---
+# create cwagent service account and role binding
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudwatch-agent-ds
+  namespace: amazon-cloudwatch
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cloudwatch-agent-ds-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "endpoints"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes/proxy"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["nodes/stats", "configmaps", "events"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["cwagent-clusterleader"]
+    verbs: ["get","update"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cloudwatch-agent-ds-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: cloudwatch-agent-ds
+    namespace: amazon-cloudwatch
+roleRef:
+  kind: ClusterRole
+  name: cloudwatch-agent-ds-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# deploy cwagent as daemonset
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cloudwatch-agent-ds
+  namespace: amazon-cloudwatch
+spec:
+  selector:
+    matchLabels:
+      name: cloudwatch-agent-ds
+  template:
+    metadata:
+      labels:
+        name: cloudwatch-agent-ds
+    spec:
+      hostNetwork: true
+      containers:
+        - name: cloudwatch-agent
+          image: amazon/cloudwatch-agent:1.247348.0b251302
+          #ports:
+          #  - containerPort: 8125
+          #    hostPort: 8125
+          #    protocol: UDP
+          resources:
+            limits:
+              cpu:  200m
+              memory: 200Mi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          # Please don't change below envs
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: HOST_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CI_VERSION
+              value: "k8s/1.3.8"
+          # Please don't change the mountPath
+          volumeMounts:
+            - name: aws-credentials
+              mountPath: /root/.aws
+            - name: cwagentconfig
+              mountPath: /etc/cwagentconfig
+            - name: rootfs
+              mountPath: /rootfs
+              readOnly: true
+            - name: criosock
+              mountPath: /var/run/crio/crio.sock
+              readOnly: true
+            - name: sys
+              mountPath: /sys
+              readOnly: true
+            - name: devdisk
+              mountPath: /dev/disk
+              readOnly: true
+      volumes:
+        - name: aws-credentials
+          secret:
+            secretName: aws-credentials
+        - name: cwagentconfig
+          configMap:
+            name: cwagentconfig-ds
+        - name: rootfs
+          hostPath:
+            path: /
+        - name: criosock
+          hostPath:
+            path: /var/run/crio/crio.sock
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: devdisk
+          hostPath:
+            path: /dev/disk/
+      terminationGracePeriodSeconds: 60
+      serviceAccountName: cloudwatch-agent-ds

@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: thanos-receive
+  namespace: thanos-receiver
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-receive
+  namespace: thanos-receiver
+  labels:
+    app: thanos-receive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-receive
+  serviceName: thanos-receive
+  template:
+    metadata:
+      labels:
+        app: thanos-receive
+    spec:
+      serviceAccountName: thanos-receive
+      containers:
+      - name: thanos-receive
+        image: quay.io/thanos/thanos:v0.8.1
+        args:
+        - receive
+        - --tsdb.path=/data/remote-write-receive-data
+        - --debug.name=receive
+        - --log.level=debug
+        - --grpc-address=0.0.0.0:19891
+        - --http-address=0.0.0.0:18091
+        - --remote-write.address=0.0.0.0:19291
+        - --objstore.config-file=/etc/prometheus/store-secret.yaml
+        ports:
+        - name: http
+          containerPort: 19291
+        - name: grpc
+          containerPort: 19891
+        volumeMounts:
+        - name: store-credentials
+          mountPath: /etc/prometheus/
+          readOnly: true
+        - name: remote-write-data
+          mountPath: /data/remote-write-receive-data
+      volumes:
+      - name: store-credentials
+        secret:
+          secretName: store-credentials
+      - name: remote-write-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.openshift.io/serving-cert-secret-name: thanos-receive-tls
+  labels:
+    app: thanos-receive
+  name: thanos-receive
+  namespace: thanos-receiver
+spec:
+  ports:
+  - port: 9091
+    protocol: TCP
+    targetPort: http
+    name: http
+  - port: 19891
+    protocol: TCP
+    targetPort: grpc
+    name: grpc
+  selector:
+    app: thanos-receive
+  type: ClusterIP
