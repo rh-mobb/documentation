@@ -19,7 +19,7 @@ Create a set of security groups and assign users by following [the Microsoft doc
 
 In addition, if you are using `zsh` as your shell (which is the default shell on macOS) you may need to run `set -k` to get the below commands to run without errors. [This is because `zsh` disables comments in interactive shells from being used](https://zsh.sourceforge.io/Doc/Release/Options.html). 
 
-## 1. Register a new application in Azure AD for authenitcation
+## 1. Register a new application in Azure AD for authentication
 
 ### Capture the OAuth callback URL
 First, construct the cluster's OAuth callback URL and make note of it. To do so, run the following command, making sure to replace the variable specified:
@@ -52,17 +52,17 @@ Then, click on the "Overview" sub-blade and make note of the "Application (clien
 
 ## 2. Configure optional claims (for optional and group claims)
 
-In order to provide OpenShift with enough information about the user to create their account, we will configure Azure AD to provide two optional claims, specifically "email" and "upn", as well as a group claim when a user logs in. For more information on optional claims in Azure AD, see [the Microsoft documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-optional-claims).
+In order to provide OpenShift with enough information about the user to create their account, we will configure Azure AD to provide two optional claims, specifically "email" and "preferred_username", as well as a group claim when a user logs in. For more information on optional claims in Azure AD, see [the Microsoft documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-optional-claims).
 
 Click on the "Token configuration" sub-blade and select the "Add optional claim" button. 
 
 ![Azure Portal - Add Optional Claims Page](../images/azure-portal_optional-claims-page.png)
 
-Select ID then check the "email" and "upn" claims and click the "Add" button to configure them for your Azure AD application. 
+Select ID then check the "email" and "preferred_username" claims and click the "Add" button to configure them for your Azure AD application. 
 
 ![Azure Portal - Add Optional Claims - Token Type](../images/azure-portal_add-optional-claims-page.png)
 ![Azure Portal - Add Optional Claims - email](../images/azure-portal_add-optional-email-claims-page.png)
-![Azure Portal - Add Optional Claims - upn](../images/azure-portal_add-optional-upn-claims-page.png)
+![Azure Portal - Add Optional Claims - preferred_username](../images/azure-portal_add-optional-preferred_username-claims-page.png)
 
 When prompted, follow the prompt to enable the necessary Microsoft Graph permissions.
 
@@ -97,7 +97,7 @@ rosa create idp \
     --issuer-url https://login.microsoftonline.com/${TENANT_ID}/v2.0 \
     --email-claims email \
     --name-claims name \
-    --username-claims upn \
+    --username-claims preferred_username \
     --groups-claims groups
 ```
 
@@ -107,7 +107,7 @@ Once the cluster authentication operator reconciles your changes (generally with
 
 Once you login, you will notice that you have very limited permissions. This is because, by default, OpenShift only grants you the ability to create new projects (namespaces) in the cluster. Other projects (namespaces) are restricted from view. The cluster OAth provider **does not** automatically create RoleBindings and ClusterRoleBindings for the groups that are created, you are responsible for creating those via your own processes. 
 
-OpenShift includes a signifcant number of pre-configured roles, including the `cluster-admin` role that grants full access and control over the clster. To grant an automatically generated group access to the `cluster-admin` role, you must create a ClusterRoleBinding to the group ID.
+OpenShift includes a significant number of pre-configured roles, including the `cluster-admin` role that grants full access and control over the cluster. To grant an automatically generated group access to the `cluster-admin` role, you must create a ClusterRoleBinding to the group ID.
 
 ```bash
 GROUP_ID=wwwwwwww-wwww-wwww-wwww-wwwwwwwwwwww # Replace with your Azure AD Group ID that you would like to have cluster admin permissions
