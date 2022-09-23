@@ -2,7 +2,7 @@
 
 **Michael McNeill, Sohaib Azed**
 
-*28 July 2022*
+*23 September 2022*
 
 This guide demonstrates how to configure Azure AD as the cluster identity provider in Azure Red Hat OpenShift. This guide will walk through the creation of an Azure Active Directory (Azure AD) application and configure Azure Red Hat OpenShift (ARO) to authenticate using Azure AD. 
 
