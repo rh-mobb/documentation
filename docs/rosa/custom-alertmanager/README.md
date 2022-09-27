@@ -1,6 +1,8 @@
 # Custom Alerts in ROSA 4.11.x
 
-Starting with ROSA 4.11 clusters the OpenShift Administrator can enable a second AlertManager instance in user workload metrics which can be used to create custom alerts.
+Starting with OpenShift 4.11 it is possible to [manage alerting rules for user-defined projects](https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html#managing-alerting-rules-for-user-defined-projects_managing-alerts). Similarly, in ROSA clusters the OpenShift Administrator can enable a second AlertManager instance in the user workload monitoring namespace which can be used to create such alerts.
+
+> Note: Currently this is **not a managed nor a supported** feature of ROSA.
 
 ## Prerequisites
 
