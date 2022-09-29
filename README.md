@@ -30,7 +30,7 @@
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](./docs/aro/private-cluster)
-  * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
+  * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator.md)
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
 * [Deploy and use the Azure Service Operator V1(ASO)](./docs/aro/azure-service-operator-v1)
