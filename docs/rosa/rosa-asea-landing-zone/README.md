@@ -1,11 +1,12 @@
 # Integrating Red Hat OpenShift Service on AWS (ROSA) and AWS Secure Environment Accelerator (ASEA) Landing Zones
 
 **Tyler Stacey**
+
 *Last updated 28 Sep 2022*
 
-The [AWS Secure Environment Accelerator (ASEA)](https://aws-samples.github.io/aws-secure-environment-accelerator/) is a tool developed and designed by AWS to help deploy and operate a secure landing zone on AWS. ASEA creates core management and operations accounts, configures networking, identity services, cloud security services, centralized logging and alerting. In this post you will learn how to deploy Red Hat OpenShift Service on AWS (ROSA) in an ASEA environment.
+The [AWS Secure Environment Accelerator (ASEA)](https://aws-samples.github.io/aws-secure-environment-accelerator/) is a tool developed and designed by AWS to help deploy and operate a secure landing zone on AWS. ASEA creates core management and operations accounts, configures networking, identity services, cloud security services, and centralized logging and alerting. In this post, you will learn how to deploy Red Hat OpenShift Service on AWS (ROSA) in an ASEA environment.
 
-Thus guide is validated for ASEA v1.5.3 ([using the full configuration](https://github.com/aws-samples/aws-secure-environment-accelerator/blob/main/reference-artifacts/SAMPLE_CONFIGS/config.example.json)) and ROSA v4.11.4.
+This guide is validated for ASEA v1.5.3 ([using the full configuration](https://github.com/aws-samples/aws-secure-environment-accelerator/blob/main/reference-artifacts/SAMPLE_CONFIGS/config.example.json)) and ROSA v4.11.4.
 
 ## Prerequisites
 
@@ -16,7 +17,7 @@ Thus guide is validated for ASEA v1.5.3 ([using the full configuration](https://
 
 ## ASEA Configuration
 
-ASEA is delivered with a sample configuration file which deploys an opinionated and prescriptive architecture designed to help meet the security and operational requirements of many AWS customers around the world. The sample deployment configuration of the ASEA provides a prescriptive architecture that helps customers meet NIST 800-53 and/or Canadian Center for Cyber Security (CCCS) Cloud Medium Control Profile:
+ASEA is delivered with a sample configuration file that deploys an opinionated and prescriptive architecture designed to help meet the security and operational requirements of many AWS customers around the world. The sample deployment configuration of the ASEA provides a prescriptive architecture that helps customers meet NIST 800-53 and/or Canadian Center for Cyber Security (CCCS) Cloud Medium Control Profile:
 
 ![ASEA Prescriptive Architecture](ASEA-high-level-architecture.png)
 
@@ -26,7 +27,7 @@ To best support the automated deployment of ROSA clusters some modifications to 
 
 A separate ROSA Organizational Unit (OU) is created in AWS Organizations through the ASEA configuration files to support the configuration required by the service. The ROSA OU has the following characteristics:
 
-- Dynamic Virtual Private Cloud (VPC) generation: The CCCS Cloud Medium Profile requires centralized ingress and egress of network traffic in the cloud. To support this the ROSA account Virtual Private Clouds (VPCs) must be attached to the transit gateway and have appropriate routes to direct traffic to the deployed firewall solution. A separate VPC is required for ROSA based on the requirement to create a Route53 Private Hosted Zone (PHZ) during the cluster installation. Currently, shared VPCs do not support the creation of a PHZ in an account separate from the VPC. Support for pre-existing Route53 hosted zones is currently in development: https://github.com/openshift-cs/managed-openshift/issues/70 
+- Dynamic Virtual Private Cloud (VPC) generation: The CCCS Cloud Medium Profile requires centralized ingress and egress of network traffic in the cloud. To support this the ROSA account Virtual Private Clouds (VPCs) must be attached to the transit gateway and have appropriate routes to direct traffic to the deployed firewall solution. A separate VPC is required for ROSA based on the requirement to create a Route53 Private Hosted Zone (PHZ) during the cluster installation. Currently, shared VPCs do not support the creation of a PHZ in an account separate from the VPC. Support for pre-existing Route53 hosted zones is currently in development: [https://github.com/openshift-cs/managed-openshift/issues/70](https://github.com/openshift-cs/managed-openshift/issues/70)
 
 - Private Marketplace (PMP) Access to ROSA: Terms and conditions for the use of ROSA are enabled through the Private Marketplace when the ROSA service is enabled on each account. This is a one-time activity per account.
 
@@ -737,7 +738,7 @@ To support the most restrictive SCPs of ASEA we will consider the following SCPs
 - ASEA-Guardrails-Part1
 - ASEA-Guardrails-Sensitive
 
-To prepare your ASEA environment and enable ROSA perform the following steps:
+To prepare your ASEA environment and enable ROSA to perform the following steps:
 
 1. Create the ROSA-TempAdministrator role with AdministratorAccess in the required account.
 
@@ -755,12 +756,11 @@ role.
 7. You can now delete the ROSA-TempAdministrator role in this account.
 
 ## Deploy a ROSA cluster
+To install ROSA in a high-security environment, the custom KMS, PrivateLink and STS cluster patterns should be followed. For more information about these patterns please see the following information:
 
-In order to install ROSA in a high security environment, the custom KMS, PrivateLink and STS cluster patterns should be followed. For more information about these patterns please see the following information:
+- [https://aws.amazon.com/blogs/containers/red-hat-openshift-service-on-aws-private-clusters-with-aws-privatelink/](https://aws.amazon.com/blogs/containers/red-hat-openshift-service-on-aws-private-clusters-with-aws-privatelink/)
 
-- https://aws.amazon.com/blogs/containers/red-hat-openshift-service-on-aws-private-clusters-with-aws-privatelink/
-
-- https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html
+- [https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html)
 
 ### Prepare the ROSA Workload Account
 
@@ -783,7 +783,7 @@ Creation of the account roles is a one-time activity, create them with the follo
 rosa create account-roles --mode manual --prefix ROSA
 ```
 
-Using `--mode manual` generates the aws CLI commands and JSON files needed to create the account-wide roles and policies. Review the the roles and policies and run the provided commands from the working directory.
+Using `--mode manual` generates the aws CLI commands and JSON files needed to create the account-wide roles and policies. Review the roles and policies and run the provided commands from the working directory.
 
 ### Create the Required KMS Key and Initial Policy
 
@@ -996,7 +996,7 @@ Create a temporary Admin user with `cluster-admin` privileges:
 rosa create admin -c $ROSA_CLUSTER_NAME
 ```
 
-Run the resulting login statement from output. It may take up to 15 minutes before authentication is fully synced.
+Run the resulting login statement from the output. It may take up to 15 minutes before authentication is fully synced.
 
 Verify the default persistent volumes in the cluster.
 
