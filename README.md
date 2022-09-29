@@ -17,7 +17,7 @@
 * [Installing the AWS Load Balancer Controller (ALB) on ROSA](./docs/rosa/alb-sts)
 * [Adding AWS WAF in front of ROSA / OSD](./docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
-* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
+* [Use AWS CloudWatch Agent to push Prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Using Amazon Web Services Elastic File System (EFS) on ROSA](./docs/rosa/aws-efs-operator-on-rosa)
@@ -25,6 +25,7 @@
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](./docs/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](./docs/rosa/ecr-secret-operator)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](./docs/rosa/ack)
+* [Deploy ROSA in an AWS Secure Environment Accelerator (ASEA) Landing Zone](./docs/rosa/rosa-asea-landing-zone/)
 
 ### ARO
 
