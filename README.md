@@ -17,7 +17,7 @@
 * [Installing the AWS Load Balancer Controller (ALB) on ROSA](./docs/rosa/alb-sts)
 * [Adding AWS WAF in front of ROSA / OSD](./docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
-* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
+* [Use AWS CloudWatch Agent to push Prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Using Amazon Web Services Elastic File System (EFS) on ROSA](./docs/rosa/aws-efs-operator-on-rosa)
