@@ -24,6 +24,8 @@ This document is divided into the following sections:
 
 ### Customer Supplied KMS Key
 
+### Multi-Availability Zone
+
 ## ROSA Day 2 Security and Operations
 
 ### Configure an Identity Provider
@@ -44,5 +46,5 @@ This document is divided into the following sections:
 
 ## AWS Landing Zone Recommendations
 
-Customers eeking the highest
+Customers seeking the highest
 
