@@ -25,8 +25,6 @@ The script uses the `rosa`, `aws`, and `jq` CLI commands to create files in the 
 
 The AWS Policy Simulator is used to verify the permissions of each role policy against the API calls extracted by `jq`; results are then stored in a text file appended with `.results`.
 
-The script can be downloaded here: https://github.com/rh-mobb/documentation/edit/main/docs/rosa/verify-permissions/verify-permissions.sh
-
 ```bash
 #!/bin/bash
 
@@ -80,7 +78,7 @@ To use the script, run the following commands in a `bash` terminal (the -p optio
 ```bash
 mkdir scratch
 cd scratch
-curl https://raw.githubusercontent.com/rh-mobb/documentation/edit/main/docs/rosa/verify-permissions/verify-permissions.sh --output verify-permissions.sh
+curl https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/rosa/verify-permissions/verify-permissions.sh --output verify-permissions.sh
 chmod +x verify-permissions.sh
 ./verify-permissions.sh -p SimPolTest
 ```
