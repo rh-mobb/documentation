@@ -25,6 +25,8 @@ The script uses the `rosa`, `aws`, and `jq` CLI commands to create files in the 
 
 The AWS Policy Simulator is used to verify the permissions of each role policy against the API calls extracted by `jq`; results are then stored in a text file appended with `.results`.
 
+This script will verify the permissions for the current account and region.
+
 ```bash
 #!/bin/bash
 
@@ -101,5 +103,7 @@ ENDPOSITION	6	159
 STARTPOSITION	17	3
 ...
 ```
+
+> If any actions are blocked, review the error provided by AWS and consult with your Administrator to determine if SCPs are blocking the required API calls.
 
 
