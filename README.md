@@ -50,6 +50,7 @@
   * [via GUI ](./docs/aro/setup-quay/quay-console.md)
 * [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 * [Create infrastructure nodes on an ARO Cluster](./docs/aro/add-infra-nodes)
+* [Configure a load balancer service to use a static public IP](./docs/static-ip-load-balancer)
 
 ### GCP
 
