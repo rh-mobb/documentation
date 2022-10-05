@@ -14,8 +14,8 @@ This guide will walk through the following steps:
 
 ## Prerequisites 
 
-- An existing ARO cluster. If you need an ARO cluster, see the quickstart (here)[https://mobb.ninja/docs/quickstart-aro.html].
-- The Azure CLI. If you need to install the Azure CLI, see the Microsoft documentation (here)[https://learn.microsoft.com/en-us/cli/azure/install-azure-cli].
+- An existing ARO cluster. If you need an ARO cluster, see the quickstart [here](https://mobb.ninja/docs/quickstart-aro.html).
+- The Azure CLI. If you need to install the Azure CLI, see the Microsoft documentation [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
 
 ## Before you begin
 
@@ -28,7 +28,7 @@ PUBLIC_IP_NAME=example-pip # Replace this with the name you want your static pub
 
 ## Create a new static public IP address
 
-Create a static public IP address by using the `az network public ip create` command. The following command creates a static IP resource using the name you specified above in the parent resource group of the cluster object. 
+Create a static public IP address by using the `az network public ip create` command. The following command creates a static IP resource using the name you specified above in the parent resource group of the cluster object. To create the IP, run the following command:
 
 ```bash
 az network public-ip create \
@@ -65,11 +65,7 @@ az role assignment create \
 
 ## Create the load balancer service and assign the static public IP address.
 
-Finally, we need to create a LoadBalancer service inside of OpenShift that specifies the static public IP address, as well as the parent resource group. To do so, we'll create a 
-
-To create a LoadBalancer service with the static public IP address, add the loadBalancerIP property and the value of the static public IP address to the YAML manifest. Create a file named load-balancer-service.yaml and copy in the following YAML. Provide your own public IP address created in the previous step. The following example also sets the annotation to the resource group named myResourceGroup. Provide your own resource group name.
-
-Next, generate the necessary YAML for the cluster's OAuth provider to use Azure AD as its identity provider. To do so, run the following command, making sure to replace the variables specified:
+Finally, we need to create a LoadBalancer service inside of OpenShift that specifies the static public IP address, as well as the parent resource group. Next, generate the necessary YAML for the LoadBalancer service with the loadBalancerIP property and resource group annotation set. To do so, run the following command, making sure to replace the variables specified:
 
 ```bash
 PUBLIC_IP=$(az network public-ip show --resource-group ${RESOURCE_GROUP} --name ${PUBLIC_IP_NAME} --query ipAddress --output tsv)
