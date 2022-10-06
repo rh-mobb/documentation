@@ -1,0 +1,2162 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation from the MOBB/MOST Team">
+      
+      
+        <meta name="author" content="The MOBB Team">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="docums-, docurial-8.1.8">
+    
+    
+      
+        <title>ARO Custom domain with cert-manager and LetsEncrypt - MOBB Ninja</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6e60f8b8.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings1.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings2.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings3.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings4.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings5.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings6.css">
+    
+      <link rel="stylesheet" href="../../css/print-site.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-material.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#aro-custom-domain-with-cert-manager-and-letsencrypt" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MOBB Ninja" class="md-header__button md-logo" aria-label="MOBB Ninja" data-md-component="logo">
+      
+  <img src="../../assets/avatar.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MOBB Ninja
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ARO Custom domain with cert-manager and LetsEncrypt
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to Dark Mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to Dark Mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to Light Mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to Light Mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rh-mobb/documentation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../private-cluster/" class="md-tabs__link">
+        Products
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart-aro/" class="md-tabs__link">
+        Quickstarts
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../acm/observability/rosa/" class="md-tabs__link">
+        Advanced Cluster Manager (ACM)
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../rosa/custom-alertmanager-4.9/" class="md-tabs__link">
+        Observability
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../security/secrets-store-csi/hashicorp-vault/" class="md-tabs__link">
+        Security
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../blog/" class="md-tabs__link">
+      Blogs
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MOBB Ninja" class="md-nav__button md-logo" aria-label="MOBB Ninja" data-md-component="logo">
+      
+  <img src="../../assets/avatar.png" alt="logo">
+
+    </a>
+    MOBB Ninja
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rh-mobb/documentation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Products
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Products" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Products
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_1" type="checkbox" id="__nav_2_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_1">
+          ARO
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="ARO" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          ARO
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../private-cluster/" class="md-nav__link">
+        Private Cluster
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ocm/" class="md-nav__link">
+        Openshift Cluster Manager (OCM)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gpu/" class="md-nav__link">
+        ARO for GPU Workloads
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../frontdoor/" class="md-nav__link">
+        Azure Frontdoor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_1_5" type="checkbox" id="__nav_2_1_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_1_5">
+          Azure Service Operator
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Azure Service Operator" data-md-level="3">
+        <label class="md-nav__title" for="__nav_2_1_5">
+          <span class="md-nav__icon md-icon"></span>
+          Azure Service Operator
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../azure-service-operator-v1/" class="md-nav__link">
+        v1
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../azure-service-operator-v2/" class="md-nav__link">
+        v2
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_2" type="checkbox" id="__nav_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_2">
+          ROSA
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="ROSA" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          ROSA
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/private-link/" class="md-nav__link">
+        Private Link
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_2_2" type="checkbox" id="__nav_2_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_2_2">
+          Secure Token Service (STS)
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Secure Token Service (STS)" data-md-level="3">
+        <label class="md-nav__title" for="__nav_2_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Secure Token Service (STS)
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/sts/" class="md-nav__link">
+        Create ROSA Cluster w/STS
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_3">
+          GCP
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="GCP" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          GCP
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gcp/osd_preexisting_vpc/" class="md-nav__link">
+        Deploy OSD in GCP w/ BYO VPC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gcp/filestore/" class="md-nav__link">
+        Using Filestore w/ OSD
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Quickstarts
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Quickstarts" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Quickstarts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart-aro/" class="md-nav__link">
+        ARO Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart-rosa/" class="md-nav__link">
+        ROSA Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Advanced Cluster Manager (ACM)
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Advanced Cluster Manager (ACM)" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Advanced Cluster Manager (ACM)
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../acm/observability/rosa/" class="md-nav__link">
+        Deploy ACM Observability to a ROSA Cluster
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Observability
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Observability" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Observability
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_1">
+          Configuring Alerts for User Workloads
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuring Alerts for User Workloads" data-md-level="2">
+        <label class="md-nav__title" for="__nav_5_1">
+          <span class="md-nav__icon md-icon"></span>
+          Configuring Alerts for User Workloads
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/custom-alertmanager-4.9/" class="md-nav__link">
+        ROSA 4.9.X
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/custom-alertmanager/" class="md-nav__link">
+        ROSA 4.11+
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/federated-metrics/" class="md-nav__link">
+        Federating ROSA Metrics to S3
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Security
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Security" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_1" type="checkbox" id="__nav_6_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_1">
+          K8s Secret Store CSI Driver
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="K8s Secret Store CSI Driver" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_1">
+          <span class="md-nav__icon md-icon"></span>
+          K8s Secret Store CSI Driver
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/secrets-store-csi/hashicorp-vault/" class="md-nav__link">
+        HashiCorp CSI
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/aws-secrets-manager-csi/" class="md-nav__link">
+        AWS Secrets CSI w/ ROSA STS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/secrets-store-csi/azure-key-vault/" class="md-nav__link">
+        Azure Key Vault CSI Driver
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2" type="checkbox" id="__nav_6_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2">
+          Configuring IDPs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuring IDPs" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuring IDPs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2_1" type="checkbox" id="__nav_6_2_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2_1">
+          Azure AD
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Azure AD" data-md-level="3">
+        <label class="md-nav__title" for="__nav_6_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          Azure AD
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/azuread-aro/" class="md-nav__link">
+        Azure AD for ARO
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/group-claims/aro/" class="md-nav__link">
+        Azure AD for ARO w/group claims
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/group-claims/rosa/" class="md-nav__link">
+        Azure AD for ROSA w/group claims
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/azuread/" class="md-nav__link">
+        Azure AD for ROSA/OSD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/azuread-aro-cli/" class="md-nav__link">
+        Azure AD for ARO via CLI
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2_2" type="checkbox" id="__nav_6_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2_2">
+          Gitlab
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Gitlab" data-md-level="3">
+        <label class="md-nav__title" for="__nav_6_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Gitlab
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/gitlab/" class="md-nav__link">
+        ROSA/OSD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/gitlab-aro/" class="md-nav__link">
+        ARO
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_3" type="checkbox" id="__nav_6_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_3">
+          Advanced Cluster Security
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Advanced Cluster Security" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_3">
+          <span class="md-nav__icon md-icon"></span>
+          Advanced Cluster Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/rhacs/" class="md-nav__link">
+        Deploying ACS in ROSA/ARO
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/" class="md-nav__link">
+        Blogs
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    Table of Contents
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prepare-azure-account-for-azure-openshift" class="md-nav__link">
+    Prepare Azure Account for Azure OpenShift
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-red-hat-pull-secret" class="md-nav__link">
+    Get Red Hat pull secret
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-azure-openshift" class="md-nav__link">
+    Deploy Azure OpenShift
+  </a>
+  
+    <nav class="md-nav" aria-label="Deploy Azure OpenShift">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variables-and-resource-group" class="md-nav__link">
+    Variables and Resource Group
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#networking" class="md-nav__link">
+    Networking
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-dns-zones-service-principal" class="md-nav__link">
+    Create DNS Zones &amp; Service Principal
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#login-to-cluster" class="md-nav__link">
+    Login to Cluster
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-cert-manager" class="md-nav__link">
+    Set up Cert-Manager
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-cert-manager-letsencrypt" class="md-nav__link">
+    Configure cert-manager LetsEncrypt
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure cert-manager LetsEncrypt">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-certificate-requestor" class="md-nav__link">
+    Configure Certificate Requestor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-install-api-certificate" class="md-nav__link">
+    Create &amp; Install API Certificate
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-install-apps-wildcard-certificate" class="md-nav__link">
+    Create &amp; Install APPS Wildcard Certificate
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    Debugging
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-certificates" class="md-nav__link">
+    Validate Certificates
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delete-cluster" class="md-nav__link">
+    Delete Cluster
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/rh-mobb/documentation/edit/master/docs/aro/cert-manager/README.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="aro-custom-domain-with-cert-manager-and-letsencrypt">ARO Custom domain with cert-manager and LetsEncrypt</h1>
+<p>ARO guide to deploying an ARO cluster with custom domain and automating certificate management with cert-manager and letsencrypt certificates to manage the *.apps and api endpoints.</p>
+<p>Author: <a href="https://twitter.com/byron_miller">Byron Miller</a></p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li>Do not remove this line (it will not be displayed)
+{:toc}</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>az cli</li>
+<li>oc cli</li>
+<li>jq</li>
+<li>gettext</li>
+<li>OpenShift 4.10</li>
+<li>domain name to use</li>
+</ul>
+<p>I'm going to be running this setup through Fedora in WSL2. Be sure to always use the same terminal/session for all commands since we'll reference environment variables set or created through the steps.</p>
+<p><strong>Fedora Linux</strong></p>
+<blockquote>
+<p>See <a href="https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf">Azure Docs</a> for alternative install options.</p>
+</blockquote>
+<ol>
+<li>Import the Microsoft Keys</li>
+</ol>
+<p><code>bash
+   sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc</code></p>
+<ol>
+<li>Add the Microsoft Yum Repository</li>
+</ol>
+<p><code>bash
+   cat &lt;&lt; EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
+   [azure-cli]
+   name=Azure CLI
+   baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+   enabled=1
+   gpgcheck=1
+   gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+   EOF</code></p>
+<ol>
+<li>Install Azure CLI</li>
+</ol>
+<p><code>bash
+   sudo dnf install -y azure-cli</code></p>
+<ol>
+<li>
+<p>Install jq &amp; gettext</p>
+<p>I'm going to rely on using shell variables interpolated into Kubernetes config and jq to build variables. Installing or ensuring the gettext &amp; jq package is installed will allow us to use envsubst to simplify some of our configuration so we can use output of CLI's as input into Yamls to reduce the complexity of manual editing.</p>
+</li>
+</ol>
+<p><code>bash
+   sudo dnf install gettext jq</code></p>
+<h3 id="prepare-azure-account-for-azure-openshift">Prepare Azure Account for Azure OpenShift</h3>
+<ol>
+<li>Log into the Azure CLI by running the following and then authorizing through your Web Browser</li>
+</ol>
+<p><code>bash
+   az login</code></p>
+<ol>
+<li>Register resource providers</li>
+</ol>
+<p><code>bash
+   az provider register -n Microsoft.RedHatOpenShift --wait
+   az provider register -n Microsoft.Compute --wait
+   az provider register -n Microsoft.Storage --wait
+   az provider register -n Microsoft.Authorization --wait</code></p>
+<h3 id="get-red-hat-pull-secret">Get Red Hat pull secret</h3>
+<ol>
+<li>
+<p>Log into cloud.redhat.com</p>
+</li>
+<li>
+<p>Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned</p>
+</li>
+<li>
+<p>click the <strong>Download pull secret</strong> button and remember where you saved it, you'll reference it later.</p>
+</li>
+</ol>
+<h2 id="deploy-azure-openshift">Deploy Azure OpenShift</h2>
+<h3 id="variables-and-resource-group">Variables and Resource Group</h3>
+<p>Set some environment variables to use later, and create an Azure Resource Group.</p>
+<ol>
+<li>Set the following environment variables</li>
+</ol>
+<blockquote>
+<p>Change the values to suit your environment</p>
+</blockquote>
+<p><code>bash
+   PULL_SECRET=./pull-secret.txt  # the path to pull-secret
+   LOCATION=southcentralus        # the location of your cluster
+   RESOURCEGROUP=aro-rg           # the name of the resource group where you want to create your cluster
+   CLUSTER=aro-cluster            # the name of your cluster
+   DOMAIN=lab.domain.com          # Domain or subdomain zone for cluster &amp; cluster api</code></p>
+<ol>
+<li>Create an Azure resource group</li>
+</ol>
+<p><code>bash
+   az group create \
+   --name $RESOURCEGROUP \
+   --location $LOCATION</code></p>
+<h3 id="networking">Networking</h3>
+<p>Create a virtual network with two empty subnets</p>
+<ol>
+<li>Create virtual network</li>
+</ol>
+<p><code>bash
+   az network vnet create \
+      --resource-group $RESOURCEGROUP \
+      --name aro-vnet \
+      --address-prefixes 10.0.0.0/22</code></p>
+<ol>
+<li>Create control plane subnet</li>
+</ol>
+<p><code>bash
+   az network vnet subnet create \
+   --resource-group $RESOURCEGROUP \
+   --vnet-name aro-vnet \
+   --name master-subnet \
+   --address-prefixes 10.0.0.0/23 \
+   --service-endpoints Microsoft.ContainerRegistry</code></p>
+<ol>
+<li>Create machine subnet</li>
+</ol>
+<p><code>bash
+   az network vnet subnet create \
+   --resource-group $RESOURCEGROUP \
+   --vnet-name aro-vnet \
+   --name worker-subnet \
+   --address-prefixes 10.0.2.0/23 \
+   --service-endpoints Microsoft.ContainerRegistry</code></p>
+<ol>
+<li>Disable network policies on the control plane subnet</li>
+</ol>
+<blockquote>
+<p>This is required for the service to be able to connect to and manage the cluster.</p>
+</blockquote>
+<p><code>bash
+   az network vnet subnet update \
+   --name master-subnet \
+   --resource-group $RESOURCEGROUP \
+   --vnet-name aro-vnet \
+   --disable-private-link-service-network-policies true</code></p>
+<ol>
+<li>Create the cluster</li>
+</ol>
+<blockquote>
+<p>This will take between 30 and 45 minutes.</p>
+</blockquote>
+<p><code>bash
+   az aro create \
+   --resource-group $RESOURCEGROUP \
+   --name $CLUSTER \
+   --vnet aro-vnet \
+   --master-subnet master-subnet \
+   --worker-subnet worker-subnet \
+   --pull-secret @$PULL_SECRET \
+   --domain $DOMAIN</code></p>
+<ol>
+<li>
+<p>Wait until the ARO cluster is fully provisioned.</p>
+</li>
+<li>
+<p>Get OpenShift console URL</p>
+</li>
+</ol>
+<blockquote>
+<p>You can use these to login to the web console (will get a cert warning that you can bypass with typing "thisisunsafe" in a chrome browser or login with oc)</p>
+</blockquote>
+<p><code>bash
+   az aro show -g $RESOURCEGROUP -n $CLUSTER --query "consoleProfile.url" -o tsv</code></p>
+<ol>
+<li>Get OpenShift credentials</li>
+</ol>
+<p><code>bash
+   az aro list-credentials --name $CLUSTER --resource-group $RESOURCEGROUP</code></p>
+<h2 id="create-dns-zones-service-principal">Create DNS Zones &amp; Service Principal</h2>
+<p>In order for cert-manager to work with AzureDNS, we need to create the zone and add a CAA record as well as create a Service Principal that we can use to manage records in this zone so CertManager can use DNS01 authentication for validating requests.</p>
+<p>This zone should be a public zone since letsencrypt will need to be able to read records created here.</p>
+<blockquote>
+<p>If you use a subdomain, please be sure to <a href="https://docs.microsoft.com/en-us/azure/dns/delegate-subdomain">create the NS records</a> in your primary domain to the subdomain. </p>
+</blockquote>
+<p>For ease of management, we're using the same resource group for domain as we have the cluster in.</p>
+<ol>
+<li>Create Zone</li>
+</ol>
+<p><code>bash
+   az network dns zone create -g $RESOURCEGROUP -n $DOMAIN</code></p>
+<pre><code>&gt;You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar.
+</code></pre>
+<ol>
+<li>Create API DNS record</li>
+</ol>
+<p><code>bash
+   APIREC=$(az aro show -g $RESOURCEGROUP -n $CLUSTER --query apiserverProfile.ip -o tsv)
+   az network dns record-set a add-record -g $RESOURCEGROUP -z $DOMAIN \
+   -n api -a $APIREC</code></p>
+<ol>
+<li>Create Wildcard DNS record</li>
+</ol>
+<p><code>bash
+   WILDCARDREC=$(az aro show -n $CLUSTER -g $RESOURCEGROUP --query '{ingress:ingressProfiles[0].ip}' -o tsv)
+   az network dns record-set a add-record -g $RESOURCEGROUP -z $DOMAIN \
+   -n "*.apps" -a $WILDCARDREC</code></p>
+<ol>
+<li>Add CAA Record</li>
+</ol>
+<blockquote>
+<p><a href="https://letsencrypt.org/docs/caa/">CAA is a type of DNS record</a> that allows owners to specify which Certificate Authorities are allowed to issue certificates containing their domain names.  </p>
+</blockquote>
+<p><code>bash
+   az network dns record-set caa add-record -g $RESOURCEGROUP -z $DOMAIN \
+   -n @ --flags 0 --tag "issuewild" --value "letsencrypt.org"</code></p>
+<p>You should be able to view the records in your console</p>
+<p><img alt="dns records in zone" src="dns-zone-records.png" /></p>
+<blockquote>
+<p>Note - You may have to create NS records in your root zone for a subdomain if you use a subdomain zone to point to the subdomains name servers.</p>
+</blockquote>
+<ol>
+<li>Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.</li>
+</ol>
+<blockquote>
+<p>AZURE_CERT_MANAGER_NEW_SP_NAME = the name of the service principal to create that will manage the DNS zone automation for cert-manager.</p>
+</blockquote>
+<p><code>bash
+   AZURE_CERT_MANAGER_NEW_SP_NAME=aro-dns-sp
+   LETSENCRYPTEMAIL=youremail@work.com
+   DNS_SP=$(az ad sp create-for-rbac --name $AZURE_CERT_MANAGER_NEW_SP_NAME --output json)
+   AZURE_CERT_MANAGER_SP_APP_ID=$(echo $DNS_SP | jq -r '.appId')
+   AZURE_CERT_MANAGER_SP_PASSWORD=$(echo $DNS_SP | jq -r '.password')
+   AZURE_TENANT_ID=$(echo $DNS_SP | jq -r '.tenant')
+   AZURE_SUBSCRIPTION_ID=$(az account show --output json | jq -r '.id')</code></p>
+<ol>
+<li>Restrict service principal - remove contributor role.</li>
+</ol>
+<blockquote>
+<p>Note: This may not exist, safe to proceed. We're going to grant the DNS Management Role to it next.</p>
+</blockquote>
+<p><code>bash
+   az role assignment delete --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role Contributor</code></p>
+<ol>
+<li>Grant DNS Zone Contributor to our Service Principal</li>
+</ol>
+<p>We'll grant <a href="https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#dns-zone-contributor">DNS Zone Contributor</a> to our DNS Service principal. </p>
+<p><code>bash
+   az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role befefa01-2a29-4197-83a8-272ff33ce314</code></p>
+<ol>
+<li>Assign service principal to DNS zone</li>
+</ol>
+<p><code>bash
+   DNS_ID=$(az network dns zone show --name $DOMAIN --resource-group $RESOURCEGROUP --query "id" --output tsv)
+   az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role "DNS Zone Contributor" --scope $DNS_ID</code></p>
+<h2 id="login-to-cluster">Login to Cluster</h2>
+<ol>
+<li>Login to your cluster through oc cli</li>
+</ol>
+<blockquote>
+<p>You may need to flush your local dns resolver/cache before you can see the DNS/Hostnames. On Windows you can open up a command prompt as administrator and type "ipconfig /flushdns"</p>
+</blockquote>
+<p><code>bash
+   apiServer=$(az aro show -g $RESOURCEGROUP -n $CLUSTER --query apiserverProfile.url -o tsv)
+   loginCred=$(az aro list-credentials --name $CLUSTER --resource-group $RESOURCEGROUP --query "kubeadminPassword" -o tsv)
+   oc login $apiServer -u kubeadmin -p $loginCred</code></p>
+<blockquote>
+<p>You may get a warning that the certificate isn't trusted. We can ignore that now since we're in the process of adding a trusted certificate.</p>
+</blockquote>
+<h2 id="set-up-cert-manager">Set up Cert-Manager</h2>
+<p>We'll install cert-manager from operatorhub. If you experience any issues installing here, it probably means that you didn't <a href="https://docs.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret">provide a pull-secret</a> when you installed your ARO cluster. </p>
+<ol>
+<li>Create namespace</li>
+</ol>
+<p><code>bash
+   cat &lt;&lt;EOF | oc apply -f -
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     annotations:
+       openshift.io/display-name:  Red Hat Certificate Manager Operator
+     labels:
+       openshift.io/cluster-monitoring: 'true'
+     name: openshift-cert-manager-operator
+   EOF</code></p>
+<ol>
+<li>Switch openshift-cert-manager-operator project (namespace)</li>
+</ol>
+<p><code>bash
+   oc project openshift-cert-manager-operator</code></p>
+<ol>
+<li>Create OperatorGroup</li>
+</ol>
+<p><code>bash
+   cat &lt;&lt;EOF | oc apply -f -
+   apiVersion: operators.coreos.com/v1
+   kind: OperatorGroup
+   metadata:
+     name: openshift-cert-manager-operator
+   spec: {}
+   EOF</code></p>
+<ol>
+<li>Create subscription for cert-manager operator</li>
+</ol>
+<p><code>yaml
+   cat &lt;&lt;EOF | oc apply -f -
+   apiVersion: operators.coreos.com/v1alpha1
+   kind: Subscription
+   metadata:
+     name: openshift-cert-manager-operator
+     namespace: openshift-cert-manager-operator
+   spec:
+     channel: tech-preview
+     installPlanApproval: Automatic
+     name: openshift-cert-manager-operator
+     source: redhat-operators
+     sourceNamespace: openshift-marketplace
+   EOF</code></p>
+<blockquote>
+<p><em>It will take a few minutes for this operator to install and complete it's set up. May be a good time to take a coffee break :)</em></p>
+</blockquote>
+<ol>
+<li>Wait for cert-manager operator to finish installing.</li>
+</ol>
+<p>Our next steps can't complete until the operator has finished installing. I recommend that you login to your cluster with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.</p>
+<p><img alt="View cert-manager Operator for Red Hat OpenShift" src="cert-manager-operator.png" /></p>
+<h2 id="configure-cert-manager-letsencrypt">Configure cert-manager LetsEncrypt</h2>
+<p>We're going to set up cert-manager to use DNS verification for letsencrypt certificates. We'll need to generate a service principal that can update the DNS zone and create short term records needed to validate certificate requests and associate this service principal with the cluster issuer.</p>
+<h3 id="configure-certificate-requestor">Configure Certificate Requestor</h3>
+<ol>
+<li>Switch openshift-cert-manager project (namespace)</li>
+</ol>
+<p><code>bash
+   oc project openshift-cert-manager</code></p>
+<ol>
+<li>Create azuredns-config secret for storing service principal credentials to manage zone.</li>
+</ol>
+<p><code>bash
+   oc create secret generic azuredns-config --from-literal=client-secret=$AZURE_CERT_MANAGER_SP_PASSWORD -n openshift-cert-manager</code></p>
+<ol>
+<li>Create Cluster Issuer</li>
+</ol>
+<p><code>yaml
+   envsubst  &lt;&lt;EOF | oc apply -f -
+   apiVersion: cert-manager.io/v1
+   kind: ClusterIssuer
+   metadata:
+     name: letsencrypt-prod
+   spec:
+     acme:
+       server: https://acme-v02.api.letsencrypt.org/directory
+       email: $LETSENCRYPTEMAIL
+       # This key doesn't exist, cert-manager creates it
+       privateKeySecretRef:
+         name: prod-letsencrypt-issuer-account-key
+       solvers:
+       - dns01:
+           azureDNS:
+             clientID: $AZURE_CERT_MANAGER_SP_APP_ID
+             clientSecretSecretRef:
+               name: azuredns-config
+               key: client-secret
+             subscriptionID: $AZURE_SUBSCRIPTION_ID
+             tenantID: $AZURE_TENANT_ID
+             resourceGroupName: $RESOURCEGROUP
+             hostedZoneName: $DOMAIN
+             environment: AzurePublicCloud
+   EOF</code></p>
+<ol>
+<li>Describe issuer</li>
+</ol>
+<p><code>bash
+   oc describe clusterissuer letsencrypt-prod</code></p>
+<p>You should see some output that the issuer is Registered/Ready</p>
+<p><code>Conditions:
+    Last Transition Time:  2022-06-17T17:29:37Z
+    Message:               The ACME account was registered with the ACME server
+    Observed Generation:   1
+    Reason:                ACMEAccountRegistered
+    Status:                True
+    Type:                  Ready
+   Events:                    &lt;none&gt;</code></p>
+<p>Once the above command is complete, you should be able to login to openshift, click view operators and make sure you're in the "openshift-cert-manager-operator" project and you should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.  </p>
+<p><img alt="cluster issuer" src="cluster-issuer.png" /></p>
+<h3 id="create-install-api-certificate">Create &amp; Install API Certificate</h3>
+<ol>
+<li>Switch openshift-config project</li>
+</ol>
+<p><code>bash
+   oc project openshift-config</code></p>
+<ol>
+<li>Configure API certificate</li>
+</ol>
+<p><code>yaml
+   envsubst  &lt;&lt;EOF | oc apply -f -
+   apiVersion: cert-manager.io/v1
+   kind: Certificate
+   metadata:
+     name: openshift-api
+     namespace: openshift-config
+   spec:
+     secretName: openshift-api-certificate
+     issuerRef:
+       name: letsencrypt-prod
+       kind: ClusterIssuer
+     dnsNames:
+     - api.$DOMAIN
+   EOF</code></p>
+<ol>
+<li>View certificate status</li>
+</ol>
+<p><code>bash
+   oc describe certificate openshift-api -n openshift-config</code></p>
+<ol>
+<li>Create cluster api cert job</li>
+</ol>
+<p>This job will install the certificate </p>
+<p>```yaml
+   envsubst  &lt;&lt;EOF | oc apply -f -
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   metadata:
+     name: patch-cluster-api-cert
+   rules:
+     - apiGroups:
+         - ""
+       resources:
+         - secrets
+       verbs:
+         - get
+         - list
+     - apiGroups:
+         - config.openshift.io
+       resources:
+         - apiservers
+       verbs:
+         - get
+         - list
+         - patch
+         - update</p>
+<hr />
+<p>apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   metadata:
+     name: patch-cluster-api-cert
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: patch-cluster-api-cert
+   subjects:
+     - kind: ServiceAccount
+       name: patch-cluster-api-cert
+       namespace: openshift-config</p>
+<hr />
+<p>apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: patch-cluster-api-cert</p>
+<hr />
+<p>apiVersion: batch/v1
+   kind: Job
+   metadata:
+     name: patch-cluster-api-cert
+     annotations:
+       argocd.argoproj.io/hook: PostSync
+       argocd.argoproj.io/hook-delete-policy: HookSucceeded
+   spec:
+     template:
+       spec:
+         containers:
+           - image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+             env:
+               - name: API_HOST_NAME
+                 value: api.$DOMAIN
+             command:
+               - /bin/bash
+               - -c
+               - |
+                 #!/usr/bin/env bash
+                 if oc get secret openshift-api-certificate -n openshift-config; then
+                   oc patch apiserver cluster --type=merge -p '{"spec":{"servingCerts": {"namedCertificates": [{"names": ["'$API_HOST_NAME'"], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}'
+                 else
+                   echo "Could not execute sync as secret 'openshift-api-certificate' in namespace 'openshift-config' does not exist, check status of CertificationRequest"
+                   exit 1
+                 fi
+             name: patch-cluster-api-cert
+         dnsPolicy: ClusterFirst
+         restartPolicy: Never
+         terminationGracePeriodSeconds: 30
+         serviceAccount: patch-cluster-api-cert
+         serviceAccountName: patch-cluster-api-cert
+   EOF
+   ```</p>
+<h3 id="create-install-apps-wildcard-certificate">Create &amp; Install APPS Wildcard Certificate</h3>
+<ol>
+<li>Switch openshift-ingress project (namespace)</li>
+</ol>
+<p><code>bash
+   oc project openshift-ingress</code></p>
+<ol>
+<li>Configure Wildcard Certificate</li>
+</ol>
+<p><code>yaml
+   envsubst  &lt;&lt;EOF | oc apply -f -
+   apiVersion: cert-manager.io/v1
+   kind: Certificate
+   metadata:
+     name: openshift-wildcard
+     namespace: openshift-ingress
+   spec:
+     secretName: openshift-wildcard-certificate
+     issuerRef:
+        name: letsencrypt-prod
+        kind: ClusterIssuer
+     commonName: "*.apps.$DOMAIN"
+     dnsNames:
+     - "*.apps.$DOMAIN"
+   EOF</code></p>
+<p>This will generate our API and wildcard certificate requests.  We'll now create two jobs that will install these certificates.</p>
+<ol>
+<li>View certificate status</li>
+</ol>
+<p><code>bash
+   oc describe certificate openshift-wildcard -n openshift-ingress</code></p>
+<ol>
+<li>Install Wildcard Certificate Job</li>
+</ol>
+<p>```yaml
+   cat &lt;&lt;EOF | oc apply -f -
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   metadata:
+     name: patch-cluster-wildcard-cert
+   rules:
+     - apiGroups:
+         - operator.openshift.io
+       resources:
+         - ingresscontrollers
+       verbs:
+         - get
+         - list
+         - patch
+     - apiGroups:
+         - ""
+       resources:
+         - secrets
+       verbs:
+         - get
+         - list</p>
+<hr />
+<p>apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   metadata:
+     name: patch-cluster-wildcard-cert
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: patch-cluster-wildcard-cert
+   subjects:
+     - kind: ServiceAccount
+       name: patch-cluster-wildcard-cert
+       namespace: openshift-ingress</p>
+<hr />
+<p>apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: patch-cluster-wildcard-cert</p>
+<hr />
+<p>apiVersion: batch/v1
+   kind: Job
+   metadata:
+     name: patch-cluster-wildcard-cert
+     annotations:
+       argocd.argoproj.io/hook: PostSync
+       argocd.argoproj.io/hook-delete-policy: HookSucceeded
+   spec:
+     template:
+       spec:
+         containers:
+           - image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+             command:
+               - /bin/bash
+               - -c
+               - |
+                 #!/usr/bin/env bash
+                 if oc get secret openshift-wildcard-certificate -n openshift-ingress; then
+                   oc patch ingresscontroller default -n openshift-ingress-operator --type=merge --patch='{"spec": { "defaultCertificate": { "name": "openshift-wildcard-certificate" }}}'
+                 else
+                   echo "Could not execute sync as secret 'openshift-wildcard-certificate' in namespace 'openshift-ingress' does not exist, check status of CertificationRequest"
+                   exit 1
+                 fi
+             name: patch-cluster-wildcard-cert
+         dnsPolicy: ClusterFirst
+         restartPolicy: Never
+         terminationGracePeriodSeconds: 30
+         serviceAccount: patch-cluster-wildcard-cert
+         serviceAccountName: patch-cluster-wildcard-cert
+   EOF
+   ```</p>
+<h2 id="debugging">Debugging</h2>
+<p>One of the most helpful commands i've seen for debugging is in regards to challenges failing. The order says pending in perpetuity and you can run this to see why.</p>
+<pre><code class="language-bash">oc describe challenges
+</code></pre>
+<p>This is a very <a href="https://cert-manager.io/docs/faq/acme/">helpful guide in debugging certificates</a> as well.</p>
+<h2 id="validate-certificates">Validate Certificates</h2>
+<p>It will take a few minutes for the jobs to successfully complete. </p>
+<p>Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser and no more warnings about SSL on cli.</p>
+<p>You may want to open an InPrivate/Private browser tab to visit the console/api so you can see the new SSL cert without having to expire your cache.</p>
+<h2 id="delete-cluster">Delete Cluster</h2>
+<p>Once you're done its a good idea to delete the cluster to ensure that you don't get a surprise bill.</p>
+<ol>
+<li>
+<p>Delete the cluster</p>
+<p><code>bash
+   az aro delete -y \
+  --resource-group $RESOURCEGROUP \
+  --name $CLUSTER</code></p>
+</li>
+<li>
+<p>Delete the Azure resource group</p>
+<blockquote>
+<p>Only do this if there's nothing else in the resource group.</p>
+</blockquote>
+<p><code>bash
+   az group delete -y \
+  --name $RESOURCEGROUP</code></p>
+</li>
+</ol>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://khanhduy1407.github.io/docurial/" target="_blank" rel="noopener">
+      Docurial
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.22074ed6.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.960e086b.min.js"></script>
+      
+        <script src="../../js/print-site.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,90 @@
+#################################
+### Astronomer global configuration
+#################################
+global:
+  # Enables default values for Azure installations
+  azure:
+    enabled: true
+  sccEnabled: true
+
+  # Base domain for all subdomains exposed through ingress
+  baseDomain: astro.mobb.ninja
+
+  # Name of secret containing TLS certificate
+  tlsSecret: astronomer-tls
+
+  # Enable privateCaCerts only if your enterprise security team
+  # generated a certificate from a private certificate authority.
+  #  privateCaCerts:
+  #  - private-root-ca
+
+  # Enable privateCaCertsAddToHost only when your nodes do not already
+  # include the private CA in their docker trust store.
+  # Most enterprises already have this configured,
+  # and in that case 'enabled' should be false.
+  #privateCaCertsAddToHost:
+  #  enabled: true
+  #  hostDirectory: /etc/docker/certs.d
+  # For development or proof-of-concept, you can use an in-cluster database
+  postgresqlEnabled: true # Keep True if deploying a database on your AKS cluster.
+
+  # do not run prometheus node exporter
+  nodeExporterEnabled: false
+
+  # Turn on Security Context Constraints
+  #sccEnabled: false #AKS
+  sccEnabled: true  #ARO
+
+  # Disable logging
+  # Astronomer default logging stack is not supported in Openshift
+  logging: true
+
+# Settings for database deployed on AKS cluster.
+postgresql:
+  replication:
+    enabled: true
+    slaveReplicas: 2
+    synchronousCommit: "on"
+    numSynchronousReplicas: 1
+
+# SSL support for using SSL connections to encrypt client/server communication between database and Astronomer platform. Enable SSL if provisioning Azure Database for PostgreSQL - Flexible Server as it enforces SSL. Change the setting with respect to the database provisioned.
+  ssl:
+    enabled: false
+    mode: "require"
+
+#################################
+### Nginx configuration
+#################################
+nginx:
+  # IP address the nginx ingress should bind to
+  loadBalancerIP: ~
+  #  Set to 'true' when deploying to a private cluster
+  privateLoadBalancer: True
+
+  # Dict of arbitrary annotations to add to the nginx ingress. For full configuration options, see https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/
+  ingressAnnotations: {}
+
+#################################
+### SMTP configuration
+#################################
+
+astronomer:
+  houston:
+    config:
+      publicSignups: false # Users need to be invited to have access to Astronomer. Set to true otherwise
+      emailConfirmation: true # Users get an email verification before accessing Astronomer
+      deployments:
+        manualReleaseNames: true # Allows you to set your release names
+      email:
+        enabled: true
+        smtpUrl: smtps://x@mail-relay
+        reply: "noreply@astronomer.io" # Emails will be sent from this address
+      auth:
+        github:
+          enabled: true # Lets users authenticate with Github
+        local:
+          enabled: false # Disables logging in with just a username and password
+        openidConnect:
+          google:
+            enabled: true # Lets users authenticate with OpenID
+

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: azure-log-forwarding
+  labels:
+    k8s-app: fluent-bit-logging
+    version: v1
+    kubernetes.io/cluster-service: "true"
+spec:
+  selector:
+    matchLabels:
+      k8s-app: fluent-bit-logging
+  template:
+    metadata:
+      labels:
+        k8s-app: fluent-bit-logging
+        version: v1
+        kubernetes.io/cluster-service: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2020"
+        prometheus.io/path: /api/v1/metrics/prometheus
+    spec:
+      serviceAccountName: fluent-bit
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: fluent-bit
+        image: fluent/fluent-bit:1.6
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 2020
+          - containerPort: 24224
+        env:
+        - name: WorkspaceId
+          valueFrom:
+            secretKeyRef:
+              name: fluentbit-secrets
+              key: WorkspaceId
+        - name: SharedKey
+          valueFrom:
+            secretKeyRef:
+              name: fluentbit-secrets
+              key: SharedKey
+        - name: LogName
+          value: logapp
+        volumeMounts:
+          - name: fluent-bit-etc
+            mountPath: /fluent-bit/etc/
+      volumes:
+      - name: fluent-bit-etc
+        configMap:
+            name: fluent-bit-config
+

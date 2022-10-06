@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: thanos-querier
+  namespace: thanos-receiver
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-querier
+  namespace: thanos-receiver
+  labels:
+    app: thanos-querier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-querier
+  template:
+    metadata:
+      labels:
+        app: thanos-querier
+    spec:
+      serviceAccountName: thanos-querier
+      containers:
+      - name: thanos
+        image: quay.io/thanos/thanos:v0.8.1
+        args:
+        - query
+        - --query.replica-label=replica
+        # Discover local store APIs using DNS SRV.
+        - --store=dnssrv+thanos-store-gateway.$(MY_POD_NAMESPACE).svc.cluster.local
+        - --store=dns+thanos-receive.$(MY_POD_NAMESPACE).svc.cluster.local:19891
+        env:
+          - name: MY_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: thanos-querier
+  name: thanos-querier
+  namespace: thanos-receiver
+spec:
+  ports:
+  - port: 9090
+    protocol: TCP
+    targetPort: http
+    name: http
+  selector:
+    app: thanos-querier
+  type: ClusterIP
+---

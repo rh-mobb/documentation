@@ -1,0 +1,87 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: thanos-store-gateway
+  namespace: thanos-receiver
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: system:openshift:scc:anyuid
+  namespace: thanos-receiver
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:anyuid
+subjects:
+- kind: ServiceAccount
+  name: thanos-store-gateway
+  namespace: thanos-receiver
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-store-gateway
+  namespace: thanos-receiver
+  labels:
+    app: thanos-store-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-store-gateway
+  serviceName: thanos-store-gateway
+  template:
+    metadata:
+      labels:
+        app: thanos-store-gateway
+        thanos-store-api: "true"
+    spec:
+      serviceAccountName: thanos-store-gateway
+      containers:
+      - name: thanos
+        image: quay.io/thanos/thanos:v0.8.1
+        args:
+        - store
+        - --data-dir=/data
+        - --index-cache-size=500MB
+        - --chunk-pool-size=500MB
+        - --objstore.config-file=/etc/prometheus/store-secret.yaml
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: "200m"
+            memory: 256Mi
+        volumeMounts:
+        - name: store-credentials
+          mountPath: /etc/prometheus/
+          readOnly: true
+      volumes:
+      - name: store-credentials
+        secret:
+          secretName: store-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: thanos-store-gateway
+  name: thanos-store-gateway
+  namespace: thanos-receiver
+spec:
+  ports:
+  - port: 10901
+    protocol: TCP
+    targetPort: grpc
+    name: grpc
+  selector:
+    app: thanos-store-gateway
+  type: ClusterIP
