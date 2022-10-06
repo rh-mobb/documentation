@@ -53,6 +53,7 @@ nav:
         - "ARO": idp/gitlab-aro/README.md
     - Advanced Cluster Security:
       - "Deploying ACS in ROSA/ARO": security/rhacs.md
+  - Blogs: blog/index.md
 
 
 # Theme Config
@@ -75,8 +76,16 @@ theme:
 
 # Plugins
 plugins:
-  - tags
+  - tags:
+      insert: top
   - search
+  - blogging:
+      post_date_format: long
+      dirs:
+        - blog
+      size: 5
+      features:
+        tags: {}
   - print-site:
       add_print_site_banner: true
       print_site_banner_template: "docs/assets/templates/custom_banner.tpl"
