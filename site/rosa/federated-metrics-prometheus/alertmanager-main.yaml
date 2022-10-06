@@ -1,8 +1,0 @@
-apiVersion: monitoring.coreos.com/v1
-kind: Alertmanager
-metadata:
-  name: main
-spec:
-  securityContext: {}
-  replicas: 3
-
