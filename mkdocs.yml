@@ -1,0 +1,95 @@
+# Site Info
+site_name: MOBB Ninja
+# site_url: https://
+site_author: The MOBB Team
+site_description: >-
+  Documentation from the MOBB/MOST Team
+repo_url: https://github.com/rh-mobb/documentation
+
+
+# Site Navigation
+nav:
+  - Home: index.md
+  - Products:
+    - ARO:
+      - "Private Cluster": aro/private-cluster.md
+      - "Openshift Cluster Manager (OCM)": aro/ocm.md
+      - "ARO for GPU Workloads": aro/gpu/README.md
+      - "Azure Frontdoor": aro/frontdoor/README.md
+      - Azure Service Operator:
+        - "v1": aro/azure-service-operator-v1/index.md
+        - "v2": aro/azure-service-operator-v2/index.md
+    - ROSA:
+      - "Private Link": rosa/private-link/README.md
+      - Secure Token Service (STS):
+        - "Create ROSA Cluster w/STS": rosa/sts/README.md
+    - GCP:
+      - "Deploy OSD in GCP w/ BYO VPC": gcp/osd_preexisting_vpc.md
+      - "Using Filestore w/ OSD": gcp/filestore.md
+  - Quickstarts:
+    - "ARO Quickstart": quickstart-aro.md
+    - "ROSA Quickstart": quickstart-rosa.md
+  - Advanced Cluster Manager (ACM):
+    - "Deploy ACM Observability to a ROSA Cluster": acm/observability/rosa/README.md
+  - Observability:
+    - Configuring Alerts for User Workloads:
+      - "ROSA 4.9.X": rosa/custom-alertmanager-4.9/README.md
+      - "ROSA 4.11+": rosa/custom-alertmanager/README.md
+    - "Federating ROSA Metrics to S3": rosa/federated-metrics/README.md
+  - Security:
+    - K8s Secret Store CSI Driver:
+      - "HashiCorp CSI": security/secrets-store-csi/hashicorp-vault.md
+      - "AWS Secrets CSI w/ ROSA STS": rosa/aws-secrets-manager-csi/README.md
+      - "Azure Key Vault CSI Driver": security/secrets-store-csi/azure-key-vault.md
+    - Configuring IDPs:
+      - Azure AD:
+        - "Azure AD for ARO": idp/azuread-aro/README.md
+        - "Azure AD for ARO w/group claims": idp/group-claims/aro/README.md
+        - "Azure AD for ROSA w/group claims": idp/group-claims/rosa/README.md
+        - "Azure AD for ROSA/OSD": idp/azuread/README.md
+        - "Azure AD for ARO via CLI": idp/azuread-aro-cli/README.md
+      - Gitlab:
+        - "ROSA/OSD": idp/gitlab/README.md
+        - "ARO": idp/gitlab-aro/README.md
+    - Advanced Cluster Security:
+      - "Deploying ACS in ROSA/ARO": security/rhacs.md
+  - Blogs: blog/index.md
+
+
+# Theme Config
+theme:
+  name: material
+  logo: assets/avatar.png
+  features: 
+    - navigation.tabs
+    - navigation.tabs.sticky
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to Dark Mode
+    
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to Light Mode
+
+# Plugins
+plugins:
+  - tags:
+      insert: top
+  - search
+  - blogging:
+      post_date_format: long
+      dirs:
+        - blog
+      size: 5
+      features:
+        tags: {}
+  - print-site:
+      add_print_site_banner: true
+      print_site_banner_template: "docs/assets/templates/custom_banner.tpl"
+
+# Site Extras
+extra:
+  banner_message: "This site is not official Red Hat documentation and is provided for informational purposes only. These guides may be experimental, proof of concept, or early adoption. Officially supported documentation is available at"

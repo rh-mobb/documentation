@@ -1,0 +1,1863 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation from the MOBB/MOST Team">
+      
+      
+        <meta name="author" content="The MOBB Team">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="docums-, docurial-8.1.8">
+    
+    
+      
+        <title>Azure AD for ARO via CLI - MOBB Ninja</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6e60f8b8.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings1.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings2.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings3.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings4.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings5.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings6.css">
+    
+      <link rel="stylesheet" href="../../css/print-site.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-material.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configure-azure-ad-as-an-oidc-identity-provider-for-aro-with-cli" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MOBB Ninja" class="md-header__button md-logo" aria-label="MOBB Ninja" data-md-component="logo">
+      
+  <img src="../../assets/avatar.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MOBB Ninja
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Azure AD for ARO via CLI
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to Dark Mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to Dark Mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to Light Mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to Light Mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rh-mobb/documentation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../aro/private-cluster/" class="md-tabs__link">
+        Products
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart-aro/" class="md-tabs__link">
+        Quickstarts
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../acm/observability/rosa/" class="md-tabs__link">
+        Advanced Cluster Manager (ACM)
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../rosa/custom-alertmanager-4.9/" class="md-tabs__link">
+        Observability
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../security/secrets-store-csi/hashicorp-vault/" class="md-tabs__link md-tabs__link--active">
+        Security
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../blog/" class="md-tabs__link">
+      Blogs
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MOBB Ninja" class="md-nav__button md-logo" aria-label="MOBB Ninja" data-md-component="logo">
+      
+  <img src="../../assets/avatar.png" alt="logo">
+
+    </a>
+    MOBB Ninja
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rh-mobb/documentation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Products
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Products" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Products
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_1" type="checkbox" id="__nav_2_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_1">
+          ARO
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="ARO" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          ARO
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/private-cluster/" class="md-nav__link">
+        Private Cluster
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/ocm/" class="md-nav__link">
+        Openshift Cluster Manager (OCM)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/gpu/" class="md-nav__link">
+        ARO for GPU Workloads
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/frontdoor/" class="md-nav__link">
+        Azure Frontdoor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_1_5" type="checkbox" id="__nav_2_1_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_1_5">
+          Azure Service Operator
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Azure Service Operator" data-md-level="3">
+        <label class="md-nav__title" for="__nav_2_1_5">
+          <span class="md-nav__icon md-icon"></span>
+          Azure Service Operator
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/azure-service-operator-v1/" class="md-nav__link">
+        v1
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/azure-service-operator-v2/" class="md-nav__link">
+        v2
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_2" type="checkbox" id="__nav_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_2">
+          ROSA
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="ROSA" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          ROSA
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/private-link/" class="md-nav__link">
+        Private Link
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_2_2" type="checkbox" id="__nav_2_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_2_2">
+          Secure Token Service (STS)
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Secure Token Service (STS)" data-md-level="3">
+        <label class="md-nav__title" for="__nav_2_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Secure Token Service (STS)
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/sts/" class="md-nav__link">
+        Create ROSA Cluster w/STS
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_3">
+          GCP
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="GCP" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          GCP
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gcp/osd_preexisting_vpc/" class="md-nav__link">
+        Deploy OSD in GCP w/ BYO VPC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gcp/filestore/" class="md-nav__link">
+        Using Filestore w/ OSD
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Quickstarts
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Quickstarts" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Quickstarts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart-aro/" class="md-nav__link">
+        ARO Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart-rosa/" class="md-nav__link">
+        ROSA Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Advanced Cluster Manager (ACM)
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Advanced Cluster Manager (ACM)" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Advanced Cluster Manager (ACM)
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../acm/observability/rosa/" class="md-nav__link">
+        Deploy ACM Observability to a ROSA Cluster
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Observability
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Observability" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Observability
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_1">
+          Configuring Alerts for User Workloads
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuring Alerts for User Workloads" data-md-level="2">
+        <label class="md-nav__title" for="__nav_5_1">
+          <span class="md-nav__icon md-icon"></span>
+          Configuring Alerts for User Workloads
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/custom-alertmanager-4.9/" class="md-nav__link">
+        ROSA 4.9.X
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/custom-alertmanager/" class="md-nav__link">
+        ROSA 4.11+
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/federated-metrics/" class="md-nav__link">
+        Federating ROSA Metrics to S3
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Security
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Security" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_1" type="checkbox" id="__nav_6_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_1">
+          K8s Secret Store CSI Driver
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="K8s Secret Store CSI Driver" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_1">
+          <span class="md-nav__icon md-icon"></span>
+          K8s Secret Store CSI Driver
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/secrets-store-csi/hashicorp-vault/" class="md-nav__link">
+        HashiCorp CSI
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rosa/aws-secrets-manager-csi/" class="md-nav__link">
+        AWS Secrets CSI w/ ROSA STS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/secrets-store-csi/azure-key-vault/" class="md-nav__link">
+        Azure Key Vault CSI Driver
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2" type="checkbox" id="__nav_6_2" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2">
+          Configuring IDPs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuring IDPs" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuring IDPs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2_1" type="checkbox" id="__nav_6_2_1" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2_1">
+          Azure AD
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Azure AD" data-md-level="3">
+        <label class="md-nav__title" for="__nav_6_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          Azure AD
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../azuread-aro/" class="md-nav__link">
+        Azure AD for ARO
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../group-claims/aro/" class="md-nav__link">
+        Azure AD for ARO w/group claims
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../group-claims/rosa/" class="md-nav__link">
+        Azure AD for ROSA w/group claims
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../azuread/" class="md-nav__link">
+        Azure AD for ROSA/OSD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Azure AD for ARO via CLI
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Azure AD for ARO via CLI
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#have-azure-cli-installed" class="md-nav__link">
+    Have Azure cli installed
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#login-to-azure" class="md-nav__link">
+    Login to Azure
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure" class="md-nav__link">
+    Azure
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#define-needed-variables" class="md-nav__link">
+    Define needed variables
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-oauthcallbackurl" class="md-nav__link">
+    Get oauthCallbackURL
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-manifestjson-file-to-configure-the-azure-active-directory-application" class="md-nav__link">
+    Create manifest.json file to configure the Azure Active Directory application
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registercreate-app" class="md-nav__link">
+    Register/create app
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-servive-principal-for-the-new-app" class="md-nav__link">
+    Add Servive Principal for the new app
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-service-principal-an-enterprise-application" class="md-nav__link">
+    Make Service Principal an Enterprise Application
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2_2" type="checkbox" id="__nav_6_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2_2">
+          Gitlab
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Gitlab" data-md-level="3">
+        <label class="md-nav__title" for="__nav_6_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Gitlab
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gitlab/" class="md-nav__link">
+        ROSA/OSD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gitlab-aro/" class="md-nav__link">
+        ARO
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_3" type="checkbox" id="__nav_6_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_3">
+          Advanced Cluster Security
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Advanced Cluster Security" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_3">
+          <span class="md-nav__icon md-icon"></span>
+          Advanced Cluster Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/rhacs/" class="md-nav__link">
+        Deploying ACS in ROSA/ARO
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/" class="md-nav__link">
+        Blogs
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#have-azure-cli-installed" class="md-nav__link">
+    Have Azure cli installed
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#login-to-azure" class="md-nav__link">
+    Login to Azure
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure" class="md-nav__link">
+    Azure
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#define-needed-variables" class="md-nav__link">
+    Define needed variables
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-oauthcallbackurl" class="md-nav__link">
+    Get oauthCallbackURL
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-manifestjson-file-to-configure-the-azure-active-directory-application" class="md-nav__link">
+    Create manifest.json file to configure the Azure Active Directory application
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registercreate-app" class="md-nav__link">
+    Register/create app
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-servive-principal-for-the-new-app" class="md-nav__link">
+    Add Servive Principal for the new app
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-service-principal-an-enterprise-application" class="md-nav__link">
+    Make Service Principal an Enterprise Application
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/rh-mobb/documentation/edit/master/docs/idp/azuread-aro-cli/README.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="configure-azure-ad-as-an-oidc-identity-provider-for-aro-with-cli">Configure Azure AD as an OIDC identity provider for ARO with cli</h1>
+<p><strong>Daniel Moessner</strong></p>
+<p><em>26 June 2022</em></p>
+<p>The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (ARO) via cli are:</p>
+<ul>
+<li><a href="#prerewuisites">Prerequisites</a><ul>
+<li><a href="#have-azure-cli-installed">Have Azure cli installed</a></li>
+<li><a href="#login-to-azure">Login to Azure</a></li>
+</ul>
+</li>
+<li><a href="#azure">Azure</a><ul>
+<li><a href="#define-needed-variables">Define needed variables</a></li>
+<li><a href="#get-oauthcallbackurl">Get oauthCallbackURL</a></li>
+<li><a href="#create-manifestjson-file-to-configure-the-azure-active-directory-application">Create manifest.json file to configure the Azure Active Directory application</a></li>
+<li><a href="#registercreate-app">Register/create app</a></li>
+<li><a href="#add-servive-principal-for-the-new-app">Add Servive Principal for the new app</a></li>
+<li><a href="#make-service-principal-and-enterprise-application">Make Service Principal an Enterprise Application</a></li>
+<li><a href="#create-the-client-secret">Create the client secret</a></li>
+<li><a href="#update-the-azure-ad-application-scope-permissions">Update the Azure AD application scope permissions</a></li>
+<li><a href="#get-tenant-id">Get Tenant ID</a></li>
+</ul>
+</li>
+<li><a href="#openshift">OpenShift</a><ul>
+<li><a href="#login-to-openshift-as-kubeadmin">Login to OpenShift as kubeadmin</a></li>
+<li><a href="#create-an-openshift-secret">Create an OpenShift secret</a></li>
+<li><a href="#apply-openshift-openid-authentication">Apply OpenShift OpenID authentication</a></li>
+<li><a href="#wait-for-authentication-operator-to-roll-out">Wait for authentication operator to roll out</a></li>
+<li><a href="#verify-login-through-azure-active-directory">Verify login through Azure Active Directory</a></li>
+<li><a href="#last-steps">Last steps</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="have-azure-cli-installed">Have Azure cli installed</h3>
+<p>Follow the Microsoft instuctions: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli</p>
+<blockquote>
+<p><strong>Note</strong>
+This has been written for az cli verion <code>2.37.0</code> some commands will not work with previous versions, however, there is a known issue https://github.com/Azure/azure-cli/issues/23027 where we will use an older version via <code>podman run -it mcr.microsoft.com/azure-cli:2.36.0</code> . 
+In case you're using <code>docker</code>, just replace <code>podman</code> command by <code>docker</code> . 
+For podman installation on  Mac, Windows &amp; Linux, please refer to https://podman.io/getting-started/installation</p>
+</blockquote>
+<h3 id="login-to-azure">Login to Azure</h3>
+<p>Login to Azure as follows:</p>
+<p><code>az login</code></p>
+<p>If you're logging in from a system you have no access to your browser you can authenticate, you can also use</p>
+<p><code>az login --use-device-code</code> </p>
+<h2 id="azure">Azure</h2>
+<h3 id="define-needed-variables">Define needed variables</h3>
+<p>To simplly follow along, first define the following variables according to your set-up:</p>
+<p><code>RESOURCEGROUP=&lt;cluster-dmoessne-aro01&gt; # replave with your name
+   CLUSTERNAME=&lt;rg-dmoessne-aro01&gt;  # replave with your name</code></p>
+<h3 id="get-oauthcallbackurl">Get oauthCallbackURL</h3>
+<p>To get the <code>oauthCallbackURL</code> for the Azure AD integration, run the following commands:
+   ```
+   DOMAIN=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query clusterProfile.domain -o tsv)
+   APISERVER=$(az aro show -g $RESOURCEGROUP -n $CLUSTERNAME --query apiserverProfile.url -o tsv)</p>
+<p>oauthCallbackURL=https://oauth-openshift.apps.$DOMAIN/oauth2callback/AAD
+   echo $oauthCallbackURL
+   ```</p>
+<blockquote>
+<p><strong>Note</strong> 
+<code>oauthCallbackURL</code>, in particular <code>AAD</code> can be changed but <strong>must</strong> match the name in the oauth providerwhen creating the OpenShift OpenID authentication   </p>
+</blockquote>
+<h3 id="create-manifestjson-file-to-configure-the-azure-active-directory-application">Create <code>manifest.json</code> file to configure the Azure Active Directory application</h3>
+<p>Configure OpenShift to use the <code>email</code> claim and fall back to <code>upn</code> to set the Preferred Username by adding the <code>upn</code> as part of the ID token returned by Azure Active Directory.</p>
+<p>Create a <code>manifest.json</code> file to configure the Azure Active Directory application.</p>
+<p><code>cat &lt;&lt; EOF &gt; manifest.json
+   {
+    "idToken": [
+      {
+       "name": "upn",
+       "source": null,
+       "essential": false,
+       "additionalProperties": []
+      },
+      {
+       "name": "email",
+       "source": null,
+       "essential": false,
+       "additionalProperties": []
+      }
+     ]
+   }  
+   EOF</code></p>
+<h3 id="registercreate-app">Register/create app</h3>
+<p>Create an Azure AD application and retrieve app id:</p>
+<p>```
+   DISPLAYNAME=<auth-dmoessne-aro01> # set you name accordingly </p>
+<p>az ad app create \
+   --display-name $DISPLAYNAME \
+   --web-redirect-uris $oauthCallbackURL \
+   --sign-in-audience AzureADMyOrg \
+   --optional-claims @manifest.json
+   ```</p>
+<p><code>APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)</code></p>
+<h3 id="add-servive-principal-for-the-new-app">Add Servive Principal for the new app</h3>
+<p>Create Pervice Principal for the app created:</p>
+<p><code>az ad sp create --id $APPID</code></p>
+<h3 id="make-service-principal-an-enterprise-application">Make Service Principal an Enterprise Application</h3>
+<p>We need this Service Principal to be an Enterprise Application to be able to add users and groups, so we add the needed tag (az cli &gt;= <code>2.38.0</code>)</p>
+<p><code>az ad sp update --id $APPID --set 'tags=["WindowsAzureActiveDirectoryIntegratedApp"]'</code></p>
+<blockquote>
+<p><strong>Note</strong> 
+ In case you get a trace back (az cli = <code>2.37.0</code>) check out https://github.com/Azure/azure-cli/issues/23027
+ To overcome that issue, we'll do the following
+```</p>
+<h1 id="app_idaz-ad-app-list-display-name-displayname-query-id-o-tsv">APP_ID=$(az ad app list --display-name $DISPLAYNAME --query [].id -o tsv)</h1>
+<h1 id="az-rest-method-patch-url-httpsgraphmicrosoftcomv10applicationsapp_id-body-tagswindowsazureactivedirectoryintegratedapp">az rest --method PATCH --url https://graph.microsoft.com/v1.0/applications/$APP_ID --body '{"tags":["WindowsAzureActiveDirectoryIntegratedApp"]}'</h1>
+<p>```</p>
+</blockquote>
+<h3 id="create-the-client-secret">Create the client secret</h3>
+<p>The password for the app created is retrieved by resetting the same:</p>
+<p><code>PASSWD=$(az ad app credential reset --id $APPID --query password -o tsv)</code> </p>
+<blockquote>
+<p><strong>Note</strong> 
+The password generated with above command is by default valid for one year and you may want to change that by adding either and end date via 
+<code>--end-date</code> or set validity in years with <code>--years</code>. 
+For details consult the <a href="https://docs.microsoft.com/en-us/cli/azure/ad/app/credential?view=azure-cli-latest#az-ad-app-credential-reset">documentation</a></p>
+</blockquote>
+<h3 id="update-the-azure-ad-application-scope-permissions">Update the Azure AD application scope permissions</h3>
+<p>To be able to read the user information from Azure Active Directory, we need to add the following Azure Active Directory Graph permissions</p>
+<p>Add permission for the Azure Active Directory as follows:</p>
+<ul>
+<li>
+<p>read email
+   <code>az ad app permission add \
+   --api 00000003-0000-0000-c000-000000000000 \
+   --api-permissions 64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0=Scope \
+   --id $APPID</code></p>
+</li>
+<li>
+<p>read profile
+   <code>az ad app permission add \
+   --api 00000003-0000-0000-c000-000000000000 \
+   --api-permissions 14dad69e-099b-42c9-810b-d002981feec1=Scope \
+   --id $APPID</code></p>
+</li>
+<li>
+<p>User.Read
+   <code>az ad app permission add \
+   --api 00000003-0000-0000-c000-000000000000 \
+   --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope \
+   --id $APPID</code></p>
+<blockquote>
+<p><strong>Note</strong>
+If you see a message that you need to grant consent you can safely ignore it, unless you are authenticated as a alobal administrator for this Azure Active Directory. Standard domain users will be asked to grant consent when they first login to the cluster using their AAD credentials.</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="get-tenant-id">Get Tenant ID</h3>
+<p>We do need the Tenant ID for setting up the Oauth provider later on:</p>
+<p><code>TENANTID=$(az account show --query tenantId -o tsv)</code></p>
+<blockquote>
+<p><strong>Note</strong>
+Now we can switch over to our OpenShift installation and apply the needed configuraion.
+Please refer to https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html to get the latest <code>oc</code> cli</p>
+</blockquote>
+<h2 id="openshift">OpenShift</h2>
+<h3 id="login-to-openshift-as-kubeadmin">Login to OpenShift as kubeadmin</h3>
+<p>Fetch kubeadmin password and login to your cluster via <code>oc</code> cli (you can use any other cluster-admin user in case you have already created/added other oauth providers)</p>
+<p>```
+   KUBEPW=$(az aro list-credentials \
+   --name $CLUSTERNAME \
+   --resource-group $RESOURCEGROUP \
+   --query kubeadminPassword --output tsv)</p>
+<p>oc login $APISERVER -u kubeadmin -p $KUBEPW
+   ``` </p>
+<h3 id="create-an-openshift-secret">Create an OpenShift secret</h3>
+<p>Create an OpenShift secret to store the Azure Active Directory application secret from the application password we created/reset earlier:</p>
+<p><code>oc create secret generic openid-client-secret-azuread \
+   -n openshift-config \
+   --from-literal=clientSecret=$PASSWD</code></p>
+<h3 id="apply-openshift-openid-authentication">Apply OpenShift OpenID authentication</h3>
+<p>As a last step we need to apply the OpenShift OpenID authentication for Azure Active Directory:</p>
+<p><code>cat &lt;&lt; EOF | oc apply -f -
+   apiVersion: config.openshift.io/v1
+   kind: OAuth
+   metadata:
+     name: cluster
+   spec:
+     identityProviders:
+     - name: AAD
+       mappingMethod: claim
+       type: OpenID
+       openID:
+         clientID: $APPID
+         clientSecret:
+           name: openid-client-secret-azuread
+         extraScopes:
+         - email
+         - profile
+         extraAuthorizeParameters:
+           include_granted_scopes: "true"
+         claims:
+           preferredUsername:
+           - email
+           - upn
+           name:
+           - name
+           email:
+           - email
+         issuer: https://login.microsoftonline.com/$TENANTID
+   EOF</code></p>
+<h3 id="wait-for-authentication-operator-to-roll-out">Wait for authentication operator to roll out</h3>
+<p>Before we move over to the OpenShift login, let's wait for the new version of the authentication cluster operator to be rolled out</p>
+<p><code>watch -n 5 oc get co authentication</code></p>
+<blockquote>
+<p><strong>Note</strong>
+it may take some time until the rollout starts </p>
+</blockquote>
+<h3 id="verify-login-through-azure-active-directory">Verify login through Azure Active Directory</h3>
+<p>Get console url to login:</p>
+<p><code>az aro show --name $CLUSTERNAME --resource-group $RESOURCEGROUP --query "consoleProfile.url" -o tsv</code></p>
+<p>Opening the url in a browser, we can see the login to Azure AD is available</p>
+<p><img alt="AADLoginPage" src="AAD_enabled.png" /></p>
+<p>At first login you may have to accept application permissions</p>
+<p><img alt="AcceptPerms" src="accept_permissions.png" /></p>
+<h3 id="last-steps">Last steps</h3>
+<p>As a last step you may want to grant a user or group cluster-admin permissions and remove kubeadmin user, see
+- https://docs.openshift.com/container-platform/4.10/authentication/using-rbac.html#cluster-role-binding-commands_using-rbac
+- https://docs.openshift.com/container-platform/4.10/authentication/remove-kubeadmin.html</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../azuread/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Azure AD for ROSA/OSD" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Azure AD for ROSA/OSD
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../gitlab/" class="md-footer__link md-footer__link--next" aria-label="Next: ROSA/OSD" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              ROSA/OSD
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://khanhduy1407.github.io/docurial/" target="_blank" rel="noopener">
+      Docurial
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.22074ed6.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.960e086b.min.js"></script>
+      
+        <script src="../../js/print-site.js"></script>
+      
+    
+  </body>
+</html>

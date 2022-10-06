@@ -1,0 +1,22 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: grafana-operator
+  namespace: thanos-receiver
+  labels:
+    operators.coreos.com/grafana-operator.thanos-receiver: ''
+spec:
+  name: grafana-operator
+  channel: v4
+  source: community-operators
+  sourceNamespace: openshift-marketplace
+  installPlanGeneration: 1
+  installPlanApproval: Automatic
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: grafana-operator
+spec:
+  targetNamespaces:
+    - thanos-receiver

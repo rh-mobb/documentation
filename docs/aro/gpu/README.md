@@ -60,7 +60,7 @@ ARO supports the following GPU workers:
 
 1. Login to azure
 
-   Login to [portal.azure.com](portal.azure.com), type "quotas" in search by, click on Compute and in the search box type "NCAsv3_T4". Select the region your cluster is in (select checkbox) and then click Request quota increase and ask for quota (I chose 8 so i can build two demo clusters of NC4as T4s).
+   Login to [portal.azure.com](https://portal.azure.com), type "quotas" in search by, click on Compute and in the search box type "NCAsv3_T4". Select the region your cluster is in (select checkbox) and then click Request quota increase and ask for quota (I chose 8 so i can build two demo clusters of NC4as T4s).
 
 2. Configure quota
 
@@ -122,7 +122,7 @@ We'll update our pull secret to make sure that we can install operators as well 
 
 ### Manually
 
-1. Log into [cloud.redhat.com](cloud.redhat.com)
+1. Log into [cloud.redhat.com](https://cloud.redhat.com)
 
 1. Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned
 

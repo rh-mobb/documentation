@@ -1,0 +1,1806 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation from the MOBB/MOST Team">
+      
+      
+        <meta name="author" content="The MOBB Team">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="docums-, docurial-8.1.8">
+    
+    
+      
+        <title>Private Link - MOBB Ninja</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6e60f8b8.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings1.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings2.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings3.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings4.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings5.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-enum-headings6.css">
+    
+      <link rel="stylesheet" href="../../css/print-site.css">
+    
+      <link rel="stylesheet" href="../../css/print-site-material.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#creating-a-rosa-cluster-with-private-link-enabled" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="MOBB Ninja" class="md-header__button md-logo" aria-label="MOBB Ninja" data-md-component="logo">
+      
+  <img src="../../assets/avatar.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MOBB Ninja
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Private Link
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to Dark Mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to Dark Mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to Light Mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to Light Mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rh-mobb/documentation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../aro/private-cluster/" class="md-tabs__link md-tabs__link--active">
+        Products
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart-aro/" class="md-tabs__link">
+        Quickstarts
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../acm/observability/rosa/" class="md-tabs__link">
+        Advanced Cluster Manager (ACM)
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../custom-alertmanager-4.9/" class="md-tabs__link">
+        Observability
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../security/secrets-store-csi/hashicorp-vault/" class="md-tabs__link">
+        Security
+      </a>
+    </li>
+  
+
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../blog/" class="md-tabs__link">
+      Blogs
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="MOBB Ninja" class="md-nav__button md-logo" aria-label="MOBB Ninja" data-md-component="logo">
+      
+  <img src="../../assets/avatar.png" alt="logo">
+
+    </a>
+    MOBB Ninja
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rh-mobb/documentation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Products
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Products" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Products
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_1" type="checkbox" id="__nav_2_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_1">
+          ARO
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="ARO" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          ARO
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/private-cluster/" class="md-nav__link">
+        Private Cluster
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/ocm/" class="md-nav__link">
+        Openshift Cluster Manager (OCM)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/gpu/" class="md-nav__link">
+        ARO for GPU Workloads
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/frontdoor/" class="md-nav__link">
+        Azure Frontdoor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_1_5" type="checkbox" id="__nav_2_1_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_1_5">
+          Azure Service Operator
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Azure Service Operator" data-md-level="3">
+        <label class="md-nav__title" for="__nav_2_1_5">
+          <span class="md-nav__icon md-icon"></span>
+          Azure Service Operator
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/azure-service-operator-v1/" class="md-nav__link">
+        v1
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../aro/azure-service-operator-v2/" class="md-nav__link">
+        v2
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_2" type="checkbox" id="__nav_2_2" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_2">
+          ROSA
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="ROSA" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          ROSA
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Private Link
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Private Link
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-vpc-and-subnets" class="md-nav__link">
+    Create VPC and Subnets
+  </a>
+  
+    <nav class="md-nav" aria-label="Create VPC and Subnets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-vpc-with-a-private-subnet-and-aws-site-to-site-vpn-access" class="md-nav__link">
+    Option 1 - VPC with a private subnet and AWS Site-to-Site VPN access.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-vpc-with-public-and-private-subnets-and-aws-site-to-site-vpn-access" class="md-nav__link">
+    Option 2 - VPC with public and private subnets and AWS Site-to-Site VPN access
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-vpc-with-public-and-private-subnets-nat" class="md-nav__link">
+    Option 3 - VPC with public and private subnets (NAT)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-rosa" class="md-nav__link">
+    Deploy ROSA
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-connectivity" class="md-nav__link">
+    Test Connectivity
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    Cleanup
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_2_2" type="checkbox" id="__nav_2_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_2_2">
+          Secure Token Service (STS)
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Secure Token Service (STS)" data-md-level="3">
+        <label class="md-nav__title" for="__nav_2_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Secure Token Service (STS)
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sts/" class="md-nav__link">
+        Create ROSA Cluster w/STS
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2_3" type="checkbox" id="__nav_2_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_3">
+          GCP
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="GCP" data-md-level="2">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          GCP
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gcp/osd_preexisting_vpc/" class="md-nav__link">
+        Deploy OSD in GCP w/ BYO VPC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gcp/filestore/" class="md-nav__link">
+        Using Filestore w/ OSD
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Quickstarts
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Quickstarts" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Quickstarts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart-aro/" class="md-nav__link">
+        ARO Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart-rosa/" class="md-nav__link">
+        ROSA Quickstart
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Advanced Cluster Manager (ACM)
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Advanced Cluster Manager (ACM)" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Advanced Cluster Manager (ACM)
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../acm/observability/rosa/" class="md-nav__link">
+        Deploy ACM Observability to a ROSA Cluster
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Observability
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Observability" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Observability
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5_1" type="checkbox" id="__nav_5_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_1">
+          Configuring Alerts for User Workloads
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuring Alerts for User Workloads" data-md-level="2">
+        <label class="md-nav__title" for="__nav_5_1">
+          <span class="md-nav__icon md-icon"></span>
+          Configuring Alerts for User Workloads
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom-alertmanager-4.9/" class="md-nav__link">
+        ROSA 4.9.X
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom-alertmanager/" class="md-nav__link">
+        ROSA 4.11+
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../federated-metrics/" class="md-nav__link">
+        Federating ROSA Metrics to S3
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Security
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Security" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_1" type="checkbox" id="__nav_6_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_1">
+          K8s Secret Store CSI Driver
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="K8s Secret Store CSI Driver" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_1">
+          <span class="md-nav__icon md-icon"></span>
+          K8s Secret Store CSI Driver
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/secrets-store-csi/hashicorp-vault/" class="md-nav__link">
+        HashiCorp CSI
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aws-secrets-manager-csi/" class="md-nav__link">
+        AWS Secrets CSI w/ ROSA STS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/secrets-store-csi/azure-key-vault/" class="md-nav__link">
+        Azure Key Vault CSI Driver
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2" type="checkbox" id="__nav_6_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2">
+          Configuring IDPs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuring IDPs" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuring IDPs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2_1" type="checkbox" id="__nav_6_2_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2_1">
+          Azure AD
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Azure AD" data-md-level="3">
+        <label class="md-nav__title" for="__nav_6_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          Azure AD
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/azuread-aro/" class="md-nav__link">
+        Azure AD for ARO
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/group-claims/aro/" class="md-nav__link">
+        Azure AD for ARO w/group claims
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/group-claims/rosa/" class="md-nav__link">
+        Azure AD for ROSA w/group claims
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/azuread/" class="md-nav__link">
+        Azure AD for ROSA/OSD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/azuread-aro-cli/" class="md-nav__link">
+        Azure AD for ARO via CLI
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2_2" type="checkbox" id="__nav_6_2_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2_2">
+          Gitlab
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Gitlab" data-md-level="3">
+        <label class="md-nav__title" for="__nav_6_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Gitlab
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/gitlab/" class="md-nav__link">
+        ROSA/OSD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../idp/gitlab-aro/" class="md-nav__link">
+        ARO
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_3" type="checkbox" id="__nav_6_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_3">
+          Advanced Cluster Security
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Advanced Cluster Security" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_3">
+          <span class="md-nav__icon md-icon"></span>
+          Advanced Cluster Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/rhacs/" class="md-nav__link">
+        Deploying ACS in ROSA/ARO
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/" class="md-nav__link">
+        Blogs
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-vpc-and-subnets" class="md-nav__link">
+    Create VPC and Subnets
+  </a>
+  
+    <nav class="md-nav" aria-label="Create VPC and Subnets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-vpc-with-a-private-subnet-and-aws-site-to-site-vpn-access" class="md-nav__link">
+    Option 1 - VPC with a private subnet and AWS Site-to-Site VPN access.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-vpc-with-public-and-private-subnets-and-aws-site-to-site-vpn-access" class="md-nav__link">
+    Option 2 - VPC with public and private subnets and AWS Site-to-Site VPN access
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-vpc-with-public-and-private-subnets-nat" class="md-nav__link">
+    Option 3 - VPC with public and private subnets (NAT)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-rosa" class="md-nav__link">
+    Deploy ROSA
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-connectivity" class="md-nav__link">
+    Test Connectivity
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    Cleanup
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/rh-mobb/documentation/edit/master/docs/rosa/private-link/README.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="creating-a-rosa-cluster-with-private-link-enabled">Creating a ROSA cluster with Private Link enabled</h1>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li><a href="https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html">AWS CLI</a></li>
+<li><a href="https://github.com/openshift/rosa/releases/tag/v1.0.8">Rosa CLI</a> v1.0.8</li>
+<li><a href="https://stedolan.github.io/jq/download/">jq</a></li>
+</ul>
+<h2 id="create-vpc-and-subnets">Create VPC and Subnets</h2>
+<p>The following instructions use the AWS CLI to create the necessary networking to deploy a Private Link ROSA cluster into a Single AZ and are intended to be a guide. Ideally you would use an Automation tool like Ansible or Terraform to manage your VPCs.</p>
+<blockquote>
+<p>When creating subnets, make sure that subnet(s) are created to availability zone that has ROSA instances types available. If AZ is not "forced", subnet is created to random AZ in the region. Force AZ using <code>--availability-zone</code> argument in <code>create-subnet</code> command. Use <code>rosa list instance-types</code> to list ROSA instance types and check available types availability in AZ with <code>aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values=AZ_NAME_HERE --region REGION_HERE --output text | egrep "YOU_PREFERRED_INSTANCE_TYPE"</code>. As an example, you cannot install ROSA to <code>us-east-1e</code> AZ, but <code>us-east-1b</code> works fine.</p>
+</blockquote>
+<h3 id="option-1-vpc-with-a-private-subnet-and-aws-site-to-site-vpn-access">Option 1 - VPC with a private subnet and AWS Site-to-Site VPN access.</h3>
+<p>Todo</p>
+<h3 id="option-2-vpc-with-public-and-private-subnets-and-aws-site-to-site-vpn-access">Option 2 - VPC with public and private subnets and AWS Site-to-Site VPN access</h3>
+<p>Todo</p>
+<h3 id="option-3-vpc-with-public-and-private-subnets-nat">Option 3 - VPC with public and private subnets (NAT)</h3>
+<p>This will create both a Private and Public subnet. All cluster resources will live in the private subnet, the public subnet only exists to NAT the egress traffic to the Internet.</p>
+<p><img alt="architecture diagram showing privatelink with public subnet" src="images/architecture-pl.png" /></p>
+<blockquote>
+<p>As an alternative use the Terraform instructions provided <a href="../byo-vpc">here</a> then skip down to the rosa create command.</p>
+</blockquote>
+<ol>
+<li>
+<p>Set a Cluster name</p>
+<p><code>ROSA_CLUSTER_NAME=private-link</code></p>
+</li>
+<li>
+<p>Create a VPC to install a ROSA cluster into</p>
+<p><code>``
+VPC_ID=</code>aws ec2 create-vpc --cidr-block 10.0.0.0/16 | jq -r .Vpc.VpcId`</p>
+<p>aws ec2 create-tags --resources $VPC_ID \
+  --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .</p>
+<p>aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames | jq .
+```</p>
+</li>
+<li>
+<p>Create a Public Subnet for the cluster to NAT egress traffic out of</p>
+<p><code>``bash
+PUBLIC_SUBNET=</code>aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.128.0/17 | jq -r .Subnet.SubnetId`</p>
+<p>aws ec2 create-tags --resources $PUBLIC_SUBNET \
+  --tags Key=Name,Value=$ROSA_CLUSTER_NAME-public | jq .
+```</p>
+</li>
+<li>
+<p>Create a Private Subnet for the cluster machines to live in</p>
+<p><code>``bash
+PRIVATE_SUBNET=</code>aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.0.0/17 | jq -r .Subnet.SubnetId`</p>
+<p>aws ec2 create-tags --resources $PRIVATE_SUBNET \
+  --tags Key=Name,Value=$ROSA_CLUSTER_NAME-private | jq .
+```</p>
+</li>
+<li>
+<p>Create an Internet Gateway for NAT egress traffic</p>
+<p><code>``bash
+I_GW=</code>aws ec2 create-internet-gateway | jq -r .InternetGateway.InternetGatewayId`
+aws ec2 attach-internet-gateway --vpc-id $VPC_ID --internet-gateway-id $I_GW | jq .</p>
+<p>aws ec2 create-tags --resources $I_GW \
+  --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
+```</p>
+</li>
+<li>
+<p>Create a Route Table for NAT egress traffic</p>
+<p><code>``bash
+R_TABLE=</code>aws ec2 create-route-table --vpc-id $VPC_ID | jq -r .RouteTable.RouteTableId`</p>
+<p>aws ec2 create-route --route-table-id $R_TABLE --destination-cidr-block 0.0.0.0/0 --gateway-id $I_GW | jq .</p>
+<p>aws ec2 describe-route-tables --route-table-id $R_TABLE | jq .</p>
+<p>aws ec2 associate-route-table --subnet-id $PUBLIC_SUBNET --route-table-id $R_TABLE | jq .</p>
+<p>aws ec2 create-tags --resources $R_TABLE \
+  --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
+```</p>
+</li>
+<li>
+<p>Create a NAT Gateway for the Private network</p>
+<p><code>``bash
+EIP=</code>aws ec2 allocate-address --domain vpc | jq -r .AllocationId<code>NAT_GW=</code>aws ec2 create-nat-gateway --subnet-id $PUBLIC_SUBNET \
+  --allocation-id $EIP | jq -r .NatGateway.NatGatewayId`</p>
+<p>aws ec2 create-tags --resources $EIP --resources $NAT_GW \
+  --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
+```</p>
+</li>
+<li>
+<p>Create a Route Table for the Private subnet to the NAT</p>
+<p><code>``bash
+R_TABLE_NAT=</code>aws ec2 create-route-table --vpc-id $VPC_ID | jq -r .RouteTable.RouteTableId`</p>
+<p>while ! aws ec2 describe-route-tables --route-table-id $R_TABLE_NAT \
+  | jq .; do sleep 1; done</p>
+<p>aws ec2 create-route --route-table-id $R_TABLE_NAT --destination-cidr-block 0.0.0.0/0 --gateway-id $NAT_GW | jq .</p>
+<p>aws ec2 associate-route-table --subnet-id $PRIVATE_SUBNET --route-table-id $R_TABLE_NAT | jq .</p>
+<p>aws ec2 create-tags --resources $R_TABLE_NAT $EIP \
+  --tags Key=Name,Value=$ROSA_CLUSTER_NAME-private | jq .
+```</p>
+</li>
+</ol>
+<h2 id="deploy-rosa">Deploy ROSA</h2>
+<ol>
+<li>
+<p>Create ROSA cluster in the private subnet</p>
+<p><code>bash
+rosa create cluster --private-link \
+  --cluster-name=$ROSA_CLUSTER_NAME \
+  --machine-cidr=10.0.0.0/16 \
+  --subnet-ids=$PRIVATE_SUBNET</code></p>
+</li>
+</ol>
+<h2 id="test-connectivity">Test Connectivity</h2>
+<ol>
+<li>
+<p>Create an Instance to use as a jump host</p>
+<p><strong>TODO: CLI instructions</strong></p>
+<p><strong>Through the GUI:</strong></p>
+<ol>
+<li>
+<p>Navigate to the EC2 console and launch a new instance</p>
+</li>
+<li>
+<p>Select the AMI for your instance, if you don't have a standard, the Amazon Linux 2 AMI works just fine</p>
+</li>
+<li>
+<p>Choose your instance type, the t2.micro/free tier is sufficient for our needs, and click <strong>Next: Configure Instance Details</strong></p>
+</li>
+<li>
+<p>Change the <strong>Network</strong> settings to setup this host inside your <em>private-link</em> VPC
+  <img alt="select the private link vpc from dropdown" src="images/rosa-private-link-bastion-network.png" /></p>
+</li>
+<li>
+<p>Change the <strong>Subnet</strong> setting to use the <em>private-link-public</em> subnet
+  <img alt="select the subnet named private-link-public from the dropdown" src="images/rosa-private-link-bastion-subnet.png" /></p>
+</li>
+<li>
+<p>Change <strong>Auto-assign Public IP</strong> to <em>Enable</em>
+  <img alt="select Enable from dropdown" src="images/rosa-private-linke-bastion-PublicIP.png" /></p>
+</li>
+<li>
+<p>Default settings for Storage and Tags are OK, if you do not need to change them for your own reasons, select <strong>6. Configure Security Group</strong> from the top navigation or click through using the <strong>Next</strong> buttons</p>
+</li>
+<li>
+<p>If you already have a security group created to allow access from your computer to AWS, choose <strong>Select an existing security group</strong> and choose that group from the list and skip to <strong>Review and Launch</strong>. Otherwise, select <strong>Create a new security group</strong> and continue.</p>
+</li>
+<li>
+<p>To allow access only from your current public IP, change the <strong>Source</strong> heading to use <em>My IP</em>
+  <img alt="use the MY IP option from the Source dropdown" src="images/rosa-private-linke-bastion-securityGroup.png" /></p>
+</li>
+<li>
+<p>Click <strong>Review and Launch</strong>, verify all settings are correct and follow the standard AWS instructions for finalizing the setup and selecting/creating the security keys.</p>
+</li>
+<li>
+<p>Once launched, open the instance summary for the jump host instance and note the public IP address.</p>
+</li>
+</ol>
+</li>
+<li>
+<p>Create a ROSA admin user and save the login command for use later</p>
+<p><code>rosa create admin -c $ROSA_CLUSTER_NAME</code></p>
+</li>
+<li>
+<p>Note the DNS name of your private cluster, use the <code>rosa describe</code> command if needed</p>
+</li>
+</ol>
+<p><code>rosa describe cluster -c private-link</code></p>
+<ol>
+<li>
+<p>update /etc/hosts to point the openshift domains to localhost. Use the DNS of your openshift cluster as described in the previous step in place of <code>$YOUR_OPENSHIFT_DNS</code> below</p>
+<p><code>127.0.0.1 api.$YOUR_OPENSHIFT_DNS
+127.0.0.1 console-openshift-console.apps.$YOUR_OPENSHIFT_DNS
+127.0.0.1 oauth-openshift.apps.$YOUR_OPENSHIFT_DNS</code></p>
+</li>
+<li>
+<p>SSH to that instance, tunneling traffic for the appropriate hostnames. Be sure to use your new/existing private key, the OpenShift DNS for <code>$YOUR_OPENSHIFT_DNS</code> and your jump host IP for <code>$YOUR_EC2_IP</code></p>
+<p><code>bash
+  sudo ssh -i PATH/TO/YOUR_KEY.pem \
+  -L 6443:api.$YOUR_OPENSHIFT_DNS:6443 \
+  -L 443:console-openshift-console.apps.$YOUR_OPENSHIFT_DNS:443 \
+  -L 80:console-openshift-console.apps.$YOUR_OPENSHIFT_DNS:80 \
+   ec2-user@$YOUR_EC2_IP</code></p>
+</li>
+<li>
+<p>Log into the cluster using oc login command from the create admin command above. ex.</p>
+<p><code>bash
+oc login https://api.private-test.3d1n.p1.openshiftapps.com:6443 --username cluster-admin --password GQSGJ-daqfN-8QNY3-tS9gU</code></p>
+</li>
+<li>
+<p>Check that you can access the Console by opening the console url in your browser.</p>
+</li>
+</ol>
+<h2 id="cleanup">Cleanup</h2>
+<ol>
+<li>
+<p>Delete ROSA</p>
+<p><code>bash
+rosa delete cluster -c $ROSA_CLUSTER_NAME -y</code></p>
+</li>
+<li>
+<p>Delete AWS resources</p>
+<p><code>bash
+aws ec2 delete-nat-gateway --nat-gateway-id $NAT_GW | jq .
+aws ec2 release-address --allocation-id=$EIP | jq .
+aws ec2 detach-internet-gateway --vpc-id $VPC_ID \
+  --internet-gateway-id $I_GW | jq .
+aws ec2 delete-subnet --subnet-id=$PRIVATE_SUBNET | jq .
+aws ec2 delete-subnet --subnet-id=$PUBLIC_SUBNET | jq .
+aws ec2 delete-route-table --route-table-id=$R_TABLE | jq .
+aws ec2 delete-route-table --route-table-id=$R_TABLE_NAT | jq .
+aws ec2 delete-vpc --vpc-id=$VPC_ID | jq .</code></p>
+</li>
+</ol>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../../aro/azure-service-operator-v2/" class="md-footer__link md-footer__link--prev" aria-label="Previous: v2" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              v2
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../sts/" class="md-footer__link md-footer__link--next" aria-label="Next: Create ROSA Cluster w/STS" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Create ROSA Cluster w/STS
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://khanhduy1407.github.io/docurial/" target="_blank" rel="noopener">
+      Docurial
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.22074ed6.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.960e086b.min.js"></script>
+      
+        <script src="../../js/print-site.js"></script>
+      
+    
+  </body>
+</html>
