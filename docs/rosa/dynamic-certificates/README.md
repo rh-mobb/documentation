@@ -208,6 +208,7 @@ The Volume attachment to the pod and the setting of NameServers will be done tog
    oc patch csv $CERT_MANAGER_CSV_NAME --type='json' -p '[{"op": "add", "path": "/spec/install/spec/deployments/0/spec/template/spec/volumes", "value": [{"name": "extra-ca"}]}, {"op": "add", "path": "/spec/install/spec/deployments/0/spec/template/spec/volumes/0/configMap", "value": {"name": "extra-ca", "defaultMode": 420}}, {"op": "add", "path": "/spec/install/spec/deployments/0/spec/template/spec/containers/0/volumeMounts", "value": [{"name": "extra-ca", "mountPath": "/etc/ssl/certs/extra-ca-bundle.pem", "readOnly": true, "subPath": "extra-ca-bundle.pem"}]}]'
    ```
 
+   > *During an Operator upgrade, the above changes might be lost. There seems to be improvement plans to facilitate these changes directly through the Operator config, but until then, it'd be a good idea to maintain some automation around this to persist these changes if it ever gets overridden to defaults.*
 
 
 ## Create the Issuer and the Certficiate
