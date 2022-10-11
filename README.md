@@ -17,7 +17,7 @@
 * [Installing the AWS Load Balancer Controller (ALB) on ROSA](./docs/rosa/alb-sts)
 * [Adding AWS WAF in front of ROSA / OSD](./docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
-* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
+* [Use AWS CloudWatch Agent to push Prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Using Amazon Web Services Elastic File System (EFS) on ROSA](./docs/rosa/aws-efs-operator-on-rosa)
@@ -25,11 +25,12 @@
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](./docs/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](./docs/rosa/ecr-secret-operator)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](./docs/rosa/ack)
+* [Deploy ROSA in an AWS Secure Environment Accelerator (ASEA) Landing Zone](./docs/rosa/rosa-asea-landing-zone/)
 
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](./docs/aro/private-cluster)
-  * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
+  * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator.md)
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
 * [Deploy and use the Azure Service Operator V1(ASO)](./docs/aro/azure-service-operator-v1)
@@ -49,6 +50,7 @@
   * [via GUI ](./docs/aro/setup-quay/quay-console.md)
 * [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 * [Create infrastructure nodes on an ARO Cluster](./docs/aro/add-infra-nodes)
+* [Configure a load balancer service to use a static public IP](./docs/aro/static-ip-load-balancer)
 
 ### GCP
 

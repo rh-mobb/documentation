@@ -32,7 +32,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
     ```bash
     helm repo add csi-secrets-store-provider-azure \
-      https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/charts
+      https://azure.github.io/secrets-store-csi-driver-provider-azure/charts
     ```
 
 1. Update your local Helm Repositories
