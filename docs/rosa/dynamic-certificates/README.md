@@ -1,11 +1,20 @@
 # Dynamic Certificates for ROSA Custom Domain
 
-There're users who prefer not to use wild-card certificates. This ROSA guide talks about certificate management with cert-manager and letsencrypt, to dynamically issue certificates to routes created on a custom domain that's hosted on AWS Route53.
+11 Oct 2022
 
-## Table of Contents
-
-* Do not remove this line (it will not be displayed)
-{:toc}
+There may be situations when you prefer not to use wild-card certificates. This ROSA guide talks about certificate management with cert-manager and letsencrypt, to dynamically issue certificates to routes created on a custom domain that's hosted on AWS Route53.
+- [Dynamic Certificates for ROSA Custom Domain](#dynamic-certificates-for-rosa-custom-domain)
+  - [Prerequisites](#prerequisites)
+  - [Set up environment](#set-up-environment)
+  - [Prepare AWS Account](#prepare-aws-account)
+  - [Set up cert-manager](#set-up-cert-manager)
+  - [Create the Issuer and the Certficiate](#create-the-issuer-and-the-certficiate)
+    - [Configure Certificate Requestor](#configure-certificate-requestor)
+    - [Create the Certificate, which will later be used by the Custom Domain.](#create-the-certificate-which-will-later-be-used-by-the-custom-domain)
+  - [Create the Custom Domain, which will be used to access your applications.](#create-the-custom-domain-which-will-be-used-to-access-your-applications)
+  - [Dynamic Certificates for Custom Domain Routes.](#dynamic-certificates-for-custom-domain-routes)
+  - [Test an application.](#test-an-application)
+  - [Debugging](#debugging)
 
 ## Prerequisites
 
@@ -49,7 +58,9 @@ There're users who prefer not to use wild-card certificates. This ROSA guide tal
 
 ## Prepare AWS Account
 
-In order to make changes to the AWS Route53 Hosted Zone to add/remove DNS TXT challenge records by the cert-manager pod, we first need to create an IAM role with specific policy permissions & a trust relationship to allow access to the pod.
+   In order to make changes to the AWS Route53 Hosted Zone to add/remove DNS TXT challenge records by the cert-manager pod, we first need to create an IAM role with specific policy permissions & a trust relationship to allow access to the pod.
+
+  > My Custom Domain Hosted Zone is in the same accout as the ROSA cluster. If these are in different accounts, few additional steps for [Cross Account Access](https://cert-manager.io/docs/configuration/acme/dns01/route53/#cross-account-access) will be required. 
 
 1. Prepare an IAM Policy file
 
@@ -141,9 +152,9 @@ In order to make changes to the AWS Route53 Hosted Zone to add/remove DNS TXT ch
 
 1. Create a project (namespace) in the ROSA cluster.
 
-   ```bash
-   oc new-project cert-manager --display-name="Certificate Manager" --description="Project contains Certificates and Custom Domain related components."
-   ```
+    ```bash
+    oc new-project cert-manager --display-name="Certificate Manager" --description="Project  contains Certificates and Custom Domain related components."
+    ```
 2. Install the cert-manager Operator
 
    ```yaml
@@ -178,7 +189,7 @@ In order to make changes to the AWS Route53 Hosted Zone to add/remove DNS TXT ch
 
 4. Annotate the ServiceAccount.
 
-This is to enable the AWS SDK client code running within the cert-manager pod to interact with AWS STS service for temporary tokens, by assuming the IAM Role that was created in an earlier step. This is referred to as [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html). 
+   This is to enable the AWS SDK client code running within the cert-manager pod to interact with AWS STS service for temporary tokens, by assuming the IAM Role that was created in an earlier step. This is referred to as [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html). 
 
    ```bash
    oc annotate serviceaccount cert-manager -n cert-manager eks.amazonaws.com/role-arn=$ROLE
@@ -187,7 +198,7 @@ This is to enable the AWS SDK client code running within the cert-manager pod to
 
 5. Update the CA truststore of the cert-manager pod.
 
-This step is usually not required. However, it was noticed that the cert-manager pod had difficulties in trusting the [STS](sts.amazonaws.com) & [LetsEncrypt](acme-v02.api.letsencrypt.org) endpoints. So the below commands essentially downloads the CA chain of these endpoints, puts them into a ConfigMap, which then gets attached to the pod as a Volume.
+   This step is usually not required. However, it was noticed that the cert-manager pod had difficulties in trusting the [STS](sts.amazonaws.com) & [LetsEncrypt](acme-v02.api.letsencrypt.org) endpoints. So the below commands essentially downloads the CA chain of these endpoints, puts them into a ConfigMap, which then gets attached to the pod as a Volume.
 Along with this step, I'll also be [setting the NameServers that the cert-manager will use for DNS01 self-check](https://cert-manager.io/docs/configuration/acme/dns01/#setting-nameservers-for-dns01-self-check) 
 The Volume attachment to the pod and the setting of NameServers will be done together by patching the cert-manager CSV resource to persist these changes to the cert-manager deployment. This will cause the rollout of a new deployment and restart of the cert-manager pod.
 
@@ -370,7 +381,7 @@ This step will create a new deployment (and hence a pod) that'll watch out for s
    oc apply -f https://github.com/cert-manager/openshift-routes/releases/latest/download/cert-manager-openshift-routes.yaml -n cert-manager
    ```
    > *Additonal OpenShift resources such as a ClusterRole (with permissions to watch and update the routes across the cluster), a ServiceAccount (with these permissions, that will be used to run this newly created pod) and a ClusterRoleBinding to bind these two resources, will be created in this step too.* 
-   > *If the cluster does not have access to github, you may as well locally save the raw contents of the above yaml, and run oc apply -f localfilename.yaml -n cert-manager* 
+   > *If the cluster does not have access to github, you may as well save the raw contents locally, and run oc apply -f localfilename.yaml -n cert-manager* 
 
 2. View the status of the new pod.
 
@@ -391,18 +402,18 @@ Check if all the pods are running successfully and that the events do not mentio
 
 2. Expose the test application Service.
 
-Let's create a Route to expose the application from outside the cluster, and annotate the Route to give it a new Certificate.
+   Let's create a Route to expose the application from outside the cluster, and annotate the Route to give it a new Certificate.
 
    ```bash
    oc create route edge --service=hello-openshift testroute --hostname hello.apps.$DOMAIN -n testapp
    oc annotate route testroute -n testapp cert-manager.io/issuer-kind=ClusterIssuer cert-manager.io/issuer-name=letsencryptissuer
    ```
 
-   > *It will take a 2-3 minutes for the Certificate to be created.* 
+   > *It will take a 2-3 minutes for the Certificate to be created. The renewal of the certitificate will automatically be managed by the cert-manager compoenents as it approaches expiry.* 
 
 3. Access the application Route.
 
-Do a curl test (or any http client of your preference) to confirm there are no certificate related errors. 
+   Do a curl test (or any http client of your preference) to confirm there are no certificate related errors. 
    > *Output should print "Hello OpenShfit!", and you should also notice a line that says "subjectAltName: host hello.apps.$DOMIAN" matched cert's "hello.apps.$DOMIAN"*
 
    ```bash
