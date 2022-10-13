@@ -1,9 +1,9 @@
 # Azure Key Vault CSI on Azure Red Hat OpenShift
 
 **Author: Paul Czarkowski**
-*Modified: 08/16/2021*
+*Modified: 10/13/2022*
 
-This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
+This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
 
 ## Prerequisites
 
@@ -115,59 +115,59 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 1. Create a Secret Provider Class to give access to this secret
 
     ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
-kind: SecretProviderClass
-metadata:
-  name: azure-kvname
-  namespace: my-application
-spec:
-  provider: azure
-  parameters:
-    usePodIdentity: "false"
-    useVMManagedIdentity: "false"
-    userAssignedIdentityID: ""
-    keyvaultName: "${KEYVAULT_NAME}"
-    objects: |
-      array:
-        - |
-          objectName: secret1
-          objectType: secret
-          objectVersion: ""
-    tenantId: "${AZ_TENANT_ID}"
-EOF
+    cat <<EOF | kubectl apply -f -
+    apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+    kind: SecretProviderClass
+    metadata:
+      name: azure-kvname
+      namespace: my-application
+    spec:
+      provider: azure
+      parameters:
+        usePodIdentity: "false"
+        useVMManagedIdentity: "false"
+        userAssignedIdentityID: ""
+        keyvaultName: "${KEYVAULT_NAME}"
+        objects: |
+          array:
+            - |
+              objectName: secret1
+              objectType: secret
+              objectVersion: ""
+        tenantId: "${AZ_TENANT_ID}"
+    EOF
     ```
 
 1. Create a Pod that uses the above Secret Provider Class
 
     ```bash
-cat <<EOF | kubectl apply -f -
-kind: Pod
-apiVersion: v1
-metadata:
-  name: busybox-secrets-store-inline
-  namespace: my-application
-spec:
-  containers:
-  - name: busybox
-    image: k8s.gcr.io/e2e-test-images/busybox:1.29
-    command:
-      - "/bin/sleep"
-      - "10000"
-    volumeMounts:
-    - name: secrets-store-inline
-      mountPath: "/mnt/secrets-store"
-      readOnly: true
-  volumes:
-    - name: secrets-store-inline
-      csi:
-        driver: secrets-store.csi.k8s.io
-        readOnly: true
-        volumeAttributes:
-          secretProviderClass: "azure-kvname"
-        nodePublishSecretRef:
-          name: secrets-store-creds
-EOF
+    cat <<EOF | kubectl apply -f -
+    kind: Pod
+    apiVersion: v1
+    metadata:
+      name: busybox-secrets-store-inline
+      namespace: my-application
+    spec:
+      containers:
+      - name: busybox
+        image: k8s.gcr.io/e2e-test-images/busybox:1.29
+        command:
+          - "/bin/sleep"
+          - "10000"
+        volumeMounts:
+        - name: secrets-store-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "azure-kvname"
+            nodePublishSecretRef:
+              name: secrets-store-creds
+    EOF
     ```
 
 1. Check the Secret is mounted
