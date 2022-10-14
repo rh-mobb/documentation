@@ -191,7 +191,15 @@ ROSA can be installed using command line parameters or in interactive mode.  For
   Pod CIDR [10.128.0.0/14]:
   Host prefix [23]:
   Private cluster (y/N):
-  ```  
+  ```
+  
+  You must create operator-roles and oidc-provider as shown in the above create cluster command's output. For e.g.
+  
+  ```bash
+  rosa create operator-roles --cluster <cluster-name>
+  rosa create oidc-provider --cluster <cluster-name>
+  ```
+  
   >Note: the installation process should take between 30 - 45 minutes
 
 ### Get the web console link to the ROSA cluster
@@ -225,6 +233,12 @@ Deleting a ROSA cluster consists of two parts
 
   ```bash
   rosa delete cluster --cluster=<cluster-name>
+  ```
+   Delete Cluster's operator-roles and oidc-provider as shown in the above delete cluster command's output. For e.g.
+  
+  ```bash
+  rosa delete operator-roles -c <cluster-name>
+  rosa delete oidc-provider -c <cluster-name>
   ```
 
 2. Delete the CloudFormation stack, including the removal of the `osdCcsAdmin` user
