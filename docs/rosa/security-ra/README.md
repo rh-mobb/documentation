@@ -10,6 +10,8 @@ This overall architectural guidance compliments detailed, specific recommendatio
 
 The Security Reference Architecture (SRA) for ROSA is a living document and is updated periodically based on new feature releases, customer feedback and evolving security best practices.
 
+![security-ra](./rosa-security-ra.png)
+
 This document is divided into the following sections:
 
 - ROSA Day 1 Configuration
