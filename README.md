@@ -53,6 +53,7 @@
 ### GCP
 
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](./docs/gcp/osd_preexisting_vpc.md)
+* [Configure Cluster Logging to Stackdriver](./docs/gcp/clf-stackdriver-vector)
 * [Using Filestore with OpenShift Dedicated in GCP](./docs/gcp/filestore.md)
 
 ## Advanced Cluster Manager (ACM)
