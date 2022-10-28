@@ -354,7 +354,7 @@ Once the cluster has finished installing it is time to validate. Validation when
       ```bash
       TAG_SG="$ROSA_CLUSTER_NAME-jumphost-sg"
 
-      aws ec2 create-security-group --group-name ${ROSA_CLUSTER_NAME}-jumphost-sg --description ${ROSA_CLUSTER_NAME}-jumphost-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]
+      aws ec2 create-security-group --group-name ${ROSA_CLUSTER_NAME}-jumphost-sg --description ${ROSA_CLUSTER_NAME}-jumphost-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]"
       ```
 
     - Grab the Security Group Id generated in the previous step
