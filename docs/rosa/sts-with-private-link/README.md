@@ -491,5 +491,6 @@ Once the cluster has finished installing it is time to validate. Validation when
     aws ec2 delete-subnet --subnet-id=$PUBLIC_SUBNET | jq .
     aws ec2 delete-route-table --route-table-id=$R_TABLE | jq .
     aws ec2 delete-route-table --route-table-id=$R_TABLE_NAT | jq .
+    aws ec2 delete-internet-gateway --internet-gateway-id $I_GW | jq .
     aws ec2 delete-vpc --vpc-id=$VPC_ID | jq .
     ```
