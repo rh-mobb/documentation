@@ -10,7 +10,7 @@ Quick Introduction to ROSA by Charlotte Fung on [AWS YouTube channel](https://yo
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/KRqXxek4GvQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>  
 
-######
+
 If you prefer a more visual medium, you can watch [Steve Mirman](https://twitter.com/stevemirman) walk through this quickstart on [YouTube](https://www.youtube.com/watch?v=IFNig_Z_p2Y).
 <iframe width="560" height="315" src="https://www.youtube.com/embed/IFNig_Z_p2Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
@@ -176,7 +176,7 @@ Initialize the ROSA CLI to complete the remaining validation checks and configur
 ROSA can be installed using command line parameters or in interactive mode.  For an interactive installation run the following command
 
   ```bash
-  rosa create cluster --interactive
+  rosa create cluster --interactive --mode auto
   ```
   
   As part of the interactive install you will be required to enter the following parameters or accept the default values (if applicable)
@@ -229,6 +229,12 @@ Deleting a ROSA cluster consists of two parts
 
   ```bash
   rosa delete cluster --cluster=<cluster-name>
+  ```
+  Delete Cluster's operator-roles and oidc-provider as shown in the above delete cluster command's output. For e.g.
+  
+  ```bash
+  rosa delete operator-roles -c <cluster-name>
+  rosa delete oidc-provider -c <cluster-name>
   ```
 
 2. Delete the CloudFormation stack, including the removal of the `osdCcsAdmin` user
