@@ -70,7 +70,7 @@ ROSA clusters that will be used for production workloads should be deployed acro
 
 This provides the highest level of fault tolerance and protects against the loss of a single availability zone in an AWS region.
 
-### ROSA CLI Example to Deploy Day 1 ROSA SRA
+### Deploy the Day 1 ROSA SRA via ROSA CLI
 
 ## ROSA Day 2 Security and Operations
 
