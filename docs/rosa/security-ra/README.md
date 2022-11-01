@@ -25,7 +25,7 @@ ROSA Day 1 configurations are applied to the cluster at the time it is created; 
 
 ROSA provides 3 network deployment patterns: public, private and PrivateLink. Choosing the PrivateLink option provides the most secure configuration and is recommended for customers with sensitive workloads or strict compliance requirements. The PrivateLink option uses [AWS PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html) to allow Red Hat Site Reliability Engineering (SRE) teams to manage the cluster using a private subnet connected to the cluster's PrivateLink endpoint in an existing VPC.
 
-![private-link](./rosa-privatelink.png)
+![private-link](./rosa-privatelink.svg)
 
 When using the PrivateLink model, a VPC with Private Subnets must exist in the AWS account where ROSA will be deployed. The subnets are provided to the installer via CLI flags.
 
