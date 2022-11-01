@@ -72,6 +72,233 @@ This provides the highest level of fault tolerance and protects against the loss
 
 ### Deploy the Day 1 ROSA SRA via ROSA CLI
 
+The Day 1 ROSA SRA can be deployed quickly using the AWS CLI and the ROSA CLI. To deploy the cluster, the following prerequisites must be met:
+
+- AWS Account:
+    - Access to an AWS account with [sufficient permissions](https://docs.openshift.com/rosa/rosa_architecture/rosa-sts-about-iam-resources.html) to deploy a ROSA cluster.
+    - If using AWS Organizations and Service Control Policies (SCPs), the SCPs must not be more restrictive than the minimum permissions required to operate the service.
+    - [Sufficient quota](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-required-aws-service-quotas.html#rosa-sts-required-aws-service-quotas) to support the cluster deployment.
+- Networking: An AWS VPC, with 3 private subnets across 3 availability zones and outbound internet access. Make note of the AWS VPC Subnet IDs as they will be needed for the installer.
+- Tooling:
+    - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+    - [ROSA CLI](https://github.com/openshift/rosa/releases/tag/v1.2.6) v1.2.6
+
+#### Prepare the ROSA Workload Account
+
+Log in to the AWS account with a user that has been assigned AdministratorAccess and run the following command using the `aws` CLI:
+
+```bash
+export AWS_REGION="ca-central-1"
+aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"
+ ```
+
+#### Create the required ROSA Account Roles
+
+Creation of the account roles is a one-time activity, create them with the following command:
+
+```bash
+rosa create account-roles --mode auto -y
+```
+
+#### Create the Required KMS Key and Initial Policy
+
+The custom KMS key is used to encrypt EC2 EBS node volumes and the EBS volumes that are created by the default `StorageClass` on OpenShift.
+
+Create a new Symmetric KMS Key for EBS Encryption:
+
+```bash
+KMS_ARN=$(aws kms create-key --region $AWS_REGION --description 'rosa-ebs-key' --query KeyMetadata.Arn --output text)
+```
+
+Generate the necessary key policy to allow the ROSA STS roles to access the key. Use the below command to populate a sample policy, or create your own.
+
+```bash
+AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text); cat << EOF > rosa-key-policy.json
+{
+    "Version": "2012-10-17",
+    "Id": "rosa-key-policy-1",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::${AWS_ACCOUNT}:root"
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow ROSA use of the key",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Support-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Installer-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Worker-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-ControlPlane-Role"
+                ]
+            },
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow attachment of persistent resources",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Support-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Installer-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Worker-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-ControlPlane-Role"
+                ]
+            },
+            "Action": [
+                "kms:CreateGrant",
+                "kms:ListGrants",
+                "kms:RevokeGrant"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "kms:GrantIsForAWSResource": "true"
+                }
+            }
+        }
+    ]
+}
+EOF
+```
+
+Apply the newly generated key policy to the custom KMS key.
+
+```bash
+aws kms put-key-policy --key-id $KMS_ARN \
+--policy file://rosa-key-policy.json \
+--policy-name default
+```
+
+#### Deploy a multi-AZ, single subnet, PrivateLink, STS ROSA cluster
+
+To deploy the cluster, you must gather the following info:
+
+- `--subnet-ids`: AWS subnet IDs that the cluster will be deployed in
+- `--machine-cidr`: The VPC CIDR 
+
+Deploy the cluster with the following command:
+
+```bash
+ROSA_CLUSTER_NAME=rosa-ct1
+rosa create cluster --cluster-name $ROSA_CLUSTER_NAME --sts --private-link \
+--region ca-central-1 --version 4.11.4 \
+--machine-cidr 10.0.0.0/20 \
+--subnet-ids subnet-058aa558a63da3d51,subnet-058aa558a63da3d52,subnet-058aa558a63da3d53
+--enable-customer-managed-key --kms-key-arn $KMS_ARN -y --mode auto
+```
+
+To complete the KMS key policy, you must retrieve the Cluster CSI and Machine API operator role names:
+
+```bash
+rosa describe cluster -c $ROSA_CLUSTER_NAME
+```
+
+The operator role names will be similar to:
+
+```text
+arn:aws:iam::${AWS_ACCOUNT}:role/<CLUSTERNAME>-<IDENTIFIER>-openshift-cluster-csi-drivers-ebs-cloud-credenti
+arn:aws:iam::${AWS_ACCOUNT}:role/<CLUSTERNAME>-<IDENTIFIER>-openshift-machine-api-aws-cloud-credentials
+```
+
+Replace the role names in the following script with your **EXACT** Operator Role names:
+
+```bash
+AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text); cat << EOF > rosa-key-policy.json
+{
+    "Version": "2012-10-17",
+    "Id": "rosa-key-policy-1",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::${AWS_ACCOUNT}:root"
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow ROSA use of the key",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ROSA-Support-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ROSA-Installer-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ROSA-Worker-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/<CLUSTERNAME>-<IDENTIFIER>-openshift-cluster-csi-drivers-ebs-cloud-credent",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/<CLUSTERNAME>-<IDENTIFIER>-openshift-machine-api-aws-cloud-credentials"
+                ]
+            },
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow attachment of persistent resources",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ROSA-Support-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ROSA-Installer-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ROSA-Worker-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/ROSA-ControlPlane-Role",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/<CLUSTERNAME>-<IDENTIFIER>-openshift-cluster-csi-drivers-ebs-cloud-credent",
+                    "arn:aws:iam::${AWS_ACCOUNT}:role/<CLUSTERNAME>-<IDENTIFIER>-openshift-machine-api-aws-cloud-credentials"
+                ]
+            },
+            "Action": [
+                "kms:CreateGrant",
+                "kms:ListGrants",
+                "kms:RevokeGrant"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "kms:GrantIsForAWSResource": "true"
+                }
+            }
+        }
+    ]
+}
+EOF
+```
+
+Apply the newly updated key policy to the custom KMS key.
+
+```bash
+aws kms put-key-policy --key-id $KMS_ARN \
+--policy file://rosa-key-policy.json \
+--policy-name default
+```
+
+After creating the operator roles, create the required OIDC provider:
+
+```bash
+rosa create oidc-provider --mode auto --cluster $ROSA_CLUSTER_NAME
+```
+
+Wait for the cluster deployment to finish.
+
+
 ## ROSA Day 2 Security and Operations
 
 ### Configure an Identity Provider
