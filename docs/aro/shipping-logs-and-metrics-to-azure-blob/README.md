@@ -2,6 +2,13 @@
 
 ## Preparation
 
+1. Prerequisites
+
+* Azure CLI
+* Terraform
+* OC CLI
+* Helm CLI
+
 1. Create some environment variables to be reused through this guide
 
    > Modify these values to suit your environment, especially the storage account name which must be globally unique.
@@ -58,10 +65,56 @@
       "[?name=='${CLUSTER}'].{Name:name,Console:consoleProfile.url,API:apiserverProfile.url, ResourceGroup:resourceGroup,Location:location}" \
       -o tsv |  read -r NAME CONSOLE API RESOURCEGROUP LOCATION
    az aro list-credentials -n $NAME -g $RESOURCEGROUP \
-      -o tsv | read -r PASS USER
-   oc login ${API} --username ${USER} --password ${PASS}
-   echo "$ oc login ${API} --username ${USER} --password ${PASS}"
-   echo "Login to ${CONSOLE} as ${USER} with password ${PASS}"
+      -o tsv | read -r OCP_PASS OCP_USER
+   oc login ${API} --username ${OCP_USER} --password ${OCP_PASS}
+   echo "$ oc login ${API} --username ${OCP_USER} --password ${OCP_PASS}"
+   echo "Login to ${CONSOLE} as ${OCP_USER} with password ${OCP_PASS}"
+   ```
+
+1. Now would be a good time to use the output of this command to log into the OCP Console, you can always run `echo "Login to ${CONSOLE} as ${OCP_USER} with password ${OCP_PASS}"` at any time to remind yourself of the URL and credentials.
+
+### Configure additional Azure resources
+
+1. Create Azure Storage Account and Storage Containers
+
+   ```bash
+   # Create Storage Account
+   az storage account create \
+      --name $AZR_STORAGE_ACCOUNT_NAME \
+      --resource-group $RESOURCEGROUP \
+      --location $LOCATION \
+      --sku Standard_RAGRS \
+      --kind StorageV2
+   # Fetch the Azure storage key
+   AZR_STORAGE_KEY=$(az storage account keys list -g "${RESOURCEGROUP}" \
+      -n "${AZR_STORAGE_ACCOUNT_NAME}" --query "[0].value" -o tsv)
+   # Create Azure Storage Containers
+   az storage container create --name "${CLUSTER}-metrics" \
+     --account-name "${AZR_STORAGE_ACCOUNT_NAME}" \
+     --account-key "${AZR_STORAGE_KEY}"
+   az storage container create --name "${CLUSTER}-logs" \
+     --account-name "${AZR_STORAGE_ACCOUNT_NAME}" \
+     --account-key "${AZR_STORAGE_KEY}"
+   ```
+
+### Configure MOBB Helm Repository
+
+1. Add the MOBB chart repository to your Helm
+
+   ```bash
+   helm repo add mobb https://rh-mobb.github.io/helm-charts/
+   ```
+
+1. Update your repositories
+
+   ```bash
+   helm repo update
+   ```
+
+1. Create a namespace to use
+
+   ```bash
+   oc new-project $NAMESPACE
    ```
 
 ### Update the Pull Secret and enable OperatorHub
@@ -69,33 +122,24 @@
 1. Download a Pull secret from [Red Hat Cloud Console](https://console.redhat.com/openshift/downloads#tool-pull-secret) and save it in `${SCRATCHDIR}/pullsecret.txt`
 
 
-1. Annotate resources for Helm
+1. Update the cluster's pull secret using the [mobb/aro-pull-secret](https://github.com/rh-mobb/helm-charts/tree/main/charts/aro-pull-secret) Helm Chart
 
    ```bash
+   # Annotate resources for Helm
    oc -n openshift-config annotate secret \
       pull-secret meta.helm.sh/release-name=pull-secret
    oc -n openshift-config annotate secret \
       pull-secret meta.helm.sh/release-namespace=openshift-config
    oc -n openshift-config label secret \
       pull-secret app.kubernetes.io/managed-by=Helm
-  ```
-
-1. Update the pull secret
-
-   > Change the location of the pull secret if its not in `~/Downloads`
-
-   ```bash
+   # Update pull secret (change path needed)
    cat << EOF > "${WORKDIR}/pullsecret.yaml"
    pullSecret: |
      $(< "${WORKDIR}/pull-secret.txt")
    EOF
    helm upgrade --install pull-secret mobb/aro-pull-secret \
-  -n openshift-config --values "${WORKDIR}/pullsecret.yaml"
-  ```
-
-1. Enable OperatorHub
-
-   ```bash
+      -n openshift-config --values "${WORKDIR}/pullsecret.yaml"
+   # Enable Operator Hub
    oc patch configs.samples.operator.openshift.io cluster --type=merge \
       -p='{"spec":{"managementState":"Managed"}}'
    oc patch operatorhub cluster --type=merge \
@@ -106,6 +150,7 @@
         {"name":"redhat-marketplace","disabled":false}
       ]}}'
    ```
+
 
 1. Wait for OperatorHub pods to be ready
 
@@ -122,62 +167,12 @@
    redhat-operators-pdbg8                  1/1     Running   0             117s
    ```
 
-## Configure additional Azure resources
-
-1. Create Azure Storage Account
-
-   ```bash
-   az storage account create \
-      --name $AZR_STORAGE_ACCOUNT_NAME \
-      --resource-group $RESOURCEGROUP \
-      --location $LOCATION \
-      --sku Standard_RAGRS \
-      --kind StorageV2
-   ```
-
-1. Fetch the Azure storage key
-
-   ```bash
-   AZR_STORAGE_KEY=$(az storage account keys list -g "${RESOURCEGROUP}" \
-      -n "${AZR_STORAGE_ACCOUNT_NAME}" --query "[0].value" -o tsv)
-   ```
-
-1. Create Azure Storage Containers
-
-   ```bash
-   az storage container create --name "${CLUSTER}-metrics" \
-     --account-name "${AZR_STORAGE_ACCOUNT_NAME}" \
-     --account-key "${AZR_STORAGE_KEY}"
-   az storage container create --name "${CLUSTER}-logs" \
-     --account-name "${AZR_STORAGE_ACCOUNT_NAME}" \
-     --account-key "${AZR_STORAGE_KEY}"
-   ```
-
 ## Configure Metrics Federation to Azure Blob Storage
 
-1. Create a namespace to use
+1. Deploy the Grafana Operator
 
    ```bash
-   oc new-project $NAMESPACE
-   ```
-
-1. Add the MOBB chart repository to your Helm
-
-   ```bash
-   helm repo add mobb https://rh-mobb.github.io/helm-charts/
-   ```
-
-1. Update your repositories
-
-   ```bash
-   helm repo update
-   ```
-
-### Grafana Operator
-
-1. Create a file containing the Grafana operator
-
-   ```yaml
+   # Create a file containing the Grafana operator
    mkdir -p $WORKDIR/metrics
    cat <<EOF > $WORKDIR/metrics/grafana-operator.yaml
    subscriptions:
@@ -192,19 +187,11 @@
      - name: ${NAMESPACE}
        targetNamespace: ~
    EOF
-   ```
-
-1. Deploy the Grafana Operator using Helm
-
-   ```bash
+   # Deploy the Grafana Operator using Helm
    helm upgrade -n "${NAMESPACE}" clf-operators \
       mobb/operatorhub --install \
       --values "${WORKDIR}/metrics/grafana-operator.yaml"
-   ```
-
-1. Wait for the Grafana Operator to be installed
-
-   ```bash
+   # Wait for the Grafana Operator to be installed
    while ! oc get grafana; do sleep 5; echo -n .; done
    ```
 
@@ -219,15 +206,12 @@
 
 ### Resource Locker Operator
 
-1. Create the namespace `resource-locker-operator`
+1. Deploy the Resource Locker Operator
 
    ```bash
+   # Create the namespace `resource-locker-operator`
    oc create namespace resource-locker-operator
-   ```
-
-1. Create a file containing the Grafana operator
-
-   ```yaml
+   # Create a file containing the Grafana operator
    cat <<EOF > $WORKDIR/resource-locker-operator.yaml
    subscriptions:
    - name: resource-locker-operator
@@ -236,25 +220,16 @@
      source: community-operators
      sourceNamespace: openshift-marketplace
      namespace: resource-locker-operator
-
    operatorGroups:
    - name: resource-locker
      namespace: resource-locker-operator
      targetNamespace: all
    EOF
-   ```
-
-1. Deploy the Resource Locker Operator using Helm
-
-   ```bash
+   # Deploy the Resource Locker Operator using Helm
    helm upgrade -n resource-locker-operator resource-locker-operator \
       mobb/operatorhub --install \
       --values "${WORKDIR}"/resource-locker-operator.yaml
-   ```
-
-1. Wait for the Operators to be installed
-
-   ```bash
+   # Wait for the Operators to be installed
    while ! oc get resourcelocker; do sleep 5; echo -n .; done
    ```
 
@@ -270,36 +245,22 @@
 
    ```bash
    helm upgrade -n "${NAMESPACE}" aro-thanos-af \
-      --install mobb/aro-thanos-af --version 0.3.1 \
+      --install mobb/aro-thanos-af --version 0.4.0 \
       --set "aro.storageAccount=${AZR_STORAGE_ACCOUNT_NAME}" \
       --set "aro.storageAccountKey=${AZR_STORAGE_KEY}" \
       --set "aro.storageContainer=${CLUSTER}-metrics" \
-      --set "enableUserWorkloadMetrics=true" \
-      --set "grafana-cr.oauthProxy.passThrough=true"
+      --set "enableUserWorkloadMetrics=true"
   ```
-
-1. Wait a few minutes and then get the `Route` for `Grafana`
-
-   ```bash
-   oc -n $NAMESPACE get route grafana-route
-   ```
-
-1. Browse to the provided route and login using your OpenShift credentials, then login as `admin` with the password `password`.
-
-![screenshot showing federated metrics](../federated-metrics/grafana-metrics.png)
 
 ## Configure Logs Federation to Azure Blob Storage
 
-1. Create namespaces for the OpenShift Logging Operators
+1. Deploy the cluster logging and loki operators
 
    ```bash
+   # Create nanespaces
    oc create ns openshift-logging
    oc create ns openshift-operators-redhat
-   ```
-
-1. Create a Helm values file that can be used to deploy the cluster logging and loki operators
-
-   ```yaml
+   # Configure and deploy operators
    mkdir -p "${WORKDIR}/logs"
    cat << EOF > "${WORKDIR}/logs/log-operators.yaml"
    subscriptions:
@@ -325,19 +286,11 @@
      namespace: openshift-operators-redhat
      targetNamespace: all
    EOF
-   ```
-
-1. Deploy the OpenShift Loki Operator and the Red Hat OpenShift Logging Operator
-
-   ```bash
+   # Deploy the OpenShift Loki Operator and the Red Hat OpenShift Logging Operator
    helm upgrade -n $NAMESPACE clf-operators \
       mobb/operatorhub --install \
       --values "${WORKDIR}/logs/log-operators.yaml"
-   ```
-
-1. Wait for the Operators to be installed
-
-   ```bash
+   # Wait for the Operators to be installed
    while ! oc get clusterlogging; do sleep 5; echo -n .; done
    while ! oc get lokistack; do sleep 5; echo -n .; done
    ```
@@ -346,16 +299,78 @@
 
    ```bash
    helm upgrade -n "${NAMESPACE}" aro-clf-blob \
-      --install /home/pczarkow/development/redhat/mobb-charts/charts/aro-clf-blob \
+      --install charts/aro-clf-blob --version 0.1.0 \
       --set "aro.storageAccount=${AZR_STORAGE_ACCOUNT_NAME}" \
       --set "aro.storageAccountKey=${AZR_STORAGE_KEY}" \
       --set "aro.storageContainer=${CLUSTER}-logs"
+   ```
+
+1. Wait for the logging stack to come online
+
+   ```bash
+   watch oc -n openshift-logging get pods
+   ```
+
+   ```
+   NAME                                           READY   STATUS    RESTARTS   AGE
+   cluster-logging-operator-8469d5479f-kzh4j      1/1     Running   0          2m10s
+   collector-gbqpr                                2/2     Running   0          61s
+   collector-j7f4j                                2/2     Running   0          40s
+   collector-ldj2k                                2/2     Running   0          58s
+   collector-pc82l                                2/2     Running   0          56s
+   collector-qrzlb                                2/2     Running   0          58s
+   collector-vsj7z                                2/2     Running   0          56s
+   logging-loki-compactor-0                       1/1     Running   0          89s
+   logging-loki-distributor-565c84c54f-4f24j      1/1     Running   0          89s
+   logging-loki-gateway-69d68bc47f-rfp8t          2/2     Running   0          88s
+   logging-loki-index-gateway-0                   1/1     Running   0          88s
+   logging-loki-ingester-0                        0/1     Running   0          89s
+   logging-loki-querier-96c699b7d-fjdrr           1/1     Running   0          89s
+   logging-loki-query-frontend-796d85bf5b-cb4dh   1/1     Running   0          88s
+   logging-view-plugin-98cf668b-dbdkd             1/1     Running   0          107s
    ```
 
 1. Sometimes the log collector needs to be restarted for logs to flow correctly into Loki.  Wait a few minutes then run th following
 
    ```bash
    oc -n openshift-logging rollout restart daemonset collector
+   ```
+
+## Validate Metrics and Logs
+
+1. Wait a few minutes and then get the `Route` for `Grafana`
+
+   ```bash
+   oc -n $NAMESPACE get route grafana-route
+   ```
+
+1. Browse to the provided route and login using your OpenShift credentials, then login as `admin` with the password `password`.
+
+![screenshot showing federated metrics](../federated-metrics/grafana-metrics.png)
+
+
+### Debugging loki
+
+1. Port forward to the Loki Service
+
+   ```bash
+   oc port-forward -n openshift-logging svc/logging-loki-gateway-http 8080:8080
+   ```
+
+1. Make sure you can curl the Loki service and get a list of labels
+
+   > You can get the bearer token from the login command screen in the OCP Dashboard
+
+   ```bash
+   curl -k -H "Authorization: Bearer <BEARER TOKEN>" \
+   'https://localhost:8080/api/logs/v1/infrastructure/loki/api/v1/labels'
+   ```
+
+1. You can also use the [Loki CLI](https://github.com/grafana/loki/releases)
+
+   ```
+   logcli --bearer-token="<TOKEN FROM OCP>" --tls-skip-verify --addr https://localhost:
+   8080/api/logs/v1/infrastructure/ labels
    ```
 
 ## Cleanup
