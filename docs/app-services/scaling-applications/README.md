@@ -1,6 +1,7 @@
 # Make Application Resilient 
 In this document, we will deploy an application to ROSA/ARO cluster, Ensure the application is resilient to node failure and scale when under load.
 
+Author: [Sohaib Azed](https://www.linkedin.com/in/sohaib-azed-05b8b04a/)
 
 ## Prerequisites
 * ROSA/ARO cluster
