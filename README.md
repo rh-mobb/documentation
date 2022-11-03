@@ -111,6 +111,7 @@
 
 * [Deploying Astronomer to OpenShift](./docs/aro/astronomer/)
 * [Deploying 3scale API Management to ROSA/OSD](./docs/app-services/3scale)
+* [Make Applications Resilient](./docs/app-services/scaling-applications)
 
 ## Ingress
 * [Configure a custom ingress TLS profile for ROSA/OSD](./docs/ingress/tls-cipher-customization/)
