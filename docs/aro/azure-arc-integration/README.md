@@ -1,5 +1,5 @@
 # Integrating Azure ARC with ARO
-In this section of the workshop, we will integrate ARO cluster with Azure Arc-enabled Kubernetes. When you connect a Kubernetes/OpenShift cluster with Azure Arc, it will:
+This document explain how to integrate ARO cluster with Azure Arc-enabled Kubernetes. When you connect a Kubernetes/OpenShift cluster with Azure Arc, it will:
 
 - Be represented in Azure Resource Manager with a unique ID
 - Be place in an Azure subscription and resource group 
@@ -149,7 +149,7 @@ type: kubernetes.io/service-account-token
 ```
 
 ```bash
-oc apply -f aro-content/assets/azure-arc-secret.yaml
+oc apply -f azure-arc-secret.yaml
 ```
 
 ```bash
@@ -302,7 +302,7 @@ spec:
 ```
 
 ```bash
-oc apply -f aro-content/assets/azure-arc-secretproviderclass.yaml
+oc apply -f azure-arc-secretproviderclass.yaml
 ```
 
 Create a pod with the following YAML, filling in the name of your identity
@@ -335,7 +335,7 @@ spec:
 ```
 
 ```bash
-oc apply -f aro-content/assets/azure-arc-pod.yaml
+oc apply -f azure-arc-pod.yaml
 ```
 
 ### Validate the secrets
