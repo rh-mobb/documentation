@@ -2,7 +2,7 @@
 This document explain how to integrate ARO cluster with Azure Arc-enabled Kubernetes. When you connect a Kubernetes/OpenShift cluster with Azure Arc, it will:
 
 - Be represented in Azure Resource Manager with a unique ID
-- Be place in an Azure subscription and resource group 
+- Be placed in an Azure subscription and resource group 
 - Receive tags just like any otherAzure resource
 
 Azure Arc-enabled Kubernetes supports the following scenarios for connected clusters:
