@@ -7,6 +7,10 @@
 * [Docker](https://docs.docker.com/get-docker/)
 
 ### Background
+Quick Introduction by Ryan Niksch & Charlotte Fung on [YouTube](https://youtu.be/1PBFtpCIMBo).
+
+ <iframe width="560" height="315" src="https://www.youtube.com/embed/1PBFtpCIMBo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>  <br/>
+ 
 There are two options to use to authenticate wth Amazon ECR to pull images.  
 
 The traditional method is to create a pull secret for ecr.

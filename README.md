@@ -26,6 +26,9 @@
 * [Configuring a ROSA cluster to use ECR secret operator](./docs/rosa/ecr-secret-operator)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](./docs/rosa/ack)
 * [Deploy ROSA in an AWS Secure Environment Accelerator (ASEA) Landing Zone](./docs/rosa/rosa-asea-landing-zone/)
+* [Verify Required Permissions for a ROSA STS deployment](./docs/rosa/verify-permissions)
+* [STS OIDC flow in ROSA Operators](./docs/rosa/sts-oidc-flow)
+* [Dynamic Certificates for ROSA Custom Domain](./docs/rosa/dynamic-certificates)
 
 ### ARO
 
@@ -70,6 +73,7 @@
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Federating ROSA metrics to AWS Prometheus](./docs/rosa/cluster-metrics-to-aws-prometheus)
 * [Configure ROSA STS Cluster Logging to CloudWatch](./docs/rosa/clf-cloudwatch-sts)
+* [Configure ROSA Cluster Logging to CloudWatch with Vector](./docs/rosa/clf-cloudwatch-vector/)
 * [Federating ARO metrics to Azure Files](./docs/aro/federated-metrics)
 * [Sending ARO cluster logs to Azure Log Analytics](./docs/aro/clf-to-azure)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
