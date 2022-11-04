@@ -54,6 +54,7 @@
 * [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 * [Create infrastructure nodes on an ARO Cluster](./docs/aro/add-infra-nodes)
 * [Configure a load balancer service to use a static public IP](./docs/aro/static-ip-load-balancer)
+* [Integrate ARO cluster with Azure ARC](./docs/aro/azure-arc-integration)
 
 ### GCP
 
