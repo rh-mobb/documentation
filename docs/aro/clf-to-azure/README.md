@@ -19,93 +19,93 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
 1. Set some environment variables
 
-    ```bash
-    export NAMESPACE=aro-clf-am
-    export AZR_RESOURCE_LOCATION=eastus
-    export AZR_RESOURCE_GROUP=openshift
-    # this value must be unique
-    export AZR_LOG_APP_NAME=$AZR_RESOURCE_GROUP-$AZR_RESOURCE_LOCATION
-    ```
+   ```bash
+   export NAMESPACE=aro-clf-am
+   export AZR_RESOURCE_LOCATION=eastus
+   export AZR_RESOURCE_GROUP=openshift
+   # this value must be unique
+   export AZR_LOG_APP_NAME=$AZR_RESOURCE_GROUP-$AZR_RESOURCE_LOCATION
+   ```
 
 ## Set up ARO Monitor workspace
 
 1. Add the Azure CLI log extensions
 
-    ```bash
-    az extension add --name log-analytics
-    ```
+   ```bash
+   az extension add --name log-analytics
+   ```
 
 1. Create resource group
 
-    > **If you plan to reuse the same group as your cluster skip this step**
+   > **If you plan to reuse the same group as your cluster skip this step**
 
-    ```bash
-    az group create -n $AZR_RESOURCE_GROUP -l $AZR_RESOURCE_LOCATION
-    ```
+   ```bash
+   az group create -n $AZR_RESOURCE_GROUP -l $AZR_RESOURCE_LOCATION
+   ```
 
 1. Create workspace
 
-    ```bash
-az monitor log-analytics workspace create \
-  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-  -l $AZR_RESOURCE_LOCATION
-    ```
+   ```bash
+   az monitor log-analytics workspace create \
+    -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+    -l $AZR_RESOURCE_LOCATION
+   ```
 
 1. Create a secret for your Azure workspace
 
-    ```bash
-WORKSPACE_ID=$(az monitor log-analytics workspace show \
-  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-  --query customerId -o tsv)
-SHARED_KEY=$(az monitor log-analytics workspace get-shared-keys \
-  -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
-  --query primarySharedKey -o tsv)
-    ```
+   ```bash
+   WORKSPACE_ID=$(az monitor log-analytics workspace show \
+    -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+    --query customerId -o tsv)
+   SHARED_KEY=$(az monitor log-analytics workspace get-shared-keys \
+    -g $AZR_RESOURCE_GROUP -n $AZR_LOG_APP_NAME \
+    --query primarySharedKey -o tsv)
+   ```
 
 ## Configure OpenShift
 
 1. Create a Project to run the log forwarding in
 
-    ```bash
-    oc new-project $NAMESPACE
-    ```
+   ```bash
+   oc new-project $NAMESPACE
+   ```
 
 1. Create namespaces for logging operators
 
-    ```bash
-    kubectl create ns openshift-logging
-    kubectl create ns openshift-operators-redhat
-    ```
+   ```bash
+   kubectl create ns openshift-logging
+   kubectl create ns openshift-operators-redhat
+   ```
 
 1. Add the MOBB chart repository to Helm
 
-    ```bash
-    helm repo add mobb https://rh-mobb.github.io/helm-charts/
-    ```
+   ```bash
+   helm repo add mobb https://rh-mobb.github.io/helm-charts/
+   ```
 
 1. Update your Helm repositories
 
-    ```bash
-    helm repo update
-    ```
+   ```bash
+   helm repo update
+   ```
 
 1. Deploy the OpenShift Elasticsearch Operator and the Red Hat OpenShift Logging Operator
 
-    **> Note: You can skip this if you already have them installed, or install them via the OpenShift Console.**
+   **> Note: You can skip this if you already have them installed, or install them via the OpenShift Console.**
 
-    ```bash
-helm upgrade -n $NAMESPACE clf-operators \
-  mobb/operatorhub --version 0.1.1 --install \
-  --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-clf-am/files/operators.yaml
-    ```
+   ```bash
+   helm upgrade -n $NAMESPACE clf-operators \
+    mobb/operatorhub --version 0.1.1 --install \
+    --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-clf-am/files/operators.yaml
+   ```
 
 1. Configure cluster logging forwarder
 
-    ```bash
-  helm upgrade -n $NAMESPACE clf \
-    mobb/aro-clf-am --version 0.1.0 --install \
+   ```bash
+   helm upgrade -n $NAMESPACE clf \
+    mobb/aro-clf-am --install \
     --set "azure.workspaceId=$WORKSPACE_ID" --set "azure.sharedKey=$SHARED_KEY"
-    ```
+   ```
 
 ## Check for logs in Azure
 
@@ -113,21 +113,24 @@ helm upgrade -n $NAMESPACE clf-operators \
 
 1. Query our new Workspace
 
-    ```bash
-    az monitor log-analytics query -w $WORKSPACE_ID  \
+   ```bash
+   az monitor log-analytics query -w $WORKSPACE_ID  \
       --analytics-query "openshift_CL | take 10" --output tsv
-    ```
+   ```
 
   or
 
   1. Log into [Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs)
 
   1. Select your workspace
-      ![screenshot of scope selection](./images/select_scope.png)
+
+     ![screenshot of scope selection](./images/select_scope.png)
+
   1. Run the Query
 
-      ```
-      openshift_CL
-        | take 10
-      ```
-      ![screenshot of query results](./images/query_results.png)
+     ```
+     openshift_CL
+       | take 10
+     ```
+
+     ![screenshot of query results](./images/query_results.png)

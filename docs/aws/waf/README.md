@@ -6,6 +6,10 @@
 
 1. Operator does not want WAF running on OpenShift to ensure that OCP resources do not experience Denial of Service through handling the WAF
 
+Quick Introduction by [Paul Czarkowski](https://twitter.com/pczarkowski) & Ryan Niksch on [YouTube](https://youtu.be/-HorEsl2ho4)
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/-HorEsl2ho4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 # Solutions
 
 ## Cloud Front -> WAF -> CustomDomain -> $APP
