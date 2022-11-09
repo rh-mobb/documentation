@@ -279,7 +279,7 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
     ```bash
     rosa create cluster -y --cluster-name ${ROSA_CLUSTER_NAME} \
       --region ${REGION} --version ${VERSION} \
-      --subnet-ids=$PRIVATE_SUBNET \
+      --subnet-ids=$PUBLIC_SUBNET,$PRIVATE_SUBNET \
       --private-link --machine-cidr=10.0.0.0/16 \
       --sts
     ```
