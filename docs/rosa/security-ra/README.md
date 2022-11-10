@@ -197,7 +197,7 @@ ROSA_CLUSTER_NAME=rosa-ct1
 rosa create cluster --cluster-name $ROSA_CLUSTER_NAME --sts --private-link \
 --region ca-central-1 --version 4.11.4 \
 --machine-cidr 10.0.0.0/20 \
---subnet-ids subnet-058aa558a63da3d51,subnet-058aa558a63da3d52,subnet-058aa558a63da3d53
+--subnet-ids subnet-058aa558a63da3d51,subnet-058aa558a63da3d52,subnet-058aa558a63da3d53 \
 --enable-customer-managed-key --kms-key-arn $KMS_ARN -y --mode auto
 ```
 
@@ -301,18 +301,149 @@ Wait for the cluster deployment to finish.
 
 ## ROSA Day 2 Security and Operations
 
+This section of the SRA describes tasks that are completed once the cluster has been deployed. These configurations enhance the security of the cluster and are often requirements for customers operating in regulated environments.
+
 ### Configure an Identity Provider
+
+ROSA provides an easy way to access clusters immediately after deployment through the creation of a `cluster-admin` user through the ROSA CLI. This method creates an HTPASSWORD identity provider on the cluster. This is good if you need quick access to the cluster, but should not be used for clusters that will host any workloads.
+
+The recommended approach is to use a formal identity provider (IDP) to access the cluster (and then grant that user admin privileges, if desired).
+
+ROSA supports several commercially available IDPs and common protocols. The full listing can be found in the ROSA documentation:
+- [https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa-sts-config-identity-providers.html#understanding-idp-supported_rosa-sts-config-identity-providers](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa-sts-config-identity-providers.html#understanding-idp-supported_rosa-sts-config-identity-providers)
+
+Some examples of how to configure an IDP can be found on the `mobb.ninja` website:
+- [Configure Azure AD as an identity provider for ROSA/OSD](https://mobb.ninja/docs/idp/azuread)
+- [Configure GitLab as an identity provider for ROSA/OSD](https://mobb.ninja/docs/idp/gitlab)
+- [Configure Azure AD as an identity provider for ROSA with group claims](https://mobb.ninja/docs/idp/group-claims/rosa/)
 
 ### Configure CloudWatch Log Forwarding
 
+ROSA does not provide persistent logging by default, but it can be enabled through the `cluster-logging` operator from the OpenShift Marketplace. This add-on service offers an optional application log-forwarding solution based on AWS CloudWatch. This logging solution can be installed after the ROSA cluster is provisioned.
+
+To capture all logging events in AWS CloudWatch, all three log types should be enabled:
+
+- **Applications logs**: Permits the Operator to collect application logs, which includes everything that is not deployed in the `openshift-`, `kube-`, and default namespaces.
+- **Infrastructure logs**: Permits the Operator to collect logs from OpenShift Container Platform, Kubernetes, and some nodes.
+- **Audit logs**: Permits the Operator to collect node logs related to security audits. By default, Red Hat stores audit logs outside the cluster through a separate mechanism that does not rely on the Cluster Logging Operator. For more information about default audit logging, see the ROSA Service Definition.
+
+After the operator has been enabled the logs can be viewed in the AWS Console, and persistently stored based on the CloudWatch configuration of the AWS Account.
+
+The cluster-logging operator has the following limits when configured for CloudWatch log forwarding:
+
+| **Message Size (bytes)** | **Maximum logging rate (messages/second/node)** |
+|--------------------------|-------------------------------------------------|
+| 512                      | 1,000                                           |
+| 1,024                    | 650                                             |
+| 2,048                    | 450                                             |
+
+Details on this configuration can be found at the following links:
+- [Configuring the Cluster Log Forwarder for CloudWatch Logs and STS](https://mobb.ninja/docs/rosa/clf-cloudwatch-sts/)
+- [Viewing cluster logs in the AWS Console](https://docs.openshift.com/rosa/rosa_cluster_admin/rosa_logging/rosa-viewing-logs.html)
+
 ### Configure Custom Ingress TLS Profile
+
+By default, ROSA supports multiple versions of TLS on the Ingress COntrollers used for applications to support the broadest set of clients and libraries. To support specific versions of TLS, the `tlsSecurityProfile` value on cluster ingress controllers can be modified.
+
+Review the OpenShift Documentation that explains the options for the `tlsSecurityProfile` to determine which profile meets your organization's needs. By default, ingress controllers are configured to use the Intermediate profile, which corresponds to the Intermediate Mozilla profile:
+
+- [OpenShift documentation on tlsSecurityProfile](https://docs.openshift.com/container-platform/4.11/networking/ingress-operator.html#configuring-ingress-controller-tls)
+- [Intermediate Mozilla Profile](https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28recommended.29)
+
+The `tlsSecurityProfile` can be modified by following these instructions:
+
+- [Configure ROSA/OSD to use custom TLS ciphers on the ingress controllers](https://mobb.ninja/docs/ingress/tls-cipher-customization/)
 
 ### Compliance Operator
 
+The Compliance Operator lets ROSA administrators describe the required compliance state of a cluster and provides them with an overview of gaps and ways to remediate them. The Compliance Operator assesses compliance of both the Kubernetes API resources of ROSA, as well as the nodes running the cluster. The Compliance Operator uses OpenSCAP, a NIST-certified tool, to scan and enforce security policies provided by the content.
+
+There are several profiles available as part of the Compliance Operator installation. These profiles represent different compliance benchmarks. Each profile has the product name that it applies to added as a prefix to the profile’s name. `ocp4-e8` applies the Essential 8 benchmark to the OpenShift Container Platform product, while `rhcos4-e8` applies the Essential 8 benchmark to the Red Hat Enterprise Linux CoreOS (RHCOS) product.
+
+> **Important note:** The compliance benchmarks are continuously updated and maintained by Red Hat based on each control profile. ROSA-specific benchmarks are under development to account for the managed service components.
+
+To understand and install the compliance operator, read the Red Hat documentation:
+
+- [Installing the Compliance Operator](https://docs.openshift.com/container-platform/4.11/security/compliance_operator/compliance-operator-installation.html)
+- [Understanding the Compliance Operator](https://docs.openshift.com/container-platform/4.11/security/compliance_operator/compliance-operator-understanding.html)
+- [Supported compliance profiles](https://docs.openshift.com/container-platform/4.11/security/compliance_operator/compliance-operator-supported-profiles.html)
+
 ### OpenShift Service Mesh
+
+Red Hat OpenShift Service Mesh addresses a variety of problems in a microservice architecture by creating a centralized point of control in an application. It adds a transparent layer on existing distributed applications without requiring any changes to the application code.
+
+Red Hat OpenShift Service Mesh provides a number of key capabilities uniformly across a network of services:
+
+- **Traffic Management** - Control the flow of traffic and API calls between services, make calls more reliable, and make the network more robust in the face of adverse conditions.
+- **Service Identity and Security** - Provide services in the mesh with a verifiable identity and provide the ability to protect service traffic as it flows over networks of varying degrees of trustworthiness.
+- **Policy Enforcement** - Apply an organizational policy to the interaction between services, ensure access policies are enforced and resources are fairly distributed among consumers. Policy changes are made by configuring the mesh, not by changing application code.
+- **Telemetry** - Gain an understanding of the dependencies between services and the nature and flow of traffic between them, providing the ability to quickly identify issues.
+
+To learn more about OpenSHift Service Mesh and to install the Service Mesh, read the OpenShift documentation:
+
+- [Understanding Service Mesh](https://docs.openshift.com/container-platform/4.11/service_mesh/v2x/ossm-architecture.html)
+- [Installing the Service Mesh Operator](https://docs.openshift.com/container-platform/4.11/service_mesh/v2x/installing-ossm.html)
+- [Adding workloads to the Service Mesh](https://docs.openshift.com/container-platform/4.11/service_mesh/v2x/ossm-create-mesh.html)
+- [Service Mesh Security](https://docs.openshift.com/container-platform/4.11/service_mesh/v2x/ossm-security.html)
 
 ### Backup and Restore / Disaster Recovery
 
-### Configure AWS WAF for Application Ingress
+An important part of any platform used to host business and user workloads is data protection. Data protection may include operations including on-demand backup, scheduled backup and restore. These operations allow the objects within a cluster to be backed up to a storage provider, either locally or on a public cloud and restore that cluster from the backup in the event of a failure or scheduled maintenance.
 
-### Observability and Alerting
+As part of the Shared Responsibility Model for ROSA, consumers of the service are responsible for backing up cluster and application data when the STS option is used. To implement a backup and disaster recovery solution, administrators can use OpenShift APIs for Data Protection (OADP). OADP is an operator that Red Hat has created to create backup and restore APIs in the OpenShift cluster. OADP provides the following APIs:
+
+- Backup
+- Restore
+- Schedule
+- BackupStorageLocation
+- VolumeSnapshotLocation
+
+You can learn how to install and use OADP from the following resources:
+
+- [OADP features and plug-ins](https://docs.openshift.com/container-platform/4.11/backup_and_restore/application_backup_and_restore/oadp-features-plugins.html)
+- [Deploying OpenShift Advanced Data Protection on a ROSA cluster](https://mobb.ninja/docs/misc/oadp/rosa-sts/)
+
+### Configure AWS WAF and CloudFront for Application Ingress
+
+ROSA does not provide advanced firewall or DDoS protection by default, however, this can easily be achieved by combining three AWS services to protect the cluster and applications:
+
+- **AWS WAF** is a web application firewall that helps protect web applications from attacks by allowing you to configure rules that allow, block, or monitor (count) web requests based on conditions that you define. These conditions include IP addresses, HTTP headers, HTTP body, URI strings, SQL injection and cross-site scripting.
+- **Amazon CloudFront** is a web service that gives businesses and web application developers an easy and cost effective way to distribute content with low latency and high data transfer speeds.
+- **AWS Shield** is a managed service that provides protection against Distributed Denial of Service (DDoS) attacks for applications running on AWS.
+
+To learn more about these services and how to configure them for ROSA, read the documentation below:
+
+- [AWS WAF FAQ](https://aws.amazon.com/waf/faqs/)
+- [Amazon CloudFront FAQ](https://aws.amazon.com/cloudfront/faqs/)
+- [AWS Shield FAQ](https://aws.amazon.com/shield/faqs/)
+- [Using CloudFront + WAF on ROSA](https://mobb.ninja/docs/aws/waf/cloud-front.html)
+- [Using ALB + WAF on ROSA](https://mobb.ninja/docs/aws/waf/alb.html)
+
+### Use and Store Secrets Securely in AWS
+
+Kubernetes Secrets are insecure by default, this is described in the Kubernetes documentation:
+
+> Kubernetes Secrets are, by default, stored unencrypted in the API server's underlying data store (etcd). This design is not unique to ROSA and affects all Kubernetes distributions. Anyone with API access can retrieve or modify a Secret, and so can anyone with access to etcd. Additionally, anyone who is authorized to create a Pod in a namespace can use that access to read any Secret in that namespace; this includes indirect access such as the ability to create a Deployment.
+
+Customers looking for secure ways to manage application secrets often chose to use a third-party tool to manage secrets due to this behavior.
+
+The AWS Secrets and Configuration Provider (ASCP) provides a way to expose AWS Secrets as Kubernetes storage volumes. With the ASCP, you can store and manage your secrets in AWS Secrets Manager and then retrieve them through your workloads running on ROSA.
+
+This is made even easier / more secure through the use of AWS STS and Kubernetes PodIdentity.
+
+To use the AWS Secrets Manager CSI with ROSA and STS, follow this guide:
+- [Using AWS Secrets Manager CSI on Red Hat OpenShift on AWS with STS](https://mobb.ninja/docs/rosa/aws-secrets-manager-csi/)
+
+### Provide External Persistent Storage to Applications on ROSA
+
+ROSA supports both Amazon Elastic Block Storage (EBS) and Elastic File Storage (EFS) for persistent application data.
+
+When applications require ReadWriteMany capabilities, or when multiple applications must read the same data, EFS should be used.
+
+With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
+
+To learn more, or to install the EFS CSI driver, review the following documentation:
+
+- [Persistent Storage using EFS](https://docs.openshift.com/rosa/storage/persistent_storage/osd-persistent-storage-aws.html)
+- [Persistent Storage using EBS](https://docs.openshift.com/rosa/storage/persistent_storage/rosa-persistent-storage-aws-ebs.html)
+- [Enabling the AWS EFS CSI Driver Operator on ROSA](https://mobb.ninja/docs/rosa/aws-efs-csi-operator-sts/)
