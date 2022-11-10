@@ -7,3 +7,6 @@
 
 preview:
 	hugo server --minify --theme relearn -D
+
+publish:
+	hugo --minify --theme relearn

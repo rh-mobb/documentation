@@ -1,9 +1,15 @@
-baseURL = 'http://mobb.ninja/'
+baseURL = 'https://rh-mobb.github.io/mobb_ninja/'
 languageCode = 'en-us'
 title = 'Managed OpenShift Black Belt - Unofficial Documentation'
+theme = "relearn"
 DefaultContentLanguage = "en"
 pygmentsCodeFences = true
 pygmentsStyle = "monokai"
+# as the official Hugo documentation recommends, we turn this off for this
+# showcase; this allows the published site to be served by both http and https
+canonifyURLs = false
+# required for official documentation served from subfolder
+relativeURLs = false
 
 defaultContentLanguageInSubdir= false
 enableMissingTranslationPlaceholders = false
