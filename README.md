@@ -54,6 +54,8 @@
 * [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 * [Create infrastructure nodes on an ARO Cluster](./docs/aro/add-infra-nodes)
 * [Configure a load balancer service to use a static public IP](./docs/aro/static-ip-load-balancer)
+* [Shipping logs and metrics to Azure Blob Storage with Thanos and Loki](./docs/aro/shipping-logs-and-metrics-to-azure-blob/)
+* [Integrate ARO cluster with Azure ARC](./docs/aro/azure-arc-integration)
 
 ### GCP
 
@@ -66,6 +68,8 @@
 
 ## Observability
 
+### ROSA
+
 * Configuring Alerts for User Workloads
   * [ROSA 4.9.x, 4.10.x](./docs/rosa/custom-alertmanager-4.9)
   * [ROSA 4.11+](./docs/rosa/custom-alertmanager)
@@ -73,10 +77,14 @@
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Federating ROSA metrics to AWS Prometheus](./docs/rosa/cluster-metrics-to-aws-prometheus)
 * [Configure ROSA STS Cluster Logging to CloudWatch](./docs/rosa/clf-cloudwatch-sts)
+* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 * [Configure ROSA Cluster Logging to CloudWatch with Vector](./docs/rosa/clf-cloudwatch-vector/)
+
+### ARO
+
+* [Shipping logs and metrics to Azure Blob Storage with Thanos and Loki](./docs/aro/shipping-logs-and-metrics-to-azure-blob/)
 * [Federating ARO metrics to Azure Files](./docs/aro/federated-metrics)
 * [Sending ARO cluster logs to Azure Log Analytics](./docs/aro/clf-to-azure)
-* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 
 ## Security
 
