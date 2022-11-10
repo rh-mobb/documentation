@@ -17,7 +17,7 @@
 * [Installing the AWS Load Balancer Controller (ALB) on ROSA](./docs/rosa/alb-sts)
 * [Adding AWS WAF in front of ROSA / OSD](./docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](./docs/rosa/aws-secrets-manager-csi)
-* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
+* [Use AWS CloudWatch Agent to push Prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](./docs/rosa/custom-alertmanager)
 * [Using Amazon Web Services Elastic File System (EFS) on ROSA](./docs/rosa/aws-efs-operator-on-rosa)
@@ -25,11 +25,15 @@
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](./docs/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](./docs/rosa/ecr-secret-operator)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](./docs/rosa/ack)
+* [Deploy ROSA in an AWS Secure Environment Accelerator (ASEA) Landing Zone](./docs/rosa/rosa-asea-landing-zone/)
+* [Verify Required Permissions for a ROSA STS deployment](./docs/rosa/verify-permissions)
+* [STS OIDC flow in ROSA Operators](./docs/rosa/sts-oidc-flow)
+* [Dynamic Certificates for ROSA Custom Domain](./docs/rosa/dynamic-certificates)
 
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](./docs/aro/private-cluster)
-  * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator)
+  * [Using the Egressip Ipam Operator with a Private ARO Cluster](./docs/aro/egress-ipam-operator.md)
 * [Considerations for Disaster Recovery with ARO](./docs/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](./docs/aro/key-vault-csi)
 * [Deploy and use the Azure Service Operator V1(ASO)](./docs/aro/azure-service-operator-v1)
@@ -49,6 +53,9 @@
   * [via GUI ](./docs/aro/setup-quay/quay-console.md)
 * [Configure ARO with Azure Policy](./docs/aro/azure-policy)
 * [Create infrastructure nodes on an ARO Cluster](./docs/aro/add-infra-nodes)
+* [Configure a load balancer service to use a static public IP](./docs/aro/static-ip-load-balancer)
+* [Shipping logs and metrics to Azure Blob Storage with Thanos and Loki](./docs/aro/shipping-logs-and-metrics-to-azure-blob/)
+* [Integrate ARO cluster with Azure ARC](./docs/aro/azure-arc-integration)
 
 ### GCP
 
@@ -61,6 +68,8 @@
 
 ## Observability
 
+### ROSA
+
 * Configuring Alerts for User Workloads
   * [ROSA 4.9.x, 4.10.x](./docs/rosa/custom-alertmanager-4.9)
   * [ROSA 4.11+](./docs/rosa/custom-alertmanager)
@@ -68,9 +77,14 @@
 * [Federating ROSA metrics to Prometheus with customer alerting](./docs/rosa/federated-metrics-prometheus)
 * [Federating ROSA metrics to AWS Prometheus](./docs/rosa/cluster-metrics-to-aws-prometheus)
 * [Configure ROSA STS Cluster Logging to CloudWatch](./docs/rosa/clf-cloudwatch-sts)
+* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
+* [Configure ROSA Cluster Logging to CloudWatch with Vector](./docs/rosa/clf-cloudwatch-vector/)
+
+### ARO
+
+* [Shipping logs and metrics to Azure Blob Storage with Thanos and Loki](./docs/aro/shipping-logs-and-metrics-to-azure-blob/)
 * [Federating ARO metrics to Azure Files](./docs/aro/federated-metrics)
 * [Sending ARO cluster logs to Azure Log Analytics](./docs/aro/clf-to-azure)
-* [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](./docs/rosa/metrics-to-cloudwatch-agent)
 
 ## Security
 
