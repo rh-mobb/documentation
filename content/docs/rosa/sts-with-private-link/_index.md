@@ -362,7 +362,7 @@ Once the cluster has finished installing it is time to validate. Validation when
       ```bash
       TAG_SG="$ROSA_CLUSTER_NAME-jumphost-sg"
 
-      aws ec2 create-security-group --group-name ${ROSA_CLUSTER_NAME}-jumphost-sg --description ${ROSA_CLUSTER_NAME}-jumphost-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]
+      aws ec2 create-security-group --group-name ${ROSA_CLUSTER_NAME}-jumphost-sg --description ${ROSA_CLUSTER_NAME}-jumphost-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]"
       ```
 
     - Grab the Security Group Id generated in the previous step
@@ -499,5 +499,6 @@ Once the cluster has finished installing it is time to validate. Validation when
     aws ec2 delete-subnet --subnet-id=$PUBLIC_SUBNET | jq .
     aws ec2 delete-route-table --route-table-id=$R_TABLE | jq .
     aws ec2 delete-route-table --route-table-id=$R_TABLE_NAT | jq .
+    aws ec2 delete-internet-gateway --internet-gateway-id $I_GW | jq .
     aws ec2 delete-vpc --vpc-id=$VPC_ID | jq .
     ```

@@ -346,3 +346,26 @@ title: Deploying OpenShift Advanced Data Protection on a ROSA cluster
    ```bash
    oc delete cloudstorage ${CLUSTER_NAME}-oadp
    ```
+<<<<<<< HEAD:content/docs/misc/oadp/rosa-sts/_index.md
+=======
+
+1. Delete the AWS S3 Bucket
+
+   ```bash
+   aws s3 rm s3://${CLUSTER_NAME}-oadp --recursive
+   aws s3api delete-bucket --bucket ${CLUSTER_NAME}-oadp
+   ```
+
+1. Detach the Policy from the role
+
+   ```bash
+   aws iam detach-role-policy --role-name "${ROLE_NAME}" \
+     --policy-arn "${POLICY_ARN}"
+   ```
+
+1. Delete the role
+
+   ```bash
+   aws iam delete-role --role-name "${ROLE_NAME}"
+   ```
+>>>>>>> main:docs/misc/oadp/rosa-sts/README.md

@@ -5,9 +5,9 @@ aliases: ['/docs/security/secrets-store-csi/azure-key-vault']
 ---
 
 **Author: Paul Czarkowski**
-*Modified: 08/16/2021*
+*Modified: 10/13/2022*
 
-This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
+This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
     ```bash
     helm repo add csi-secrets-store-provider-azure \
-      https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/charts
+      https://azure.github.io/secrets-store-csi-driver-provider-azure/charts
     ```
 
 1. Update your local Helm Repositories

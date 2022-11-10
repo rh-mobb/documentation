@@ -29,17 +29,6 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     export NAMESPACE=aro-thanos-af
     ```
 
-1. Set some environment variables to use throughout
-
-    > **Note: AZR_STORAGE_ACCOUNT_NAME must be unique**
-
-    ```bash
-    export AZR_RESOURCE_LOCATION=eastus
-    export AZR_RESOURCE_GROUP=openshift
-    export AZR_STORAGE_ACCOUNT_NAME=arofederatedmetrics
-    export NAMESPACE=aro-thanos-af
-    ```
-
 ## Azure Preperation
 
 1. Create an Azure storage account
