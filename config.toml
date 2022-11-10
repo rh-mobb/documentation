@@ -7,7 +7,7 @@ pygmentsCodeFences = true
 pygmentsStyle = "monokai"
 # as the official Hugo documentation recommends, we turn this off for this
 # showcase; this allows the published site to be served by both http and https
-canonifyURLs = false
+canonifyURLs = true
 # required for official documentation served from subfolder
 relativeURLs = false
 
