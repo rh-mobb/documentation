@@ -2,7 +2,7 @@
 
 ARO guide to running Nvidia GPU workloads.
 
-Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/stuartatmicrosoft)
+Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart)
 
 
 ## Table of Contents
@@ -54,7 +54,7 @@ ARO supports the following GPU workers:
 * NC4as T4 v3
 * NC8as T4 v3
 * NC16as T4 v3
-* NC464as T4 v3
+* NC64as T4 v3
 
 >Please remember that when you request quota that Azure is per core.  To request a single NC4as T4 v3 node, you will need to request quota in groups of 4. If you wish to request an NC16as T4 v3 you will need to request quota of 16.
 

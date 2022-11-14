@@ -1,122 +1,24 @@
-# Custom AlertManager in ROSA 4.9.x
+# Custom Alerts in ROSA 4.11.x
 
-ROSA 4.9.x introduces a new way to provide custom AlertManager configuration to receive alerts from User Workload Management.
+Starting with OpenShift 4.11 it is possible to [manage alerting rules for user-defined projects](https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html#managing-alerting-rules-for-user-defined-projects_managing-alerts). Similarly, in ROSA clusters the OpenShift Administrator can enable a second AlertManager instance in the user workload monitoring namespace which can be used to create such alerts.
 
-The OpenShift Administrator can use the Prometheus Operator to create a custom AlertManager resource and then use the AlertManagerConfig resource to configure User Workload Monitoring to use the custom AlertManager.
+> Note: Currently this is **not a managed** feature of ROSA. Such an implementation may get overwritten if the User Workload Monitoring functionality is toggled using the OpenShift Cluster Manager (OCM).
 
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
-* A Red Hat OpenShift for AWS (ROSA) cluster 4.9.0 or higher
+* A Red Hat OpenShift for AWS (ROSA) cluster 4.11.0 or higher
 
 ## Create Environment Variables
 
-1. Before we get started we need to set some environment variables to be used throughout the guide.
+## Configure User Workload Monitoring to include AlertManager
+
+1. Edit the user workload config to include AlertManager
+
+  > Note: If you have other modifications to this config, you will need to hand edit the resource rather than brute forcing it like below.
 
    ```bash
-   export PROM_NAMESPACE=custom-alert-manager
-   ```
-
-## Install Prometheus Operator
-
-> If you prefer you can do this from the Operator Hub in the cluster console itself.
-
-1. Create a OperatorGroup and Subscription for the Prometheus Operator
-
-   ```bash
-   cat << EOF | kubectl apply -f -
-   ---
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: ${PROM_NAMESPACE}
-   ---
-   apiVersion: operators.coreos.com/v1
-   kind: OperatorGroup
-   metadata:
-     name: federated-metrics
-     namespace: ${PROM_NAMESPACE}
-   spec:
-     targetNamespaces:
-     - ${PROM_NAMESPACE}
-   ---
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     name: prometheus
-     namespace: ${PROM_NAMESPACE}
-   spec:
-     channel: beta
-     installPlanApproval: Automatic
-     name: prometheus
-     source: community-operators
-     sourceNamespace: openshift-marketplace
-   EOF
-   ```
-
-## Deploy AlertManager
-
-1. Create an Alert Manager Configuration file
-
-   > This will create a basic AlertManager configuration to send alerts to a slack channel. Configuring slack is outside the scope of this document. Update the variables to suit your slack integration.
-
-   ```bash
-   SLACK_API_URL=https://hooks.slack.com/services/XXX/XXX/XXX
-   SLACK_CHANNEL='#paultest'
-   cat << EOF | kubectl apply -n ${PROM_NAMESPACE} -f -
-   apiVersion: v1
-   kind: Secret
-   metadata:
-     name: custom-alertmanager
-     namespace: ${PROM_NAMESPACE}
-   stringData:
-     alertmanager.yaml: |
-       global:
-         slack_api_url: "${SLACK_API_URL}"
-       route:
-         receiver: slack-notifications
-         group_by: [alertname]
-       receivers:
-       - name: slack-notifications
-         slack_configs:
-         - channel: ${SLACK_CHANNEL}
-           send_resolved: true
-   ---
-   apiVersion: monitoring.coreos.com/v1
-   kind: Alertmanager
-   metadata:
-     name: custom-alertmanager
-     namespace: ${PROM_NAMESPACE}
-   spec:
-     securityContext: {}
-     replicas: 3
-     configSecret: custom-alertmanager
-   ---
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: custom-alertmanager
-     namespace: ${PROM_NAMESPACE}
-   spec:
-     type: ClusterIP
-     ports:
-     - name: web
-       port: 9093
-       protocol: TCP
-       targetPort: web
-     selector:
-       alertmanager: custom-alertmanager
-   EOF
-   ```
-
-## Configure User Workload Monitoring to use the custom AlertManager
-
-1. Create an AlertManagerConfig for User Workload Monitoring
-
-   > Note: This next command assumes the existing `config.yaml` in the `user-workload-monitoring-config` config map is empty. You should verify it with `kubectl get -n openshift-user-workload-monitoring cm user-workload-monitoring-config -o yaml` and simply edit in the differences if its not.
-
-   ```bash
-   cat << EOF | kubectl apply -f -
+   cat << EOF | oc apply -f -
    apiVersion: v1
    kind: ConfigMap
    metadata:
@@ -124,27 +26,73 @@ The OpenShift Administrator can use the Prometheus Operator to create a custom A
      namespace: openshift-user-workload-monitoring
    data:
      config.yaml: |
-       thanosRuler:
-         additionalAlertmanagerConfigs:
-         - scheme: http
-           pathPrefix: /
-           timeout: "30s"
-           apiVersion: v1
-           staticConfigs: ["custom-alertmanager.$PROM_NAMESPACE.svc.cluster.local:9093"]
+       alertmanager:
+         enabled: true
+         enableAlertmanagerConfig: true
    EOF
+   ```
+
+1. Verify that a new Alert Manager instance is defined
+
+   ```bash
+   oc -n openshift-user-workload-monitoring get alertmanager
+   ```
+
+   ```
+   NAME            VERSION   REPLICAS   AGE
+   user-workload   0.24.0    2          2m
+   ```
+
+1. If you want non-admin users to be able to define alerts in their own namespaces you can run the following.
+
+   ```bash
+   oc -n <namespace> adm policy add-role-to-user alert-routing-edit <user>
+   ```
+
+1. Update the Alert Manager Configuration file
+
+   > This will create a basic AlertManager configuration to send alerts to a slack channel. Configuring slack is outside the scope of this document. Update the variables to suit your slack integration.
+
+   ```bash
+   SLACK_API_URL=https://hooks.slack.com/services/XXX/XXX/XXX
+   SLACK_CHANNEL='#paultest'
+   cat << EOF | kubectl apply -f -
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: alertmanager-user-workload
+     namespace: openshift-user-workload-monitoring
+   stringData:
+     alertmanager.yaml: |
+       global:
+         slack_api_url: "${SLACK_API_URL}"
+       route:
+         receiver: Default
+         group_by: [alertname]
+       receivers:
+         - name: Default
+           slack_configs:
+             - channel: ${SLACK_CHANNEL}
+               send_resolved: true
+     EOF
    ```
 
 ## Create an Example Alert
 
+1. Create a Namespace for your custom alert
+
+   ```bash
+   oc create namespace custom-alert
+   ```
+
 1. Verify it works by creating a Prometheus Rule that will fire off an alert
 
    ```bash
-   cat << EOF | kubectl apply -n $PROM_NAMESPACE -f -
+   cat << EOF | kubectl apply -n custom-alert -f -
    apiVersion: monitoring.coreos.com/v1
    kind: PrometheusRule
    metadata:
      name: prometheus-example-rules
-     namespace: ${PROM_NAMESPACE}
    spec:
      groups:
      - name: example.rules
@@ -157,7 +105,8 @@ The OpenShift Administrator can use the Prometheus Operator to create a custom A
 1. Forward a port to the alert manager service
 
    ```bash
-    kubectl port-forward -n ${PROM_NAMESPACE} svc/custom-alertmanager 9093:9093
+    kubectl port-forward -n openshift-user-workload-monitoring \
+      svc/alertmanager-operated 9093:9093
     ```
 
 1. Browse to http://localhost:9093/#/alerts to see the alert "ExampleAlert"
