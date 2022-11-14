@@ -1,12 +1,14 @@
-# Creating a OSD in GCP with Existing VPCs
+# Creating a OSD in GCP with Existing VPCs - GUI
 
 **Roberto Carratalá, Andrea Bozzoni**
 
-*Last updated 07/06/2022*
+*Last updated 11/14/2022*
+
+This is a guide to install OSD in GCP within Existing Virtual Private Clouds (VPCs) using GCP and [OCM UI](https://console.redhat.com/openshift).
+
+The guide will show all the steps to create all the networking prerequisites in GCP and then installing the OSD Cluster in GCP.
 
 > **Tip** The official documentation for installing a OSD cluster in GCP can be found [here](https://docs.openshift.com/dedicated/osd_cluster_create/creating-a-gcp-cluster.html).
-
-For deploy an OSD cluster in GCP using existing Virtual Private Cloud (VPC) you need to implement some prerequisites that you must create before starting the OpenShift Dedicated installation though the OCM.
 
 ## Prerequisites
 
@@ -17,18 +19,13 @@ NOTE: Also the GCloud Shell can be used, and have the gcloud cli among other too
 
 ## Generate GCP VPC and Subnets
 
+For deploy an OSD cluster in GCP using existing Virtual Private Cloud (VPC) you need to implement some prerequisites that you must create before starting the OpenShift Dedicated installation though the OCM.
+
 This is a diagram showing the GCP infra prerequisites that are needed for the OSD installation:
 
 ![GCP Prereqs](./images/osd-prereqs.png){: width="750" }
 
-To deploy the GCP VPC and subnets among other prerequisites for install the OSD in GCP using the preexisting VPCs you have two options:
-
-* **Option 1** - GCloud CLI
-* **Option 2** - Terraform Automation
-
-Please select one of these two options and proceed with the OSD install steps.
-
-### Option 1 - Generate OSD VPC and Subnets using GCloud CLI
+You can use the gcloud CLI, to deploy the GCP VPC and subnets among other prerequisites for install the OSD in GCP.
 
 As mentioned before, for deploy OSD in GCP using existing GCP VPC, you need to provide and create beforehand a GCP VPC and two subnets (one for the masters and another for the workers nodes).
 
@@ -123,32 +120,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
    ![GCP Nat Master](./images/osd-gcp5.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
 
-### Option 2 - Deploy OSD VPC and Subnets using Terraform
-
-You can use also [automation code in Terraform](https://github.com/rh-mobb/tf-osd-gcp) to deploy all the GCP infrastructure required to deploy the OSD in preexistent VPCs.
-
-* Clone the tf-osd-gcp repository:
-
-```bash
-git clone https://github.com/rh-mobb/tf-osd-gcp.git
-cd tf-osd-gcp
-```
-
-* Copy and modify the tfvars file in order to custom to your scenario:
-
-```bash
-cp -pr terraform.tfvars.example terraform.tfvars
-```
-
-* Deploy the network infrastructure in GCP needed for deploy the OSD cluster:
-
-```bash
-make all
-```
-
-## Install the OSD cluster using pre-existent VPCs
-
-### Option 1 - Create the OSD cluster using OCM UI
+## Install the OSD cluster using pre-existent VPCs using the GUI
 
 These steps are based in the [official OSD installation documentation](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html#osd-create-gcp-cluster-ccs_osd-creating-a-cluster-on-gcp).
 
@@ -191,63 +163,13 @@ On the Cluster details page, provide a name for your cluster and specify the clu
 14. Review the summary of your selections and click Create cluster to start the cluster installation. Check that the **Install into Existing VPC** is enabled and the VPC and Subnets are properly selected and defined:
 ![OSD Install](./images/osd-gcp13.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
 
-### Option 2 - Create OSD cluster using OCM-CLI
-
-[OCM CLI](https://github.com/openshift-online/ocm-cli) is a command line tool that simplifies the use of the OCM API available at <https://api.openshift.com>.
-
-1. Define the variables needed for the OSD in GCP cluster creation:
-
-```bash
-export CLUSTER_NAME=<cluster name>
-export REGION=<region name>
-export OSD_VPC=<vpc name>
-export MASTER_SUBNET=<master subnet name>
-export WORKER_SUBNET=<worker subnet name>
-```
-
-2. You need to generate a [GCP Service Account and generate a new key](https://cloud.google.com/sdk/docs/authorizing#authorize_with_a_service_account). Then download the json file and export the path where is located:
-
-```bash
-export GCP_SA_FILE=<location of the gcp sa json file>
-```
-
-> If the Service Account is generated beforehand (look for osd-ccs-admin service account), then you only need to generate a new key and download the json gcp Service Account file file.
-
-3. Create the cluster using the OCM-CLI:
-
-```bash
-ocm create cluster $CLUSTER_NAME --provider gcp \
-   --vpc-name $OSD_VPC --region $REGION         \
-   --control-plane-subnet $MASTER_SUBNET        \ 
-   --compute-subnet $WORKER_SUBNET              \
-   --service-account-file $GCP_SA_FILE --ccs
-```
-
-4. Check the cluster status using OCM-CLI:
-
-```bash
-GCP_OSD_ID=$(ocm list clusters | grep $CLUSTER_NAME | awk '{ print $1 }')
-ocm cluster status $GCP_OSD_ID
-```
-
 ## Cleanup
 
 Deleting a ROSA cluster consists of two parts:
 
-1. Delete the OSD cluster using option 1 or option 2:
+1. Deleting the OSD cluster can be done using the OCM console described in the [official OSD docs](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
 
-   * Option 1: Deleting the OSD cluster can be done using the OCM console described in the [official OSD docs](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
-
-   * Option 2: Delete OSD from CLI:
-
-   ```bash
-   ocm delete cluster $GCP_OSD_ID
-   ```
-
-2. Deleting the GCP infrastructure resources (VPC, Subnets, Cloud NAT, Cloud Router).
-Depending of which option you selected you must perform:
-
-3. **Option 1**: Delete GCP resources using GCloud CLI:
+2. Deleting the GCP infrastructure resources (VPC, Subnets, Cloud NAT, Cloud Router):
 
    ```sh
    gcloud compute routers nats delete $NAT_WORKER \
@@ -262,10 +184,4 @@ Depending of which option you selected you must perform:
    gcloud compute networks subnets delete $WORKER_SUBNET --region=$REGION --quiet
 
    gcloud compute networks delete $OSD_VPC --quiet
-   ```
-
-4. **Option 2**: Delete GCP resources using Terraform:
-
-   ```sh
-   make destroy
    ```
