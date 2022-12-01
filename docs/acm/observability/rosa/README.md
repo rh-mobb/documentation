@@ -174,7 +174,7 @@ DOCKER_CONFIG_JSON=`oc extract secret/multiclusterhub-operator-pull-secret -n op
 
 1. Create a Secret containing your S3 details
 
-    ```bash
+```bash
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
@@ -192,11 +192,11 @@ stringData:
       access_key: $ACCESS_KEY_ID
       secret_key: $ACCESS_KEY
 EOF
-    ```
+```
 
 1. Create a CR for `MulticlusterHub`
 
-    ```bash
+```bash
 cat << EOF | kubectl apply -f -
 apiVersion: observability.open-cluster-management.io/v1beta2
 kind: MultiClusterObservability
@@ -209,7 +209,7 @@ spec:
       name: thanos-object-storage
       key: thanos.yaml
 EOF
-    ```
+```
 
 <!--
 1. Annotate the service accounts to use STS
