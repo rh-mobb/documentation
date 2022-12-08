@@ -35,6 +35,7 @@ archetype: home
 * [Verify Required Permissions for a ROSA STS deployment](/docs/rosa/verify-permissions)
 * [STS OIDC flow in ROSA Operators](/docs/rosa/sts-oidc-flow)
 * [Dynamic Certificates for ROSA Custom Domain](/docs/rosa/dynamic-certificates)
+* [Security Reference Architecture for ROSA](/docs/rosa/security-ra)
 
 ### ARO
 

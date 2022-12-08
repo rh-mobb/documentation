@@ -196,9 +196,9 @@ After adding your Openshift Container Platform and Cloud Provider sources, Cost 
 
 1. Cloud provider cost and usage related to running your OpenShift Container Platform clusters on their platform
 
-   > See the following video for a quick overview of Cost Management for OpenShift followed by a demo of the product
+ See the following video for a quick overview of Cost Management for OpenShift followed by a demo of the product on [YouTube](https://www.youtube.com/watch?v=umyceNEWpog)
 
-  <iframe width="560" height="315" src="https://www.youtube.com/watch?v=umyceNEWpog" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/umyceNEWpog" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Next steps for managing your costs
 
