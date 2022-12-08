@@ -114,8 +114,8 @@ Create an Azure AD application and retrieve app id:
    APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
    ```
 
-### Add Servive Principal for the new app ###
-Create Pervice Principal for the app created:
+### Add Service Principal for the new app ###
+Create Service Principal for the app created:
 
    ```
    az ad sp create --id $APPID
