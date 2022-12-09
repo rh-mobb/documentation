@@ -1,8 +1,8 @@
 # Adding an additional ingress controller to an ARO cluster
 
-**Paul Czarkowski, Stuart Kirk**
+**Paul Czarkowski, Stuart Kirk, Anton Nesterov**
 
-*03/30/2022*
+*03/30/2022 (updated on 12/09/2022)*
 
 ## Prerequisites
 
@@ -70,23 +70,46 @@ oc create secret tls custom-tls \
    EOF
    ```
 
+> NOTE: By default the ingress controller is created with `external` scope. This means that the corresponding Azure Load Balancer will have a public frontend IP. If you wish to deploy a privately visible ingress controller add the following lines to the `spec`:
+
+    ```yaml
+    spec:
+      ...
+      endpointPublishingStrategy:
+        loadBalancer:
+          scope: Internal
+        type: LoadBalancerService
+      ...
+    ```
+
 
 1. Wait a few moments then get the `EXTERNAL-IP` of the new ingress controller
 
     ```bash
-oc get -n openshift-ingress svc router-custom
+    oc get -n openshift-ingress svc router-custom
     ```
 
-    The output should look like:
+    In case of an Externally (publicly) scoped ingress controller the output should look like:
 
     ```
     NAME            TYPE           CLUSTER-IP     EXTERNAL-IP    PORT(S)                      AGE
     router-custom   LoadBalancer   172.30.90.84   20.120.48.78   80:32160/TCP,443:32511/TCP   49s
     ```
 
+    In case of an Internal (private) one:
+
+    ```
+    NAME            TYPE           CLUSTER-IP     EXTERNAL-IP    PORT(S)                      AGE
+    router-custom   LoadBalancer   172.30.55.36     10.0.2.4     80:30475/TCP,443:30249/TCP   10s
+
+    ```
+1. Optionally verify in the Azure portal or using CLI that the Load Balancer Service has gotten the new Frontend IP and two Load Balancing Rules - one for port 80 and another one for port 443. In case of an Internally scoped Ingress Controller the changes are to be observed within the Load Balancer that has the `-internal` suffix.
+
 1. Create a wildcard DNS record pointing at the `EXTERNAL-IP`
 
 1. Test that the Ingress is working
+
+> NOTE: For the Internal ingress controller, make sure that the test host has the necessary reachability to the VPC/subnet as well as the DNS resolver.
 
     ```bash
     curl -s https://test.$DOMAIN | head
