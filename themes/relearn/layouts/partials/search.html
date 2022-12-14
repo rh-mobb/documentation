@@ -1,0 +1,31 @@
+        <div class="searchbox default-animation">
+          <label for="search-by"><i class="fas fa-search"></i></label>
+          <input data-search-input id="search-by" type="search" placeholder="{{ T "Search-placeholder" }}">
+          <span data-search-clear=""><i class="fas fa-times"></i></span>
+        </div>
+        {{- $assetBusting := not .Site.Params.disableAssetsBusting }}
+        {{- $pageBaseLang := replaceRE "([a-z]+).*" "${1}" .Page.Lang }}
+        {{- $contentlangs := (union (slice | append .Site.Params.additionalContentLanguage) (slice $pageBaseLang)) }}
+        {{- $quotedcontentlangs := slice }}
+        {{- $missingcontentlangs := slice }}
+        {{- range $contentlangs }}
+          {{- $file := (printf "js/lunr.%s.min.js" .) }}
+          {{- if fileExists (printf "/static/%s" $file) }}
+            {{- $quotedcontentlangs = $quotedcontentlangs | append (printf "'%s'" .) }}
+          {{- else }}
+            {{- $missingcontentlangs = $missingcontentlangs | append . }}
+          {{- end }}
+        {{- end }}
+        {{- $contentlangs = $contentlangs | complement $missingcontentlangs }}
+        <script>
+          var contentLangs=[{{ delimit $quotedcontentlangs ", " | safeJS }}];
+        </script>
+        <script src="{{"js/auto-complete.js" | relURL}}{{ if $assetBusting }}?{{ now.Unix }}{{ end }}" defer></script>
+        <script src="{{"js/lunr.min.js" | relURL}}{{ if $assetBusting }}?{{ now.Unix }}{{ end }}" defer></script>
+        <script src="{{"js/lunr.stemmer.support.min.js" | relURL}}{{ if $assetBusting }}?{{ now.Unix }}{{ end }}" defer></script>
+        <script src="{{"js/lunr.multi.min.js" | relURL}}{{ if $assetBusting }}?{{ now.Unix }}{{ end }}" defer></script>
+        {{- range $contentlangs }}
+          {{- $file := (printf "js/lunr.%s.min.js" .) }}
+        <script src="{{ $file | relURL}}{{ if $assetBusting }}?{{ now.Unix }}{{ end }}" defer></script>
+        {{- end }}
+        <script src="{{ "js/search.js" | relURL }}{{ if $assetBusting }}?{{ now.Unix }}{{ end }}" defer></script>
