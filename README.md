@@ -57,6 +57,7 @@
 * [Configure a load balancer service to use a static public IP](./docs/aro/static-ip-load-balancer)
 * [Shipping logs and metrics to Azure Blob Storage with Thanos and Loki](./docs/aro/shipping-logs-and-metrics-to-azure-blob/)
 * [Integrate ARO cluster with Azure ARC](./docs/aro/azure-arc-integration)
+* [Extra MachineSets on ARO clusters](./docs/aro/aro-machinesets)
 
 ### GCP
 
