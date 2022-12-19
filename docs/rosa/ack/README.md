@@ -12,7 +12,7 @@ This tutorial shows how to use the ACK S3 controller as an example, but can be a
 
 * A ROSA cluster
 * AWS CLI
-* Helm 3 CLI
+* OpenShift CLI `oc`
 
 
 
@@ -80,7 +80,7 @@ This tutorial shows how to use the ACK S3 controller as an example, but can be a
 
    ```bash
    oc create configmap --namespace ack-system \
-     --from-env-file=$SCRATCH_DIR/config.txt ack-user-config
+     --from-env-file=$SCRATCH_DIR/config.txt ack-s3-user-config
    ```
 
 1. Create a secret for ACK to use
@@ -96,7 +96,7 @@ This tutorial shows how to use the ACK S3 controller as an example, but can be a
 
    ```bash
    oc create secret generic --namespace ack-system \
-     --from-env-file=$SCRATCH_DIR/secrets.txt ack-user-secrets
+     --from-env-file=$SCRATCH_DIR/secrets.txt ack-s3-user-secrets
    ```
 
 1. Check the `ack-s3-controller` is running
