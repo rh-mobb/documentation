@@ -66,6 +66,7 @@
 ## Advanced Cluster Manager (ACM)
 
 * [Deploy ACM Observability to a ROSA cluster](./docs/acm/observability/rosa)
+* [Deploy ACM Submariner for connect overlay networks of ARO - ROSA clusters](./docs/acm/submariner/aro-submariner.md)
 
 ## Observability
 
