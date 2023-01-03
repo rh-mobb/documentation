@@ -27,7 +27,7 @@ home = [ "HTML", "RSS", "JSON"]
 alwaysopen = false
 collapsibleMenu = true
 # ordersectionsby = "weight" # ordersectionsby = "title"
-# color_main = "#737373"
+color_main = "#737373"
 # color_second = "#b30000"
 # disableSearch = false # default is false
 # disableNavChevron = false # set true to hide next/prev chevron, default is false
