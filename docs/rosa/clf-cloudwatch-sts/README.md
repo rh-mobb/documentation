@@ -116,13 +116,31 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
      name: cluster-logging
      source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: cluster-logging.5.5.0
    EOF
    ```
 
 1. Deploy the Elasticsearch operator
 
    > Note: This is only needed for CRDs and won't actually deploy a Elasticsearch cluster.
+
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: operators.coreos.com/v1alpha1
+   kind: Subscription
+   metadata:
+     labels:
+        operators.coreos.com/cluster-logging.openshift-logging: ""
+     name: cluster-logging
+     namespace: openshift-logging
+   spec:
+     channel: stable
+     installPlanApproval: Automatic
+     name: cluster-logging
+     source: redhat-operators
+     sourceNamespace: openshift-marketplace
+   EOF
+   ```  
+
 
 1. Create a secret
 
@@ -181,8 +199,10 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
      namespace: openshift-logging
    spec:
      collection:
-       type: fluentd
-    forwarder:
+       logs:
+          type: fluentd
+     forwarder:
+       fluentd: {}
      managementState: Managed
    EOF
    ```
