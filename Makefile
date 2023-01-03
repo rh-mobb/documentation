@@ -1,14 +1,20 @@
+ifeq (, $(shell which podman))
+    DOCKER = docker
+else
+    DOCKER = podman
+endif
+
 build:
-	docker run --rm \
+	$(DOCKER) run --rm \
 	  --name=jekyll-build \
 		--volume="$(PWD):/srv/jekyll" \
-		-it jekyll/jekyll:3.8.6 \
+		-it docker.io/jekyll/jekyll:3.8.6 \
 		jekyll build
 
 preview:
-	docker run --rm -ti \
+	$(DOCKER) run --rm -ti \
 		--name=jekyll-preview \
 		--volume="$(PWD):/srv/jekyll" \
 		--publish 4000:4000 \
-		jekyll/jekyll:3.8.6 \
+		docker.io/jekyll/jekyll:3.8.6 \
 		jekyll serve
