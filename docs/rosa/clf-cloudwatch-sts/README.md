@@ -125,19 +125,28 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
 
    ```bash
    cat << EOF | oc apply -f -
+   apiVersion: operators.coreos.com/v1
+   kind: OperatorGroup
+   metadata:
+      name: openshift-operators-redhat
+      namespace: openshift-operators-redhat 
+   spec: {}
+   EOF
+   ```
+ 
+   ```bash
+   cat << EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
-     labels:
-        operators.coreos.com/cluster-logging.openshift-logging: ""
-     name: cluster-logging
-     namespace: openshift-logging
+     name: "elasticsearch-operator"
+     namespace: "openshift-operators-redhat" 
    spec:
-     channel: stable
-     installPlanApproval: Automatic
-     name: cluster-logging
-     source: redhat-operators
-     sourceNamespace: openshift-marketplace
+     channel: "stable" 
+     installPlanApproval: "Automatic" 
+     source: "redhat-operators" 
+     sourceNamespace: "openshift-marketplace"
+     name: "elasticsearch-operator"
    EOF
    ```  
 
