@@ -36,17 +36,17 @@ echo "OAuth callback URL: https://oauth-openshift.apps.$domain/oauth2callback/AA
 
 Second, you need to create the Azure AD application itself. To do so, login to the Azure portal, and navigate to [App registrations blade](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade), then click on "New registration" to create a new application.
 
-![Azure Portal - App registrations blade](../images/azure-portal_app-registrations-blade.png)
+![Azure Portal - App registrations blade](./images/azure-portal_app-registrations-blade.png)
 
 Provide a name for the application, for example `openshift-auth`. Select "Web" from the Redirect URI dropdown and fill in the Redirect URI using the value of the OAuth callback URL you retrieved in the previous step. Once you fill in the necessary information, click "Register" to create the application.
 
-![Azure Portal - Register an application page](../images/azure-portal_register-an-application-page.png)
+![Azure Portal - Register an application page](./images/azure-portal_register-an-application-page.png)
 
 Then, click on the "Certificates & secrets" sub-blade and select "New client secret". Fill in the details request and make note of the generated client secret value, as you'll use it in a later step. You won't be able to retrieve it again.
 
-![Azure Portal - Certificates & secrets page](../images/azure-portal_certificates-secrets-page.png)
-![Azure Portal - Add a Client Secret page](../images/azure-portal_add-a-client-secret-page.png)
-![Azure Portal - Copy Client Secret page](../images/azure-portal_copy-client-secret-page.png)
+![Azure Portal - Certificates & secrets page](./images/azure-portal_certificates-secrets-page.png)
+![Azure Portal - Add a Client Secret page](./images/azure-portal_add-a-client-secret-page.png)
+![Azure Portal - Copy Client Secret page](./images/azure-portal_copy-client-secret-page.png)
 
 Then, click on the "Overview" sub-blade and make note of the "Application (client) ID" and "Directory (tenant) ID". You'll need those values in a later step as well.
 
