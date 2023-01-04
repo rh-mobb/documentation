@@ -78,6 +78,10 @@ Select the "Security groups" option and click the "Add" button to configure grou
 
 ![Azure Portal - Edit Groups Claim Page](../images/azure-portal_edit-group-claims-page.png)
 
+Grant the admin consent for the in the API Permission section
+
+![Azure Portal - Admin Consent Grant](../images/azure-portal_admin-consent-grant.png)
+
 ## 3. Configure the OpenShift cluster to use Azure AD as the identity provider
 
 Finally, we need to configure OpenShift to use Azure AD as its identity provider. 
@@ -124,7 +128,7 @@ spec:
         name:
         - name
         preferredUsername:
-        - preferred_username
+        - email
       clientID: ${APP_ID}
       clientSecret:
         name: openid-client-secret
