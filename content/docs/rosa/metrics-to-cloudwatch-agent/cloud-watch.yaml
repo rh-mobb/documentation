@@ -18,14 +18,14 @@ data:
   cwagentconfig.json: |
     {
       "agent": {
-        "region": "{{region_name}}",
+        "region": "__cluster_region__",
         "debug": true
       },
       "logs": {
         "metrics_collected": {
           "prometheus": {
-            "cluster_name": "{{cluster_name}}",
-            "log_group_name": "/aws/containerinsights/{{cluster_name}}/prometheus",
+            "cluster_name": "__cluster_name__",
+            "log_group_name": "/aws/containerinsights/__cluster_name__/prometheus",
             "prometheus_config_path": "/etc/prometheusconfig/prometheus.yaml",
             "emf_processor": {
               "metric_declaration": [

@@ -5,7 +5,7 @@ title: Configuring the Cluster Log Forwarder for CloudWatch Logs and STS
 
 *Author: Paul Czarkowski*
 
-*last edited: 2022-08-31*
+*last edited: 2023-01-04*
 
 This guide shows how to deploy the Cluster Log Forwarder operator and configure it to use STS authentication to forward logs to CloudWatch.
 
@@ -22,15 +22,14 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
    > Change the cluster name to match your ROSA cluster and ensure you're logged into the cluster as an Administrator. Ensure all fields are outputted correctly before moving on.
 
    ```bash
-   export ROSA_CLUSTER_NAME=my-cluster
-   export ROSA_CLUSTER_ID=$(rosa describe cluster -c ${ROSA_CLUSTER_NAME} --output json | jq -r .id)
+   export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}"  | sed 's/-[a-z0-9]\+$//')
    export REGION=$(rosa describe cluster -c ${ROSA_CLUSTER_NAME} --output json | jq -r .region.id)
-   export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer)
+   export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer | sed  's|^https://||')
    export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
    export AWS_PAGER=""
    export SCRATCH="/tmp/${ROSA_CLUSTER_NAME}/clf-cloudwatch-sts"
    mkdir -p ${SCRATCH}
-   echo "Cluster ID: ${ROSA_CLUSTER_ID}, Region: ${REGION}, OIDC Endpoint: ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
+   echo "Cluster: ${ROSA_CLUSTER_NAME}, Region: ${REGION}, OIDC Endpoint: ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
    ```
 
 ## Prepare AWS Account
@@ -74,12 +73,12 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
       "Statement": [{
         "Effect": "Allow",
         "Principal": {
-          "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/${ROSA_CLUSTER_ID}"
+          "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_ENDPOINT}"
         },
         "Action": "sts:AssumeRoleWithWebIdentity",
         "Condition": {
           "StringEquals": {
-            "rh-oidc.s3.us-east-1.amazonaws.com/${ROSA_CLUSTER_ID}:sub": "system:serviceaccount:openshift-logging:logcollector"
+            "${OIDC_ENDPOINT}:sub": "system:serviceaccount:openshift-logging:logcollector"
           }
         }
       }]
@@ -117,13 +116,8 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
      name: cluster-logging
      source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: cluster-logging.5.5.0
    EOF
    ```
-
-1. Deploy the Elasticsearch operator
-
-   > Note: This is only needed for CRDs and won't actually deploy a Elasticsearch cluster.
 
 1. Create a secret
 
@@ -182,8 +176,10 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
      namespace: openshift-logging
    spec:
      collection:
-       type: fluentd
-    forwarder:
+       logs:
+          type: fluentd
+     forwarder:
+       fluentd: {}
      managementState: Managed
    EOF
    ```
