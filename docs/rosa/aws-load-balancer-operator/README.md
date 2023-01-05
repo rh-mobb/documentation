@@ -1,6 +1,8 @@
 # Using AWS Load Balancer Operator On Red Hat OpenShift on AWS with STS
 
-Author **Shaozhen Ding**
+Author **Shaozhen Ding**, **Paul Czarkowski**
+
+*last edited: 01/05/2023*
 
 [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/) is a controller to help manage Elastic Load Balancers for a Kubernetes cluster.
 
@@ -21,178 +23,266 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 * [A multi AZ ROSA cluster deployed with STS](/docs/rosa/sts/)
 * AWS CLI
 * OC CLI
-* Tag the VPC (If this is a bring your own VPC)
 
-  ```
-  CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}")
-  aws ec2 create-tags --resources VPC_ID --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned 
-  ```
+## Environment
+
+1. Prepare the environment variables
+
+   ```bash
+   export AWS_PAGER=""
+   export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}"  | sed 's/-[a-z0-9]\{5\}$//')
+   export REGION=$(oc get infrastructure cluster -o=jsonpath="{.status.platformStatus.aws.region}")
+   export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed  's|^https://||')
+   export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+   export SCRATCH="/tmp/${ROSA_CLUSTER_NAME}/alb-operator"
+   mkdir -p ${SCRATCH}
+   echo "Cluster: ${ROSA_CLUSTER_NAME}, Region: ${REGION}, OIDC Endpoint: ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
+   ```
+
+## AWS VPC / Subnets
+
+> Note: This section only applies to BYO VPC clusters, if you let ROSA create your VPCs you can skip to the following [Installation](#installation) section.
+
+1. Set Variables describing your VPC and Subnets:
+
+   ```bash
+   export VPC=<vpc-id>
+   export PUBLIC_SUBNET_IDS=<public-subnets>
+   export PRIVATE_SUBNET_IDS=<private-subnets>
+   export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}")
+   ```
+
+1. Tag VPC with the cluster name
+
+   ```bash
+   aws ec2 create-tags --resources VPC_ID --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned
+   ```
+
+1. Add tags to Public Subnets
+
+   ```bash
+   aws ec2 create-tags \
+     --resources "${PUBLIC_SUBNET_IDS}" \
+     --tags Key=kubernetes.io/role/elb,Value=''
+   ```
+
+1. Add tags to Private Subnets
+
+   ```bash
+   aws ec2 create-tags \
+     --resources "${PRIVATE_SUBNET_IDS}" \
+     --tags Key=kubernetes.io/role/internal-elb,Value=''
+   ```
 
 ## Installation
 
-* Prepare the environment variables
+1. Create Policy for the aws load balancer controller
 
-```bash
-export ROSA_CLUSTER_NAME=USE_YOUR_ROSA_CLUSTER_NAME
-export REGION=THE_REGION
-export ROSA_CLUSTER_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME --output json | jq -r .id)
-export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq .spec.serviceAccountIssuer)
-export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
-```
+   > **Note**: Policy is from [AWS Load Balancer Controller Policy](https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.4/docs/install/iam_policy.json) plus subnet create tags permission (required by the operator)
 
-* Create Role and Policy for the aws load balancer controller
+   ```bash
+   oc new-project aws-load-balancer-operator
+   POLICY_ARN=$(aws iam list-policies --query \
+     "Policies[?PolicyName=='aws-load-balancer-operator-policy'].{ARN:Arn}" \
+     --output text)
+   if [[ -z "${POLICY_ARN}" ]]; then
+     wget -O "${SCRATCH}/load-balancer-operator-policy.json" \
+       https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/rosa/aws-load-balancer-operator/load-balancer-operator-policy.json
+     POLICY_ARN=$(aws --region "$REGION" --query Policy.Arn \
+     --output text iam create-policy \
+     --policy-name aws-load-balancer-operator-policy \
+     --policy-document "file://${SCRATCH}/load-balancer-operator-policy.json")
+   fi
+   echo $POLICY_ARN
+   ```
 
-**notes**: Policy is from [AWS Load Balancer Controller Policy](https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.4/docs/install/iam_policy.json) plus subnet create tags permission (required by the operator)
+1. Create trust policy for ALB Operator
 
+   ```bash
+   cat <<EOF > "${SCRATCH}/trust-policy.json"
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+     {
+     "Effect": "Allow",
+     "Condition": {
+       "StringEquals" : {
+         "${OIDC_ENDPOINT}:sub": ["system:serviceaccount:aws-load-balancer-operator:aws-load-balancer-operator-controller-manager", "system:serviceaccount:aws-load-balancer-operator:aws-load-balancer-controller-cluster"]
+       }
+     },
+     "Principal": {
+       "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/${OIDC_ENDPOINT}"
+     },
+     "Action": "sts:AssumeRoleWithWebIdentity"
+     }
+     ]
+   }
+   EOF
+   ```
 
-```bash
-oc new-project aws-load-balancer-operator
-wget https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/rosa/aws-load-balancer-operator/load-balancer-operator-policy.json
-POLICY_ARN=$(aws --region "$REGION" --query Policy.Arn \
---output text iam create-policy \
---policy-name aws-load-balancer-operator-policy \
---policy-document file://load-balancer-operator-policy.json)
-echo $POLICY_ARN
+1. Create Role for ALB Operator
 
-cat <<EOF > trust-policy.json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-  {
-  "Effect": "Allow",
-  "Condition": {
-    "StringEquals" : {
-      "rh-oidc.s3.us-east-1.amazonaws.com/${ROSA_CLUSTER_ID}:sub": ["system:serviceaccount:aws-load-balancer-operator:aws-load-balancer-operator-controller-manager", "system:serviceaccount:aws-load-balancer-operator:aws-load-balancer-controller-cluster"]
-    }
-  },
-  "Principal": {
-    "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/$ROSA_CLUSTER_ID"
-  },
-  "Action": "sts:AssumeRoleWithWebIdentity"
-  }
-  ]
-}
-EOF
+   ```bash
+   ROLE_ARN=$(aws iam create-role --role-name "${ROSA_CLUSTER_NAME}-alb-operator" \
+   --assume-role-policy-document "file://${SCRATCH}/trust-policy.json" \
+   --query Role.Arn --output text)
+   echo $ROLE_ARN
 
-ROLE_ARN=$(aws iam create-role --role-name aws-load-balancer-operator-role \
---assume-role-policy-document file://trust-policy.json \
---query Role.Arn --output text)
-echo $ROLE_ARN
+   aws iam attach-role-policy --role-name "${ROSA_CLUSTER_NAME}-alb-operator" \
+     --policy-arn $POLICY_ARN
+   ```
 
-aws iam attach-role-policy --role-name aws-load-balancer-operator-role --policy-arn $POLICY_ARN
+1. Create secret for ALB Operator
 
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-stringData:
-  credentials: |
-    [default]
-    role_arn = $ROLE_ARN
-    web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
-EOF
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: aws-load-balancer-operator
+     namespace: aws-load-balancer-operator
+   stringData:
+     credentials: |
+       [default]
+       role_arn = $ROLE_ARN
+       web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
+   EOF
+   ```
 
-```
+1. Install Red Hat AWS Load Balancer Operator
 
-* Install Red Hat AWS Load Balancer Operator
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: operators.coreos.com/v1
+   kind: OperatorGroup
+   metadata:
+     name: aws-load-balancer-operator
+     namespace: aws-load-balancer-operator
+   spec:
+     targetNamespaces:
+       - aws-load-balancer-operator
+   ---
+   apiVersion: operators.coreos.com/v1alpha1
+   kind: Subscription
+   metadata:
+     name: aws-load-balancer-operator
+     namespace: aws-load-balancer-operator
+   spec:
+     channel: stable-v0
+     installPlanApproval: Automatic
+     name: aws-load-balancer-operator
+     source: redhat-operators
+     sourceNamespace: openshift-marketplace
+     startingCSV: aws-load-balancer-operator.v0.2.0
+   EOF
+   ```
 
-```bash
-cat << EOF | oc apply -f -
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-spec:
-  targetNamespaces:
-    - aws-load-balancer-operator
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-spec:
-  channel: stable-v0
-  installPlanApproval: Automatic
-  name: aws-load-balancer-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-  startingCSV: aws-load-balancer-operator.v0.2.0
-EOF
-```
+1. Install Red Hat AWS Load Balancer Controller
 
-* Install Red Hat AWS Load Balancer Controller CRD
+   > Note: If you get the error `error: unable to recognize "STDIN": no matches for kind "AWSLoadBalancerController" in version "networking.olm.openshift.io/v1alpha1"` wait a minute and try again, it just means the Operator hasn't completed installing yet.
 
-```bash
-cat << EOF | oc apply -f -
-apiVersion: networking.olm.openshift.io/v1alpha1
-kind: AWSLoadBalancerController
-metadata:
-  name: cluster
-spec:
-  credentials:
-    name: aws-load-balancer-operator
-EOF
-```
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: networking.olm.openshift.io/v1alpha1
+   kind: AWSLoadBalancerController
+   metadata:
+     name: cluster
+   spec:
+     credentials:
+       name: aws-load-balancer-operator
+   EOF
+   ```
 
-* Tag ROSA AWS Subnets
+1. Check the Operator and Controller pods are both running
 
-    * Tag all the rosa private subnets with kubernetes.io/role/internal-elb = 1
-    * Tag all the rosa public subnets with kubernetes.io/role/elb = 1
+   ```bash
+   oc -n aws-load-balancer-operator get pods
+   ```
+
+   You should see the following, if not wait a moment and retry.
+
+   ```
+   NAME                                                             READY   STATUS    RESTARTS   AGE
+   aws-load-balancer-controller-cluster-6ddf658785-pdp5d            1/1     Running   0          99s
+   aws-load-balancer-operator-controller-manager-577d9ffcb9-w6zqn   2/2     Running   0          2m4s
+   ```
 
 ## Validate the deployment with Echo Server application
 
-### Deploy Echo Server Ingress with ALB
+1. Deploy Echo Server Ingress with ALB
 
-```bash
-oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-namespace.yaml
-oc adm policy add-scc-to-user anyuid system:serviceaccount:echoserver:default
-oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-deployment.yaml
-oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-service.yaml
-oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-ingress.yaml
+   ```bash
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-namespace.yaml
+   oc adm policy add-scc-to-user anyuid system:serviceaccount:echoserver:default
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-deployment.yaml
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-service.yaml
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-ingress.yaml
+   ```
 
-oc get ingress -n echoserver
-NAME         CLASS   HOSTS   ADDRESS                                                                  PORTS   AGE
-echoserver   alb     *       k8s-echoserv-echoserv-384bcaf98e-798185250.us-east-2.elb.amazonaws.com   80      24s
+1. Curl the ALB ingress endpoint to verify the echoserver pod is accessible
 
-curl -vvv -H "HOST: echoserver.example.com" http://k8s-echoserv-echoserv-384bcaf98e-798185250.us-east-2.elb.amazonaws.com
-```
+   ```
+   INGRESS=$(oc -n echoserver get ingress echoserver \
+     -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+   curl -sH "Host: echoserver.example.com" \
+     "http://${INGRESS}" | grep Hostname
+   ```
 
-### Deploy Echo Server NLB Load Balancer
+   ```
+   Hostname: echoserver-7757d5ff4d-ftvf2
+   ```
 
-```bash
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Service
-metadata:
-  name: echoserver-nlb
-  namespace: echoserver
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: external
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
-    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
-spec:
-  ports:
-    - port: 80
-      targetPort: 8080
-      protocol: TCP
-  type: LoadBalancer
-  selector:
-    app: echoserver
-EOF
+1. Deploy Echo Server NLB Load Balancer
 
-oc get service -n echoserver
-NAME             TYPE           CLUSTER-IP      EXTERNAL-IP                                                                     PORT(S)        AGE
-echoserver       NodePort       172.30.153.66   <none>                                                                          80:31296/TCP   48m
-echoserver-nlb   LoadBalancer   172.30.53.223   k8s-echoserv-echoserv-d036437ed4-94d8073cee7e077c.elb.us-east-2.amazonaws.com   80:31957/TCP   4m12s
-```
+   ```bash
+   cat << EOF | oc apply -f -
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: echoserver-nlb
+     namespace: echoserver
+     annotations:
+       service.beta.kubernetes.io/aws-load-balancer-type: external
+       service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
+       service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+   spec:
+     ports:
+       - port: 80
+         targetPort: 8080
+         protocol: TCP
+     type: LoadBalancer
+     selector:
+       app: echoserver
+   EOF
+   ```
+
+1. Test the NLB endpoint
+
+   ```bash
+   NLB=$(oc -n echoserver get service echoserver-nlb \
+     -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+   curl -s "http://${NLB}" | grep Hostname
+   ```
+
+   ```
+   Hostname: echoserver-7757d5ff4d-ftvf2
+   ```
 
 ## Clean Up
 
-* oc delete subscription aws-load-balancer-operator -n aws-load-balancer-operator
-* aws iam detach-role-policy --role-name aws-load-balancer-operator-role --policy-arn $POLICY_ARN
-* aws iam delete-role --role-name aws-load-balancer-operator-role
-* aws iam delete-policy --policy-arn $POLICY_ARN
+1. Delete the Operator and the AWS Roles
+
+   ```bash
+   oc delete subscription aws-load-balancer-operator -n aws-load-balancer-operator
+   aws iam detach-role-policy \
+     --role-name "${ROSA_CLUSTER_NAME}-alb-operator" \
+     --policy-arn $POLICY_ARN
+   aws iam delete-role \
+     --role-name "${ROSA_CLUSTER_NAME}-alb-operator"
+   ```
+
+1. If you wish to delete the policy you can run
+
+   ```bash
+   aws iam delete-policy --policy-arn $POLICY_ARN
+   ```
