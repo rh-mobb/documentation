@@ -114,7 +114,7 @@ The is an example guide for creating a public ingress endpoint for a ROSA Privat
        name: acme-tls
        namespace: my-custom-route
    EOF
-```
+   ```
 
 1. Wait for the domain to be ready:
 
@@ -122,14 +122,15 @@ The is an example guide for creating a public ingress endpoint for a ROSA Privat
    watch oc get customdomains
    ```
 
-1. Once its ready grab the endpoint:
+1. Once its ready grab the CLB name:
 
    ```bash
-   ENDPOINT=$(oc get customdomains acme -o jsonpath='{.status.endpoint}')
-   echo $ENDPOINT
+   CDO_NAME=acme
+   CLB_NAME=$(oc get svc -n openshift-ingress -o jsonpath='{range .items[?(@.metadata.labels.ingresscontroller\.operator\.openshift\.io\/owning-ingresscontroller=="'$CDO_NAME'")]}{.status.loadBalancer.ingress[].hostname}{"\n"}{end}')
+   echo $CLB_NAME
    ```
 
-1. Create a CNAME in your DNS provider for *.<$DOMAIN> that points at the endpoint from the above command.
+1. Create a CNAME in your DNS provider for *.<$DOMAIN> that points at the CLB NAME from the above command.
 
 ### Deploy a public application
 
