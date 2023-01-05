@@ -1,7 +1,9 @@
 ---
 date: '2022-09-28'
-title: Integrating Red Hat OpenShift Service on AWS (ROSA) and AWS Secure Environment Accelerator (ASEA) Landing Zones
+title: Integrating ROSA and ASEA Landing Zones
 ---
+
+## Integrating Red Hat OpenShift Service on AWS (ROSA) and AWS Secure Environment Accelerator (ASEA) Landing Zones
 
 **Tyler Stacey**
 

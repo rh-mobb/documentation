@@ -2,7 +2,6 @@
 date: '2022-09-14T22:07:08.584151'
 title: OpenShift Logging
 ---
-# OpenShift Logging
 
 A guid to shipping logs and metrics on OpenShift
 
@@ -10,7 +9,7 @@ Author: [Aaron Aldrich](https://twitter.com/crayzeigh)
 
 ## Prerequisites
 
-1. OpenShift CLI (oc) 
+1. OpenShift CLI (oc)
 1. Rights to install operators on the cluster
 
 ## Setup OpenShift Logging
@@ -19,15 +18,15 @@ This is for setup of centralized logging on OpenShift making use of Elasticsearc
 
 This setup is primarily concerned with simplicity and basic log searching. Consequently it is insufficient for long-lived retention or for advanced visualization of logs. For more advanced observability setups, you'll want to look at [Forwarding Logs to Third Party Systems](https://docs.openshift.com/container-platform/4.7/logging/cluster-logging-external.html)
 
-1. Create a namespace for the OpenShift Elasticsearch Operator. 
-    
+1. Create a namespace for the OpenShift Elasticsearch Operator.
+
     > This is necessary to avoid potential conflicts with community operators that could send similarly named metrics/logs into the stack.
 
     ```bash
     oc create -f - <<EOF
     apiVersion: v1
     kind: Namespace
-    metadata: 
+    metadata:
     name: openshift-operators-redhat
     annotations:
       openshift.io/node-selector: ""
@@ -83,7 +82,7 @@ This setup is primarily concerned with simplicity and basic log searching. Conse
           name: "elasticsearch-operator"
         EOF
         ```
-    
+
     1. Verify Operator Installation
 
         ```bash
@@ -137,7 +136,7 @@ This setup is primarily concerned with simplicity and basic log searching. Conse
           sourceNamespace: openshift-marketplace
         EOF
         ```
-    
+
     1. Verify the Operator installation, the `PHASE` should be `Succeeded`
 
     ```bash
@@ -211,7 +210,7 @@ This setup is primarily concerned with simplicity and basic log searching. Conse
 
 1. Your logging instances are now configured and recieving logs. To view them, you will need to log into your Kibana instance and create the appropriate index patterns. For more information on index patterns, see the [Kibana documentation.](https://www.elastic.co/guide/en/kibana/6.8/index-patterns.html)
 
-    > **NOTE**: The following restrictions and notes apply to index patterns:  
+    > **NOTE**: The following restrictions and notes apply to index patterns:
     > - All users can view the `app-` logs for namespaces they have access to
     > - Only cluster-admins can view the `infra-` and `audit-` logs
     > - For best accuracy, use the `@timestamp` field for determining chronology

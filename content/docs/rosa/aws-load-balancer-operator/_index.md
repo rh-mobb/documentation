@@ -1,4 +1,8 @@
-# Using AWS Load Balancer Operator On Red Hat OpenShift on AWS with STS
+---
+date: '2023-01-03T22:07:08.574151'
+title: AWS Load Balancer Operator On ROSA
+# aliases: ['/docs/rosa/alb-sts']
+---
 
 Author **Shaozhen Ding**, **Paul Czarkowski**
 
@@ -179,7 +183,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 
 1. Install Red Hat AWS Load Balancer Controller
 
-   > Note: If you get the error `error: unable to recognize "STDIN": no matches for kind "AWSLoadBalancerController" in version "networking.olm.openshift.io/v1alpha1"` wait a minute and try again, it just means the Operator hasn't completed installing yet.
+   > Note: If you get an error here wait a minute and try again, it likely means the Operator hasn't completed installing yet.
 
    ```bash
    cat << EOF | oc apply -f -
