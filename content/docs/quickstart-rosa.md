@@ -3,6 +3,7 @@ date: '2022-09-14T22:07:08.594151'
 title: ROSA Quickstart
 weight: 1
 aliases: [/docs/quickstart-rosa.md]
+tags: ["AWS", "ROSA"] 
 ---
 
 A Quickstart guide to deploying a Red Hat OpenShift cluster on AWS.

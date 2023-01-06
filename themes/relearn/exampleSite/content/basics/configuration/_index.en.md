@@ -39,7 +39,7 @@ Note that some of these parameters are explained in details in other sections of
   # Set this to true to disable copy-to-clipboard button for inline code.
   disableInlineCopyToClipBoard = false
   # A title for shortcuts in menu is set by default. Set this to true to disable it.
-  disableShortcutsTitle = false
+  disableShortcutsTitle = true
   # If set to false, a Home button will appear below the search bar on the menu.
   # It is redirecting to the landing page of the current language if specified. (Default is "/")
   disableLandingPageButton = true

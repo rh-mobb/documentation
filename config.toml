@@ -16,7 +16,7 @@ enableMissingTranslationPlaceholders = false
 
 # googleanalytics = "UA-123-45"
 
-disableKinds = ["taxonomy", "taxonomyTerm", "category", "RSS"]
+# disableKinds = ["taxonomy","taxonomyTerm", "category", "RSS"]
 
 # Keep this as is
 [outputs]
@@ -27,12 +27,14 @@ home = [ "HTML", "RSS", "JSON"]
 alwaysopen = false
 collapsibleMenu = true
 themeVariant = "red"
+disableShortcutsTitle = true
+# showVisitedLinks = true
 # ordersectionsby = "weight" # ordersectionsby = "title"
 #color_main = "#CC0000"
 # color_second = "#b30000"
 # disableSearch = false # default is false
 # disableNavChevron = false # set true to hide next/prev chevron, default is false
-# menushortcutsnewtab = false # set true to open shortcuts links to a new tab/window
+menushortcutsnewtab = true
 
 # #editURL = "https://github.com/vjeantet/hugo-theme-docport/edit/master/exampleSite/content/"
 # enableGitInfo = true
@@ -69,23 +71,24 @@ tabWidth = 2
 # top menu shotcuts
 #
 [[menu.shortcuts]]
-name = "Github"
+name = "<i class='fab fa-fw fa-github'></i> Github"
 identifier = "ds"
-url = "https://github.com/vjeantet/hugo-theme-docport"
+icon = "<i class='fab fa-fw fa-github'></i>"
+url = "https://github.com/rh-mobb/documentation"
 weight = 10
 
 [[menu.shortcuts]]
-name = "Download"
-url = "https://github.com/vjeantet/hugo-theme-docport/archive/master.zip"
+name = "<i class='fas fa-fw fa-file-download'></i> Download"
+url = "https://github.com/rh-mobb/documentation/archive/refs/heads/main.zip"
 weight = 11
 
 [[menu.shortcuts]]
-name = "Hugo Documentation"
-identifier = "hugodoc"
-url = "https://gohugo.io/"
+name = "<i class='fab fa-fw fa-redhat'></i> Red Hat Blog"
+identifier = "rhblog"
+url = "https://www.redhat.com/en/blog"
 weight = 20
 
 [[menu.shortcuts]]
-name = "Credits"
-url = "/docport-theme/credits/"
+name = "<i class='fas fa-fw fa-tags'></i> Tags"
+url = "tags/"
 weight = 30
