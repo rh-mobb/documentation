@@ -5,3 +5,14 @@ description: MOBB Docs and Guides for misc
 archetype: chapter
 ---
 
+
+## Misc Topics:
+
+* [Common Managed OpenShift References/Tasks](./references.md)
+* [Cost Management for Cloud Services](./cost-management)
+* [Custom TLS Ciphers](./tls-cipher-customization)
+* [Jupyter Notebook](./jup)
+* [K8s Secret Store CSI](./secrets-store-csi)
+* [OADP](./oadp)
+* [Sharing Common Images](./common-images-namespace) 
+* [Stop Default Router from Serving Custom Domains](./default-router-custom-domain)

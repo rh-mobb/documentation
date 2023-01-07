@@ -1,6 +1,6 @@
 ---
 date: '2022-09-14T22:07:10.024151'
-title: Jupiter Notebooks
+title: Jupyter Notebooks
 tags: ["GPU", "OCP"]
 ---
 

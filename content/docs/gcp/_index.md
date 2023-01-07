@@ -5,3 +5,6 @@ description: MOBB Docs and Guides for GCP
 archetype: chapter
 tags: ["GCP", "OSD"]
 ---
+
+* [Filestore Storage for OSD on GCP](./filestore.md)
+* [Creating OSD on GCP w/ Existing VPC](./osd_preexisting_vpc.md)

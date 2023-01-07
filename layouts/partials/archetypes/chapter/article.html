@@ -4,7 +4,8 @@
           <article class="chapter">
 {{ partial "heading-pre.html" . }}
 <h1>{{ .Title }}</h1>{{ partial "heading-post.html" . }}
-
+<br>
+<br>
 {{ $content | safeHTML }}
             <footer class="footline">
               {{- partial "content-footer.html" . }}
