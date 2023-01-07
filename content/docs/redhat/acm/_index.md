@@ -6,3 +6,6 @@ description: MOBB Docs and Guides for acm
 archetype: chapter
 ---
 
+## [Observability](./observability)
+* [ROSA](./observability/rosa)
+
