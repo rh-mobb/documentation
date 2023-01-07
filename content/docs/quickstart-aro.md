@@ -4,6 +4,7 @@ title: ARO Quickstart
 weight: 1
 aliases: [/docs/quickstart-aro.md]
 author: paulczar
+tags: ["ARO", "Azure", "Quickstarts"]
 ---
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster.
 

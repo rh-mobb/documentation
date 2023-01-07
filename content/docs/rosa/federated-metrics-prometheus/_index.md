@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.754151'
 title: Federating Metrics to a centralized Prometheus Cluster
+tags: ["AWS", "ROSA"]
 ---
 Red Hat Openshift for AWS (ROSA) comes with two built-in monitoring stacks. `ClusterMonitoring` and `User Workload Monitoring`. They are both based on Prometheus, the first targets the Cluster Operator (Red Hat SRE) and the latter targets the Cluster user (you!).
 

@@ -2,6 +2,7 @@
 date: '2022-09-14T22:07:09.774151'
 title: Deploying 3scale API Management to ROSA and OSD
 aliases: ['/docs/app-services/3scale']
+tags: ["ROSA", "OSD"]
 ---
 
 **Michael McNeill**

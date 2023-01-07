@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.604151'
 title: Using AWS Controllers for Kubernetes (ACK) on ROSA
+tags: ["AWS", "ROSA"]
 ---
 
 *Updated: 06/02/2022 by Paul Czarkowski*

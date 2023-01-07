@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.764151'
 title: Enabling the AWS EFS CSI Driver Operator on ROSA
+tags: ["AWS", "ROSA"]
 ---
 **Author: Paul Czarkowski**
 *Modified: 07/11/2022*

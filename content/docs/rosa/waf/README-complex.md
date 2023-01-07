@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.854151'
 title: This is a POC of ROSA with a AWS WAF service
+tags: ["AWS", "ROSA"]
 ---
 # This is a POC of ROSA with a AWS WAF service
 

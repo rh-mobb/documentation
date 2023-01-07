@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.604151'
 title: Creating a ROSA cluster in STS mode
+tags: ["AWS", "ROSA", "STS"]
 ---
 **Paul Czarkowski**
 

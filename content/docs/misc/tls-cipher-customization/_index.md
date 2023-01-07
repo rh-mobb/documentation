@@ -2,7 +2,7 @@
 date: '2022-09-14T22:07:10.024151'
 title: Configure ROSA/OSD to use custom TLS ciphers on the ingress controllers
 aliases: ['/docs/ingress/tls-cipher-customization']
-
+tags: ["ROSA", "AWS", "OSD"]
 ---
 
 **Michael McNeill**

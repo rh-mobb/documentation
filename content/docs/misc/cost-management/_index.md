@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.784151'
 title: Red Hat Cost Management for Cloud Services
+tags: ["Cost", "Azure", "ARO"]
 ---
 
 **Author: Charlotte Fung**

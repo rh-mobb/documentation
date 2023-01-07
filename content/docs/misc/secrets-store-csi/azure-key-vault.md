@@ -2,6 +2,7 @@
 date: '2022-09-14T22:07:09.804151'
 title: Azure Key Vault CSI on Azure Red Hat OpenShift
 aliases: ['/docs/security/secrets-store-csi/azure-key-vault']
+tags: ["Azure", "ARO"]
 ---
 
 **Author: Paul Czarkowski**

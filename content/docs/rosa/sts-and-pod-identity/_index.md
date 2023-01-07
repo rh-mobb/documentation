@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.754151'
 title: Integrating with AWS resources using Pod Identity
+tags: ["AWS", "ROSA", "STS"]
 ---
 # Integrating with AWS resources using Pod Identity
 

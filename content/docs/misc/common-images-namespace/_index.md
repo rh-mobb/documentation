@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.854151'
 title: OpenShift - Sharing Common images
+tags: ["OCP"]
 ---
 # OpenShift - Sharing Common images
 

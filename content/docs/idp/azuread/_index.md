@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.894151'
 title: Configure Azure AD as an OIDC identity provider for ROSA/OSD
+tags: ["Azure", "ROSA", "OSD"]
 ---
 
 **Michael McNeill, Andrea Bozzoni, Steve Mirman**

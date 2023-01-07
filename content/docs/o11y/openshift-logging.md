@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.584151'
 title: OpenShift Logging
+tags: ["Observability", "OCP"]
 ---
 
 A guid to shipping logs and metrics on OpenShift

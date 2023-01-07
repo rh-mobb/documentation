@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.754151'
 title: Creating a Public/Private BYO VPC for ROSA
+tags: ["AWS", "ROSA"]
 ---
 ## Creating a Public/Private BYO VPC for ROSA
 

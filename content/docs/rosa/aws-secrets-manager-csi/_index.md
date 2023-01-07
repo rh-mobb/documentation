@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.754151'
 title: Using AWS Secrets Manager CSI on Red Hat OpenShift on AWS with STS
+tags: ["AWS", "ROSA"]
 ---
 Author **Paul Czarkowski**
 

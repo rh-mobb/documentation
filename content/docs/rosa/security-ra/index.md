@@ -1,6 +1,7 @@
 ---
 date: '2022-09-30'
 title: Security Reference Architecture for ROSA
+tags: ["AWS", "ROSA"]
 ---
 
 **Tyler Stacey**

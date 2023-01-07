@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.954151'
 title: Configure Azure AD as an OIDC identity provider for ARO with cli
+tags: ["Azure", "ARO"]
 ---
 
 **Daniel Moessner**
@@ -9,26 +10,26 @@ title: Configure Azure AD as an OIDC identity provider for ARO with cli
 
 The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (ARO) via cli are:
 
-   * [Prerequisites](#prerewuisites)
-      * [Have Azure cli installed](#have-azure-cli-installed)
-      * [Login to Azure](#login-to-azure)
-   * [Azure](#azure)
-      * [Define needed variables](#define-needed-variables)
-      * [Get oauthCallbackURL](#get-oauthcallbackurl)
-      * [Create manifest.json file to configure the Azure Active Directory application](#create-manifestjson-file-to-configure-the-azure-active-directory-application)
-      * [Register/create app](#registercreate-app)
-      * [Add Servive Principal for the new app](#add-servive-principal-for-the-new-app)
-      * [Make Service Principal an Enterprise Application](#make-service-principal-and-enterprise-application)
-      * [Create the client secret](#create-the-client-secret)
-      * [Update the Azure AD application scope permissions](#update-the-azure-ad-application-scope-permissions)
-      * [Get Tenant ID](#get-tenant-id)
-   * [OpenShift](#openshift)
-      * [Login to OpenShift as kubeadmin](#login-to-openshift-as-kubeadmin)
-      * [Create an OpenShift secret](#create-an-openshift-secret)
-      * [Apply OpenShift OpenID authentication](#apply-openshift-openid-authentication)
-      * [Wait for authentication operator to roll out](#wait-for-authentication-operator-to-roll-out)
-      * [Verify login through Azure Active Directory](#verify-login-through-azure-active-directory)
-      * [Last steps](#last-steps)
+- [Prerequisites](#prerequisites)
+  - [Have Azure cli installed](#have-azure-cli-installed)
+  - [Login to Azure](#login-to-azure)
+- [Azure](#azure)
+  - [Define needed variables](#define-needed-variables)
+  - [Get oauthCallbackURL](#get-oauthcallbackurl)
+  - [Create `manifest.json` file to configure the Azure Active Directory application](#create-manifestjson-file-to-configure-the-azure-active-directory-application)
+  - [Register/create app](#registercreate-app)
+  - [Add Service Principal for the new app](#add-service-principal-for-the-new-app)
+  - [Make Service Principal an Enterprise Application](#make-service-principal-an-enterprise-application)
+  - [Create the client secret](#create-the-client-secret)
+  - [Update the Azure AD application scope permissions](#update-the-azure-ad-application-scope-permissions)
+  - [Get Tenant ID](#get-tenant-id)
+- [OpenShift](#openshift)
+  - [Login to OpenShift as kubeadmin](#login-to-openshift-as-kubeadmin)
+  - [Create an OpenShift secret###](#create-an-openshift-secret)
+  - [Apply OpenShift OpenID authentication](#apply-openshift-openid-authentication)
+  - [Wait for authentication operator to roll out](#wait-for-authentication-operator-to-roll-out)
+  - [Verify login through Azure Active Directory](#verify-login-through-azure-active-directory)
+  - [Last steps](#last-steps)
 
 ## Prerequisites ##
 ### Have Azure cli installed ###

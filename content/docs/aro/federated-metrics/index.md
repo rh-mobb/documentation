@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.564151'
 title: 'Federating System and User metrics to Azure Files in Azure Red Hat OpenShift'
+tags: ["ARO", "Azure"]
 ---
 
 **Paul Czarkowski**

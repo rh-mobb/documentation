@@ -1,6 +1,7 @@
 ---
 date: '2022-10-21'
 title: Configuring the Cluster Log Forwarder for CloudWatch Logs using Vector
+tags: ["AWS", "ROSA"]
 ---
 
 *Author: Thatcher Hubbard*

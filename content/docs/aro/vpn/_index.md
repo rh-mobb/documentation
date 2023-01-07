@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.574151'
 title: Setup a VPN Connection into an ARO Cluster with OpenVPN
+tags: ["ARO", "Azure"]
 ---
 
 **Kevin Collins**

@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.614151'
 title: Creating a ROSA cluster with Private Link enabled
+tags: ["AWS", "ROSA", "Private Link"]
 ---
 ## Prerequisites
 

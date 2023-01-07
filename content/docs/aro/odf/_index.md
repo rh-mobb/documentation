@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.574151'
 title: OpenShift Data Foundation with ARO
+tags: ["ARO", "Azure"]
 ---
 **Kevin Collins**
 

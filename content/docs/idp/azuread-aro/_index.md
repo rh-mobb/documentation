@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.904151'
 title: Configure ARO to use Azure AD
+tags: ["Azure", "ARO"]
 ---
 
 **Michael McNeill, Sohaib Azed**

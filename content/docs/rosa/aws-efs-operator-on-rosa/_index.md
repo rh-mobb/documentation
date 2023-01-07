@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.614151'
 title: Enabling the AWS EFS Operator on ROSA
+tags: ["AWS", "ROSA"]
 ---
 The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. AWS also provides and supports a CSI EFS Driver to be used with Kubernetes that allows Kubernetes workloads to leverage this shared file storage.
 

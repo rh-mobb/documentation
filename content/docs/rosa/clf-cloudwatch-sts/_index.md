@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.604151'
 title: Configuring the Cluster Log Forwarder for CloudWatch Logs and STS
+tags: ["AWS", "ROSA"]
 ---
 
 *Author: Paul Czarkowski*

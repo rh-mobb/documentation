@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.614151'
 title: Federating System and User metrics to S3 in Red Hat OpenShift for AWS
+tags: ["AWS", "ROSA"]
 ---
 **Paul Czarkowski**
 

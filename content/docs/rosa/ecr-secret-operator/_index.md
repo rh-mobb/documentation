@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.764151'
 title: ECR Secret Operator
+tags: ["AWS", "ROSA"]
 ---
 
 Amazon Elastic Container Registry [Private Registry Authentication](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html) provides a temporary token that is valid only for 12 hours. It is a challenge for automating container image build process to refresh the token or secret in a timely manner.

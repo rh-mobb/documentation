@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.564151'
 title: User Workload Monitoring on Azure Red Hat OpenShift
+tags: ["ARO", "Azure"]
 ---
 # User Workload Monitoring on Azure Red Hat OpenShift
 

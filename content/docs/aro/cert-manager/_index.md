@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.564151'
 title: ARO Custom domain with cert-manager and LetsEncrypt
+tags: ["ARO", "Azure"]
 ---
 
 ARO guide to deploying an ARO cluster with custom domain and automating certificate management with cert-manager and letsencrypt certificates to manage the *.apps and api endpoints.

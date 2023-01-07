@@ -2,6 +2,7 @@
 date: '2022-10-04'
 title: "Verify Permissions for ROSA STS Deployment"
 authors: []
+tags: ["AWS", "ROSA", "STS"]
 ---
 
 #

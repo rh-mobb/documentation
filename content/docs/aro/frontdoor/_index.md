@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.574151'
 title: Azure Front Door with ARO ( Azure Red Hat OpenShift )
+tags: ["ARO", "Azure"]
 ---
 Securing exposing an Internet facing application with a private ARO Cluster.
 

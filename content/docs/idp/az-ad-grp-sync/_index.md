@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.894151'
-title: Using Group Sync Operator with Azure Active Directory and ROSA/OSD
+title: Using Group Sync Operator with Azure Active Directory and ROSA
+tags: ["Azure", "ROSA"]
 ---
 
 **Steve Mirman**

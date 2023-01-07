@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.554151'
 title: Using Cluster Logging Forwarder in ARO with Azure Monitor
+tags: ["ARO", "Azure"]
 ---
 
 **Paul Czarkowski, Steve Mirman**

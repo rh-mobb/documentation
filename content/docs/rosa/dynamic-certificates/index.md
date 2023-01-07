@@ -1,23 +1,23 @@
 ---
 date: '2022-10-11'
 title: Dynamic Certificates for ROSA Custom Domain
+tags: ["AWS", "ROSA"]
 ---
 
 *last edited 11 Oct 2022*
 
 There may be situations when you prefer not to use wild-card certificates. This ROSA guide talks about certificate management with cert-manager and letsencrypt, to dynamically issue certificates to routes created on a custom domain that's hosted on AWS Route53.
-- [Dynamic Certificates for ROSA Custom Domain](#dynamic-certificates-for-rosa-custom-domain)
-  - [Prerequisites](#prerequisites)
-  - [Set up environment](#set-up-environment)
-  - [Prepare AWS Account](#prepare-aws-account)
-  - [Set up cert-manager](#set-up-cert-manager)
-  - [Create the Issuer and the Certficiate](#create-the-issuer-and-the-certficiate)
-    - [Configure Certificate Requestor](#configure-certificate-requestor)
-    - [Create the Certificate, which will later be used by the Custom Domain.](#create-the-certificate-which-will-later-be-used-by-the-custom-domain)
-  - [Create the Custom Domain, which will be used to access your applications.](#create-the-custom-domain-which-will-be-used-to-access-your-applications)
-  - [Dynamic Certificates for Custom Domain Routes.](#dynamic-certificates-for-custom-domain-routes)
-  - [Test an application.](#test-an-application)
-  - [Debugging](#debugging)
+- [Prerequisites](#prerequisites)
+- [Set up environment](#set-up-environment)
+- [Prepare AWS Account](#prepare-aws-account)
+- [Set up cert-manager](#set-up-cert-manager)
+- [Create the Issuer and the Certficiate](#create-the-issuer-and-the-certficiate)
+  - [Configure Certificate Requestor](#configure-certificate-requestor)
+  - [Create the Certificate, which will later be used by the Custom Domain.](#create-the-certificate-which-will-later-be-used-by-the-custom-domain)
+- [Create the Custom Domain, which will be used to access your applications.](#create-the-custom-domain-which-will-be-used-to-access-your-applications)
+- [Dynamic Certificates for Custom Domain Routes.](#dynamic-certificates-for-custom-domain-routes)
+- [Test an application.](#test-an-application)
+- [Debugging](#debugging)
 
 ## Prerequisites
 

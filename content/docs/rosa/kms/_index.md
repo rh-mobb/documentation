@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.764151'
 title: Creating a ROSA cluster in STS mode with custom KMS key
+tags: ["AWS", "ROSA"]
 ---
 **Byron Miller**
 

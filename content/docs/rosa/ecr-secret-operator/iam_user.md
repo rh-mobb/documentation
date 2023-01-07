@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.764151'
 title: Create IAM user and Policy
+tags: ["AWS", "ROSA"]
 ---
 ## Create IAM user and Policy
 

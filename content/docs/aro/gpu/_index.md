@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.564151'
 title: ARO with Nvidia GPU Workloads
+tags: ["ARO", "Azure", "GPU"]
 ---
 
 ARO guide to running Nvidia GPU workloads.

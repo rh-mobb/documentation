@@ -1,6 +1,7 @@
 ---
 date: '2022-10-05'
 title: Configure a load balancer service to use a static public IP
+tags: ["AWS", "ROSA"]
 ---
 
 **Michael McNeill**

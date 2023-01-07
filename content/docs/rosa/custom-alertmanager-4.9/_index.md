@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.604151'
 title: Custom AlertManager in ROSA 4.9.x
+tags: ["AWS", "ROSA"]
 ---
 ROSA 4.9.x introduces a new way to provide custom AlertManager configuration to receive alerts from User Workload Management.
 

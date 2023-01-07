@@ -1,6 +1,7 @@
 ---
 date: '2022-09-14T22:07:09.754151'
 title: Extending ROSA STS to include authentication with AWS Services
+tags: ["AWS", "ROSA", "STS"]
 ---
 # Extending ROSA STS to include authentication with AWS Services
 
