@@ -7,7 +7,7 @@ The docs follow this org structure:
 * /content > docs > *High Level Topic* (eg. ARO, ROSA, etc.) > *Subject Matter*(eg. aro/add-infra-nodes/) > index.md *this is the former 'README.md'*
   * the index files allow for the side bar menu to generate a topic heading which mirrors the *Front Matter* of the page that you create
 
-[Front Matter Example](./contrib_files/Screen%20Shot%202023-01-09%20at%206.25.37%20PM.png)
+![Front Matter Example](./contrib_files/Screen%20Shot%202023-01-09%20at%206.25.37%20PM.png)
 
 ## Adding New Docs
 
