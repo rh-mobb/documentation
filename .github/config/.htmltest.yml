@@ -1,0 +1,4 @@
+- name: Run htmltest
+  uses: wjdp/htmltest-action@master
+  with:
+    config: .htmltest.yml
