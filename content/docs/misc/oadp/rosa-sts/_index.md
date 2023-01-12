@@ -6,7 +6,7 @@ tags: ["ROSA", "AWS", "STS"]
 
 ## Prerequisites
 
-* [An STS enabled ROSA cluster](./docs/rosa/sts)
+* [An STS enabled ROSA cluster](../../../rosa/sts)
 
 ## Getting Started
 
