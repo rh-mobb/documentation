@@ -1,6 +1,10 @@
 ## Structure Overview
 
-The docs in this repo follow the structure of `/content/docs/[Section]/[Topic]/index.md`.  For example `/content/docs/aro/add-infra-nodes/index.md`. This becomes the URL of your page, so keep the Section and Topic descriptive but short.
+The docs in this repo follow the structure of `/content/docs/[Section]/[Topic]/index.md`.
+
+For example `/content/docs/aro/add-infra-nodes/index.md`.
+
+This becomes the URL of your page, so keep the Section and Topic descriptive but short.
 
 Docs that follow this structure will be automatically added to the content menu (left side of the rendered website) based on their title (set in front matter).
 
