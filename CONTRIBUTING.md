@@ -41,6 +41,7 @@ Note: weight overrides the default alphabetical sorting for menu items on the si
 
 ## Taxonomy
 
+The strategy here is to keep our taxonomy simple and helpful for traversing the site and finding docs relevant to a product or topic. Feel free as we expand our docs to create new tags by simply adding them to the front matter of your page. However please keep in mind simplicity.
 
 ### Current Tags
 * ACM
