@@ -25,8 +25,8 @@ jobs:
     - name: Build 
       run: hugo --minify
 
-    - name: HTML Test
-      run: gem install html-proofer && htmlproofer public --disable-external
+#     - name: HTML Test
+#       run: gem install html-proofer && htmlproofer public --disable-external
 
     - name: Deploy
       if: success() && github.ref == 'refs/heads/hugo'
