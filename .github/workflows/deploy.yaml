@@ -4,9 +4,9 @@ on:
 
   push:
     branches:
-      - main
-  pull_request:
-    types: [closed]
+      - hugo
+#   pull_request:
+#     types: [closed]
 
 jobs:
   deploy:
@@ -29,7 +29,7 @@ jobs:
       run: gem install html-proofer && htmlproofer public --disable-external
 
     - name: Deploy
-      if: success() && github.ref == 'refs/heads/main'
+      if: success() && github.ref == 'refs/heads/hugo'
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
