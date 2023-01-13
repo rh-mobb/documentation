@@ -6,6 +6,8 @@ Submariner is an open source tool that can be used with Red Hat Advanced Cluster
 
 This article describes how to deploy ACM Submariner for connecting ROSA clusters overlay networks.
 
+NOTE: ACM Submariner for ROSA clusters only works from ACM2.7 onwards!
+
 ## Prerequisites
 
 * OpenShift Cluster version 4 (ROSA or non-ROSA)
@@ -122,7 +124,7 @@ NOTE: if it's not in Running state, wait a couple of minutes and check again.
         AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
         REGION=eu-west-1 \
         AWS_PAGER="" \
-        CIDR="10.10.0.0/16"
+        CIDR="10.0.0.0/16"
 ```
 
 NOTE: it's critical that the Machine CIDR of the ROSA clusters not overlap, for that reason we're setting different CIDRs than the out of the box ROSA cluster install.  
@@ -200,6 +202,8 @@ kubectl get nodes --show-labels | grep submariner
 
 ## Deploy Second ROSA Cluster
 
+> **IMPORTANT**: To enable Submariner in both ROSA clusters, the POD_CIDR and SERVICE_CIDR can’t overlap between them. To avoid IP address conflicts, the second ROSA cluster needs to modify the default IP CIDRs. Check the Submariner docs for more information.
+
 * Define the prerequisites for install the second ROSA cluster
 
 ```sh
@@ -208,7 +212,9 @@ kubectl get nodes --show-labels | grep submariner
         AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
         REGION=us-east-2 \
         AWS_PAGER="" \
-        CIDR="10.20.0.0/16"
+        CIDR="10.20.0.0/16" \
+        POD_CIDR="10.132.0.0/14" \
+        SERVICE_CIDR="172.31.0.0/16"
 ```
 
 * Create the IAM Account Roles
@@ -217,12 +223,14 @@ kubectl get nodes --show-labels | grep submariner
 rosa create account-roles --mode auto --yes
 ```
 
-* Generate the second STS ROSA cluster
+* Generate the second STS ROSA cluster (with the POD_CIDR and SERVICE_CIDR modified)
 
 ```sh
  rosa create cluster -y --cluster-name ${ROSA_CLUSTER_NAME_2} \
    --region ${REGION} --version ${VERSION} \
    --machine-cidr $CIDR \
+   --pod-cidr $POD_CIDR \
+   --service-cidr $SERVICE_CIDR \
    --sts
 ```
 
