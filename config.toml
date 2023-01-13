@@ -1,4 +1,4 @@
-baseURL = 'https://rh-mobb.github.io/mobb_ninja/'
+baseURL = 'https://mobb.ninja/'
 languageCode = 'en-us'
 title = 'Managed OpenShift Black Belt - Unofficial Documentation'
 theme = "relearn"
@@ -14,7 +14,7 @@ relativeURLs = false
 defaultContentLanguageInSubdir= false
 enableMissingTranslationPlaceholders = false
 
-# googleanalytics = "UA-123-45"
+# googleanalytics = "G-WM5QQ0P3P1"
 
 # disableKinds = ["taxonomy","taxonomyTerm", "category", "RSS"]
 
