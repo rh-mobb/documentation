@@ -1,7 +1,5 @@
 name: Deploy Mobb Site
-
 on:
-
   push:
     branches:
       - hugo
@@ -13,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code 
+    - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Setup Hugo
@@ -21,8 +19,8 @@ jobs:
       with:
         hugo-version: 'latest'
         extended: true
-    
-    - name: Build 
+
+    - name: Build
       run: hugo --minify
 
 #     - name: HTML Test
