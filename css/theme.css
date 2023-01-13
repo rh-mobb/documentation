@@ -71,11 +71,11 @@ th {
     border-bottom-style: solid;
     border-bottom-width: 4px;
     text-align: center;
-    padding: 1rem;
+    padding: 2rem;
     position: relative;
 }
 #header a {
-    display: inline-block;
+    display: flow-root;
 }
 
 .searchbox {
