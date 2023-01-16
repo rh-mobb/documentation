@@ -1,7 +1,7 @@
 ---
 date: '2022-09-14T22:07:08.594151'
-title: Creating a OSD in GCP with Existing VPCs - GUI
-aliases: ['/docs/gcp/osd_preexisting_vpc.md']
+title: Creating a OSD in GCP with Existing VPCs - CLI
+aliases: ['/docs/gcp/osd_preexisting_vpc/osd_preexisting_vpc_cli.md']
 tags: ["GCP", "OSD"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["GCP", "OSD"]
 
 *Last updated 11/14/2022*
 
-This is a guide to install OSD in GCP within Existing Virtual Private Clouds (VPCs) using GCP and [OCM UI](https://console.redhat.com/openshift).
+This is a guide to install OSD in GCP within Existing Virtual Private Clouds (VPCs) using CLI tools (gcloud CLI) or Terraform.
 
 The guide will show all the steps to create all the networking prerequisites in GCP and then installing the OSD Cluster in GCP.
 
@@ -28,7 +28,7 @@ For deploy an OSD cluster in GCP using existing Virtual Private Cloud (VPC) you 
 
 This is a diagram showing the GCP infra prerequisites that are needed for the OSD installation:
 
-![GCP Prereqs](./images/osd-prereqs.png){: width="750" }
+![GCP Prereqs](../images/osd-prereqs.png)
 
 You can use the gcloud CLI, to deploy the GCP VPC and subnets among other prerequisites for install the OSD in GCP.
 
@@ -78,7 +78,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
    --network=$OSD_VPC --range=10.0.128.0/17 --region=$REGION
    ```
 
-   ![GCP VPC and Subnets](./images/osd-gcp1.png){: width="750" }
+   ![GCP VPC and Subnets](../images/osd-gcp1.png)
 
 6. Once the VPC and the two subnets are provided it is needed to create one [GCP Cloud Router](https://cloud.google.com/network-connectivity/docs/router/how-to/create-router-vpc-on-premises-network):
 
@@ -89,7 +89,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
    --project=$PROJECT_NAME --network=$OSD_VPC --region=$REGION
    ```
 
-   ![GCP Routers](./images/osd-gcp2.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Routers](../images/osd-gcp2.png)
 
 7. Then, we will deploy two [GCP Cloud NATs](https://cloud.google.com/nat/docs/set-up-manage-network-address-translation#gcloud) and attach them within the GCP Router:
 
@@ -105,7 +105,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
    --nat-custom-subnet-ip-ranges=$MASTER_SUBNET
     ```
 
-   ![GCP Nat Master](./images/osd-gcp3.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Nat Master](../images/osd-gcp3.png)
 
     * Generate the GCP Cloud NAT for the Worker Subnets:
 
@@ -119,62 +119,96 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
        --nat-custom-subnet-ip-ranges=$WORKER_SUBNET
    ```
 
-   ![GCP Nat Worker](./images/osd-gcp4.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Nat Worker](../images/osd-gcp4.png)
 
 8. As you can check the Cloud NATs GW are attached now to the Cloud Router:
 
-   ![GCP Nat Master](./images/osd-gcp5.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="350" }
+   ![GCP Nat Master](../images/osd-gcp5.png)
 
-## Install the OSD cluster using pre-existent VPCs using the GUI
+## Install the OSD cluster using pre-existent VPCs using OCM-CLI
 
-These steps are based in the [official OSD installation documentation](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html#osd-create-gcp-cluster-ccs_osd-creating-a-cluster-on-gcp).
+[OCM CLI](https://github.com/openshift-online/ocm-cli) is a command line tool that simplifies the use of the OCM API available at <https://api.openshift.com>.
 
-1. Log in to OpenShift Cluster Manager and click Create cluster.
+1. Define the variables needed for the OSD in GCP cluster creation:
 
-2. In the Cloud tab, click Create cluster in the Red Hat OpenShift Dedicated row.
+```bash
+export CLUSTER_NAME=<cluster name>
+export REGION=<region name>
+export OSD_VPC=<vpc name>
+export MASTER_SUBNET=<master subnet name>
+export WORKER_SUBNET=<worker subnet name>
+```
 
-3. Under Billing model, configure the subscription type and infrastructure type
-![OSD Install](./images/osd-gcp6.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="750" }
+2. You need to generate a [GCP Service Account and generate a new key](https://cloud.google.com/sdk/docs/authorizing#authorize_with_a_service_account). Then download the json file and export the path where is located:
 
-4. Select Run on Google Cloud Platform.
+```bash
+export GCP_SA_FILE=<location of the gcp sa json file>
+```
 
-5. Click Prerequisites to review the prerequisites for installing OpenShift Dedicated on GCP with CCS.
+> If the Service Account is generated beforehand (look for osd-ccs-admin service account), then you only need to generate a new key and download the json gcp Service Account file file.
 
-6. Provide your GCP service account private key in JSON format. You can either click Browse to locate and attach a JSON file or add the details in the Service account JSON field.
-![OSD Install](./images/osd-gcp7.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="750" }
+3. Create the cluster using the OCM-CLI:
 
-7. Validate your cloud provider account and then click Next.
-On the Cluster details page, provide a name for your cluster and specify the cluster details:
-![OSD Install](./images/osd-gcp8.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="750" }
+```bash
+ocm create cluster $CLUSTER_NAME --provider gcp \
+   --vpc-name $OSD_VPC --region $REGION         \
+   --control-plane-subnet $MASTER_SUBNET        \ 
+   --compute-subnet $WORKER_SUBNET              \
+   --service-account-file $GCP_SA_FILE --ccs
+```
 
-> NOTE: the Region used to be installed needs to be the same as the VPC and Subnets deployed in the early step.
+4. Check the cluster status using OCM-CLI:
 
-8. On the Default machine pool page, select a Compute node instance type and a Compute node count:
-![OSD Install](./images/osd-gcp9.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+```bash
+GCP_OSD_ID=$(ocm list clusters | grep $CLUSTER_NAME | awk '{ print $1 }')
+ocm cluster status $GCP_OSD_ID
+```
 
-9. In the Cluster privacy section, select **Public** endpoints and application routes for your cluster.
+5. Enjoy your brand new OSD in GCP cluster!
 
-10. Select Install into an existing VPC to install the cluster in an existing GCP Virtual Private Cloud (VPC):
-![OSD Install](./images/osd-gcp10.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+## Automated Deploy OSD VPC and Subnets using Terraform
 
-11. Provide your Virtual Private Cloud (VPC) subnet settings, that you deployed as prerequisites in the previous section:
-![OSD Install](./images/osd-gcp11.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+You can use also [automation code in Terraform](https://github.com/rh-mobb/tf-osd-gcp) to deploy all the GCP infrastructure required to deploy the OSD in preexistent VPCs and to deploy the OSD in GCP within the Preexistent VPCs.
 
-12. In the CIDR ranges dialog, configure custom classless inter-domain routing (CIDR) ranges or use the defaults that are provided:
-![OSD Install](./images/osd-gcp12.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+* Clone the tf-osd-gcp repository:
 
-13. On the Cluster update strategy page, configure your update preferences.
+```bash
+git clone https://github.com/rh-mobb/tf-osd-gcp.git
+cd tf-osd-gcp
+```
 
-14. Review the summary of your selections and click Create cluster to start the cluster installation. Check that the **Install into Existing VPC** is enabled and the VPC and Subnets are properly selected and defined:
-![OSD Install](./images/osd-gcp13.png){:style="display:block; margin-left:auto; margin-right:auto"}{: width="600" }
+* Copy and modify the tfvars file in order to custom to your scenario:
+
+```bash
+cp -pr terraform.tfvars.example terraform.tfvars
+```
+
+* Deploy the network infrastructure in GCP needed for deploy the OSD cluster:
+
+```bash
+make all
+```
 
 ## Cleanup
 
-Deleting a ROSA cluster consists of two parts:
+For cleaning up the cluster you need to delete first the OSD cluster and then all the Network Prereqs that you've deployed.
 
-1. Deleting the OSD cluster can be done using the OCM console described in the [official OSD docs](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
+### Using Gcloud CLI
 
-2. Deleting the GCP infrastructure resources (VPC, Subnets, Cloud NAT, Cloud Router):
+1. Delete the OSD cluster using option 1 or option 2:
+
+   * Option 1: Deleting the OSD cluster can be done using the OCM console described in the [official OSD docs](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
+
+   * Option 2: Delete OSD from CLI:
+
+   ```bash
+   ocm delete cluster $GCP_OSD_ID
+   ```
+
+2. Deleting the GCP infrastructure resources (VPC, Subnets, Cloud NAT, Cloud Router).
+Depending of which option you selected you must perform:
+
+3. Delete GCP resources using GCloud CLI:
 
    ```sh
    gcloud compute routers nats delete $NAT_WORKER \
@@ -189,4 +223,12 @@ Deleting a ROSA cluster consists of two parts:
    gcloud compute networks subnets delete $WORKER_SUBNET --region=$REGION --quiet
 
    gcloud compute networks delete $OSD_VPC --quiet
+   ```
+
+### Using Terraform
+
+1. Delete GCP resources using Terraform:
+
+   ```sh
+   make destroy
    ```
