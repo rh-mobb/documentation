@@ -7,4 +7,6 @@ tags: ["GCP", "OSD"]
 ---
 
 * [Filestore Storage for OSD on GCP](./filestore.md)
-* [Creating OSD on GCP w/ Existing VPC](./osd_preexisting_vpc.md)
+* Deploy OSD in GCP using Pre-Existent VPC and Subnets
+  * [via CLI](/docs/gcp/osd_preexisting_vpc_cli.md)
+  * [via GUI](/docs/gcp/osd_preexisting_vpc_ui.md)
