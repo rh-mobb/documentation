@@ -63,7 +63,9 @@ archetype: home
 
 ### GCP
 
-* [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/docs/gcp/osd_preexisting_vpc.md)
+* Deploy OSD in GCP using Pre-Existent VPC and Subnets
+  * [via CLI](/docs/gcp/osd_preexisting_vpc_cli.md)
+  * [via GUI](/docs/gcp/osd_preexisting_vpc_ui.md)
 * [Using Filestore with OpenShift Dedicated in GCP](/docs/gcp/filestore.md)
 
 ## Advanced Cluster Manager (ACM)
