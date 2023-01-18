@@ -14,7 +14,7 @@ relativeURLs = false
 defaultContentLanguageInSubdir= false
 enableMissingTranslationPlaceholders = false
 
-# googleanalytics = "G-WM5QQ0P3P1"
+googleanalytics = "G-WM5QQ0P3P1"
 
 # disableKinds = ["taxonomy","taxonomyTerm", "category", "RSS"]
 
