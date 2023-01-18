@@ -28,7 +28,37 @@ As an example, you cannot install ROSA to `us-east-1e` AZ, but `us-east-1b` work
 
 ### Option 1 - VPC with a private subnet and AWS Site-to-Site VPN access.
 
-Todo
+![architecture diagram showing PL with private subnet and S2S VPN](./images/ROSA%20PL%20Private%20Cluster%20w_%20S2S%20VPN.png)
+
+This will create a completely Private ROSA cluster with Private Link enabled and routing configured to tunnel through your onsite VPN
+
+1. Set Cluster Name
+
+    ```
+    ROSA_CLUSTER_NAME=private-pl-cluster
+
+    ```
+1. Create a VPC to install the ROSA cluster into
+
+    ```
+    VPC_ID=`aws ec2 create-vpc --cidr-block 10.0.0.0/16 | jq -r .Vpc.VpcId`
+
+    aws ec2 create-tags --resources $VPC_ID \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME | jq .
+
+    aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames | jq .
+    ```
+
+1. Create the private subnets for the cluster machines
+
+    ```
+    PRIVATE_SUBNET=`aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.0.0/17 | jq -r .Subnet.SubnetId`
+
+    aws ec2 create-tags --resources $PRIVATE_SUBNET \
+      --tags Key=Name,Value=$ROSA_CLUSTER_NAME-private | jq .
+    ```
+1. Create Transit Gateway to build your Hybrid connectivity model (VPN and DirectConnect) 
+
 
 ### Option 2 - VPC with public and private subnets and AWS Site-to-Site VPN access
 
