@@ -34,7 +34,8 @@ Make sure to use the same terminal session while going through guide for all com
   * Create a private ARO cluster.
 
     Follow this guide to [Create a private ARO cluster](https://mobb.ninja/docs/aro/private-cluster)
-    or simply run this [bash script](../private-cluster/create-cluster.sh)
+    or simply run this [bash script](
+    https://github.com/rh-mobb/documentation/blob/main/docs/aro/private-cluster/create-cluster.sh)
 
 ## Set Evironment Variables
 
