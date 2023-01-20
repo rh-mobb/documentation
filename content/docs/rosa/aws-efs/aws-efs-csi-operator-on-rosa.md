@@ -3,8 +3,8 @@ date: '2022-09-14T22:07:09.764151'
 title: Enabling the AWS EFS CSI Driver Operator on ROSA
 tags: ["AWS", "ROSA"]
 ---
-**Author: Paul Czarkowski**
-*Modified: 07/11/2022*
+**Author: Paul Czarkowski, Andy Repton**
+*Modified: 20/01/2023*
 
 The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
 
@@ -12,12 +12,25 @@ This is a guide to quickly enable the EFS Operator on ROSA to a Red Hat OpenShif
 
 > Note: The official supported installation instructions for the EFS CSI Driver on ROSA are available [here](https://access.redhat.com/articles/6966373).
 
+## Dynamic vs Static provisioning
+
+The CSI driver supports both Static and Dynamic provisioning. Dynamic provisioning should not be confused with the ability of the Operator to create EFS volumes.
+
+### Dynamic provisioning
+
+Dynamic provisioning provisions new PVs as subdirectories of a pre-existing EFS volume. The PVs are independent of each other. However, they all share the same EFS volume. When the volume is deleted, all PVs provisioned out of it are deleted too. The EFS CSI driver creates an AWS Access Point for each such subdirectory. Due to AWS AccessPoint limits, you can only dynamically provision 120 PVs from a single StorageClass/EFS volume.
+
+### Static provisioning
+
+Static provisioning mounts the entire volume to a pod.
+
 ## Prerequisites
 
 * A Red Hat OpenShift on AWS (ROSA) 4.10 cluster
 * The OC CLI
 * The AWS CLI
-* JQ
+* `jq` command
+* `watch` command
 
 ## Set up environment
 
@@ -25,6 +38,7 @@ This is a guide to quickly enable the EFS Operator on ROSA to a Red Hat OpenShif
 
    ```bash
    export CLUSTER_NAME="sts-cluster"
+   export AWS_REGION="your_aws_region"
    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json \
    | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -126,8 +140,6 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Create Role for the EFS CSI Driver Operator
 
    ```bash
-
-   ```bash
    ROLE=$(aws iam create-role \
      --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" \
      --assume-role-policy-document file://$SCRATCH_DIR/TrustPolicy.json \
@@ -213,25 +225,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    watch oc get daemonset aws-efs-csi-driver-node -n openshift-cluster-csi-drivers
    ```
 
-
-1. Create a storage class
-
-   ```bash
-   cat <<EOF | oc apply -f -
-   allowVolumeExpansion: true
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: efs-csi
-   provisioner: efs.csi.aws.com
-   parameters:
-     reclaimPolicy: Delete
-     volumeBindingMode: WaitForFirstConsumer
-   EOF
-   ```
-
-## Prepare an AWS EFS Volume
-
+## Prepare an AWS EFS Volume for dynamic provisioning
 
 1. Run this set of commands to update the VPC to allow EFS access
 
@@ -241,18 +235,17 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    VPC=$(aws ec2 describe-instances \
      --filters "Name=private-dns-name,Values=$NODE" \
      --query 'Reservations[*].Instances[*].{VpcId:VpcId}' \
+     --region $AWS_REGION \
      | jq -r '.[0][0].VpcId')
-   SUBNET=$(aws ec2 describe-subnets \
-     --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private*' \
-     --query 'Subnets[*].{SubnetId:SubnetId}' \
-     | jq -r '.[0].SubnetId')
    CIDR=$(aws ec2 describe-vpcs \
      --filters "Name=vpc-id,Values=$VPC" \
      --query 'Vpcs[*].CidrBlock' \
+     --region $AWS_REGION \
      | jq -r '.[0]')
    SG=$(aws ec2 describe-instances --filters \
      "Name=private-dns-name,Values=$NODE" \
      --query 'Reservations[*].Instances[*].{SecurityGroups:SecurityGroups}' \
+     --region $AWS_REGION \
      | jq -r '.[0][0].SecurityGroups[0].GroupId')
    echo "CIDR - $CIDR,  SG - $SG"
    ```
@@ -265,22 +258,70 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
     --protocol tcp \
     --port 2049 \
     --cidr $CIDR | jq .
+    --region $AWS_REGION
    ```
 
-1. Create EFS File System
+> At this point you can create either a single Zone EFS filesystem, or a Region wide EFS filesystem
+
+### Creating a region-wide EFS
+
+1. Create a region-wide EFS File System
 
    ```bash
    EFS=$(aws efs create-file-system --creation-token efs-token-1 \
+      --region ${AWS_REGION} \
       --encrypted | jq -r '.FileSystemId')
    echo $EFS
    ```
 
-1. Configure Mount Target for EFS
+1. Configure a region-wide Mount Target for EFS (this will create a mount point in each subnet of your VPC by default)
+
+   ```bash
+   for SUBNET in $(aws ec2 describe-subnets \
+     --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private*' \
+     --query 'Subnets[*].{SubnetId:SubnetId}' \
+     --region $AWS_REGION \
+     | jq -r '.[].SubnetId'); do \
+       MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
+          --subnet-id $SUBNET --security-groups $SG \
+          --region $AWS_REGION \
+          | jq -r '.MountTargetId'); \
+       echo $MOUNT_TARGET; \
+    done
+   ```
+
+### Creating a single-zone EFS
+
+> Note: If you followed the instructions above to create a region wide EFS mount, skip the following steps and proceed to "Create a Storage Class for the EFS volume"
+
+1. Select the first subnet that you will make your EFS mount in (this will by default select the same Subnet your first node is in)
+   ```bash
+   SUBNET=$(aws ec2 describe-subnets \
+     --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private*' \
+     --query 'Subnets[*].{SubnetId:SubnetId}' \
+     --region $AWS_REGION \
+     | jq -r '.[0].SubnetId')
+   AWS_ZONE=$(aws ec2 describe-subnets --filters Name=subnet-id,Values=$SUBNET \
+     --region $AWS_REGION | jq -r '.Subnets[0].AvailabilityZone')
+   ```
+
+1. Create your zonal EFS filesystem
+
+   ```bash
+   EFS=$(aws efs create-file-system --creation-token efs-token-1 \
+      --availability-zone-name $AWS_ZONE \
+      --region $AWS_REGION \
+      --encrypted | jq -r '.FileSystemId')
+   echo $EFS
+   ```
+
+1. Create your EFS mount point
 
    ```bash
    MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
-      --subnet-id $SUBNET --security-groups $SG \
-      | jq -r '.MountTargetId')
+     --subnet-id $SUBNET --security-groups $SG \
+     --region $AWS_REGION \
+     | jq -r '.MountTargetId')
    echo $MOUNT_TARGET
    ```
 
@@ -437,11 +478,13 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Delete the EFS Shared Volume via AWS
 
    ```bash
-   aws efs delete-mount-target --mount-target-id $MOUNT_TARGET
-   aws efs delete-file-system --file-system-id $EFS
+   aws efs delete-mount-target --mount-target-id $MOUNT_TARGET --region $AWS_REGION
+   aws efs delete-file-system --file-system-id $EFS --region $AWS_REGION
    ```
 
-    > Note if you receive the error `An error occurred (FileSystemInUse)` wait a few minutes and try again.
+    > Note: if you receive the error `An error occurred (FileSystemInUse)` wait a few minutes and try again.
+
+    > Note: if you created additional mount points for a regional EFS filesystem, remember to delete all of them before removing the file system
 
 1. Detach the Policies to the Role
 
