@@ -14,7 +14,7 @@ relativeURLs = false
 defaultContentLanguageInSubdir= false
 enableMissingTranslationPlaceholders = false
 
-# googleanalytics = "G-WM5QQ0P3P1"
+googleanalytics = "G-WM5QQ0P3P1"
 
 # disableKinds = ["taxonomy","taxonomyTerm", "category", "RSS"]
 
@@ -91,4 +91,9 @@ weight = 20
 [[menu.shortcuts]]
 name = "<i class='fas fa-fw fa-tags'></i> Tags"
 url = "tags/"
+weight = 40
+
+[[menu.shortcuts]]
+name = "<i class='fas fa-fw fa-user-md'></i> Contact Us"
+url= "https://www.redhat.com/en/contact"
 weight = 30
