@@ -30,6 +30,7 @@ This is a guide to quickly enable the EFS Operator on ROSA to a Red Hat OpenShif
    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
    export SCRATCH_DIR=/tmp/scratch
    export AWS_PAGER=""
+   export AWS_REGION="your_region"
    mkdir -p $SCRATCH_DIR
    ```
 
@@ -241,18 +242,22 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    VPC=$(aws ec2 describe-instances \
      --filters "Name=private-dns-name,Values=$NODE" \
      --query 'Reservations[*].Instances[*].{VpcId:VpcId}' \
+     --region ${AWS_REGION} \
      | jq -r '.[0][0].VpcId')
    SUBNET=$(aws ec2 describe-subnets \
      --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private*' \
      --query 'Subnets[*].{SubnetId:SubnetId}' \
+     --region ${AWS_REGION} \
      | jq -r '.[0].SubnetId')
    CIDR=$(aws ec2 describe-vpcs \
      --filters "Name=vpc-id,Values=$VPC" \
      --query 'Vpcs[*].CidrBlock' \
+     -region ${AWS_REGION} \
      | jq -r '.[0]')
    SG=$(aws ec2 describe-instances --filters \
      "Name=private-dns-name,Values=$NODE" \
      --query 'Reservations[*].Instances[*].{SecurityGroups:SecurityGroups}' \
+     -region ${AWS_REGION} \
      | jq -r '.[0][0].SecurityGroups[0].GroupId')
    echo "CIDR - $CIDR,  SG - $SG"
    ```
