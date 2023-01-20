@@ -4,7 +4,7 @@ title: Enabling the AWS EFS Operator on ROSA
 tags: ["AWS", "ROSA"]
 ---
 
-> **Important note:** Please be aware that this is the **old** operator that is no longer supported by Red Hat Support/SRE. Please use the [EFS CSI Operator](./aws-efs-csi-operator-on-rosa.md) for new clusters. This guide is kept for posterity and for clarity between the two operators.
+> **Important note:** Please be aware that this is the **old** operator that is no longer supported by Red Hat Support/SRE. Please use the [EFS CSI Operator](../aws-efs-csi-operator-on-rosa) for new clusters. This guide is kept for posterity and for clarity between the two operators.
 
 The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. AWS also provides and supports a CSI EFS Driver to be used with Kubernetes that allows Kubernetes workloads to leverage this shared file storage.
 
