@@ -10,7 +10,7 @@ Amazon [Elastic File Service](https://aws.amazon.com/efs/) (EFS) is a dynamic fi
 ## Heads up!
 There are currently multiple operators available for EFS. This section details them and how to install the correct one.
 
-### If you are running OpenShift 4.10 or older:
+### If you are running OpenShift 4.10 or newer:
 
 The EFS CSI driver is now Generally Available (GA) as shown [in the documentation](https://docs.openshift.com/container-platform/4.10/storage/container_storage_interface/persistent-storage-csi-aws-efs.html). Please use the guide found [here to install the EFS CSI driver](./aws-efs-csi-operator-on-rosa)
 
