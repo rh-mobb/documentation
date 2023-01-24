@@ -24,6 +24,7 @@
     {{- partial "favicon.html" . }}
     {{- partial "stylesheet.html" . }}
     {{- partial "custom-header.html" . }}
+    {{ template "_internal/google_analytics.html" . }}
   </head>
   <body class="mobile-support {{ (partial "output-format.hugo" .) }}{{- if .Site.Params.disableInlineCopyToClipBoard }} disableInlineCopyToClipboard{{ end }}" data-url="{{ .RelPermalink }}">
     <div id="body" class="default-animation">
