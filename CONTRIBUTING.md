@@ -38,6 +38,8 @@ Docs that follow this structure will be automatically added to the content menu 
 
 1. Update `/content/docs/[Section]/_index.md` to include your new document.
 
+1. To verify your changes you can run `make preview` to preview the site locally at [http://localhost:1313/](http://localhost:1313/)
+
 1. Submit PR
 
 
