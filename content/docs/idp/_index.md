@@ -30,5 +30,5 @@ The identity providers available for use are:
 
 ## Configuring Group Synchronization
 
-* [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](./docs/idp/az-ad-grp-sync)
-* [Using Group Sync Operator with Okta and ROSA/OSD](./docs/idp/okta-grp-sync)
+* [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](./az-ad-grp-sync)
+* [Using Group Sync Operator with Okta and ROSA/OSD](./okta-grp-sync)
