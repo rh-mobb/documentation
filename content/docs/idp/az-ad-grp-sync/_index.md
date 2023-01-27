@@ -39,13 +39,12 @@ To synchronize groups and users with ROSA/OSD they must exist in Azure AD
 
 The GroupSync job requires permissions on the Azure AD tenant beyond those of the OIDC IdP. For it to work, add the these entries:
 
-- `Group.ReadAll`
-- `GroupMember.ReadAll`
-- `User.ReadAll`
+- `Group.Read.All`
+- `GroupMember.Read.All`
+- `User.Read.All`
 
 ..under the 'API Permissions' menu item. These three should all be 'Application' rather than 'Delegated' and this will require clicking on 'Grant admin consent' button above the permissions list. When done, the screen should look like this:
-
-    ![API permissions](./images/grp-sync-api-perm.png)
+    ![Azure AD add user to group](./images/grp-sync-api-perm.png)
 
 ## Install the Group Sync Operator from the OpenShift Operator Hub ##
 
