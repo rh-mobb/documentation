@@ -47,7 +47,7 @@ cat &amp;lt;&amp;lt;EOF &amp;gt; /tmp/iam_policy.json { &amp;#34;Version&amp;#34
 Pre-Requisites Terraform Deploy Download this repo
 git clone https://github.com/rh-mobb/documentation.git cd documentation/docs/rosa/byo-vpc Modify main.tf as needed, then run
 terraform init terraform plan terraform apply Cleanup To destroy resources terraform destroy</description></item><item><title>Creating a ROSA cluster in STS mode with custom KMS key</title><link>https://mobb.ninja/docs/rosa/kms/</link><pubDate>Wed, 14 Sep 2022 22:07:09 +0000</pubDate><guid>https://mobb.ninja/docs/rosa/kms/</guid><description>Byron Miller
-Last updated 4/21/2022
+Last updated 31/01/2023
 Tip Official Documentation ROSA STS with custom KMS key
 This guide will walk you through installing ROSA (Red Hat OpenShift Service on AWS) with a customer-provided KMS key that will be used to encrypt both the root volumes of nodes as well as persistent volumes for mounted EBS claims.
 Prerequisites AWS CLI ROSA CLI v1.1.11 or higher OpenShift CLI - rosa download openshift-client Prepare AWS Account for ROSA Configure the AWS CLI by running the following command</description></item><item><title>Custom Alerts in ROSA 4.11.x</title><link>https://mobb.ninja/docs/rosa/custom-alertmanager/</link><pubDate>Wed, 14 Sep 2022 22:07:09 +0000</pubDate><guid>https://mobb.ninja/docs/rosa/custom-alertmanager/</guid><description>Starting with OpenShift 4.11 it is possible to manage alerting rules for user-defined projects. Similarly, in ROSA clusters the OpenShift Administrator can enable a second AlertManager instance in the user workload monitoring namespace which can be used to create such alerts.
