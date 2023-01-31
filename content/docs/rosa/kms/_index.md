@@ -5,7 +5,7 @@ tags: ["AWS", "ROSA"]
 ---
 **Byron Miller**
 
-*Last updated 4/21/2022*
+*Last updated 31/01/2023*
 
 > **Tip** Official Documentation [ROSA STS with custom KMS key](https://docs.openshift.com/rosa/rosa_getting_started/rosa-sts-creating-a-cluster-with-customizations.html#rosa-sts-creating-cluster-customizations_rosa-sts-creating-a-cluster-with-customizations)
 
@@ -66,93 +66,6 @@ This guide will walk you through installing ROSA (Red Hat OpenShift Service on A
    export AWS_REGION="us-east-2"
    ```
 
-## Create KMS Key
-
-For this example, we will create a custom KMS key using the AWS CLI. If you would prefer, you could use an existing key instead.
-
-1. Create a customer-managed KMS key
-
-   ```bash
-   KMS_ARN=$(aws kms create-key --region $AWS_REGION --description 'Custom ROSA Encryption Key' --query KeyMetadata.Arn --output text)
-   ```
-
-   This command will save the ARN output of this custom key for further steps.
-
-1. Generate the necessary key policy to allow the ROSA STS roles to access the key. Use the below command to populate a sample policy, or create your own.
-
-   > Important note, if you specify a custom STS role prefix, you will need to update that in the command below.
-
-   ```bash
-   AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text); cat << EOF > rosa-key-policy.json
-   {
-       "Version": "2012-10-17",
-       "Id": "key-rosa-policy-1",
-       "Statement": [
-           {
-               "Sid": "Enable IAM User Permissions",
-               "Effect": "Allow",
-               "Principal": {
-                   "AWS": "arn:aws:iam::${AWS_ACCOUNT}:root"
-               },
-               "Action": "kms:*",
-               "Resource": "*"
-           },
-           {
-               "Sid": "Allow ROSA use of the key",
-               "Effect": "Allow",
-               "Principal": {
-                   "AWS": [
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Support-Role",
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Installer-Role",
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Worker-Role",
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-ControlPlane-Role"
-                   ]
-               },
-               "Action": [
-                   "kms:Encrypt",
-                   "kms:Decrypt",
-                   "kms:ReEncrypt*",
-                   "kms:GenerateDataKey*",
-                   "kms:DescribeKey"
-               ],
-               "Resource": "*"
-           },
-           {
-               "Sid": "Allow attachment of persistent resources",
-               "Effect": "Allow",
-               "Principal": {
-                   "AWS": [
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Support-Role",
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Installer-Role",
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Worker-Role",
-                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-ControlPlane-Role"
-                   ]
-               },
-               "Action": [
-                   "kms:CreateGrant",
-                   "kms:ListGrants",
-                   "kms:RevokeGrant"
-               ],
-               "Resource": "*",
-               "Condition": {
-                   "Bool": {
-                       "kms:GrantIsForAWSResource": "true"
-                   }
-               }
-           }
-       ]
-   }
-   EOF
-   ```
-
-1. Apply the newly generated key policy to the custom KMS key.
-
-   ```bash
-   aws kms put-key-policy --key-id $KMS_ARN \
-   --policy file://rosa-key-policy.json \
-   --policy-name default
-   ```
-
 ## Create ROSA Cluster
 
 1. Make sure your ROSA CLI version is at minimum v1.1.11 or higher.
@@ -184,6 +97,103 @@ For this example, we will create a custom KMS key using the AWS CLI. If you woul
    --region $AWS_REGION --compute-nodes 2 --machine-cidr 10.0.0.0/16 \
    --service-cidr 172.30.0.0/16 --pod-cidr 10.128.0.0/14 --host-prefix 23 \
    --kms-key-arn $KMS_ARN
+   ```
+3. Take note of the role `<cluster-name-hash>-openshift-cluster-csi-drivers-ebs-cloud-credential`, which is provided at the end of the previous command.
+
+    > The full name of the role gets truncated depending on the length of the cluster name. Do not copy and paste from the example above.
+    ```bash
+    arn:aws:iam::<aws-account>:role/poc-mskey-x6h0-openshift-cluster-csi-drivers-ebs-cloud-credenti
+    ```
+   
+## Create KMS Key
+
+For this example, we will create a custom KMS key using the AWS CLI. If you would prefer, you could use an existing key instead.
+
+1. Create a customer-managed KMS key
+
+   ```bash
+   KMS_ARN=$(aws kms create-key --region $AWS_REGION --description 'Custom ROSA Encryption Key' --query KeyMetadata.Arn --output text)
+   ```
+
+   This command will save the ARN output of this custom key for further steps.
+
+1. Generate the necessary key policy to allow the ROSA STS roles to access the key. Use the below command to populate a sample policy, or create your own.
+
+   > Important note 1, if you specify a custom STS role prefix, you will need to update that in the command below.
+
+   > Important note 2, adapt the name of the role `openshift-cluster-csi-drivers-ebs-cloud-credentials` as per captured in previous steps.
+
+   ```bash
+   AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text); cat << EOF > rosa-key-policy.json
+   {
+       "Version": "2012-10-17",
+       "Id": "key-rosa-policy-1",
+       "Statement": [
+           {
+               "Sid": "Enable IAM User Permissions",
+               "Effect": "Allow",
+               "Principal": {
+                   "AWS": "arn:aws:iam::${AWS_ACCOUNT}:root"
+               },
+               "Action": "kms:*",
+               "Resource": "*"
+           },
+           {
+               "Sid": "Allow ROSA use of the key",
+               "Effect": "Allow",
+               "Principal": {
+                   "AWS": [
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Support-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Installer-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Worker-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-ControlPlane-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/${ROSA_CLUSTER_NAME}-openshift-cluster-csi-drivers-ebs-cloud-credenti"
+                   ]
+               },
+               "Action": [
+                   "kms:Encrypt",
+                   "kms:Decrypt",
+                   "kms:ReEncrypt*",
+                   "kms:GenerateDataKey*",
+                   "kms:DescribeKey"
+               ],
+               "Resource": "*"
+           },
+           {
+               "Sid": "Allow attachment of persistent resources",
+               "Effect": "Allow",
+               "Principal": {
+                   "AWS": [
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Support-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Installer-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-Worker-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/ManagedOpenShift-ControlPlane-Role",
+                       "arn:aws:iam::${AWS_ACCOUNT}:role/${ROSA_CLUSTER_NAME}-openshift-cluster-csi-drivers-ebs-cloud-credenti"
+                   ]
+               },
+               "Action": [
+                   "kms:CreateGrant",
+                   "kms:ListGrants",
+                   "kms:RevokeGrant"
+               ],
+               "Resource": "*",
+               "Condition": {
+                   "Bool": {
+                       "kms:GrantIsForAWSResource": "true"
+                   }
+               }
+           }
+       ]
+   }
+   EOF
+   ```
+
+1. Apply the newly generated key policy to the custom KMS key.
+
+   ```bash
+   aws kms put-key-policy --key-id $KMS_ARN \
+   --policy file://rosa-key-policy.json \
+   --policy-name default
    ```
 
 1. Create the operator roles necessary for the cluster to function.
@@ -231,12 +241,12 @@ Once the cluster has finished installing we can validate our access to the clust
    ```bash
    NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM
                                        STORAGECLASS       REASON   AGE
-   pvc-00dac374-a45e-43fa-a313-ae0491e8edf1   10Gi       RWO            Delete           Bound    openshift-monitoring/alertmanager-data-alertmanager-main-1   gp2-customer-kms            26m
-   pvc-7d211496-4ddf-4200-921c-1404b754afa5   10Gi       RWO            Delete           Bound    openshift-monitoring/alertmanager-data-alertmanager-main-0   gp2-customer-kms            26m
-   pvc-b5243cef-ec30-4e5c-a348-aeb8136a908c   100Gi      RWO            Delete           Bound    openshift-monitoring/prometheus-data-prometheus-k8s-0        gp2-customer-kms            26m
-   pvc-ec60c1cf-72cf-4ac6-ab12-8e9e5afdc15f   100Gi      RWO            Delete           Bound    openshift-monitoring/prometheus-data-prometheus-k8s-1        gp2-customer-kms            26m
+   pvc-00dac374-a45e-43fa-a313-ae0491e8edf1   10Gi       RWO            Delete           Bound    openshift-monitoring/alertmanager-data-alertmanager-main-1   gp3-customer-kms            26m
+   pvc-7d211496-4ddf-4200-921c-1404b754afa5   10Gi       RWO            Delete           Bound    openshift-monitoring/alertmanager-data-alertmanager-main-0   gp3-customer-kms            26m
+   pvc-b5243cef-ec30-4e5c-a348-aeb8136a908c   100Gi      RWO            Delete           Bound    openshift-monitoring/prometheus-data-prometheus-k8s-0        gp3-customer-kms            26m
+   pvc-ec60c1cf-72cf-4ac6-ab12-8e9e5afdc15f   100Gi      RWO            Delete           Bound    openshift-monitoring/prometheus-data-prometheus-k8s-1        gp3-customer-kms            26m
    ```
-You should see the StroageClass set to `gp2-customer-kms`. This is the default StorageClass which is encrypted using the customer-provided key.
+You should see the StroageClass set to `gp3-customer-kms`. This is the default StorageClass which is encrypted using the customer-provided key.
 
 ## Cleanup
 
