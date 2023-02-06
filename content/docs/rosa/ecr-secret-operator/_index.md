@@ -15,8 +15,8 @@ This operators frequently talks with AWS ECR GetAuthroization Token and create/u
 
 * [Create an ECR private repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html)
 * Provide AWS Authentication to the operator. Two Options:
-  * [IAM User](./iam_user.md)
-  * [STS Assume Role](./iam_assume_role.md)
+  * [IAM User](./iam_user)
+  * [STS Assume Role](./iam_assume_role)
 
 ### Install the operator
 
