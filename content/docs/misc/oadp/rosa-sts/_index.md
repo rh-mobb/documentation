@@ -347,8 +347,6 @@ tags: ["ROSA", "AWS", "STS"]
    ```bash
    oc delete cloudstorage ${CLUSTER_NAME}-oadp
    ```
-<<<<<<< HEAD:content/docs/misc/oadp/rosa-sts/_index.md
-=======
 
 1. Delete the AWS S3 Bucket
 
@@ -369,4 +367,3 @@ tags: ["ROSA", "AWS", "STS"]
    ```bash
    aws iam delete-role --role-name "${ROLE_NAME}"
    ```
->>>>>>> main:docs/misc/oadp/rosa-sts/README.md
