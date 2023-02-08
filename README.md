@@ -11,4 +11,3 @@ If this is your first interatction with Red Hat's Managed Openshift service offe
 For contributing to this repository, please follow the guidelines specified in the [contributing.md](./CONTRIBUTING.md)
 
 
-
