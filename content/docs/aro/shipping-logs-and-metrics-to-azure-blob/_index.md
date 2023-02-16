@@ -1,6 +1,6 @@
 ---
 date: '2022-10-01'
-title: Azure Red Hat Openshift - Shippings logs and metrics to Azure Blob storage
+title: Shipping logs and metrics to Azure Blob storage
 authors: ['paulczar']
 tags: ["ARO", "Azure"]
 ---
