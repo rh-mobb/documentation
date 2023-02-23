@@ -37,6 +37,7 @@ archetype: home
 * [Dynamic Certificates for ROSA Custom Domain](/docs/rosa/dynamic-certificates)
 * [External DNS for ROSA Custom Domain](/docs/rosa/external-dns)
 * [Security Reference Architecture for ROSA](/docs/rosa/security-ra)
+* [Configure ROSA for Nvidia GPU Workloads](/docs/rosa/gpu)
 
 ### ARO
 
