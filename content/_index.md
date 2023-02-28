@@ -20,6 +20,7 @@ archetype: home
 * [Deploying ROSA in STS mode with Private Link](/docs/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](/docs/rosa/kms)
 * [Installing the AWS Load Balancer Operator on ROSA](/docs/rosa/aws-load-balancer-operator)
+* [Assign Egress IP for External Traffic](/docs/rosa/egress-ip)
 * [Adding AWS WAF in front of ROSA / OSD](/docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](/docs/rosa/aws-secrets-manager-csi)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/docs/rosa/metrics-to-cloudwatch-agent)

@@ -22,7 +22,7 @@ for more information.
 
 ## Prerequisites
 
-* ROSA, ARO, or OSD Cluster
+* ROSA Cluster
 * openshift-cli (`oc`)
 * rosa-cli (`rosa`)
 * jq
@@ -166,24 +166,12 @@ demo-egress-ns    10.10.100.253
 demo-egress-pod   10.10.100.254                   
 ```
 
-To complete the egress IP assignment, we need to assign a specific label to the nodes.  The egress IP rule that you created in [a previous step](#create-the-egress-ip-rule) 
+To complete the egress IP assignment, we need to assign a specific label to the nodes.  The 
+egress IP rule that you created in [a previous step](#create-the-egress-ip-rule) 
 only applies to nodes with the `k8s.ovn.org/egress-assignable` label.  We want 
 to ensure that label exists on only a specific machinepool as set via 
 an environment variable in the [set environment variables](#set-environment-variables) 
 step.
-
-#### Non-ROSA Clusters
-
-ROSA has an admission webhook which prevents assigning node labels via the `oc` 
-command.  On a non-ROSA cluster, you can assign labels with the following:
-
-```bash
-for NODE in $(oc get nodes -o json | jq -r '.items[] | select(.metadata.labels."node-role.kubernetes.io/worker" == "" and .metadata.labels."node-role.kubernetes.io/infra" == "") | .metadata.name'); do
-  oc label node ${NODE} "k8s.ovn.org/egress-assignable"=""
-done
-```
-
-#### ROSA Clusters
 
 For ROSA clusters, you can assign labels via the following `rosa` command:
 
@@ -222,8 +210,9 @@ Run the echoserver which gives us some helpful information:
 oc -n default run demo-service --image=gcr.io/google_containers/echoserver:1.4
 ```
 
-Expose the pod as a service, limiting the ingress (via the `.spec.loadBalancerSourceRanges` field) to the service to only the egress
-IP addresses in which we specified our pods should be using:
+Expose the pod as a service, limiting the ingress (via the `.spec.loadBalancerSourceRanges` 
+field) to the service to only the egress IP addresses in which we 
+specified our pods should be using:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -404,15 +393,7 @@ oc delete egressip demo-egress-ns; \
 oc delete egressip demo-egress-pod
 ```
 
-#### Cleanup Node Labels: Non-ROSA Clusters
-
-```bash
-for NODE in $(oc get nodes -o json | jq -r '.items[] | select(.metadata.labels."node-role.kubernetes.io/worker" == "" and .metadata.labels."node-role.kubernetes.io/infra" == "") | .metadata.name'); do
-  oc label node ${NODE} "k8s.ovn.org/egress-assignable-"
-done
-```
-
-#### Cleanup Node Labels: ROSA Clusters
+You can cleanup the assigned node labels by running the following commands:
 
 > **WARNING:** if you are reliant upon any node labels for your machinepool, 
 this command will replace those labels.  Be sure to input your desired labels 
