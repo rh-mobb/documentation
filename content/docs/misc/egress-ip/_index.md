@@ -5,16 +5,16 @@ tags: ["OSD", "ROSA", "ARO"]
 ---
 
 It may be desirable to assign a consistent IP address for traffic that leaves 
-the cluster when configuring such items as security groups or other sorts of 
+the cluster when configuring items such as security groups or other sorts of 
 security controls which require an IP-based configuration.  By default, 
-Kubernetes, via the OVN-Kubernetes CNI will assign random IP addresses from a pool 
+Kubernetes via the OVN-Kubernetes CNI will assign random IP addresses from a pool 
 which will make configuring security lockdowns unpredictable or 
 unnecessarily open.  This guide shows you how to configure a set of predictable 
-IP addresses for this type of traffic to meet common security standards and 
-guidance.
+IP addresses for egress cluster traffic to meet common security standards and 
+guidance and other potential use cases.
 
-See the [OpenShfit documentation](https://docs.openshift.com/container-platform/4.12/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) 
-for more information on this topic.
+See the [OpenShfit documentation on this topic](https://docs.openshift.com/container-platform/4.12/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) 
+for more information.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ copy/paste in your own.  Be sure to replace the values for your desired
 values for this step:
 
 ```bash
-export ROSA_CLUSTER_NAME=dscott
+export ROSA_CLUSTER_NAME=cluster
 export ROSA_MACHINE_POOL_NAME=Default
 ```
 
@@ -40,7 +40,9 @@ export ROSA_MACHINE_POOL_NAME=Default
 
 For each public cloud provider, there is a limit on the number of IP addresses 
 that may be assigned per node.  This may affect the ability to assign an egress IP 
-address.  To verify sufficient capacity, you can run the following command:
+address.  To verify sufficient capacity, you can run the following command to 
+print out the currently assigned IP addresses versus the total capacity in order 
+to identify any nodes which may affected:
 
 ```bash
 oc get node -o json | \
@@ -81,19 +83,19 @@ field of each node manually to verify node capacity.
 
 > **NOTE:** generally speaking it would be ideal to [label the nodes](#label-the-nodes) prior to assigning 
 the egress IP addresses, however there is a bug that exists which needs to 
-be fixed first.  Once this is fixed, we should re-order the documentation.  See 
-https://issues.redhat.com/browse/OCPBUGS-4969
+be fixed first.  Once this is fixed, the process and documentation will
+be re-ordered to address this.  See https://issues.redhat.com/browse/OCPBUGS-4969
 
 #### Example: Assign Egress IP to a Namespace
 
-Create a project to demonstrate assigning Egress IP addresses based on a 
+Create a project to demonstrate assigning egress IP addresses based on a 
 namespace selection:
 
 ```bash
 oc new-project demo-egress-ns
 ```
 
-Create the Egress Rule.  This rule will ensure that Egress traffic will 
+Create the egress Rule.  This rule will ensure that egress traffic will 
 be applied to all pods within the namespace that we just created 
 via the `spec.namespaceSelector` field:
 
@@ -116,14 +118,14 @@ EOF
 
 #### Example: Assign Egress IP to a Pod
 
-Create a project to demonstrate assigning Egress IP addresses based on a 
+Create a project to demonstrate assigning egress IP addresses based on a 
 pod selection:
 
 ```bash
 oc new-project demo-egress-pod
 ```
 
-Create the Egress Rule.  This rule will ensure that Egress traffic will 
+Create the egress Rule.  This rule will ensure that egress traffic will 
 be applied to the pod which we just created using the `spec.podSelector`
 field.  It should be noted that `spec.namespaceSelector` is a 
 mandatory field:
@@ -152,8 +154,7 @@ EOF
 
 You can run `oc get egressips` and see that the egress IP assignments are 
 pending.  This is due to bug https://issues.redhat.com/browse/OCPBUGS-4969 and 
-will not be an issue once fixed.  Adding the labels will begin the egress IP
-assignment
+will not be an issue once fixed:
 
 ```bash
 NAME              EGRESSIPS       ASSIGNED NODE   ASSIGNED EGRESSIPS
@@ -161,13 +162,15 @@ demo-egress-ns    10.10.100.253
 demo-egress-pod   10.10.100.254                   
 ```
 
-The Egress IP rule that you created in [a previous step](#create-the-egress-ip-rule) 
-only applies to nodes with the `k8s.ovn.org/egress-assignable` label.  We want to 
-ensure that only our worker nodes receive this label.
+To complete the egress IP assignment, we need to assign a specific label to the nodes.  The egress IP rule that you created in [a previous step](#create-the-egress-ip-rule) 
+only applies to nodes with the `k8s.ovn.org/egress-assignable` label.  We want 
+to ensure that label exists on only a specific machinepool as set via 
+an environment variable in the [set environment variables](#set-environment-variables) 
+step.
 
 #### Non-ROSA Clusters
 
-ROSA has an admission webhook which prevents assigning labels via the `oc` 
+ROSA has an admission webhook which prevents assigning node labels via the `oc` 
 command.  On a non-ROSA cluster, you can assign labels with the following:
 
 ```bash
@@ -192,7 +195,7 @@ rosa update machinepool ${ROSA_MACHINE_POOL_NAME} \
 
 ### Review the Egress IPs
 
-You can review the Egress IP assignments by running `oc get egressips` which
+You can review the egress IP assignments by running `oc get egressips` which
 will produce output as follows:
 
 ```bash
