@@ -4,6 +4,10 @@ title: Assign Consistent Egress IP for External Traffic
 tags: ["OSD", "ROSA", "ARO"]
 ---
 
+**Dustin Scott**
+
+*28 February 2023*
+
 It may be desirable to assign a consistent IP address for traffic that leaves 
 the cluster when configuring items such as security groups or other sorts of 
 security controls which require an IP-based configuration.  By default, 
