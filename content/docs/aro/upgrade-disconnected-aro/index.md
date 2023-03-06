@@ -1,4 +1,8 @@
-# Upgrade a disconnected ARO cluster
+---
+date: '2023-03-06'
+title: Upgrade a disconnected ARO cluster
+tags: ["ARO", "Azure"]
+---
 
 **Aaron Green & Kevin Collins**
 
@@ -9,7 +13,7 @@ One of the great features of ARO is that you can create 'disconnected' clusters 
 
 When you upgrade a cluster, OpenShift needs to call out to the Internet to get an upgrade graph to see what options you have to upgrade the cluster.  This of course breaks the concept of having a disconnected cluster.  This guide goes through how to upgrade ARO without having the cluster reach out to the Internat and maintaining the disconnected nature of an ARO cluster.
 
-## Prerequisites
+### Prerequisites
 
   * A Private Azure Red Hat OpenShift cluster with no Internet Connectivity
 
