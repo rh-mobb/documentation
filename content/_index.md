@@ -64,6 +64,7 @@ archetype: home
 * [Configure ARO with Azure Policy](/docs/aro/azure-policy)
 * [Create infrastructure nodes on an ARO Cluster](/docs/aro/add-infra-nodes)
 * [Configure a load balancer service to use a static public IP](/docs/aro/static-ip-load-balancer)
+* [Upgrade a disconnected ARO cluster](/docs/aro/upgrade-disconnected-aro)
 
 ### GCP
 
