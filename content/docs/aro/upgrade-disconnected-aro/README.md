@@ -11,62 +11,61 @@ When you upgrade a cluster, OpenShift needs to call out to the Internet to get a
 
 ## Prerequisites
 
-  * a Private Azure Red Hat OpenShift cluster with no Internet Connectivity
+  * A Private Azure Red Hat OpenShift cluster with no Internet Connectivity
 
-## Get Started
+## Check upgrade path
 
-1. Determine which version you want to upgrade to:
+* ***NOTE:*** This step is VERY important. In a future step, you need to have already validated that the version you are upgrading to is safe to do so.
 
-  If you already know which version you want to upgrade to, you can skip this part.
+1. First check which version your cluster is at:
+   ```bash
+   oc get clusterversion version
+   ```
 
-  First check which version your cluster is at:
-  ```bash
-  oc get clusterversion version
-  ```
+   Note the server version. 
+   ```bash
+   NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
+   version   4.10.40   True        False         14h     Cluster version is 4.10.40
+   ```
+ 
+2. Verify you are selecting a valid version to upgrade to.  Go to https://access.redhat.com/labsinfo/ocpupgradegraph
 
-  Note the server version. 
- ```
- NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
-version   4.10.40   True        False         14h     Cluster version is 4.10.40
-  ```
+   Under Channel, select the stable minor version that you want to upgrade the cluster to.  In this example, we have 4.10 cluster that is at patch level 40 and we want to upgrade it to 4.11.  Note that you can also update patch versions.
 
-  Verify you are selecting a valid version to upgrade to.  Go to https://access.redhat.com/labsinfo/ocpupgradegraph
+   On the next screen, start by selecting the version your cluster is at. In example below, we'll select 4.10.40.
 
-  Under Channel, select the stable minor version that you want to upgrade the cluster to.  In this example, we have 4.10 cluster that is at patch level 40 and we want to upgrade it to 4.11.  Note that you can also update patch versions.
+   Then select the version you want to upgrade to ensuring there is a green line showing the upgrade path is recommended.  In example, we select version 4.11.28.
 
-  On the next screen, start by selecting the version your cluster is at.  4.10.40 in this example.
-  Then select the version you want to upgrade to ensuring there is a green line showing the upgrade path is recommended.  In this example, we will select the latest 4.11 version 4.11.28.
+   ![Upgrade Graph](./graph.png)
 
-  ![Upgrade Graph](./graph.png)
+## Upgrade the cluster
+
+* ***NOTE:*** In step 2 below, you are explicitly telling the cluster to upgrade to an image digest value and must use the `--force` flag because the cluster has no ability to validate the image digest value without Internet connectivity. Please ensure you have completed the step to check upgrade path so that you are upgrading the cluster to a version with a supported path from the current cluster version you're on.
 
 1. Retrieve the image digest of the OpenShift version you want to upgrade to:
-  
 
    ```bash
-   curl  --silent https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.11.28/release.txt | grep "Pull From:"
+   export VERSION=4.11.28 # Update to your desired version 
+   curl -s https://mirror.openshift.com/pub/openshift-v4/clients/ocp/"${VERSION}"/release.txt | grep "Pull From:"
    ```
-
-   > replace 4.11.28 with the version you want to upgrade to
-
    Expected Output:
+   ```bash
+   Pull From: quay.io/openshift-release-dev/ocp-release@sha256:85238bc3eddb88e958535597dbe8ec6f2aa88aa1713c2e1ee7faf88d1fefdac0
    ```
-     Pull From: quay.io/openshift-release-dev/ocp-release@sha256:85238bc3eddb88e958535597dbe8ec6f2aa88aa1713c2e1ee7faf88d1fefdac0
-   ``` 
-1. Perform the Upgrade
+   
+2. Perform the Upgrade
 
     > Set the image to the desired values from the above command.
 
    ```bash
    oc adm upgrade --allow-explicit-upgrade --to-image=quay.io/openshift-release-dev/ocp-release@sha256:1c3913a65b0a10b4a0650f54e545fe928360a94767acea64c0bd10faa52c945a --force
    ```
-1. Check the status of the scheduled upgrade
+3. Check the status of the scheduled upgrade
 
    ```bash
    oc get clusterversion version
    ```
-
    When the upgrade is complete you will see the following:
-
 
    ```
    NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
