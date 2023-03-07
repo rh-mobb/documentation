@@ -99,15 +99,15 @@ Set some environment variables to use later, and create an Azure Resource Group.
     > Change the values to suit your environment, but these defaults should work.
 
     ```bash
-    AZR_RESOURCE_LOCATION=eastus
-    AZR_RESOURCE_GROUP=openshift-private
-    AZR_CLUSTER=private-cluster
-    AZR_PULL_SECRET=~/Downloads/pull-secret.txt
-    NETWORK_SUBNET=10.0.0.0/20
-    CONTROL_SUBNET=10.0.0.0/24
-    MACHINE_SUBNET=10.0.1.0/24
-    FIREWALL_SUBNET=10.0.2.0/24
-    JUMPHOST_SUBNET=10.0.3.0/24
+    export AZR_RESOURCE_LOCATION=eastus
+    export AZR_RESOURCE_GROUP=openshift-private
+    export AZR_CLUSTER=private-cluster
+    export AZR_PULL_SECRET=~/Downloads/pull-secret.txt
+    export NETWORK_SUBNET=10.0.0.0/20
+    export CONTROL_SUBNET=10.0.0.0/24
+    export MACHINE_SUBNET=10.0.1.0/24
+    export FIREWALL_SUBNET=10.0.2.0/24
+    export JUMPHOST_SUBNET=10.0.3.0/24
     ```
 
 1. Create an Azure resource group
@@ -116,6 +116,16 @@ Set some environment variables to use later, and create an Azure Resource Group.
     az group create                \
       --name $AZR_RESOURCE_GROUP   \
       --location $AZR_RESOURCE_LOCATION
+    ```
+
+1. Create an Azure Service Principal
+
+    ```bash
+    AZ_SUB_ID=$(az account show --query id -o tsv)
+    AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor \
+      --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}" \
+      --query "password" -o tsv)
+    AZ_SP_ID=$(az ad sp list --display-name "${AZR_CLUSTER}-SP" --query "[0].appId" -o tsv)
     ```
 
 ### Networking
@@ -165,7 +175,66 @@ Create a virtual network with two empty subnets
       --disable-private-link-service-network-policies true
     ```
 
-### Firewall + Internet Egress
+### Egress
+
+You have the choice of running a NAT GW or Firewall service for your Internet Egress.
+
+Run through the step of one of the two following options
+
+#### Nat GW
+
+This replaces the routes for the cluster to go through the Azure NAT GW service for egress vs the LoadBalancer which we can later remove. It does come with extra Azure costs of course.
+
+1. Create a Public IP
+
+    ```bash
+    az network public-ip create -g $AZR_RESOURCE_GROUP \
+      -n $AZR_CLUSTER-natgw-ip   \
+      --sku "Standard" --location $AZR_RESOURCE_LOCATION
+    ```
+
+1. Create the NAT Gateway
+
+    ```bash
+    az network nat gateway create \
+      --resource-group ${AZR_RESOURCE_GROUP} \
+      --name "${AZR_CLUSTER}-natgw" \
+      --location ${AZR_RESOURCE_LOCATION} \
+      --public-ip-addresses "${AZR_CLUSTER}-natgw-ip"
+    ```
+
+1. Get the IPs of the NAT Gateway
+
+    ```bash
+    GW_PUBLIC_IP=$(az network public-ip show -g ${AZR_RESOURCE_GROUP} \
+      -n "${AZR_CLUSTER}-natgw-ip" --query "ipAddress" -o tsv)
+    GW_PRIVATE_IP=$(az network nat gateway show -g ${AZR_RESOURCE_GROUP} \
+    -n "${AZR_CLUSTER}-natgw" --query "ipConfigurations[0].privateIpAddress" -o tsv)
+
+    echo $FWPUBLIC_IP
+    echo $FWPRIVATE_IP
+    ```
+
+1. Reconfigure Subnets to use Nat GW
+
+    ```bash
+    az network vnet subnet update \
+      --name "${AZR_CLUSTER}-aro-control-subnet-${AZR_RESOURCE_LOCATION}"   \
+      --resource-group ${AZR_RESOURCE_GROUP}                              \
+      --vnet-name "${AZR_CLUSTER}-aro-vnet-${AZR_RESOURCE_LOCATION}"        \
+      --nat-gateway "${AZR_CLUSTER}-natgw"
+    ```
+
+    ```bash
+    az network vnet subnet update \
+      --name "${AZR_CLUSTER}-aro-machine-subnet-${AZR_RESOURCE_LOCATION}"   \
+      --resource-group ${AZR_RESOURCE_GROUP}                              \
+      --vnet-name "${AZR_CLUSTER}-aro-vnet-${AZR_RESOURCE_LOCATION}"        \
+      --nat-gateway "${AZR_CLUSTER}-natgw"
+    ```
+
+
+#### Firewall + Internet Egress
 
 This replaces the routes for the cluster to go through the Firewall for egress vs the LoadBalancer which we can later remove. It does come with extra Azure costs of course.
 
@@ -291,7 +360,9 @@ This replaces the routes for the cluster to go through the Firewall for egress v
     --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
     --apiserver-visibility Private                                           \
     --ingress-visibility Private                                             \
-    --pull-secret @$AZR_PULL_SECRET
+    --pull-secret @$AZR_PULL_SECRET                                          \
+    --client-id "${AZ_SP_ID}"                                                \
+    --client-secret "${AZ_SP_PASS}"
       ```
 
 ### Jump Host
@@ -319,6 +390,7 @@ With the cluster in a private network, we can create a Jump host in order to con
         --image "RedHat:RHEL:8.2:8.2.2021040911" \
         --subnet JumpSubnet                      \
         --public-ip-address jumphost-ip          \
+        --public-ip-sku Standard                 \
         --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
     ```
 
@@ -330,49 +402,12 @@ With the cluster in a private network, we can create a Jump host in order to con
     echo $JUMP_IP
     ```
 
-1. ssh to jump host forwarding port 1337 as a socks proxy.
+1. Use sshuttle to create a ssh vpn via the jump host (use a separate terminal session)
 
     > replace the IP with the IP of the jump box from the previous step.
 
     ```bash
-    ssh -D 1337 -C -i $HOME/.ssh/id_rsa aro@$JUMP_IP
-    ```
-
-1. test the socks proxy
-
-    ```bash
-    curl --socks5-hostname localhost:1337 http://www.google.com/
-    ```
-
-1. Install tools
-
-   ```bash
-   sudo yum install -y gcc libffi-devel python3-devel openssl-devel jq
-   sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-
-   cat << EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
-   [azure-cli]
-   name=Azure CLI
-   baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-   enabled=1
-   gpgcheck=1
-   gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-   EOF
-
-   sudo yum install -y azure-cli
-   wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-   mkdir openshift
-   tar -zxvf openshift-client-linux.tar.gz -C openshift
-   sudo install openshift/oc /usr/local/bin/oc
-   sudo install openshift/kubectl /usr/local/bin/kubectl
-   ```
-
-1. Wait until the ARO cluster is fully provisioned.
-
-1. Login to Azure
-
-    ```bash
-    az login
+    sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
     ```
 
 1. Get OpenShift console URL
@@ -380,8 +415,6 @@ With the cluster in a private network, we can create a Jump host in order to con
     > set these variables to match the ones you set at the start.
 
     ```bash
-    AZR_RESOURCE_GROUP=openshift-private
-    AZR_CLUSTER=private-cluster
     APISERVER=$(az aro show              \
     --name $AZR_CLUSTER                  \
     --resource-group $AZR_RESOURCE_GROUP \
@@ -399,23 +432,13 @@ With the cluster in a private network, we can create a Jump host in order to con
     -o tsv)
     ```
 
-### Test Access
-
-1. Test Access to the cluster via the socks proxy
+1. log into OpenShift
 
     ```bash
-    CONSOLE=$(az aro show                  \
-      --name $AZR_CLUSTER                  \
-      --resource-group $AZR_RESOURCE_GROUP \
-      -o tsv --query consoleProfile)
-    echo $CONSOLE
-
-    curl --socks5-hostname localhost:1337 $CONSOLE
+    oc login $APISERVER --username cluster-admin --password ${ADMINPW}
     ```
 
-> Unfortunately you can't [easily] use the socks proxy with the `oc` command, but at least you can access the console via the socks proxy.
 
-1. Set localhost:1337 as a socks proxy in your browser and verify you can access the cluster by browsing to the `$CONSOLE` url.
 
 ### Delete Cluster
 
