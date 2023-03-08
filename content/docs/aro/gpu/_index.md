@@ -51,8 +51,12 @@ If you plan to use Helm to deploy the GPU operator, you will need do the followi
 All GPU quotas in Azure are 0 by default. You will need to login to the azure portal and request GPU quota. There is a lot of competition for GPU workers, so you may have to provision an ARO cluster in a region where you can actually reserve GPU.
 ARO supports the following GPU workers:
 * NC4as T4 v3
+* NC6s v3
 * NC8as T4 v3
+* NC12s v3
 * NC16as T4 v3
+* NC24s v3
+* NC24rs v3
 * NC64as T4 v3
 
 >Please remember that when you request quota that Azure is per core.  To request a single NC4as T4 v3 node, you will need to request quota in groups of 4. If you wish to request an NC16as T4 v3 you will need to request quota of 16.
