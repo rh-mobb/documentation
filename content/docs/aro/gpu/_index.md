@@ -316,7 +316,6 @@ This will create the nvidia-gpu-operator name space, set up the operator group a
 
 1. Install the Nvidia GPU Operator chart
 
-    ```bash
 
     ```bash
     helm upgrade --install -n nvidia-gpu-operator nvidia-gpu \
