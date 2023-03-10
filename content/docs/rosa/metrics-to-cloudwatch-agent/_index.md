@@ -69,14 +69,14 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
 1. Download the Cloud Watch Agent Kubernetes manifests
 
    ```bash
-   wget -O $SCRATCH_DIR/cloud-watch.yaml https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/rosa/metrics-to-cloudwatch-agent/cloud-watch.yaml
+   wget -O $SCRATCH_DIR/cloud-watch.yaml https://raw.githubusercontent.com/rh-mobb/documentation/main/content/docs/rosa/metrics-to-cloudwatch-agent/cloud-watch.yaml
    ```
 
 1. Update the Cloud Watch Agent Kubernetes manifests
 
    ```bash
-   sed -i "s/__cluster_name__/$CLUSTER_NAME/g" $SCRATCH_DIR/cloud-watch.yaml
-   sed -i "s/__cluster_region__/$CLUSTER_REGION/g" $SCRATCH_DIR/cloud-watch.yaml
+   sed -i .bak "s/__cluster_name__/$CLUSTER_NAME/g" $SCRATCH_DIR/cloud-watch.yaml
+   sed -i .bak "s/__cluster_region__/$CLUSTER_REGION/g" $SCRATCH_DIR/cloud-watch.yaml
    ```
 
 1. Provide AWS Creds to the Cloud Watch Agent
@@ -124,14 +124,14 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
 1. Download the Sample Dashboard
 
    ```bash
-   wget -O $SCRATCH_DIR/dashboard.json https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/rosa/metrics-to-cloudwatch-agent/dashboard.json
+   wget -O $SCRATCH_DIR/dashboard.json https://raw.githubusercontent.com/rh-mobb/documentation/main/content/docs/rosa/metrics-to-cloudwatch-agent/dashboard.json
    ```
 
 1. Update the Sample Dashboard
 
    ```bash
-   sed -i "s/__CLUSTER_NAME__/$CLUSTER_NAME/g" $SCRATCH_DIR/dashboard.json
-   sed -i "s/__REGION_NAME__/$CLUSTER_REGION/g" $SCRATCH_DIR/dashboard.json
+   sed -i .bak "s/__CLUSTER_NAME__/$CLUSTER_NAME/g" $SCRATCH_DIR/dashboard.json
+   sed -i .bak "s/__REGION_NAME__/$CLUSTER_REGION/g" $SCRATCH_DIR/dashboard.json
    ```
 
 1. Browse to https://us-east-2.console.aws.amazon.com/cloudwatch
