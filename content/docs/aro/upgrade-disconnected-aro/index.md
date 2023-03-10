@@ -11,7 +11,7 @@ tags: ["ARO", "Azure"]
 ## Background
 One of the great features of ARO is that you can create 'disconnected' clusters with no connectivity to the Internet.  Out of the box, the ARO service mirrors all the code repositories to build OpenShift clusters to Azure Container Registry.  This means ARO is built without having to reach out to the Internet as the images to build OpenShift are pulled via the Azure private network.
 
-When you upgrade a cluster, OpenShift needs to call out to the Internet to get an upgrade graph to see what options you have to upgrade the cluster.  This of course breaks the concept of having a disconnected cluster.  This guide goes through how to upgrade ARO without having the cluster reach out to the Internat and maintaining the disconnected nature of an ARO cluster.
+When you upgrade a cluster, OpenShift needs to call out to the Internet to get an upgrade graph to see what options you have to upgrade the cluster.  This of course breaks the concept of having a disconnected cluster.  This guide goes through how to upgrade ARO without having the cluster reach out to the Internet and maintaining the disconnected nature of an ARO cluster.
 
 ### Prerequisites
 
@@ -34,17 +34,17 @@ When you upgrade a cluster, OpenShift needs to call out to the Internet to get a
  
 2. Verify you are selecting a valid version to upgrade to.  Go to https://access.redhat.com/labsinfo/ocpupgradegraph
 
-   Under Channel, select the stable minor version that you want to upgrade the cluster to.  In this example, we have 4.10 cluster that is at patch level 40 and we want to upgrade it to 4.11.  Note that you can also update patch versions.
+   Under Channel, select the stable minor version that you want to upgrade the cluster to.  In this example, we have a 4.10 cluster that is at patch level 40 and we want to upgrade it to 4.11.  Note that you can also update patch versions.
 
-   On the next screen, start by selecting the version your cluster is at. In example below, we'll select 4.10.40.
+   On the next screen, start by selecting the version your cluster is at. In the example below, we'll select 4.10.40.
 
-   Then select the version you want to upgrade to ensuring there is a green line showing the upgrade path is recommended.  In example, we select version 4.11.28.
+   Then select the version you want to upgrade to ensure there is a green line showing the upgrade path is recommended.  In the example, we select version 4.11.28.
 
    ![Upgrade Graph](./graph.png)
 
 ## Upgrade the cluster
 
-* ***NOTE:*** In step 2 below, you are explicitly telling the cluster to upgrade to an image digest value and must use the `--force` flag because the cluster has no ability to validate the image digest value without Internet connectivity. Please ensure you have completed the step to check upgrade path so that you are upgrading the cluster to a version with a supported path from the current cluster version you're on.
+* ***NOTE:*** In step 2 below, you are explicitly telling the cluster to upgrade to an image digest value and must use the `--force` flag because the cluster has no ability to validate the image digest value without Internet connectivity. Please ensure you have completed the step to check the upgrade path so that you are upgrading the cluster to a version with a supported path from the current cluster version you're on.
 
 1. Retrieve the image digest of the OpenShift version you want to upgrade to:
 
