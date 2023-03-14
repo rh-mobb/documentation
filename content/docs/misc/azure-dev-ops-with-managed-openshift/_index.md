@@ -12,15 +12,15 @@ Adopted from [Hosting an Azure Pipelines Build Agent in OpenShift](https://cloud
 and [Kevin Chung Azure Pipelines OpenShift example](https://github.com/kevchu3/kevin-azure-pipelines-openshift)
 
 
-Azure DevOps is a very popular DevOps tool and among a host of features allows developers to create CI/CD pipelines.
+Azure DevOps is a very popular DevOps tool that has a host of features including the ability for developers to create CI/CD pipelines.
 
 In this document, I will show you how to connect your Managed OpenShift Cluster to Azure DevOps end-to-end including running the pipeline build process in the cluster, setting up the OpenShift internal image registry to store the images, and then finally deploy a sample application.  To demonstrate the flexibility of Azure DevOps, I will be deploying to a ROSA cluster, however the same procudures will apply to if you choose to deploy to any other OCP Cluster.
 
 ## Prerequisites
 
-* A Public Cloud subscritption (Azure Subscription)
+* A Public Cloud subscription (Azure Subscription)
 * Azure Dev Ops instance
-* An OpenShift Cluster *(to create an Azure Red Hat OpenShift (ROSA) cluster, click [here](https://mobb.ninja/docs/quickstart-aro.html))*
+* An OpenShift Cluster *(to create an Azure Red Hat OpenShift (ROSA) cluster, click [here](https://mobb.ninja/docs/quickstart-rosa.html))*
 
 ## Clone example application and configuration files
 ```bash
@@ -33,8 +33,10 @@ cd azure-pipelines-openshift
 While logged into your [Azure DevOps Organization](https://aex.dev.azure.com/me?mkt=en-US), create a new project.  The examples in this document will assume the project is named azure-pipelines-openshift
 ![ADO New Project](./images/ado-new-project.png)
 
-Obtain a personal access token.  While in User DevOPs, select Personal Access Token under User Settings.
+
+Obtain a personal access token.  While in Azure DevOPs, select Personal Access Token under User Settings.
 ![azpat](./images/azpat.png)
+
 
 On the next screen, create a New Token.  In this example, we will create a token with Full Access.  Once you click create your token will be displayed.  Make sure to store it somewhere safe as you won't be able to see it again.  
 ![create-pat](./images/create-pat.png)
@@ -52,15 +54,13 @@ note: this is an abreviated version of this [blog](https://cloud.redhat.com/blog
 In this step, we will configure OpenShift to build our container image leveraging Universal Base Images ( UBI )
 
 
-
-
-## Configure the Azure DevOps build agent with OpenShift
+### Configure the Azure DevOps build agent with OpenShift
 Start by creating a new project
-``bash
+```bash
 oc new-project azure-build
 ```
 
-Craete the following artifacts that include a wrapper script for the build agent and an example BuildConfig that will build a .NET application using the Red Hat Universal Based Image for .NET
+Create the following artifacts that include a wrapper script for the build agent and an example BuildConfig that will build a .NET application using the Red Hat Universal Based Image for .NET
 ```bash
  oc create configmap start-sh --from-file=start.sh=assets/start.sh
  oc create imagestream azure-build-agent
@@ -81,7 +81,7 @@ As a cluster admin, create a service account for the build agent
  oc create -f assets/nonroot-builder.yaml
  oc adm policy add-scc-to-user nonroot-builder -z azure-build-sa
 ```
-* Make sure to be in the root directory of the Azure Pipelines OpenShift git repository you cloned in the previous step.
+Make sure to be in the root directory of the Azure Pipelines OpenShift git repository you cloned in the previous step.
 
 Create a secret with your Azure DevOps credentials
 ```bash
@@ -120,16 +120,17 @@ Before we can do steps 2 and 3, we need to create a service account in OpenShift
 Create a new project for our application
 ```bash
  oc new-project ado-openshift
- ```
+```
 
- Create a service account
+ Create a service account and grant it cluster-admin privileges
  ```bash
  oc create sa azure-sa
+ oc adm policy add-cluster-role-to-user cluster-admin -z azure-sa
  ```
 
  Create a secret token for the service account
- ```bash
- cat <<EOF | oc apply -f -
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -138,13 +139,13 @@ metadata:
     kubernetes.io/service-account.name: "azure-sa" 
 type: kubernetes.io/service-account-token
 EOF
- ```
+```
 
  Retrieve the secret name that we just created that was a token associated with it.
 
- ```bash
+```bash
   oc get secrets | grep azure-sa-token | awk '{ print $1 }'
- ```
+```
 
 expected output:
 
@@ -177,7 +178,7 @@ service-ca.crt:  9930 bytes
 ```
 Copy the value of the token.
 
-retrieve the host of your cluster image regstry.
+Retrieve the host of your cluster image regstry.
 ```bash
  oc get route default-route -n openshift-image-registry -o jsonpath='{.spec.host}'
 ```
@@ -193,34 +194,39 @@ oc cluster-info
 
 expected output:
 ```
-Kubernetes control plane is running at https://api.ado-rosa.9s68.p1.openshiftapps.com:6443
+ Kubernetes control plane is running at https://api.ado-rosa.9s68.p1.openshiftapps.com:6443
 ```
 
 note the api server url for usage later 
 
 ### Configure Azure DevOps service connections for the registry and OpenShift
 
-From Azure DevOps, click on Project settinugs ( the gear icon ), then Service Connections, and finally Create service connection.
+From Azure DevOps, click on Project settings ( the gear icon ), then Service Connections, and finally Create service connection.
 
-![create-service-connection](./images/create-service-connection.png)
+ 
+ ![create-service-connection](./images/create-service-connection.png)
+
 
 Select Docker registry
-![docker-registry](./images/docker-registry.png)
+ 
+ ![docker-registry](./images/docker-registry.png)
 
 Enter the settings we retrieved in the previous step:
 
-* Docker Registry - make sure to add https:// in front of the hostname you retrieve
+* Docker Registry - make sure to add https:// in front of the hostname you retrieved
 * Docker ID - the service account you created
 * Docker Password - the service account token
 * Service connection name - enter openshift-registry
 
-Next, lets create a another serivce connection for our cluster.
+Next, let's create a another serivce connection for our cluster.
 
 Click New service connection:
-![new-service-connection](./images/new-service-connection.png)
+
+ ![new-service-connection](./images/new-service-connection.png)
 
 Select Kubernetes
-![select-kubernetes](./images/select-kubernetes.png)
+ 
+ ![select-kubernetes](./images/select-kubernetes.png)
 
 * Server Url - the api server you retrieved in the previous step
 
@@ -233,37 +239,43 @@ Select Kubernetes
 
 * Service connection name - select openshift
 
-![openshift-settings](./images/openshift-connection.png)
+ ![openshift-settings](./images/openshift-connection.png)
 
 ## Create an Azure DevOps Pipeline
 
 We will be deploying an application from a GitHub repo.  Fork the following Git Repo: https://github.com/rh-mobb/azure-pipelines-openshift
 
 In Azure DevOPs, click on Pipelines and then Create Pipeline
-![new-pipeline](./images/new-pipeline.png)
+ 
+ ![new-pipeline](./images/new-pipeline.png)
 
 On the next screen, select GitHub
-![pipeline-github](./images/pipeline-github.png)
+ 
+ ![pipeline-github](./images/pipeline-github.png)
 
 On the next screen, select your github repo that you forked to.
 
 Review the azure-pipelines.yml file and then click run.
 
 If this is the first time running, you might see a message like the following:
-![build-permissions](./images/build-permissions.png)
+ 
+ ![build-permissions](./images/build-permissions.png)
 
 Clickad on the Build and Push Image tile, and then view permissions, and grat permissions to both the Default queue and the openshift-registry service connection.
-![grant-build-permissions](./images/grant-build-permissions.png)
+ 
+ ![grant-build-permissions](./images/grant-build-permissions.png)
 
 Like we saw with permissions on the build and push, we also need to give permissions to deploy.
 
-![permission-deploy](./images/grant-deploy-permissions.png)
+ ![permission-deploy](./images/grant-deploy-permissions.png)
 
 On the next screen, click on Permit to give access to the OpenShift connection.
-![grand-openshift-permission](./images/grant-openshift-permissions.png)
+
+ ![grand-openshift-permission](./images/grant-openshift-permissions.png)
 
 After a few minutes, you should see both the Build and Push Image and Deploy to DEV stages complete.
-![successful-pipeline](./images/successful-pipeline.png)
+
+ ![successful-pipeline](./images/successful-pipeline.png)
 
 To verify the application was successfully deployed in openshift run:
 ```bash
