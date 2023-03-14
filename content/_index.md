@@ -134,6 +134,7 @@ archetype: home
 * [Migrate Kubernetes Applications with Konveyor Crane](/docs/demos/crane/)
 * [Red Hat Cost Management for Cloud Services](/docs/misc/cost-management/)
 * [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/docs/misc/oadp/rosa-sts/)
+* [Azure DevOps with Managed OpenShift](/docs/misc/azure-dev-ops-with-managed-openshift/)
 
 ## Fixes / Workarounds
 
