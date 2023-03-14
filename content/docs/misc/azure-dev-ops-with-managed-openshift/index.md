@@ -152,6 +152,7 @@ expected output:
 ```
 azure-sa-token-2qrgw
 ```
+note: your output will have a different name
 
 Describe the secret to retrieve the token:
 
@@ -213,6 +214,7 @@ Select Docker registry
 
 Enter the settings we retrieved in the previous step:
 
+* Select Others for Docker Registry
 * Docker Registry - make sure to add https:// in front of the hostname you retrieved
 * Docker ID - the service account you created
 * Docker Password - the service account token

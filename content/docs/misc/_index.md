@@ -10,6 +10,7 @@ archetype: chapter
 
 * [Common Managed OpenShift References/Tasks](./references.md)
 * [Cost Management for Cloud Services](./cost-management)
+* [Azure DevOps with Managed OpenShift](./azure-dev-ops-with-managed-openshift)
 * [Custom TLS Ciphers](./tls-cipher-customization)
 * [Jupyter Notebook](./jup)
 * [K8s Secret Store CSI](./secrets-store-csi)
