@@ -227,7 +227,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
 1. Configure remoteWrite for user workloads
 
-   ```bash
+  ```bash
    cat << EOF | kubectl apply -f -
    apiVersion: v1
    kind: ConfigMap
