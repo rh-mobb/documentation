@@ -77,6 +77,7 @@ archetype: home
 
 ## Observability
 
+* [Deploy Grafana on OpenShift 4](/docs/o11y/ocp-grafana/)
 * Configuring Alerts for User Workloads
   * [ROSA 4.9.x, 4.10.x](/docs/rosa/custom-alertmanager-4.9)
   * [ROSA 4.11+](/docs/rosa/custom-alertmanager)
