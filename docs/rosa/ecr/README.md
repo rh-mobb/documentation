@@ -47,11 +47,6 @@ aws iam list-roles | grep <cluster_name>
 
 ##### ECR Policies
 
-Set your AWS Region, Registry Name and Account ID
-
-REGION=us-east-2
-REGISTRY=hello-ecr
-
 ECR has several pre-defined policies that give permissions to interact with the service.  In the case of ROSA, we will be pulling images from ECR and will only need to add the `AmazonEC2ContainerRegistryReadOnly` policy.  
 
 1. Add the `AmazonEC2ContainerRegistryReadOnly` policy to the `ManagedOpenShift-Worker-Role` for STS clusters or the `<cluster name>-<identifier>-worker-role` for non-STS clusters.
@@ -67,7 +62,16 @@ ECR has several pre-defined policies that give permissions to interact with the 
 ## Test it Out
 
 
-1. Create a repository   
+1. Set ENV variables
+
+   Set our AWS Region and Registry name for creating a new ECR
+
+   ```
+   REGION=us-east-2
+   REGISTRY=hello-ecr
+   ```
+
+2. Create a repository   
 
    ```
    aws ecr create-repository \
@@ -75,7 +79,7 @@ ECR has several pre-defined policies that give permissions to interact with the 
     --image-scanning-configuration scanOnPush=true \
     --region $REGION
    ```
-2. Set Registry ID
+3. Set Registry ID
 
    ```
    REGISTRYID=`aws ecr describe-repositories --repository-name hello-ecr | jq -r '.repositories[].registryId'`
