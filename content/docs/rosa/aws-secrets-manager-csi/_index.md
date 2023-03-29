@@ -3,19 +3,20 @@ date: '2022-09-14T22:07:09.754151'
 title: Using AWS Secrets Manager CSI on Red Hat OpenShift on AWS with STS
 tags: ["AWS", "ROSA"]
 ---
-Author **Paul Czarkowski**
+Author: [Paul Czarkowski](https://github.com/paulczar)
 
-*last modified 2021-08-17*
+*last modified 2023-03-29*
 
 The AWS Secrets and Configuration Provider (ASCP) provides a way to expose AWS Secrets as Kubernetes storage volumes. With the ASCP, you can store and manage your secrets in Secrets Manager and then retrieve them through your workloads running on ROSA or OSD.
 
-This is made even easier / more secure through the use of AWS STS and Kubernetes PodIdentity.
+This is made even easier and more secure through the use of AWS STS and Kubernetes PodIdentity.
 
 ## Prerequisites
 
 * [A ROSA cluster deployed with STS](/docs/rosa/sts/)
 * Helm 3
 * aws CLI
+* oc CLI
 * jq
 
 ### Preparing Environment
@@ -24,13 +25,13 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 
     ```bash
     oc get authentication.config.openshift.io cluster -o json \
-    | jq .spec.serviceAccountIssuer
+      | jq .spec.serviceAccountIssuer
     ```
 
     You should see something like the following, if not you should not proceed, instead look to the [Red Hat documentation on creating an STS cluster](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa_creating_a_cluster_with_sts/rosa-sts-creating-a-cluster-quickly.html).
 
     ```
-    "https://rh-oidc.s3.us-east-1.amazonaws.com/xxxxxx"
+    "https://xxxxx.cloudfront.net/xxxxx"
     ```
 
 1. Set SecurityContextConstraints to allow the CSI driver to run
@@ -46,10 +47,9 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Create some environment variables to refer to later
 
     ```bash
-    export ROSA_CLUSTER_NAME=my-cluster
-    export ROSA_CLUSTER_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME --output json | jq -r .id)
     export REGION=us-east-2
-    export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq .spec.serviceAccountIssuer)
+    export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster \
+      -o jsonpath='{.spec.serviceAccountIssuer}' | sed  's|^https://||')
     export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
     export AWS_PAGER=""
     ```
@@ -59,7 +59,8 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Use Helm to register the secrets store csi driver
 
     ```bash
-    helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+    helm repo add secrets-store-csi-driver \
+      https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
     ```
 
 1. Update your Helm Repositories
@@ -71,20 +72,21 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Install the secrets store csi driver
 
     ```bash
-    helm upgrade --install -n csi-secrets-store csi-secrets-store-driver secrets-store-csi-driver/secrets-store-csi-driver
+    helm upgrade --install -n csi-secrets-store \
+      csi-secrets-store-driver secrets-store-csi-driver/secrets-store-csi-driver
     ```
 
 1. Deploy the AWS provider
 
     ```bash
-    kubectl -n csi-secrets-store apply -f \
-      https://raw.githubusercontent.com/rh-mobb/documentation/main/docs/security/secrets-store-csi/aws-provider-installer.yaml
+    oc -n csi-secrets-store apply -f \
+      https://raw.githubusercontent.com/rh-mobb/documentation/main/content/docs/misc/secrets-store-csi/aws-provider-installer.yaml
     ```
 
 1. Check that both Daemonsets are running
 
     ```bash
-    kubectl -n csi-secrets-store get ds \
+    oc -n csi-secrets-store get ds \
       csi-secrets-store-provider-aws \
       csi-secrets-store-driver-secrets-store-csi-driver
     ```
@@ -94,7 +96,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Create a secret in Secrets Manager
 
     ```bash
-    SECRET_ARN=$(aws --region "$REGION" secretsmanager  create-secret \
+    SECRET_ARN=$(aws --region "$REGION" secretsmanager create-secret \
       --name MySecret --secret-string \
       '{"username":"shadowman", "password":"hunter2"}' \
       --query ARN --output text)
@@ -132,21 +134,26 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 
 1. Create IAM Role trust policy document
 
-    > Note you can use Conditions to lock down to a specific namespace or service account here. But for simplicity we're keeping it open.
+    > Note the trust policy is locked down to the default service account of a namespace you will create later.
 
     ```bash
     cat <<EOF > trust-policy.json
     {
-    "Version": "2012-10-17",
-    "Statement": [
+      "Version": "2012-10-17",
+      "Statement": [
       {
       "Effect": "Allow",
+      "Condition": {
+        "StringEquals" : {
+          "${OIDC_ENDPOINT}:sub": ["system:serviceaccount:my-application:default"]
+        }
+      },
       "Principal": {
-        "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/$ROSA_CLUSTER_ID"
+        "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/${OIDC_ENDPOINT}"
       },
       "Action": "sts:AssumeRoleWithWebIdentity"
       }
-    ]
+      ]
     }
     EOF
     ```
@@ -163,7 +170,8 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Attach Role to the Policy
 
     ```bash
-    aws iam attach-role-policy --role-name openshift-access-to-mysecret --policy-arn $POLICY_ARN
+    aws iam attach-role-policy --role-name openshift-access-to-mysecret \
+      --policy-arn $POLICY_ARN
     ```
 
 ## Create an Application to use this secret
@@ -184,7 +192,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Create a secret provider class to access our secret
 
     ```bash
-    cat << EOF | kubectl apply -f -
+    cat << EOF | oc apply -f -
     apiVersion: secrets-store.csi.x-k8s.io/v1
     kind: SecretProviderClass
     metadata:
@@ -201,7 +209,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Create a Deployment using our secret
 
     ```bash
-    cat << EOF | kubectl apply -f -
+    cat << EOF | oc apply -f -
     apiVersion: v1
     kind: Pod
     metadata:
@@ -232,7 +240,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Verify the Pod has the secret mounted
 
     ```bash
-    kubectl exec -it my-application -- cat /mnt/secrets-store/MySecret
+    oc exec -it my-application -- cat /mnt/secrets-store/MySecret
     ```
 
 ## Cleanup
@@ -246,14 +254,7 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
 1. Delete the secrets store csi driver
 
     ```bash
-    helm delete -n kube-system csi-secrets-store
-    ```
-
-1. Delete the AWS provider
-
-    ```bash
-    kubectl -n kube-system delete -f \
-      https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
+    helm delete -n csi-secrets-store csi-secrets-store-driver
     ```
 
 1. Delete Security Context Constraints
@@ -265,10 +266,24 @@ This is made even easier / more secure through the use of AWS STS and Kubernetes
       system:serviceaccount:kube-system:csi-secrets-store-provider-aws
     ```
 
+1. Delete the AWS provider
+
+    ```bash
+    oc -n csi-secrets-store delete -f \
+      https://raw.githubusercontent.com/rh-mobb/documentation/main/content/docs/misc/secrets-store-csi/aws-provider-installer.yaml
+    ```
+
 1. Delete AWS Roles and Policies
 
     ```bash
-    aws iam detach-role-policy --role-name openshift-access-to-mysecret --policy-arn $POLICY_ARN
+    aws iam detach-role-policy --role-name openshift-access-to-mysecret \
+      --policy-arn $POLICY_ARN
     aws iam delete-role --role-name openshift-access-to-mysecret
     aws iam delete-policy --policy-arn $POLICY_ARN
     ```
+
+1. Delete the Secrets Manager secret
+
+   ```bash
+   aws secretsmanager --region $REGION delete-secret --secret-id $SECRET_ARN
+   ```
