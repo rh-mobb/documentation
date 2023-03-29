@@ -2,6 +2,7 @@
 date: '2022-09-14T22:07:09.754151'
 title: Federating Metrics to a centralized Prometheus Cluster
 tags: ["AWS", "ROSA"]
+Author: Paul Czerkowski, Connor Wooley
 ---
 Red Hat Openshift for AWS (ROSA) comes with two built-in monitoring stacks. `ClusterMonitoring` and `User Workload Monitoring`. They are both based on Prometheus, the first targets the Cluster Operator (Red Hat SRE) and the latter targets the Cluster user (you!).
 
@@ -107,15 +108,15 @@ This guide is heavily influenced by Tommer Amber's [guide](https://medium.com/@t
    You should see the following:
 
    ```bash
-   NAME               HOST/PORT                                                                     PATH   SERVICES                   PORT            TERMINATION   WILDCARD
-prometheus-route   prometheus-route-custom-prometheus.apps.mycluster.jnmf.p1.openshiftapps.com          monitoring-prometheus-cr   web-proxy       reencrypt     None
+      NAME               HOST/PORT                                                                     PATH   SERVICES                   PORT   TERMINATION WILDCARD
+      prometheus-route   prometheus-route-custom-prometheus.apps.mycluster.jnmf.p1.openshiftapps.com         monitoring-prometheus-cr   web-proxy  reencrypt  None
    ```
 
-   Open the Prometheus Route in your browser (the `HOST/PATH` field from above)
+Open the Prometheus Route in your browser (the `HOST/PORT` field from above)
 
    It should take you through authorization and then you should see the Prometheus UI.
 
-1. add `/targets` to the end of the URL to see the list of available targets
+1. add `/targets` to the end of the URL to see the list of available targets OR under the *Status* drop down select *Targets*
 
    ![screenshot of prometheus targets screen](./prom-targets.png)
 
@@ -131,7 +132,7 @@ prometheus-route   prometheus-route-custom-prometheus.apps.mycluster.jnmf.p1.ope
 1. forward a port to Alert Manager
 
    ```bash
-   kubectl -n ${NAMESPACE} port-forward svc/monitoring-alertmanager-cr 9093:9093
+      kubectl -n ${NAMESPACE} port-forward svc/monitoring-alertmanager-cr 9093:9093
    ```
 
 1. Browse to http://localhost:9093/#/alerts to see the alert "ExampleAlert"
@@ -143,12 +144,12 @@ prometheus-route   prometheus-route-custom-prometheus.apps.mycluster.jnmf.p1.ope
 1. Find the Grafana Route
 
    ```bash
-   kubectl get route grafana-route
+      kubectl get route grafana-route
    ```
 
    ```bash
-   NAME            HOST/PORT                                                                PATH   SERVICES          PORT            TERMINATION   WILDCARD
-grafana-route   grafana-route-federated-metrics.apps.metrics.9l1z.p1.openshiftapps.com   /      grafana-service   grafana-proxy   reencrypt     None
+      NAME            HOST/PORT                                                                PATH   SERVICES          PORT            TERMINATION   WILDCARD
+      grafana-route   grafana-route-federated-metrics.apps.metrics.9l1z.p1.openshiftapps.com   /      grafana-service   grafana-proxy   reencrypt     None
    ```
 
 1. Log into grafana using your cluster's idp
@@ -168,11 +169,11 @@ grafana-route   grafana-route-federated-metrics.apps.metrics.9l1z.p1.openshiftap
 1. Delete the helm release
 
    ```bash
-   helm -n $NAMESPACE delete monitoring
+      helm -n $NAMESPACE delete monitoring
    ```
 
 1. Delete the namespace
 
    ```bash
-   kubectl delete namespace $NAMESPACE
+      kubectl delete namespace $NAMESPACE
    ```
