@@ -1,10 +1,12 @@
 # Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)
 
+Authors: Kevin Collins, Byron Miller
+
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-* [Openshift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.8+
-* [Docker](https://docs.docker.com/get-docker/)
+* [Openshift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.11+
+* [Podman Desktop](https://podman-desktop.io/)
 
 ### Background
 There are two options to use to authenticate wth Amazon ECR to pull images.  
@@ -14,7 +16,7 @@ The traditional method is to create a pull secret for ecr.
 Example:
 
 ```
-oc create secret docker-registry ecr-pull-secret  --docker-server=<registry id>.dkr.ecr.<region>.amazonaws.com  \
+oc create secret docker-registry ecr-pull-secret  --podman-server=<registry id>.dkr.ecr.<region>.amazonaws.com  \
   --docker-username=AWS --docker-password=$(aws ecr get-login-password)  --namespace=hello-world
 ```
 
@@ -45,6 +47,11 @@ aws iam list-roles | grep <cluster_name>
 
 ##### ECR Policies
 
+Set your AWS Region, Registry Name and Account ID
+
+REGION=us-east-2
+REGISTRY=hello-ecr
+
 ECR has several pre-defined policies that give permissions to interact with the service.  In the case of ROSA, we will be pulling images from ECR and will only need to add the `AmazonEC2ContainerRegistryReadOnly` policy.  
 
 1. Add the `AmazonEC2ContainerRegistryReadOnly` policy to the `ManagedOpenShift-Worker-Role` for STS clusters or the `<cluster name>-<identifier>-worker-role` for non-STS clusters.
@@ -59,61 +66,71 @@ ECR has several pre-defined policies that give permissions to interact with the 
 
 ## Test it Out
 
-1. Log into ECR  
 
-   ```
-   aws ecr get-login-password --region region | docker login --username AWS \
-     --password-stdin aws_account_id.dkr.ecr.region.amazonaws.com
-   ```
-
-2. Create a repository   
+1. Create a repository   
 
    ```
    aws ecr create-repository \
-    --repository-name hello-world \
+    --repository-name $REGISTRY \
     --image-scanning-configuration scanOnPush=true \
-    --region region
+    --region $REGION
    ```
-
-3. Pull an image  
-
-   ```
-   docker pull openshift/hello-openshift
-   ```
-
-4. Tag the image for ecr  
+2. Set Registry ID
 
    ```
-   docker tag openshift/hello-openshift:latest <registry id>.dkr.ecr.<region>.amazonaws.com/hello-world:latest
+   REGISTRYID=`aws ecr describe-repositories --repository-name hello-ecr | jq -r '.repositories[].registryId'`
    ```
-
-   note: you can find the registry id and URI with the following command
 
    ```
    aws ecr describe-repositories
    ```
-
    ![resulting output](./images/repositories.png)<br/><br/>
 
-5. Push the image to ECR  
+
+3. Log into ECR  
 
    ```
-   docker push <registry id>.dkr.ecr.<region>.amazonaws.com/hello-world:latest
+   podman login -u AWS -p $(aws ecr get-login-password --region $REGION) $REGISTRYID.dkr.ecr.$REGION.amazonaws.com
    ```
 
-6. Create a new project  
+4. Pull an image  
 
    ```
-   oc new project hello-world
+   podman pull openshift/hello-openshift
    ```
 
-7. Create a new app using the image on ECR  
+5. Tag the image for ecr  
 
    ```
-   oc new-app --name hello-world --image <registry id>.dkr.ecr.<region>.amazonaws.com/hello-world:latest
+   podman tag openshift/hello-openshift:latest $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
    ```
 
-8. View a list of pods in the namespace you created:
+6. Push the image to ECR  
+
+   ```
+   podman push $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
+   ```
+
+7. Create OC pull secret for new ECR registry
+   
+   ```
+   oc create secret docker-registry ecr-pull-secret  --docker-server=$REGISTRYID.dkr.ecr.$REGION.amazonaws.com  \
+   --docker-username=AWS --docker-password=$(aws ecr get-login-password)  --namespace=hello-ecr
+   ```
+
+8. Create a new project  
+
+   ```
+   oc new-project hello-ecr
+   ```
+
+9.  Create a new app using the image on ECR  
+
+   ```
+   oc new-app --name hello-ecr --image $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
+   ```
+
+10. View a list of pods in the namespace you created:
     
    ```
    oc get pods 
@@ -123,14 +140,14 @@ ECR has several pre-defined policies that give permissions to interact with the 
 
    ![resulting output](./images/view-pods.png)
 
-   If you see the hello-world pod running ... congratulations!  You can now pull images from your ECR repository.<br/><br/>
+   If you see the hello-ecr pod running ... congratulations!  You can now pull images from your ECR repository.<br/><br/>
    
 ## Clean up    
 
 1. Simply delete the project you created to test pulling images:
 
     ```
-    oc delete project hello-world
+    oc delete project hello-ecr
     ```
     
-10. You may also want to remove the `arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly` policy from the worker nodes if you do no want them to continue to have access to the ECR.
+   You may also want to remove the `arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly` policy from the worker nodes if you do no want them to continue to have access to the ECR.
