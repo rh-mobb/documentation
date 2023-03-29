@@ -4,6 +4,10 @@ title: Deploying OpenShift API for Data Protection on a ROSA cluster
 tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
 ---
 
+**Author: Paul Czarkowski, Dustin Scott**
+
+*Last edited: 03/29/2023*
+
 ## Prerequisites
 
 * [An STS enabled ROSA cluster](../../../rosa/sts)
@@ -339,14 +343,20 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
 1. Delete the Data Protection Application
 
    ```bash
-   oc delete dpa ${CLUSTER_NAME}-dpa
+   oc -n openshift-adp delete dpa ${CLUSTER_NAME}-dpa
    ```
 
 1. Delete the Cloud Storage
 
    ```bash
-   oc delete cloudstorage ${CLUSTER_NAME}-oadp
+   oc -n openshift-adp delete cloudstorage ${CLUSTER_NAME}-oadp
    ```
+
+> **WARNING:** if this command hangs, you may need to delete the finalizer:
+
+  ```bash
+  oc -n openshift-adp patch cloudstorage ${CLUSTER_NAME}-oadp -p '{"metadata":{"finalizers":null}}' --type=merge
+  ```
 
 1. Delete the AWS S3 Bucket
 
