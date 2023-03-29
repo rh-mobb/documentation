@@ -167,6 +167,25 @@ The following steps are required to configure your Azure account to be a cost ma
 
 Cost management will begin polling Azure for cost data, which will appear on the cost management dashboard (console.redhat.com/openshift/cost-management/).
 
+## Adding your Amazon AWS source to Cost Management
+
+1. In the [console.redhat.com](https://console.redhat.com/) click on **All apps and services** tab in the left top corner of the screen to navigate to this window. Click on **Sources** under **Settings**
+
+   ![Access Sources link](./images/addingazuresource1.png)
+
+2. On Sources page, click on **Cloud sources** tab and then click **Add a source**. This opens up the Sources Wizard
+![Console View](./images/console-view.png)
+
+1. Select **Amazon Web Services** as the source type and click next.
+
+2. Enter a name for your source and click next.
+
+3. To automatically configure your AWS account, select **Account authorization** option and provide **Access Key ID** and **Access Secret Key**. Click next.
+
+4. Select **Cost Management** option and click next. 
+
+5. Review the information and click add. 
+
 ## Managing your Costs
 
 After adding your Openshift Container Platform and Cloud Provider sources, Cost management will show cost data by
