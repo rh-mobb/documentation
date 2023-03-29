@@ -85,56 +85,50 @@ ECR has several pre-defined policies that give permissions to interact with the 
    REGISTRYID=`aws ecr describe-repositories --repository-name hello-ecr | jq -r '.repositories[].registryId'`
    ```
 
-   ```
-   aws ecr describe-repositories
-   ```
-   ![resulting output](./images/repositories.png)<br/><br/>
-
-
-3. Log into ECR  
+4. Log into ECR  
 
    ```
    podman login -u AWS -p $(aws ecr get-login-password --region $REGION) $REGISTRYID.dkr.ecr.$REGION.amazonaws.com
    ```
 
-4. Pull an image  
+5. Pull an image  
 
    ```
    podman pull openshift/hello-openshift
    ```
 
-5. Tag the image for ecr  
+6. Tag the image for ecr  
 
    ```
    podman tag openshift/hello-openshift:latest $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
    ```
 
-6. Push the image to ECR  
+7. Push the image to ECR  
 
    ```
    podman push $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
    ```
 
-7. Create OC pull secret for new ECR registry
+8. Create OC pull secret for new ECR registry
    
    ```
    oc create secret docker-registry ecr-pull-secret  --docker-server=$REGISTRYID.dkr.ecr.$REGION.amazonaws.com  \
    --docker-username=AWS --docker-password=$(aws ecr get-login-password)  --namespace=hello-ecr
    ```
 
-8. Create a new project  
+9. Create a new project  
 
    ```
    oc new-project hello-ecr
    ```
 
-9.  Create a new app using the image on ECR  
+10. Create a new app using the image on ECR  
 
    ```
    oc new-app --name hello-ecr --image $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
    ```
 
-10. View a list of pods in the namespace you created:
+11. View a list of pods in the namespace you created:
     
    ```
    oc get pods 
