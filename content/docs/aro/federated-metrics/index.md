@@ -75,7 +75,6 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     ```bash
     helm upgrade -n $NAMESPACE $NAMESPACE-operators \
       mobb/operatorhub --version 0.1.1 --install \
-      --values ./files/grafana-operator.yaml
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/grafana-operator.yaml
     ```
 
@@ -94,7 +93,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     **> Note: `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics, remove it from the helm command below if you already have custom settings.  The Addendum at the end of this doc will explain the changes you'll need to make instead.**
 
    ```bash
-   helm upgrade -n $NAMESPACE aro-thanos-af
+   helm upgrade -n $NAMESPACE aro-thanos-af \
      --install mobb/aro-thanos-af --version 0.2.0 \
      --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
      --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
