@@ -358,6 +358,18 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
   oc -n openshift-adp patch cloudstorage ${CLUSTER_NAME}-oadp -p '{"metadata":{"finalizers":null}}' --type=merge
   ```
 
+1. Remove the operator if it is no longer required:
+
+  ```bash
+  oc -n openshift-adp delete subscription oadp-operator
+  ```
+
+1. Remove the namespace for the operator:
+
+  ```bash
+  oc delete ns openshift-adp
+  ```
+
 1. Delete the AWS S3 Bucket
 
    ```bash
