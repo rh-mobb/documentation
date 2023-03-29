@@ -219,8 +219,8 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
          defaultPlugins:
          - openshift
          - aws
-         restic:
-           enable: false
+       restic:
+         enable: false
      volumeSnapshots:
      - velero:
          config:
