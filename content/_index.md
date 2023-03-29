@@ -27,8 +27,6 @@ archetype: home
 * [Federating ROSA metrics to Prometheus with customer alerting](/docs/rosa/federated-metrics-prometheus)
 * [Configuring Alerts for User Workloads in ROSA 4.9.x](/docs/rosa/custom-alertmanager)
 * [AWS EFS on ROSA](/docs/rosa/aws-efs)
-  * [Using Amazon Web Services Elastic File System (EFS) on ROSA](/docs/rosa/aws-efs/aws-efs-operator-on-rosa)
-  * [Using the AWS EFS CSI Driver Operator on ROSA 4.10.x](/docs/rosa/aws-efs/aws-efs-csi-operator-on-rosa)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/docs/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/docs/rosa/ecr-secret-operator)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](/docs/rosa/ack)
