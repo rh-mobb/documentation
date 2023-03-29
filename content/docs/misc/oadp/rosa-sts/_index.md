@@ -140,6 +140,10 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
 
 1. Deploy OADP Operator
 
+> **NOTE:** there is currently an issue with 1.1 of the operator with backups 
+that have a `PartiallyFailed` status.  This does not seem to affect the backup 
+and restore process, but it should be noted as there are issues with it.
+
    ```bash
    cat << EOF | oc create -f -
    apiVersion: operators.coreos.com/v1
@@ -155,17 +159,15 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
-     labels:
-       operators.coreos.com/oadp-operator.openshift-adp: ""
-     name: oadp-operator
+     name: redhat-oadp-operator
      namespace: openshift-adp
    spec:
-     channel: stable
+     channel: stable-1.0
      installPlanApproval: Automatic
-     name: oadp-operator
-     source: community-operators
+     name: redhat-oadp-operator
+     source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: oadp-operator.v0.5.6
+     startingCSV: oadp-operator.v1.0.8
    EOF
    ```
 
@@ -368,6 +370,19 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
 
   ```bash
   oc delete ns openshift-adp
+  ```
+
+1. Remove the backup and restore resources from the cluster if they are no longer required:
+
+  ```bash
+  oc delete backup hello-world
+  oc delete restore hello-world
+  ```
+
+1. Remove the Custom Resource Definitinos from the cluster if you no longer wish to have them:
+
+  ```bash
+  for CRD in `oc get crds | grep velero | awk '{print $1}'`; do oc delete crd $CRD; done
   ```
 
 1. Delete the AWS S3 Bucket
