@@ -1,11 +1,11 @@
 ---
 date: '2022-09-14T22:07:08.604151'
-title: Creating a ROSA cluster in STS mode
+title: Deploying ROSA in STS mode
 tags: ["AWS", "ROSA", "STS"]
 ---
 **Paul Czarkowski**
 
-*Last updated 05/31/2022*
+*Last updated 03/29/2023*
 
 > **Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
 
@@ -32,7 +32,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 1. set some environment variables
 
     ```bash
-    export VERSION=4.10.15 \
+    export VERSION=4.11.31 \
            ROSA_CLUSTER_NAME=mycluster \
            AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
            REGION=us-east-2 \
@@ -56,20 +56,14 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
    To perform ROSA cluster provisioning tasks, you must create ocm-role and user-role IAM resources in your AWS account and link them to your Red Hat organization.
 
    <br>
-   <b>OCM Role</b><br>
-   The first role you will create is the ocm-role which the OpenShift Cluster Manager will use to be able to administer and Create ROSA clusters.
+   <b>Create the OCM Role</b><br>
+   The first role you will create is the ocm-role which the OpenShift Cluster Manager (OCM) will use to be able to administer and Create ROSA clusters. If this has already been done for your OCM Organization, you can skip to creating the user-role.
 
    If you haven't already created the ocm-role, you can create and link the role with one command.
    ```bash
    rosa create ocm-role
    ```
    > **Tip** If you have multiple AWS accounts that you want to associate with your Red Hat Organization, you can use the `--profile` option to specify the AWS profile you would like to associate.
-
-   If you have already created the ocm-role, you can just link the ocm-role to your Red Hat organization.
-
-   ```bash
-   rosa link ocm-user --role-arm <arn>
-   ```
 
 
    > **Tip** You can get your OCM role arn from AWS IAM:
@@ -78,7 +72,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
    ```
 
    <br>
-   <b>User Role</b><br>
+   <b>Create the User Role</b><br>
    The second is the user-role that allows OCM to verify that users creating a cluster have access to the current AWS account.
 
    If you haven't already created the user-role, you can create and link the role with one command.
@@ -95,9 +89,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
    rosa link user-role --role-arn <arn>
    ```
 
-   > **Tip** You can get your User role arn from the ROSA cli: `rosa whoami`
-
-   look for the `AWS ARN:` field
+   > **Tip** You can get your user-role arn by running the ROSA cli command: `rosa whoami`. Look for the `AWS ARN:` field.
    <br>
 
 ## Deploy ROSA cluster
@@ -125,6 +117,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
     ```bash
     watch "rosa describe cluster -c $ROSA_CLUSTER_NAME"
     ```
+    **Tip** Newer versions of MacOS do not include a `watch` command. One can be installed using a package manager such as [Homebrew](https://brew.sh/). 
 
 1. Watch the install logs
 
@@ -153,9 +146,9 @@ Once the cluster has finished installing we can validate we can access it
     ```
 1. Clean up the STS roles
 
-Once the cluster is deleted we can delete the STS roles.
+    Once the cluster has been deleted we can delete the STS roles.
 
-    > Note you can get the correct commands with the ID filled in from the output of the previous step.
+    **Tip** You can get the correct commands with the ID filled in from the output of the previous step.
 
     ```bash
     rosa delete operator-roles -c <id> --yes --mode auto
