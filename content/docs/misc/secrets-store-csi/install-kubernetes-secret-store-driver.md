@@ -31,14 +31,14 @@
     ```bash
     helm install -n k8s-secrets-store-csi csi-secrets-store \
       secrets-store-csi-driver/secrets-store-csi-driver \
-      --version v1.0.1 \
+      --version v1.3.2 \
       --set "linux.providersDir=/var/run/secrets-store-csi-providers"
     ```
 
 1. Check that the Daemonsets is running
 
     ```bash
-    kubectl --namespace=k8s-secrets-store-csi get pods -l "app=secrets-store-csi-driver"
+    oc -n k8s-secrets-store-csi get pods -l "app=secrets-store-csi-driver"
     ```
 
     You should see the following
