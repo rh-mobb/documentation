@@ -14,12 +14,12 @@ aws iam create-role \ --role-name AWSLoadBalancerController --query Policy.</des
 Note: Please see the official Red Hat KCS for more information.
 Prerequisites An STS based ROSA Cluster Workaround Uninstall the logging-addon from the cluster
 rosa uninstall addon -c &amp;lt;mycluster&amp;gt; cluster-logging-operator -y Create a IAM Trust Policy document
-cat &amp;lt;&amp;lt; EOF &amp;gt; /tmp/trust-policy.</description></item><item><title>Creating a ROSA cluster in STS mode</title><link>https://mobb.ninja/docs/rosa/sts/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/rosa/sts/</guid><description>Paul Czarkowski
-Last updated 05/31/2022
-Tip The official documentation for installing a ROSA cluster in STS mode can be found here.
-Quick Introduction by Ryan Niksch (AWS) and Shaozen Ding (Red Hat) on YouTube
-STS allows us to deploy ROSA without needing a ROSA admin account, instead it uses roles and policies with Amazon STS (secure token service) to gain access to the AWS resources needed to install and operate the cluster.</description></item><item><title>Creating a ROSA cluster with Private Link enabled (custom VPC) and STS</title><link>https://mobb.ninja/docs/rosa/sts-with-private-link/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/rosa/sts-with-private-link/</guid><description>Steve Mirman, Paul Czarkowski
+cat &amp;lt;&amp;lt; EOF &amp;gt; /tmp/trust-policy.</description></item><item><title>Creating a ROSA cluster with Private Link enabled (custom VPC) and STS</title><link>https://mobb.ninja/docs/rosa/sts-with-private-link/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/rosa/sts-with-private-link/</guid><description>Steve Mirman, Paul Czarkowski
 Last updated 1/28/2022
 This is a combination of the private-link and sts setup documents to show the full picture
 Prerequisites AWS CLI Rosa CLI v1.1.7 jq AWS Preparation If this is a brand new AWS account that has never had a AWS Load Balancer installed in it, you should run the following
-aws iam create-service-linked-role --aws-service-name \ &amp;#34;elasticloadbalancing.amazonaws.com&amp;#34; Create the AWS Virtual Private Cloud (VPC) and Subnets For this scenario, we will be using a newly created VPC with both public and private subnets.</description></item></channel></rss>
+aws iam create-service-linked-role --aws-service-name \ &amp;#34;elasticloadbalancing.amazonaws.com&amp;#34; Create the AWS Virtual Private Cloud (VPC) and Subnets For this scenario, we will be using a newly created VPC with both public and private subnets.</description></item><item><title>Deploying ROSA in STS mode</title><link>https://mobb.ninja/docs/rosa/sts/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/rosa/sts/</guid><description>Paul Czarkowski
+Last updated 03/29/2023
+Tip The official documentation for installing a ROSA cluster in STS mode can be found here.
+Quick Introduction by Ryan Niksch (AWS) and Shaozen Ding (Red Hat) on YouTube
+STS allows us to deploy ROSA without needing a ROSA admin account, instead it uses roles and policies with Amazon STS (secure token service) to gain access to the AWS resources needed to install and operate the cluster.</description></item></channel></rss>
