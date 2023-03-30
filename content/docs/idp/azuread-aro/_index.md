@@ -118,7 +118,9 @@ spec:
       clientID: ${APP_ID}
       clientSecret:
         name: openid-client-secret
-      extraScopes: []
+      extraScopes: 
+      - profile
+      - openid
       issuer: https://login.microsoftonline.com/${TENANT_ID}/v2.0
     type: OpenID
 EOF
