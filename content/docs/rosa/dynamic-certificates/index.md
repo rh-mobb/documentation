@@ -201,7 +201,7 @@ There may be situations when you prefer not to use wild-card certificates. This 
 
 5. Update the CA truststore of the cert-manager pod.
 
-   This step is usually not required. However, it was noticed that the cert-manager pod had difficulties in trusting the [STS](sts.amazonaws.com) & [LetsEncrypt](acme-v02.api.letsencrypt.org) endpoints. So the below commands essentially downloads the CA chain of these endpoints, puts them into a ConfigMap, which then gets attached to the pod as a Volume.
+   This step is usually not required. However, it was noticed that the cert-manager pod had difficulties in trusting the [STS](https://docs.aws.amazon.com/iam/index.html#sts) & [LetsEncrypt](https://acme-v02.api.letsencrypt.org/) endpoints. So the below commands essentially downloads the CA chain of these endpoints, puts them into a ConfigMap, which then gets attached to the pod as a Volume.
 Along with this step, I'll also be [setting the NameServers that the cert-manager will use for DNS01 self-check](https://cert-manager.io/docs/configuration/acme/dns01/#setting-nameservers-for-dns01-self-check)
 The Volume attachment to the pod and the setting of NameServers will be done together by patching the cert-manager CSV resource to persist these changes to the cert-manager deployment. This will cause the rollout of a new deployment and restart of the cert-manager pod.
 
@@ -260,7 +260,7 @@ The Volume attachment to the pod and the setting of NameServers will be done tog
    oc describe clusterissuer letsencryptissuer
    ```
 
-   You should see an output that mentions that the issuer is Registered/Ready
+   You should see an output that mentions that the issuer is Registered/Ready.   Note this can take a few minutes.
 
    ```
    Conditions:
@@ -279,7 +279,7 @@ The Volume attachment to the pod and the setting of NameServers will be done tog
 
 ### Create the Certificate, which will later be used by the Custom Domain.
 
-   > *I've used a SAN certificate here to show how SAN certificates could be created, which will be useful for clusters intended to run only a fixed set of applications. However, this is optional; a single subject/domain certificate works too*
+   > *I've used a SAN certificate here to show how SAN certificates could be created, which will be useful for clusters intended to run only a fixed set of applications. However, this is optional; a single subject/domain certificate works too *
 
 1. Configure the Certificate
 
@@ -305,7 +305,7 @@ The Volume attachment to the pod and the setting of NameServers will be done tog
 
 2. View the Certificate status
 
-   It'll take upto 5 minutes for the Certificate to show as Ready status. If it takes too long, the oc describe command will mention issues if any.
+   It'll take up to 5 minutes for the Certificate to show as Ready status. If it takes too long, the oc describe command will mention issues if any.
 
    ```bash
    oc get certificate customdomain-cert -n cert-manager
@@ -378,7 +378,7 @@ The Volume attachment to the pod and the setting of NameServers will be done tog
 
 1. Create OpenShift resources required for issuing Dynamic Certificates to Routes.
 
-This step will create a new deployment (and hence a pod) that'll watch out for specifically annotated routes in the cluster, and if the issuer-kind and issuer-name annotations are found in a new route, it'll request the Issuer (ClusterIssuer in my case) for a new Certificate that's unique to this route and which'll honor the hostname that was specified while creating the route.
+This step will create a new deployment (and hence a pod) that'll watch out for specifically annotated routes in the cluster, and if the issuer-kind and issuer-name annotations are found in a new route, it will request the Issuer (ClusterIssuer in my case) for a new Certificate that's unique to this route and which will honor the hostname that was specified while creating the route.
 
    ```bash
    oc apply -f https://github.com/cert-manager/openshift-routes/releases/latest/download/cert-manager-openshift-routes.yaml -n cert-manager
