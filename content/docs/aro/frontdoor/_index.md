@@ -10,7 +10,7 @@ When you create a cluster on ARO you have several options in making the cluster 
 How can you allow Internet access to an application running on your private cluster where the .apps endpoint is private?  This document will guide you through using Azure Frontdoor to expose your applications to the Internet.  There are several advantages of this approach, namely your cluster and all the resources in your Azure account can remain private, providing you an extra layer of security.  Azure FrontDoor operates at the edge so we are controlling traffic before it even gets into your Azure account.  On top of that, Azure FrontDoor also offers WAF and DDoS protection, certificate management and SSL Offloading just to name a few benefits.
 
 
-**Kevin Collins** *06/16/2022*
+**Kevin Collins, Ricardo M. Martins** *03/29/2023*
 
 *Adopted from [ARO Reference Architecture](https://github.com/UmarMohamedUsman/aro-reference-architecture)*
 
@@ -79,7 +79,7 @@ Make sure to use the same terminal session while going through guide for all com
 
    LBCONFIG_ID=$(az network lb frontend-ip list -g $ARO_RGNAME --lb-name $INTERNAL_LBNAME --query "[? contains(subnet.id,'$WORKER_SUBNET_ID')].id" -o tsv)
 
-   LBCONFIG_IP=$(az network lb frontend-ip list -g $ARO_RGNAME --lb-name $INTERNAL_LBNAME --query "[? contains(subnet.id,'$WORKER_SUBNET_ID')].privateIpAddress" -o tsv)
+   LBCONFIG_IP=$(az network lb frontend-ip list -g $ARO_RGNAME --lb-name $INTERNAL_LBNAME --query "[? contains(subnet.id,'$WORKER_SUBNET_ID')].privateIPAddress" -o tsv)
 
    ```
 ## Create a Private Link Service
