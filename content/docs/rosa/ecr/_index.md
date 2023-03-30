@@ -55,11 +55,11 @@ aws iam list-roles | grep <cluster_name>
 
 ![resulting output](./images/nonsts-roles.png)
 
-## Configure ECR with ROSA STS
+## Configure ECR with ROSA
 
 ECR has several pre-defined policies that give permissions to interact with the service.  In the case of ROSA, we will be pulling images from ECR and will only need to add the `AmazonEC2ContainerRegistryReadOnly` policy.
 
-1. Add the `AmazonEC2ContainerRegistryReadOnly` policy to the `ManagedOpenShift-Worker-Role` for STS clusters or the `<cluster name>-<identifier>-worker-role` for non-STS clusters.
+1. Add the `AmazonEC2ContainerRegistryReadOnly` policy to the `ManagedOpenShift-Worker-Role` for STS clusters (or the `<cluster name>-<identifier>-worker-role` for non-STS clusters).
 
    STS Example:
 
@@ -86,7 +86,7 @@ ECR has several pre-defined policies that give permissions to interact with the 
     --image-scanning-configuration scanOnPush=true \
     --region $REGION
    ```
-   
+
 4. Set Registry ID
 
    ```
