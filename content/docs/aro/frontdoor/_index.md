@@ -372,7 +372,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 1. Log into your openshift cluster
    > Before you deploy your application, you will need to be connected to a private network that has access to the cluster.
 
-   A great way to establish this connectity is with a VPN connection.  Follow this [guide](../vpn/README.md) to setup a VPN connection with your Azure account.
+   A great way to establish this connectity is with a VPN connection.  Follow this [guide](../vpn/) to setup a VPN connection with your Azure account.
 
    ```bash
    kubeadmin_password=$(az aro list-credentials --name $AROCLUSTER --resource-group $ARORG --query kubeadminPassword --output tsv)
