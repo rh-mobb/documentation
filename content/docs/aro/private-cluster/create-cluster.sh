@@ -113,6 +113,7 @@ az vm create --name jumphost \
     --admin-username aro \
     --image "RedHat:RHEL:9_1:9.1.2022112113" \
     --subnet JumpSubnet \
+    --public-ip-sku Standard \
     --public-ip-address jumphost-ip \
     --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
 
