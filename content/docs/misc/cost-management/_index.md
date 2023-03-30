@@ -1,12 +1,12 @@
 ---
-date: '2022-09-14T22:07:09.784151'
+date: '2023-03-29T22:07:09.784151'
 title: Red Hat Cost Management for Cloud Services
 tags: ["Cost", "Azure", "ARO"]
 ---
 
 **Author: Charlotte Fung**
 
-*Last edited: 09/05/2022*
+*Last edited: 03/29/2023*
 
 Adopted from [Official Documentation for Cost Management Service](https://access.redhat.com/documentation/en-us/cost_management_service/2022)
 
@@ -60,39 +60,25 @@ In this document, I will show you how to connect your OpenShift and Cloud provid
 
 1. Modify the following two lines in the YAML file to look like the following
 
-   > Change `SOURCE-NAME` to the new name of your source (ex. `my-openshift-cost-source`)
-
    ```yaml
    create_source: true
    name: <SOURCE-NAME>
    ```
+   > Change `SOURCE-NAME` to the new name of your source (ex. `my-openshift-cost-source`)
+   > Change `false` to `true`
 
 1. Click the **Create** button. This creates a new source for cost management that will appear in the **console.redhat.com** Cost Management applications
 
 ## Adding your Microsoft Azure source to Cost Management
 
-### **1. Creating a Microsoft Azure Source in your Red Hat account**
-
-1. In the [console.redhat.com](https://console.redhat.com/) click on **All apps and services** tab in the left top corner of the screen to navigate to this window. Click on **Sources** under **Settings**
-
-   ![Access Sources link](./images/addingazuresource1.png)
-
-1. On Sources page, click on **Cloud sources** tab and then click **Add a source**. This opens up the Sources Wizard
-
-1. Enter a name for your source and click next
-
-1. Select **cost management** as the application and **Microsoft Azure** as the source type.
-
-1. Click **Next**. We will create the storage account and resource group in Azure account before proceeding. Keep this window open.
-
-### **2. Configuring your Microsoft Azure**
+### **1. Configuring your Microsoft Azure**
 The following steps are required to configure your Azure account to be a cost management source
 
 1. Creating a storage account and resource group
 1. Configuring a storage account contributor and reader roles for access
 1. Scheduling daily exports
 
-### 2.1 Creating an Azure resource group and storage account using Azure CLI
+### 1.1 Creating an Azure resource group and storage account using Azure CLI
 
 1. First create a new resource group
 
@@ -122,38 +108,30 @@ The following steps are required to configure your Azure account to be a cost ma
     ```
 
 1. Make note of the resource group and storage account. We will need them in the subsequent steps
+   
+### **2. Creating a Microsoft Azure Source in your Red Hat account**
 
-1. Return to **Sources** wizard in [console.redhat.com](https://console.redhat.com/), enter the **Resource group name** and **Storage account name** and click **Next**. Leave this window for now and proceed to next step below.
+1. In the [console.redhat.com](https://console.redhat.com/) click on **All apps and services** tab in the left top corner of the screen to navigate to this window. Click on **Sources** under **Settings**
 
-### 2.2 Configuring Azure roles using Azure CLI
+   ![Access Sources link](./images/addingazuresource1.png)
 
-We need to grant cost management read-only access to Azure cost data by configuring a Storage Account Contributor and Reader role in Azure
+2. On Sources page, click on **Cloud sources** tab and then click **Add a source**. This opens up the Sources Wizard
+![Console View](./images/console-view.png)
 
-1. Run the following command to obtain your **Subscription ID**:
+3. Select **Microsoft Azure** as the source type and click next.
 
-   ```bash
-   SUBSCRIPTION=$(az account show --query "{subscription_id: id}" -o tsv)
-   ```
+4. Enter a name for your source and click next.
 
-1. Return to the [console.redhat.com](https://console.redhat.com/) **Sources** wizard, enter your **Subscription ID**. Click **Next** to move to the next screen
+5. Select **cost management** as the application click next.
 
-1. In Azure CLI, create a cost management Storage Account Contributor role, an obtain your **tenant ID**, **client (application) ID**, and **client secret**
+6. Enter **resource group** and **storage account name** created in the last step to collect cost data and metrics for cost management click next.
 
-    ```bash
-    az ad sp create-for-rbac -n "CostManagement" \
-      --role "Storage Account Contributor" \
-      --query '{"tenant": tenant, "client_id": appId, "secret": password}'
-    ```
+7. Enter **Subscription ID** for your Azure account click next. Use the command given by the wizard to get Subscription ID.
+   
+8. Use the command given by the wizard to create **Service Principal** and enter **Tenant ID**, **Application ID** and **Application Secret**.
 
-1. Return to **Sources** wizard in [console.redhat.com](https://console.redhat.com/), enter your Azure **Tenant ID**, **Client ID**, and **Client Secret**.
+9. Click next, review the information and click add. 
 
-1. Run the following command to create cost management Reader role with your subscription ID. Copy the full command from the **Sources** wizard, which will automatically substitute your Azure subscription ID obtained earlier.
-
-   ```bash
-   az role assignment create --role "Cost Management Reader" \
-     --assignee http://CostManagement --subscription ${SUBSCRIPTION}
-   ```
-1. Click **Next** in **Sources** wizard.
 
 ### 2.3 Configuring a Daily Azure data export schedule using Azure Portal
 
@@ -188,6 +166,25 @@ We need to grant cost management read-only access to Azure cost data by configur
 1. Click **Finish** to complete adding the Azure source to cost management
 
 Cost management will begin polling Azure for cost data, which will appear on the cost management dashboard (console.redhat.com/openshift/cost-management/).
+
+## Adding your Amazon AWS source to Cost Management
+
+1. In the [console.redhat.com](https://console.redhat.com/) click on **All apps and services** tab in the left top corner of the screen to navigate to this window. Click on **Sources** under **Settings**
+
+   ![Access Sources link](./images/addingazuresource1.png)
+
+2. On Sources page, click on **Cloud sources** tab and then click **Add a source**. This opens up the Sources Wizard
+![Console View](./images/console-view.png)
+
+1. Select **Amazon Web Services** as the source type and click next.
+
+2. Enter a name for your source and click next.
+
+3. To automatically configure your AWS account, select **Account authorization** option and provide **Access Key ID** and **Access Secret Key**. Click next.
+
+4. Select **Cost Management** option and click next. 
+
+5. Review the information and click add. 
 
 ## Managing your Costs
 
