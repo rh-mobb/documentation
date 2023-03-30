@@ -16,9 +16,20 @@ Author: [Chris Kang](https://github.com/theckang)
 * oc cli #logged-in-cluster-admin
 * jq
 
-If you need to install a ROSA cluster, please read our [ROSA Quickstart Guide]({{< ref "/docs/quickstart-rosa.md" >}}). Please be sure you are installing or using an existing ROSA cluster that it is 4.10.x or higher.
+If you need to install a ROSA cluster, please read our [ROSA Quickstart Guide]({{< ref "/docs/quickstart-rosa.md" >}}). Please be sure you are installing or using an existing ROSA cluster that it is 4.10.x or higher. 
 
 >As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator. This has greatly simplified the setup of the cluster for GPU workloads.
+
+Enter the `oc login` command, username, and password from the output of the previous command:
+
+Example login:
+```bash
+oc login https://api.cluster_name.t6k4.i1.organization.org:6443 \
+> --username cluster-admin \
+> --password FWGYL-2mkJI-3ZTTZ-rINns 
+Login successful. 
+You have access to 77 projects, the list has been suppressed. You can list all projects with ' projects'
+```
 
 Linux:
 
@@ -145,8 +156,13 @@ Two options: [Helm](#helm) or [Manual](#manually)
 1. Wait until NFD instances are ready
 
    ```bash
-   watch oc get ds -n openshift-nfd
+   oc wait --for=jsonpath='{.status.numberReady}'=3 -l app=nfd-master ds -n openshift-nfd
    ```
+   
+   ```bash
+   oc wait --for=jsonpath='{.status.numberReady}'=5 -l app=nfd-worker ds -n openshift-nfd
+   ```
+   
 
 1. Wait until Cluster Policy is ready
 
@@ -405,17 +421,21 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
 1. Wait until NFD instances are ready
 
    ```bash
-   watch oc get ds -n openshift-nfd
+   oc wait --for=jsonpath='{.status.numberReady}'=3 -l app=nfd-master ds -n openshift-nfd
+   ```
+   
+   ```bash
+   oc wait --for=jsonpath='{.status.numberReady}'=5 -l app=nfd-worker ds -n openshift-nfd
    ```
 
 #### Apply nVidia Cluster Config
 
 We'll now apply the nvidia cluster config. Please read the [nvidia documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/openshift/install-gpu-ocp.html) on customizing this if you have your own private repos or specific settings. This will be another process that takes a few minutes to complete.
 
-1. Apply cluster config
+1. Create cluster config
 
    ```yaml
-   cat <<EOF | oc apply -f -
+   cat <<EOF | oc create -f -
    apiVersion: nvidia.com/v1
    kind: ClusterPolicy
    metadata:
@@ -510,7 +530,7 @@ We'll now apply the nvidia cluster config. Please read the [nvidia documentation
    ```yaml
    oc project nvidia-gpu-operator
 
-   cat <<EOF | oc apply -f -
+   cat <<EOF | oc create -f -
    apiVersion: v1
    kind: Pod
    metadata:
