@@ -6,9 +6,9 @@ tags: ["AWS", "ROSA", "TERRAFORM"]
 
 *Author: Kumudu Herath*
 
-This guide shows how to create a Public/Private Link STS ROSA cluster and required operator IAM roles and oidc provider using Red Hat [OCM Terraform Provider](https://github.com/terraform-redhat/terraform-provider-ocm). This guide also provides examples of creating other necessary components like AWS VPC, Azure App Registration for Azure AD IDP provider and Azure AD IDP for ROSA Cluster. These additional component creation can be enabled using terraform variables. Goal of this guide is to show how to create a ROSA STS cluster and how to add additional terraform modules to extend cluster provisioning using terraform automation. 
+This guide shows how to create a Public or Private Link STS ROSA cluster, the required operator IAM roles and the oidc provider using Red Hat [OCM Terraform Provider](https://github.com/terraform-redhat/terraform-provider-ocm). This guide also provides examples of creating other necessary components like AWS VPC, Azure App Registration for Azure AD IDP provider and Azure AD IDP for ROSA Cluster. These additional component creations can be enabled using terraform variables. The goal of this guide is to show how to create a ROSA STS cluster and how to add additional terraform modules to extend cluster provisioning using terraform automation. 
 
-> This guide extends official OCM ROSA Cluster TF privisioning example. Detail info can be found [here](https://github.com/terraform-redhat/terraform-provider-ocm/tree/main/examples/create_rosa_cluster/create_rosa_sts_cluster/classic_sts/cluster)
+> This guide extends the official OCM ROSA Cluster TF privisioning example. Detail info can be found [here](https://github.com/terraform-redhat/terraform-provider-ocm/tree/main/examples/create_rosa_cluster/create_rosa_sts_cluster/classic_sts/cluster)
 
 ## Prerequisites
 
@@ -19,8 +19,9 @@ This guide shows how to create a Public/Private Link STS ROSA cluster and requir
 
 ### Environment Setup
 
-Variables can be pass to teraaform using either Environment variables or using terraform.tfvars file place in the directory where terraform command executes. 
-Following example shows how to configure common terraform environment variables
+Variables can be passed to terraform using either Environment variables or using the terraform.tfvars file, which is placed in the directory where the terraform command executes. 
+
+Following example shows how to configure common terraform environment variables.
    ```bash
    export TF_VAR_token="OCM TOKEN Value"
    export TF_VAR_url="https://api.openshift.com"
@@ -29,9 +30,9 @@ Following example shows how to configure common terraform environment variables
    ```
 
 ### Usage
-Following examples show how to create terraform.tfvars file for Public and Private link ROSA STS clusters
+Following examples show how to create the terraform.tfvars file for Public and Private link ROSA STS clusters.
 
-## Sample terraform.tfvars file for Public ROSA STS Cluster
+## Sample terraform.tfvars file for the Public ROSA STS Cluster
 ```
 token="OCM TOKEN Value"
 url="https://api.openshift.com"
@@ -61,7 +62,7 @@ additional_tags={
 aad_tenant_id="AZURE_Tenant_id"
 ```
 
-## Sample terraform.tfvars file for for Private Link ROSA STS Cluster
+## Sample terraform.tfvars file for the Private Link ROSA STS Cluster
 ```
 token="OCM TOKEN Value"
 url="https://api.openshift.com"
@@ -99,8 +100,8 @@ aad_tenant_id="AZURE_Tenant_id"
 1. Download this repo
 
     ```bash
-    git clone https://github.com/rh-mobb/documentation.git
-    cd documentation/docs/rosa/byo-vpc
+    git clone https://github.com/rh-mobb/terraform_ocm_rosa_sts.git
+    cd terraform_ocm_rosa_sts
     ```
 
 1. Create terraform.tfvars as above, then run
