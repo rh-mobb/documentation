@@ -355,11 +355,9 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 
 ### Create the cluster
 
-Create the cluster
+This will take between 30 and 45 minutes.
 
-    > This will take between 30 and 45 minutes.
-
-    ```bash
+```bash
     az aro create                                                            \
     --resource-group $AZR_RESOURCE_GROUP                                     \
     --name $AZR_CLUSTER                                                      \
@@ -371,7 +369,8 @@ Create the cluster
     --pull-secret @$AZR_PULL_SECRET                                          \
     --client-id "${AZ_SP_ID}"                                                \
     --client-secret "${AZ_SP_PASS}"
-      ```
+ ```
+
 
 ### Jump Host
 
