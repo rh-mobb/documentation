@@ -3,5 +3,6 @@ Create the policy cat &amp;lt;&amp;lt;EOF &amp;gt; /tmp/iam_policy.json { &amp;#
 Notes: These are sample commands. Please fill in your own resource parameters E.g. ARN
 Prequisites
 An STS Openshift Cluster
-Create the policy
-cat &amp;lt;&amp;lt;EOF &amp;gt; /tmp/iam_policy.json { &amp;#34;Version&amp;#34;: &amp;#34;2012-10-17&amp;#34;, &amp;#34;Statement&amp;#34;: [ { &amp;#34;Effect&amp;#34;: &amp;#34;Allow&amp;#34;, &amp;#34;Action&amp;#34;: [ &amp;#34;ecr:GetAuthorizationToken&amp;#34; ], &amp;#34;Resource&amp;#34;: &amp;#34;*&amp;#34; } ] } EOF aws iam create-policy \ --policy-name ECRLoginPolicy \ --policy-document file:///tmp/iam_policy.json Create the role and attach the policy cat &amp;lt;&amp;lt;EOF &amp;gt; /tmp/trust_policy.</description></item></channel></rss>
+Setup Environment Variables
+export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json \ | jq -r .spec.serviceAccountIssuer| sed -e &amp;#34;s/^https:\/\///&amp;#34;) export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text) export REPOSITORY_NAME=test Create the policy
+cat &amp;lt;&amp;lt;EOF &amp;gt; /tmp/iam_policy.json { &amp;#34;Version&amp;#34;: &amp;#34;2012-10-17&amp;#34;, &amp;#34;Statement&amp;#34;: [ { &amp;#34;Effect&amp;#34;: &amp;#34;Allow&amp;#34;, &amp;#34;Action&amp;#34;: [ &amp;#34;ecr:GetAuthorizationToken&amp;#34; ], &amp;#34;Resource&amp;#34;: &amp;#34;*&amp;#34; } ] } EOF aws iam create-policy \ --policy-name ECRLoginPolicy \ --policy-document file:///tmp/iam_policy.</description></item></channel></rss>
