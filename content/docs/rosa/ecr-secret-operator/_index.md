@@ -3,10 +3,15 @@ date: '2022-09-14T22:07:09.764151'
 title: ECR Secret Operator
 tags: ["AWS", "ROSA"]
 ---
+**Author: Shaozhen**
+*Modified: 04/06/2023*
 
-Amazon Elastic Container Registry [Private Registry Authentication](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html) provides a temporary token that is valid only for 12 hours. It is a challenge for automating container image build process to refresh the token or secret in a timely manner.
+Amazon Elastic Container Registry [Private Registry Authentication](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html) provides a temporary authorization token valid only for 12 hours. This operator refreshes automatically the Amazon ECR authorization token before it expires, reducing the overhead in managing the authentication flow.
 
-This operators frequently talks with AWS ECR GetAuthroization Token and create/update the secret, so that the service account can perform docker image build.
+This operator contains two Custom Resources which direct the operator to generate/refresh Amazon ECR authorization token in a timely manner:
+
+* [Image Pull Secret API](https://github.com/rh-mobb/ecr-secret-operator/blob/v0.4.0/api/v1alpha1/secret_types.go)
+* [Argo CD Repo Helm Chart Secret](https://github.com/rh-mobb/ecr-secret-operator/blob/v0.4.0/api/v1alpha1/argohelmreposecret_types.go)
 
 
 ## How to use this operator
@@ -23,12 +28,12 @@ This operators frequently talks with AWS ECR GetAuthroization Token and create/u
 * Install the operator from operator hub community
 
 ![Installed Operator](./images/operatorhub.png)
-![Installed Operator](./images/install.png)
 
 ### Create the ECR Secret CRD
 
 ```bash
-echo << EOF | oc apply -f -
+oc new-project test-ecr-secret-operator
+cat << EOF | oc apply -f -
 apiVersion: ecr.mobb.redhat.com/v1alpha1
 kind: Secret
 metadata:
@@ -36,7 +41,7 @@ metadata:
   namespace: test-ecr-secret-operator
 spec:
   generated_secret_name: ecr-docker-secret
-  ecr_registry: [ACCOUNT_ID].dkr.ecr.us-east-2.amazonaws.com
+  ecr_registry: ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-2.amazonaws.com
   frequency: 10h
   region: us-east-2
 EOF
@@ -64,7 +69,7 @@ Configure build config to point to your ECR Container repository
 ```bash
 oc create imagestream ruby
 oc tag openshift/ruby:2.5-ubi8 ruby:2.5
-echo << EOF | oc apply -f -
+cat << EOF | oc apply -f -
 kind: BuildConfig
 apiVersion: build.openshift.io/v1
 metadata:
@@ -84,7 +89,7 @@ spec:
   output:
     to:
       kind: "DockerImage"
-      name: "[ACCOUNT_ID].dkr.ecr.us-east-2.amazonaws.com/test:latest"
+      name: "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-2.amazonaws.com/test:latest"
   postCommit:
       script: "bundle exec rake test"
 EOF
@@ -94,3 +99,46 @@ oc start-build ruby-sample-build --wait
 Build should succeed and push the image to the the private ECR Container repository
 
 ![Success Build](./images/build.png)
+
+
+### Create the ECR Secret Argo CD Helm Repo CRD
+
+* [OpenShift GitOps is installed](https://docs.openshift.com/container-platform/4.8/cicd/gitops/installing-openshift-gitops.html)
+* [Helm chart stored in ecr](https://docs.aws.amazon.com/AmazonECR/latest/userguide/push-oci-artifact.html)
+* aws ecr set-repository-policy --repository-name helm-test-chart --policy-text file:///tmp/repo_policy.json
+
+```bash
+export ACCOUNT_AWS_ID=
+cat << EOF | oc apply -f -
+apiVersion: ecr.mobb.redhat.com/v1alpha1
+kind: ArgoHelmRepoSecret
+metadata:
+  name: helm-repo
+  namespace: openshift-gitops
+spec:
+  generated_secret_name: ecr-argo-helm-secret
+  url: ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-2.amazonaws.com
+  frequency: 10h
+  region: us-east-2
+EOF
+cat << EOF | oc apply -f -
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: test
+spec:
+  destination:
+    name: ''
+    namespace: test-ecr-secret-operator
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: ''
+    repoURL: ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-2.amazonaws.com
+    targetRevision: 0.1.0
+    chart: helm-test-chart
+  project: default
+EOF
+```
+
+The ArgoCD application should sync with ECR helm chart successfully
+![](./images/argo_helm.png)
