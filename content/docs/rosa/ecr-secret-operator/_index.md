@@ -105,10 +105,9 @@ Build should succeed and push the image to the the private ECR Container reposit
 
 * [OpenShift GitOps is installed](https://docs.openshift.com/container-platform/4.8/cicd/gitops/installing-openshift-gitops.html)
 * [Helm chart stored in ecr](https://docs.aws.amazon.com/AmazonECR/latest/userguide/push-oci-artifact.html)
-* aws ecr set-repository-policy --repository-name helm-test-chart --policy-text file:///tmp/repo_policy.json
+* Create the Helm Repo CRD
 
 ```bash
-export ACCOUNT_AWS_ID=
 cat << EOF | oc apply -f -
 apiVersion: ecr.mobb.redhat.com/v1alpha1
 kind: ArgoHelmRepoSecret
@@ -121,6 +120,10 @@ spec:
   frequency: 10h
   region: us-east-2
 EOF
+```
+* Create a sample GitOps application
+
+```
 cat << EOF | oc apply -f -
 apiVersion: argoproj.io/v1alpha1
 kind: Application
