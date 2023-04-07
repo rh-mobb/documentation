@@ -4,66 +4,29 @@ title: ARO Custom domain with cert-manager and LetsEncrypt
 tags: ["ARO", "Azure"]
 ---
 
-ARO guide to deploying an ARO cluster with custom domain and automating certificate management with cert-manager and letsencrypt certificates to manage the *.apps and api endpoints.
+ARO guide to deploying an ARO cluster with custom domain and automating certificate management with cert-manager and letsencrypt certificates to manage the `*.apps` and `api` endpoints.
 
 Author: [Byron Miller](https://twitter.com/byron_miller)
 
 ## Prerequisites
 
-* az cli
+* az cli (already installed in Azure Cloud Shell)
 * oc cli
-* jq
-* gettext
-* OpenShift 4.10
-* domain name to use
+* jq (already installed in Azure Cloud Shell)
+* OpenShift 4.10+
+* domain name to use (we will create zones for this domain name during this guide)
 
-I'm going to be running this setup through Fedora in WSL2. Be sure to always use the same terminal/session for all commands since we'll reference environment variables set or created through the steps.
+I'm going to be running this setup through Bash on the Azure Cloud Shell. Be sure to always use the same terminal/session for all commands since we'll reference environment variables set or created through the steps.
 
-**Fedora Linux**
+**Azure Cloud Shell - Bash**
 
 > See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf) for alternative install options.
 
-1. Import the Microsoft Keys
+1. Install oc CLI
 
-   ```bash
-   sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-   ```
-
-1. Add the Microsoft Yum Repository
-
-   ```bash
-   cat << EOF | sudo tee /etc/yum.repos.d/azure-cli.repo
-   [azure-cli]
-   name=Azure CLI
-   baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-   enabled=1
-   gpgcheck=1
-   gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-   EOF
-   ```
-
-1. Install Azure CLI
-
-   ```bash
-   sudo dnf install -y azure-cli
-   ```
-
-1. Install jq & gettext
-
-    I'm going to rely on using shell variables interpolated into Kubernetes config and jq to build variables. Installing or ensuring the gettext & jq package is installed will allow us to use envsubst to simplify some of our configuration so we can use output of CLI's as input into Yamls to reduce the complexity of manual editing.
-
-
-   ```bash
-   sudo dnf install gettext jq
-   ```
+    Follow the instructions in [Installing the OpenShift CLI on Linux](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html#installing-the-openshift-cli-on-linux) to install `oc` CLI.
 
 ### Prepare Azure Account for Azure OpenShift
-
-1. Log into the Azure CLI by running the following and then authorizing through your Web Browser
-
-   ```bash
-   az login
-   ```
 
 1. Register resource providers
 
@@ -80,8 +43,15 @@ I'm going to be running this setup through Fedora in WSL2. Be sure to always use
 
 1. Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned
 
-1. click the **Download pull secret** button and remember where you saved it, you'll reference it later.
+1. click **Copy pull secret** 
 
+1. Back in the Azure Cloud Shell, enter the following. Insetad of `paste_your_secret`, paste your actual secret. To do so, right-click and choose paste.
+
+    ```bash
+    cat >> ./pull-secret.txt << EOF
+    paste_your_secret
+    EOF
+    ```
 
 ## Deploy Azure OpenShift
 
@@ -108,7 +78,6 @@ Set some environment variables to use later, and create an Azure Resource Group.
    --name $RESOURCEGROUP \
    --location $LOCATION
    ```
-
 
 ### Networking
 
@@ -174,20 +143,6 @@ Create a virtual network with two empty subnets
 
 1. Wait until the ARO cluster is fully provisioned.
 
-1. Get OpenShift console URL
-
-   > You can use these to login to the web console (will get a cert warning that you can bypass with typing "thisisunsafe" in a chrome browser or login with oc)
-
-   ```bash
-   az aro show -g $RESOURCEGROUP -n $CLUSTER --query "consoleProfile.url" -o tsv
-   ```
-
-1. Get OpenShift credentials
-
-   ```bash
-   az aro list-credentials --name $CLUSTER --resource-group $RESOURCEGROUP
-   ```
-
 ## Create DNS Zones & Service Principal
 
 In order for cert-manager to work with AzureDNS, we need to create the zone and add a CAA record as well as create a Service Principal that we can use to manage records in this zone so CertManager can use DNS01 authentication for validating requests.
@@ -204,7 +159,7 @@ For ease of management, we're using the same resource group for domain as we hav
    az network dns zone create -g $RESOURCEGROUP -n $DOMAIN
    ```
 
-    >You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar.
+    >You will need to configure your nameservers to point to Azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar.
 
 1. Create API DNS record
 
@@ -235,7 +190,7 @@ For ease of management, we're using the same resource group for domain as we hav
 
    ![dns records in zone](dns-zone-records.png)
 
-   >Note - You may have to create NS records in your root zone for a subdomain if you use a subdomain zone to point to the subdomains name servers.
+   > Note - You may have to create NS records in your root zone for a subdomain if you use a subdomain zone to point to the subdomains name servers.
 
 1. Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.
 
@@ -251,9 +206,9 @@ For ease of management, we're using the same resource group for domain as we hav
    AZURE_SUBSCRIPTION_ID=$(az account show --output json | jq -r '.id')
    ```
 
-1. Restrict service principal - remove contributor role.
+1. Restrict service principal - remove contributor role if it exists.
 
-   >Note: This may not exist, safe to proceed. We're going to grant the DNS Management Role to it next.
+   >Note: If you get the error message `No matched assignments were found to delete`, that's fine, and it is safe to proceed. We're going to grant the DNS Management Role to it next.
 
    ```bash
    az role assignment delete --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role Contributor
@@ -264,7 +219,7 @@ For ease of management, we're using the same resource group for domain as we hav
    We'll grant [DNS Zone Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#dns-zone-contributor) to our DNS Service principal.
 
    ```bash
-   az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role befefa01-2a29-4197-83a8-272ff33ce314
+   az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role befefa01-2a29-4197-83a8-272ff33ce314 --scope /subscriptions/$AZURE_SUBSCRIPTION_ID
    ```
 
 1. Assign service principal to DNS zone
@@ -274,9 +229,31 @@ For ease of management, we're using the same resource group for domain as we hav
    az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role "DNS Zone Contributor" --scope $DNS_ID
    ```
 
-## Login to Cluster
+1. Get OpenShift console URL
 
-1. Login to your cluster through oc cli
+   ```bash
+   az aro show -g $RESOURCEGROUP -n $CLUSTER --query "consoleProfile.url" -o tsv
+   ```
+
+1. Get OpenShift API URL
+
+   ```bash
+   az aro show -g $RESOURCEGROUP -n $CLUSTER --query "apiserverProfile.url" -o tsv
+   ```
+
+1. Get OpenShift credentials
+
+   > You can use these to log in to the web console (will get a cert warning that you can bypass with typing "thisisunsafe" in a chrome browser or login with oc)
+
+   ```bash
+   az aro list-credentials --name $CLUSTER --resource-group $RESOURCEGROUP
+   ```
+
+
+
+## Log In to Cluster
+
+1. Log in to your cluster through oc cli
 
    >You may need to flush your local dns resolver/cache before you can see the DNS/Hostnames. On Windows you can open up a command prompt as administrator and type "ipconfig /flushdns"
 
@@ -348,7 +325,7 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
 
 1. Wait for cert-manager operator to finish installing.
 
-   Our next steps can't complete until the operator has finished installing. I recommend that you login to your cluster with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.
+   Our next steps can't complete until the operator has finished installing. I recommend that you log in to your cluster console with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.
 
    ![View cert-manager Operator for Red Hat OpenShift](cert-manager-operator.png)
 
@@ -373,7 +350,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
 1. Create Cluster Issuer
 
    ```yaml
-   envsubst  <<EOF | oc apply -f -
+   cat <<EOF | oc apply -f -
    apiVersion: cert-manager.io/v1
    kind: ClusterIssuer
    metadata:
@@ -419,14 +396,14 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    Events:                    <none>
    ```
 
-   Once the above command is complete, you should be able to login to openshift, click view operators and make sure you're in the "openshift-cert-manager-operator" project and you should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.
+   Once the above command is complete, you should be able to log in to the OpenShift console, navigate to Installed Operators, click on the cert-manager Operator, make sure you're in the "openshift-cert-manager-operator" project, and click the ClusterIssuer tab. You should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.
 
    ![cluster issuer](cluster-issuer.png)
 
 ### Create & Install API Certificate
 
 1. Switch openshift-config project
-
+/
    ```bash
    oc project openshift-config
    ```
@@ -434,7 +411,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
 1. Configure API certificate
 
    ```yaml
-   envsubst  <<EOF | oc apply -f -
+   cat <<EOF | oc apply -f -
    apiVersion: cert-manager.io/v1
    kind: Certificate
    metadata:
@@ -461,7 +438,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    This job will install the certificate
 
    ```yaml
-   envsubst  <<EOF | oc apply -f -
+   cat <<EOF | oc apply -f -
    apiVersion: rbac.authorization.k8s.io/v1
    kind: ClusterRole
    metadata:
@@ -523,7 +500,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
                - |
                  #!/usr/bin/env bash
                  if oc get secret openshift-api-certificate -n openshift-config; then
-                   oc patch apiserver cluster --type=merge -p '{"spec":{"servingCerts": {"namedCertificates": [{"names": ["'$API_HOST_NAME'"], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}'
+                   oc patch apiserver cluster --type=merge -p '{"spec":{"servingCerts": {"namedCertificates": [{"names": ["'\$API_HOST_NAME'"], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}'
                  else
                    echo "Could not execute sync as secret 'openshift-api-certificate' in namespace 'openshift-config' does not exist, check status of CertificationRequest"
                    exit 1
@@ -548,7 +525,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
 1. Configure Wildcard Certificate
 
    ```yaml
-   envsubst  <<EOF | oc apply -f -
+   cat <<EOF | oc apply -f -
    apiVersion: cert-manager.io/v1
    kind: Certificate
    metadata:
@@ -666,7 +643,7 @@ It will take a few minutes for the jobs to successfully complete.
 
 Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser and no more warnings about SSL on cli.
 
-You may want to open an InPrivate/Private browser tab to visit the console/api so you can see the new SSL cert without having to expire your cache.
+You may want to open an InPrivate/Private browser tab to visit the console/api via the URLs you previously listed so you can see the new SSL cert without having to expire your cache.
 
 ## Delete Cluster
 
