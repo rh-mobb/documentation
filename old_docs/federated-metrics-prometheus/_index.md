@@ -58,13 +58,12 @@ This guide is heavily influenced by Tommer Amber's [guide](https://medium.com/@t
 1. Wait until the two operators are running
 
    ```bash
-   watch kubectl get pods -n $NAMESPACE
+   watch oc get pods -n $NAMESPACE
    ```
 
    ```
    NAME                                                   READY   STATUS    RESTARTS   AGE
    grafana-operator-controller-manager-775f8d98c9-822h7   2/2     Running   0          7m33s
-   operatorhubio-dtb2v                                    1/1     Running   0          8m32s
    prometheus-operator-5cb6844699-t7wfd                   1/1     Running   0          7m29s
    ```
 
@@ -86,7 +85,7 @@ This guide is heavily influenced by Tommer Amber's [guide](https://medium.com/@t
 1. Ensure the new Prometheus instance's Pods are running
 
    ```bash
-   kubectl get pods -n ${NAMESPACE} -l app=prometheus -o wide
+      oc -n $NAMESPACE get pods 
    ```
 
    You should see the following:
@@ -102,7 +101,7 @@ This guide is heavily influenced by Tommer Amber's [guide](https://medium.com/@t
     Fetch the Route:
 
    ```bash
-   kubectl -n ${NAMESPACE} get route prometheus-route
+   oc -n $NAMESPACE get route prometheus-route
    ```
 
    You should see the following:
@@ -132,7 +131,7 @@ Open the Prometheus Route in your browser (the `HOST/PORT` field from above)
 1. forward a port to Alert Manager
 
    ```bash
-      kubectl -n ${NAMESPACE} port-forward svc/monitoring-alertmanager-cr 9093:9093
+      oc -n $NAMESPACE port-forward svc/monitoring-alertmanager-cr 9093:9093
    ```
 
 1. Browse to http://localhost:9093/#/alerts to see the alert "ExampleAlert"
