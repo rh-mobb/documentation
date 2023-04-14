@@ -51,28 +51,28 @@ This guide walks through setting up federating Prometheus metrics to S3 storage.
 1. Create a Policy for access to S3
 
     ```bash
-cat <<EOF > $SCRATCH_DIR/s3-policy.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "Statement",
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket",
-                "s3:GetObject",
-                "s3:DeleteObject",
-                "s3:PutObject",
-                "s3:PutObjectAcl"
-            ],
-            "Resource": [
-                "arn:aws:s3:::$S3_BUCKET/*",
-                "arn:aws:s3:::$S3_BUCKET"
-            ]
-        }
-    ]
-}
-EOF
+    cat <<EOF > $SCRATCH_DIR/s3-policy.json
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "Statement",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:ListBucket",
+                    "s3:GetObject",
+                    "s3:DeleteObject",
+                    "s3:PutObject",
+                    "s3:PutObjectAcl"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::$S3_BUCKET/*",
+                    "arn:aws:s3:::$S3_BUCKET"
+                ]
+            }
+        ]
+    }
+    EOF
     ```
 
 1. Apply the Policy
