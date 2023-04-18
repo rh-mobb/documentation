@@ -45,11 +45,11 @@ I'm going to be running this setup through Bash on the Azure Cloud Shell. Be sur
 
 1. click **Copy pull secret** 
 
-1. Back in the Azure Cloud Shell, enter the following. Insetad of `paste_your_secret`, paste your actual secret. To do so, right-click and choose paste.
+1. Back in the Azure Cloud Shell, enter the following. Instead of `<paste_your_secret>`, paste your actual secret on that line. To do so, right-click and choose paste.
 
     ```bash
     cat >> ./pull-secret.txt << EOF
-    paste_your_secret
+    <paste_your_secret>
     EOF
     ```
 
