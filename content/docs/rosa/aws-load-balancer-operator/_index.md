@@ -51,7 +51,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 1. Set Variables describing your VPC and Subnets:
 
    ```bash
-   export VPC=<vpc-id>
+   export VPC_ID=<vpc-id>
    export PUBLIC_SUBNET_IDS=<public-subnets>
    export PRIVATE_SUBNET_IDS=<private-subnets>
    export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}")
@@ -60,7 +60,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 1. Tag VPC with the cluster name
 
    ```bash
-   aws ec2 create-tags --resources VPC_ID --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned
+   aws ec2 create-tags --resources ${VPC_ID} --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned
    ```
 
 1. Add tags to Public Subnets
