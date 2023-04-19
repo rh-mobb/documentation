@@ -89,9 +89,9 @@ NOTE: you can select from ACM 2.7 onwards for install ACM Submariner for ROSA/AR
 * Check that the Operator has installed successfully
 
 ```sh
-oc get csv
-NAME                                 DISPLAY                                      VERSION   REPLACES   PHASE
-advanced-cluster-management.v2.7.0   Advanced Cluster Management for Kubernetes   2.7.0                Succeeded
+kubectl get csv -n open-cluster-management
+NAME                                 DISPLAY                                      VERSION   REPLACES                             PHASE
+advanced-cluster-management.v2.7.2   Advanced Cluster Management for Kubernetes   2.7.2     advanced-cluster-management.v2.7.1   Succeeded
 ```
 
 NOTE: ACM Submariner for ROSA/ARO will only work from ACM 2.7 onwards! Ensure that you have a >= 2.7 ACM version.
@@ -109,6 +109,13 @@ spec: {}
 EOF
 ```
 
+* Check that the MultiClusterHub is installed and running properly
+
+```sh
+kubectl get multiclusterhub -n open-cluster-management -o json | jq '.items[0].status.phase'
+"Running"
+```
+
 NOTE: if it's not in Running state, wait a couple of minutes and check again.
 
 
@@ -117,7 +124,7 @@ NOTE: if it's not in Running state, wait a couple of minutes and check again.
 * Define the prerequisites for install the ROSA cluster
 
 ```sh
- export VERSION=4.10.15 \
+ export VERSION=4.11.36 \
         ROSA_CLUSTER_NAME=rosa-sbmr1 \
         AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
         REGION=eu-west-1 \
@@ -173,7 +180,7 @@ kubectl config use $ROSA_CLUSTER_NAME
 kubectl get dns cluster -o jsonpath='{.spec.baseDomain}'
 ```
 
-### Generate ROSA New nodes for submariner 
+## Generate ROSA New nodes for submariner 
 
 * Create new node/s that will be used to run Submariner gateway using the following command (check https://github.com/submariner-io/submariner/issues/1896 for more details)
 
@@ -181,7 +188,7 @@ kubectl get dns cluster -o jsonpath='{.spec.baseDomain}'
 rosa create machinepool --cluster $ROSA_CLUSTER_NAME --name=sm-gw-mp --replicas=1 --labels='submariner.io/gateway=true'
 ```
 
-NOTE: setting replicas=2  means that we allocate two nodes for SM GW , to support GW Active/Passive HA (check [Gateway Failover](https://submariner.io/getting-started/architecture/gateway-engine/) section ), if GW HA is not needed you can set replicas=1.
+NOTE: setting replicas=2 means that we allocate two nodes for SM GW , to support GW Active/Passive HA (check [Gateway Failover](https://submariner.io/getting-started/architecture/gateway-engine/) section ), if GW HA is not needed you can set replicas=1.
 
 * Check the machinepools requested, including the submariner machinepool requested
 
@@ -189,7 +196,7 @@ NOTE: setting replicas=2  means that we allocate two nodes for SM GW , to suppor
 rosa list machinepools -c $ROSA_CLUSTER_NAME
 ID        AUTOSCALING  REPLICAS  INSTANCE TYPE  LABELS                        TAINTS    AVAILABILITY ZONES    SPOT INSTANCES
 Default   No           2         m5.xlarge                                              eu-west-1a            N/A
-sm-gw-mp  No           2         m5.xlarge      submariner.io/gateway=true              eu-west-1a            No
+sm-gw-mp  No           1         m5.xlarge      submariner.io/gateway=true              eu-west-1a            No
 ```
 
 * After a couple of minutes, check the new nodes generated
@@ -198,7 +205,7 @@ sm-gw-mp  No           2         m5.xlarge      submariner.io/gateway=true      
 kubectl get nodes --show-labels | grep submariner
 ```
 
-### Deploy ARO Cluster
+## Deploy ARO Cluster
 
 > **IMPORTANT**: To enable Submariner in ROSA - ARO clusters, the POD_CIDR and SERVICE_CIDR can’t overlap between them. To avoid IP address conflicts, the ARO cluster needs to modify the default IP CIDRs. Check the Submariner docs for more information.
 
@@ -206,8 +213,8 @@ kubectl get nodes --show-labels | grep submariner
 
 ```sh
 AZR_RESOURCE_LOCATION=eastus
-AZR_RESOURCE_GROUP=aro-rcarrata-rg
-AZR_CLUSTER=aro-rcarrata
+AZR_RESOURCE_GROUP=aro-sbmr2-rg
+AZR_CLUSTER=aro-sbmr2
 AZR_PULL_SECRET=~/Downloads/pull-secret.txt
 POD_CIDR="10.132.0.0/14"
 SERVICE_CIDR="172.31.0.0/16"
@@ -230,7 +237,7 @@ SERVICE_CIDR="172.31.0.0/16"
    --resource-group $AZR_RESOURCE_GROUP
 ```
 
-* Disable network policies on the control plane subnet
+* Create control plane subnet
 
 ```sh
  az network vnet subnet create \
@@ -239,6 +246,27 @@ SERVICE_CIDR="172.31.0.0/16"
    --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
    --address-prefixes 10.0.0.0/23 \
    --service-endpoints Microsoft.ContainerRegistry
+```
+
+* Create machine subnet
+
+```sh
+az network vnet subnet create \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+  --address-prefixes 10.0.2.0/23 \
+  --service-endpoints Microsoft.ContainerRegistry
+```
+
+* Disable network policies on the control plane subnet
+
+```bash
+az network vnet subnet update \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  --resource-group $AZR_RESOURCE_GROUP \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
+  --disable-private-link-service-network-policies true
 ```
 
 * Create the ARO cluster
@@ -250,33 +278,27 @@ SERVICE_CIDR="172.31.0.0/16"
    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
    --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-   --pod-cidr “$POD_CIDR” \
-   --service-cidr “$SERVICE_CIDR” \
+   --pod-cidr "$POD_CIDR" \
+   --service-cidr "$SERVICE_CIDR" \
    --pull-secret @$AZR_PULL_SECRET
 ```
 
-* Get ARO OpenShift console URL
+* Get ARO OpenShift API Url
 
 ```sh
- az aro show \
-   --name $AZR_CLUSTER \
-   --resource-group $AZR_RESOURCE_GROUP \
-   -o tsv --query consoleProfile
+ARO_URL=$(az aro show -g $AZR_RESOURCE_GROUP -n $AZR_CLUSTER --query apiserverProfile.url -o tsv)
 ```
 
 * Login into the ARO cluster and set context
 
 ```sh
- az aro list-credentials \
-   --name $AZR_CLUSTER \
-   --resource-group $AZR_RESOURCE_GROUP \
-   -o tsv
+ARO_KUBEPASS=$(az aro list-credentials --name $AZR_CLUSTER --resource-group $AZR_RESOURCE_GROUP -o tsv --query kubeadminPassword)
 ```
 
 * Login into the ARO cluster and set context
 
 ```sh
-oc login --username kubeadmin --password xxx --server=https://api.xxx.xxx.xxx:6443
+oc login --username kubeadmin --password $ARO_KUBEPASS --server=$ARO_URL
 
 kubectl config rename-context $(oc config current-context) $AZR_CLUSTER
 kubectl config use $AZR_CLUSTER
@@ -288,7 +310,7 @@ NOTE: ARO doesn't need to generate extra nodes to have the ACM submariner compon
 
 ## Create ManagedClusterSets
 
-* Create a ManagedClusterSet for ROSA and ARO clusters
+* Create a [ManagedClusterSet](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html-single/clusters/index#managedclustersets-intro) for ROSA and ARO clusters
 
 ```sh
 kubectl config use hub
@@ -302,18 +324,21 @@ metadata:
 EOF
 ```
 
-### Import ROSA cluster in ACM (CLI)
+## Import ROSA cluster in ACM (CLI)
 
 We will import the cluster using the auto-import secret and using the Klusterlet Addon Config.
+
+If you want to import your cluster using the RHACM UI, refer to the official [Importing a managed cluster by using console](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html-single/clusters/index#importing-managed-cluster-console) documentation. 
 
 * Retrieve ROSA TOKEN the ROSA API from the ROSA cluster
 
 ```sh
-kubectl config use rosa-sub1
-SUB1_API=$(oc whoami -t)
-echo $SUB1_API
-SUB1_TOKEN=$(oc whoami --show-server)
-echo $SUB1_TOKEN
+kubectl config use $ROSA_CLUSTER_NAME
+SUB1_API=$(oc whoami --show-server)
+echo "$ROSA_CLUSTER_NAME API: $SUB1_API\n"
+
+SUB1_TOKEN=$(oc whoami -t)
+echo "$ROSA_CLUSTER_NAME Token: $SUB1_TOKEN\n"
 ```
 
 * Config the Hub as the current context
@@ -397,10 +422,12 @@ EOF
 kubectl get ManagedCluster
 NAME            HUB ACCEPTED   MANAGED CLUSTER URLS                                           JOINED   AVAILABLE   AGE
 local-cluster   true           https://api.cluster-xxxx.xxxx.xxxx.xxx.com:6443   True     True        5h9m
-rosa-subm1      true           https://api.rosa-subm1.xxxx.p1.openshiftapps.com:6443          True     True        1m
+rosa-sbmr1      true           https://api.rosa-subm1.xxxx.p1.openshiftapps.com:6443          True     True        1m
 ```
 
-### Import ARO cluster into ACM (CLI)
+![ARO Submariner](./aro-submariner1.png)
+
+## Import ARO cluster into ACM (CLI)
 
 * Retrieve the ARO token and the ARO API url from the ARO cluster
 
@@ -408,9 +435,10 @@ rosa-subm1      true           https://api.rosa-subm1.xxxx.p1.openshiftapps.com:
 kubectl config use $AZR_CLUSTER
 
 SUB2_API=$(oc whoami --show-server)
-echo $SUB2_API
+echo "$AZR_CLUSTER API: $SUB2_API\n"
+
 SUB2_TOKEN=$(oc whoami -t)
-echo $SUB2_TOKEN
+echo "$AZR_CLUSTER Token: $SUB2_TOKEN\n"
 ```
 
 * Config the Hub as the current context
@@ -486,7 +514,7 @@ spec:
 EOF
 ```
 
-### Review the clusters imported in ACM
+## Review the clusters imported in ACM
 
 * Check the managed clusters in ACM 
 
@@ -500,7 +528,24 @@ local-cluster   true           https://api.cluster-xxxx.xxxx.xxxx.xxxx.com:6443 
 rosa-sbmr1      true           https://api.rosa-xxxx.xxxx.p1.openshiftapps.com:6443          True     True        46h
 ```
 
-## Deploy Submariner Addon in Managed ROSA and ARO clusters
+![ARO Submariner](./aro-submariner2.png)
+
+Now it's time to deploy submariner in our Managed Clusters (ROSA and ARO). 
+Either deploy using the RHACM UI or with CLI (choose one).
+
+## Deploy Submariner Addon in Managed ROSA and ARO clusters from the RHACM UI
+
+* Inside of the ClusterSets tab, go to the rosa-aro-clusters generated.
+
+* Go to Submariner add-ons and Click in "Install Submariner Add-Ons"
+
+* Configure the Submariner addons adding both ROSA and ARO clusters generated:
+
+![ARO Submariner](./aro-submariner5.png)
+
+The Submariner Add-on installation will start, and will take up to 10 minutes to finish.
+
+## Deploy Submariner Addon in Managed ROSA and ARO clusters with CLI
 
 NOTE: All of this commands are executed in the ACM Hub cluster, not in the ACM Managed Clusters (ROSA / ARO created).
 
@@ -598,6 +643,10 @@ spec:
 EOF
 ```
 
-* Few minutes after we can check that the app Connection Status and the Agent Status are Healthy:
+The Submariner Add-on installation will start, and will take up to 10 minutes to finish.
+
+## Check the Status of the Submariner Networking Add-On 
+
+* Few minutes (up to 10 minutes) after we can check that the app Connection Status and the Agent Status are Healthy:
 
 ![ARO Submariner](./aro-submariner.png)
