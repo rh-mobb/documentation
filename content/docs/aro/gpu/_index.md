@@ -172,6 +172,12 @@ ARO still uses Kubernetes Machinsets to create a machine set.  I'm going to expo
       gpu mobb/aro-gpu
    ```
 
+1. Switch to the proper namespace (project):
+
+```bash
+oc project openshift-machine-api
+```
+
 1. Wait for the new GPU nodes to be available
 
    ```bash
