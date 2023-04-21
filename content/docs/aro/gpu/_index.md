@@ -6,7 +6,7 @@ tags: ["ARO", "Azure", "GPU"]
 
 ARO guide to running Nvidia GPU workloads.
 
-Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart)
+Authors: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart), [Ricardo M. Martins](https://github.com/ricmmartins)
 
 
 ## Prerequisites
