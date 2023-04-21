@@ -15,7 +15,7 @@ Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://
 * jq, moreutils, and gettext package
 * ARO 4.10
 
-If you need to install an ARO cluster, please read our [ARO Quick start guide](https://mobb.ninja/docs/quickstart-aro.html). Please be sure if you're installing or using an existing ARO cluster that it is 4.10.x or higher.
+If you need to install an ARO cluster, please read our [ARO Quick start guide](https://mobb.ninja/docs/quickstart-aro/). Please be sure if you're installing or using an existing ARO cluster that it is 4.10.x or higher.
 
 >As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator. This has greatly simplified the setup of the cluster for GPU workloads.
 
@@ -171,6 +171,12 @@ ARO still uses Kubernetes Machinsets to create a machine set.  I'm going to expo
    helm upgrade --install -n openshift-machine-api \
       gpu mobb/aro-gpu
    ```
+
+1. Switch to the proper namespace (project):
+
+```bash
+oc project openshift-machine-api
+```
 
 1. Wait for the new GPU nodes to be available
 
