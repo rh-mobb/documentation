@@ -1,4 +1,3 @@
-
 ---
 title: "Advanced Cluster Management"
 date: 2022-09-14
