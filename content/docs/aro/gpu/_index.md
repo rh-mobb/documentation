@@ -712,7 +712,7 @@ It may take some time for the nVidia Operator and NFD to completely install and 
    oc logs cuda-vector-add --tail=-1
    ```
 
-   >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating" try running "oc delete pod cuda-vector-add" and then re-run the create statement above. I've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
+   >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating", try running "oc delete pod cuda-vector-add" and then re-run the create statement above. I've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
 
    You should see Output like the following (mary vary depending on GPU):
 
