@@ -119,7 +119,7 @@ NOTE: if it's not in Running state, wait a couple of minutes and check again.
 * Define the prerequisites for install the ROSA cluster
 
 ```sh
- export VERSION=4.10.15 \
+ export VERSION=4.11.36 \
         ROSA_CLUSTER_NAME_1=rosa-sbmr1 \
         AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
         REGION=eu-west-1 \
@@ -207,7 +207,7 @@ kubectl get nodes --show-labels | grep submariner
 * Define the prerequisites for install the second ROSA cluster
 
 ```sh
- export VERSION=4.10.15 \
+ export VERSION=4.11.36 \
         ROSA_CLUSTER_NAME_2=rosa-sbmr2 \
         AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
         REGION=us-east-2 \
@@ -398,9 +398,10 @@ EOF
 ```sh
 kubectl config use $ROSA_CLUSTER_NAME_2
 SUB2_API=$(oc whoami --show-server)
-echo $SUB2_API
+echo "$ROSA_CLUSTER_NAME_2 API: $SUB2_API\n"
+
 SUB2_TOKEN=$(oc whoami -t)
-echo $SUB2_TOKEN
+echo "$ROSA_CLUSTER_NAME_2 Token: $SUB2_TOKEN\n"
 ```
 
 * Config the Hub as the current context
@@ -412,7 +413,7 @@ kubectl get mch -A
 
 * Create (in the Hub) ManagedCluster object defining the second ROSA cluster
 
-```
+```sh
 cat << EOF | kubectl apply -f -
 apiVersion: cluster.open-cluster-management.io/v1
 kind: ManagedCluster
@@ -432,7 +433,7 @@ EOF
 
 * Create (in the Hub) auto-import-secret.yaml secret defining the the token and server from second ROSA cluster
 
-```
+```sh
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
@@ -449,7 +450,7 @@ EOF
 
 * Create and apply the klusterlet add-on configuration file for the second rosa cluster
 
-```
+```sh
 cat << EOF | kubectl apply -f -
 apiVersion: agent.open-cluster-management.io/v1
 kind: KlusterletAddonConfig
@@ -480,7 +481,7 @@ EOF
 
 * Check the managed clusters and the managed cluster set
 
-```
+```sh
 kubectl config use hub
 
 kubectl get managedclusters
@@ -489,6 +490,21 @@ local-cluster   true           https://api.cluster-xxx.xxx.xxx.xxx.com:6443   Tr
 rosa-subm1      true           https://api.rosa-subm1.xxx.p1.openshiftapps.com:6443          True     True        133m
 rosa-subm2      true           https://api.rosa-subm2.xxx.p1.openshiftapps.com:6443          True     True        51m
 ```
+
+![ROSA Submariner](./rosa-submariner2.png)
+
+Now it's time to deploy submariner in our Managed ROSA Clusters. 
+Either deploy using the RHACM UI or with CLI (choose one).
+
+## Deploy Submariner Addon in Managed ROSA clusters from the RHACM UI
+
+* Inside of the ClusterSets tab, go to the rosa-aro-clusters generated.
+
+* Go to Submariner add-ons and Click in "Install Submariner Add-Ons"
+
+* Configure the Submariner addons adding both ROSA clusters generated:
+
+![ROSA Submariner](./rosa-submariner3.png)
 
 ## Deploy Submariner Addon in ROSA clusters
 
@@ -596,6 +612,95 @@ rosa-sbmr1      submariner                    True
 rosa-sbmr2      submariner                    True
 ```
 
-* Check in the UI that the Connection Status, Agent Status have Healthy status and the Gateway Nodes are labeled properly
+The Submariner Add-on installation will start, and will take up to 10 minutes to finish.
 
-![ACM Grafana Dashboard](./rosa-submariner.png)
+## Check the Status of the Submariner Networking Add-On 
+
+* Few minutes (up to 10 minutes) after we can check that the app Connection Status and the Agent Status are Healthy:
+
+![ROSA Submariner](./rosa-submariner.png)
+
+## Testing Submariner Networking connectivity with an example app (Optional)
+
+This final step (**totally optional**), is an extra step to check if the Submariner networking tunnels are built and connected properly.
+
+This example app deploy one FE (guestbook) in the first ROSA cluster, and two redis with active-backup replication.
+
+One Redis will be in the first ROSA cluster and will sync and replicate the data inserted by the FE, to the second redis (in backup/passive mode) using the submariner tunnel (connecting both ROSA clusters).
+
+The connection will be using the ServiceExport feature (DNS Discovery) from Submariner, that allows to call the Redis Service (Active or Passive) from within the Service CIDR. 
+
+* Clone the example repo app
+
+```sh
+git clone https://github.com/rh-mobb/acm-demo-app
+```
+
+* Deploy the GuestBook App in ROSA Cluster 1
+
+```sh
+kubectl config use hub
+oc apply -k guestbook-app/acm-resources
+```
+
+![ROSA Submariner](./rosa-submariner4.png)
+
+* Deploy the Redis Master App in ROSA Cluster 1
+
+```sh
+oc apply -k redis-master-app/acm-resources
+```
+
+![ROSA Submariner](./rosa-submariner5.png)
+
+* Apply relaxed scc only for this PoC
+
+```sh
+kubectl config use $ROSA_CLUSTER_NAME
+oc adm policy add-scc-to-user anyuid -z default -n guestbook
+oc delete pod --all -n guestbook
+```
+
+* Deploy the Redis Slave App in ROSA Cluster 2
+
+```sh
+kubectl config use hub
+oc apply -k redis-slave-app/acm-resources
+```
+
+* Apply relaxed SCC only for this PoC
+
+```sh
+kubectl config use $ROSA_CLUSTER_NAME_2
+oc adm policy add-scc-to-user anyuid -z default -n guestbook
+oc delete pod --all -n guestbook
+```
+
+![ROSA Submariner](./rosa-submariner6.png)
+
+### Testing the Synchronization of the Redis Master-Slave between clusters and interacting with our FrontEnd using Submariner tunnels
+
+To test the sync between the data from the Redis Master<->Slave, let's write some data into our frontend. Access to the route of the guestbook App y write some data:
+
+![ROSA Submariner](./rosa-submariner7.png)
+
+* Now let's see the logs in the Redis Slave:
+
+![ROSA Submariner](./rosa-submariner9.png)
+
+The sync is automatic and almost instantaneous between Master-Slave.
+
+* We can check the data write in the redis-slave with the redis-cli and the following command:
+
+```
+for key in $(redis-cli -p 6379 keys \*);
+  do echo "Key : '$key'"
+     redis-cli -p 6379 GET $key;
+done
+```
+
+* Let's performed in the redis-slave pod:
+
+![ROSA Submariner](./rosa-submariner8.png)
+
+And that's how the Redis-Master in the ROSA cluster 1 sync properly the data to the redis-slave in the ROSA Cluster 2, using Submariner tunnels, all encrypted with IPSec.
