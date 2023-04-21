@@ -11,7 +11,16 @@ tags: ["AWS", "ROSA"]
 
 * Prequisites
 
-  [An STS Openshift Cluster](https://docs.openshift.com/container-platform/4.10/authentication/managing_cloud_provider_credentials/cco-mode-sts.html)
+  * [An STS Openshift Cluster](https://docs.openshift.com/container-platform/4.10/authentication/managing_cloud_provider_credentials/cco-mode-sts.html)
+
+  * Setup Environment Variables
+   ```bash
+    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json \
+    | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
+    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    export REPOSITORY_NAME=test
+   ```
+
 
 * Create the policy
 
@@ -47,12 +56,12 @@ cat <<EOF > /tmp/trust_policy.json
         {
             "Effect": "Allow",
             "Principal": {
-                "Federated": "arn:aws:iam::[ACCOUNT_ID]:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/1ou2pbj9v68ghlc63bo0mad059cj1elf"
+                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
             },
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {
                 "StringEquals": {
-                    "rh-oidc.s3.us-east-1.amazonaws.com/1ou2pbj9v68ghlc63bo0mad059cj1elf:sub": "system:serviceaccount:ecr-secret-operator:ecr-secret-operator-controller-manager"
+                    "${OIDC_PROVIDER}:sub": "system:serviceaccount:ecr-secret-operator:ecr-secret-operator-controller-manager"
                 }
             }
         }
@@ -61,7 +70,7 @@ cat <<EOF > /tmp/trust_policy.json
 EOF
 
 aws iam create-role --role-name ECRLogin --assume-role-policy-document file:///tmp/trust_policy.json
-aws iam attach-role-policy --role-name ECRLogin --policy-arn arn:aws:iam::[ACCOUNT_ID]:policy/ECRLoginPolicy
+aws iam attach-role-policy --role-name ECRLogin --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/ECRLoginPolicy
 ```
 
 * Create the repository policy
@@ -76,7 +85,7 @@ cat <<EOF > /tmp/repo_policy.json
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-                    "arn:aws:iam::[ACCOUNT_ID]:role/ECRLogin"
+                    "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ECRLogin"
                 ]
             },
             "Action": [
@@ -93,7 +102,7 @@ cat <<EOF > /tmp/repo_policy.json
 }
 EOF
 
-aws ecr set-repository-policy --repository-name test --policy-text file:///tmp/repo_policy.json
+aws ecr set-repository-policy --repository-name ${REPOSITORY_NAME} --policy-text file:///tmp/repo_policy.json
 ```
 
 * Create STS kubernetes Secret
@@ -101,10 +110,10 @@ aws ecr set-repository-policy --repository-name test --policy-text file:///tmp/r
 ```
 cat <<EOF > /tmp/credentials
 [default]
-role_arn = arn:aws:iam::[ACCOUNT_ID]:role/ECRLogin
+role_arn = arn:aws:iam::${AWS_ACCOUNT_ID}:role/ECRLogin
 web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
 EOF
 
-
-oc create secret generic aws-ecr-cloud-credentials --from-file=credentials=/tmp/credentials
+oc new-project ecr-secret-operator
+oc create secret generic aws-ecr-cloud-credentials --from-file=credentials=/tmp/credentials -n ecr-secret-operator
 ```

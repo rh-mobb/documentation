@@ -1,12 +1,12 @@
 ---
-date: '2022-09-14T22:07:08.554151'
+date: '2023-29-14T22:07:08.554151'
 title: Using Cluster Logging Forwarder in ARO with Azure Monitor
 tags: ["ARO", "Azure"]
 ---
 
-**Paul Czarkowski, Steve Mirman**
+**Paul Czarkowski, Steve Mirman, Nerav Doshi**
 
-*08/19/2021*
+*03/29/2023*oc log
 
 In Azure Red Hat OpenShift (ARO) you can fairly easily set up cluster logging to an in-cluster Elasticsearch using the OpenShift Elasticsearch Operator
 and the Cluster Logging Operator, but what if you want to use the Azure native Log Analytics service?
@@ -124,7 +124,9 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
   or
 
-1. Log into [Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs)
+1. Log into Azure[Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs) or you can login into portal and search for Log Analytics workspace
+
+   ! [screenshot of Log analytics workspace](./images/loganalyticsportal.png)
 
 1. Select your workspace
 
@@ -137,4 +139,4 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
       | take 10
    ```
 
-   ![screenshot of query results](./images/query_results.png)
+   ![screenshot of query results](./images/loganalytics_query.png)

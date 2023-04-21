@@ -26,6 +26,12 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
     brew update && brew install azure-cli
     ```
 
+2. Install sshuttle using homebrew
+
+    ```bash
+    brew install sshuttle
+    ```
+
 **Linux**
 
 > See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf) for alternative install options.
@@ -52,7 +58,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 1. Install Azure CLI
 
     ```bash
-    sudo dnf install -y azure-cli
+    sudo dnf install -y azure-cli sshuttle
     ```
 
 ### Prepare Azure Account for Azure OpenShift
@@ -347,11 +353,11 @@ This replaces the routes for the cluster to go through the Firewall for egress v
     --route-table aro-udr
     ```
 
-1. Create the cluster
+### Create the cluster
 
-    > This will take between 30 and 45 minutes.
+This will take between 30 and 45 minutes.
 
-    ```bash
+```bash
     az aro create                                                            \
     --resource-group $AZR_RESOURCE_GROUP                                     \
     --name $AZR_CLUSTER                                                      \
@@ -363,7 +369,8 @@ This replaces the routes for the cluster to go through the Firewall for egress v
     --pull-secret @$AZR_PULL_SECRET                                          \
     --client-id "${AZ_SP_ID}"                                                \
     --client-secret "${AZ_SP_PASS}"
-      ```
+ ```
+
 
 ### Jump Host
 

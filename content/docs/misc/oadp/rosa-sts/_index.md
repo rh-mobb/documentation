@@ -4,6 +4,10 @@ title: Deploying OpenShift API for Data Protection on a ROSA cluster
 tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
 ---
 
+**Author: Paul Czarkowski, Dustin Scott**
+
+*Last edited: 03/29/2023*
+
 ## Prerequisites
 
 * [An STS enabled ROSA cluster](../../../rosa/sts)
@@ -136,6 +140,10 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
 
 1. Deploy OADP Operator
 
+> **NOTE:** there is currently an issue with 1.1 of the operator with backups 
+that have a `PartiallyFailed` status.  This does not seem to affect the backup 
+and restore process, but it should be noted as there are issues with it.
+
    ```bash
    cat << EOF | oc create -f -
    apiVersion: operators.coreos.com/v1
@@ -151,17 +159,15 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
-     labels:
-       operators.coreos.com/oadp-operator.openshift-adp: ""
-     name: oadp-operator
+     name: redhat-oadp-operator
      namespace: openshift-adp
    spec:
-     channel: stable
+     channel: stable-1.0
      installPlanApproval: Automatic
-     name: oadp-operator
-     source: community-operators
+     name: redhat-oadp-operator
+     source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: oadp-operator.v0.5.6
+     startingCSV: oadp-operator.v1.0.8
    EOF
    ```
 
@@ -219,8 +225,8 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
          defaultPlugins:
          - openshift
          - aws
-         restic:
-           enable: false
+       restic:
+         enable: false
      volumeSnapshots:
      - velero:
          config:
@@ -339,14 +345,45 @@ tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
 1. Delete the Data Protection Application
 
    ```bash
-   oc delete dpa ${CLUSTER_NAME}-dpa
+   oc -n openshift-adp delete dpa ${CLUSTER_NAME}-dpa
    ```
 
 1. Delete the Cloud Storage
 
    ```bash
-   oc delete cloudstorage ${CLUSTER_NAME}-oadp
+   oc -n openshift-adp delete cloudstorage ${CLUSTER_NAME}-oadp
    ```
+
+> **WARNING:** if this command hangs, you may need to delete the finalizer:
+
+  ```bash
+  oc -n openshift-adp patch cloudstorage ${CLUSTER_NAME}-oadp -p '{"metadata":{"finalizers":null}}' --type=merge
+  ```
+
+1. Remove the operator if it is no longer required:
+
+  ```bash
+  oc -n openshift-adp delete subscription oadp-operator
+  ```
+
+1. Remove the namespace for the operator:
+
+  ```bash
+  oc delete ns openshift-adp
+  ```
+
+1. Remove the backup and restore resources from the cluster if they are no longer required:
+
+  ```bash
+  oc delete backup hello-world
+  oc delete restore hello-world
+  ```
+
+1. Remove the Custom Resource Definitinos from the cluster if you no longer wish to have them:
+
+  ```bash
+  for CRD in `oc get crds | grep velero | awk '{print $1}'`; do oc delete crd $CRD; done
+  ```
 
 1. Delete the AWS S3 Bucket
 

@@ -5,8 +5,9 @@ aliases: ['/docs/security/secrets-store-csi/azure-key-vault']
 tags: ["Azure", "ARO"]
 ---
 
-**Author: Paul Czarkowski**
-*Modified: 10/13/2022*
+Author: [Paul Czarkowski](https://github.com/paulczar)
+
+*Last modified: 03/29/2023*
 
 This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
 
@@ -14,7 +15,8 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 
 1. [An ARO cluster](/docs/quickstart-aro)
 2. The AZ CLI (logged in)
-3. Helm 3.x CLI
+3. The OC CLI (logged in)
+4. Helm 3.x CLI
 
 ### Environment Variables
 
@@ -25,7 +27,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     ```bash
     export KEYVAULT_RESOURCE_GROUP=${AZR_RESOURCE_GROUP:-"openshift"}
     export KEYVAULT_LOCATION=${AZR_RESOURCE_LOCATION:-"eastus"}
-    export KEYVAULT_NAME=secret-store-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
+    export KEYVAULT_NAME=secret-store-$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' < /dev/urandom | fold -w 10 | head -n 1)
     export AZ_TENANT_ID=$(az account show -o tsv --query tenantId)
     ```
 
@@ -53,7 +55,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
       csi-secrets-store-provider-azure/csi-secrets-store-provider-azure \
       --set linux.privileged=true --set secrets-store-csi-driver.install=false \
       --set "linux.providersDir=/var/run/secrets-store-csi-providers" \
-      --version=v1.0.1
+      --version=v1.4.1
     ```
 
 1. Set SecurityContextConstraints to allow the CSI driver to run
@@ -92,9 +94,11 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
    > Note: If this gives you an error, you may need upgrade your Azure CLI to the latest version.
 
    ```bash
-   export SERVICE_PRINCIPAL_CLIENT_SECRET="$(az ad sp create-for-rbac --skip-assignment --name http://$KEYVAULT_NAME --query 'password' -otsv)"
+   export SERVICE_PRINCIPAL_CLIENT_SECRET="$(az ad sp create-for-rbac \
+     --name http://$KEYVAULT_NAME --query 'password' -otsv)"
 
-   export SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list --display-name http://$KEYVAULT_NAME --query '[0].appId' -otsv)"
+   export SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list \
+     --display-name http://$KEYVAULT_NAME --query '[0].appId' -otsv)"
    ```
 
 1. Set an Access Policy for the Service Principal
@@ -108,11 +112,12 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 1. Create and label a secret for Kubernetes to use to access the Key Vault
 
     ```bash
-    kubectl create secret generic secrets-store-creds \
+    oc create secret generic secrets-store-creds \
       -n my-application \
       --from-literal clientid=${SERVICE_PRINCIPAL_CLIENT_ID} \
       --from-literal clientsecret=${SERVICE_PRINCIPAL_CLIENT_SECRET}
-    kubectl -n my-application label secret \
+    
+    oc -n my-application label secret \
       secrets-store-creds secrets-store.csi.k8s.io/used=true
     ```
 
@@ -121,8 +126,8 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 1. Create a Secret Provider Class to give access to this secret
 
    ```bash
-   cat <<EOF | kubectl apply -f -
-   apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+   cat <<EOF | oc apply -f -
+   apiVersion: secrets-store.csi.x-k8s.io/v1
    kind: SecretProviderClass
    metadata:
      name: azure-kvname
@@ -147,7 +152,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 1. Create a Pod that uses the above Secret Provider Class
 
    ```bash
-   cat <<EOF | kubectl apply -f -
+   cat <<EOF | oc apply -f -
    kind: Pod
    apiVersion: v1
    metadata:
@@ -179,7 +184,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 1. Check the Secret is mounted
 
     ```bash
-    kubectl exec busybox-secrets-store-inline -- ls /mnt/secrets-store/
+    oc exec busybox-secrets-store-inline -- ls /mnt/secrets-store/
     ```
 
     Output should match:
@@ -191,7 +196,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
 1. Print the Secret
 
     ```bash
-    kubectl exec busybox-secrets-store-inline \
+    oc exec busybox-secrets-store-inline \
       -- cat /mnt/secrets-store/secret1
     ```
 

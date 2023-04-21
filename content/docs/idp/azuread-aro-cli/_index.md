@@ -4,9 +4,9 @@ title: Configure Azure AD as an OIDC identity provider for ARO with cli
 tags: ["Azure", "ARO"]
 ---
 
-**Daniel Moessner**
+**Shaozhen Ding**
 
-*26 June 2022*
+*31 March 2023*
 
 The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (ARO) via cli are:
 
@@ -84,7 +84,7 @@ Create a `manifest.json` file to configure the Azure Active Directory applicatio
    {
     "idToken": [
       {
-       "name": "upn",
+       "name": "preferred_username",
        "source": null,
        "essential": false,
        "additionalProperties": []
@@ -115,7 +115,7 @@ Create an Azure AD application and retrieve app id:
    ```
 
    ```
-   APPID=$(az ad app list --display-name $DISPLAYNAME --query [].appId -o tsv)
+   APPID=$(az ad app list --display-name $DISPLAYNAME --query '[].appId' -o tsv)
    ```
 
 ### Add Service Principal for the new app ###
@@ -240,13 +240,12 @@ As a last step we need to apply the OpenShift OpenID authentication for Azure Ac
            include_granted_scopes: "true"
          claims:
            preferredUsername:
-           - email
-           - upn
+           - preferred_username
            name:
            - name
            email:
            - email
-         issuer: https://login.microsoftonline.com/$TENANTID
+         issuer: https://login.microsoftonline.com/$TENANTID/v2.0
    EOF
    ```
 
