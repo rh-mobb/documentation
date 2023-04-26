@@ -6,13 +6,14 @@ Submariner is an open source tool that can be used with Red Hat Advanced Cluster
 
 This article describes how to deploy ACM Submariner for connecting ROSA clusters overlay networks.
 
-NOTE: ACM Submariner for ROSA clusters only works from ACM2.7 onwards!
+NOTE: ACM Submariner for ROSA clusters only works with ACM 2.7 or newer!
 
 ## Prerequisites
 
 * OpenShift Cluster version 4 (ROSA or non-ROSA)
 * rosa cli
 * aws cli (optional)
+* ACM 2.7 or newer
 
 ## Manage Multiple Logins
 
@@ -177,7 +178,7 @@ kubectl get dns cluster -o jsonpath='{.spec.baseDomain}'
 
 ### Generate ROSA New nodes for submariner 
 
-* Create new node/s that will be used to run Submariner gateway using the following command (check https://github.com/submariner-io/submariner/issues/1896 for more details)
+* Create new node/s that will be used to run Submariner gateway using the following command (check [the related GitHub issue](https://github.com/submariner-io/submariner/issues/1896) for more details)
 
 ```sh
 rosa create machinepool --cluster $ROSA_CLUSTER_NAME_1 --name=sm-gw-mp --replicas=1 --labels='submariner.io/gateway=true'
@@ -209,7 +210,7 @@ kubectl get nodes --show-labels | grep submariner
 ```sh
  export VERSION=4.11.36 \
         ROSA_CLUSTER_NAME_2=rosa-sbmr2 \
-        AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
+        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text) \
         REGION=us-east-2 \
         AWS_PAGER="" \
         CIDR="10.20.0.0/16" \
@@ -291,7 +292,7 @@ kubectl get nodes --show-labels | grep submariner
 
 ## Create a ManagedClusterSet
 
-* In the Hub (where ACM is installed), create the ManagedClusterSet for the rosa-clusters:
+* In the Hub (where ACM is installed), create the ManagedClusterSet for the `rosa-clusters`:
 
 ```sh
 kubectl config use hub
@@ -530,9 +531,9 @@ spec:
 EOF
 ```
 
-NOTE: Set the the value of globalnetEnabled to true if you want to enable Submariner Globalnet in the ManagedClusterSet.
+NOTE: Set the the value of `globalnetEnabled: true` if you want to enable Submariner Globalnet in the ManagedClusterSet.
 
-* Check the Submariner Broker in the rosa-clusters-broker namespace:
+* Check the Submariner Broker in the `rosa-clusters-broker` namespace:
 
 ```sh
 kubectl get broker -n rosa-clusters-broker
@@ -540,7 +541,7 @@ NAME                AGE
 submariner-broker   21s
 ```
 
-* We don’t need to label the ManagedCluster because it was imported the proper labels within the proper ManagedClusterSet:
+* We don’t need to label the ManagedCluster because it was imported the proper labels within the proper ManagedClusterSet.
 
 * Deploy SubmarinerConfig for the first rosa cluster imported:
 
@@ -604,7 +605,7 @@ spec:
 EOF
 ```
 
-* Check the submariner managedclusteraddons status in order to check if submariner is deployed correctly
+* Check the submariner status of `managedclusteraddons`  in order to check if submariner is deployed correctly
 
 ```sh
 kubectl get managedclusteraddon -A | grep submariner
@@ -616,7 +617,7 @@ The Submariner Add-on installation will start, and will take up to 10 minutes to
 
 ## Check the Status of the Submariner Networking Add-On 
 
-* Few minutes (up to 10 minutes) after we can check that the app Connection Status and the Agent Status are Healthy:
+A few minutes (up to 10 minutes) after we can check that the app Connection Status and the Agent Status are Healthy:
 
 ![ROSA Submariner](./rosa-submariner.png)
 
@@ -699,7 +700,7 @@ for key in $(redis-cli -p 6379 keys \*);
 done
 ```
 
-* Let's performed in the redis-slave pod:
+* Let's do this in the redis-slave pod:
 
 ![ROSA Submariner](./rosa-submariner8.png)
 
