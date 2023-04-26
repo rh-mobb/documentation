@@ -1,4 +1,3 @@
-
 ---
 title: "Advanced Cluster Management"
 date: 2022-09-14
@@ -9,3 +8,5 @@ archetype: chapter
 ## [Observability](./observability)
 * [ROSA](./observability/rosa)
 
+## [Observability](./submariner)
+* [ROSA](./submariner/rosa)

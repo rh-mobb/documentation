@@ -1,5 +1,5 @@
 ---
-date: '2023-29-14T22:07:08.554151'
+date: '2023-03-26T22:07:09.774151'
 title: Using Cluster Logging Forwarder in ARO with Azure Monitor
 tags: ["ARO", "Azure"]
 ---
