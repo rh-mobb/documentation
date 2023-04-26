@@ -328,7 +328,7 @@ kubectl get dns cluster -o jsonpath='{.spec.baseDomain}'
 kubectl get mch -A
 ```
 
-* Create (in the Hub) ManagedCluster object defining the rosa-subm1 cluster
+* Create (in the Hub) ManagedCluster object defining the `rosa-subm1` cluster
 
 ```sh
 cat << EOF | kubectl apply -f -
@@ -345,7 +345,7 @@ spec:
 EOF
 ```
 
-* Create (in the Hub) auto-import-secret.yaml secret defining the the token and server from first ROSA cluster
+* Create (in the Hub)` auto-import-secret.yaml` secret defining the the token and server from first ROSA cluster
 
 ```sh
 cat << EOF | kubectl apply -f -
@@ -509,7 +509,7 @@ Either deploy using the RHACM UI or with CLI (choose one).
 
 ## Deploy Submariner Addon in ROSA clusters
 
-* After the ManagedClusterSet is created, the submariner-addon creates a namespace called managed-cluster-set-name-broker and deploys the Submariner broker to it.
+* After the ManagedClusterSet is created, the `submariner-addon` creates a namespace called `managed-cluster-set-name-broker` and deploys the Submariner broker to it.
 
 ```sh
 $ kubectl get ns | grep broker
@@ -517,7 +517,7 @@ default-broker                                     Active   6h39m
 rosa-clusters-broker                               Active   13m
 ```
 
-* Create the Broker configuration on the hub cluster in the managed-cluster-set-name-broker namespace
+* Create the Broker configuration on the hub cluster in the `managed-cluster-set-name-broker` namespace
 
 ```sh
 cat << EOF | kubectl apply -f -
