@@ -91,7 +91,8 @@ rosa create idp \
     --issuer-url https://login.microsoftonline.com/${TENANT_ID}/v2.0 \
     --email-claims email \
     --name-claims name \
-    --username-claims preferred_username
+    --username-claims preferred_username \
+    --extra-scopes email,profile
 ```
 
 ## 4. Grant additional permissions to individual users
