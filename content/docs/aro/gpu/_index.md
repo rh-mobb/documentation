@@ -6,7 +6,7 @@ tags: ["ARO", "Azure", "GPU"]
 
 ARO guide to running Nvidia GPU workloads.
 
-Author: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart)
+Authors: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart), [Ricardo M. Martins](https://github.com/ricmmartins)
 
 
 ## Prerequisites
@@ -174,9 +174,9 @@ ARO still uses Kubernetes Machinsets to create a machine set.  I'm going to expo
 
 1. Switch to the proper namespace (project):
 
-```bash
-oc project openshift-machine-api
-```
+    ```bash
+    oc project openshift-machine-api
+    ```
 
 1. Wait for the new GPU nodes to be available
 
@@ -712,7 +712,7 @@ It may take some time for the nVidia Operator and NFD to completely install and 
    oc logs cuda-vector-add --tail=-1
    ```
 
-   >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating" try running "oc delete pod cuda-vector-add" and then re-run the create statement above. I've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
+   >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating", try running "oc delete pod cuda-vector-add" and then re-run the create statement above. I've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
 
    You should see Output like the following (mary vary depending on GPU):
 
