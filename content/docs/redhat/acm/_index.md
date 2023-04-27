@@ -10,3 +10,4 @@ archetype: chapter
 
 ## [Submariner](./submariner)
 * [ROSA Submariner](./submariner/rosa)
+* [ARO Submariner](./submariner/aro)

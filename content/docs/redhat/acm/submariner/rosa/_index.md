@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.774151'
+date: '2023-04-25T22:07:09.774151'
 title: Deploy ACM Submariner for connect overlay networks of ROSA clusters
 aliases: ['/docs/acm/observability/rosa']
 tags: ["Submariner", "ROSA", "ACM"]
