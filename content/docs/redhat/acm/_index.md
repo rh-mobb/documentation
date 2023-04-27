@@ -8,5 +8,5 @@ archetype: chapter
 ## [Observability](./observability)
 * [ROSA](./observability/rosa)
 
-## [Observability](./submariner)
-* [ROSA](./submariner/rosa)
+## [Submariner](./submariner)
+* [ROSA Submariner](./submariner/rosa)
