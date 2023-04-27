@@ -11,6 +11,6 @@ Create a new project named ‘jph-demo’ for your installation of Open Data Hub
 You will need to log in as cluster admin to deploy GPU Operator.
 2. OpenShift Command Line Interface Please see the OpenShift Command Line section for more information on installing.
 The following guides through a step by step procedure in deploying Jupyter Notebook in OpenShift.</description></item><item><title>ARO with Nvidia GPU Workloads</title><link>https://mobb.ninja/docs/aro/gpu/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/aro/gpu/</guid><description>ARO guide to running Nvidia GPU workloads.
-Author: Byron Miller, Stuart Kirk
+Authors: Byron Miller, Stuart Kirk, Ricardo M. Martins
 Prerequisites oc cli jq, moreutils, and gettext package ARO 4.10 If you need to install an ARO cluster, please read our ARO Quick start guide. Please be sure if you&amp;rsquo;re installing or using an existing ARO cluster that it is 4.10.x or higher.
 As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator.</description></item></channel></rss>

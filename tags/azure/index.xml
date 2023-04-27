@@ -64,7 +64,7 @@ MacOS
 See Azure Docs for alternative install options.
 Install Azure CLI using homebrew
 brew update &amp;amp;&amp;amp; brew install azure-cli Linux</description></item><item><title>ARO with Nvidia GPU Workloads</title><link>https://mobb.ninja/docs/aro/gpu/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/aro/gpu/</guid><description>ARO guide to running Nvidia GPU workloads.
-Author: Byron Miller, Stuart Kirk
+Authors: Byron Miller, Stuart Kirk, Ricardo M. Martins
 Prerequisites oc cli jq, moreutils, and gettext package ARO 4.10 If you need to install an ARO cluster, please read our ARO Quick start guide. Please be sure if you&amp;rsquo;re installing or using an existing ARO cluster that it is 4.10.x or higher.
 As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator.</description></item><item><title>Azure Front Door with ARO ( Azure Red Hat OpenShift )</title><link>https://mobb.ninja/docs/aro/frontdoor/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/aro/frontdoor/</guid><description>Securing exposing an Internet facing application with a private ARO Cluster.
 When you create a cluster on ARO you have several options in making the cluster public or private. With a public cluster you are allowing Internet traffic to the api and *.apps endpoints. With a private cluster you can make either or both the api and .apps endpoints private.
