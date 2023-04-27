@@ -121,6 +121,7 @@ spec:
       extraScopes: 
       - profile
       - openid
+      - email
       issuer: https://login.microsoftonline.com/${TENANT_ID}/v2.0
     type: OpenID
 EOF
