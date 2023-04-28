@@ -5,3 +5,4 @@ archetype: chapter
 ---
 
 * [Deploy ACM Submariner for connecting overlay networks of ROSA clusters](./rosa)
+* [Deploy ACM Submariner for connect overlay networks ARO - ROSA clusters](./aro)
