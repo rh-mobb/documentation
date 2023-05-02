@@ -394,7 +394,7 @@ With the cluster in a private network, we can create a Jump host in order to con
         --resource-group $AZR_RESOURCE_GROUP     \
         --ssh-key-values $HOME/.ssh/id_rsa.pub   \
         --admin-username aro                     \
-        --image "RedHat:RHEL:8.2:8.2.2021040911" \
+        --image "RedHat:RHEL:9_1:9.1.2022112113" \
         --subnet JumpSubnet                      \
         --public-ip-address jumphost-ip          \
         --public-ip-sku Standard                 \
