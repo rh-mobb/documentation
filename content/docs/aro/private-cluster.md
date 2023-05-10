@@ -442,7 +442,7 @@ With the cluster in a private network, we can create a Jump host in order to con
 1. log into OpenShift
 
     ```bash
-    oc login $APISERVER --username cluster-admin --password ${ADMINPW}
+    oc login $APISERVER --username kubeadmin --password ${ADMINPW}
     ```
 
 
