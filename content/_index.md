@@ -29,7 +29,6 @@ archetype: home
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/docs/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/docs/rosa/ecr-secret-operator)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](/docs/rosa/ack)
-* [Deploy ROSA in an AWS Secure Environment Accelerator (ASEA) Landing Zone](/docs/rosa/rosa-asea-landing-zone/)
 * [Verify Required Permissions for a ROSA STS deployment](/docs/rosa/verify-permissions)
 * [STS OIDC flow in ROSA Operators](/docs/rosa/sts-oidc-flow)
 * [Dynamic Certificates for ROSA Custom Domain](/docs/rosa/dynamic-certificates)
