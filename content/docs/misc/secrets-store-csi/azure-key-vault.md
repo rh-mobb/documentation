@@ -27,7 +27,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     ```bash
     export KEYVAULT_RESOURCE_GROUP=${AZR_RESOURCE_GROUP:-"openshift"}
     export KEYVAULT_LOCATION=${AZR_RESOURCE_LOCATION:-"eastus"}
-    export KEYVAULT_NAME=secret-store-$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' < /dev/urandom | fold -w 10 | head -n 1)
+    export KEYVAULT_NAME=secret-store-$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
     export AZ_TENANT_ID=$(az account show -o tsv --query tenantId)
     ```
 
