@@ -3,6 +3,9 @@ date: '2022-09-14T22:07:08.604151'
 title: Custom AlertManager in ROSA 4.9.x
 tags: ["AWS", "ROSA"]
 ---
+
+**This page is deprecated. In order to get the best experience for custom alerting in ROSA, please upgrade your cluster to to 4.12 and follow the [newer](../custom-alertmanager) documentation.**
+
 ROSA 4.9.x introduces a new way to provide custom AlertManager configuration to receive alerts from User Workload Management.
 
 The OpenShift Administrator can use the Prometheus Operator to create a custom AlertManager resource and then use the AlertManagerConfig resource to configure User Workload Monitoring to use the custom AlertManager.
