@@ -8,7 +8,7 @@ A Quickstart guide to deploying a Private Azure Red Hat OpenShift cluster.
 
 > Once the cluster is running you will need a way to access the private network that ARO is deployed into.
 
-Author: [Paul Czarkowski](https://twitter.com/pczarkowski)
+Authors: [Paul Czarkowski](https://twitter.com/pczarkowski), [Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins)
 
 ## Prerequisites
 
@@ -209,16 +209,13 @@ This replaces the routes for the cluster to go through the Azure NAT GW service 
       --public-ip-addresses "${AZR_CLUSTER}-natgw-ip"
     ```
 
-1. Get the IPs of the NAT Gateway
+1. Get the Public IP of the NAT Gateway
 
     ```bash
     GW_PUBLIC_IP=$(az network public-ip show -g ${AZR_RESOURCE_GROUP} \
       -n "${AZR_CLUSTER}-natgw-ip" --query "ipAddress" -o tsv)
-    GW_PRIVATE_IP=$(az network nat gateway show -g ${AZR_RESOURCE_GROUP} \
-    -n "${AZR_CLUSTER}-natgw" --query "ipConfigurations[0].privateIpAddress" -o tsv)
 
-    echo $FWPUBLIC_IP
-    echo $FWPRIVATE_IP
+    echo $GW_PUBLIC_IP
     ```
 
 1. Reconfigure Subnets to use Nat GW
