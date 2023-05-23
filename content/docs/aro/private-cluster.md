@@ -209,7 +209,7 @@ This replaces the routes for the cluster to go through the Azure NAT GW service 
       --public-ip-addresses "${AZR_CLUSTER}-natgw-ip"
     ```
 
-1. Get the IPs of the NAT Gateway
+1. Get the Public IP of the NAT Gateway
 
     ```bash
     GW_PUBLIC_IP=$(az network public-ip show -g ${AZR_RESOURCE_GROUP} \
