@@ -141,7 +141,7 @@ Once the cluster authentication operator reconciles your changes (generally with
 
 If you have a private cluster behind a firewall, you may get an error message like the image below when you try login into the web console using the AAD option. In this case you should open a firewall rule allowing access from the cluster to `graph.microsoft.com`.
 
-![Cluster Access - Authentication Error - ](./auth-error.png)
+![Cluster Access - Authentication Error - ](./images/auth-error.png)
 
 If you are using Azure Firewall, you can run those commands to allow this access:
 
@@ -155,11 +155,11 @@ az network firewall network-rule create -g $AZR_RESOURCE_GROUP -f aro-private   
 
 Now you should be able to login choosing the AAD option:
 
-![Cluster Access - AAD Login - ](./aad-login.png)
+![Cluster Access - AAD Login - ](./images/aad-login.png)
 
 Then inform the user you would like to use:
 
-![Cluster Access - AAD Login - ](./aad-credential.png)
+![Cluster Access - AAD Login - ](./images/aad-credential.png)
 
 
 ## 4. Grant additional permissions to individual users
