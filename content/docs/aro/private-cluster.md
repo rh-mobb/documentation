@@ -215,7 +215,7 @@ This replaces the routes for the cluster to go through the Azure NAT GW service 
     GW_PUBLIC_IP=$(az network public-ip show -g ${AZR_RESOURCE_GROUP} \
       -n "${AZR_CLUSTER}-natgw-ip" --query "ipAddress" -o tsv)
 
-    echo $FWPUBLIC_IP
+    echo $GW_PUBLIC_IP
     ```
 
 1. Reconfigure Subnets to use Nat GW
