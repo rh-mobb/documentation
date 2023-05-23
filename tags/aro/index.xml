@@ -103,7 +103,7 @@ A default 3-node cluster is a bit small for Astronomer, If you have a three node
 Be represented in Azure Resource Manager with a unique ID Be placed in an Azure subscription and resource group Receive tags just like any otherAzure resource Azure Arc-enabled Kubernetes supports the following scenarios for connected clusters:
 Connect Kubernetes running outside of Azure for inventory, grouping, and tagging. Deploy applications and apply configuration using GitOps-based configuration management.</description></item><item><title>Private ARO Cluster with access via JumpHost</title><link>https://mobb.ninja/docs/aro/private-cluster/</link><pubDate>Wed, 14 Sep 2022 22:07:08 +0000</pubDate><guid>https://mobb.ninja/docs/aro/private-cluster/</guid><description>A Quickstart guide to deploying a Private Azure Red Hat OpenShift cluster.
 Once the cluster is running you will need a way to access the private network that ARO is deployed into.
-Author: Paul Czarkowski
+Authors: Paul Czarkowski, Ricardo Macedo Martins
 Prerequisites Azure CLI Obviously you&amp;rsquo;ll need to have an Azure account to configure the CLI against.
 MacOS
 See Azure Docs for alternative install options.
