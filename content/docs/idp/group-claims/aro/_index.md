@@ -1,11 +1,11 @@
 ---
-date: '2022-09-14T22:07:09.954151'
+date: '2023-05-24T22:07:09.954151'
 title: Configure ARO to use Azure AD Group Claims
 ---
 
-**Michael McNeill**
+Authors: **Michael McNeill**, **Ricardo M. Martins**
 
-*23 September 2022*
+*24 May 2023*
 
 This guide demonstrates how to utilize the OpenID Connect group claim functionality implemented in OpenShift 4.10. This functionality allows an identity provider to provide a user's group membership for use within OpenShift. This guide will walk through the creation of an Azure Active Directory (Azure AD) application, configure the necessary Azure AD groups, and configure Azure Red Hat OpenShift (ARO) to authenticate and manage authorization using Azure AD.
 
@@ -155,9 +155,30 @@ oc apply -f ./cluster-oauth-config.yaml
 
 Once the cluster authentication operator reconciles your changes (generally within a few minutes), you will be able to login to the cluster using Azure AD. In addition, the cluster OAuth provider will automatically create or update the membership of groups the user is a member of (using the group ID). The provider **does not** automatically create RoleBindings and ClusterRoleBindings for the groups that are created, you are responsible for creating those via your own processes.
 
-## 4. Grant additional permissions to individual groups
+If you have a private cluster behind a firewall, you may get an error message like the image below when you try login into the web console using the AAD option. In this case you should open a firewall rule allowing access from the cluster to `graph.microsoft.com`.
 
-Once the cluster authentication operator reconciles your changes (generally within a few minutes), you will be able to login to the cluster using Azure AD. In addition, the cluster OAuth provider will automatically create or update the membership of groups the user is a member of (using the group ID).
+![Cluster Access - Authentication Error - ](../images/auth-error.png)
+
+If you are using Azure Firewall, you can run those commands to allow this access:
+
+```bash
+az network firewall network-rule create -g $AZR_RESOURCE_GROUP -f aro-private   \
+    --collection-name 'Allow_Microsoft_Graph' --action allow --priority 100     \
+    -n 'Microsoft_Graph' --source-address '*' --protocols 'any'                 \
+    --source-addresses '*' --destination-fqdns 'graph.microsoft.com'            \
+    --destination-ports '*'
+```
+
+Now you should be able to login choosing the AAD option:
+
+![Cluster Access - AAD Login - ](../images/aad-login.png)
+
+Then inform the user you would like to use:
+
+![Cluster Access - AAD Login - ](../images/aad-credential.png)
+
+
+## 4. Grant additional permissions to individual groups
 
 Once you login, you will notice that you have very limited permissions. This is because, by default, OpenShift only grants you the ability to create new projects (namespaces) in the cluster. Other projects (namespaces) are restricted from view. The cluster OAth provider **does not** automatically create RoleBindings and ClusterRoleBindings for the groups that are created, you are responsible for creating those via your own processes.
 
