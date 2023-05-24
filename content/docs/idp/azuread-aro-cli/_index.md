@@ -1,12 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.954151'
+date: '2023-03-31'
 title: Configure Azure AD as an OIDC identity provider for ARO with cli
 tags: ["Azure", "ARO"]
+authors:
+  - Shaozhen Ding
 ---
-
-**Shaozhen Ding**
-
-*31 March 2023*
 
 The steps to add Azure AD as an identity provider for Azure Red Hat OpenShift (ARO) via cli are:
 

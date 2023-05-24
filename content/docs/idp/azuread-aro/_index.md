@@ -1,12 +1,12 @@
 ---
-date: '2022-09-14T22:07:09.904151'
+date: '2022-09-23'
 title: Configure ARO to use Azure AD
 tags: ["Azure", "ARO"]
+authors:
+  - Michael McNeill
+  - Sohaib Azed
+  - Ricardo Martins
 ---
-
-**Michael McNeill, Sohaib Azed, Ricardo Macedo Martins**
-
-*23 September 2022*
 
 This guide demonstrates how to configure Azure AD as the cluster identity provider in Azure Red Hat OpenShift. This guide will walk through the creation of an Azure Active Directory (Azure AD) application and configure Azure Red Hat OpenShift (ARO) to authenticate using Azure AD.
 
