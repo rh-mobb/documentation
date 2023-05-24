@@ -10,6 +10,7 @@ pygmentsStyle = "monokai"
 canonifyURLs = true
 # required for official documentation served from subfolder
 relativeURLs = false
+enableGitInfo = true
 
 defaultContentLanguageInSubdir= false
 enableMissingTranslationPlaceholders = false
@@ -37,7 +38,6 @@ disableShortcutsTitle = true
 menushortcutsnewtab = true
 
 # #editURL = "https://github.com/vjeantet/hugo-theme-docport/edit/master/exampleSite/content/"
-# enableGitInfo = true
 
 disableInlineCopyToClipBoard = true # Don't display the copy-to-clipboard button on inline code blocks, default is false
 
