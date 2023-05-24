@@ -2,9 +2,9 @@
 date: '2022-10-11'
 title: Dynamic Certificates for ROSA Custom Domain
 tags: ["AWS", "ROSA"]
+authors:
+  - Kevin Collins
 ---
-
-*last edited 11 Oct 2022*
 
 There may be situations when you prefer not to use wild-card certificates. This ROSA guide talks about certificate management with cert-manager and letsencrypt, to dynamically issue certificates to routes created on a custom domain that's hosted on AWS Route53.
 - [Prerequisites](#prerequisites)

@@ -2,9 +2,10 @@
 date: '2022-10-21'
 title: Configuring the Cluster Log Forwarder for CloudWatch Logs using Vector
 tags: ["AWS", "ROSA"]
+authors:
+  - Thatcher Hubbard
+  - Connor Wooley
 ---
-
-*Author: Thatcher Hubbard*
 
 This guide shows how to deploy the Cluster Log Forwarder operator and configure it to use the [Vector](https://vector.dev) logging agent to forward logs to CloudWatch.
 

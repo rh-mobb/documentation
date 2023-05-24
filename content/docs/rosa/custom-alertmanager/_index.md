@@ -2,6 +2,8 @@
 date: '2022-09-14T22:07:09.754151'
 title: Custom Alerts in ROSA 4.11.x
 tags: ["AWS", "ROSA"]
+authors:
+  - Paul Czarkowski
 ---
 
 Starting with OpenShift 4.11 it is possible to [manage alerting rules for user-defined projects](https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html#managing-alerting-rules-for-user-defined-projects_managing-alerts). Similarly, in ROSA clusters the OpenShift Administrator can enable a second AlertManager instance in the user workload monitoring namespace which can be used to create such alerts.

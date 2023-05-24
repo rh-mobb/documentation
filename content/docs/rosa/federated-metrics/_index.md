@@ -1,11 +1,11 @@
 ---
-date: '2022-09-14T22:07:08.614151'
+date: '2021-06-07'
 title: Federating System and User metrics to S3 in Red Hat OpenShift for AWS
 tags: ["AWS", "ROSA"]
+authors:
+  - Paul Czarkowski
+  - Michael Tipton
 ---
-**Paul Czarkowski**
-
-*06/07/2021*
 
 This guide walks through setting up federating Prometheus metrics to S3 storage.
 

@@ -2,8 +2,9 @@
 date: '2022-09-14T22:07:09.754151'
 title: Extending ROSA STS to include authentication with AWS Services
 tags: ["AWS", "ROSA", "STS"]
+authors:
+  - Connor Wooley
 ---
-# Extending ROSA STS to include authentication with AWS Services
 
 In this example we will deploy the Amazon Ingress Controller that uses ALBs, and configure it to use STS authentication.
 

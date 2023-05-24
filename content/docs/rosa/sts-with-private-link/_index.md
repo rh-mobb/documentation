@@ -2,10 +2,10 @@
 date: '2022-09-14T22:07:08.594151'
 title: Creating a ROSA cluster with Private Link enabled (custom VPC) and STS
 tags: ["AWS", "ROSA", "STS", "Private Link"]
+authors:
+  - Steve Mirman
+  - Paul Czarkowski
 ---
-**Steve Mirman, Paul Czarkowski**
-
-*Last updated 1/28/2022*
 
 > This is a combination of the [private-link](../private-link) and [sts](../sts) setup documents to show the full picture
 

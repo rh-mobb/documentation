@@ -1,8 +1,10 @@
 ---
 date: '2022-09-14T22:07:09.814151'
-title: This is a POC of ROSA with a AWS WAF service
+title: AWS ALB
 aliases: ['/docs/aws/waf/alb.md']
 tags: ["AWS", "ROSA", "OSD"]
+authors:
+  - Connor Wooley
 ---
 **Note: It is recommended that you use the [Cloud Front based guide](./cloud-front.md) unless you absolutely must use an ALB based solution.**
 

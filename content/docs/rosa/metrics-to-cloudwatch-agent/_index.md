@@ -2,6 +2,8 @@
 date: '2022-09-14T22:07:09.754151'
 title: Using the AWS Cloud Watch agent to publish metrics to CloudWatch in ROSA
 tags: ["AWS", "ROSA"]
+authors:
+  - Kevin Collins
 ---
 This document shows how you can use the AWS Cloud Watch agent to scrape Prometheus endpoints and publish metrics to CloudWatch in a Red Hat OpenShift Container Platform (ROSA) cluster.
 

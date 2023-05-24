@@ -2,6 +2,8 @@
 date: '2022-09-14T22:07:09.764151'
 title: Work Around to fix the issue with the logging-addon on ROSA STS Clusters
 tags: ["AWS", "ROSA", "STS"]
+authors:
+  - Connor Wooley
 ---
 
 Currently, the logging-addon is not working on ROSA STS clusters. This is due to permissions missing from the Operator itself. This is a work around to provide credentials to the addon.

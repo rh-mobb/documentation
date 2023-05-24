@@ -2,11 +2,9 @@
 date: '2022-09-14T22:07:09.754151'
 title: Federating Metrics to a centralized Prometheus Cluster
 tags: ["AWS", "ROSA"]
+authors:
+  - Paul Czarkowski
 ---
-
-**Author: Paul Czarkowski**
-
-*edited 4/10/2023*
 
 This document has been removed as it was written for older ROSA clusters which did not allow for custom Alert Manager configs as a way to provide a second Prometheus with a configurable Alert Manager.
 

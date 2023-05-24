@@ -2,10 +2,10 @@
 date: '2022-09-14T22:07:08.604151'
 title: Deploying ROSA in STS mode
 tags: ["AWS", "ROSA", "STS"]
+authors:
+  - Paul Czarkowski
+  - Michael Ducy
 ---
-**Paul Czarkowski**
-
-*Last updated 03/29/2023*
 
 > **Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
 

@@ -2,9 +2,10 @@
 date: '2022-09-30'
 title: Security Reference Architecture for ROSA
 tags: ["AWS", "ROSA"]
+authors:
+  - Tyler Stacey
+  - Connor Wooley
 ---
-
-**Tyler Stacey**
 
 The **Security Reference Architecture for ROSA** is a set of guidelines for deploying Red Hat OpenShift on AWS (ROSA) clusters to support high-security production workloads that align with Red Hat and AWS best practices.
 
