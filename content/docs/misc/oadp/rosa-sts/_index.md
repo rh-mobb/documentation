@@ -2,11 +2,10 @@
 date: '2022-09-14T22:07:09.804151'
 title: Deploying OpenShift API for Data Protection on a ROSA cluster
 tags: ["ROSA", "AWS", "STS", "OADP", "Velero", "Backup", "Restore", "Storage"]
+authors:
+  - Paul Czarkowski
+  - Dustin Scott
 ---
-
-**Author: Paul Czarkowski, Dustin Scott**
-
-*Last edited: 03/29/2023*
 
 ## Prerequisites
 

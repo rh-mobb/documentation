@@ -1,7 +1,9 @@
 ---
-date: '2023-03-14T22:07:09.784151'
+date: '2023-03-14'
 title: Azure DevOps with Managed OpenShift
 tags: ["DevOps", "ADO", "Azure", "ARO", "ROSA"]
+authors:
+  - Kevin Collins
 ---
 
 **Author: Kevin Collins**

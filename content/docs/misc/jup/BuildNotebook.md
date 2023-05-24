@@ -3,6 +3,8 @@ date: '2022-09-14T22:07:10.024151'
 title: How to deploy Jupyter Notebook
 aliases: ['/docs/misc/jup/BuildNotebook.md']
 tags: ["GPU", "OCP"]
+authors:
+  - Connor Wooley
 ---
 
 Retrieve the login command
