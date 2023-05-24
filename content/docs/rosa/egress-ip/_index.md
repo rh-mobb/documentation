@@ -1,5 +1,5 @@
 ---
-date: '2023-02-23T08:00:00.000000'
+date: '2023-05-24T08:00:00.000000'
 title: Assign Consistent Egress IP for External Traffic
 tags: ["OSD", "ROSA", "ARO"]
 ---
@@ -17,7 +17,7 @@ unnecessarily open.  This guide shows you how to configure a set of predictable
 IP addresses for egress cluster traffic to meet common security standards and 
 guidance and other potential use cases.
 
-See the [OpenShfit documentation on this topic](https://docs.openshift.com/container-platform/4.12/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) 
+See the [OpenShift documentation on this topic](https://docs.openshift.com/container-platform/4.12/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) 
 for more information.
 
 ## Prerequisites
@@ -83,12 +83,24 @@ oc get node -o json | \
 installed, you can review the `metadata.annotations['cloud.network.openshift.io/egress-ipconfig']` 
 field of each node manually to verify node capacity.
 
-### Create the Egress IP Rule
+### Create the Egress IP Rule(s)
 
 > **NOTE:** generally speaking it would be ideal to [label the nodes](#label-the-nodes) prior to assigning 
 the egress IP addresses, however there is a bug that exists which needs to 
 be fixed first.  Once this is fixed, the process and documentation will
 be re-ordered to address this.  See https://issues.redhat.com/browse/OCPBUGS-4969
+
+#### Identify the Egress IPs
+
+Before creating the rules, we should identify which egress IPs that we will use.  It should be noted 
+that the egress IPs that you select should exist as a part of the subnets in which the worker 
+nodes are provisioned into.
+
+#### Reserve the Egress IPs
+
+It is recommended, but not required, to reserve the egress IPs that you have requested to avoid 
+conflicts with the AWS VPC DHCP service. To do so, you can request 
+explicit IP reservations by [following the AWS documentation for CIDR reservations](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-cidr-reservation.html).
 
 #### Example: Assign Egress IP to a Namespace
 
@@ -99,7 +111,7 @@ namespace selection:
 oc new-project demo-egress-ns
 ```
 
-Create the egress Rule.  This rule will ensure that egress traffic will 
+Create the egress rule.  This rule will ensure that egress traffic will 
 be applied to all pods within the namespace that we just created 
 via the `spec.namespaceSelector` field:
 
@@ -110,6 +122,8 @@ kind: EgressIP
 metadata:
   name: demo-egress-ns
 spec:
+  # NOTE: these egress IPs are within the subnet range(s) in which my worker nodes
+  #       are deployed.
   egressIPs:
     - 10.10.100.253
     - 10.10.150.253
@@ -141,6 +155,8 @@ kind: EgressIP
 metadata:
   name: demo-egress-pod
 spec:
+  # NOTE: these egress IPs are within the subnet range(s) in which my worker nodes
+  #       are deployed.
   egressIPs:
     - 10.10.100.254
     - 10.10.150.254
@@ -232,6 +248,11 @@ spec:
       targetPort: 8080
   type: LoadBalancer
   externalTrafficPolicy: Local
+  # NOTE: this limits the source IPs that are allowed to connect to our service.  It 
+  #       is being used as part of this demo, restricting connectivity to our egress
+  #       IP addresses only.
+  # NOTE: these egress IPs are within the subnet range(s) in which my worker nodes
+  #       are deployed.
   loadBalancerSourceRanges:
     - 10.10.100.254/32
     - 10.10.150.254/32
@@ -273,7 +294,10 @@ curl -s http://$LOAD_BALANCER_HOSTNAME
 ```
 
 You should see output similar to the following, indicating a successful 
-connection:
+connection.  It should be noted that that `client_address` below is the 
+internal IP address of the load balancer rather than our egress IP.  Successful
+connectivity (by limiting the service to `.spec.loadBalancerSourceRanges`)
+is what provides a successful demonstration:
 
 ```bash
 CLIENT VALUES:
@@ -325,7 +349,10 @@ curl -s http://$LOAD_BALANCER_HOSTNAME
 ```
 
 You should see output similar to the following, indicating a successful 
-connection:
+connection.  It should be noted that that `client_address` below is the 
+internal IP address of the load balancer rather than our egress IP.  Successful
+connectivity (by limiting the service to `.spec.loadBalancerSourceRanges`)
+is what provides a successful demonstration:
 
 ```bash
 CLIENT VALUES:
@@ -356,7 +383,9 @@ exit
 #### Test Blocked Egress
 
 Alternatively to a successful connection, you can see that the traffic is 
-successfully blocked when the egress rules do not apply:
+successfully blocked when the egress rules do not apply. Unsuccessful
+connectivity (by limiting the service to `.spec.loadBalancerSourceRanges`)
+is what provides a successful demonstration in this scenario:
 
 ```bash
 oc run \
