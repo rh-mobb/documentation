@@ -1,5 +1,5 @@
 ---
-date: '2023-02-23T08:00:00.000000'
+date: '2023-05-24T08:00:00.000000'
 title: Assign Consistent Egress IP for External Traffic
 tags: ["OSD", "ROSA", "ARO"]
 ---
@@ -90,7 +90,7 @@ the egress IP addresses, however there is a bug that exists which needs to
 be fixed first.  Once this is fixed, the process and documentation will
 be re-ordered to address this.  See https://issues.redhat.com/browse/OCPBUGS-4969
 
-#### Identity the Egress IPs
+#### Identify the Egress IPs
 
 Before creating the rules, we should identify which egress IPs that we will use.  It should be noted 
 that the egress IPs that you select should exist as a part of the subnets in which the worker 
@@ -100,9 +100,7 @@ nodes are provisioned into.
 
 It is recommended, but not required, to reserve the egress IPs that you have requested to avoid 
 conflicts with the AWS VPC DHCP service. To do so, you can request 
-explicit IP reservations by following the following AWS doc:
-
-https://docs.aws.amazon.com/vpc/latest/userguide/subnet-cidr-reservation.html
+explicit IP reservations by [following the AWS documentation for CIDR reservations](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-cidr-reservation.html).
 
 #### Example: Assign Egress IP to a Namespace
 
