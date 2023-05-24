@@ -1,7 +1,9 @@
 ---
 date: '2022-10-01'
 title: Shipping logs and metrics to Azure Blob storage
-authors: ['paulczar']
+authors:
+  - Paul Czarkowski
+  - Connor Wooley
 tags: ["ARO", "Azure"]
 ---
 

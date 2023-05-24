@@ -1,13 +1,12 @@
 ---
-date: '2022-09-14T22:07:08.584151'
+date: '2022-07-25'
 title: Setting up Quay on an ARO cluster via CLI
 aliases: ['/docs/aro/setup-quay/quay-cli.md']
 tags: ["ARO", "Azure"]
+authors:
+  - Kristopher White
+  - Connor Wooley
 ---
-
-**Kristopher White x Connor Wooley**
-
-*07/25/2022*
 
 ## Pre Requisites
 

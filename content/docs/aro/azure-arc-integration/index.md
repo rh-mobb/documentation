@@ -2,6 +2,8 @@
 date: '2022-09-14T22:07:08.604151'
 title: Integrating Azure ARC with ARO
 tags: ["ARO", "Azure"]
+authors:
+  - Connor Wooley
 ---
 
 This document explain how to integrate ARO cluster with Azure Arc-enabled Kubernetes. When you connect a Kubernetes/OpenShift cluster with Azure Arc, it will:

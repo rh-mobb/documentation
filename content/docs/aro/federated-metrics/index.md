@@ -1,12 +1,11 @@
 ---
-date: '2022-09-14T22:07:08.564151'
+date: '2021-06-04'
 title: 'Federating System and User metrics to Azure Files in Azure Red Hat OpenShift'
 tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
+  - Kumudu Herath
 ---
-
-**Paul Czarkowski**
-
-*06/04/2021*
 
 By default Azure Red Hat OpenShift (ARO) stores metrics in Ephemeral volumes, and its advised that users do not change this setting. However its not unreasonable to expect that metrics should be persisted for a set amount of time.
 
