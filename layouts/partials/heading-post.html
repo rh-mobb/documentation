@@ -1,23 +1,14 @@
 {{ .Params.headingPost | safeHTML }}
 <hr>
 <p>
-    <!-- author comes from the creator metadata to define the initial author of the article -->
-    <!-- if creator is unset, unknown is printed -->
-    <b>Author:</b>
-    {{ if isset .Params "creator" }}
-        {{ $.Params.Creator }}
-    {{ else }}
-        Unknown
-    {{ end }}<br>
-
     <!-- editors comes from the editors metadata -->
     <!-- if editors are unset, no editors are printed -->
-    {{ if isset .Params "editors" }}
-        <b>Editors:</b> {{ range $index, $editor := .Params.Editors }}
-            {{ if eq $index (sub (len $.Params.Editors) 1) }}
-                {{ $editor }}
+    {{ if isset .Params "authors" }}
+        <b>Authors:</b> {{ range $index, $author := .Params.Authors }}
+            {{ if eq $index (sub (len $.Params.Authors) 1) }}
+                {{ $author }}
             {{ else }}
-                {{ $editor }},
+                {{ $author }},
             {{ end }}
         {{ end }}<br>
     {{ end }}
