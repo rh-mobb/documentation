@@ -24,12 +24,11 @@ archetype: home
 * [Adding AWS WAF in front of ROSA / OSD](/docs/aws/waf)
 * [Use AWS Secrets CSI with ROSA in STS mode](/docs/rosa/aws-secrets-manager-csi)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/docs/rosa/metrics-to-cloudwatch-agent)
-* [Configuring Alerts for User Workloads in ROSA 4.9.x](/docs/rosa/custom-alertmanager)
+* [Configuring Alerts for User Workloads in ROSA](/docs/rosa/custom-alertmanager)
 * [AWS EFS on ROSA](/docs/rosa/aws-efs)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/docs/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/docs/rosa/ecr-secret-operator)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](/docs/rosa/ack)
-* [Deploy ROSA in an AWS Secure Environment Accelerator (ASEA) Landing Zone](/docs/rosa/rosa-asea-landing-zone/)
 * [Verify Required Permissions for a ROSA STS deployment](/docs/rosa/verify-permissions)
 * [STS OIDC flow in ROSA Operators](/docs/rosa/sts-oidc-flow)
 * [Dynamic Certificates for ROSA Custom Domain](/docs/rosa/dynamic-certificates)
@@ -77,9 +76,7 @@ archetype: home
 ## Observability
 
 * [Deploy Grafana on OpenShift 4](/docs/o11y/ocp-grafana/)
-* Configuring Alerts for User Workloads
-  * [ROSA 4.9.x, 4.10.x](/docs/rosa/custom-alertmanager-4.9)
-  * [ROSA 4.11+](/docs/rosa/custom-alertmanager)
+* [Configuring Alerts for User Workloads](/docs/rosa/custom-alertmanager)
 * [Federating ROSA metrics to S3](/docs/rosa/federated-metrics)
 * [Federating ROSA metrics to AWS Prometheus](/docs/rosa/cluster-metrics-to-aws-prometheus)
 * [Configure ROSA STS Cluster Logging to CloudWatch](/docs/rosa/clf-cloudwatch-sts)

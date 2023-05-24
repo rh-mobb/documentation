@@ -7,7 +7,7 @@ tags: ["AWS", "ROSA"]
 
 Author **Shaozhen Ding**, **Paul Czarkowski**
 
-*last edited: 01/05/2023*
+*last edited: 04/26/2023*
 
 [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/) is a controller to help manage Elastic Load Balancers for a Kubernetes cluster.
 
@@ -60,15 +60,16 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 1. Tag VPC with the cluster name
 
    ```bash
-   aws ec2 create-tags --resources ${VPC_ID} --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned
+   aws ec2 create-tags --resources ${VPC_ID} --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned --region ${REGION}
    ```
 
 1. Add tags to Public Subnets
 
    ```bash
    aws ec2 create-tags \
-     --resources "${PUBLIC_SUBNET_IDS}" \
-     --tags Key=kubernetes.io/role/elb,Value=''
+     --resources ${PUBLIC_SUBNET_IDS} \
+     --tags Key=kubernetes.io/role/elb,Value='' \
+     --region ${REGION}
    ```
 
 1. Add tags to Private Subnets
@@ -76,7 +77,8 @@ Compared with default AWS In Tree Provider, this controller is actively develope
    ```bash
    aws ec2 create-tags \
      --resources "${PRIVATE_SUBNET_IDS}" \
-     --tags Key=kubernetes.io/role/internal-elb,Value=''
+     --tags Key=kubernetes.io/role/internal-elb,Value='' \
+     --region ${REGION}
    ```
 
 ## Installation
@@ -164,8 +166,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
      name: aws-load-balancer-operator
      namespace: aws-load-balancer-operator
    spec:
-     targetNamespaces:
-       - aws-load-balancer-operator
+     upgradeStrategy: Default
    ---
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
@@ -173,12 +174,12 @@ Compared with default AWS In Tree Provider, this controller is actively develope
      name: aws-load-balancer-operator
      namespace: aws-load-balancer-operator
    spec:
-     channel: stable-v0
+     channel: stable-v1.0
      installPlanApproval: Automatic
      name: aws-load-balancer-operator
      source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: aws-load-balancer-operator.v0.2.0
+     startingCSV: aws-load-balancer-operator.v1.0.0
    EOF
    ```
 
@@ -188,7 +189,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 
    ```bash
    cat << EOF | oc apply -f -
-   apiVersion: networking.olm.openshift.io/v1alpha1
+   apiVersion: networking.olm.openshift.io/v1
    kind: AWSLoadBalancerController
    metadata:
      name: cluster
