@@ -1,13 +1,12 @@
 ---
-date: '2022-09-14T22:07:09.774151'
+date: '2022-01-26'
 title: Deploying 3scale API Management to ROSA and OSD
 aliases: ['/docs/app-services/3scale']
 tags: ["ROSA", "OSD"]
+authors:
+  - Michael McNeill
+  - Connor Wooley
 ---
-
-**Michael McNeill**
-
-*26 January 2022*
 
 This document will take you through deploying 3scale in any OSD or ROSA cluster. Review the [official documentation here](https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/) for more information or how to further customize or use 3scale.
 

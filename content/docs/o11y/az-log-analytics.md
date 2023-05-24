@@ -2,6 +2,8 @@
 date: '2022-09-14T22:07:08.584151'
 title: Shipping logs to Azure Log Analytics
 tags: ["Observability", "Azure"]
+authors:
+  - Connor Wooley
 ---
 
 This document follows the steps outlined by Microsoft in [their documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-azure-redhat4-setup)

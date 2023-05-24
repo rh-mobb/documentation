@@ -3,6 +3,8 @@ date: '2022-09-14T22:07:09.774151'
 title: Advanced Cluster Management Observability on ROSA
 aliases: ['/docs/acm/observability/rosa']
 tags: ["Observability", "ROSA", "ACM"]
+authors:
+  - Connor Wooley
 ---
 
 <!-- commented sections enable STS support which isn't fully working as
