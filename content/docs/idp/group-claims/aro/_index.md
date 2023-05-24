@@ -157,8 +157,6 @@ Once the cluster authentication operator reconciles your changes (generally with
 
 ## 4. Grant additional permissions to individual groups
 
-Once the cluster authentication operator reconciles your changes (generally within a few minutes), you will be able to login to the cluster using Azure AD. In addition, the cluster OAuth provider will automatically create or update the membership of groups the user is a member of (using the group ID).
-
 Once you login, you will notice that you have very limited permissions. This is because, by default, OpenShift only grants you the ability to create new projects (namespaces) in the cluster. Other projects (namespaces) are restricted from view. The cluster OAth provider **does not** automatically create RoleBindings and ClusterRoleBindings for the groups that are created, you are responsible for creating those via your own processes.
 
 OpenShift includes a significant number of pre-configured roles, including the `cluster-admin` role that grants full access and control over the cluster. To grant an automatically generated group access to the `cluster-admin` role, you must create a ClusterRoleBinding to the group ID.
