@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.614151'
+date: '2022-05-10'
 title: Adding a Public Ingress endpoint to a ROSA Private-Link Cluster
 tags: ["AWS", "ROSA", "Private Link"]
 authors:

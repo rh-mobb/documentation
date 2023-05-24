@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.584151'
+date: '2022-04-29'
 title: Create Filestore Storage for OSD in GCP
 aliases: ['/docs/gcp/filestore.md']
 tags: ["GCP", "OSD"]

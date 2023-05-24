@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.584151'
+date: '2021-07-27'
 title: Shipping logs to Azure Log Analytics
 tags: ["Observability", "Azure"]
 authors:

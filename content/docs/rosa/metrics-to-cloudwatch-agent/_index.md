@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.754151'
+date: '2021-10-04'
 title: Using the AWS Cloud Watch agent to publish metrics to CloudWatch in ROSA
 tags: ["AWS", "ROSA"]
 authors:

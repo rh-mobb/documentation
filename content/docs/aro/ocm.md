@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.564151'
+date: '2021-09-21'
 title: Registering an ARO cluster to OpenShift Cluster Manager
 tags: ["ARO", "Azure"]
 ---

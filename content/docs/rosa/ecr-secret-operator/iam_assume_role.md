@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2022-05-31'
 title: Create STS Assume Role
 tags: ["AWS", "ROSA"]
 authors:

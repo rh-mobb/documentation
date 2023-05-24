@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.754151'
+date: '2021-10-20'
 title: Custom Alerts in ROSA 4.11.x
 tags: ["AWS", "ROSA"]
 authors:

@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.754151'
+date: '2021-10-21'
 title: Federating Metrics to a centralized Prometheus Cluster
 tags: ["AWS", "ROSA"]
 authors:

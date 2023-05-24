@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.574151'
+date: '2022-03-19'
 title: Adding an additional ingress controller to an ARO cluster
 tags: ["ARO", "Azure"]
 authors:

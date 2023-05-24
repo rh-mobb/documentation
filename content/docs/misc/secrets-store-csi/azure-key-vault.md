@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.804151'
+date: '2021-08-16'
 title: Azure Key Vault CSI on Azure Red Hat OpenShift
 aliases: ['/docs/security/secrets-store-csi/azure-key-vault']
 tags: ["Azure", "ARO"]

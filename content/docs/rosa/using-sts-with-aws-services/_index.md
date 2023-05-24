@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.754151'
+date: '2021-10-04'
 title: Extending ROSA STS to include authentication with AWS Services
 tags: ["AWS", "ROSA", "STS"]
 authors:

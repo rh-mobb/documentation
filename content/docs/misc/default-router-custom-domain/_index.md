@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:10.024151'
+date: '2022-06-22'
 title: Stop default router from serving custom domain routes
 aliases: [/docs/ingress/default-router-custom-domain/README.md]
 tags: ["OSD", "ROSA"]

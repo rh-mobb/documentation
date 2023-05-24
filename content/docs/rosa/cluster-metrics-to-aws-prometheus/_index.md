@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2021-12-16'
 title: ROSA - Federating Metrics to AWS Prometheus
 tags: ["AWS", "ROSA"]
 authors:

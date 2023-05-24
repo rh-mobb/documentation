@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.584151'
+date: '2021-07-27'
 title: OpenShift Logging
 tags: ["Observability", "OCP"]
 authors:

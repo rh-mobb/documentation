@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.604151'
+date: '2022-06-02'
 title: Using AWS Controllers for Kubernetes (ACK) on ROSA
 tags: ["AWS", "ROSA"]
 authors:

@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2023-04-04'
 title: Enabling the AWS EFS CSI Driver Operator on ROSA
 tags: ["AWS", "ROSA"]
 aliases:

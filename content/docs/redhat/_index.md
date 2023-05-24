@@ -1,7 +1,7 @@
 
 ---
 title: "Other Red Hat Products"
-date: 2022-09-14
+date: 2022-09-18
 archetype: chapter
 ---
 

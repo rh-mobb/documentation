@@ -1,4 +1,4 @@
 ---
-date: '2022-09-14T22:07:08.554151'
+date: '2022-09-19'
 title: Azure Service Operator
 ---

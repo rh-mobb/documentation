@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.774151'
+date: '2022-01-11'
 title: Advanced Cluster Management Observability on ROSA
 aliases: ['/docs/acm/observability/rosa']
 tags: ["Observability", "ROSA", "ACM"]

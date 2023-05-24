@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.604151'
+date: '2022-08-19'
 title: Configuring the Cluster Log Forwarder for CloudWatch Logs and STS
 tags: ["AWS", "ROSA"]
 authors:

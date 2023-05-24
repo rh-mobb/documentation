@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2022-04-22'
 title: Creating a ROSA cluster in STS mode with custom KMS key
 tags: ["AWS", "ROSA"]
 authors:

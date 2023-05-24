@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.594151'
+date: '2021-08-09'
 title: Creating a ROSA cluster with Private Link enabled (custom VPC) and STS
 tags: ["AWS", "ROSA", "STS", "Private Link"]
 authors:

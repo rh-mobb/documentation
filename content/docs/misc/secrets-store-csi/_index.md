@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.804151'
+date: '2021-08-18'
 title: Installing the Kubernetes Secret Store CSI on OpenShift
 alias: /docs/security/secrets-store-csi
 tags: ["ARO", "ROSA", "OSD", "OCP"]

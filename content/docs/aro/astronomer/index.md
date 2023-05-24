@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.554151'
+date: '2021-05-24'
 title: Installing Astronomer on a private ARO cluster
 tags: ["ARO", "Azure"]
 authors:

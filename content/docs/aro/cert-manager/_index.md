@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.564151'
+date: '2022-06-19'
 title: ARO Custom domain with cert-manager and LetsEncrypt
 tags: ["ARO", "Azure"]
 authors:

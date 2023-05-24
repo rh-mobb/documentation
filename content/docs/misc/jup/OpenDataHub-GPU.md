@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:10.024151'
+date: '2022-07-01'
 title: Installing the Open Data Hub Operator
 aliases: ['/docs/misc/jup/OpenDataHub-GPU.md']
 tags: ["GPU", "OCP"]

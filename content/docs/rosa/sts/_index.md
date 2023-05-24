@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.604151'
+date: '2022-05-27'
 title: Deploying ROSA in STS mode
 tags: ["AWS", "ROSA", "STS"]
 authors:
