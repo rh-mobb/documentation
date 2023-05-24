@@ -3,11 +3,11 @@ date: '2022-09-14T22:07:08.594151'
 title: Creating a OSD in GCP with Existing VPCs
 aliases: ['/docs/gcp/osd_preexisting_vpc.md']
 tags: ["GCP", "OSD"]
+authors:
+  - Roberto Carratalá
+  - Andrea Bozzoni
+  - Connor Wooley
 ---
-
-**Roberto Carratalá, Andrea Bozzoni**
-
-*Last updated 07/06/2022*
 
 > **Tip** The official documentation for installing a OSD cluster in GCP can be found [here](https://docs.openshift.com/dedicated/osd_cluster_create/creating-a-gcp-cluster.html).
 
