@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.954151'
+date: '2023-05-24T22:07:09.954151'
 title: Configure ARO to use Azure AD Group Claims
 ---
 
