@@ -8,5 +8,6 @@ publish:
 
 .PHONY: preview.%
 preview.%:
+	gh repo set-default github.com/rh-mobb/documentation
 	gh pr checkout $*
 	hugo server --minify --theme relearn -D
