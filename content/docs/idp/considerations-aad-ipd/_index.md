@@ -4,7 +4,7 @@ title: Important Considerations for Using AAD as IDP
 tags: ["Azure", "IDP", "ARO", "ROSA"]
 ---
 
-**Ricardo Macedo Martins**
+Author: **[Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins)**
 
 *May 24, 2023*
 
