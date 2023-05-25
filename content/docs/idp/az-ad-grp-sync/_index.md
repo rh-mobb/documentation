@@ -1,12 +1,11 @@
 ---
-date: '2022-09-14T22:07:09.894151'
+date: '2021-11-08'
 title: Using Group Sync Operator with Azure Active Directory and ROSA
 tags: ["Azure", "ROSA"]
+authors:
+  - Steve Mirman
+  - Kumudu Herath
 ---
-
-**Steve Mirman**
-
-*8 November 2021*
 
 This guide focuses on how to synchronize Identity Provider (IDP) groups and users after configuring authentication in OpenShift Cluster Manager (OCM). For an IDP configuration example, please reference the [Configure Azure AD as an OIDC identity provider for ROSA/OSD](https://mobb.ninja/docs/idp/azuread/) guide.
 

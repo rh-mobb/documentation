@@ -1,7 +1,9 @@
 ---
-date: '2022-09-14T22:07:08.604151'
+date: '2022-09-01'
 title: Custom AlertManager in ROSA 4.9.x
 tags: ["AWS", "ROSA"]
+authors:
+  - Paul Czarkowski
 ---
 
 **This page is deprecated. In order to get the best experience for custom alerting in ROSA, please upgrade your cluster to to 4.12 and follow the [newer](../custom-alertmanager) documentation.**

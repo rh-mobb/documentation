@@ -1,12 +1,11 @@
 ---
-date: '2022-09-14T22:07:08.564151'
+date: '2022-05-23'
 title: Trident NetApp operator setup for Azure NetApp files
 tags: ["ARO", "Azure"]
+authors:
+  - Byron Miller
+  - Connor Wooley
 ---
-
-**Byron Miller**
-
-*05/23/2022*
 
 Note:
 This guide a simple "happy path" to show the path of least friction to showcasing how to use NetApp files with Azure Red Hat OpenShift. This may not be the best behavior for any system beyond demonstration purposes.

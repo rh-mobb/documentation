@@ -1,13 +1,11 @@
 ---
-date: '2022-09-14T22:07:09.854151'
+date: '2021-06-21'
 title: OpenShift - Sharing Common images
 tags: ["OCP"]
+authors:
+  - Paul Czarkowski
+  - Connor Wooley
 ---
-# OpenShift - Sharing Common images
-
-**Paul Czarkowski**
-
-*21 June 2021*
 
 In OpenShift images (stored in the in-cluster registry) are protected by Kubernetes RBAC and by default only the namespace in which the image was built can access it.
 

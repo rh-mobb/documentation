@@ -1,16 +1,16 @@
 ---
-date: '2022-09-14T22:07:08.574151'
+date: '2023-03-29'
 title: Azure Front Door with ARO ( Azure Red Hat OpenShift )
 tags: ["ARO", "Azure"]
+authors:
+  - Kevin Collins
+  - Ricardo Martins
 ---
 Securing exposing an Internet facing application with a private ARO Cluster.
 
 When you create a cluster on ARO you have several options in making the cluster public or private.  With a public cluster you are allowing Internet traffic to the api and *.apps endpoints.  With a private cluster you can make either or both the api and .apps endpoints private.
 
 How can you allow Internet access to an application running on your private cluster where the .apps endpoint is private?  This document will guide you through using Azure Frontdoor to expose your applications to the Internet.  There are several advantages of this approach, namely your cluster and all the resources in your Azure account can remain private, providing you an extra layer of security.  Azure FrontDoor operates at the edge so we are controlling traffic before it even gets into your Azure account.  On top of that, Azure FrontDoor also offers WAF and DDoS protection, certificate management and SSL Offloading just to name a few benefits.
-
-
-**Kevin Collins, Ricardo M. Martins** *03/29/2023*
 
 *Adopted from [ARO Reference Architecture](https://github.com/UmarMohamedUsman/aro-reference-architecture)*
 

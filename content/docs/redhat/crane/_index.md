@@ -1,13 +1,12 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2022-07-29'
 title: Migrate Kubernetes Applications with Konveyer Crane
 aliases: ['/docs/demos/crane/']
 tags: []
+authors:
+  - Paul Czarkowski
+  - JJ Asghar
 ---
-
-*7/29/2021*
-
-by [Paul Czarkowski](mailto:pczarkow@redhat.com) and [JJ Asghar](mailto:awesome@ibm.com)
 
 ## Introduction
 

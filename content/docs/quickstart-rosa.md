@@ -1,14 +1,15 @@
 ---
-date: '2022-09-14T22:07:08.594151'
+date: '2021-06-10'
 title: ROSA Quickstart
 weight: 1
 aliases: [/docs/quickstart-rosa.md]
 tags: ["AWS", "ROSA", "Quickstarts"] 
+authors:
+  - Steve Mirman
+  - Paul Czarkowski
 ---
 
 A Quickstart guide to deploying a Red Hat OpenShift cluster on AWS.
-
-Author: [Steve Mirman](https://twitter.com/stevemirman)
 
 ## Video Walkthrough
 

@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.554151'
+date: '2021-06-29'
 title: Using the Egressip Ipam Operator with a Private ARO Cluster
 tags: ["ARO", "Azure"]
 ---

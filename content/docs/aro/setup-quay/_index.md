@@ -1,4 +1,6 @@
 ---
-date: '2022-09-14T22:07:08.574151'
+date: '2022-09-19'
 title: Quay on ARO
+authors:
+  - Paul Czarkowski
 ---

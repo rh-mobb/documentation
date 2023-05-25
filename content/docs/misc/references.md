@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.804151'
+date: '2021-06-16'
 title: Common Managed OpenShift References / Tasks
 ---
 # Common Managed OpenShift References / Tasks

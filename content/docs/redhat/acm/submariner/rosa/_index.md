@@ -3,9 +3,9 @@ date: '2023-04-25T22:07:09.774151'
 title: Deploy ACM Submariner for connect overlay networks of ROSA clusters
 aliases: ['/docs/acm/observability/rosa']
 tags: ["Submariner", "ROSA", "ACM"]
+authors:
+  - Roberto Carratalá
 ---
-
-Author: [Roberto Carratalá](https://github.com/rcarrata)
 
 Submariner is an open source tool that can be used with Red Hat Advanced Cluster Management for Kubernetes to provide direct networking between pods and compatible multicluster service discovery across two or more Kubernetes clusters in your environment, either on-premises or in the cloud.
 

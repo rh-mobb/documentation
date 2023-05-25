@@ -1,12 +1,13 @@
 ---
-date: '2022-09-14T22:07:08.574151'
+date: '2022-06-15'
 title: ARO IBM Cloud Paks 4 Data
 tags: ["ARO", "Azure"]
+authors:
+  - Kristopher White
+  - Connor Wooley
 ---
 
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster with IBM Cloud Paks 4 Data.
-
-*Author: Kristopher White*
 
 ## Video Walkthrough
 

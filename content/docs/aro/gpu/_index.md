@@ -1,13 +1,14 @@
 ---
-date: '2022-09-14T22:07:08.564151'
+date: '2022-06-22'
 title: ARO with Nvidia GPU Workloads
 tags: ["ARO", "Azure", "GPU"]
+authors:
+  - Byron Miller
+  - Stuart Kirk
+  - Ricardo Martins
 ---
 
 ARO guide to running Nvidia GPU workloads.
-
-Authors: [Byron Miller](https://twitter.com/byron_miller), [Stuart Kirk](https://github.com/redhatstuart), [Ricardo M. Martins](https://github.com/ricmmartins)
-
 
 ## Prerequisites
 

@@ -1,11 +1,11 @@
 ---
-date: '2023-05-24T11:26:30.000000'
+date: '2023-05-24'
 title: Configure ARO to use Azure AD Group Claims
+authors:
+  - Michael McNeill
+  - Ricardo Martins
+  - Neal Gompa
 ---
-
-Authors: **Michael McNeill**, **Ricardo M. Martins**
-
-*24 May 2023*
 
 This guide demonstrates how to utilize the OpenID Connect group claim functionality implemented in OpenShift 4.10. This functionality allows an identity provider to provide a user's group membership for use within OpenShift. This guide will walk through the creation of an Azure Active Directory (Azure AD) application, configure the necessary Azure AD groups, and configure Azure Red Hat OpenShift (ARO) to authenticate and manage authorization using Azure AD.
 

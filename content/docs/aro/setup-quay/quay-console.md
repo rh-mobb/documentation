@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:08.584151'
+date: '2022-09-19'
 title: Setting up Quay on an ARO cluster via Console
 aliases: ['/docs/aro/setup-quay/quay-cli.md']
 tags: ["ARO", "Azure"]

@@ -1,14 +1,13 @@
 ---
-date: '2022-09-14T22:07:08.574151'
+date: '2023-03-29'
 title: Setup a VPN Connection into an ARO Cluster with OpenVPN
 tags: ["ARO", "Azure"]
+authors:
+  - Kevin Collins
+  - Ricardo Martins
 ---
 
-**Kevin Collins, Ricardo M. Martins**
-
-*03/29/2023*
-
-When you configure an Azure Red Hat OpenShift (ARO) cluster with a private only configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute a point-to0-site VPN connection so you won't need to setup and configure Jump Boxes.
+When you configure an Azure Red Hat OpenShift (ARO) cluster with a private only configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute a point-to-site VPN connection so you won't need to setup and configure Jump Boxes.
 
 ## Prerequisites
 

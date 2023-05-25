@@ -1,10 +1,11 @@
 ---
-date: '2022-09-14T22:07:08.604151'
+date: '2022-06-02'
 title: Using AWS Controllers for Kubernetes (ACK) on ROSA
 tags: ["AWS", "ROSA"]
+authors:
+  - Paul Czarkowski
+  - Connor Wooley
 ---
-
-*Updated: 06/02/2022 by Paul Czarkowski*
 
 [AWS Controllers for Kubernetes](https://aws-controllers-k8s.github.io/community/docs/community/overview/) (ACK) lets you define and use AWS service resources directly from Kubernetes. With ACK, you can take advantage of AWS-managed services for your Kubernetes applications without needing to define resources outside of the cluster or run services that provide supporting capabilities like databases or message queues within the cluster.
 

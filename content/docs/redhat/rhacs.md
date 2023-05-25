@@ -1,13 +1,12 @@
 ---
-date: '2022-09-14T22:07:09.804151'
+date: '2022-10-06'
 title: Deploying Red Hat Advanced Cluster Security in ARO/ROSA
 aliases: ['/docs/security/rhacs.md']
 tags: ["ACS", "ARO", "ROSA"]
+authors:
+  - Roberto Carratalá
+  - Connor Wooley
 ---
-
-**Author: Roberto Carratalá**
-
-*Updated: 10/06/2022*
 
 This document is based in the [RHACS workshop](https://redhat-scholars.github.io/acs-workshop/acs-workshop/index.html) and in the [RHACS official documentation](https://docs.openshift.com/acs/3.70/installing/install-ocp-operator.html).
 

@@ -10,11 +10,25 @@ Docs that follow this structure will be automatically added to the content menu 
 
 ### Front Matter
 
-* Date - The examples of the date object show were generated via script so going forward follow the YYYY-MM-DD format
+These fields are recommended and are used to auto-generate portions of the content body.  They belong at the 
+top of each article that you publish.
+
+* Date - The original date of content creation, in YYYY-MM-DD format
 * Title - This will be displayed page title
 * Tags - The tags associated with your page, they will display alphabetically atop of the page regardless of the order definied in the front amtter
+* Authors - Anyone who has edited this page
 
-![Front Matter Example](./contrib_files/Screen%20Shot%202023-01-09%20at%206.25.37%20PM.png)
+Example:
+
+```yaml
+---
+date: '2022-08-17'
+title: Adding infrastructure nodes to an ARO cluster
+tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
+---
+```
 
 ## Adding New Docs
 
@@ -26,13 +40,15 @@ Docs that follow this structure will be automatically added to the content menu 
 
 1. Write your Doc with the proper front matter (Title, Date, Tags)
 
-   ```
-   ---
-   date: "2023-01-01"
-   title: "Creating s3 buckets in ROSA using ACK"
-   tags: ["rosa","s3", "ack"]
-   ---
-   ```
+```yaml
+---
+date: "2023-01-01"
+title: "Creating s3 buckets in ROSA using ACK"
+tags: ["rosa","s3", "ack"]
+authors:
+   - My Name
+---
+```
 
 1. Update `/content/docs/_index.md` to include your new document.
 
@@ -49,11 +65,13 @@ Docs that follow this structure will be automatically added to the content menu 
 
 In order to create a landing page for your new section you will need to create a `/docs/[Section]/_index.md` which is a chapter page in our useage. This page will create the section in the drop down menu as well as display as a landing page for the new section. The front matter for the chapter pages should follow the format below
 
-```
+```yaml
 ---
 date: "2023-01-01"
 title: "DevSecFinOps"
 tags: ["devops", "finops", "devsecops"]
+authors:
+   - My Name
 ---
 ```
 

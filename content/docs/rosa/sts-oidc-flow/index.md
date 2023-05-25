@@ -2,6 +2,8 @@
 date: '2022-10-01'
 title: "STS OIDC in ROSA : How it works!"
 tags: ["AWS", "ROSA", "STS"]
+authors:
+  - Connor Wooley
 ---
 
 If you prefer a more visual medium, you can watch this video on [YouTube](https://youtu.be/OzhNZ_0eNMY).

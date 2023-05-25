@@ -1,9 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.754151'
+date: '2021-06-14'
 title: Creating a Public/Private BYO VPC for ROSA
 tags: ["AWS", "ROSA"]
+authors:
+  - Connor Wooley
 ---
-## Creating a Public/Private BYO VPC for ROSA
 
 This is example Terraform to create a single AZ VPC in which to deploy a single AZ ROSA cluster. This is intended to be used as a guide to get started quickly, not to be used in production.
 

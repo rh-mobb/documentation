@@ -1,9 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.754151'
+date: '2021-10-04'
 title: Integrating with AWS resources using Pod Identity
 tags: ["AWS", "ROSA", "STS"]
+authors:
+  - Connor Wooley
 ---
-# Integrating with AWS resources using Pod Identity
 
 ## Prerequisites
 

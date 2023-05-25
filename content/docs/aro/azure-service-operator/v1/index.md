@@ -1,13 +1,11 @@
 ---
-date: '2022-09-14T22:07:08.564151'
+date: '2022-09-19'
 title: 'Azure Service Operator V1 in ARO'
 aliases: ['/docs/aro/azure-service-operator-v1/']
 tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
 ---
-
-**Paul Czarkowski**
-
-*last edit - 02/16/2022*
 
 The Azure Service Operator (ASO) provides Custom Resource Definitions (CRDs) for Azure resources that can be used to create, update, and delete Azure services from an OpenShift cluster.
 

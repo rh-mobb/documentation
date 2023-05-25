@@ -1,11 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.904151'
+date: '2022-02-16'
 title: Configure GitLab as an identity provider for ROSA/OSD
+authors:
+  - Steve Mirman
+  - Paul Czarkowski
 ---
-
-**Steve Mirman**
-
-*16 February 2022*
 
 The following instructions will detail how to configure GitLab as the identity provider for Managed OpenShift through the OpenShift Cluster Manager (OCM):
 

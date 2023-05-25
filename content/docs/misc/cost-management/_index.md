@@ -2,11 +2,10 @@
 date: '2023-03-29T22:07:09.784151'
 title: Red Hat Cost Management for Cloud Services
 tags: ["Cost", "Azure", "ARO"]
+authors:
+  - Charlotte Fung
+  - Sohaib Azed
 ---
-
-**Author: Charlotte Fung**
-
-*Last edited: 03/29/2023*
 
 Adopted from [Official Documentation for Cost Management Service](https://access.redhat.com/documentation/en-us/cost_management_service/2022)
 
