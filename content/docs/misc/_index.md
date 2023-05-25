@@ -3,6 +3,7 @@ title: "Miscellaneous"
 date: 2022-09-18
 description: MOBB Docs and Guides for misc
 archetype: chapter
+skipMetadata: true
 ---
 
 
