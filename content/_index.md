@@ -103,6 +103,7 @@ skipMetadata: true
 * [Configure Azure AD as an identitiy provider for ROSA with group claims](/docs/idp/group-claims/rosa/)
 * [Configure Azure AD as an identity provider for ROSA/OSD](/docs/idp/azuread)
 * [Configure Azure AD as an identity provider for ARO via the CLI](/docs/idp/azuread-aro-cli)
+* [Considerations when using AAD as IDP](/docs/idp/considerations-aad-ipd)
 
 ## Configuring Group Synchronization
 
