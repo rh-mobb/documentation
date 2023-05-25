@@ -2,6 +2,7 @@
 date: '2021-10-29'
 title: Configuring IDP for ROSA, OSD and ARO
 tags: ["ROSA", "OSD", ARO", "Azure", "AWS" ]
+skipMetadata: true
 ---
 
 Red Hat OpenShift on AWS (ROSA) and OpenShift Dedicated (OSD) provide a simple way for the cluster administrator to configure one or more identity providers for their cluster[s] via the [OpenShift Cluster Manager (OCM)](https://console.redhat.com/openshift), while Azure Red Hat OpenShift relies on the internal cluster OAuth provider.

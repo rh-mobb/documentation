@@ -1,4 +1,5 @@
 {{ .Params.headingPost | safeHTML }}
+{{ if not .Params.skipMetadata }}
 <hr>
 <p>
     <!-- authors comes from the authors metadata -->
@@ -44,3 +45,4 @@
     {{ end }}
 </p>
 <hr>
+{{ end }}
