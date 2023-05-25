@@ -1,8 +1,8 @@
 {{ .Params.headingPost | safeHTML }}
 <hr>
 <p>
-    <!-- editors comes from the editors metadata -->
-    <!-- if editors are unset, no editors are printed -->
+    <!-- authors comes from the authors metadata -->
+    <!-- if authors are unset, no authors are printed -->
     {{ if isset .Params "authors" }}
         <b>Authors:</b> {{ range $index, $author := .Params.Authors }}
             {{ if eq $index (sub (len $.Params.Authors) 1) }}
@@ -17,8 +17,12 @@
     <!-- requires git binary and enableGitInfo set in the hugo config -->
     <!-- if unset, unknown is printed -->
     <b>Last Editor:</b>
-    {{ if $.GitInfo.AuthorName }}
-        {{ .GitInfo.AuthorName }}
+    {{ if $.GitInfo }}
+        {{ if $.GitInfo.AuthorName }}
+            {{ .GitInfo.AuthorName }}
+        {{ else }}
+            Unknown
+        {{ end }}
     {{ else }}
         Unknown
     {{ end }}<br>
