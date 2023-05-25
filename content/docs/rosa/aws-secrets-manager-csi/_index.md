@@ -1,5 +1,5 @@
 ---
-date: '2021-08-17'
+date: '2023-05-25'
 title: Using AWS Secrets Manager CSI on Red Hat OpenShift on AWS with STS
 tags: ["AWS", "ROSA"]
 authors:
@@ -261,9 +261,9 @@ This is made even easier and more secure through the use of AWS STS and Kubernet
 
     ```bash
     oc adm policy remove-scc-from-user privileged \
-      system:serviceaccount:kube-system:secrets-store-csi-driver
+      system:serviceaccount:csi-secrets-store:secrets-store-csi-driver
     oc adm policy remove-scc-from-user privileged \
-      system:serviceaccount:kube-system:csi-secrets-store-provider-aws
+      system:serviceaccount:csi-secrets-store:csi-secrets-store-provider-aws
     ```
 
 1. Delete the AWS provider
