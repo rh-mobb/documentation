@@ -2,6 +2,8 @@
 date: '2023-05-24T18:50:00.0000'
 title: Considerations when using AAD as IDP
 tags: ["Azure", "IDP", "ARO", "ROSA"]
+authors:
+  - Ricardo Martins
 ---
 
 Author: [Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins)
