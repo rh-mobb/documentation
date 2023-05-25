@@ -1,6 +1,6 @@
 ---
 date: '2023-05-24T18:50:00.0000'
-title: Important Considerations for Using AAD as IDP
+title: Considerations when using AAD as IDP
 tags: ["Azure", "IDP", "ARO", "ROSA"]
 ---
 
