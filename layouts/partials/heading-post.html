@@ -46,3 +46,24 @@
 </p>
 <hr>
 {{ end }}
+
+<!-- summary comes from the summary metadata -->
+<!-- if summary is unset, the content provided in the markdown file should provide the summary -->
+<!-- markdown is able to be included for the summary -->
+{{ if isset .Params "summary" }}
+    {{ "## Summary" | markdownify }}
+    {{ .Params.Summary | markdownify }}
+{{ end }}
+
+<!-- preqreqs comes from the prereqs metadata -->
+<!-- if prereqs is unset, it is up to the user to provide prereqs for this walkthrough (or it may not be a walkthrough) -->
+<!-- markdown is able to be included for the prereqs -->
+{{ if isset .Params "prereqs" }}
+    {{ "## Prerequisite Tooling" | markdownify }}
+    The following tooling must be installed prior to beginning this walkthrough:<br>
+    {{ range $prereq := .Params.Prereqs }}
+        <ul>
+            <li>{{ $prereq | markdownify }}</li>
+        </ul>
+    {{ end }}
+{{ end }}
