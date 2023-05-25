@@ -52,8 +52,6 @@ isPlainText = true
 isHTML = false
 notAlternative = true
 
-[markup.goldmark.renderer]
-unsafe = true
 
 # Code highlight configuration
 [markup.highlight]
