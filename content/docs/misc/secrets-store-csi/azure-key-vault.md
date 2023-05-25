@@ -1,13 +1,12 @@
 ---
-date: '2022-09-14T22:07:09.804151'
+date: '2021-08-16'
 title: Azure Key Vault CSI on Azure Red Hat OpenShift
 aliases: ['/docs/security/secrets-store-csi/azure-key-vault']
 tags: ["Azure", "ARO"]
+authors:
+  - Paul Czarkowski
+  - Diana Sari
 ---
-
-Author: [Paul Czarkowski](https://github.com/paulczar)
-
-*Last modified: 03/29/2023*
 
 This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
 

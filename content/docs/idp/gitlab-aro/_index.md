@@ -1,11 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.944151'
+date: '2022-03-28'
 title: Configure GitLab as an identity provider for ARO
+authors:
+  - Steve Mirman
+  - Paul Czarkowski
 ---
-
-**Steve Mirman**
-
-*28 March 2022*
 
 The following instructions will detail how to configure GitLab as the identity provider for Azure Red Hat OpenShift:
 

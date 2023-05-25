@@ -1,10 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2022-05-31'
 title: ECR Secret Operator
 tags: ["AWS", "ROSA"]
+authors:
+  - Shaozhen Ding 
 ---
-**Author: Shaozhen**
-*Modified: 04/06/2023*
 
 Amazon Elastic Container Registry [Private Registry Authentication](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html) provides a temporary authorization token valid only for 12 hours. This operator refreshes automatically the Amazon ECR authorization token before it expires, reducing the overhead in managing the authentication flow.
 

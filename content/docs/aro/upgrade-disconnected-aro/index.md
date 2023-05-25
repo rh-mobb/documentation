@@ -2,11 +2,10 @@
 date: '2023-03-06'
 title: Upgrade a disconnected ARO cluster
 tags: ["ARO", "Azure"]
+authors:
+  - Aaron Green
+  - Kevin Collins
 ---
-
-**Aaron Green & Kevin Collins**
-
-*03/06/2023*
 
 ## Background
 One of the great features of ARO is that you can create 'disconnected' clusters with no connectivity to the Internet.  Out of the box, the ARO service mirrors all the code repositories to build OpenShift clusters to Azure Container Registry.  This means ARO is built without having to reach out to the Internet as the images to build OpenShift are pulled via the Azure private network.

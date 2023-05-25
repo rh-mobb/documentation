@@ -2,12 +2,12 @@
 date: '2023-02-21'
 title: ROSA with Nvidia GPU Workloads
 tags: ["AWS", "ROSA", "GPU"]
+authors:
+  - Chris Kang
+  - Diana Sari
 ---
 
 ROSA guide to running Nvidia GPU workloads.
-
-Author: [Chris Kang](https://github.com/theckang)
-
 
 ## Prerequisites
 

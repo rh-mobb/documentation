@@ -3,11 +3,10 @@ date: '2023-01-03T22:07:08.574151'
 title: AWS Load Balancer Operator On ROSA
 aliases: ['/docs/rosa/alb-sts']
 tags: ["AWS", "ROSA"]
+authors:
+  - Shaozhen Ding
+  - Paul Czarkowski
 ---
-
-Author **Shaozhen Ding**, **Paul Czarkowski**
-
-*last edited: 04/26/2023*
 
 [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/) is a controller to help manage Elastic Load Balancers for a Kubernetes cluster.
 

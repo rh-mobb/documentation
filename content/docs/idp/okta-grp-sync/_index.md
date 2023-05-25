@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:10.004151'
+date: '2022-07-25'
 title: Using Group Sync Operator with Okta and ROSA/OSD
 ---
 

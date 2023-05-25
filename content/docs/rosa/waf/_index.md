@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.854151'
+date: '2021-06-17'
 title: Examples of using a WAF in front of ROSA / OSD on AWS / OCP on AWS
 aliases: ['/docs/aws/waf']
 tags: ["AWS", "ROSA", "OSD", "OCP"]

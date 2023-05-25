@@ -1,7 +1,10 @@
 ---
-date: '2022-09-14T22:07:08.564151'
+date: '2022-06-28'
 title: Accessing the Internal Registry from ARO
 tags: ["ARO", "Azure"]
+authors:
+  - Kevin Collins
+  - Connor Wooley
 ---
 
 **Kevin Collins**

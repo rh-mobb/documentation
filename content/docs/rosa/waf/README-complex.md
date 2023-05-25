@@ -1,5 +1,5 @@
 ---
-date: '2022-09-14T22:07:09.854151'
+date: '2021-06-17'
 title: This is a POC of ROSA with a AWS WAF service
 tags: ["AWS", "ROSA"]
 ---

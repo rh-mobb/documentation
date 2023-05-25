@@ -2,6 +2,8 @@
 date: '2023-02-19'
 title: External DNS for ROSA Custom Domain
 tags: ["AWS", "ROSA"]
+authors:
+  - Chris Kang
 ---
 
 Configuring the Custom Domain Operator requires a wildcard CNAME DNS record in your Route53 Hosted Zone. If you do not wish to use a wildcard record, you can use the External DNS Operator to create individual entries for routes.
@@ -9,10 +11,6 @@ Configuring the Custom Domain Operator requires a wildcard CNAME DNS record in y
 This document will guide you through deploying and configuring the External DNS Operator with a Custom Domain in ROSA.
 
 **Important Note**: The ExternalDNS Operator does not support STS yet and uses long lived IAM credentials. This guide will be updated once STS is supported.
-
-Author: [Chris Kang](https://github.com/theckang)
-
-*Last modified 02/19/2023* 
 
 ## Prerequisites
 * ROSA Cluster

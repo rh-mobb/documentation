@@ -1,12 +1,10 @@
 ---
-date: '2023-05-24T08:00:00.000000'
+date: '2023-02-28'
 title: Assign Consistent Egress IP for External Traffic
 tags: ["OSD", "ROSA", "ARO"]
+authors:
+  - 'Dustin Scott'
 ---
-
-**Dustin Scott**
-
-*28 February 2023*
 
 It may be desirable to assign a consistent IP address for traffic that leaves 
 the cluster when configuring items such as security groups or other sorts of 

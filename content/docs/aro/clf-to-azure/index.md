@@ -2,11 +2,12 @@
 date: '2023-03-26T22:07:09.774151'
 title: Using Cluster Logging Forwarder in ARO with Azure Monitor
 tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
+  - Steve Mirman
+  - Nerav Doshi
+  - Roberto Carratalá
 ---
-
-**Paul Czarkowski, Steve Mirman, Nerav Doshi**
-
-*03/29/2023*oc log
 
 In Azure Red Hat OpenShift (ARO) you can fairly easily set up cluster logging to an in-cluster Elasticsearch using the OpenShift Elasticsearch Operator
 and the Cluster Logging Operator, but what if you want to use the Azure native Log Analytics service?

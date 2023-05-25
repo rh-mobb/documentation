@@ -1,11 +1,11 @@
 ---
-date: '2022-09-14T22:07:09.754151'
+date: '2023-05-25'
 title: Using AWS Secrets Manager CSI on Red Hat OpenShift on AWS with STS
 tags: ["AWS", "ROSA"]
+authors:
+  - Paul Czarkowski
+  - Chris Kang
 ---
-Author: [Paul Czarkowski](https://github.com/paulczar)
-
-*last modified 2023-03-29*
 
 The AWS Secrets and Configuration Provider (ASCP) provides a way to expose AWS Secrets as Kubernetes storage volumes. With the ASCP, you can store and manage your secrets in Secrets Manager and then retrieve them through your workloads running on ROSA or OSD.
 
@@ -261,9 +261,9 @@ This is made even easier and more secure through the use of AWS STS and Kubernet
 
     ```bash
     oc adm policy remove-scc-from-user privileged \
-      system:serviceaccount:kube-system:secrets-store-csi-driver
+      system:serviceaccount:csi-secrets-store:secrets-store-csi-driver
     oc adm policy remove-scc-from-user privileged \
-      system:serviceaccount:kube-system:csi-secrets-store-provider-aws
+      system:serviceaccount:csi-secrets-store:csi-secrets-store-provider-aws
     ```
 
 1. Delete the AWS provider

@@ -1,12 +1,13 @@
 ---
-date: '2022-09-14T22:07:08.574151'
+date: '2022-03-19'
 title: Adding an additional ingress controller to an ARO cluster
 tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
+  - Stuart Kirk
+  - Anton Nesterov
+  - Connor Wooley
 ---
-
-**Paul Czarkowski, Stuart Kirk, Anton Nesterov**
-
-*03/30/2022 (updated on 12/09/2022)*
 
 ## Prerequisites
 

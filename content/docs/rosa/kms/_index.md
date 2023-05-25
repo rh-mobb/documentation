@@ -1,11 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2022-04-22'
 title: Creating a ROSA cluster in STS mode with custom KMS key
 tags: ["AWS", "ROSA"]
+authors:
+  - Byron Miller
 ---
-**Byron Miller**
-
-*Last updated 31/01/2023*
 
 > **Tip** Official Documentation [ROSA STS with custom KMS key](https://docs.openshift.com/rosa/rosa_getting_started/rosa-sts-creating-a-cluster-with-customizations.html#rosa-sts-creating-cluster-customizations_rosa-sts-creating-a-cluster-with-customizations)
 

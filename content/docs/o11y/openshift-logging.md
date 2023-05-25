@@ -1,12 +1,13 @@
 ---
-date: '2022-09-14T22:07:08.584151'
+date: '2021-07-27'
 title: OpenShift Logging
 tags: ["Observability", "OCP"]
+authors:
+  - Aaron Aldrich
+  - Connor Wooley
 ---
 
-A guid to shipping logs and metrics on OpenShift
-
-Author: [Aaron Aldrich](https://twitter.com/crayzeigh)
+A guide to shipping logs and metrics on OpenShift
 
 ## Prerequisites
 

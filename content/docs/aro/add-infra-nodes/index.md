@@ -1,12 +1,10 @@
 ---
-date: '2022-09-14T22:07:08.584151'
+date: '2022-08-17'
 title: Adding infrastructure nodes to an ARO cluster
 tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
 ---
-
-**Paul Czarkowski**
-
-*08/17/2022*
 
 This document shows how to set up infrastructure nodes in an ARO cluster and move infrastructure related workloads to them. This can help with larger clusters that have resource contention between user workloads and infrastructure workloads such as Prometheus.
 

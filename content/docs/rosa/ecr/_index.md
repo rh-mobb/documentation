@@ -1,10 +1,11 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2022-04-26'
 title: 'Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)'
 tags: ["AWS", "ROSA"]
+authors:
+  - Kevin Collins
+  - Byron Miller
 ---
-
-Authors: Kevin Collins, Byron Miller
 
 ## Prerequisites
 

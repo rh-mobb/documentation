@@ -3,6 +3,7 @@ title: "Documentation from the MOBB"
 date: 2022-09-14
 description: MOBB Docs and Guides
 archetype: home
+skipMetadata: true
 ---
 
 ## Quickstarts / Getting Started

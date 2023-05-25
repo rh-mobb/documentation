@@ -1,13 +1,12 @@
 ---
-date: '2022-09-14T22:07:10.024151'
+date: '2022-08-24'
 title: Configure ROSA/OSD to use custom TLS ciphers on the ingress controllers
 aliases: ['/docs/ingress/tls-cipher-customization']
 tags: ["ROSA", "AWS", "OSD"]
+authors:
+  - Michael McNeill
+  - Connor Wooley
 ---
-
-**Michael McNeill**
-
-*24 August 2022*
 
 This guide demonstrates how to properly patch the cluster ingress controllers, as well as ingress controllers created by the Custom Domain Operator. This functionality allows customers to modify the `tlsSecurityProfile` value on cluster ingress controllers. This guide will demonstrate how to apply a custom `tlsSecurityProfile`, a scoped service account (with the associated role and role binding), and a CronJob that the cipher changes are reapplied with 60 minutes (in the event that an ingress controller is recreated or modified).
 

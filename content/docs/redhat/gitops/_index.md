@@ -1,8 +1,11 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2021-06-17'
 title: Demonstrate GitOps on Managed OpenShift with ArgoCD
 aliases: ['/docs/demos/gitops/']
 tags: ["GitOps", "ROSA", "ARO"]
+authors:
+  - Steve Mirman
+  - Connor Wooley
 ---
 
 Author: [Steve Mirman](https://twitter.com/stevemirman)

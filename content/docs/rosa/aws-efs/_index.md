@@ -1,13 +1,15 @@
 ---
-date: '2022-09-14T22:07:09.764151'
+date: '2023-04-04'
 title: Enabling the AWS EFS CSI Driver Operator on ROSA
 tags: ["AWS", "ROSA"]
 aliases:
 - /docs/rosa/aws-efs/aws-efs-csi-operator-on-rosa/
 - /docs/rosa/aws-efs/aws-efs-operator-on-rosa/
+authors:
+  - Paul Czarkowski
+  - Andy Repton
+  - Shaozhen Ding
 ---
-**Author: Paul Czarkowski, Andy Repton, Shaozhen Ding**
-*Modified: 03/29/2023*
 
 The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
 

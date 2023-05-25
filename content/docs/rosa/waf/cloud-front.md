@@ -1,8 +1,10 @@
 ---
-date: '2022-09-14T22:07:09.854151'
+date: '2021-06-17'
 title: Using CloudFront + WAF
 aliases: ['/docs/aws/waf/cloud-front.md']
 tags: ["AWS", "ROSA"]
+authors:
+  - Connor Wooley
 ---
 ## Problem Statement
 

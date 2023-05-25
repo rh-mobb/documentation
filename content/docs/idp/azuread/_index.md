@@ -1,12 +1,13 @@
 ---
-date: '2022-09-14T22:07:09.894151'
+date: '2022-09-23'
 title: Configure Azure AD as an OIDC identity provider for ROSA/OSD
 tags: ["Azure", "ROSA", "OSD"]
+authors:
+  - Michael McNeill
+  - Andrea Bozzoni
+  - Steve Mirman
+  - Thatcher Hubbard
 ---
-
-**Michael McNeill, Andrea Bozzoni, Steve Mirman**
-
-*23 September 2022*
 
 This guide demonstrates how to configure Azure AD as the cluster identity provider in Red Hat OpenShift Service on AWS (ROSA). This guide will walk through the creation of an Azure Active Directory (Azure AD) application and configure Red Hat OpenShift Service on AWS (ROSA) to authenticate using Azure AD.
 

@@ -1,8 +1,9 @@
 ---
-date: '2022-09-14T22:07:08.614151'
+date: '2021-06-07'
 title: User Workload Monitoring on Azure Red Hat OpenShift
+authors:
+  - Paul Czarkowski
 ---
-# User Workload Monitoring on Azure Red Hat OpenShift
 
 In Azure Red Hat OpenShift (ARO) Monitoring for User Defined Projects is disabled by default. Follow these instructions to enable it.
 

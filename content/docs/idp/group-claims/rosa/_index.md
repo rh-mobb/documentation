@@ -1,11 +1,10 @@
 ---
-date: '2022-09-14T22:07:10.004151'
+date: '2022-09-19'
 title: Configure ROSA to use Azure AD Group Claims
+authors:
+  - Michael McNeill
+  - Paul Czarkowski
 ---
-
-**Michael McNeill**
-
-*23 September 2022*
 
 This guide demonstrates how to utilize the OpenID Connect group claim functionality implemented in OpenShift 4.10. This functionality allows an identity provider to provide a user's group membership for use within OpenShift. This guide will walk through the creation of an Azure Active Directory (Azure AD) application, configure the necessary Azure AD groups, and configure Red Hat OpenShift Service on AWS (ROSA) to authenticate and manage authorization using Azure AD.
 
