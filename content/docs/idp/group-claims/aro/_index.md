@@ -1,6 +1,5 @@
 ---
-date: '2023-05-24'
-title: Configure ARO to use Azure AD Group Claims
+date: '2023-05-24T11:26:30.000000'
 ---
 
 Authors: **Michael McNeill**, **Ricardo M. Martins**
