@@ -181,13 +181,15 @@ Virtual network peering allows two Azure regions to connect to each other via a 
     64 bytes from 10.1.3.4: icmp_seq=2 ttl=64 time=23.10 ms
     ```
 
-1. ssh to jump host forwarding port 1337 as a socks proxy.
+1. Use sshuttle to create a ssh vpn via the jump host (use a separate terminal session)
 
-    ```
-    ssh -D 1337 -C -i $HOME/.ssh/id_rsa aro@$JUMP_IP
+    > replace the IP with the IP of the jump box from the previous step.
+
+    ```bash
+    sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
     ```
 
-1. configure localhost:1337 as a socks proxy in your browser and access the two consoles.
+1. Login to your cluster console on your browser using the console URL on both clusters to see if they are accessible from one to another. 
 
 From here the two clusters are visible to each other via their frontends. This means they can access eachother's ingress endpoints, routes and Load Balancers, but not pod-to-pod. A PostgreSQL pod in the primary cluster could replicate to a PostgreSQL pod in the secondary cluster via a service of type LoadBalancer.
 
