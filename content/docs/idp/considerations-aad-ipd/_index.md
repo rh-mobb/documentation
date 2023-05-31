@@ -15,7 +15,7 @@ In this guide, we will discuss key considerations when using Azure Active Direct
 * [Configure ARO to Use Azure AD](https://mobb.ninja/docs/idp/azuread-aro/)
 * [Configuring IDP for ROSA, OSD, and ARO](https://mobb.ninja/docs/idp/azuread/)
 
-# Default Access for All Users in Azure Active Directory
+## Default Access for All Users in Azure Active Directory
 
 Once you set up AAD as the IDP for your cluster, it's important to note that by default, all users in your Azure Active Directory instance will have access to the cluster. They can log in using their AAD credentials through the OpenShift Web Console endpoint:
 
@@ -23,7 +23,7 @@ Once you set up AAD as the IDP for your cluster, it's important to note that by 
 
 However, for security purposes, it's recommended to restrict access and only allow specific users who are assigned to access the cluster.
 
-# Restricting Access
+## Restricting Access
 
 To implement access restrictions, follow these steps:
 
@@ -77,7 +77,7 @@ You will then be logged in:
 
 ![Logged In](./images/logged-in.png)
 
-# Approval Workflow
+## Approval Workflow
 
 If you receive a message like the one below, it means that your AAD has the [admin consent workflow](https://learn.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) enabled:
 
@@ -92,7 +92,7 @@ And wait for approval:
 
 ![Request Sent](./images/request-sent.png)
 
-# Self-Approval Process
+## Self-Approval Process
 
 If you have administrative privileges, you can self-approve the request by following these steps:
 
@@ -137,7 +137,7 @@ It worked!
 
 As a best practice, we recommend removing the kubeadmin user after setting up an identity provider. You can find instructions on how to do this [here](https://docs.openshift.com/container-platform/4.13/authentication/remove-kubeadmin.html).
 
-# Using the Group Sync Operator
+## Using the Group Sync Operator
 
 Integrating groups from external identity providers with OpenShift, such as synchronizing groups from AAD, can be a valuable feature to enhance your system's functionality. To accomplish this, you can leverage the usage of the [Group Sync Operator](https://github.com/redhat-cop/group-sync-operator). 
 
