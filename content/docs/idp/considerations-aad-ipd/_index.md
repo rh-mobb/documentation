@@ -12,8 +12,8 @@ Author: [Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins)
 
 In this guide, we will discuss key considerations when using Azure Active Directory (AAD) as the Identity Provider (IDP) for your ARO or ROSA cluster. Below are some helpful references:
 
-* [Configure ARO to Use Azure AD](https://mobb.ninja/docs/idp/azuread-aro/)
-* [Configuring IDP for ROSA, OSD, and ARO](https://mobb.ninja/docs/idp/azuread/)
+* [Configure ARO to Use Azure AD](../azuread-aro/)
+* [Configuring IDP for ROSA, OSD, and ARO](../azuread/)
 
 ## Default Access for All Users in Azure Active Directory
 
