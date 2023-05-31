@@ -21,7 +21,7 @@ authors:
    export CLUSTER_NAME=my-cluster
    export ROSA_CLUSTER_ID=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .id)
    export REGION=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .region.id)
-   export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer)
+   export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed  's|^https://||')
    export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
    export CLUSTER_VERSION=`rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r .version.raw_id | cut -f -2 -d '.'`
    export ROLE_NAME="${CLUSTER_NAME}-openshift-oadp-aws-cloud-credentials"
@@ -88,12 +88,12 @@ authors:
       "Statement": [{
         "Effect": "Allow",
         "Principal": {
-          "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/rh-oidc.s3.us-east-1.amazonaws.com/${ROSA_CLUSTER_ID}"
+          "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_ENDPOINT}"
         },
         "Action": "sts:AssumeRoleWithWebIdentity",
         "Condition": {
           "StringEquals": {
-             "rh-oidc.s3.us-east-1.amazonaws.com/${ROSA_CLUSTER_ID}:sub": [
+             "${OIDC_ENDPOINT}:sub": [
                "system:serviceaccount:openshift-adp:openshift-adp-controller-manager",
                "system:serviceaccount:openshift-adp:velero"]
           }
