@@ -24,7 +24,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     ```bash
     export AZR_RESOURCE_LOCATION=eastus
     export AZR_RESOURCE_GROUP=openshift
-    export AZR_STORAGE_ACCOUNT_NAME=arofederatedmetrics
+    export AZR_STORAGE_ACCOUNT_NAME=arometrics$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | fold -w 5 | head -n 1)
     export CLUSTER_NAME=openshift
     export NAMESPACE=aro-thanos-af
     ```
@@ -93,7 +93,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
    ```bash
    helm upgrade -n $NAMESPACE aro-thanos-af \
-     --install mobb/aro-thanos-af --version 0.2.0 \
+     --install mobb/aro-thanos-af --version 0.4.1 \
      --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
      --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
      --set "aro.storageContainer=$CLUSTER_NAME" \
@@ -102,7 +102,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
 ## Validate Grafana is installed and seeing metrics from Azure Files
 
-1. get the Route URL for Grafana (remember its https) and login using username `root` and the password you updated to (or the default of `secret`).
+1. get the Route URL for Grafana (remember its https) and login using username `admin` and the password `password`.
 
     ```bash
     oc -n $NAMESPACE get route grafana-route
@@ -181,24 +181,24 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     ```bash
     oc -n openshift-user-workload-monitoring get \
-      configmaps user-workload-monitoring-config
+      configmaps user-workload-monitoring-config -o yaml
     ```
 
-    **If the config doesn't exist run:**
+    **If the config doesn't exist (or is empty) run:**
 
     ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: user-workload-monitoring-config
-  namespace: openshift-user-workload-monitoring
-data:
-  config.yaml: |
-    prometheus:
-      remoteWrite:
-        - url: "http://thanos-receive.$NAMESPACE.svc.cluster.local:9091/api/v1/receive"
-EOF
+    cat << EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: user-workload-monitoring-config
+      namespace: openshift-user-workload-monitoring
+    data:
+      config.yaml: |
+        prometheus:
+          remoteWrite:
+            - url: "http://thanos-receive.$NAMESPACE.svc.cluster.local:9091/api/v1/receive"
+    EOF
     ```
 
     **Otherwise update it with the following:**
