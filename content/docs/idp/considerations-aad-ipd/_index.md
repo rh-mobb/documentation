@@ -141,5 +141,5 @@ As a best practice, we recommend removing the kubeadmin user after setting up an
 
 Integrating groups from external identity providers with OpenShift, such as synchronizing groups from AAD, can be a valuable feature to enhance your system's functionality. To accomplish this, you can leverage the usage of the [Group Sync Operator](https://github.com/redhat-cop/group-sync-operator). 
 
-We have published a comprehensive how-to guide that walks you through the process, [accessible here](../idp/az-ad-grp-sync). By following these instructions, you'll be able to seamlessly synchronize AAD groups into your OpenShift environment, optimizing your workflow and streamlining access management.
+We have published a comprehensive how-to guide that walks you through the process, [accessible here](../az-ad-grp-sync). By following these instructions, you'll be able to seamlessly synchronize AAD groups into your OpenShift environment, optimizing your workflow and streamlining access management.
 
