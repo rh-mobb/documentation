@@ -52,7 +52,7 @@ An ARO cluster can be deployed into Multiple Availability Zones (AZs) in a singl
 * Decide on RPO/RTO (Recovery Point Objective / Recovery Time Objective) for DR
 * Decide whether your regions should be hot/hot, hot/warm, or hot/cold.
 * Choose regions close to your consumers.
-* choose two [*paired* regions](https://docs.microsoft.com/en-us/azure/best-practices-availability-paired-regions).
+* choose two [`"paired"` regions](https://docs.microsoft.com/en-us/azure/best-practices-availability-paired-regions).
 * Use global virtual network peering to connect your networks together.
 * Use Front Door or Traffic Manager to route *public* traffic to the correct region.
 * Enable geo-replication for container images (If using ACR).
@@ -216,9 +216,19 @@ In a Hot/Warm scenario where you'll only ever use the DR region as a backup to t
 
     ```bash
     az acr login --name acrdr1
-    docker pull mcr.microsoft.com/hello-world
-    docker tag mcr.microsoft.com/hello-world acrdr1.azurecr.io/hello-world:v1
-    docker push acrdr1.azurecr.io/hello-world:v1
+    podman pull mcr.microsoft.com/hello-world
+    podman tag mcr.microsoft.com/hello-world acrdr1.azurecr.io/hello-world:v1
+    podman push acrdr1.azurecr.io/hello-world:v1
+    ```
+    
+    If you are seeing podman authentication error, you may want to login using following command:
+    
+    ```bash
+    ACR_NAME="acrdr1"
+    podman login \
+        --username "00000000-0000-0000-0000-000000000000" \
+        --password $(az acr login -n "${ACR_NAME}" --expose-token --query "accessToken" -o tsv) \
+        "${ACR_NAME}.azurecr.io"
     ```
 
 1. Replicate the registry to the DR2 region.
