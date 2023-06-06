@@ -36,7 +36,7 @@ One of the advantages of using OpenShift is the internal registry that comes wit
     ```
 1. Log into the image registry
    ```bash
-   podman docker login -u $(oc whoami) -p $(oc whoami -t) $HOST
+   podman login -u $(oc whoami) -p $(oc whoami -t) $HOST
    ```
 ## Test it out
    ```bash
