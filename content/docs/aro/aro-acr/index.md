@@ -12,7 +12,7 @@ You can limit access to the ACR by assigning virtual network private IP addresse
 
 Network traffic between the Private ARO cluster and the registry's private endpoints traverses the virtual network and a private link on the Microsoft backbone network, eliminating exposure from the public internet.
 
->NOTE: If you are interested in deploy and integrate an ACR with a public endpoint and connect them into an ARO cluster follow the Use [ACR with ARO guide](https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro). 
+>NOTE: If you are interested in deploy and integrate an ACR with a public endpoint and connect them into an ARO cluster follow the [How-to Use ACR with ARO guide](https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro). 
 
 ## Prepare your ARO cluster
 
@@ -28,7 +28,7 @@ Network traffic between the Private ARO cluster and the registry's private endpo
    export ACR_NAME=acr$((RANDOM))
    export PRIVATEENDPOINTSUBNET_PREFIX="10.0.8.0/23"
    export PRIVATEENDPOINTSUBNET_NAME="PrivateEndpoint-subnet"
-   export ARO_VNET_NAME="aro-rcarrata-vnet"
+   export ARO_VNET_NAME="aro-mobb-vnet"
    ```
 
 ## Create ACR and restrict the access using Private Endpoint
@@ -37,9 +37,7 @@ You can limit access to the ACR instance by assigning virtual network private IP
 
 Network traffic between the clients on the virtual network and the registry's private endpoints traverses the virtual network and a private link on the Microsoft backbone network, eliminating exposure from the public internet. Private Link also enables private registry access from on-premises through Azure ExpressRoute private peering or a VPN gateway.
 
-Also, you can configure DNS settings for the registry's private endpoints, so that the settings resolve to the registry's allocated private IP address. With DNS configuration, clients and services in the network can continue to access the registry at the registry's fully qualified domain name, such as myaroacr.azurecr.io.
-
-1. Register the resource provider for Azure Container Registry in that subscription:
+1. Register the resource provider for Azure Container Registry in your subscription:
 
   ```bash
   az provider register --namespace Microsoft.ContainerRegistry
