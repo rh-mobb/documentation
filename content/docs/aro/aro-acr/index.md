@@ -22,6 +22,7 @@ Network traffic between the Private ARO cluster and the registry's private endpo
 
    ```bash
    export NAMESPACE=aro-acr
+   export AZR_CLUSTER=aro-mobb
    export AZR_RESOURCE_LOCATION=eastus
    export AZR_RESOURCE_GROUP=aro-mobb-rg
    export ACR_NAME=acr$((RANDOM))
@@ -46,27 +47,27 @@ Also, you can configure DNS settings for the registry's private endpoints, so th
 
 1. Create PrivateEndpoint-subnet for allocate the ACR PrivateEndpoint resources (among others):
 
-   ```bash
-   az network vnet subnet create \
-   --resource-group $AZR_RESOURCE_GROUP \
-   --vnet-name $ARO_VNET_NAME \
-   --name $PRIVATEENDPOINTSUBNET_NAME \
-   --address-prefixes $PRIVATEENDPOINTSUBNET_PREFIX \
-   --disable-private-endpoint-network-policies
-   ```
+  ```bash
+  az network vnet subnet create \
+    --resource-group $AZR_RESOURCE_GROUP \
+    --vnet-name $ARO_VNET_NAME \
+    --name $PRIVATEENDPOINTSUBNET_NAME \
+    --address-prefixes $PRIVATEENDPOINTSUBNET_PREFIX \
+    --disable-private-endpoint-network-policies
+  ```
 
 >NOTE: Disable network policies such as network security groups in the subnet for the private endpoint it's needed for the integration with Private Endpoint in this scenario.
 
 1. Create the Azure Container Registry disabling the public network access for the container registry:
 
-   ```bash
-   az acr create \
-   --resource-group $AZR_RESOURCE_GROUP \
-   --name $ACR_NAME \
-   --sku Premium \
-   --public-network-enabled false \
-   --admin-enabled true
-   ```
+  ```bash
+  az acr create \
+    --resource-group $AZR_RESOURCE_GROUP \
+    --name $ACR_NAME \
+    --sku Premium \
+    --public-network-enabled false \
+    --admin-enabled true
+  ```
 
 1. Create a private Azure DNS zone for the private Azure container registry domain:
 
@@ -91,7 +92,7 @@ Also, you can configure DNS settings for the registry's private endpoints, so th
 
 1. Get the resource ID of your registry:
 
-  ```
+  ```bash
   REGISTRY_ID=$(az acr show -n $ACR_NAME --query 'id' -o tsv)
   ```
 
@@ -146,3 +147,127 @@ Also, you can configure DNS settings for the registry's private endpoints, so th
     --query "ipConfigurations[?privateLinkConnectionProperties.requiredMemberName=='registry'].privateIPAddress" \
     -o tsv)
   ```
+
+1. You can nslookup the FQDN to check that the record it's propagated properly, and answers with the privatelink one:
+
+  ```bash
+  nslookup $REGISTRY_FQDN
+  ```
+
+1. Get the Username and Password for login to the ACR instance:
+
+  ```bash
+  ACR_USER=$(az acr credential show -n  $ACR_NAME --query "username" -o tsv)
+  ACR_PASS=$(az acr credential show -n $ACR_NAME --query "passwords[0].value" -o tsv)
+  ```
+
+1. Try to login with `podman` or `docker` to the registry outside of the vNET:
+
+  ```bash
+  podman login --username $ACR_USER $REGISTRY_FQDN
+  ```
+
+>NOTE: you will receive an error, that it's what we're expecting, because the access to the ACR it's restricted outside of the vNET (peering or VPN/ER needs to be used). 
+
+1. Get (and save) the ARO_URL and the KUBEADMIN password:
+
+  ```bash
+  ARO_KUBEPASS=$(az aro list-credentials --name $AZR_CLUSTER --resource-group $AZR_RESOURCE_GROUP -o tsv --query kubeadminPassword)
+   ARO_URL=$(az aro show -g $AZR_RESOURCE_GROUP -n $AZR_CLUSTER --query apiserverProfile.url -o tsv)
+  ```
+
+## Automation with Terraform (Optional)
+
+If you want to deploy everything on this blog post automated, clone the rh-mobb terraform-aro repo and deploy it:
+
+  ```bash
+  git clone https://github.com/rh-mobb/terraform-aro.git
+  cd terraform-aro
+  terraform init
+  terraform plan -out aro.plan 		                       \
+    -var "cluster_name=aro-$(shell whoami)"              \
+    -var "restrict_egress_traffic=true"		               \
+    -var "api_server_profile=Private"                    \
+    -var "ingress_profile=Private"                       \
+    -var "acr_private=true"
+
+  terraform apply aro.plan
+  ```
+
+## Testing the Azure Container Registry from the Private ARO cluster
+
+Once we have deployed the ACR, we need to test the ACR instance deployed, and limited the access only from within the vNET (or using peering, VPN or ExpressRoute connectivity).
+
+1. SSH to the JUMPHOST to be able to test and push a example image:
+
+  ```bash
+  export JUMPHOST="xxx"
+  ssh -l aro $JUMPHOST
+  ```
+
+1. Inside of the JUMPHOST (within the vNET) install oc and docker/podman:
+
+  ```bash
+  sudo dnf update -y --disablerepo=* --enablerepo='*microsoft*' rhui-azure-rhel8-eus
+  sudo dnf install telnet wget bash-completion podman -y
+  wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+  tar -xvf openshift-client-linux.tar.gz
+  sudo mv oc kubectl /usr/bin/
+  oc completion bash > oc_bash_completion
+  sudo cp oc_bash_completion /etc/bash_completion.d/
+  ```
+
+1. Login to the registry (this time should work):
+
+  ```bash
+  export REGISTRY_FQDN="xxx"
+  export ACR_USER="xxx"
+  export ARO_URL="xxx"
+  podman login --username $ACR_USER $REGISTRY_FQDN 
+  ```
+
+1. Push an example image to the ACR:
+
+  ```bash
+  podman pull quay.io/centos7/httpd-24-centos7
+  podman tag quay.io/centos7/httpd-24-centos7 $REGISTRY_FQDN/centos7/httpd-24-centos7
+  podman push $REGISTRY_FQDN/centos7/httpd-24-centos7
+  ```
+
+1. Login to the Private ARO cluster and create a test namespace: 
+
+  ```bash
+  oc login --username kubeadmin --server=$ARO_URL
+  oc new-project test-acr
+  ```
+
+1. Create the Kubernetes secret for storing the credentials to access the ACR inside of the ARO cluster:
+
+  ```bash
+  oc create -n test-acr secret docker-registry \
+      --docker-server=$REGISTRY_FQDN \
+      --docker-username=$ACR_USER \
+      --docker-password=******** \
+      --docker-email=unused \
+      acr-secret
+  ```
+
+1. Link the secret to the service account:
+
+  ```bash
+  oc secrets link default acr-secret --for=pull
+  ```
+
+1. Deploy an example app using the ACR container image pushed in the previous step:
+
+```bash
+oc create -n test-acr deployment httpd --image=$REGISTRY_FQDN/centos7/httpd-24-centos7
+```
+
+1. After a couple of minutes, check the status of the pod:
+
+```bash
+oc get pod -n test-acr
+```
+
+It should work, deploying the container image in the Private ARO cluster.
