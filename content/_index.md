@@ -71,7 +71,7 @@ skipMetadata: true
 
 ## Advanced Cluster Manager (ACM)
 
-* [Deploy ACM Observability to a ROSA cluster](/docs/acm/observability/rosa)
+* [Deploy ACM Observability to a ROSA cluster](/docs/redhat/acm/observability/rosa)
 * [Deploy ACM Submariner for connecting overlay networks of ROSA clusters](/docs/redhat/acm/submariner/rosa)
 * [Deploy ACM Submariner for connect overlay networks ARO - ROSA clusters](/docs/redhat/acm/submariner/aro)
 
