@@ -336,18 +336,18 @@ We will be deploying a Java based application called [microsweeper](https://gith
    --server-name microsweeper-database
    ```
 
-## Deploy the [minesweeper application](https://github.com/redhat-mw-demos/microsweeper-quarkus/tree/ARO)
+## Deploy the [minesweeper application](https://github.com/rh-mobb/aro-workshop-app.git)
 
 1. Clone the git repository
 
    ```bash
-   git clone -b ARO https://github.com/redhat-mw-demos/microsweeper-quarkus.git
+   git clone https://github.com/rh-mobb/aro-workshop-app.git
    ```
 
 1. change to the root directory
 
    ```bash
-   cd microsweeper-quarkus
+   cd aro-workshop-app
    ```
 
 1. Ensure Java 1.8 is set at your Java version
@@ -422,16 +422,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
    %prod.quarkus.kubernetes-client.trust-certs=true
    %prod.quarkus.kubernetes.deploy=true
    %prod.quarkus.kubernetes.deployment-target=openshift
-   #%prod.quarkus.kubernetes.deployment-target=knative
    %prod.quarkus.openshift.build-strategy=docker
-   #%prod.quarkus.openshift.expose=true
-
-   # Serverless configurations
-   #%prod.quarkus.container-image.group=microsweeper-%prod.quarkus
-   #%prod.quarkus.container-image.registry=image-registry.openshift-image-registry.svc:5000
-
-   # macOS configurations
-   #%prod.quarkus.native.container-build=true
    ```
 
 1. Build and deploy the quarkus application to OpenShift
