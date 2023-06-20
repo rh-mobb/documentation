@@ -5,7 +5,7 @@ tags: ["ROSA", "OSD", ARO", "Azure", "AWS" ]
 skipMetadata: true
 ---
 
-Red Hat OpenShift on AWS (ROSA) and OpenShift Dedicated (OSD) provide a simple way for the cluster administrator to configure one or more identity providers for their cluster[s] via the [OpenShift Cluster Manager (OCM)](https://console.redhat.com/openshift), while Azure Red Hat OpenShift relies on the internal cluster OAuth provider.
+Red Hat OpenShift on AWS (ROSA) and OpenShift Dedicated (OSD) provide a simple way for the cluster administrator to configure one or more identity providers for their cluster[s] via the [OpenShift Cluster Manager (OCM)](https://console.redhat.com/openshift), while Azure Red Hat OpenShift relies on the internal [cluster authentication operator](https://github.com/openshift/cluster-authentication-operator).
 
 The identity providers available for use are:
 
@@ -23,6 +23,7 @@ The identity providers available for use are:
 * [Azure AD](./azuread-aro)
 * [Azure AD with Group Claims](./group-claims/aro)
 * [Azure AD via CLI](./azuread-aro-cli)
+* [Azure AD with Red Hat SSO](./azuread-red-hat-sso)
 
 ### ROSA/OSD
 
