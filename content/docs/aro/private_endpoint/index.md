@@ -127,7 +127,7 @@ nslookup <storageAccount_Name>.flie.core.windows.net
 - Should return:
 ```
 Server:		x.x.x.x
-Address:	X.x.x.x#x
+Address:	x.x.x.x#x
 
 Non-authoritative answer:
 <storage_account_name>.file.core.windows.net	canonical name = <storage_account_name>.privatelink.file.core.windows.net.
