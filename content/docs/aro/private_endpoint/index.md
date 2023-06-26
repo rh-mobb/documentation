@@ -148,61 +148,45 @@ oc create secret generic <secret-name> --from-literal=azurestorageaccountname=<s
 
 - The CSI can either create volumes in pre created storage accounts or dynamically create the storage account with a volume inside the dynamic storage account
 
-- for using an existing storage account
+- Using an existing storage account
 
-```yaml
-allowVolumeExpansion: true
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: <static_sc_name>
-# mountOptions:
-# - dir_mode=0777
-# - file_mode=0777
-# - serverino
-# - nosharesock
-# - actimeo=30
-# - nofail
-# - mfsymlinks
-parameters:
-  resourceGroup: <cluster_resource_group>
-  server: <storage_account>.privatelink.file.core.windows.net
-  skuName: Standard_LRS
-  storageAccount: <storage_account>
-  secretName: test
-  secretNamespace: default
-  shareName: <file_share_name>
-provisioner: file.csi.azure.com
-reclaimPolicy: Delete
-volumeBindingMode: Immediate
-```
+    ```yaml
+    allowVolumeExpansion: true
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: <static_sc_name>
+    parameters:
+      resourceGroup: <cluster_resource_group>
+      server: <storage_account>.privatelink.file.core.windows.net
+      skuName: Standard_LRS
+      storageAccount: <storage_account>
+      secretName: test
+      secretNamespace: default
+      shareName: <file_share_name>
+    provisioner: file.csi.azure.com
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    ```
 
 - Configure so the provisioner dynamically creates the Storage Account in Azure
 
-```yaml
-allowVolumeExpansion: true
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: <dynamic_sc_name>
-mountOptions:
-- dir_mode=0777
-- file_mode=0777
-- serverino
-- nosharesock
-- actimeo=30
-- nofail
-- mfsymlinks
-parameters:
-  resourceGroup: <cluster-resource-group>
-  skuName: Standard_LRS
-  secretName: test
-  secretNamespace: default
-  networkEndpointType: privateEndpoint
-provisioner: file.csi.azure.com
-reclaimPolicy: Delete
-volumeBindingMode: Immediate
-```
+    ```yaml
+    allowVolumeExpansion: true
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: <dynamic_sc_name>
+    parameters:
+      resourceGroup: <cluster-resource-group>
+      skuName: Standard_LRS
+      secretName: test
+      secretNamespace: default
+      networkEndpointType: privateEndpoint
+    provisioner: file.csi.azure.com
+    reclaimPolicy: Delete
+    volumeBindingMode: Immediate
+    ```
 
 4. create PVC object that maps to the PV created
 
