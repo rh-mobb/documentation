@@ -91,6 +91,7 @@ When using a custom or on-premises DNS server, you should configure your DNS ser
 *For MAG customers:*
 
 [GOV Private Endpoint DNS](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#government)
+
 [Custom DNS Config](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#virtual-network-workloads-without-custom-dns-server)
 
 
