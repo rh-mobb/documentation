@@ -24,9 +24,7 @@ Enter the `oc login` command, username, and password from the output of the prev
 
 Example login:
 ```bash
-oc login https://api.cluster_name.t6k4.i1.organization.org:6443 \
-> --username cluster-admin \
-> --password FWGYL-2mkJI-3ZTTZ-rINns 
+oc login https://api.cluster_name.t6k4.i1.organization.org:6443 --username cluster-admin
 Login successful. 
 You have access to 77 projects, the list has been suppressed. You can list all projects with ' projects'
 ```
@@ -156,9 +154,10 @@ Two options: [Helm](#helm) or [Manual](#manually)
 1. Wait until NFD instances are ready
 
    ```bash
-   oc wait --for=jsonpath='{.status.numberReady}'=3 -l app=nfd-master ds -n openshift-nfd
+   oc wait --for=jsonpath='{.status.availableReplicas}'=3 -l app=nfd-master deployment -n openshift-nfd
    ```
-   
+   > NOTE: If you are deploying ROSA in single-AZ change the replicas from 3 to 1 nfd-master
+
    ```bash
    oc wait --for=jsonpath='{.status.numberReady}'=5 -l app=nfd-worker ds -n openshift-nfd
    ```
@@ -554,7 +553,7 @@ We'll now apply the nvidia cluster config. Please read the [nvidia documentation
    oc logs cuda-vector-add --tail=-1
    ```
 
-   >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating" try running "oc delete pod cuda-vector-add" and then re-run the create statement above. I've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
+   >Please note, if you get an error "Error from server (BadRequest): container "cuda-vector-add" in pod "cuda-vector-add" is waiting to start: ContainerCreating" try running "oc delete pod cuda-vector-add" and then re-run the create statement above. We've seen issues where if this step is ran before all of the operator consolidation is done it may just sit there.
 
    You should see Output like the following (mary vary depending on GPU):
 
