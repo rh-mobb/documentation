@@ -248,14 +248,14 @@ touch test
 
 3. In your Azure portal or using the CLI, verify the created file exists in your Storage Account's File Share 
 
-- in the azure portal
+- Azure portal
 
   1. Search for Storage Account or find the Storage Account icon on the services blade
   2. Find your storage account
   3. select File Share
   4. Open your File Share and verify the 'test' file is in the file share
 
-- using the CLI
+- CLI
 
 ```bash
 az storage file list --account-name <storage-account-name> --account-key <storage-account-key> --share-name <file-share-name>
