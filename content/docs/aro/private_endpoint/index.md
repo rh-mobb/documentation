@@ -26,7 +26,7 @@ export AZR_REGION=useast \
 
 * Note if you would like to dynamically provision the storage account using the CSI provisioner skip the first step
 
-1. storage account and attach the private endpoint to it  
+1. Create the storage account and attach the private endpoint to it  
 
 ```bash
 az storage account create \
@@ -36,7 +36,7 @@ az storage account create \
     --sku Standard_LRS \
     --kind StorageV2
 ```
-1. create endpoint subnet in the cluster rg and vnet
+2. Create a services subnet in the cluster rg and vnet for the Private Endpoint
 
 ```bash
 AZR_SERVICES_SUBNET= $(az network vnet subnet create \
@@ -48,7 +48,7 @@ echo $AZR_SERVICES_SUBNET
 
 *NOTE we recommend creating separate subnets for services, especially when you are using a private ARO environment 
 
-1. create private endpoint 
+3. Create private endpoint 
 
 ```bash
 az network private-endpoint create \
@@ -88,12 +88,13 @@ If you are using a custom DNS server on your network, clients must be able to re
 When using a custom or on-premises DNS server, you should configure your DNS server to resolve the storage account name in the privatelink subdomain to the private endpoint IP address. You can do this by delegating the privatelink subdomain to the private DNS zone of the VNet or by configuring the DNS zone on your DNS server and adding the DNS A records.
 
 
-For MAG customers:
-https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#government
-https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#virtual-network-workloads-without-custom-dns-server
+*For MAG customers:*
+
+[GOV Private Endpoint DNS](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#government)
+[Custom DNS Config](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#virtual-network-workloads-without-custom-dns-server)
 
 
-1. Retrieve the private IP from the private link connection:
+2. Retrieve the private IP from the private link connection:
 
 ```bash
 PRIVATE_IP=`az resource show \
@@ -101,7 +102,7 @@ PRIVATE_IP=`az resource show \
   --api-version 2019-04-01 \
   -o json | jq -r '.properties.ipConfigurations[0].properties.privateIPAddress'`
 ```
-1. Create the DNS records for the private link connection:
+3. Create the DNS records for the private link connection:
 
 ```bash
 az network private-dns record-set a create \
@@ -116,32 +117,34 @@ az network private-dns record-set a add-record \
   -a $PRIVATE_IP
 ```
 
-1. test private endpoint connectivity
+4. test private endpoint connectivity
   - on a Vm in the vnet run 
 
 ```bash 
     nslookup <storageAccount_Name>.flie.core.windows.net
 ```
-Should return:
-Server:		168.63.129.16
-Address:	168.63.129.16#53
+- Should return:
+    ```
+    Server:		168.63.129.16
+    Address:	168.63.129.16#53
 
-Non-authoritative answer:
-<storage_account_name>.file.core.windows.net	canonical name = <storage_account_name>.privatelink.file.core.windows.net.
-Name:	<storage_account_name>.privatelink.file.core.windows.net
-Address: x.x.x.x
+    Non-authoritative answer:
+    <storage_account_name>.file.core.windows.net	canonical name = <storage_account_name>.privatelink.file.core.windows.net.
+    Name:	<storage_account_name>.privatelink.file.core.windows.net
+    Address: x.x.x.x
+    ```
 
 ## Configure Cluster Storage Resources
 
 1. Login to your cluster
 
-1. Create a secret object containing azure file creds
+2. Create a secret object containing azure file creds
 
 ```bash
 oc create secret generic <secret-name> --from-literal=azurestorageaccountname=<storage-account> --from-literal=azurestorageaccountkey=<storage-account-key>  #is this needed? most likely not used for dynamic creation
 ```
 
-1. Create a custom storage class 
+3. Create a custom storage class 
 
 - The CSI can either create volumes in pre created storage accounts or dynamically create the storage account with a volume inside the dynamic storage account
 
@@ -153,14 +156,14 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: <static_sc_name>
-mountOptions:
-- dir_mode=0777
-- file_mode=0777
-- serverino
-- nosharesock
-- actimeo=30
-- nofail
-- mfsymlinks
+# mountOptions:
+# - dir_mode=0777
+# - file_mode=0777
+# - serverino
+# - nosharesock
+# - actimeo=30
+# - nofail
+# - mfsymlinks
 parameters:
   resourceGroup: <cluster_resource_group>
   server: <storage_account>.privatelink.file.core.windows.net
@@ -201,7 +204,7 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 ```
 
-1. create PVC object that maps to the PV created
+4. create PVC object that maps to the PV created
 
 - PVCs are scoped at the namespace level so make sure you are creating this volume claim in the appropriate project
 
@@ -221,7 +224,7 @@ spec:
 
 
 
-1. Mount Azure file share in pod
+5. Mount Azure file share in pod
 
   - create pod that mounts existing pv
   - optionally patch or create the Mount Path in the containers block of a deployment manifest as well as the PVC object in the volumes block
@@ -252,14 +255,14 @@ spec:
 oc exec -it <pod_name> -- /bin/bash
 ```
 
-1. Create a file in the file share's mount path
+2. Create a file in the file share's mount path
 
 ```bash
 cd <file_share_mount_path>
 touch test
 ```
 
-1. In your Azure portal or using the CLI, verify the created file exists in your Storage Account's File Share 
+3. In your Azure portal or using the CLI, verify the created file exists in your Storage Account's File Share 
 
 - in the azure portal
 
