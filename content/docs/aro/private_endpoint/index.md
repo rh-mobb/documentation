@@ -121,18 +121,18 @@ az network private-dns record-set a add-record \
   - on a Vm in the vnet run 
 
 ```bash 
-    nslookup <storageAccount_Name>.flie.core.windows.net
+nslookup <storageAccount_Name>.flie.core.windows.net
 ```
 - Should return:
-    ```
-    Server:		168.63.129.16
-    Address:	168.63.129.16#53
+```
+Server:		168.63.129.16
+Address:	168.63.129.16#53
 
-    Non-authoritative answer:
-    <storage_account_name>.file.core.windows.net	canonical name = <storage_account_name>.privatelink.file.core.windows.net.
-    Name:	<storage_account_name>.privatelink.file.core.windows.net
-    Address: x.x.x.x
-    ```
+Non-authoritative answer:
+<storage_account_name>.file.core.windows.net	canonical name = <storage_account_name>.privatelink.file.core.windows.net.
+Name:	<storage_account_name>.privatelink.file.core.windows.net
+Address: x.x.x.x
+```
 
 ## Configure Cluster Storage Resources
 
