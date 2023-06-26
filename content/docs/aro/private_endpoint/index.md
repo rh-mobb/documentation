@@ -82,17 +82,17 @@ az network private-dns link vnet create \
 ```
 
 
-If you are using a custom DNS server on your network, clients must be able to resolve the FQDN for the storage account endpoint to the private endpoint IP address. You should configure your DNS server to delegate your private link subdomain to the private DNS zone for the VNet, or configure the A records for StorageAccountA.privatelink.file.core.windows.net with the private endpoint IP address.
+  If you are using a custom DNS server on your network, clients must be able to resolve the FQDN for the storage account endpoint to the private endpoint IP address. You should configure your DNS server to delegate your private link subdomain to the private DNS zone for the VNet, or configure the A records for StorageAccountA.privatelink.file.core.windows.net with the private endpoint IP address.
 
 
-When using a custom or on-premises DNS server, you should configure your DNS server to resolve the storage account name in the privatelink subdomain to the private endpoint IP address. You can do this by delegating the privatelink subdomain to the private DNS zone of the VNet or by configuring the DNS zone on your DNS server and adding the DNS A records.
+  When using a custom or on-premises DNS server, you should configure your DNS server to resolve the storage account name in the privatelink subdomain to the private endpoint IP address. You can do this by delegating the privatelink subdomain to the private DNS zone of the VNet or by configuring the DNS zone on your DNS server and adding the DNS A records.
 
 
 *For MAG customers:*
 
-[GOV Private Endpoint DNS](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#government)
+  [GOV Private Endpoint DNS](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#government)
 
-[Custom DNS Config](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#virtual-network-workloads-without-custom-dns-server)
+  [Custom DNS Config](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#virtual-network-workloads-without-custom-dns-server)
 
 
 2. Retrieve the private IP from the private link connection:
