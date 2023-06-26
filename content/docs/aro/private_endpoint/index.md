@@ -1,4 +1,4 @@
-# Configure a Private ARO cluster with PVs to Azure File via a Private Endpoint
+# Configure a Private ARO cluster with Azure File via a Private Endpoint
 
 There are two way to configure this set up
 1. Self provision the storage account and file share
