@@ -1,10 +1,10 @@
-## this doc will define the steps to configure a private aro cluster with a private endpoint to connect to a storage account 
+# Configure a Private ARO cluster with PVs to Azure File via a Private Endpoint
 
 There are two way to configure this set up
 1. Self provision the storage account and file share
+2. Auto provision the storage account and file share
    - can dynamically provision the storage via PVC
    - dont have to create PVs, the PVC will create that for you 
-2. Auto provision the storage account and file share
 
 
 ## Pre Requisites
@@ -20,8 +20,6 @@ export AZR_REGION=useast \
   AZR_VNET=<my-vnet> \
   AZR_CLUSTER_NAME=<my-cluster-name> \
   AZR_STORAGE_ACCOUNT_NAME=<mys-torage-account> \
-
-
 ```
 
 ## Self-Provision Storage Account and Create/Configure the Private Endpoint  
@@ -84,7 +82,7 @@ az network private-dns link vnet create \
 ```
 
 
-If you are using a custom DNS server on your network, clients must be able to resolve the FQDN for the storage account endpoint to the private endpoint IP address. You should configure your DNS server to delegate your private link subdomain to the private DNS zone for the VNet, or configure the A records for StorageAccountA.privatelink.blob.core.windows.net with the private endpoint IP address.
+If you are using a custom DNS server on your network, clients must be able to resolve the FQDN for the storage account endpoint to the private endpoint IP address. You should configure your DNS server to delegate your private link subdomain to the private DNS zone for the VNet, or configure the A records for StorageAccountA.privatelink.file.core.windows.net with the private endpoint IP address.
 
 
 When using a custom or on-premises DNS server, you should configure your DNS server to resolve the storage account name in the privatelink subdomain to the private endpoint IP address. You can do this by delegating the privatelink subdomain to the private DNS zone of the VNet or by configuring the DNS zone on your DNS server and adding the DNS A records.
@@ -122,15 +120,15 @@ az network private-dns record-set a add-record \
   - on a Vm in the vnet run 
 
 ```bash 
-    nslookup <storageAccount_Name>.blob.core.windows.net
+    nslookup <storageAccount_Name>.flie.core.windows.net
 ```
 Should return:
 Server:		168.63.129.16
 Address:	168.63.129.16#53
 
 Non-authoritative answer:
-<storage_account_name>.blob.core.windows.net	canonical name = <storage_account_name>.privatelink.blob.core.windows.net.
-Name:	<storage_account_name>.privatelink.blob.core.windows.net
+<storage_account_name>.file.core.windows.net	canonical name = <storage_account_name>.privatelink.file.core.windows.net.
+Name:	<storage_account_name>.privatelink.file.core.windows.net
 Address: x.x.x.x
 
 ## Configure Cluster Storage Resources
@@ -203,24 +201,6 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 ```
 
-1. Create a persistent volume object referencing the secret created above
-
-```yaml
-apiVersion: "v1"
-kind: "PersistentVolume"
-metadata:
-  name: "<PV name>" 
-spec:
-  capacity:
-    storage: "5Gi" 
-  accessModes:
-    - "ReadWriteOnce"
-  storageClassName: <storage_class>
-  azureFile:
-    secretName: test 
-    shareName: <fileshare_name> 
-    readOnly: false
-```
 1. create PVC object that maps to the PV created
 
 - PVCs are scoped at the namespace level so make sure you are creating this volume claim in the appropriate project
@@ -229,15 +209,14 @@ spec:
 apiVersion: "v1"
 kind: "PersistentVolumeClaim"
 metadata:
-  name: "claim1" 
+  name: "<claim_name>" 
 spec:
   accessModes:
     - "ReadWriteOnce"
   resources:
     requests:
       storage: "5Gi" 
-  storageClassName: azure-file-sc 
-  volumeName: "pv0001" 
+  storageClassName: <storage_class_name> 
 ```
 
 
@@ -257,11 +236,11 @@ spec:
     ...
     volumeMounts:
     - mountPath: "/data" 
-      name: azure-file-share
+      name: <name_your_volume>
   volumes:
-    - name: azure-file-share
+    - name: <name_your_volume>
       persistentVolumeClaim:
-        claimName: claim1 
+        claimName: <claim_name> 
 ```
 
 
