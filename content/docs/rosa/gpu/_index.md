@@ -24,7 +24,9 @@ Enter the `oc login` command, username, and password from the output of the prev
 
 Example login:
 ```bash
-oc login https://api.cluster_name.t6k4.i1.organization.org:6443 --username cluster-admin
+oc login https://api.cluster_name.t6k4.i1.organization.org:6443 \ 
+> --username cluster-admin
+> --password mypa55w0rd
 Login successful. 
 You have access to 77 projects, the list has been suppressed. You can list all projects with ' projects'
 ```
