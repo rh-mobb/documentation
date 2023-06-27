@@ -15,11 +15,15 @@ There are two way to configure this set up
 ## Set Environment Variables
 
 ```bash
-export AZR_REGION=useast \
+export AZR_REGION=eastus \
   AZR_RESOURCE_GROUP=<my-rg> \
   AZR_VNET=<my-vnet> \
   AZR_CLUSTER_NAME=<my-cluster-name> \
-  AZR_STORAGE_ACCOUNT_NAME=<mys-torage-account> \
+  AZR_STORAGE_ACCOUNT_NAME=<my-storage-account> \
+  AZR_SERVICES_SUBNET=<private-endpoint-subnet-name> \
+  AZR_FILE_SHARE=<your-file-share-name>
+  OC_STORAGE_ACCOUNT_SECRET_NAME=<your-name>
+
 ```
 
 ## Self-Provision Storage Account and Create/Configure the Private Endpoint  
@@ -36,15 +40,26 @@ az storage account create \
     --sku Standard_LRS \
     --kind StorageV2
 ```
-2. Create a services subnet in the cluster rg and vnet for the Private Endpoint
+
+2. Create the file share in your storage account
 
 ```bash
-AZR_SERVICES_SUBNET= $(az network vnet subnet create \
+az storage share create \
+    --account-name $AZR_STORAGE_ACCOUNT_NAME \
+    --name $AZR_FILE_SHARE
+```
+
+3. Create a services subnet in the cluster rg and vnet for the Private Endpoint
+
+```bash
+az network vnet subnet create \
     --name $AZR_SERVICES_SUBNET \
     --resource-group $AZR_RESOURCE_GROUP \
-    --vnet-name $AZR_VNET)
-echo $AZR_SERVICES_SUBNET
+    --vnet-name $AZR_VNET \
+    --address-prefix 10.0.12.0/23 
 ```
+
+- address prefix will be configured based on your vnet IP addressing
 
 *NOTE we recommend creating separate subnets for services, especially when you are using a private ARO environment 
 
@@ -56,8 +71,8 @@ az network private-endpoint create \
   --resource-group $AZR_RESOURCE_GROUP \
   --vnet-name $AZR_VNET \
   --subnet $AZR_SERVICES_SUBNET \
-  --private-connection-resource-id $(az resource show -g $AZ_RESOURCE_GROUP -n $AZR_STORAGE_ACCOUNT_NAME --resource-type "Microsoft.Storage/storageAccounts" --query "id" -o tsv) \
-  --location $AZR_REGION
+  --private-connection-resource-id $(az resource show -g $AZR_RESOURCE_GROUP -n $AZR_STORAGE_ACCOUNT_NAME --resource-type "Microsoft.Storage/storageAccounts" --query "id" -o tsv) \
+  --location $AZR_REGION \
   --group-id file \
   --connection-name $AZR_STORAGE_ACCOUNT_NAME
 ```
@@ -99,7 +114,7 @@ az network private-dns link vnet create \
 
 ```bash
 PRIVATE_IP=`az resource show \
-  --ids $(az network private-endpoint show --name $AZ_CLUSTER_NAME --resource-group $AZ_RESOURCE_GROUP --query 'networkInterfaces[0].id' -o tsv) \
+  --ids $(az network private-endpoint show --name $AZR_CLUSTER_NAME --resource-group $AZR_RESOURCE_GROUP --query 'networkInterfaces[0].id' -o tsv) \
   --api-version 2019-04-01 \
   -o json | jq -r '.properties.ipConfigurations[0].properties.privateIPAddress'`
 ```
@@ -122,7 +137,7 @@ az network private-dns record-set a add-record \
   - on a Vm in the vnet run 
 
 ```bash 
-nslookup <storageAccount_Name>.flie.core.windows.net
+nslookup $AZR_STORAGE_ACCOUNT_NAME.file.core.windows.net
 ```
 - Should return:
 ```
@@ -142,10 +157,12 @@ Address: x.x.x.x
 2. Create a secret object containing azure file creds
 
 ```bash
-oc create secret generic <secret-name> --from-literal=azurestorageaccountname=<storage-account> --from-literal=azurestorageaccountkey=<storage-account-key>  #is this needed? most likely not used for dynamic creation
+AZR_STORAGE_KEY=$(az storage account keys list --account-name $AZR_STORAGE_ACCOUNT_NAME --query "[0].value")
+
+oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azurestorageaccountname=$AZR_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$AZR_STORAGE_KEY  #is this needed? most likely not used for dynamic creation
 ```
 
-3. Create a custom storage class 
+1. Create a custom storage class 
 
 - The CSI can either create volumes in pre created storage accounts or dynamically create the storage account with a volume inside the dynamic storage account
 
