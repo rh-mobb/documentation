@@ -159,7 +159,7 @@ Address: x.x.x.x
 ```bash
 AZR_STORAGE_KEY=$(az storage account keys list --account-name $AZR_STORAGE_ACCOUNT_NAME --query "[0].value")
 
-oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azurestorageaccountname=$AZR_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$AZR_STORAGE_KE
+oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azurestorageaccountname=$AZR_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$AZR_STORAGE_KEY
 ```
 
 1. Create a custom storage class 
@@ -179,7 +179,7 @@ oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azuresto
       server: <storage_account>.privatelink.file.core.windows.net
       skuName: Standard_LRS
       storageAccount: <storage_account>
-      secretName: test
+      secretName: <secret_name>
       secretNamespace: default
       shareName: <file_share_name>
     provisioner: file.csi.azure.com
@@ -198,7 +198,7 @@ oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azuresto
     parameters:
       resourceGroup: <cluster-resource-group>
       skuName: Standard_LRS
-      secretName: test
+      secretName: <secret_name>
       secretNamespace: default
       networkEndpointType: privateEndpoint
     provisioner: file.csi.azure.com
