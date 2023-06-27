@@ -3,7 +3,7 @@ date: '2021-06-10'
 title: ROSA Quickstart
 weight: 1
 aliases: [/docs/quickstart-rosa.md]
-tags: ["AWS", "ROSA", "Quickstarts"] 
+tags: ["AWS", "ROSA", "Quickstarts"]
 authors:
   - Steve Mirman
   - Paul Czarkowski
@@ -15,7 +15,7 @@ A Quickstart guide to deploying a Red Hat OpenShift cluster on AWS.
 
 Quick Introduction to ROSA by Charlotte Fung on [AWS YouTube channel](https://youtu.be/KRqXxek4GvQ)
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/KRqXxek4GvQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>  
+<iframe width="560" height="315" src="https://www.youtube.com/embed/KRqXxek4GvQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
 If you prefer a more visual medium, you can watch [Steve Mirman](https://twitter.com/stevemirman) walk through this quickstart on [YouTube](https://www.youtube.com/watch?v=IFNig_Z_p2Y).
@@ -24,9 +24,11 @@ If you prefer a more visual medium, you can watch [Steve Mirman](https://twitter
 
 ## Prerequisites
 
-### AWS CLI
+### AWS
 
-_You'll need to have an AWS account to configure the CLI against._
+an AWS account with the [AWS ROSA Prerequisites](https://console.aws.amazon.com/rosa/home?#/get-started) met.
+
+![AWS console rosa requisites](../images/rosa-aws-pre.png)
 
 **MacOS**
 
@@ -238,7 +240,7 @@ Deleting a ROSA cluster consists of two parts
   rosa delete cluster --cluster=<cluster-name>
   ```
   Delete Cluster's operator-roles and oidc-provider as shown in the above delete cluster command's output. For e.g.
-  
+
   ```bash
   rosa delete operator-roles -c <cluster-name>
   rosa delete oidc-provider -c <cluster-name>
