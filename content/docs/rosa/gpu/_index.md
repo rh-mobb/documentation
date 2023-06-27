@@ -153,10 +153,11 @@ Two options: [Helm](#helm) or [Manual](#manually)
 
 1. Wait until NFD instances are ready
 
+   > NOTE: If you are deploying ROSA in single-AZ change the replicas from 3 to 1 nfd-master
+
    ```bash
    oc wait --for=jsonpath='{.status.availableReplicas}'=3 -l app=nfd-master deployment -n openshift-nfd
    ```
-   > NOTE: If you are deploying ROSA in single-AZ change the replicas from 3 to 1 nfd-master
 
    ```bash
    oc wait --for=jsonpath='{.status.numberReady}'=5 -l app=nfd-worker ds -n openshift-nfd
