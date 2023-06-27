@@ -159,7 +159,7 @@ Address: x.x.x.x
 ```bash
 AZR_STORAGE_KEY=$(az storage account keys list --account-name $AZR_STORAGE_ACCOUNT_NAME --query "[0].value")
 
-oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azurestorageaccountname=$AZR_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$AZR_STORAGE_KEY  #is this needed? most likely not used for dynamic creation
+oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azurestorageaccountname=$AZR_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$AZR_STORAGE_KE
 ```
 
 1. Create a custom storage class 
