@@ -26,7 +26,7 @@ If you prefer a more visual medium, you can watch [Steve Mirman](https://twitter
 
 ### AWS
 
-an AWS account with the [AWS ROSA Prerequisites](https://us-east-1.console.aws.amazon.com/rosa/home?region=us-east-1#/get-started) met.
+an AWS account with the [AWS ROSA Prerequisites](https://console.aws.amazon.com/rosa/home?#/get-started) met.
 
 ![AWS console rosa requisites](../images/rosa-aws-pre.png)
 
