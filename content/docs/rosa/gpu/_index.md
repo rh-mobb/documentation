@@ -69,7 +69,7 @@ If you plan to use Helm to deploy the GPU operator, you will need to do the foll
    > The guide uses *g5.xlarge* as an example. Please be mindful of the GPU cost of the type you choose.
 
    ```bash
-   export GPU_INSTANCE_TYPE='g5.xlarge'
+   export GPU_INSTANCE_TYPE='g4dn.2xlarge'
    ```
  
 1. Login to AWS
