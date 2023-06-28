@@ -1,3 +1,12 @@
+---
+date: '2023-06-27T22:07:09.774151'
+title: Configure a Private ARO cluster with Azure File via a Private Endpoint
+tags: ["ARO", "Azure"]
+authors:
+  - Connor Wooley
+  - Dustin Scott
+---
+
 # Configure a Private ARO cluster with Azure File via a Private Endpoint
 
 There are two way to configure this set up
