@@ -285,7 +285,7 @@ touch test
 - CLI
 
 ```bash
-az storage file list --account-name <storage-account-name> --account-key <storage-account-key> --share-name <file-share-name>
+az storage file list --account-name $AZR_STORAGE_ACCOUNT_NAME --account-key $AZR_STORAGE_KEY --share-name $AZR_FILE_SHARE
 ```
 
 
