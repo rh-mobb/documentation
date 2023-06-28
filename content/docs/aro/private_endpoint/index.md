@@ -7,8 +7,6 @@ authors:
   - Dustin Scott
 ---
 
-# Configure a Private ARO cluster with Azure File via a Private Endpoint
-
 There are two way to configure this set up
 1. Self provision the storage account and file share
 2. Auto provision the storage account and file share
