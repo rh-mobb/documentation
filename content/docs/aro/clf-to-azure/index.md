@@ -78,8 +78,8 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 1. Create namespaces for logging operators
 
    ```bash
-   kubectl create ns openshift-logging
-   kubectl create ns openshift-operators-redhat
+   oc create ns openshift-logging
+   oc create ns openshift-operators-redhat
    ```
 
 1. Add the MOBB chart repository to Helm
