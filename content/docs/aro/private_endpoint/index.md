@@ -53,10 +53,13 @@ az storage account create \
 ```bash
 az storage share create \
     --account-name $AZR_STORAGE_ACCOUNT_NAME \
-    --name $AZR_FILE_SHARE
+    --name $AZR_FILE_SHARE \
+    --quota 5
 ```
 
-3. Create a services subnet in the cluster rg and vnet for the Private Endpoint
+*NOTE make sure the share quota matches the quota set later when creating the PVC
+
+1. Create a services subnet in the cluster rg and vnet for the Private Endpoint
 
 ```bash
 az network vnet subnet create \
