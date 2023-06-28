@@ -42,9 +42,9 @@ SSO_NAMESPACE=keycloak
 AZ_REGION=eastus
 AZ_RESOURCE_GROUP=dscott-sso-rg
 AZ_VNET=dscott-sso-aro-vnet-eastus
-AZ_WORKER_SUBNET=dscott-sso-aro-machine-subnet-eastus
+AZ_PRIVATE_ENDPOINT_SUBNET=dscott-sso-aro-machine-subnet-eastus
 AZ_CLUSTER_NAME=dscott-sso
-AZ_CONSOLE=$(az aro show -n dscott-sso -g dscott-sso-rg --query consoleProfile.url -o tsv)
+AZ_CONSOLE=$(az aro show -n $AZ_CLUSTER_NAME -g $AZ_RESOURCE_GROUP --query consoleProfile.url -o tsv)
 PG_USER=dscott
 PG_PASS='P@ssword1234'
 ```
@@ -103,6 +103,8 @@ For reference, please see https://learn.microsoft.com/en-us/azure/postgresql/sin
 
 First, create the database:
 
+> **NOTE** Below is only a sample, be sure to replace arguments with your desired options.
+
 ```bash
 az postgres server create \
   -l $AZ_REGION \
@@ -123,10 +125,10 @@ Create a private endpoint to restrict network access to private connectivity onl
 
 ```bash
 az network private-endpoint create \
-  --name $AZ_CLUSTER_NAME \
+  --name $AZ_CLUSTER_NAME-pgsql \
   --resource-group $AZ_RESOURCE_GROUP \
   --vnet-name $AZ_VNET \
-  --subnet $AZ_WORKER_SUBNET \
+  --subnet $AZ_PRIVATE_ENDPOINT_SUBNET \
   --private-connection-resource-id $(az resource show -g $AZ_RESOURCE_GROUP -n $AZ_CLUSTER_NAME --resource-type "Microsoft.DBforPostgreSQL/servers" --query "id" -o tsv) \
   --group-id postgresqlServer \
   --connection-name $AZ_CLUSTER_NAME 
@@ -142,7 +144,7 @@ az network private-dns zone create \
 az network private-dns link vnet create \
   --resource-group $AZ_RESOURCE_GROUP \
   --zone-name "privatelink.postgres.database.azure.com" \
-  --name $AZ_CLUSTER_NAME \
+  --name $AZ_CLUSTER_NAME-pgsql \
   --virtual-network $AZ_VNET \
   --registration-enabled false
 ```
@@ -151,7 +153,7 @@ Retrieve the private IP from the private link connection:
 
 ```bash
 PRIVATE_IP=`az resource show \
-  --ids $(az network private-endpoint show --name $AZ_CLUSTER_NAME --resource-group $AZ_RESOURCE_GROUP --query 'networkInterfaces[0].id' -o tsv) \
+  --ids $(az network private-endpoint show --name $AZ_CLUSTER_NAME-pgsql --resource-group $AZ_RESOURCE_GROUP --query 'networkInterfaces[0].id' -o tsv) \
   --api-version 2019-04-01 \
   -o json | jq -r '.properties.ipConfigurations[0].properties.privateIPAddress'`
 ```
@@ -160,12 +162,12 @@ Create the DNS records for the private link connection:
 
 ```bash
 az network private-dns record-set a create \
-  --name $AZ_CLUSTER_NAME \
+  --name $AZ_CLUSTER_NAME-pgsql \
   --zone-name privatelink.postgres.database.azure.com \
   --resource-group $AZ_RESOURCE_GROUP
 
 az network private-dns record-set a add-record \
-  --record-set-name $AZ_CLUSTER_NAME \
+  --record-set-name $AZ_CLUSTER_NAME-pgsql \
   --zone-name privatelink.postgres.database.azure.com \
   --resource-group $AZ_RESOURCE_GROUP \
   -a $PRIVATE_IP
@@ -191,7 +193,7 @@ metadata:
   namespace: $SSO_NAMESPACE
 stringData:
   POSTGRES_DATABASE: "postgres"
-  POSTGRES_EXTERNAL_ADDRESS: "$AZ_CLUSTER_NAME.privatelink.postgres.database.azure.com"
+  POSTGRES_EXTERNAL_ADDRESS: "$AZ_CLUSTER_NAME-pgsql.privatelink.postgres.database.azure.com"
   POSTGRES_EXTERNAL_PORT: "5432"
   POSTGRES_HOST: "keycloak-postgresql"
   POSTGRES_PASSWORD: "$PG_PASS"
@@ -289,7 +291,8 @@ click `Save`:
 
 ![Create client](images/create-client.png)
 
-5. Configure the new client by setting the following values in the `Settings` tab:
+5. Configure the new client by setting the following values in the `Settings` tab.  Be sure to `Save` before 
+heading to the next step as these settings will create extra tabs in the UI for configuration:
 
 * **Login Theme**: `rh-sso`
 * **Access Type**: `confidential`
