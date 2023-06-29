@@ -20,6 +20,7 @@ skipMetadata: true
 * [Deploying ROSA in STS mode](/docs/rosa/sts)
 * [Deploying ROSA in STS mode with Private Link](/docs/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](/docs/rosa/kms)
+* [Deploying ROSA via CRD and GitOps](/docs/rosa/rosa-gitops)
 * [Installing the AWS Load Balancer Operator on ROSA](/docs/rosa/aws-load-balancer-operator)
 * [Assign Egress IP for External Traffic](/docs/rosa/egress-ip)
 * [Adding AWS WAF in front of ROSA / OSD](/docs/aws/waf)
