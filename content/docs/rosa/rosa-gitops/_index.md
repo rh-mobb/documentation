@@ -87,16 +87,54 @@ environment variable that is specified below.
 policies.  If errors or more stringent security lockdowns are found, please submit a PR 
 so that we can get this fixed.
 
-1. Run the script to create the required policies and roles.  This creates a permission boundary, 
-a policy for the operator, and a role which allows the operator to assume a role against the OIDC 
-identity of the ROSA cluster.  If the policies and roles already exist (prefixed by your cluster 
+1. Download, review and make the script executable, and finally run the script 
+to create the required policies and roles.  This creates a a policy for the operator, and 
+a role which allows the operator to assume a role against the OIDC identity of the 
+ROSA cluster.  If the policies and roles already exist (prefixed by your cluster 
 name), then the creation of them is skipped:
 
 ```bash
-curl -s https://raw.githubusercontent.com/rh-mobb/ocm-operator/main/test/scripts/generate-iam.sh | bash
+# download
+curl -s https://raw.githubusercontent.com/rh-mobb/ocm-operator/main/test/scripts/generate-iam.sh > ./ocm-operator-policies.sh
+
+# review
+cat ./ocm-operator-policies.sh
+
+# make executable and run
+chmod +x ./ocm-operator-policies.sh && ./ocm-operator-policies.sh
 ```
 
-2. Ceate the secret containing the assume role credentials:
+As an alternative to the above, if you prefer Terraform, you can create the roles 
+using Terraform using this example:
+
+```bash
+cat <<EOF > main.tf
+variable "oidc_provider_url" {
+  type = string
+}
+
+variable "cluster_name" {
+  type = string
+}
+
+module "ocm_operator_iam" {
+  source = "git::https://github.com/rh-mobb/ocm-operator//test/terraform?ref=main"
+
+  oidc_provider_url       = var.oidc_provider_url
+  ocm_operator_iam_prefix = var.cluster_name
+}
+
+output "ocm_operator_iam" {
+  value = module.ocm_operator_iam
+}
+
+EOF
+terraform init
+terraform plan -out ocm.plan -var="oidc_provider_url=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.aws.sts.oidc_endpoint_url')" -var=cluster_name=$ROSA_CLUSTER_NAME
+terraform apply "ocm.plan"
+```
+
+2. Create the secret containing the assume role credentials:
 
 ```bash
 cat <<EOF > /tmp/credentials
