@@ -144,6 +144,9 @@ spec:
 EOF
 ```
 
+You have successfully installed the OCM operator, which now exists in OperatorHub!
+
+![OCM Operator](images/ocm-operator-tile.png)
 
 ## Provision a ROSA Cluster via Custom Resource Definition
 
