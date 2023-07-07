@@ -211,8 +211,8 @@ and restore process, but it should be noted as there are issues with it.
      namespace: openshift-adp
    spec:
      features:
-      dataMover:
-        enable: false
+       dataMover:
+         enable: false
      backupLocations:
      - bucket:
          cloudStorageRef:
