@@ -36,7 +36,7 @@ authors:
 1. Create an IAM Policy to allow for S3 Access
 
    ```bash
-   POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaOadp'].{ARN:Arn}" --output text)
+   POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaOadpVer1'].{ARN:Arn}" --output text)
    if [[ -z "${POLICY_ARN}" ]]; then
    cat << EOF > ${SCRATCH}/policy.json
    {
@@ -62,6 +62,10 @@ authors:
          "s3:AbortMultipartUpload",
          "s3:ListMultipartUploadParts",
          "ec2:DescribeSnapshots",
+         "ec2:DescribeVolumes",
+         "ec2:DescribeVolumeAttribute",
+         "ec2:DescribeVolumesModifications",
+         "ec2:DescribeVolumeStatus",
          "ec2:CreateTags",
          "ec2:CreateVolume",
          "ec2:CreateSnapshot",
@@ -71,7 +75,7 @@ authors:
      }
     ]}
    EOF
-   POLICY_ARN=$(aws iam create-policy --policy-name "RosaOadp" \
+   POLICY_ARN=$(aws iam create-policy --policy-name "RosaOadpVer1" \
    --policy-document file:///${SCRATCH}/policy.json --query Policy.Arn \
    --tags Key=rosa_openshift_version,Value=${CLUSTER_VERSION} Key=rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-oadp Key=operator_name,Value=openshift-oadp \
    --output text)
@@ -200,7 +204,7 @@ and restore process, but it should be noted as there are issues with it.
    EOF
    ```
 
-1. Deploy a Data Protection Application
+1. Deploy a Data Protection Application - CSI only
 
    ```bash
    cat << EOF | oc create -f -
@@ -228,6 +232,44 @@ and restore process, but it should be noted as there are issues with it.
          - aws
        restic:
          enable: false
+   EOF
+   ```
+2. Deploy a Data Protection Application - CSI or non-CSI volumes
+
+   ```bash
+   cat << EOF | oc create -f -
+   apiVersion: oadp.openshift.io/v1alpha1
+   kind: DataProtectionApplication
+   metadata:
+     name: ${CLUSTER_NAME}-dpa
+     namespace: openshift-adp
+   spec:
+     features:
+       dataMover:
+         enable: false
+     backupLocations:
+     - bucket:
+         cloudStorageRef:
+           name: ${CLUSTER_NAME}-oadp
+         credential:
+           key: credentials
+           name: cloud-credentials
+         default: true
+     configuration:
+       velero:
+         defaultPlugins:
+         - openshift
+         - aws
+       restic:
+         enable: false
+     snapshotLocations:
+       - velero:
+           config:
+             credentialsFile: /tmp/credentials/openshift-adp/cloud-credentials-credentials
+             enableSharedConfig: 'true'
+             profile: default
+             region: ${REGION}
+           provider: aws
    EOF
    ```
 
@@ -383,10 +425,11 @@ and restore process, but it should be noted as there are issues with it.
   velero restore delete hello-world
   ```
 
-1. Remove the Custom Resource Definitinos from the cluster if you no longer wish to have them:
+1. Remove the Custom Resource Definitions from the cluster if you no longer wish to have them:
 
   ```bash
   for CRD in `oc get crds | grep velero | awk '{print $1}'`; do oc delete crd $CRD; done
+  for CRD in `oc get crds | grep -i oadp | awk '{print $1}'`; do oc delete crd $CRD; done
   ```
 
 1. Delete the AWS S3 Bucket
