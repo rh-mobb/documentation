@@ -73,7 +73,7 @@ authors:
    EOF
    POLICY_ARN=$(aws iam create-policy --policy-name "RosaOadp" \
    --policy-document file:///${SCRATCH}/policy.json --query Policy.Arn \
-   --tags Key=rosa_openshift_version,Value=4.9 Key=rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-oadp Key=operator_name,Value=openshift-oadp \
+   --tags Key=rosa_openshift_version,Value=${CLUSTER_VERSION} Key=rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-oadp Key=operator_name,Value=openshift-oadp \
    --output text)
    fi
    echo ${POLICY_ARN}
@@ -161,12 +161,11 @@ and restore process, but it should be noted as there are issues with it.
      name: redhat-oadp-operator
      namespace: openshift-adp
    spec:
-     channel: stable-1.0
+     channel: stable-1.2
      installPlanApproval: Automatic
      name: redhat-oadp-operator
      source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: oadp-operator.v1.0.8
    EOF
    ```
 
@@ -211,6 +210,9 @@ and restore process, but it should be noted as there are issues with it.
      name: ${CLUSTER_NAME}-dpa
      namespace: openshift-adp
    spec:
+     features:
+      dataMover:
+        enable: false
      backupLocations:
      - bucket:
          cloudStorageRef:
@@ -226,13 +228,6 @@ and restore process, but it should be noted as there are issues with it.
          - aws
        restic:
          enable: false
-     volumeSnapshots:
-     - velero:
-         config:
-           credentialsFile: /tmp/credentials/openshift-adp/cloud-credentials-credentials
-           enableSharedConfig: "true"
-           region: ${REGION}
-         provider: aws
    EOF
    ```
 
@@ -333,6 +328,9 @@ and restore process, but it should be noted as there are issues with it.
    hello-openshift-9f885f7c6-kdjpj   1/1     Running   0          90s
    ```
 
+2. For troubleshooting tips please refer to the OADP team's [troubleshooting documentation](https://github.com/openshift/oadp-operator/blob/master/docs/TROUBLESHOOTING.md)
+
+
 ## Cleanup
 
 1. Delete the workload
@@ -376,6 +374,13 @@ and restore process, but it should be noted as there are issues with it.
   ```bash
   oc delete backup hello-world
   oc delete restore hello-world
+  ```
+
+  To delete the backup/restore and remote objects in s3
+
+  ```bash
+  velero backup delete hello-world
+  velero restore delete hello-world
   ```
 
 1. Remove the Custom Resource Definitinos from the cluster if you no longer wish to have them:
