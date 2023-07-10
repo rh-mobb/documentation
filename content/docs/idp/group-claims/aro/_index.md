@@ -166,7 +166,7 @@ az network firewall network-rule create -g $AZR_RESOURCE_GROUP -f aro-private   
     --collection-name 'Allow_Microsoft_Graph' --action allow --priority 100     \
     -n 'Microsoft_Graph' --source-address '*' --protocols 'any'                 \
     --source-addresses '*' --destination-fqdns 'graph.microsoft.com'            \
-    --destination-ports '*'
+    --destination-ports '443'
 ```
 
 Now you should be able to login choosing the AAD option:
