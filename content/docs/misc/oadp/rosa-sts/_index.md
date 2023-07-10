@@ -206,21 +206,21 @@ and restore process, but it should be noted as there are issues with it.
 
 1. Check your application's storage default storage class
 
-```
-oc get pvc -n <namespace>
-NAME     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-applog   Bound    pvc-351791ae-b6ab-4e8b-88a4-30f73caf5ef8   1Gi        RWO            gp3-csi        4d19h
-mysql    Bound    pvc-16b8e009-a20a-4379-accc-bc81fedd0621   1Gi        RWO            gp3-csi        4d19h
-```
+   ```
+   oc get pvc -n <namespace>
+   NAME     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+   applog   Bound    pvc-351791ae-b6ab-4e8b-88a4-30f73caf5ef8   1Gi        RWO            gp3-csi        4d19h
+   mysql    Bound    pvc-16b8e009-a20a-4379-accc-bc81fedd0621   1Gi        RWO            gp3-csi        4d19h
+   ```
 
-```
-oc get storageclass
-NAME                PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-gp2                 kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   true                   4d21h
-gp2-csi             ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
-gp3                 ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
-gp3-csi (default)   ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
-```
+   ```
+   oc get storageclass
+   NAME                PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+   gp2                 kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   true                   4d21h
+   gp2-csi             ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+   gp3                 ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+   gp3-csi (default)   ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+   ```
 
 Using either gp3-csi, gp2-csi, gp3 or gp2 will work. If the application(s)
 that are being backed up are all using PV's with CSI, we recommend including
