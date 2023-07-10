@@ -43,12 +43,12 @@ Make is a build automation tool to manage the compilation and execution of progr
 ### Prerequisites 
 * AWS CLI
 * ROSA CLI >= 1.2.22
+* ansible >= 2.15.0
 * python >= 3.6
 * boto3 >= 1.22.0
 * botocore >= 1.25.0
 * make
 * sshuttle
-* ansible (check min version)
 
 ### Deployment 
 Once you have all of the prerequisites installed, clone our repo and go to the <mark>ansible-rosa</mark> directory.
@@ -70,7 +70,7 @@ Next, run the following command to allow Ansible playbook to create the cluster.
 make create.tgw
 ```
 
-Once the cluster is successfully deployed, login to your cluster using the credentials provided by Ansible upon the creation task completion.
+Note that the cluster setup may take up to one hour. Once the cluster is successfully deployed, connect to the jump host and login to your cluster using the credentials provided by Ansible upon the creation task completion.
 
 And when you are done with the cluster, use the following command to delete the cluster.
 
