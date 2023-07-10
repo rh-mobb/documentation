@@ -3,6 +3,8 @@ date: '2021-06-07'
 title: User Workload Monitoring on Azure Red Hat OpenShift
 authors:
   - Paul Czarkowski
+aliases:
+  - "/docs/rosa/federated-metrics/user-defined/"
 ---
 
 In Azure Red Hat OpenShift (ARO) Monitoring for User Defined Projects is disabled by default. Follow these instructions to enable it.
