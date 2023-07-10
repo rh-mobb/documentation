@@ -204,6 +204,28 @@ and restore process, but it should be noted as there are issues with it.
    EOF
    ```
 
+1. Check your application's storage default storage class
+
+```
+oc get pvc -n <namespace>
+NAME     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+applog   Bound    pvc-351791ae-b6ab-4e8b-88a4-30f73caf5ef8   1Gi        RWO            gp3-csi        4d19h
+mysql    Bound    pvc-16b8e009-a20a-4379-accc-bc81fedd0621   1Gi        RWO            gp3-csi        4d19h
+```
+
+```
+oc get storageclass
+NAME                PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+gp2                 kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   true                   4d21h
+gp2-csi             ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+gp3                 ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+gp3-csi (default)   ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+```
+
+Using either gp3-csi, gp2-csi, gp3 or gp2 will work. If the application(s)
+that are being backed up are all using PV's with CSI, we recommend including
+the CSI plugin in the OADP DPA configuration.
+
 1. Deploy a Data Protection Application - CSI only
 
    ```bash
@@ -214,6 +236,7 @@ and restore process, but it should be noted as there are issues with it.
      name: ${CLUSTER_NAME}-dpa
      namespace: openshift-adp
    spec:
+     backupImages: false
      features:
        dataMover:
          enable: false
@@ -230,6 +253,7 @@ and restore process, but it should be noted as there are issues with it.
          defaultPlugins:
          - openshift
          - aws
+         - csi
        restic:
          enable: false
    EOF
@@ -244,6 +268,7 @@ and restore process, but it should be noted as there are issues with it.
      name: ${CLUSTER_NAME}-dpa
      namespace: openshift-adp
    spec:
+     backupImages: false
      features:
        dataMover:
          enable: false
@@ -273,13 +298,30 @@ and restore process, but it should be noted as there are issues with it.
    EOF
    ```
 
+**Note** 
+* Container image backup and restore ( spec.backupImages=false ) is disabled and not supported in OADP 1.1.x
+or OADP 1.2.0 Rosa STS environments.
+* The Restic feature ( restic.enable=false ) is disabled and not supported in Rosa STS environments.
+* The DataMover feature ( dataMover.enable=false ) is disabled and not supported in Rosa STS environments.
+
 ## Perform a backup
+
+**Note** the following sample hello-world application has no attached PV's.
+Either DPA configuration will work.
 
 1. Create a workload to backup
 
    ```bash
    oc create namespace hello-world
-   oc new-app -n hello-world --docker-image=docker.io/openshift/hello-openshift
+   oc new-app -n hello-world --image=docker.io/openshift/hello-openshift
+   ```
+1. Check the application is working.
+
+   ```
+   curl `oc get route/hello-openshift -n hello-world -o jsonpath='{.spec.host}'`
+   ```
+   ```
+   Hello OpenShift!
    ```
 
 1. Backup workload
@@ -370,7 +412,16 @@ and restore process, but it should be noted as there are issues with it.
    hello-openshift-9f885f7c6-kdjpj   1/1     Running   0          90s
    ```
 
-2. For troubleshooting tips please refer to the OADP team's [troubleshooting documentation](https://github.com/openshift/oadp-operator/blob/master/docs/TROUBLESHOOTING.md)
+   ```
+   curl `oc get route/hello-openshift -n hello-world -o jsonpath='{.spec.host}'`
+   ```
+   ```
+   Hello OpenShift!
+   ```
+
+1. For troubleshooting tips please refer to the OADP team's [troubleshooting documentation](https://github.com/openshift/oadp-operator/blob/master/docs/TROUBLESHOOTING.md)
+
+1. Additional sample applications can be found in the OADP team's [sample applications directory](https://github.com/openshift/oadp-operator/tree/master/tests/e2e/sample-applications)
 
 
 ## Cleanup
