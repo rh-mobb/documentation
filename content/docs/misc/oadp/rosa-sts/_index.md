@@ -36,7 +36,7 @@ authors:
 1. Create an IAM Policy to allow for S3 Access
 
    ```bash
-   POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaOadp'].{ARN:Arn}" --output text)
+   POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaOadpVer1'].{ARN:Arn}" --output text)
    if [[ -z "${POLICY_ARN}" ]]; then
    cat << EOF > ${SCRATCH}/policy.json
    {
@@ -62,6 +62,10 @@ authors:
          "s3:AbortMultipartUpload",
          "s3:ListMultipartUploadParts",
          "ec2:DescribeSnapshots",
+         "ec2:DescribeVolumes",
+         "ec2:DescribeVolumeAttribute",
+         "ec2:DescribeVolumesModifications",
+         "ec2:DescribeVolumeStatus",
          "ec2:CreateTags",
          "ec2:CreateVolume",
          "ec2:CreateSnapshot",
@@ -71,9 +75,9 @@ authors:
      }
     ]}
    EOF
-   POLICY_ARN=$(aws iam create-policy --policy-name "RosaOadp" \
+   POLICY_ARN=$(aws iam create-policy --policy-name "RosaOadpVer1" \
    --policy-document file:///${SCRATCH}/policy.json --query Policy.Arn \
-   --tags Key=rosa_openshift_version,Value=4.9 Key=rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-oadp Key=operator_name,Value=openshift-oadp \
+   --tags Key=rosa_openshift_version,Value=${CLUSTER_VERSION} Key=rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-oadp Key=operator_name,Value=openshift-oadp \
    --output text)
    fi
    echo ${POLICY_ARN}
@@ -161,12 +165,11 @@ and restore process, but it should be noted as there are issues with it.
      name: redhat-oadp-operator
      namespace: openshift-adp
    spec:
-     channel: stable-1.0
+     channel: stable-1.2
      installPlanApproval: Automatic
      name: redhat-oadp-operator
      source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: oadp-operator.v1.0.8
    EOF
    ```
 
@@ -201,7 +204,29 @@ and restore process, but it should be noted as there are issues with it.
    EOF
    ```
 
-1. Deploy a Data Protection Application
+1. Check your application's storage default storage class
+
+   ```
+   oc get pvc -n <namespace>
+   NAME     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+   applog   Bound    pvc-351791ae-b6ab-4e8b-88a4-30f73caf5ef8   1Gi        RWO            gp3-csi        4d19h
+   mysql    Bound    pvc-16b8e009-a20a-4379-accc-bc81fedd0621   1Gi        RWO            gp3-csi        4d19h
+   ```
+
+   ```
+   oc get storageclass
+   NAME                PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+   gp2                 kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   true                   4d21h
+   gp2-csi             ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+   gp3                 ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+   gp3-csi (default)   ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   4d21h
+   ```
+
+Using either gp3-csi, gp2-csi, gp3 or gp2 will work. If the application(s)
+that are being backed up are all using PV's with CSI, we recommend including
+the CSI plugin in the OADP DPA configuration.
+
+1. Deploy a Data Protection Application - CSI only
 
    ```bash
    cat << EOF | oc create -f -
@@ -211,6 +236,42 @@ and restore process, but it should be noted as there are issues with it.
      name: ${CLUSTER_NAME}-dpa
      namespace: openshift-adp
    spec:
+     backupImages: false
+     features:
+       dataMover:
+         enable: false
+     backupLocations:
+     - bucket:
+         cloudStorageRef:
+           name: ${CLUSTER_NAME}-oadp
+         credential:
+           key: credentials
+           name: cloud-credentials
+         default: true
+     configuration:
+       velero:
+         defaultPlugins:
+         - openshift
+         - aws
+         - csi
+       restic:
+         enable: false
+   EOF
+   ```
+2. Deploy a Data Protection Application - CSI or non-CSI volumes
+
+   ```bash
+   cat << EOF | oc create -f -
+   apiVersion: oadp.openshift.io/v1alpha1
+   kind: DataProtectionApplication
+   metadata:
+     name: ${CLUSTER_NAME}-dpa
+     namespace: openshift-adp
+   spec:
+     backupImages: false
+     features:
+       dataMover:
+         enable: false
      backupLocations:
      - bucket:
          cloudStorageRef:
@@ -226,23 +287,48 @@ and restore process, but it should be noted as there are issues with it.
          - aws
        restic:
          enable: false
-     volumeSnapshots:
-     - velero:
-         config:
-           credentialsFile: /tmp/credentials/openshift-adp/cloud-credentials-credentials
-           enableSharedConfig: "true"
-           region: ${REGION}
-         provider: aws
+     snapshotLocations:
+       - velero:
+           config:
+             credentialsFile: /tmp/credentials/openshift-adp/cloud-credentials-credentials
+             enableSharedConfig: 'true'
+             profile: default
+             region: ${REGION}
+           provider: aws
    EOF
    ```
 
+**Note** 
+* Container image backup and restore ( spec.backupImages=false ) is disabled and not supported in OADP 1.1.x
+or OADP 1.2.0 Rosa STS environments.
+* The Restic feature ( restic.enable=false ) is disabled and not supported in Rosa STS environments.
+* The DataMover feature ( dataMover.enable=false ) is disabled and not supported in Rosa STS environments.
+
 ## Perform a backup
+
+**Note** the following sample hello-world application has no attached PV's.
+Either DPA configuration will work.
 
 1. Create a workload to backup
 
    ```bash
    oc create namespace hello-world
-   oc new-app -n hello-world --docker-image=docker.io/openshift/hello-openshift
+   oc new-app -n hello-world --image=docker.io/openshift/hello-openshift
+   ```
+
+1. Expose the route
+
+   ```
+   oc expose service/hello-openshift -n hello-world
+   ```
+
+1. Check the application is working.
+
+   ```
+   curl `oc get route/hello-openshift -n hello-world -o jsonpath='{.spec.host}'`
+   ```
+   ```
+   Hello OpenShift!
    ```
 
 1. Backup workload
@@ -333,6 +419,18 @@ and restore process, but it should be noted as there are issues with it.
    hello-openshift-9f885f7c6-kdjpj   1/1     Running   0          90s
    ```
 
+   ```
+   curl `oc get route/hello-openshift -n hello-world -o jsonpath='{.spec.host}'`
+   ```
+   ```
+   Hello OpenShift!
+   ```
+
+1. For troubleshooting tips please refer to the OADP team's [troubleshooting documentation](https://github.com/openshift/oadp-operator/blob/master/docs/TROUBLESHOOTING.md)
+
+1. Additional sample applications can be found in the OADP team's [sample applications directory](https://github.com/openshift/oadp-operator/tree/master/tests/e2e/sample-applications)
+
+
 ## Cleanup
 
 1. Delete the workload
@@ -378,10 +476,18 @@ and restore process, but it should be noted as there are issues with it.
   oc delete restore hello-world
   ```
 
-1. Remove the Custom Resource Definitinos from the cluster if you no longer wish to have them:
+  To delete the backup/restore and remote objects in s3
+
+  ```bash
+  velero backup delete hello-world
+  velero restore delete hello-world
+  ```
+
+1. Remove the Custom Resource Definitions from the cluster if you no longer wish to have them:
 
   ```bash
   for CRD in `oc get crds | grep velero | awk '{print $1}'`; do oc delete crd $CRD; done
+  for CRD in `oc get crds | grep -i oadp | awk '{print $1}'`; do oc delete crd $CRD; done
   ```
 
 1. Delete the AWS S3 Bucket
