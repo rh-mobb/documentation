@@ -315,6 +315,13 @@ Either DPA configuration will work.
    oc create namespace hello-world
    oc new-app -n hello-world --image=docker.io/openshift/hello-openshift
    ```
+
+1. Expose the route
+
+   ```
+   oc expose service/hello-openshift -n hello-world
+   ```
+
 1. Check the application is working.
 
    ```
