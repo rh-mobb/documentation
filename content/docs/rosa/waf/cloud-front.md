@@ -84,6 +84,7 @@ authors:
       name: acme
     spec:
       domain: $DOMAIN
+      loadBalancerType: Classic or NLB
       certificate:
         name: acme-tls
         namespace: my-custom-route
@@ -110,15 +111,15 @@ authors:
 
     > Make sure you create it in the US-EAST-1 region (otherwise cloud front can't use it)
 
-1. Log into the [AWS console and Create a Cloud Front distribution](https://console.aws.amazon.com/cloudfront/home?region=us-east-2#create-distribution:) (make sure its the same region as your cluster).
+1. Log into the [AWS console and Create a Cloud Front distribution](https://console.aws.amazon.com/cloudfront/home?region=us-east-2#create-distribution:) 
 
-    * Origin Domain Name: <Endpoint from oc get manageddomains command>
+    * Origin Domain Name: < Endpoint from oc get manageddomains command >
     * Origin Protocol Policy: HTTPS only
     * Viewer Protocol Policy: Redirect HTTP to HTTPS
     * Allowed HTTP Methods: GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE
     * AWS WAF Web ACL: demo-waf-acl
-    * Alternate Domain Names: *.<domain>
-    * Custom SSL Certificate: <the one you just imported>
+    * Alternate Domain Names: *.< domain >
+    * Custom SSL Certificate: < the one you just imported >
     * Origin Request Policy: create a new policy whitelist: Origin, user-agent, referer, host (**IMPORTANT**)
 
 1. Hit **Create** then wait until the **Status** is *Ready*.
