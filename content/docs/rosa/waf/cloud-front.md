@@ -74,7 +74,7 @@ authors:
     oc create secret tls acme-tls --cert=$CERTS/fullchain1.pem --key=$CERTS/privkey1.pem
     ```
 
-1. Create a Custom Domain resource. (You can change the load balancer from the default Classic by adding spec.loadBalancerType: NLB to the following YAML)
+1. Create a Custom Domain resource. You can change the load balancer from the default Classic by adding spec.loadBalancerType: NLB to the following YAML
 
     ```bash
     cat << EOF | oc apply -f -
