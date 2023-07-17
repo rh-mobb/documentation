@@ -269,11 +269,13 @@ In our example we will use PostgreSQL as engine.
 1. Create new-app
 
    ```bash
-   oc new-app https://github.com/fjcloud/ip-finder-api.git --strategy=docker -e DB_ENDPOINT=${DB_ENDPOINT} \
+   oc new-app --strategy=docker 
+   -e DB_ENDPOINT=${DB_ENDPOINT} \
    -e DB_PORT=5432 \
    -e AWS_REGION=${AWS_REGION} \ 
    -e DB_USER=iamuser \
-   -e DB_NAME=iamdb
+   -e DB_NAME=iamdb \
+   https://github.com/fjcloud/ip-finder-api.git
    ```
 
 2. Add secrets to deployment
