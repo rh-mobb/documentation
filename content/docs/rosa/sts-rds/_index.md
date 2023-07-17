@@ -237,6 +237,7 @@ In our example we will use PostgreSQL as engine.
    oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 iamdb-connect \
      --env PGSSLMODE=require \
      --env PGPASSWORD=$(aws rds generate-db-auth-token --hostname $DB_ENDPOINT --port 5432 --region ${AWS_REGION} --username iamuser) \
+     --env DB_ENDPOINT=${DB_ENDPOINT} \
      -- /bin/sh
    ```
 
