@@ -29,7 +29,7 @@ In our example we will use PostgreSQL as engine.
 
 ## Set up environment
 
-1. Export value of your cluster name (rosa list cluster)
+1. Export value of your cluster name (`rosa list cluster`)
    ```bash
    export CLUSTER_NAME=<your_cluster_name>    
    ```
@@ -305,9 +305,9 @@ In our example we will use PostgreSQL as engine.
 
 4. Test app
 
-  ```bash
-  curl https://$(oc get route ip-finder-api -o jsonpath='{.spec.host}')
-  ```
+   ```bash
+   curl https://$(oc get route ip-finder-api -o jsonpath='{.spec.host}')
+   ```
 
 ## Cleanup
 
