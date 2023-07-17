@@ -36,7 +36,7 @@ In our example we will use PostgreSQL as engine.
 
 2. Export list of environements variables from your cluster
    ```bash
-   export AWS_REGION=$(rosa describe cluster -c fja-hcp5 -o json | jq -r .region.id)
+   export AWS_REGION=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r .region.id)
    export OIDC_PROVIDER=$(rosa describe cluster -c ${CLUSTER_NAME} -o json \
     | jq -r .aws.sts.oidc_endpoint_url | sed -e 's/^https:\/\///')
    export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
