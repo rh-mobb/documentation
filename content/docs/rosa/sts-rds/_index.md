@@ -216,7 +216,7 @@ In our example we will use PostgreSQL as engine.
 
    ```bash
    DB_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier psql-${CLUSTER_NAME} --query 'DBInstances[*].[Endpoint.Address]' --output text --region ${AWS_REGION})
-   oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 prep-db --env PGPASSWORD=${PSQL_PASSWORD} -- /bin/sh
+   oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 prep-db --env PGPASSWORD=${PSQL_PASSWORD} --env DB_ENDPOINT=${DB_ENDPOINT} -- /bin/sh
    ```
 
 2. Connect to DB, create user and DB (in the prompt of `oc run`)
