@@ -69,10 +69,10 @@ In our example we will use PostgreSQL as engine.
 2. Internet Gateway
 
    ```bash
-   WWW_GW=$(aws ec2 create-internet-gateway --region ${AWS_REGION} | jq -r .InternetGateway.InternetGatewayId)
-   aws ec2 attach-internet-gateway --vpc-id ${VPC_DB} --internet-gateway-id ${WWW_GW}
+   IGW=$(aws ec2 create-internet-gateway --region ${AWS_REGION} | jq -r .InternetGateway.InternetGatewayId)
+   aws ec2 attach-internet-gateway --vpc-id ${VPC_DB} --internet-gateway-id ${IGW}
    RT_ID=$(aws ec2 describe-route-tables --filters Name=vpc-id,Values=${VPC_DB} --region ${AWS_REGION}  | jq -r .RouteTables[].RouteTableId)
-   aws ec2 create-route --route-table-id ${RT_ID} --destination-cidr-block 0.0.0.0/0 --gateway-id ${WWW_GW} --region ${AWS_REGION}
+   aws ec2 create-route --route-table-id ${RT_ID} --destination-cidr-block 0.0.0.0/0 --gateway-id ${IGW} --region ${AWS_REGION}
    ```
 
 3. DB Subnet group
@@ -212,15 +212,16 @@ In our example we will use PostgreSQL as engine.
 
 ## Prepare Database
 
-1. Connect to DB
+1. Create a Pod for connecting to DB with postgres user
 
    ```bash
    DB_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier psql-${CLUSTER_NAME} --query 'DBInstances[*].[Endpoint.Address]' --output text --region ${AWS_REGION})
-   oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 prep-db --env PGPASSWORD=${PSQL_PASSWORD} -- /bin/sh -c "psql -h ${DB_ENDPOINT}"
+   oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 prep-db --env PGPASSWORD=${PSQL_PASSWORD} -- /bin/sh
    ```
 
-2. Create User and DB (in the prompt of oc run)
+2. Connect to DB, create user and DB (in the prompt of `oc run`)
    ```bash
+   psql -h ${DB_ENDPOINT}
    CREATE USER iamuser WITH LOGIN; 
    GRANT rds_iam TO iamuser;
    CREATE DATABASE iamdb;
@@ -238,7 +239,7 @@ In our example we will use PostgreSQL as engine.
      --env PGSSLMODE=require \
      --env PGPASSWORD=$(aws rds generate-db-auth-token --hostname $DB_ENDPOINT --port 5432 --region ${AWS_REGION} --username iamuser) \
      --env DB_ENDPOINT=${DB_ENDPOINT} \
-     -- /bin/sh
+    -- /bin/sh
    ```
 
 2. Download dataset IPrange / Country
@@ -328,8 +329,8 @@ In our example we will use PostgreSQL as engine.
    ```bash
    oc delete ns rds-sts-app
    aws rds delete-db-instance --db-instance-identifier psql-${CLUSTER_NAME} --region ${AWS_REGION} --skip-final-snapshot
-   aws ec2 detach-internet-gateway --vpc-id ${VPC_DB} --internet-gateway-id ${WWW_GW}
-   aws ec2 delete-internet-gateway --internet-gateway-id ${WWW_GW} --region ${AWS_REGION}
+   aws ec2 detach-internet-gateway --vpc-id ${VPC_DB} --internet-gateway-id ${IGW}
+   aws ec2 delete-internet-gateway --internet-gateway-id ${IGW} --region ${AWS_REGION}
    aws ec2 delete-subnet --subnet-id ${SUBNET_A} --region ${AWS_REGION}
    aws ec2 delete-subnet --subnet-id ${SUBNET_B} --region ${AWS_REGION}
    aws ec2 delete-subnet --subnet-id ${SUBNET_C} --region ${AWS_REGION}
