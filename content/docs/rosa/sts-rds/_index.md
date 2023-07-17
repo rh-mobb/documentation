@@ -193,6 +193,12 @@ In our example we will use PostgreSQL as engine.
 
 ## Test STS
 
+1. Create new project
+
+   ```bash
+   oc new-project rds-sts-app
+   ```
+
 1. Check that STS is working properly
    ```bash
    curl -s -H "Accept: application/json" "https://sts.amazonaws.com/\
@@ -206,20 +212,14 @@ In our example we will use PostgreSQL as engine.
 
 ## Prepare Database
 
-1. Create new project
-
-   ```bash
-   oc new-project rds-sts-app
-   ```
-
-2. Connect to DB
+1. Connect to DB
 
    ```bash
    DB_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier psql-${CLUSTER_NAME} --query 'DBInstances[*].[Endpoint.Address]' --output text --region ${AWS_REGION})
    oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 prep-db --env PGPASSWORD=${PSQL_PASSWORD} -- /bin/sh -c "psql -h ${DB_ENDPOINT}"
    ```
 
-3. Create User and DB (in the prompt of oc run)
+2. Create User and DB (in the prompt of oc run)
    ```bash
    CREATE USER iamuser WITH LOGIN; 
    GRANT rds_iam TO iamuser;
