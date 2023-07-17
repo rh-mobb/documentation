@@ -1,6 +1,5 @@
 # Deploying ROSA PrivateLink Cluster with Ansible
 Draft v0.2
-rev: fixing shiz
 
 ## Background
 This guide shows an example of how to deploy Red Hat OpenShift Services on AWS (ROSA) cluster with [PrivateLink](https://aws.amazon.com/privatelink/) with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) enabled using [Ansible](https://docs.ansible.com/) playbook from our [MOBB GitHub repo](https://github.com/rh-mobb/ansible-rosa) and [Makefiles](https://www.gnu.org/software/make/manual/make.html#Introduction) to compile them. Note that this is an unofficial Red Hat guide and your implementation may vary. 
