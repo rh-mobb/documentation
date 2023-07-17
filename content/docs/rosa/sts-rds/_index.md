@@ -313,6 +313,13 @@ In our example we will use PostgreSQL as engine.
    curl https://$(oc get route ip-finder-api -o jsonpath='{.spec.host}')
    ```
 
+   > Expected output
+   ```bash
+   {
+    "your_ip": X.X.X.X",
+    "countrycode": "FR"
+   }
+   ```
 ## Cleanup
 
 
