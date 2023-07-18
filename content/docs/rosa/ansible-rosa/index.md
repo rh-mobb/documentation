@@ -1,8 +1,16 @@
+
+---
+date: '2023-07-19'
+title: Deploying ROSA PrivateLink Cluster with Ansible
+tags: ["ROSA", "Ansible"]
+authors:
+  - Paul Czarkowski, Diana Sari
+---
+
 # Deploying ROSA PrivateLink Cluster with Ansible
-Draft v0.3
 
 ## Background
-This guide shows an example of how to deploy Red Hat OpenShift Services on AWS (ROSA) cluster with [PrivateLink](https://aws.amazon.com/privatelink/) with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) enabled using [Ansible](https://docs.ansible.com/) playbook from our [MOBB GitHub repository](https://github.com/rh-mobb/ansible-rosa) and [makefiles](https://www.gnu.org/software/make/manual/make.html#Introduction) to compile them. Note that this is an unofficial Red Hat guide and your implementation may vary. 
+This guide shows an example of how to deploy a classic [Red Hat OpenShift Services on AWS (ROSA)](https://developers.redhat.com/products/red-hat-openshift-service-on-aws/overview) cluster with [PrivateLink](https://aws.amazon.com/privatelink/) with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) enabled using [Ansible](https://docs.ansible.com/) playbook from our [MOBB GitHub repository](https://github.com/rh-mobb/ansible-rosa) and [makefiles](https://www.gnu.org/software/make/manual/make.html#Introduction) to compile them. Note that this is an unofficial Red Hat guide and your implementation may vary. 
 
 This guide is broken down into two main sections namely the architectural landscape of this deployment scenario including the AWS services and open source products and services that we will be using, and the implementation steps which includes the prerequisites needed to run the deployment itself. 
 
@@ -27,11 +35,7 @@ Finally, once the cluster is created, we will access it by establishing secure S
 ### Git
 Git is version control system that tracks changes to files and enables collaboration, while GitHub is a web-based hosting service for Git repositories. And in this scenario, the deployment will be based on the Ansible playbook from MOBB GitHub repository at [https://github.com/rh-mobb/ansible-rosa](https://github.com/rh-mobb/ansible-rosa). 
 
-We are specifying the default environment and variables in the following directories:
-* <code>./environment/*/group_vars/all.yaml</code> - environment setup
-* <code>./roles/_vars/defaults/main.yml</code> - variables
-
-And these default variables will be overridden by specific variables which we will discuss in a second. 
+We are specifying the default variables in <code>./roles/_vars/defaults/main.yml</code>, and these default variables will then be overridden by specific variables located in <code>./environment/*/group_vars/all.yaml</code> depends on the scenario.
 
 For now, let's take a look at what these default variables are. Below are the snippets from <code>./roles/_vars/defaults/main.yml</code>:
 
@@ -83,7 +87,7 @@ rosa_tgw_cidr: "10.0.0.0/8"
 rosa_egress_vpc_cidr: "10.10.0.0/24"
 ```
 
-As mentioned previously, we are going to override the above default variables with ones that are relevant our scenario in this case, i.e. ROSA with PrivateLink and Transit Gateway, and to do so, we will be running the variables specified from <code>./environment/transit-gateway-egress/group_vars/all.yaml</code> instead:
+As mentioned previously, we are going to override the above default variables with ones that are relevant to our scenario, and in this case it would be ROSA with PrivateLink and Transit Gateway, and to do so, we will be running the variables specified from <code>./environment/transit-gateway-egress/group_vars/all.yaml</code> instead:
 
 ```bash
 rosa_private_link: true
