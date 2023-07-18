@@ -13,25 +13,27 @@ In this section, we will first discuss about the architecture of the cluster we 
 ### ROSA Cluster with PrivateLink
 PrivateLink allows you to securely access AWS services over private network connections, without exposing your traffic to the public internet. In this scenario, we will be using [Transit Gateway (TGW)](https://aws.amazon.com/transit-gateway/) allowing inter-VPC and VPC-to-on-premises communications by providing a scalable and efficient way to handle traffic between these networks. 
 
-To help with DNS resolution, we will be using DNS forwarder to forward the queries to [Route 53 Inbound Resolver](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html) allowing the cluster to accept incoming DNS queries from external sources and thus establishing the desired connection without exposing the underlying infrastructure. 
+To help with DNS resolution, we will be using DNS forwarder to forward the queries to [Route 53 Inbound Resolver](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html) allowing the cluster to accept incoming DNS queries from external sources and thus establishing the desired connection without exposing the underlying infrastructure.
 
 ![ROSA with PL and TGW](images/rosa-pl-tgw-newicons.png)
 
 In addition, [Egress VPC](https://docs.aws.amazon.com/managedservices/latest/onboardingguide/networking-vpc.html) will be provisioned serving as a dedicated network component for managing outbound traffic from the cluster. A [NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html) will be created within the public subnet of the Egress VPC and along with it a [Squid](http://www.squid-cache.org/)-based proxy to restrict egress traffic from the cluster to only the permitted [endpoints or destinations](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_prerequisites). 
 
-We will also be using [VPC Endpoints](https://docs.aws.amazon.com/whitepapers/latest/aws-privatelink/what-are-vpc-endpoints.html) to privately access AWS resources, e.g. gateway endpoint for S3 bucket, interface endpoint for STS, interface endpoint for EC2 instances, etc.     
+We will also be using [VPC Endpoints](https://docs.aws.amazon.com/whitepapers/latest/aws-privatelink/what-are-vpc-endpoints.html) to privately access AWS resources, e.g. gateway endpoint for S3 bucket, interface endpoint for STS, interface endpoint for EC2 instances, etc.
 
 Finally, once the cluster is created, we will access it by establishing secure SSH connection using a jump host that is set up within the Egress VPC, and to do so we will be using [sshuttle](https://sshuttle.readthedocs.io/en/stable/). 
 
 
 ### Git
-Git is version control system that tracks changes to files and enables collaboration, while GitHub is a web-based hosting service for Git repositories. And in this scenario, the deployment will be based on the Ansible playbook from MOBB GitHub repo at [https://github.com/rh-mobb/ansible-rosa](https://github.com/rh-mobb/ansible-rosa). 
+Git is version control system that tracks changes to files and enables collaboration, while GitHub is a web-based hosting service for Git repositories. And in this scenario, the deployment will be based on the Ansible playbook from MOBB GitHub repository at [https://github.com/rh-mobb/ansible-rosa](https://github.com/rh-mobb/ansible-rosa). 
 
 We are specifying the default environment and variables in the following directories:
 * <code>./environment/*/group_vars/all.yaml</code> - environment setup
 * <code>./roles/_vars/defaults/main.yml</code> - variables
 
-And these default variables will be overridden by specific variables which we will discuss in a second. For now, let's take a look at what these default variables are. Below are the snippets from <code>./roles/_vars/defaults/main.yml</code>:
+And these default variables will be overridden by specific variables which we will discuss in a second. 
+
+For now, let's take a look at what these default variables are. Below are the snippets from <code>./roles/_vars/defaults/main.yml</code>:
 
 ```bash
 # defaults for roles/cluster_create
@@ -117,7 +119,7 @@ Next, we will talk about what <code>makefile</code> is and how it helps compilin
 ### Makefile
 [Make](https://www.gnu.org/software/make/manual/make.html#Overview) is a build automation tool to manage the compilation and execution of programs. It reads a file called a [makefile](https://www.gnu.org/software/make/manual/make.html#Introduction) that contains a set of rules and dependencies, allowing developers to define how source code files should be compiled, linked, and executed.
 
-In this scenario, the makefile can be found in the root directory of the GitHub repo, and here below is the snippet where the cluster name is set up along with the virtual environment that makefile will compile when we are running <code>make virtualenv</code>: 
+In this scenario, the makefile can be found in the root directory of the GitHub repository, and here below is the snippet where the cluster name is set up along with the virtual environment that makefile will compile when we are running <code>make virtualenv</code>: 
 
 ```bash
 CLUSTER_NAME ?= ans-$(shell whoami)
@@ -134,7 +136,9 @@ virtualenv:
 		$(VIRTUALENV)/bin/ansible-galaxy collection install -r requirements.yml
 ```
 
-As you can see above, the <code>cluster_name</code> variable is hardcoded in the makefile to be <code>ans-${username}</code>. And below are what the makefile will compile when we are running <code>make create.tgw</code> and <code>make delete.tgw</code> for this scenario. 
+As you can see above, the <code>cluster_name</code> variable is hardcoded in the makefile to be <code>ans-${username}</code>. 
+
+And below are what the makefile will compile when we are running <code>make create.tgw</code> and <code>make delete.tgw</code> for this scenario. 
 
 ```bash
 create.tgw:
@@ -148,7 +152,7 @@ Here we see that we have Ansible commands that trigger the deployment. So next, 
 
 
 ### Ansible
-[Ansible]((https://docs.ansible.com/)) is an open-source automation tool that simplifies system management and configuration. It uses a declarative approach, allowing users to define desired states using YAML-based [Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html). With an agentless architecture and a vast [library of modules](https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html), Ansible enables automation of tasks such as configuration management, package installation, and user management. 
+[Ansible](https://docs.ansible.com/) is an open-source automation tool that simplifies system management and configuration. It uses a declarative approach, allowing users to define desired states using YAML-based [Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html). With an agentless architecture and a vast [library of modules](https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html), Ansible enables automation of tasks such as configuration management, package installation, and user management. 
 
 Recall that we have the following code snippet in the <code>Make</code> section that will be run for <code>make create.tgw</code> command:
 
