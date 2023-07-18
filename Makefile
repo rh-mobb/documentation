@@ -1,12 +1,13 @@
-# build:
-# 	docker run --rm \
-# 	  --name=jekyll-build \
-# 		--volume="$(PWD):/srv/jekyll" \
-# 		-it jekyll/jekyll:3.8.6 \
-# 		jekyll build
-
+.PHONY: preview
 preview:
 	hugo server --minify --theme relearn -D
 
+.PHONY: publish
 publish:
 	hugo --minify --theme relearn
+
+.PHONY: preview.%
+preview.%:
+	gh repo set-default github.com/rh-mobb/documentation
+	gh pr checkout $*
+	hugo server --minify --theme relearn -D
