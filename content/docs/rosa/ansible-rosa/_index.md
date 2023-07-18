@@ -1,4 +1,3 @@
-
 ---
 date: '2023-07-19'
 title: Deploying ROSA PrivateLink Cluster with Ansible
