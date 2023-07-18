@@ -31,7 +31,7 @@ We are specifying the default environment and variables in the following directo
 * <code>./environment/*/group_vars/all.yaml</code> - environment setup
 * <code>./roles/_vars/defaults/main.yml</code> - variables
 
-And these default variables will be overridden by specific variables which we will discuss later. For now, let's take a look at what those default variables are. Below are the snippets from <code>./roles/_vars/defaults/main.yml</code>:
+And these default variables will be overridden by specific variables which we will discuss in a second. For now, let's take a look at what these default variables are. Below are the snippets from <code>./roles/_vars/defaults/main.yml</code>:
 
 ```bash
 # defaults for roles/cluster_create
@@ -81,7 +81,7 @@ rosa_tgw_cidr: "10.0.0.0/8"
 rosa_egress_vpc_cidr: "10.10.0.0/24"
 ```
 
-In this specific scenario, however, we are going to override some of those default variables with the following variables from <code>./environment/transit-gateway-egress/group_vars/all.yaml</code>:
+As mentioned previously, we are going to override the above default variables with ones that are relevant our scenario in this case, i.e. ROSA with PrivateLink and Transit Gateway, and thus, to do so, we will be running the variables specified from <code>./environment/transit-gateway-egress/group_vars/all.yaml</code> instead:
 
 ```bash
 rosa_private_link: true
@@ -156,7 +156,7 @@ Recall that we have the following code snippet in the <code>Make</code> section 
 create.tgw:
 	$(ANSIBLE) -v create-cluster.yaml -i ./environment/transit-gateway-egress/hosts
 ```
-In this case, we will be running Ansible command by executing a playbook called <code>create-cluster.yaml</code> and specifying <code>./environment/transit-gateway-egress/hosts</code> as the inventory file. And the variables in this playbook override the default variables we discussed previously. 
+In this case, we will be running Ansible command by executing a playbook called <code>create-cluster.yaml</code> and specifying <code>./environment/transit-gateway-egress/hosts</code> as the inventory file. 
 
 Let's take a quick look at the <code>create-cluster.yaml</code> playbook which can be found in the repository's root folder:
 
