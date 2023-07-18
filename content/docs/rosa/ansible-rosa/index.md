@@ -1,5 +1,5 @@
 # Deploying ROSA PrivateLink Cluster with Ansible
-Draft v0.2
+Draft v0.3
 
 ## Background
 This guide shows an example of how to deploy Red Hat OpenShift Services on AWS (ROSA) cluster with [PrivateLink](https://aws.amazon.com/privatelink/) with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) enabled using [Ansible](https://docs.ansible.com/) playbook from our [MOBB GitHub repo](https://github.com/rh-mobb/ansible-rosa) and [Makefiles](https://www.gnu.org/software/make/manual/make.html#Introduction) to compile them. Note that this is an unofficial Red Hat guide and your implementation may vary. 
@@ -17,7 +17,7 @@ To help with DNS resolution, we will be using DNS forwarder to forward the queri
 
 ![ROSA with PL and TGW](images/rosa-pl-tgw-newicons.png)
 
-In addition, [Egress VPC](https://docs.aws.amazon.com/managedservices/latest/onboardingguide/networking-vpc.html) will be provisioned serving as a dedicated network component for managing outbound traffic from the cluster. A [NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html) will be created within the public subnet of the Egress VPC and along with it a [Squid](http://www.squid-cache.org/)-based proxy to restrict egress traffic from the cluster to only the permitted endpoints or destinations. 
+In addition, [Egress VPC](https://docs.aws.amazon.com/managedservices/latest/onboardingguide/networking-vpc.html) will be provisioned serving as a dedicated network component for managing outbound traffic from the cluster. A [NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html) will be created within the public subnet of the Egress VPC and along with it a [Squid](http://www.squid-cache.org/)-based proxy to restrict egress traffic from the cluster to only the permitted [endpoints or destinations](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_prerequisites). 
 
 We will also be using [VPC Endpoints](https://docs.aws.amazon.com/whitepapers/latest/aws-privatelink/what-are-vpc-endpoints.html) to privately access AWS resources, e.g. gateway endpoint for S3 bucket, interface endpoint for STS, interface endpoint for EC2 instances, etc.     
 
@@ -27,11 +27,11 @@ Finally, once the cluster is created, we will access it by establishing secure S
 ### Git
 Git is version control system that tracks changes to files and enables collaboration, while GitHub is a web-based hosting service for Git repositories. And in this scenario, the deployment will be based on the Ansible playbook from MOBB GitHub repo at [https://github.com/rh-mobb/ansible-rosa](https://github.com/rh-mobb/ansible-rosa). 
 
-We are specifying the environment and variables in the following directories:
+We are specifying the default environment and variables in the following directories:
 * <code>./environment/*/group_vars/all.yaml</code> - environment setup
 * <code>./roles/_vars/defaults/main.yml</code> - variables
 
-Now, let's take a look at what those default variables are. Below are the snippets from <code>./roles/_vars/defaults/main.yml</code>:
+And these default variables will be overridden by specific variables which we will discuss later. For now, let's take a look at what those default variables are. Below are the snippets from <code>./roles/_vars/defaults/main.yml</code>:
 
 ```bash
 # defaults for roles/cluster_create
@@ -114,7 +114,7 @@ proxy_enabled: true
 Next, we will talk about what <code>make</code> is and how it helps compiling the code for our deployment in this scenario.
 
 
-### Make
+### Makefile
 Make is a build automation tool to manage the compilation and execution of programs. It reads a file called a "makefile" that contains a set of rules and dependencies, allowing developers to define how source code files should be compiled, linked, and executed.
 
 In this scenario, the makefile can be found in the root directory of the GitHub repo, and here below is the snippet where the cluster name is set up along with the virtual environment that makefile will compile when we are running <code>make virtualenv</code>: 
@@ -134,7 +134,7 @@ virtualenv:
 		$(VIRTUALENV)/bin/ansible-galaxy collection install -r requirements.yml
 ```
 
-In addition, below are what the makefile will compile when we are running <code>make create.tgw</code> and <code>make delete.tgw</code> for this scenario. 
+As you can see above, the <code>cluster_name</code> variable is hardcoded in the makefile to be <code>ans-${username}</code>. And below are what the makefile will compile when we are running <code>make create.tgw</code> and <code>make delete.tgw</code> for this scenario. 
 
 ```bash
 create.tgw:
@@ -156,7 +156,7 @@ Recall that we have the following code snippet in the <code>Make</code> section 
 create.tgw:
 	$(ANSIBLE) -v create-cluster.yaml -i ./environment/transit-gateway-egress/hosts
 ```
-In this case, we will be running Ansible command by executing a playbook called <code>create-cluster.yaml</code> and specifying <code>./environment/transit-gateway-egress/hosts</code> as the inventory file. 
+In this case, we will be running Ansible command by executing a playbook called <code>create-cluster.yaml</code> and specifying <code>./environment/transit-gateway-egress/hosts</code> as the inventory file. And the variables in this playbook override the default variables we discussed previously. 
 
 Let's take a quick look at the <code>create-cluster.yaml</code> playbook which can be found in the repository's root folder:
 
