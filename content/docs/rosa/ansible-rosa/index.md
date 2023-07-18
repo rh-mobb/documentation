@@ -154,7 +154,7 @@ Here we see that we have Ansible commands that trigger the deployment. So next, 
 ### Ansible
 [Ansible](https://docs.ansible.com/) is an open-source automation tool that simplifies system management and configuration. It uses a declarative approach, allowing users to define desired states using YAML-based [Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html). With an agentless architecture and a vast [library of modules](https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html), Ansible enables automation of tasks such as configuration management, package installation, and user management. 
 
-Recall that we have the following code snippet in the <code>Make</code> section that will be run for <code>make create.tgw</code> command:
+Recall that we have the following code snippet in the <code>Makefile</code> section that will be run for <code>make create.tgw</code> command:
 
 ```bash
 create.tgw:
