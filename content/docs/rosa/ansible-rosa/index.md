@@ -2,7 +2,7 @@
 Draft v0.3
 
 ## Background
-This guide shows an example of how to deploy Red Hat OpenShift Services on AWS (ROSA) cluster with [PrivateLink](https://aws.amazon.com/privatelink/) with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) enabled using [Ansible](https://docs.ansible.com/) playbook from our [MOBB GitHub repo](https://github.com/rh-mobb/ansible-rosa) and [Makefiles](https://www.gnu.org/software/make/manual/make.html#Introduction) to compile them. Note that this is an unofficial Red Hat guide and your implementation may vary. 
+This guide shows an example of how to deploy Red Hat OpenShift Services on AWS (ROSA) cluster with [PrivateLink](https://aws.amazon.com/privatelink/) with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) enabled using [Ansible](https://docs.ansible.com/) playbook from our [MOBB GitHub repository](https://github.com/rh-mobb/ansible-rosa) and [makefiles](https://www.gnu.org/software/make/manual/make.html#Introduction) to compile them. Note that this is an unofficial Red Hat guide and your implementation may vary. 
 
 This guide is broken down into two main sections namely the architectural landscape of this deployment scenario including the AWS services and open source products and services that we will be using, and the implementation steps which includes the prerequisites needed to run the deployment itself. 
 
@@ -81,7 +81,7 @@ rosa_tgw_cidr: "10.0.0.0/8"
 rosa_egress_vpc_cidr: "10.10.0.0/24"
 ```
 
-As mentioned previously, we are going to override the above default variables with ones that are relevant our scenario in this case, i.e. ROSA with PrivateLink and Transit Gateway, and thus, to do so, we will be running the variables specified from <code>./environment/transit-gateway-egress/group_vars/all.yaml</code> instead:
+As mentioned previously, we are going to override the above default variables with ones that are relevant our scenario in this case, i.e. ROSA with PrivateLink and Transit Gateway, and to do so, we will be running the variables specified from <code>./environment/transit-gateway-egress/group_vars/all.yaml</code> instead:
 
 ```bash
 rosa_private_link: true
@@ -111,11 +111,11 @@ jumphost_instance_type: t2.micro
 proxy_enabled: true
 ```
 
-Next, we will talk about what <code>make</code> is and how it helps compiling the code for our deployment in this scenario.
+Next, we will talk about what <code>makefile</code> is and how it helps compiling the code for our deployment in this scenario.
 
 
 ### Makefile
-Make is a build automation tool to manage the compilation and execution of programs. It reads a file called a "makefile" that contains a set of rules and dependencies, allowing developers to define how source code files should be compiled, linked, and executed.
+[Make](https://www.gnu.org/software/make/manual/make.html#Overview) is a build automation tool to manage the compilation and execution of programs. It reads a file called a [makefile](https://www.gnu.org/software/make/manual/make.html#Introduction) that contains a set of rules and dependencies, allowing developers to define how source code files should be compiled, linked, and executed.
 
 In this scenario, the makefile can be found in the root directory of the GitHub repo, and here below is the snippet where the cluster name is set up along with the virtual environment that makefile will compile when we are running <code>make virtualenv</code>: 
 
@@ -144,11 +144,11 @@ delete.tgw:
 	$(ANSIBLE) -v delete-cluster.yaml -i ./environment/transit-gateway-egress/hosts
 ```
 
-As you can see above, we have Ansible commands that trigger the deployment. So next, let's discuss about what Ansible is and how it helps building the cluster in this scenario.
+Here we see that we have Ansible commands that trigger the deployment. So next, let's discuss about what Ansible is and how it helps building the cluster in this scenario.
 
 
 ### Ansible
-Ansible is an open-source automation tool that simplifies system management and configuration. It uses a declarative approach, allowing users to define desired states using YAML-based [Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html). With an agentless architecture and a vast [library of modules](https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html), Ansible enables automation of tasks such as configuration management, package installation, and user management. 
+[Ansible]((https://docs.ansible.com/)) is an open-source automation tool that simplifies system management and configuration. It uses a declarative approach, allowing users to define desired states using YAML-based [Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html). With an agentless architecture and a vast [library of modules](https://docs.ansible.com/ansible/2.9/modules/modules_by_category.html), Ansible enables automation of tasks such as configuration management, package installation, and user management. 
 
 Recall that we have the following code snippet in the <code>Make</code> section that will be run for <code>make create.tgw</code> command:
 
