@@ -7,10 +7,14 @@ This is a quick checklist of prerequisites needed to spin up a ROSA cluster. Not
 ## ROSA Prerequisites with STS
 Before proceeding futher, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs).
 
-* Ensure you have the following info from your AWS account:
-** AWS IAM User
-** AWS Access Key ID
-** AWS Secret Access Key
+- AWS account with following info:
+    - AWS IAM User
+    - AWS Access Key ID
+    - AWS Secret Access Key
+- Red Hat account
+    Create one [here](https://console.redhat.com/) if you do not have it already.
+
+
 
 
 
