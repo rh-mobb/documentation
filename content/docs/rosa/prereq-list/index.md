@@ -1,8 +1,8 @@
-# ROSA Classic Prerequisites Checklist
+# ROSA Classic with STS Prerequisites Checklist
 rev 0.1
 
 ## Background
-This is a quick checklist of prerequisites needed to spin up a ROSA cluster. Note that this is a high level checklist and your implementation may vary. 
+This is a quick checklist of prerequisites needed to spin up a classic [Red Hat OpenShift Service on AWS (ROSA)](https://developers.redhat.com/products/red-hat-openshift-service-on-aws/overview) cluster with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html). Note that this is a high level checklist and your implementation may vary. 
 
 ## ROSA Prerequisites with STS
 Before proceeding futher, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs).
@@ -20,6 +20,9 @@ Before proceeding futher, please refer to the official documentation [here](http
         - Enter the AWS Secret Access Key and press enter.
         - Enter the default region you want to deploy into.
         - Enter the output format you want (“table” or “json”). 
+        - Verify the output by running `aws sts get-caller-identity`.
+        - Ensure that the service role for ELB already exists by running `aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing"'
+            - If it does not exist, run `aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"`
 - Red Hat account:
     - Create one [here](https://console.redhat.com/) if you do not have it already.
 - ROSA CLI (`rosa`): 
