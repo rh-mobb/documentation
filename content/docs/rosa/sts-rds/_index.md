@@ -2,8 +2,6 @@
 date: '2023-11-07'
 title: Connect to RDS database with STS from ROSA
 tags: ["AWS", "ROSA", "RDS", "STS"]
-aliases:
-- /docs/rosa/sts-rds/
 authors:
   - Florian Jacquin
 ---
