@@ -40,6 +40,8 @@ skipMetadata: true
 * [Configure ROSA for Nvidia GPU Workloads](/docs/rosa/gpu)
 * [Connect to RDS from ROSA with STS](/docs/rosa/sts-rds)
 
+
+
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](/docs/aro/private-cluster)
