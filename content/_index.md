@@ -41,6 +41,8 @@ skipMetadata: true
 * [Configure ROSA for Nvidia GPU Workloads](/docs/rosa/gpu)
 * [Securely Exposing Applications with PrivateLink ROSA Cluster and OpenShift Service Mesh](/docs/rosa/alb-nlb-ossm-e2e)
 
+
+
 ### ARO
 
 * [Deploying private ARO Cluster with Jump Host access](/docs/aro/private-cluster)
