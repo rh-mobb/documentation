@@ -13,6 +13,12 @@ authors:
 ## Background
 This is a quick checklist of prerequisites needed to spin up a classic [Red Hat OpenShift Service on AWS (ROSA)](https://developers.redhat.com/products/red-hat-openshift-service-on-aws/overview) cluster with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html). Note that this is a high level checklist and your implementation may vary. 
 
+Before running the installation process, make sure that you deploy this from a machine that has access to:
+- The API services for the cloud to which you provision.
+- The hosts on the network that you provision.
+- The internet to obtain installation media.
+
+
 ## Generic Prerequisites
 Before proceeding futher, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs).
 
@@ -65,7 +71,18 @@ Next, let's talk about the prerequisites needed from networking standpoint.
 - Firewall
     - Configure your firewall to allow access to the domains and ports listed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_prerequisites)
 - Custom DNS
-- 
+    - If you want to use custom DNS, then ROSA installer must be able to use VPC DNS with default DHCP options so it can resolve hosts locally. 
+    To do so, run `aws ec2 describe-dhcp-options` and see if the VPC is using VPC Resolver. Otherwise, the upstream DNS will need to forward the cluster scope to this VPC so the cluster can resolve internal IPs/services.
+- VPC and route tables
+    - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
+        - Make sure we can egress either via NAT GW in public subnet or via TGW.
+        - And make sure whatever UDR you would like to follow is set up.
+    - Ensure that your VPCs do not have overlapping CIDRs.
+    - EnableDNSSupport and enableDnsHostnames on the VPC.
+- Route 53
+    - If you prefer to use your own Route 53 hosted private zone, you must associate the existing hosted zone with your VPC prior to installing a cluster. 
+        - You can define your hosted zone using the `platform.aws.hostedZone` field in the `install-config.yaml` file.
+
 
 
 ## SCP Prerequisites
