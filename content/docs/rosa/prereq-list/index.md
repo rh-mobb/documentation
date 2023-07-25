@@ -13,15 +13,8 @@ authors:
 ## Background
 This is a quick checklist of prerequisites needed to spin up a classic [Red Hat OpenShift Service on AWS (ROSA)](https://developers.redhat.com/products/red-hat-openshift-service-on-aws/overview) cluster with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html). Note that this is a high level checklist and your implementation may vary. 
 
-Before running the installation process, make sure that you deploy this from a machine that has access to:
-- The API services for the cloud to which you provision.
-- The hosts on the network that you provision.
-- The internet to obtain installation media.
-
-In addition, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs) for more details of the prerequisites in general.
-
-## Accounts and CLIs Prerequisites
-First, let's discuss about the accounts and CLIs you would need to install to deploy the cluster.
+## Generic Prerequisites
+Before proceeding futher, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs).
 
 - AWS account:
     - You would need the following details:
@@ -61,6 +54,21 @@ Once you have the above prerequisites installed and enabled, let's proceed to th
 
 
 ## SCP Prerequisites
+In this section, we will discuss about the minimum set of effective permissions for [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html). 
+
+Ensure that your organization's SCP does not restrict any of these [required permissions](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#rosa-minimum-scp_prerequisites).
+
+
+## Networking Prerequisites
+Next, let's talk about the prerequisites needed from networking standpoint.
+
+- Firewall
+    - Configure your firewall to allow access to the domains and ports listed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_prerequisites)
+- Custom DNS
+- 
+
+
+## SCP Prerequisites
 Ensure that your organization's [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) has the minimum set of effective permissions as detailed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#rosa-minimum-scp_prerequisites).
 
 - Also ensure that your organization's SCP are not more restrictive than the ones listed in the links above. 
@@ -96,7 +104,6 @@ If you would like to deploy a PrivateLink cluster, then be sure to deploy the cl
 - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
     - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
     - And ensure whatever UDR you would like to follow is set up.
-
 
 ## ROSA Prerequisites without STS 
 Note that we do not discuss about the prerequisites for a classic ROSA cluster without STS in this article. And thus, if that is your preferred scenario, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html).
