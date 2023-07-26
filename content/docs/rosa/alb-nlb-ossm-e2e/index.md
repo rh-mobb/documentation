@@ -1,5 +1,5 @@
 ---
-date: '2024-07-24'
+date: '2023-07-24'
 title: Securely Exposing Applications with PrivateLink ROSA Cluster and OpenShift Service Mesh
 tags: ["ROSA", AWS, "OpenShift Service Mesh,Private Link"]
 authors:
@@ -15,15 +15,13 @@ This repository demonstrates how to utilize a privatelink ROSA (Red Hat OpenShif
 
 - A privatelink ROSA cluster
 - [ROSA CLI](https://github.com/openshift/rosa) - Download the latest release
-- oc CLI
-  ```bash
-  rosa download openshift-client
-  ```
+- oc CLI `rosa download openshift-client`
 - [jq](https://jqlang.github.io/jq/download/)
 
 Clone the repository
+
 ```bash
-Git clone https://github.com/houshym/rosa-ossm-e2e-encryption
+git clone https://github.com/houshym/rosa-ossm-e2e-encryption
 ```
  ### Deploy OpenShift Service Mesh(OSSM)
 
@@ -35,7 +33,6 @@ Install service mesh operators by applying the following snippet on the cluster 
 
 ```bash
 cat << EOF | oc apply -f -
-
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -90,22 +87,24 @@ spec:
 EOF
 ```
 
-Check the operator's status in each cluster with the following commands or run this [script](./ossm-operator/check-ossm.sh). if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
-
-Install service mesh operators by applying the following snippet on the cluster or use this [script]Check the operator's status in each cluster with the following commands or run this [script](./ossm-operator/check-ossm.sh). if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
+Install service mesh operators by applying the following snippet on the cluster or use this [script](./ossm-operator/deploy-ossm.sh) and Check the operator's status in each cluster with the following commands or run this [script](./ossm-operator/check-ossm.sh). if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
   
 ```bash
 oc get sub elasticsearch-operator -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
 ```
+
 ```bash
 oc get sub jaeger-product  -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
 ```
+
 ```bash
 oc get sub kiali-ossm  -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
 ```
+
 ```bash
 oc get sub servicemeshoperator -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
 ```
+
 ### Create a service mesh instance
    
 Create a service mesh instance. We assign a static IP addresses(10.201.1.199, 10.201.0.199,10.201.2.199) to the istio-ingress NLB
@@ -212,6 +211,7 @@ EOF
  ```
 
 Create AWS Load Balancer Controller
+
 ```bash
 cat << EOF | oc apply -f -
 apiVersion: networking.olm.openshift.io/v1
@@ -225,9 +225,11 @@ EOF
 ```
 
 ### Deploy cert-manager 
+
 We use cert-manager to issue a certificate for bookinfo application. The following step creates a self-signed certificate. if you have a certificate you can skip these steps
 
 1. Create a project (namespace) in the ROSA cluster.
+
 ```bash
 oc new-project cert-manager --display-name="Certificate Manager" --description="Project to manage certificate LCM"
 ```
@@ -235,7 +237,6 @@ oc new-project cert-manager --display-name="Certificate Manager" --description="
 2. Install the cert-manager Operator
 
 ```bash
-
 cat <<EOF | oc create -f -
 # apiVersion: operators.coreos.com/v1
 # kind: OperatorGroup
@@ -272,7 +273,9 @@ spec:
   selfSigned: {}
 EOF
 ```
+
 4. Create a self-signed certificate
+
 ```bash
 cat <<EOF | oc create -f -
 apiVersion: cert-manager.io/v1
@@ -294,6 +297,7 @@ spec:
 EOF
 ```
 ### Deploy application
+
 we use bookinfo application to show an end to end encryption
 
 ```bash
@@ -305,7 +309,9 @@ oc apply -f ./app/gateway.yaml
 ```
 
 ### Check SSL termination
+
 #### Check termination at ingress/node 
+
  get the nodes' IP address and istio-ingress service ports
 
  **Note:** If you don't get a response, check the security group and be sure that port 3000-32767 is allowed 
@@ -318,12 +324,12 @@ echo "Ingress service NodePort $INGRESS_NODE_PORT"
 ```
 
 Check application endpoint
+
 ```bash
 curl -v -k --resolve securedbookinfo.com:$INGRESS_NODE_PORT:$WORKER_IP_ADDRESS  https://securedbookinfo.com:$INGRESS_NODE_PORT/productpage 
 ```
 
 #### Check TLS termination at the NLB layer
-
 
  ```bash
 export NLB_URL=$(oc get svc -n ossm istio-ingressgateway -ojsonpath='{.status.loadBalancer.ingress[0].hostname}')
@@ -331,17 +337,18 @@ echo "NLB's FQDN:  $NLB_URL"
 export NLB_IP=$(dig +short $NLB_URL | head -1)
 echo "NLP IP address $NLB_IP"
 ```
+
 Check application  endpoint
+
 ```bash
  curl -v -k --resolve securedbookinfo.com:443:$NLB_IP https://securedbookinfo.com:443/productpage
  ```
 
-
 you can check HTTP to HTTPS redirection by running the following command and you can see HTTP/1.1 301 Moved Permanently
+
 ```bash
 curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.com/productpage
 ``` 
-
 
 ### Create an ALB in the public subnet 
  We need to create an ALB in the ingress/egress VPC. To do this, we first need to create a Target Group (TG) within this VPC and then associate this TG with the ALB's targets. To create the TG, we require the IP addresses of the NLB. 
@@ -386,30 +393,34 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
     aws elbv2 register-targets --target-group-arn $TG_ARN --targets Id=$NLB_PRV_IP_1,Port=443,AvailabilityZone=all Id=$NLB_PRV_IP_2,Port=443,AvailabilityZone=all Id=$NLB_PRV_IP_3,Port=443,AvailabilityZone=all
     ```
 
-
 1. Create an ALB in the ingress/egress VPC and set the TG.
 
    You need to find your ingress/egress VPC ID, public subnet ID, and certificate ARN to create the ALB.
 
    4.1. Create a security group for ALB
+
    ```bash
    ALB_SG_ID=$(aws ec2 create-security-group --group-name bookinfo \
        --vpc-id $ING_EGRESS_VPC_ID \
        --description "allow traffic from the internet" \
        --query 'GroupId' \
        --output text)
-    ```
+   ```
+
     4.2. Allow traffic from the internet
-   ```bash 
-   aws ec2 authorize-security-group-ingress \
+
+    ```bash 
+    aws ec2 authorize-security-group-ingress \
        --group-id $ALB_SG_ID \
        --protocol tcp \
        --port 443 \
-       --cidr 0.0.0.0/0
-   ```
-    4.3 Create ALB 
-     ```bash
-      ALB_ARN=$(aws elbv2 create-load-balancer \
+        --cidr 0.0.0.0/0
+    ```
+
+    4.3 Create ALB
+ 
+    ```bash
+    ALB_ARN=$(aws elbv2 create-load-balancer \
         --name bookinfo-alb \
         --subnets $ING_EGRESS_PUB_SUB_1 $ING_EGRESS_PUB_SUB_2 \
         --security-groups $ALB_SG_ID \
@@ -419,6 +430,7 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
         --output text)
      ```
     4.4 Create Listener
+
     ```bash
     aws elbv2 create-listener \
      --load-balancer-arn $ALB_ARN \
@@ -426,15 +438,15 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
      --port 443 \
      --certificates CertificateArn=$BOOKINFO_CERT_ARN \
      --default-actions Type=forward,TargetGroupArn=$TG_ARN
-    ```
-   
+    ```  
 ### Check application endpoint
+
 Fetch ALB's URL and generate traffic  
+
 ```bash
 ALB_DNS=$(aws elbv2 describe-load-balancers --load-balancer-arns $ALB_ARN --query 'LoadBalancers[0].DNSName' --output text)
 while true; do curl -k  https://$ALB_DNS/productpage; sleep 1; done
 ```
-
 open Kiali
 
 ![Kiali dashboard](./images/bookinfo_kiali.png)
