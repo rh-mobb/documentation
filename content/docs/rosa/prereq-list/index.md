@@ -53,7 +53,7 @@ Once you have the above prerequisites installed and enabled, let's proceed to th
 ## SCP Prerequisites
 Ensure that your organization's [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) has the minimum set of effective permissions as detailed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#rosa-minimum-scp_prerequisites).
 
-- Also ensure that your organization's SCP are not more restrictive than the above permissions. 
+- Also ensure that your organization's SCP are not more restrictive than the ones listed in the links above. 
 
 
 ## Networking Prerequisites
@@ -82,8 +82,9 @@ Next, let's talk about the prerequisites needed from networking standpoint.
             - You can define your hosted zone using the `platform.aws.hostedZone` field in the `install-config.yaml` file.
     - Ensure that your VPCs do not have overlapping CIDRs.
     - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
-        - Make sure we can egress either via NAT gateway in public subnet or via transit gateway.
-        - And make sure whatever UDR you would like to follow is set up.
+        - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
+        - And ensure whatever UDR you would like to follow is set up.
+    
     
 
 ## ROSA Prerequisites without STS 
