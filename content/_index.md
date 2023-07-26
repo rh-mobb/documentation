@@ -38,7 +38,8 @@ skipMetadata: true
 * [External DNS for ROSA Custom Domain](/docs/rosa/external-dns)
 * [Security Reference Architecture for ROSA](/docs/rosa/security-ra)
 * [Configure ROSA for Nvidia GPU Workloads](/docs/rosa/gpu)
-* [Securely Exposing Applications with PrivateLink ROSA Cluster and OpenShift Service Mesh](/docs/rosa/alb-nlb-ossm-e2e)
+* [Securely Exposing Applications with ROSA privatelink Cluster and OpenShift Service Mesh](/docs/rosa/alb-nlb-ossm-e2e)
+* [Exposing an HTTPS application with ROSA Privatelink cluster and an NLB with static IP address](docs/rosa/alb-tgw-nlb-static-ip-e2e)
 
 ### ARO
 
