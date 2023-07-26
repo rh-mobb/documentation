@@ -18,9 +18,10 @@ Before running the installation process, make sure that you deploy this from a m
 - The hosts on the network that you provision.
 - The internet to obtain installation media.
 
+In addition, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs) for more details of the prerequisites in general.
 
-## Generic Prerequisites
-Before proceeding futher, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs).
+## Accounts and CLIs Prerequisites
+First, let's discuss about the accounts and CLIs you would need to install to deploy the cluster.
 
 - AWS account:
     - You would need the following details:
@@ -74,6 +75,7 @@ Next, let's talk about the prerequisites needed from networking standpoint.
     - If you want to use custom DNS, then ROSA installer must be able to use VPC DNS with default DHCP options so it can resolve hosts locally. 
         - To do so, run `aws ec2 describe-dhcp-options` and see if the VPC is using VPC Resolver.
         - Otherwise, the upstream DNS will need to forward the cluster scope to this VPC so the cluster can resolve internal IPs/services.
+<<<<<<< HEAD
 - BYO VPC
     - Please refer to this official doc [here](https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-vpc.html) for more details on deploying cluster in the existing VPC. 
     - Create a public and private subnet for each AZ that your cluster uses.
@@ -113,6 +115,8 @@ Next, let's talk about the prerequisites needed from networking standpoint.
     - If you want to use custom DNS, then ROSA installer must be able to use VPC DNS with default DHCP options so it can resolve hosts locally. 
         - To do so, run `aws ec2 describe-dhcp-options` and see if the VPC is using VPC Resolver.
         - Otherwise, the upstream DNS will need to forward the cluster scope to this VPC so the cluster can resolve internal IPs/services.
+=======
+>>>>>>> 5e2aaccb (adding privatelink section)
 
 ## PrivateLink Prerequisites
 If you would like to deploy a PrivateLink cluster, then be sure to deploy the cluster in the pre-existing VPC (BYO VPC) and please refer [here](https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-vpc.html) for more details and below in high level:
@@ -134,13 +138,17 @@ If you would like to deploy a PrivateLink cluster, then be sure to deploy the cl
 - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
     - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
     - And ensure whatever UDR you would like to follow is set up.
+<<<<<<< HEAD
 =======
     - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
         - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
         - And ensure whatever UDR you would like to follow is set up.
     
+=======
+>>>>>>> 5e2aaccb (adding privatelink section)
     
 >>>>>>> 90edb450 (fixing typos)
 
 ## ROSA Prerequisites without STS 
 Note that we do not discuss about the prerequisites for a classic ROSA cluster without STS in this article. And thus, if that is your preferred scenario, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html).
+
