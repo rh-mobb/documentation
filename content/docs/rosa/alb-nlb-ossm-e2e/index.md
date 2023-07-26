@@ -117,7 +117,7 @@ oc apply -f ./ossm-operator/smcp.yaml
 
 ### Deploy AWS Load Balancer Operator (ALBO)
 
-Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or use the following snippet or run the  [script](./alb-operator/deploy-awlbo.sh)
+Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or use the following snippet or run the  [script](./alb-operator/deploy-aws-lbo.sh)
 
 ```bash
 #!/bin/sh
@@ -200,7 +200,7 @@ spec:
 EOF
 ```
 
- **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the [deploy-awlbo.sh](./alb-operator/deploy-awlbo.sh)
+ **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the [deploy-awlbo.sh](./alb-operator/deploy-aws-lbo.sh)
 
 ```bash
  oc -n aws-load-balancer-operator create configmap trusted-ca
