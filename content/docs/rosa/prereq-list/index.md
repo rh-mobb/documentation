@@ -62,7 +62,7 @@ Once you have the above prerequisites installed and enabled, let's proceed to th
 ## SCP Prerequisites
 Ensure that your organization's [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) has the minimum set of effective permissions as detailed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#rosa-minimum-scp_prerequisites).
 
-- Also ensure that your organization's SCP are not more restrictive than the above permissions. 
+- Also ensure that your organization's SCP are not more restrictive than the ones listed in the links above. 
 
 
 ## Networking Prerequisites
@@ -90,6 +90,7 @@ Next, let's talk about the prerequisites needed from networking standpoint.
         - If you prefer to use your own Route 53 hosted private zone, you must associate the existing hosted zone with your VPC prior to installing a cluster. 
             - You can define your hosted zone using the `platform.aws.hostedZone` field in the `install-config.yaml` file.
     - Ensure that your VPCs do not have overlapping CIDRs.
+<<<<<<< HEAD
     - EnableDNSSupport and enableDnsHostnames on the VPC.
 - Route 53
     - If you prefer to use your own Route 53 hosted private zone, you must associate the existing hosted zone with your VPC prior to installing a cluster. 
@@ -133,6 +134,13 @@ If you would like to deploy a PrivateLink cluster, then be sure to deploy the cl
 - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
     - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
     - And ensure whatever UDR you would like to follow is set up.
+=======
+    - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
+        - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
+        - And ensure whatever UDR you would like to follow is set up.
+    
+    
+>>>>>>> 90edb450 (fixing typos)
 
 ## ROSA Prerequisites without STS 
 Note that we do not discuss about the prerequisites for a classic ROSA cluster without STS in this article. And thus, if that is your preferred scenario, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html).
