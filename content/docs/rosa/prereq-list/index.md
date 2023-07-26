@@ -9,9 +9,10 @@ Before running the installation process, make sure that you deploy this from a m
 - The hosts on the network that you provision.
 - The internet to obtain installation media.
 
+In addition, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs) for more details of the prerequisites in general.
 
-## Generic Prerequisites
-Before proceeding futher, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-prereqs_rosa-sts-aws-prereqs).
+## Accounts and CLIs Prerequisites
+First, let's discuss about the accounts and CLIs you would need to install to deploy the cluster.
 
 - AWS account:
     - You would need the following details:
@@ -65,27 +66,29 @@ Next, let's talk about the prerequisites needed from networking standpoint.
     - If you want to use custom DNS, then ROSA installer must be able to use VPC DNS with default DHCP options so it can resolve hosts locally. 
         - To do so, run `aws ec2 describe-dhcp-options` and see if the VPC is using VPC Resolver.
         - Otherwise, the upstream DNS will need to forward the cluster scope to this VPC so the cluster can resolve internal IPs/services.
-- BYO VPC
-    - Please refer to this official doc [here](https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-vpc.html) for more details on deploying cluster in the existing VPC. 
-    - Create a public and private subnet for each AZ that your cluster uses.
-        - Alternatively, implement transit gateway for internet/egress with appropriate routes.
-    - The VPC's CIDR block must contain the `Networking.MachineCIDR` range, which is the IP address for cluster machines. 
-        - The subnet CIDR blocks must belong to the machine CIDR that you specify.
-    - The VPC must have a public internet gateway attached to it and for each AZ:
-        - The public subnet requires a route to the internet gateway.
-        - The public subnet requires a NAT gateway with an EIP address.
-        - The private subnet requires a route to the NAT gateway in public subnet.
-    - The VPC must not use the `kubernetes.io/cluster/.*: owned`, `Name`, and `openshift.io/cluster` tags.
-    - Set both `enableDnsHostnames` and `enableDnsSupport` to `true`.
-        - That way, the cluster can use the Route 53 zones that are attached to the VPC to resolve cluster’s internal DNS records.
-        - If you prefer to use your own Route 53 hosted private zone, you must associate the existing hosted zone with your VPC prior to installing a cluster. 
-            - You can define your hosted zone using the `platform.aws.hostedZone` field in the `install-config.yaml` file.
-    - Ensure that your VPCs do not have overlapping CIDRs.
-    - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
-        - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
-        - And ensure whatever UDR you would like to follow is set up.
-    
+
+## PrivateLink Prerequisites
+If you would like to deploy a PrivateLink cluster, then be sure to deploy the cluster in the pre-existing VPC (BYO VPC) and please refer [here](https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-vpc.html) for more details and below in high level:
+
+- Create a public and private subnet for each AZ that your cluster uses.
+    - Alternatively, implement transit gateway for internet/egress with appropriate routes.
+- The VPC's CIDR block must contain the `Networking.MachineCIDR` range, which is the IP address for cluster machines. 
+    - The subnet CIDR blocks must belong to the machine CIDR that you specify.
+- The VPC must have a public internet gateway attached to it and for each AZ:
+    - The public subnet requires a route to the internet gateway.
+    - The public subnet requires a NAT gateway with an EIP address.
+    - The private subnet requires a route to the NAT gateway in public subnet.
+- The VPC must not use the `kubernetes.io/cluster/.*: owned`, `Name`, and `openshift.io/cluster` tags.
+- Set both `enableDnsHostnames` and `enableDnsSupport` to `true`.
+    - That way, the cluster can use the Route 53 zones that are attached to the VPC to resolve cluster’s internal DNS records.
+    - If you prefer to use your own Route 53 hosted private zone, you must associate the existing hosted zone with your VPC prior to installing a cluster. 
+        - You can define your hosted zone using the `platform.aws.hostedZone` field in the `install-config.yaml` file.
+- Ensure that your VPCs do not have overlapping CIDRs.
+- Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
+    - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
+    - And ensure whatever UDR you would like to follow is set up.
     
 
 ## ROSA Prerequisites without STS 
 Note that we do not discuss about the prerequisites for a classic ROSA cluster without STS in this article. And thus, if that is your preferred scenario, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html).
+
