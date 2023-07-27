@@ -521,6 +521,6 @@ Fetch ALB's URL and generate traffic
 ALB_DNS=$(aws elbv2 describe-load-balancers --load-balancer-arns $ALB_ARN --query 'LoadBalancers[0].DNSName' --output text)
 while true; do curl -k  https://$ALB_DNS/productpage; sleep 1; done
 ```
-open Kiali
+echo "open browser and hit https://$ALB_DNS/productpage" or Open Kiali https://$(oc get route kiali -n ossm -o jsonpath='{$.status.ingress[0].routerCanonicalHostname}')
 
 ![Kiali dashboard](./images/bookinfo_kiali.png)
