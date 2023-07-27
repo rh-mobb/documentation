@@ -1,6 +1,6 @@
 date: '2023-07-26'
 title: Securely Exposing apps to the Internet with ALB, TGW, and NLB with fixed IP
-tags: ["ROSA", "AWS", ,Private Link"]
+tags: ["ROSA", "AWS", "Private Link"]
 authors:
   - Mohsen Houshamnd
   - Paul Czarkowski
@@ -154,7 +154,7 @@ oc apply -f echo-server/echo-server.yaml
 
 #### Check termination at NodePort 
 
- get the nodes' IP address and istio-ingress service ports
+get the nodes' IP address and istio-ingress service ports
 
  **Note:** If you don't get a response, check the security group and be sure that port 3000-32767 is allowed 
 
@@ -185,25 +185,21 @@ Check application  endpoint
  curl -v -k --resolve secured-echo-server.com:443:$NLB_IP https://secured-echo-server.com:443/productpage
 ```
 
-
-
 ### Create an ALB in the public subnet 
 
 We need to create an ALB in the ingress/egress VPC. To do this, we first need to create a Target Group (TG) within this VPC and then associate this TG with the ALB's targets. To create the TG, we require the IP addresses of the NLB. 
 
 1. Define a TG 
-    
+ 
     ```bash
-
-   export ING_EGRESS_VPC_ID=vpc-0344775b9177ec7d5
-   export ING_EGRESS_PUB_SUB_1=subnet-0123d00f20e9d4c4b
-   export ING_EGRESS_PUB_SUB_2=subnet-06130b9f97821d8d8
-   export ECHO_SERVER_CERT_ARN=arn:aws:acm:us-east-2:660250927410:certificate/ddae6fbd-a540-4619-939f-9e20ff9b765e
-    
+    export ING_EGRESS_VPC_ID=vpc-0344775b9177ec7d5
+    export ING_EGRESS_PUB_SUB_1=subnet-0123d00f20e9d4c4b
+    export ING_EGRESS_PUB_SUB_2=subnet-06130b9f97821d8d8
+    export ECHO_SERVER_CERT_ARN=arn:aws:acm:us-east-2:660250927410:certificate/ddae6fbd-a540-4619-939f-9e20ff9b765e 
     export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text) 
     ```
 
-2. Fetch NLB IP addresses 
+1. Fetch NLB IP addresses 
 
     ```bash
     export NLB_FQDN=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
@@ -225,36 +221,38 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     echo "Private IP 3: $NLB_PRV_IP_3"
     ```
 
-3. Register NLB IP addresses in the Target Group
+2. Register NLB IP addresses in the Target Group
 
     ```bash
     aws elbv2 register-targets --target-group-arn $TG_ARN --targets Id=$NLB_PRV_IP_1,Port=443,AvailabilityZone=all Id=$NLB_PRV_IP_2,Port=443,AvailabilityZone=all Id=$NLB_PRV_IP_3,Port=443,AvailabilityZone=all
     ```
 
-1. Create an ALB in the ingress/egress VPC and set the TG.
+3. Create an ALB in the ingress/egress VPC and set the TG.
 
    You need to find your ingress/egress VPC ID, public subnet ID, and certificate ARN to create the ALB.
 
    4.1. Create a security group for ALB
 
-   ```bash
-   ALB_SG_ID=$(aws ec2 create-security-group --group-name secured-echo-server \
-       --vpc-id $ING_EGRESS_VPC_ID \
-       --description "allow traffic from the internet" \
-       --query 'GroupId' \
-       --output text)
-   ```
+    ```bash
+    ALB_SG_ID=$(aws ec2 create-security-group --group-name secured-echo-server \
+        --vpc-id $ING_EGRESS_VPC_ID \
+        --description "allow traffic from the internet" \
+        --query 'GroupId' \
+        --output text)
+    ```
    4.2. Allow traffic from the internet
-   ```bash 
-   aws ec2 authorize-security-group-ingress \
+
+    ```bash 
+    aws ec2 authorize-security-group-ingress \
        --group-id $ALB_SG_ID \
        --protocol tcp \
        --port 443 \
        --cidr 0.0.0.0/0
-   ```
+    ```
    4.3 Create ALB 
-   ```bash
-   ALB_ARN=$(aws elbv2 create-load-balancer \
+   
+    ```bash
+    ALB_ARN=$(aws elbv2 create-load-balancer \
         --name secured-echo-alb \
         --subnets $ING_EGRESS_PUB_SUB_1 $ING_EGRESS_PUB_SUB_2 \
         --security-groups $ALB_SG_ID \
@@ -262,7 +260,8 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
         --type application \
         --query 'LoadBalancers[0].LoadBalancerArn' \
         --output text)
-   ```
+    ```
+   
    4.4 Create Listener
 
    ```bash
