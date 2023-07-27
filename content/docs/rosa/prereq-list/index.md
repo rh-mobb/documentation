@@ -8,8 +8,6 @@ authors:
   - Diana Sari
 ---
 
-# Prerequisites Checklist to Deploy ROSA Cluster with STS 
-
 ## Background
 This is a quick checklist of prerequisites needed to spin up a classic [Red Hat OpenShift Service on AWS (ROSA)](https://developers.redhat.com/products/red-hat-openshift-service-on-aws/overview) cluster with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html). Note that this is a high level checklist and your implementation may vary. 
 
