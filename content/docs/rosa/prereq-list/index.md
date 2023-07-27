@@ -67,6 +67,7 @@ Ensure that your organization's [service control policy (SCP)](https://docs.aws.
 ## Networking Prerequisites
 Next, let's talk about the prerequisites needed from networking standpoint.
 
+<<<<<<< HEAD
 - Firewall
     - Configure your firewall to allow access to the domains and ports listed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_prerequisites)
 - Custom DNS
@@ -115,6 +116,14 @@ Next, let's talk about the prerequisites needed from networking standpoint.
         - Otherwise, the upstream DNS will need to forward the cluster scope to this VPC so the cluster can resolve internal IPs/services.
 =======
 >>>>>>> 5e2aaccb (adding privatelink section)
+=======
+### Firewall
+  - Configure your firewall to allow access to the domains and ports listed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_prerequisites)
+### Custom DNS
+  - If you want to use custom DNS, then ROSA installer must be able to use VPC DNS with default DHCP options so it can resolve hosts locally. 
+      - To do so, run `aws ec2 describe-dhcp-options` and see if the VPC is using VPC Resolver.
+      - Otherwise, the upstream DNS will need to forward the cluster scope to this VPC so the cluster can resolve internal IPs/services.
+>>>>>>> 19bf7920 (fixing some minor md formatting in network pre reqs)
 
 ## PrivateLink Prerequisites
 If you would like to deploy a PrivateLink cluster, then be sure to deploy the cluster in the pre-existing VPC (BYO VPC) and please refer [here](https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-vpc.html) for more details and below in high level:
