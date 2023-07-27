@@ -73,6 +73,13 @@ done
 
 cat << EOF | oc apply -f -
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: aws-load-balancer-operator
+EOF
+
+cat << EOF | oc apply -f -
+apiVersion: v1
 kind: Secret
 metadata:
   name: aws-load-balancer-operator
@@ -84,12 +91,7 @@ stringData:
     web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
 EOF
 
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: aws-load-balancer-operator
-EOF
+
 
 cat << EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1
