@@ -248,6 +248,8 @@ the CSI plugin in the OADP DPA configuration.
            key: credentials
            name: cloud-credentials
          default: true
+         config:
+           region: ${REGION}
      configuration:
        velero:
          defaultPlugins:
@@ -280,6 +282,8 @@ the CSI plugin in the OADP DPA configuration.
            key: credentials
            name: cloud-credentials
          default: true
+         config:
+           region: ${REGION}
      configuration:
        velero:
          defaultPlugins:
