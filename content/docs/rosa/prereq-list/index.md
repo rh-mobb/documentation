@@ -49,8 +49,8 @@ First, let's discuss about the accounts and CLIs you would need to install to de
       - Alternatively, you can copy the full `rosa login --token=abc...` command and paste that in the terminal.
   - Verify your credentials by running `rosa whoami`.
   - Ensure you have sufficient quota by running `rosa verify quota`.
-      - Please refer [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#rosa-aws-policy-provisioned_prerequisites) for more details on AWS services provisioned for ROSA cluster. 
-      - Please refer [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-required-aws-service-quotas.html#rosa-required-aws-service-quotas) for more details on AWS services quota. 
+      - Please refer [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-policy-provisioned_rosa-sts-aws-prereqs) for more details on AWS services provisioned for ROSA cluster. 
+      - Please refer [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-required-aws-service-quotas.html) for more details on AWS services quota. 
 ### OpenShift CLI (`oc`):
   - Install from [here](https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html) or from the OpenShift console [here](https://console.redhat.com/openshift/downloads#tool-oc).
   - Verify that the OpenShift CLI has been installed correctly by running `rosa verify openshift-client`.
@@ -59,7 +59,7 @@ Once you have the above prerequisites installed and enabled, let's proceed to th
 
 
 ## SCP Prerequisites
-Ensure that your organization's [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) has the minimum set of effective permissions as detailed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#rosa-minimum-scp_prerequisites).
+Ensure that your organization's [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) has the minimum set of effective permissions as detailed [here](https://docs.aws.amazon.com/ROSA/latest/userguide/troubleshoot-rosa-enablement.html#error-aws-orgs-scp-denies-permissions).
 
 - Also ensure that your organization's SCP are not more restrictive than the ones listed in the links above. 
 
@@ -68,7 +68,7 @@ Ensure that your organization's [service control policy (SCP)](https://docs.aws.
 Next, let's talk about the prerequisites needed from networking standpoint.
 
 ### Firewall
-  - Configure your firewall to allow access to the domains and ports listed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_prerequisites)
+  - Configure your firewall to allow access to the domains and ports listed [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_rosa-sts-aws-prereqs)
 ### Custom DNS
   - If you want to use custom DNS, then ROSA installer must be able to use VPC DNS with default DHCP options so it can resolve hosts locally. 
       - To do so, run `aws ec2 describe-dhcp-options` and see if the VPC is using VPC Resolver.
