@@ -42,7 +42,6 @@ You must first register the Microsoft.NetApp provider and Create a NetApp accoun
 
 [Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-register)
 
-or az cli
 
 ```bash
 az provider register --namespace Microsoft.NetApp --wait
@@ -120,7 +119,7 @@ Download latest Trident package
 wget https://github.com/NetApp/trident/releases/download/v22.04.0/trident-installer-22.04.0.tar.gz
 ```
 
-Extract tar.gz into working director
+Extract tar.gz into working directory
 
 ```bash
 tar -xzvf trident-installer-22.04.0.tar.gz
@@ -135,6 +134,8 @@ cd trident-installer/helm
 Helm install
 
 ```bash
+oc new-project test-netapp
+
 helm install trident-operator trident-operator-22.04.0.tgz
 ```
 
@@ -153,7 +154,7 @@ NOTES:
 Thank you for installing trident-operator, which will deploy and manage NetApp's Trident CSI
 storage provisioner for Kubernetes.
 
-Your release is named 'trident-operator' and is installed into the 'openshift' namespace.
+Your release is named 'trident-operator' and is installed into the 'test-netapp' namespace.
 Please note that there must be only one instance of Trident (and trident-operator) in a Kubernetes cluster.
 
 To configure Trident to manage storage resources, you will need a copy of tridentctl, which is
@@ -178,6 +179,8 @@ cd ..
 +----------------+----------------+
 ```
 
+Note for mac users: take a look at the directory extras/macos/bin to find the proper tridentctl binary for MacOS 
+
 ### Install tridentctl
 
 I put all my cli's in /usr/local/bin
@@ -201,7 +204,11 @@ FYI - Sample files for review are in sample-input/backends-samples/azure-netapp-
 4. Replace subscriptionID with your azure SubscriptionID
 5. Ensure location matches your Azure Region
 
-Note: I have used nfsv3 for basic compatibility. You can remove that line and use NetApp files defaults.
+> Notes: 
+>* In case you don't have the Service Principal Secret, you can create a new secret within the credentials pane of the service account in AAD/app registrations.
+>* I have used nfsv3 for basic compatibility. You can remove that line and use NetApp files defaults.
+>* For further steps you must ensure the Service Principal has the privileges in place. Otherwise you will face an error like this: *"error initializing azure-netapp-files SDK client. capacity pool query returned no data; no capacity pools found for storage pool"*. One way to avoid this situation is by creating a new custom role (Subscription->IAM->Create a custom role)with all privileges associated in official documentation ([netapp for azure](https://docs.netapp.com/us-en/trident/trident-use/anf-prep.html#prerequisites-for-nfs-and-smb-volumes)) and associate this new role to the cluster's service principal.
+>![Storage Class](netapp-role-example.png)
 
 ```bash
 vi backend.json
