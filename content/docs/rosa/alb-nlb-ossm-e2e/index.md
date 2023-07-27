@@ -90,19 +90,19 @@ EOF
 Install service mesh operators by applying the following snippet on the cluster or use this [script](./ossm-operator/deploy-ossm.sh) and Check the operator's status in each cluster with the following commands or run this [script](./ossm-operator/check-ossm.sh). if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
   
 ```bash
-oc get sub elasticsearch-operator -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
+oc get sub elasticsearch-operator -n openshift-operators --output jsonpath='{.status.conditions[?(@.type == "CatalogSourcesUnhealthy")].message}'
 ```
 
 ```bash
-oc get sub jaeger-product  -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
+oc get sub jaeger-product  -n openshift-operators --output jsonpath='{.status.conditions[?(@.type == "CatalogSourcesUnhealthy")].message}'
 ```
 
 ```bash
-oc get sub kiali-ossm  -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
+oc get sub kiali-ossm  -n openshift-operators --output jsonpath='{.status.conditions[?(@.type == "CatalogSourcesUnhealthy")].message}'
 ```
 
 ```bash
-oc get sub servicemeshoperator -n openshift-operators --output jsonpath='{.status.conditions[*].message}'
+oc get sub servicemeshoperator -n openshift-operators --output jsonpath='{.status.conditions[?(@.type == "CatalogSourcesUnhealthy")].message}'
 ```
 
 ### Create a service mesh instance
