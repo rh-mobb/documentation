@@ -425,11 +425,12 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
     
     ```bash
 
-    export ING_EGRESS_VPC_ID=vpc-0344775b9177ec7d5
-    export ING_EGRESS_PUB_SUB_1=subnet-0123d00f20e9d4c4b
-    export ING_EGRESS_PUB_SUB_2=subnet-06130b9f97821d8d8
-    export BOOKINFO_CERT_ARN=arn:aws:acm:us-east-2:660250927410:certificate/ddae6fbd-a540-4619-939f-9e20ff9b765e
-    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text) 
+    export ING_EGRESS_VPC_ID=<vpc-id>
+    export ING_EGRESS_PUB_SUB_1=<public subnet-id 1>
+    export ING_EGRESS_PUB_SUB_2=<public subnet-id 2>
+    export BOOKINFO_CERT_ARN=<certificate arn>
+    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text)
+    echo "Target Group arn $TG_ARN"
     ```
 
 1. Fetch NLB IP addresses 
