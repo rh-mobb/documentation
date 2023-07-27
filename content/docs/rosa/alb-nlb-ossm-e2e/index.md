@@ -220,6 +220,13 @@ done
 
 cat << EOF | oc apply -f -
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: aws-load-balancer-operator
+EOF
+
+cat << EOF | oc apply -f -
+apiVersion: v1
 kind: Secret
 metadata:
   name: aws-load-balancer-operator
