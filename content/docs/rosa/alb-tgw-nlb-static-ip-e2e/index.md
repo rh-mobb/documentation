@@ -203,19 +203,14 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
 
     ```bash
     export NLB_FQDN=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-    
     echo "The external IP address of istio-ingressgateway is: $NLB_FQDN"
-    
     # Fetch the load balancer ARN
     export NLB_ARN=$(aws elbv2 describe-load-balancers --query "LoadBalancers[?DNSName=='$NLB_FQDN'].LoadBalancerArn" --output text)
     echo "NLB arn: $NLB_ARN"
-    
     export NLB_INFO=$(aws elbv2 describe-load-balancers --load-balancer-arns $NLB_ARN --output json )
-    
     export NLB_PRV_IP_1=$(echo "$NLB_INFO" | jq -r '.LoadBalancers[0].AvailabilityZones[0].LoadBalancerAddresses[0].PrivateIPv4Address')
     export NLB_PRV_IP_2=$(echo "$NLB_INFO" | jq -r '.LoadBalancers[0].AvailabilityZones[1].LoadBalancerAddresses[0].PrivateIPv4Address')
     export NLB_PRV_IP_3=$(echo "$NLB_INFO" | jq -r '.LoadBalancers[0].AvailabilityZones[2].LoadBalancerAddresses[0].PrivateIPv4Address')
-    
     echo "Private IP 1: $NLB_PRV_IP_1"
     echo "Private IP 2: $NLB_PRV_IP_2"
     echo "Private IP 3: $NLB_PRV_IP_3"
