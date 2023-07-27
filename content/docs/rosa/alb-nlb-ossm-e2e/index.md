@@ -398,13 +398,15 @@ curl -v -k --resolve securedbookinfo.com:$INGRESS_NODE_PORT:$WORKER_IP_ADDRESS  
 #### Check TLS termination at the NLB layer
 
  ```bash
-export NLB_URL=$(oc get svc -n ossm istio-ingressgateway -ojsonpath='{.status.loadBalancer.ingress[0].hostname}')
+export NLB_URL=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 echo "NLB's FQDN:  $NLB_URL"
 export NLB_IP=$(dig +short $NLB_URL | head -1)
 echo "NLP IP address $NLB_IP"
 ```
 
-Check application  endpoint
+**NOTE:** If the NLP IP address is blank, you should wait until the load balancer provisioning is completed
+
+Check application endpoint
 
 ```bash
  curl -v -k --resolve securedbookinfo.com:443:$NLB_IP https://securedbookinfo.com:443/productpage
@@ -423,11 +425,10 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
     
     ```bash
 
-   export ING_EGRESS_VPC_ID=vpc-0344775b9177ec7d5
-   export ING_EGRESS_PUB_SUB_1=subnet-0123d00f20e9d4c4b
-   export ING_EGRESS_PUB_SUB_2=subnet-06130b9f97821d8d8
-   export BOOKINFO_CERT_ARN=arn:aws:acm:us-east-2:660250927410:certificate/ddae6fbd-a540-4619-939f-9e20ff9b765e
-    
+    export ING_EGRESS_VPC_ID=vpc-0344775b9177ec7d5
+    export ING_EGRESS_PUB_SUB_1=subnet-0123d00f20e9d4c4b
+    export ING_EGRESS_PUB_SUB_2=subnet-06130b9f97821d8d8
+    export BOOKINFO_CERT_ARN=arn:aws:acm:us-east-2:660250927410:certificate/ddae6fbd-a540-4619-939f-9e20ff9b765e
     export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text) 
     ```
 
