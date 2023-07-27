@@ -497,6 +497,12 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
         --query 'LoadBalancers[0].LoadBalancerArn' \
         --output text)
      ```
+    Check load balancer status with the following command. The status should be active.
+
+    ```bash
+    aws elbv2 describe-load-balancers --name bookinfo-alb --query 'LoadBalancers[].State.Code'
+    ```
+
     4.4 Create Listener
 
     ```bash
