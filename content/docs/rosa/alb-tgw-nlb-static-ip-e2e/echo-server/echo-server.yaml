@@ -33,7 +33,7 @@ metadata:
     app: http-https-echo
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
-    service.beta.kubernetes.io/aws-load-balancer-private-ipv4-addresses: '10.201.0.200, 10.201.1.200, 10.201.2.200'
+    service.beta.kubernetes.io/aws-load-balancer-private-ipv4-addresses: '10.201.0.199, 10.201.1.199, 10.201.2.199'
     service.beta.kubernetes.io/aws-load-balancer-scheme: internal
     service.beta.kubernetes.io/aws-load-balancer-type: external
 spec:
