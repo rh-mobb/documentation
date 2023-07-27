@@ -524,7 +524,7 @@ while true; do curl -k  https://$ALB_DNS/productpage; sleep 1; done
 Retrieve the application and Kiali URLs
 
 ```bash
-echo "open browser and hit https://$ALB_DNS/productpage" or Open Kiali https://$(oc get route kiali -n ossm -o jsonpath='{$.status.ingress[0].routerCanonicalHostname}')
+echo "open browser and hit https://$ALB_DNS/productpage" or Open Kiali https://$(oc get route kiali -n ossm -o jsonpath='{$.status.ingress[0].host}')
 ```
 
 ![Kiali dashboard](./images/bookinfo_kiali.png)
