@@ -85,6 +85,13 @@ stringData:
 EOF
 
 cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aws-load-balancer-operator
+EOF
+
+cat << EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
@@ -108,7 +115,7 @@ spec:
 EOF
 ```
 
- **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the [deploy-awslbo.sh](./alb-operator/deploy-awlbo.sh)
+ **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the [deploy-awslbo.sh](./alb-operator/deploy-awslbo.sh)
 
 ```bash
  oc -n aws-load-balancer-operator create configmap trusted-ca
