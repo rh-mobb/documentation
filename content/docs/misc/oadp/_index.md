@@ -10,3 +10,4 @@ archetype: chapter
 ## MOBB Docs and Guides for OADP
 
 * [Deploying OADP on ROSA](./rosa-sts)
+* [Deploying OADP on ARO](./aro)
