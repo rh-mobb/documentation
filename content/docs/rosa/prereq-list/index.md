@@ -1,5 +1,14 @@
-# ROSA Classic with STS Prerequisites Checklist
-rev 0.1
+---
+date: '2023-07-27'
+title: Prerequisites Checklist to Deploy ROSA Cluster with STS 
+tags: ["ROSA", "STS"]
+authors:
+  - Byron Miller
+  - Connor Wooley
+  - Diana Sari
+---
+
+# Prerequisites Checklist to Deploy ROSA Cluster with STS 
 
 ## Background
 This is a quick checklist of prerequisites needed to spin up a classic [Red Hat OpenShift Service on AWS (ROSA)](https://developers.redhat.com/products/red-hat-openshift-service-on-aws/overview) cluster with [STS](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html). Note that this is a high level checklist and your implementation may vary. 
@@ -87,8 +96,7 @@ If you would like to deploy a PrivateLink cluster, then be sure to deploy the cl
 - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
     - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
     - And ensure whatever UDR you would like to follow is set up.
-    
+
 
 ## ROSA Prerequisites without STS 
 Note that we do not discuss about the prerequisites for a classic ROSA cluster without STS in this article. And thus, if that is your preferred scenario, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html).
-
