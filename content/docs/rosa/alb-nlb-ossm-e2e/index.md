@@ -271,6 +271,10 @@ EOF
  oc -n aws-load-balancer-operator exec deploy/aws-load-balancer-operator-controller-manager -c manager -- bash -c "ls -l /etc/pki/tls/certs/albo-tls-ca-bundle.crt; printenv TRUSTED_CA_CONFIGMAP_NAME"
  oc -n aws-load-balancer-operator rollout restart deployment/aws-load-balancer-operator-controller-manager
  ```
+**NOTE:** It takes minutes to operator be up and running. Check operator status is `running` 
+```bash
+oc get pod -n aws-load-balancer-operator
+```
 
 Create AWS Load Balancer Controller
 
