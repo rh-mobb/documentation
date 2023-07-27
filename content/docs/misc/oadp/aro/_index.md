@@ -108,7 +108,7 @@ to assign permissions for this service principal using the previously created
 role:
 
 ```bash
-export AZR_SP_ID=$(az ad sp list --display-name oadp --query "[?appDisplayName == '$AZR_CLUSTER_NAME'].id" -o tsv)
+export AZR_SP_ID=$(az ad sp list --display-name $AZR_STORAGE_ACCOUNT_SP_NAME --query "[?appDisplayName == '$AZR_CLUSTER_NAME'].id" -o tsv)
 ```
 
 6. Assign permissions on the storage account for the service principal 
