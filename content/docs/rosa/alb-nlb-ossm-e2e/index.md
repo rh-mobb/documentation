@@ -110,7 +110,62 @@ oc get sub servicemeshoperator -n openshift-operators --output jsonpath='{.statu
 Create a service mesh instance. We assign a static IP addresses(10.201.1.199, 10.201.0.199,10.201.2.199) to the istio-ingress NLB
 
 ```bash
-oc apply -f ./ossm-operator/smcp.yaml
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ossm
+--- 
+apiVersion: maistra.io/v2
+kind: ServiceMeshControlPlane
+metadata:
+  namespace: ossm
+  name: ossm-e2e-encryption
+spec:
+  cluster:
+    name: ossm-e2e-encryption
+  addons:
+    grafana:
+      enabled: true
+    jaeger:
+      install:
+        storage:
+          type: Memory
+    kiali:
+      enabled: true
+    prometheus:
+      enabled: true
+  policy:
+    type: Istiod
+  telemetry:
+    type: Istiod
+  tracing:
+    sampling: 10000
+    type: Jaeger
+  runtime:
+    defaults:
+      container:
+        imagePullPolicy: Always
+  proxy:
+    accessLogging:
+      file:
+        name: /dev/stdout        
+  security:
+    identity:
+      type: ThirdParty
+      thirdParty:
+        audience: istio-ca
+  gateways:
+    ingress: # istio-ingressgateway
+      service:
+        metadata:
+            annotations:
+                  service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
+                  service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+                  service.beta.kubernetes.io/aws-load-balancer-private-ipv4-addresses: 10.201.0.199, 10.201.1.199, 10.201.2.199
+                  service.beta.kubernetes.io/aws-load-balancer-type: external
+        type: LoadBalancer
+EOF
 ```
 
 **Note**: By default, NodePorts in a ROSA are not accessible outside of the cluster. To enable access to NodePorts from a load balancer, you need to modify the security group associated with your cluster and allow the port range 30000-32767 to receive traffic.
