@@ -7,7 +7,7 @@ authors:
   - Paul Czarkowski
 ---
 
-This repository demonstrates how to utilize a privatelink ROSA (Red Hat OpenShift on AWS) cluster and OSSM (OpenShift Service Mesh) to securely expose an application with end-to-end encryption. The provided architecture serves as a sample for application exposure. The deployment incorporates an Ingress/Egress VPC to route traffic to the cluster, which is deployed within a private VPC.
+This repository demonstrates how to utilize a privatelink [ROSA](https://www.redhat.com/en/technologies/cloud-computing/openshift/aws) (Red Hat OpenShift on AWS) cluster and [OSSM](https://www.redhat.com/en/technologies/cloud-computing/openshift/what-is-openshift-service-mesh) (OpenShift Service Mesh) to securely expose an application with end-to-end encryption. The provided architecture serves as a sample for application exposure. The deployment incorporates an Ingress/Egress VPC to route traffic to the cluster, which is deployed within a private VPC.
 
 ![architecture diagram showing privatelink with TGW](./images/rosa_alb_tgw_nlb_e2e.png)
 
@@ -17,11 +17,13 @@ This repository demonstrates how to utilize a privatelink ROSA (Red Hat OpenShif
 - [ROSA CLI](https://github.com/openshift/rosa) - Download the latest release
 - oc CLI `rosa download openshift-client`
 - [jq](https://jqlang.github.io/jq/download/)
+- [AWS CLI](https://aws.amazon.com/cli/)
 
 Clone the repository
 
 ```bash
 git clone https://github.com/houshym/rosa-ossm-e2e-encryption
+cd rosa-ossm-e2e-encryption
 ```
  ### Deploy OpenShift Service Mesh(OSSM)
 
@@ -29,7 +31,7 @@ git clone https://github.com/houshym/rosa-ossm-e2e-encryption
 
 Installing the OSSM(OpenShift Service Mesh) involves installing the OpenShift Elasticsearch, Jaeger, Kiali, and Service Mesh Operators, creating and managing a ServiceMeshControlPlane resource to deploy the control plane, and creating a ServiceMeshMemberRoll resource to specify the namespaces associated with the Service Mesh 
 
-Install service mesh operators by applying the following snippet on the cluster or use this [script](./ossm-operator/deploy-ossm.sh)
+Install service mesh operators by applying the following snippet on the cluster or or run the script inside the cloned git repo ./ossm-operator/deploy-ossm.sh
 
 ```bash
 cat << EOF | oc apply -f -
@@ -58,7 +60,7 @@ spec:
   channel: "stable"
   installPlanApproval: Automatic
 --- 
-#intsall Kiali operator
+#install Kiali operator
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -87,7 +89,7 @@ spec:
 EOF
 ```
 
-Install service mesh operators by applying the following snippet on the cluster or use this [script](./ossm-operator/deploy-ossm.sh) and Check the operator's status in each cluster with the following commands or run this [script](./ossm-operator/check-ossm.sh). if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
+Install service mesh operators by applying the following snippet or run the script inside the cloned git repo `./ossm-operator/deploy-ossm.sh` and Check the operator's status in each cluster with the following commands or run script `./ossm-operator/check-ossm.sh` in the cloned repo. if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
   
 ```bash
 oc get sub elasticsearch-operator -n openshift-operators --output jsonpath='{.status.conditions[?(@.type == "CatalogSourcesUnhealthy")].message}'
@@ -108,6 +110,7 @@ oc get sub servicemeshoperator -n openshift-operators --output jsonpath='{.statu
 ### Create a service mesh instance
    
 Create a service mesh instance. We assign a static IP addresses(10.201.1.199, 10.201.0.199,10.201.2.199) to the istio-ingress NLB
+**NOTE:**  The annotations in the following resources are reserving the IP addresses for a static NLB using the ALB controller as these are items of interest that differ from a regular OSSM install.
 
 ```bash
 cat << EOF | oc apply -f -
@@ -168,11 +171,10 @@ spec:
 EOF
 ```
 
-**Note**: By default, NodePorts in a ROSA are not accessible outside of the cluster. To enable access to NodePorts from a load balancer, you need to modify the security group associated with your cluster and allow the port range 30000-32767 to receive traffic.
 
 ### Deploy AWS Load Balancer Operator (ALBO)
 
-Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or use the following snippet or run the  [script](./alb-operator/deploy-aws-lbo.sh)
+Use the following snippet or run the script in the cloned repo `./alb-operator/deploy-aws-lbo.sh` . see [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) article for more details about the ALB operator and its installtion.
 
 ```bash
 #!/bin/sh
@@ -183,8 +185,7 @@ export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}")
 echo "Cluster: ${ROSA_CLUSTER_NAME}, Region: ${REGION}, OIDC Endpoint: ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
-TRUST_POLICY=$(<alb-operator/trust-policy.json)
-SUBSTITUTED_POLICY=$(echo "$TRUST_POLICY" | envsubst)
+export SUBSTITUTED_POLICY=$(cat alb-operator/trust-policy.json | envsubst)
 echo "Trust Policy $SUBSTITUTED_POLICY"
 
 if ! ROLE_ARN=$(aws iam get-role --role-name "${ROSA_CLUSTER_NAME}-alb-operator" --query Role.Arn --output text 2>/dev/null); then
@@ -262,7 +263,7 @@ spec:
 EOF
 ```
 
- **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the [deploy-awlbo.sh](./alb-operator/deploy-aws-lbo.sh)
+ **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the script `./alb-operator/deploy-aws-lbo.sh`
 
 ```bash
  oc -n aws-load-balancer-operator create configmap trusted-ca
@@ -304,15 +305,6 @@ oc new-project cert-manager --display-name="Certificate Manager" --description="
 
 ```bash
 cat <<EOF | oc create -f -
-# apiVersion: operators.coreos.com/v1
-# kind: OperatorGroup
-# metadata:
-#   generateName: cert-manager-
-#   namespace: cert-manager
-# spec:
-#   targetNamespaces:
-#     - cert-manager-operator
----
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -374,28 +366,7 @@ oc apply -f ./app/destination-rule.yaml
 oc apply -f ./app/gateway.yaml
 ```
 
-### Check SSL termination
-
-#### Check termination at ingress/node 
-
- get the nodes' IP address and istio-ingress service ports
-
- **Note:** If you don't get a response, check the security group and be sure that port 3000-32767 is allowed 
-
-```bash
-export WORKER_IP_ADDRESS=$(oc get nodes -l node-role.kubernetes.io/worker -o jsonpath='{range .items[*]}{.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}' | head -n 1)
-echo "Worker IP Address $WORKER_IP_ADDRESS"
-export INGRESS_NODE_PORT=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
-echo "Ingress service NodePort $INGRESS_NODE_PORT"
-```
-
-Check application endpoint
-
-```bash
-curl -v -k --resolve securedbookinfo.com:$INGRESS_NODE_PORT:$WORKER_IP_ADDRESS  https://securedbookinfo.com:$INGRESS_NODE_PORT/productpage 
-```
-
-#### Check TLS termination at the NLB layer
+### Verify TLS 
 
  ```bash
 export NLB_URL=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
@@ -421,7 +392,7 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
 ### Create an ALB in the public subnet 
  We need to create an ALB in the ingress/egress VPC. To do this, we first need to create a Target Group (TG) within this VPC and then associate this TG with the ALB's targets. To create the TG, we require the IP addresses of the NLB. 
 
-1. Define a TG 
+1. Define a Target Group
     
     ```bash
 
