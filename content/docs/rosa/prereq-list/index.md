@@ -27,7 +27,7 @@ First, let's discuss about the accounts and CLIs you would need to install to de
       - AWS IAM User
       - AWS Access Key ID
       - AWS Secret Access Key
-  - Ensure that you have the right permissions as well as detailed [here](https://docs.aws.amazon.com/ROSA/latest/userguide/security-iam-awsmanpol.html) and [here](https://docs.openshift.com/rosa/rosa_architecture/rosa-sts-about-iam-resources.html)
+  - Ensure that you have the right permissions as detailed [here](https://docs.aws.amazon.com/ROSA/latest/userguide/security-iam-awsmanpol.html) and [here](https://docs.openshift.com/rosa/rosa_architecture/rosa-sts-about-iam-resources.html)
 ### AWS CLI (`aws`):
   - Install from [here](https://aws.amazon.com/cli/) if you have not already.
   - Configure the CLI:
@@ -88,7 +88,6 @@ If you would like to deploy a PrivateLink cluster, then be sure to deploy the cl
 - The VPC must not use the `kubernetes.io/cluster/.*: owned`, `Name`, and `openshift.io/cluster` tags.
 - Set both `enableDnsHostnames` and `enableDnsSupport` to `true`.
     - That way, the cluster can use the Route 53 zones that are attached to the VPC to resolve cluster’s internal DNS records.
-    - If you prefer to use your own Route 53 hosted private zone, you must associate the existing hosted zone with your VPC prior to installing a cluster. 
 - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
     - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
     - And ensure whatever UDR you would like to follow is set up.
