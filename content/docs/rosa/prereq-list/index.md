@@ -28,6 +28,7 @@ First, let's discuss about the accounts and CLIs you would need to install to de
       - AWS Access Key ID
       - AWS Secret Access Key
   - Ensure that you have the right permissions as detailed [here](https://docs.aws.amazon.com/ROSA/latest/userguide/security-iam-awsmanpol.html) and [here](https://docs.openshift.com/rosa/rosa_architecture/rosa-sts-about-iam-resources.html)
+  - Please also refer [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-account_rosa-sts-aws-prereqs) for more details. 
 ### AWS CLI (`aws`):
   - Install from [here](https://aws.amazon.com/cli/) if you have not already.
   - Configure the CLI:
@@ -61,11 +62,15 @@ Once you have the above prerequisites installed and enabled, let's proceed to th
 
 
 ## SCP Prerequisites
-Ensure that your organization's [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) has the minimum set of effective permissions as detailed [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html#rosa-minimum-scp_prerequisites).
+It is a best practice for the ROSA cluster to be hosted in an AWS account within an AWS Organizational Unit. A [service control policy (SCP)](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html) is created and applied to the AWS Organizational Unit that manages what services the AWS sub-accounts are permitted to access. 
 
-- Also ensure that your organization's SCP are not more restrictive than the ones listed in the links above. 
+- Ensure that your organization's SCP are not more restrictive than the roles and policies required by the cluster.
 
 - Ensure that your SCP is configured to allow the required `aws-marketplace:Subscribe` permission when you choose `Enable ROSA` from the console, and please refer [here](https://docs.aws.amazon.com/ROSA/latest/userguide/troubleshoot-rosa-enablement.html#error-aws-orgs-scp-denies-permissions) for more details.
+
+- When you create a ROSA cluster using AWS STS, an associated AWS OpenID Connect (OIDC) identity provider is created as well. 
+    - This OIDC provider configuration relies on a public key that is located in the `us-east-1` AWS region. 
+    - Customers with AWS SCPs must allow the use of the `us-east-1` AWS region, even if these clusters are deployed in a different region.
 
 
 ## Networking Prerequisites
