@@ -15,7 +15,6 @@ skipMetadata: true
 
 ### ROSA
 
-* [Prerequisites Checklist to Deploy ROSA Cluster with STS](/docs/rosa/prereq-list)
 * [Deploying ROSA in Private Link mode](/docs/rosa/private-link)
   * [Add Public Ingress to Private Link Cluster](/docs/rosa/private-link/public-ingress)
 * [Deploying ROSA PrivateLink Cluster with Ansible](/docs/rosa/ansible-rosa)
