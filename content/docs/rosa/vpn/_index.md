@@ -1,19 +1,20 @@
 ---
-date: '2023-03-29'
+date: '2023-07-28'
 title: Setup a VPN Connection into a ROSA Cluster with OpenVPN
 tags: ["ROSA", "AWS"]
 authors:
   - Kevin Collins
 ---
 
-When you configure an Red Hat OpenShift on AWS (ROSA) cluster with a private only configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute a point-to-site VPN connection so you won't need to setup and configure Jump Boxes.
+When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private only configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute an AWS Client VPN connection so you won't need to setup and configure Jump Boxes.
 
 ## Prerequisites
 
 * a private ROSA Cluster
+* jq
 
 ## Set Envrionment Variables
-Start by setting environment variables that we use to setup the VPN connection
+Start by setting environment variables that we will use to setup the VPN connection
 ```
 export ROSA_CLUSTER_NAME=<rosa cluster name>
 
@@ -155,10 +156,20 @@ There are many ways and methods to create certificates for VPN, the guide below 
    echo '</key>' >> client-config.ovpn
 
    ```
+## Add DNS Entries
+In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluser to your VPN settings or /etc/hosts in machine you are connecting from.
 
+The DNS server will be the x.x.x.2 address of your VPC CIDR.  For example, if you VPC CIDR is 10.66.0.0/16 then your DNS server will be 10.66.0.2
+
+You can find the VPC ( machine ) CIDR with this command:
+```
+rosa describe cluster -c kevcolli-pl -o json | jq -r '.network.machine_cidr'
+```
+
+You can find the ROSA base domain with this command:
+```
+rosa describe cluster -c $ROSA_CLUSTER_NAAME -o json | jq -r '.dns.base_domain'
+``` 
 ## Configure your OpenVPN Client
-
-
 1. Connect your VPN.
-
-   ![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
+![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
