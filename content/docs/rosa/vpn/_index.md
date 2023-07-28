@@ -116,7 +116,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
 ## Create a Client VPN Endpoint
 
-    ``` bash
+    ```bash
     VPN_CLIENT_ID=$(aws ec2 create-client-vpn-endpoint \
     --client-cidr-block $VPN_CLIENT_CIDR \
     --server-certificate-arn $SERVER_CERT_ARN \
