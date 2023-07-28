@@ -13,7 +13,7 @@ This is a quick checklist of prerequisites needed to spin up a classic [Red Hat 
 
 Before running the installation process, make sure that you deploy this from a machine that has access to:
 - The API services for the cloud to which you provision.
-- Access to `api.openshift.com` and `sso.openshift.com`. 
+- Access to `api.openshift.com` and `sso.redhat.com`. 
 - The hosts on the network that you provision.
 - The internet to obtain installation media.
 
@@ -29,19 +29,22 @@ First, let's discuss about the accounts and CLIs you would need to install to de
       - AWS Secret Access Key
   - Ensure that you have the right permissions as detailed [here](https://docs.aws.amazon.com/ROSA/latest/userguide/security-iam-awsmanpol.html) and [here](https://docs.openshift.com/rosa/rosa_architecture/rosa-sts-about-iam-resources.html)
   - Please also refer [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-account_rosa-sts-aws-prereqs) for more details. 
+
 ### AWS CLI (`aws`):
   - Install from [here](https://aws.amazon.com/cli/) if you have not already.
   - Configure the CLI:
-      - Enter `aws configure` in the terminal.
-      - Enter the AWS Access Key ID and press enter.
-      - Enter the AWS Secret Access Key and press enter.
-      - Enter the default region you want to deploy into.
-      - Enter the output format you want (“table” or “json”). 
-      - Verify the output by running `aws sts get-caller-identity`.
-      - Ensure that the service role for ELB already exists by running `aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing"`
+      1. Enter `aws configure` in the terminal.
+      2. Enter the AWS Access Key ID and press enter.
+      3. Enter the AWS Secret Access Key and press enter.
+      4. Enter the default region you want to deploy into.
+      5. Enter the output format you want (“table” or “json”). 
+      6. Verify the output by running `aws sts get-caller-identity`.
+      7. Ensure that the service role for ELB already exists by running `aws iam get-role --role-name "AWSServiceRoleForElasticLoadBalancing"`
           - If it does not exist, run `aws iam create-service-linked-role --aws-service-name "elasticloadbalancing.amazonaws.com"`
+
 ### Red Hat account:
   - Create one [here](https://console.redhat.com/) if you have not already.
+
 ### ROSA CLI (`rosa`): 
   - Enable ROSA from your AWS account [here](https://console.aws.amazon.com/rosa/) if you have not already.
   - Install the CLI from [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-installing-rosa.html) or from the OpenShift console [here](https://console.redhat.com/openshift/downloads#tool-rosa).
@@ -54,6 +57,7 @@ First, let's discuss about the accounts and CLIs you would need to install to de
   - Ensure you have sufficient quota by running `rosa verify quota`.
       - Please refer [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#rosa-aws-policy-provisioned_rosa-sts-aws-prereqs) for more details on AWS services provisioned for ROSA cluster. 
       - Please refer [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-required-aws-service-quotas.html) for more details on AWS services quota. 
+
 ### OpenShift CLI (`oc`):
   - Install from [here](https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html) or from the OpenShift console [here](https://console.redhat.com/openshift/downloads#tool-oc).
   - Verify that the OpenShift CLI has been installed correctly by running `rosa verify openshift-client`.
@@ -78,6 +82,7 @@ Next, let's talk about the prerequisites needed from networking standpoint.
 
 ### Firewall
   - Configure your firewall to allow access to the domains and ports listed [here](https://docs.openshift.com/rosa/rosa_planning/rosa-sts-aws-prereqs.html#osd-aws-privatelink-firewall-prerequisites_rosa-sts-aws-prereqs)
+
 ### Custom DNS
   - If you want to use custom DNS, then ROSA installer must be able to use VPC DNS with default DHCP options so it can resolve hosts locally. 
       - To do so, run `aws ec2 describe-dhcp-options` and see if the VPC is using VPC Resolver.
@@ -90,14 +95,12 @@ If you would like to deploy a PrivateLink cluster, then be sure to deploy the cl
     - Alternatively, implement transit gateway for internet/egress with appropriate routes.
 - The VPC's CIDR block must contain the `Networking.MachineCIDR` range, which is the IP address for cluster machines. 
     - The subnet CIDR blocks must belong to the machine CIDR that you specify.
-- The VPC must not use the `kubernetes.io/cluster/.*: owned`, `Name`, and `openshift.io/cluster` tags.
 - Set both `enableDnsHostnames` and `enableDnsSupport` to `true`.
     - That way, the cluster can use the Route 53 zones that are attached to the VPC to resolve cluster’s internal DNS records.
-- Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"`. 
+- Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"` 
     - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
     - And ensure whatever UDR you would like to follow is set up.
-    
+- Select `Configure a cluster-wide proxy` in the `Network configuration` page to enable an HTTP or HTTPS proxy to deny direct access to the internet from your cluster. Please refer [here](https://access.redhat.com/documentation/en-us/red_hat_openshift_service_on_aws/4/html/networking/configuring-a-cluster-wide-proxy) for more details.   
 
-## ROSA Prerequisites without STS 
-Note that we do not discuss about the prerequisites for a classic ROSA cluster without STS in this article. And thus, if that is your preferred scenario, please refer to the official documentation [here](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-aws-prereqs.html).
+Note that you can also install a nonPrivateLink ROSA cluster in a pre-existing VPC. 
 
