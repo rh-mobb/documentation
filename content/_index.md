@@ -39,6 +39,7 @@ skipMetadata: true
 * [Security Reference Architecture for ROSA](/docs/rosa/security-ra)
 * [Configure ROSA for Nvidia GPU Workloads](/docs/rosa/gpu)
 * [Connect to RDS from ROSA with STS](/docs/rosa/sts-rds)
+* [Create an AWS Client VPN connection for a private ROSA Cluster](/docs/rosa/vpn)
 
 ### ARO
 
