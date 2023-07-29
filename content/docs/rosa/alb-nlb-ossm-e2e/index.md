@@ -1,7 +1,7 @@
 ---
 date: '2023-07-24'
 title: Securely Exposing Applications with PrivateLink ROSA Cluster and OpenShift Service Mesh
-tags: ["ROSA", AWS, "OpenShift Service Mesh,Private Link"]
+tags: ["ROSA", "AWS", "OpenShift Service Mesh","Private Link", "AWS load balancer opeator", "ALB", "NLB"]
 authors:
   - Mohsen Houshamnd
   - Paul Czarkowski
