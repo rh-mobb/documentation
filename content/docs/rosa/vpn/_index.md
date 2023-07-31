@@ -111,12 +111,12 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
 1. Import the client certificate
      ```bash
-   CLIENT_CERT_ARN=$(aws acm import-certificate --certificate fileb://issued/aws.crt --private-key fileb://private/aws.key --certificate-chain fileb://ca.crt --region $REGION --query CertificateArn --output text)
+     CLIENT_CERT_ARN=$(aws acm import-certificate --certificate fileb://issued/aws.crt --private-key fileb://private/aws.key --certificate-chain fileb://ca.crt --region $REGION --query CertificateArn --output text)
     ```
 
 ## Create a Client VPN Endpoint
 
-    ``` bash
+   ```bash
     VPN_CLIENT_ID=$(aws ec2 create-client-vpn-endpoint \
     --client-cidr-block $VPN_CLIENT_CIDR \
     --server-certificate-arn $SERVER_CERT_ARN \
@@ -125,6 +125,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```
 
    Associate each private subnet with the client VPN endpoint
+   
    ```bash
    while IFS= read -r subnet;
    do
@@ -156,7 +157,6 @@ There are many ways and methods to create certificates for VPN, the guide below 
    echo '<key>' >> client-config.ovpn
    cat private/aws.key >> client-config.ovpn
    echo '</key>' >> client-config.ovpn
-
    ```
 ## Add DNS Entries
 In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluser to your VPN settings or /etc/hosts in machine you are connecting from.
