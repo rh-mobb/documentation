@@ -174,6 +174,7 @@ rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
 ``` 
 ## Configure your OpenVPN Client
 1. Import the client-config.ovpn file into your VPN Software.
+* Mac users - just double click the client-config.ovpn and it will be imported automatically into your VPN client.
 
 1. Connect your VPN.
 
