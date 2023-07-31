@@ -3,7 +3,7 @@ date: '2023-07-28'
 title: Setup a VPN Connection into a ROSA Cluster with OpenVPN
 tags: ["ROSA", "AWS"]
 authors:
-  - Kevin Collins
+  - Kevin Collins & Kumudu Herath
 ---
 
 When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private only configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute an AWS Client VPN connection so you won't need to setup and configure Jump Boxes.
@@ -147,12 +147,14 @@ There are many ways and methods to create certificates for VPN, the guide below 
    aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id $VPN_CLIENT_ID --output text>client-config.ovpn
    ```
 
+   * note: make sure you are still in the easy rsa / pki directory.
+
    ```bash
    echo '<cert>' >> client-config.ovpn
-   cat ~/scratch/rosa-vpn/easy-rsa/easyrsa3/pki/issued/aws.crt >> client-config.ovpn
+   cat issued/aws.crt >> client-config.ovpn
    echo '</cert>' >> client-config.ovpn
    echo '<key>' >> client-config.ovpn
-   cat ~/scratch/rosa-vpn/easy-rsa/easyrsa3/pki/private/aws.key >> client-config.ovpn
+   cat private/aws.key >> client-config.ovpn
    echo '</key>' >> client-config.ovpn
 
    ```
@@ -163,13 +165,15 @@ The DNS server will be the x.x.x.2 address of your VPC CIDR.  For example, if yo
 
 You can find the VPC ( machine ) CIDR with this command:
 ```
-rosa describe cluster -c kevcolli-pl -o json | jq -r '.network.machine_cidr'
+rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.machine_cidr'
 ```
 
 You can find the ROSA base domain with this command:
 ```
-rosa describe cluster -c $ROSA_CLUSTER_NAAME -o json | jq -r '.dns.base_domain'
+rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
 ``` 
 ## Configure your OpenVPN Client
+1. Import the client-config.ovpn file into your VPN Software.
+
 1. Connect your VPN.
 ![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
