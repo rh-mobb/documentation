@@ -1,20 +1,21 @@
 ---
 date: '2023-07-28'
-title: Setup a VPN Connection into a ROSA Cluster with OpenVPN
+title: Setup a VPN Connection into a Private Link ROSA Cluster with OpenVPN
 tags: ["ROSA", "AWS"]
 authors:
   - Kevin Collins & Kumudu Herath
 ---
 
-When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private only configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute an AWS Client VPN connection so you won't need to setup and configure Jump Boxes.
+When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private link configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute an AWS Client VPN connection so you won't need to setup and configure Jump Boxes.
 
 ## Prerequisites
 
-* a private ROSA Cluster
+* a private link ROSA Cluster
 follow this [guide](../private-link/) to create a private ARO Cluster
 * jq
 
 ## Set Envrionment Variables
+
 Start by setting environment variables that we will use to setup the VPN connection
 ```
 export ROSA_CLUSTER_NAME=<rosa cluster name>
@@ -29,6 +30,7 @@ export PRIVATE_SUBNET_IDS=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json 
 ```
 
 ## Create certificates to use for your VPN Connection
+
 There are many ways and methods to create certificates for VPN, the guide below is one of the ways that works well.  Note, that whatever method you use, make sure it supports "X509v3 Extended Key Usage".
 
 1. Clone OpenVPN/easy-rsa
@@ -145,6 +147,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```
 
 ## Configure your OpenVPN Client
+
    ```bash
    aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id $VPN_CLIENT_ID --output text>client-config.ovpn
    ```
@@ -160,6 +163,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    echo '</key>' >> client-config.ovpn
    ```
 ## Add DNS Entries
+
 In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluser to your VPN settings or /etc/hosts in machine you are connecting from.
 
 The DNS server will be the x.x.x.2 address of your VPC CIDR.  For example, if you VPC CIDR is 10.66.0.0/16 then your DNS server will be 10.66.0.2
@@ -174,6 +178,7 @@ You can find the ROSA base domain with this command:
 rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
 ``` 
 ## Configure your OpenVPN Client
+
 1. Import the client-config.ovpn file into your VPN Software.
 * Mac users - just double click the client-config.ovpn and it will be imported automatically into your VPN client.
 
