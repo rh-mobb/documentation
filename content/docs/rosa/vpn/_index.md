@@ -10,8 +10,7 @@ When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private link
 
 ## Prerequisites
 
-* a private link ROSA Cluster
-follow this [guide](../private-link/) to create a private ARO Cluster
+* a private link ROSA Cluster - follow this [guide](../private-link/) to create a private ARO Cluster
 * jq
 
 ## Set Envrionment Variables
