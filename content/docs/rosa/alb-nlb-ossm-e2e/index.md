@@ -13,7 +13,7 @@ This repository demonstrates how to utilize a privatelink [ROSA](https://www.red
 
 ### Prerequisites
 
-- A privatelink ROSA cluster
+- A multi-az privatelink ROSA cluster 
 - [ROSA CLI](https://github.com/openshift/rosa) - Download the latest release
 - oc CLI `rosa download openshift-client`
 - [jq](https://jqlang.github.io/jq/download/)
