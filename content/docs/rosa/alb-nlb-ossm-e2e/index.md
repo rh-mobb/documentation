@@ -171,7 +171,6 @@ spec:
 EOF
 ```
 
-
 ### Deploy AWS Load Balancer Operator (ALBO)
 
 Use the following snippet or run the script in the cloned repo `./alb-operator/deploy-aws-lbo.sh` . see [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) article for more details about the ALB operator and its installtion.
@@ -438,15 +437,15 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
 
    4.1. Create a security group for ALB
 
-   ```bash
-   ALB_SG_ID=$(aws ec2 create-security-group --group-name bookinfo \
-       --vpc-id $ING_EGRESS_VPC_ID \
-       --description "allow traffic from the internet" \
-       --query 'GroupId' \
-       --output text)
-   ```
-
-    4.2. Allow traffic from the internet
+    ```bash
+    ALB_SG_ID=$(aws ec2 create-security-group --group-name bookinfo \
+        --vpc-id $ING_EGRESS_VPC_ID \
+        --description "allow traffic from the internet" \
+        --query 'GroupId' \
+        --output text)
+    ```
+    
+   4.2. Allow traffic from the internet
 
     ```bash 
     aws ec2 authorize-security-group-ingress \
@@ -456,7 +455,7 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
         --cidr 0.0.0.0/0
     ```
 
-    4.3 Create ALB
+   4.3 Create ALB
  
     ```bash
     ALB_ARN=$(aws elbv2 create-load-balancer \
@@ -474,7 +473,7 @@ curl -v -k -L --resolve securedbookinfo.com:80:$NLB_IP  http://securedbookinfo.c
     aws elbv2 describe-load-balancers --name bookinfo-alb --query 'LoadBalancers[].State.Code'
     ```
 
-    4.4 Create Listener
+   4.4 Create Listener
 
     ```bash
     aws elbv2 create-listener \
