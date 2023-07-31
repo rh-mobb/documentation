@@ -176,4 +176,5 @@ rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
 1. Import the client-config.ovpn file into your VPN Software.
 
 1. Connect your VPN.
+
 ![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
