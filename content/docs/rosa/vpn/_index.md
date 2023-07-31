@@ -176,7 +176,7 @@ rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
 1. Import the client-config.ovpn file into your VPN Software.
 * Mac users - just double click the client-config.ovpn and it will be imported automatically into your VPN client.
 
-* Note: In order to connect to your cluster with the oc cli, you will need to add the DNS Server above to your operating system DNS along with the VPN Client.
+* Note: In order to connect to your cluster with the oc cli, you will need to update your OS DNS server with the DNS Server above after you connected to VPN.
 
 
 1. Connect your VPN.
