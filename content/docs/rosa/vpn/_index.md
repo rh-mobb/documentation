@@ -152,7 +152,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
    ```bash
    echo '<cert>' >> client-config.ovpn
-   cat issued/aws.crt >> client-config.ovpn
+   openssl x509 -in issued/aws.crt >> client-config.ovpn
    echo '</cert>' >> client-config.ovpn
    echo '<key>' >> client-config.ovpn
    cat private/aws.key >> client-config.ovpn
