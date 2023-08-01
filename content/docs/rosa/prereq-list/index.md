@@ -89,7 +89,7 @@ Next, let's talk about the prerequisites needed from networking standpoint.
       - Otherwise, the upstream DNS will need to forward the cluster scope to this VPC so the cluster can resolve internal IPs/services.
 
 ## PrivateLink Prerequisites
-If you would like to deploy a PrivateLink cluster, then be sure to deploy the cluster in the pre-existing VPC (BYO VPC) and please refer [here](https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-vpc.html) for more details and below in high level:
+If you would like to deploy a PrivateLink cluster, then be sure to deploy the cluster in the pre-existing VPC (BYO VPC) and below are the prerequisites in high level:
 
 - Create a public and private subnet for each AZ that your cluster uses.
     - Alternatively, implement transit gateway for internet/egress with appropriate routes.
@@ -100,7 +100,8 @@ If you would like to deploy a PrivateLink cluster, then be sure to deploy the cl
 - Verify route tables by running `aws ec2 describe-route-tables --filters "Name=vpc-id,Values=<vpc-id>"` 
     - Ensure that the cluster can egress either via NAT gateway in public subnet or via transit gateway.
     - And ensure whatever UDR you would like to follow is set up.
-- Select `Configure a cluster-wide proxy` in the `Network configuration` page to enable an HTTP or HTTPS proxy to deny direct access to the internet from your cluster. Please refer [here](https://access.redhat.com/documentation/en-us/red_hat_openshift_service_on_aws/4/html/networking/configuring-a-cluster-wide-proxy) for more details.   
+- You can also configure a cluster-wide proxy during or after install.
+    - Select `Configure a cluster-wide proxy` in the `Network configuration` page to enable an HTTP or HTTPS proxy to deny direct access to the internet from your cluster. Please refer [here](https://access.redhat.com/documentation/en-us/red_hat_openshift_service_on_aws/4/html/networking/configuring-a-cluster-wide-proxy) for more details.   
 
 Note that you can also install a nonPrivateLink ROSA cluster in a pre-existing VPC. 
 
