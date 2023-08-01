@@ -16,34 +16,38 @@ Thanks to Paul Czarkowski for the original idea.
 
 ## Problem Demo
 
-### Deploy a cluster with proxy settings like so:
+1. Deploy a cluster with proxy settings like so:
 
 ```bash
-$ rosa create cluster --http-proxy http://your.proxy:8080 --https-proxy https://your.secure.proxy:8080 --no-proxy my.local.domain
+rosa create cluster --http-proxy http://your.proxy:8080 --https-proxy https://your.secure.proxy:8080 --no-proxy my.local.domain
 ```
 
-### Check your pods in the openshift-monitoring namespace
+2. Check your pods in the openshift-monitoring namespace
 
 ```bash
-$ oc get pods -n openshift-monitoring | grep token-refresher
+oc get pods -n openshift-monitoring | grep token-refresher
+```
+
+```bash
 token-refresher-74ff5d9f96-2mm4v                         1/1     CrashLoopBackOff     5             5m
 ```
 
 ## Install the patch-operator from the console
 
-### Log into your cluster as a user able to install Operators and browse to Operator Hub
+1. Log into your cluster as a user able to install Operators and browse to Operator Hub
 ![install patch operator](/docs/misc/token-refresher-proxy/images/install-patch-operator.png)
 
 Accept the warning about community operators:
 
 ![accept community warning](/docs/misc/token-refresher-proxy/images/accept-community-operator.png)
 
-### Install the Patch Operator
+2. Install the Patch Operator
 
 ![install patch operator](/docs/misc/token-refresher-proxy/images/accept-community-operator-2.png)
 
 ## Create the patch
-### Create the service account and cluster role required for the patch operator to function
+
+1. Create the service account and cluster role required for the patch operator to function
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -96,7 +100,7 @@ subjects:
 EOF
 ```
 
-### Create the patch Custom Resource for the operator
+2. Create the patch Custom Resource for the operator
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -140,5 +144,8 @@ EOF
 
 ```bash
 $ oc get pods -n openshift-monitoring | grep token-refresher
+```
+
+```bash
 token-refresher-5c5dcb6587-ncrzj                         1/1     Running     0             5s
 ```
