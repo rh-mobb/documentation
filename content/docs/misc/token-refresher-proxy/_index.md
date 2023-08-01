@@ -131,10 +131,10 @@ Currently, if you deploy a ROSA or OSD cluster with a proxy, the token-refresher
 
 ## Check that the pod has been patched correctly
 
-    ```bash
-    oc get pods -n openshift-monitoring | grep token-refresher
-    ```
+   ```bash
+   oc get pods -n openshift-monitoring | grep token-refresher
+   ```
 
-    ```bash
-    token-refresher-5c5dcb6587-ncrzj                         1/1     Running     0             5s
-    ```
+   ```bash
+   token-refresher-5c5dcb6587-ncrzj                         1/1     Running     0             5s
+   ```
