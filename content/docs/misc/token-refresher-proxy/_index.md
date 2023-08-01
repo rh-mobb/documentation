@@ -19,13 +19,13 @@ Currently, if you deploy a ROSA or OSD cluster with a proxy, the token-refresher
 
 1. Check your pods in the openshift-monitoring namespace
 
-```bash
-oc get pods -n openshift-monitoring | grep token-refresher
-```
-
-```bash
-token-refresher-74ff5d9f96-2mm4v                         1/1     CrashLoopBackOff     5             5m
-```
+    ```bash
+    oc get pods -n openshift-monitoring | grep token-refresher
+    ```
+    
+    ```bash
+    token-refresher-74ff5d9f96-2mm4v                         1/1     CrashLoopBackOff     5             5m
+    ```
 
 ## Install the patch-operator from the console
 
