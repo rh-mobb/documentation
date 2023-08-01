@@ -132,7 +132,7 @@ token-refresher-74ff5d9f96-2mm4v                         1/1     CrashLoopBackOf
 ## Check that the pod has been patched correctly
 
     ```bash
-    $ oc get pods -n openshift-monitoring | grep token-refresher
+    oc get pods -n openshift-monitoring | grep token-refresher
     ```
 
     ```bash
