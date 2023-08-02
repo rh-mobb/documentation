@@ -1,0 +1,17 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+    {
+    "Effect": "Allow",
+    "Condition": {
+      "StringEquals" : {
+        "${OIDC_ENDPOINT}:sub": ["system:serviceaccount:aws-load-balancer-operator:aws-load-balancer-operator-controller-manager", "system:serviceaccount:aws-load-balancer-operator:aws-load-balancer-controller-cluster"]
+      }
+    },
+    "Principal": {
+      "Federated": "arn:aws:iam::$AWS_ACCOUNT_ID:oidc-provider/${OIDC_ENDPOINT}"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity"
+    }
+    ]
+  }

@@ -39,6 +39,7 @@ skipMetadata: true
 * [Security Reference Architecture for ROSA](/docs/rosa/security-ra)
 * [Configure ROSA for Nvidia GPU Workloads](/docs/rosa/gpu)
 * [Connect to RDS from ROSA with STS](/docs/rosa/sts-rds)
+* [Securely Exposing Applications on ROSA PrivateLink Cluster: A Guide with Openshift Service Mesh, ALB, TGW and NLB ](/content/docs/rosa/alb-nlb-ossm-e2e/)
 
 ### ARO
 
