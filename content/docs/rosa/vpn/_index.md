@@ -169,6 +169,8 @@ There are many ways and methods to create certificates for VPN, the guide below 
    aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id $VPN_CLIENT_ID --output text>client-config.ovpn
    ```
 
+1. Run the following commands to add the certificates created in the first step to the VPN Configuration file.
+
    * note: make sure you are still in the easy rsa / pki directory.
 
    ```bash
