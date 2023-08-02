@@ -45,13 +45,6 @@ aws ec2 create-tags --resources ${ROSA_CLUSTER_VPC_ID} \
   --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned \
   --region ${REGION}
 
-# Configuring egress proxy for AWS Load Balancer Operator
-# oc -n aws-load-balancer-operator create configmap trusted-ca
-# oc -n aws-load-balancer-operator label cm trusted-ca config.openshift.io/inject-trusted-cabundle=true
-# oc -n aws-load-balancer-operator patch subscription aws-load-balancer-operator --type='merge' -p '{"spec":{"config":{"env":[{"name":"TRUSTED_CA_CONFIGMAP_NAME","value":"trusted-ca"}],"volumes":[{"name":"trusted-ca","configMap":{"name":"trusted-ca"}}],"volumeMounts":[{"name":"trusted-ca","mountPath":"/etc/pki/tls/certs/albo-tls-ca-bundle.crt","subPath":"ca-bundle.crt"}]}}}'
-# oc -n aws-load-balancer-operator exec deploy/aws-load-balancer-operator-controller-manager -c manager -- bash -c "ls -l /etc/pki/tls/certs/albo-tls-ca-bundle.crt; printenv TRUSTED_CA_CONFIGMAP_NAME"
-# oc -n aws-load-balancer-operator rollout restart deployment/aws-load-balancer-operator-controller-manager
-# end of Configuring egress proxy section
 
 cat << EOF | oc apply -f -
 apiVersion: v1
@@ -88,3 +81,12 @@ spec:
   sourceNamespace: openshift-marketplace
   startingCSV: aws-load-balancer-operator.v1.0.0
 EOF
+
+
+# Configuring egress proxy for AWS Load Balancer Operator
+# oc -n aws-load-balancer-operator create configmap trusted-ca
+# oc -n aws-load-balancer-operator label cm trusted-ca config.openshift.io/inject-trusted-cabundle=true
+# oc -n aws-load-balancer-operator patch subscription aws-load-balancer-operator --type='merge' -p '{"spec":{"config":{"env":[{"name":"TRUSTED_CA_CONFIGMAP_NAME","value":"trusted-ca"}],"volumes":[{"name":"trusted-ca","configMap":{"name":"trusted-ca"}}],"volumeMounts":[{"name":"trusted-ca","mountPath":"/etc/pki/tls/certs/albo-tls-ca-bundle.crt","subPath":"ca-bundle.crt"}]}}}'
+# oc -n aws-load-balancer-operator exec deploy/aws-load-balancer-operator-controller-manager -c manager -- bash -c "ls -l /etc/pki/tls/certs/albo-tls-ca-bundle.crt; printenv TRUSTED_CA_CONFIGMAP_NAME"
+# oc -n aws-load-balancer-operator rollout restart deployment/aws-load-balancer-operator-controller-manager
+# end of Configuring egress proxy section
