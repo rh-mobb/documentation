@@ -13,7 +13,7 @@ This repository demonstrates how to utilize a privatelink ROSA (Red Hat OpenShif
 
 ### Prerequisites
 
-- A privatelink ROSA cluster
+- A multi-az privatelink ROSA cluster
 - [ROSA CLI](https://github.com/openshift/rosa) - Download the latest release
 - oc CLI `bash rosa download openshift-client`
 - [jq](https://jqlang.github.io/jq/download/)
@@ -21,101 +21,16 @@ This repository demonstrates how to utilize a privatelink ROSA (Red Hat OpenShif
 Clone the repository
 
 ```bash
-git clone https://github.com/houshym/rosa-ossm-e2e-encryption
-cd rosa rosa-ossm-e2e-encryption
+git clone https://github.com/rh-mobb/examples.git
+cd examples
 ```
 
 ### Deploy AWS Load Balancer Operator (ALBO)
 
-Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or use the following snippet or run the  script `./alb-operator/deploy-aws-lbo.sh`
+Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or use the following snippet or run the  script `./aws-lbo/deploy-aws-lbo.sh`
 
 ```bash
-#!/bin/sh
-set +e
-export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}"  | sed 's/-[a-z0-9]\{5\}$//')
-export REGION=$(oc get infrastructure cluster -o=jsonpath="{.status.platformStatus.aws.region}")
-export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed  's|^https://||')
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}")
-echo "Cluster: ${ROSA_CLUSTER_NAME}, Region: ${REGION}, OIDC Endpoint: ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
-TRUST_POLICY=$(<alb-operator/trust-policy.json)
-SUBSTITUTED_POLICY=$(echo "$TRUST_POLICY" | envsubst)
-echo "Trust Policy $SUBSTITUTED_POLICY"
-
-if ! ROLE_ARN=$(aws iam get-role --role-name "${ROSA_CLUSTER_NAME}-alb-operator" --query Role.Arn --output text 2>/dev/null); then
-  ROLE_ARN=$(aws iam create-role --role-name "${ROSA_CLUSTER_NAME}-alb-operator" --assume-role-policy-document "$SUBSTITUTED_POLICY" --query Role.Arn --output text)
-fi
-echo "Role ARN: $ROLE_ARN"
-
-# Create the policy if it doesn't exist
-EXISTING_POLICY_ARN=$(aws --region "$REGION" --output text iam list-policies --query "Policies[?PolicyName=='aws-load-balancer-operator-policy'].Arn" --output text)
-if [ -z "$EXISTING_POLICY_ARN" ]; then
-  # Create the policy if it doesn't exist
-  POLICY_ARN=$(aws --region "$REGION" --query Policy.Arn --output text iam create-policy --policy-name aws-load-balancer-operator-policy --policy-document "file://alb-operator/load-balancer-operator-policy.json")
-else
-  POLICY_ARN="$EXISTING_POLICY_ARN"
-fi
-echo "Policy ARN: $POLICY_ARN"
-aws iam attach-role-policy --role-name "${ROSA_CLUSTER_NAME}-alb-operator" \
-  --policy-arn $POLICY_ARN
-# tag cluster vpc for aws load balancer operator
-export ROSA_CLUSTER_SUBNET=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[0]')
-export ROSA_CLUSTER_VPC_ID=$(aws ec2 describe-subnets --subnet-ids $ROSA_CLUSTER_SUBNET --query 'Subnets[0].VpcId' --output text)
-echo "ROSA cluster VPC ID $ROSA_CLUSTER_VPC_ID"
-aws ec2 create-tags --resources ${ROSA_CLUSTER_VPC_ID} \
-  --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned \
-  --region ${REGION}
-
-# Fetch all subnets of the VPC
-export ROSA_CLUSTER_SUBNETS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$ROSA_CLUSTER_VPC_ID" --query 'Subnets[*].SubnetId' --output text)
-
-# Loop through each subnet and add the tag
-for subnet in $ROSA_CLUSTER_SUBNETS; do
-    aws ec2 create-tags --resources $ROSA_CLUSTER_SUBNETS --tags Key=kubernetes.io/role/internal-elb,Value=1
-done
-
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: aws-load-balancer-operator
-EOF
-
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-stringData:
-  credentials: |
-    [default]
-    role_arn = $ROLE_ARN
-    web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
-EOF
-
-cat << EOF | oc apply -f -
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-spec:
-  upgradeStrategy: Default
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-spec:
-  channel: stable-v1.0
-  installPlanApproval: Automatic
-  name: aws-load-balancer-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-  startingCSV: aws-load-balancer-operator.v1.0.0
-EOF
+./aws-lbo/deploy-aws-lbo.sh
 ```
 
  **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the script `./alb-operator/deploy-aws-lbo.sh`
@@ -148,7 +63,7 @@ we use echo-server application to show an end to end encryption
 
 ```bash
 oc new-project echo-server
-oc apply -f echo-server/echo-server.yaml
+oc apply -f ./aws-lbo/echo-server/echo-server.yaml
 ```
 
 ### Check TLS at the NLB layer
@@ -172,10 +87,10 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
 1. Define a Target Group
  
     ```bash
-    export ING_EGRESS_VPC_ID=vpc-0344775b9177ec7d5
-    export ING_EGRESS_PUB_SUB_1=subnet-0123d00f20e9d4c4b
-    export ING_EGRESS_PUB_SUB_2=subnet-06130b9f97821d8d8
-    export ECHO_SERVER_CERT_ARN=arn:aws:acm:us-east-2:660250927410:certificate/ddae6fbd-a540-4619-939f-9e20ff9b765e 
+    export ING_EGRESS_VPC_ID=<vpc-id>
+    export ING_EGRESS_PUB_SUB_1=<public subnet-id 1>
+    export ING_EGRESS_PUB_SUB_2=<public subnet-id 2>
+    export BOOKINFO_CERT_ARN=<certificate arn>
     export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text) 
     ```
 
