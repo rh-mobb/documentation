@@ -173,20 +173,26 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
    ```bash
    echo '<cert>' >> client-config.ovpn
+
    openssl x509 -in issued/aws.crt >> client-config.ovpn
+   
    echo '</cert>' >> client-config.ovpn
+   
    echo '<key>' >> client-config.ovpn
+   
    cat private/aws.key >> client-config.ovpn
+   
    echo '</key>' >> client-config.ovpn
    ```
 
 1. Add DNS Entries
 
-   In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluser to your VPN settings or /etc/hosts in machine you are connecting from.
+   In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluster to your VPN settings or /etc/hosts in machine you are connecting from.
 
    The DNS server will be the x.x.x.2 address of your VPC CIDR.  For example, if you VPC CIDR is 10.66.0.0/16 then your DNS server will be 10.66.0.2
 
    You can find the VPC ( machine ) CIDR with this command:
+
    ```bash
    rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.machine_cidr'
    ```
@@ -206,4 +212,4 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
 3. Connect your VPN.
 
-![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
+   ![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
