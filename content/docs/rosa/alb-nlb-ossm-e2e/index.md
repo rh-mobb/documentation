@@ -22,8 +22,8 @@ This repository demonstrates how to utilize a privatelink [ROSA](https://www.red
 Clone the repository
 
 ```bash
-git clone https://github.com/houshym/rosa-ossm-e2e-encryption
-cd rosa-ossm-e2e-encryption
+git clone https://github.com/rh-mobb/examples.git
+cd examples
 ```
  ### Deploy OpenShift Service Mesh(OSSM)
 
@@ -31,7 +31,7 @@ cd rosa-ossm-e2e-encryption
 
 Installing the OSSM(OpenShift Service Mesh) involves installing the OpenShift Elasticsearch, Jaeger, Kiali, and Service Mesh Operators, creating and managing a ServiceMeshControlPlane resource to deploy the control plane, and creating a ServiceMeshMemberRoll resource to specify the namespaces associated with the Service Mesh 
 
-Install service mesh operators by applying the following snippet on the cluster or or run the script inside the cloned git repo ./ossm-operator/deploy-ossm.sh
+Install service mesh operators by applying the following snippet on the cluster or or run the script inside the cloned git repo `./ossm-operator/deploy-ossm.sh`
 
 ```bash
 cat << EOF | oc apply -f -
@@ -89,7 +89,7 @@ spec:
 EOF
 ```
 
-Install service mesh operators by applying the following snippet or run the script inside the cloned git repo `./ossm-operator/deploy-ossm.sh` and Check the operator's status in each cluster with the following commands or run script `./ossm-operator/check-ossm.sh` in the cloned repo. if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
+ Check the operator's status in each cluster with the following commands or run script `./ossm-operator/check-ossm.sh` in the cloned repo. if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
   
 ```bash
 oc get sub elasticsearch-operator -n openshift-operators --output jsonpath='{.status.conditions[?(@.type == "CatalogSourcesUnhealthy")].message}'
@@ -109,7 +109,7 @@ oc get sub servicemeshoperator -n openshift-operators --output jsonpath='{.statu
 
 ### Create a service mesh instance
    
-Create a service mesh instance. We assign a static IP addresses(10.201.1.199, 10.201.0.199,10.201.2.199) to the istio-ingress NLB
+Create a service mesh instance. We assign a static IP addresses(10.201.1.199, 10.201.0.199,10.201.2.199) to the istio-ingress NLB. You need to update these IPs based on your configuration.
 **NOTE:**  The annotations in the following resources are reserving the IP addresses for a static NLB using the ALB controller as these are items of interest that differ from a regular OSSM install.
 
 ```bash
@@ -173,93 +173,10 @@ EOF
 
 ### Deploy AWS Load Balancer Operator (ALBO)
 
-Use the following snippet or run the script in the cloned repo `./alb-operator/deploy-aws-lbo.sh` . see [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) article for more details about the ALB operator and its installtion.
+Use the following snippet or run the script in the cloned repo `./aws-lbo/deploy-aws-lbo.sh` . see [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) article for more details about the ALB operator and its installtion.
 
 ```bash
-#!/bin/sh
-set +e
-export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}"  | sed 's/-[a-z0-9]\{5\}$//')
-export REGION=$(oc get infrastructure cluster -o=jsonpath="{.status.platformStatus.aws.region}")
-export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed  's|^https://||')
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}")
-echo "Cluster: ${ROSA_CLUSTER_NAME}, Region: ${REGION}, OIDC Endpoint: ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
-export SUBSTITUTED_POLICY=$(cat alb-operator/trust-policy.json | envsubst)
-echo "Trust Policy $SUBSTITUTED_POLICY"
-
-if ! ROLE_ARN=$(aws iam get-role --role-name "${ROSA_CLUSTER_NAME}-alb-operator" --query Role.Arn --output text 2>/dev/null); then
-  ROLE_ARN=$(aws iam create-role --role-name "${ROSA_CLUSTER_NAME}-alb-operator" --assume-role-policy-document "$SUBSTITUTED_POLICY" --query Role.Arn --output text)
-fi
-echo "Role ARN: $ROLE_ARN"
-# Create the policy if it doesn't exist
-EXISTING_POLICY_ARN=$(aws --region "$REGION" --output text iam list-policies --query "Policies[?PolicyName=='aws-load-balancer-operator-policy'].Arn" --output text)
-if [ -z "$EXISTING_POLICY_ARN" ]; then
-  # Create the policy if it doesn't exist
-  POLICY_ARN=$(aws --region "$REGION" --query Policy.Arn --output text iam create-policy --policy-name aws-load-balancer-operator-policy --policy-document "file://alb-operator/load-balancer-operator-policy.json")
-else
-  POLICY_ARN="$EXISTING_POLICY_ARN"
-fi
-echo "Policy ARN: $POLICY_ARN"
-aws iam attach-role-policy --role-name "${ROSA_CLUSTER_NAME}-alb-operator" \
-  --policy-arn $POLICY_ARN
-# tag cluster vpc for aws load balancer operator
-export ROSA_CLUSTER_SUBNET=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[0]')
-export ROSA_CLUSTER_VPC_ID=$(aws ec2 describe-subnets --subnet-ids $ROSA_CLUSTER_SUBNET --query 'Subnets[0].VpcId' --output text)
-echo "ROSA cluster VPC ID $ROSA_CLUSTER_VPC_ID"
-aws ec2 create-tags --resources ${ROSA_CLUSTER_VPC_ID} \
-  --tags Key=kubernetes.io/cluster/${CLUSTER_NAME},Value=owned \
-  --region ${REGION}
-
-# Fetch all subnets of the VPC
-export ROSA_CLUSTER_SUBNETS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$ROSA_CLUSTER_VPC_ID" --query 'Subnets[*].SubnetId' --output text)
-
-# Loop through each subnet and add the tag
-for subnet in $ROSA_CLUSTER_SUBNETS; do
-    aws ec2 create-tags --resources $ROSA_CLUSTER_SUBNETS --tags Key=kubernetes.io/role/internal-elb,Value=1
-done
-
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: aws-load-balancer-operator
-EOF
-
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-stringData:
-  credentials: |
-    [default]
-    role_arn = $ROLE_ARN
-    web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
-EOF
-
-cat << EOF | oc apply -f -
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-spec:
-  upgradeStrategy: Default
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: aws-load-balancer-operator
-  namespace: aws-load-balancer-operator
-spec:
-  channel: stable-v1.0
-  installPlanApproval: Automatic
-  name: aws-load-balancer-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-  startingCSV: aws-load-balancer-operator.v1.0.0
-EOF
+./aws-lbo/deploy-aws-lbo.sh
 ```
 
  **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the script `./alb-operator/deploy-aws-lbo.sh`
