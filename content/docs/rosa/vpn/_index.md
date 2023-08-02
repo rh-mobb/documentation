@@ -53,6 +53,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 1. Edit certificate parameters
 
    Uncomment and edit the copied template with your values
+
    ```bash
    vim pki/vars
    ```
@@ -67,6 +68,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```
 
    Uncomment (remove the #) the folowing field
+
    ```
    #set_var EASYRSA_KEY_SIZE        2048
    ```
@@ -108,15 +110,30 @@ There are many ways and methods to create certificates for VPN, the guide below 
    * Before running the below commands, make sure you are still in the pki directory under the easyrsa3 directory
 
     ```bash
-   SERVER_CERT_ARN=$(aws acm import-certificate --certificate fileb://issued/server.crt --private-key fileb://private/server.key --certificate-chain fileb://ca.crt --region $REGION --query CertificateArn --output text)
+   SERVER_CERT_ARN=$(aws acm import-certificate \
+   --certificate fileb://issued/server.crt \
+   --private-key fileb://private/server.key \ 
+   --certificate-chain fileb://ca.crt \
+   --region $REGION \
+   --query CertificateArn \
+   --output text)
     ```
 
 1. Import the client certificate
+
      ```bash
-     CLIENT_CERT_ARN=$(aws acm import-certificate --certificate fileb://issued/aws.crt --private-key fileb://private/aws.key --certificate-chain fileb://ca.crt --region $REGION --query CertificateArn --output text)
+     CLIENT_CERT_ARN=$(aws acm import-certificate  \ 
+     --certificate fileb://issued/aws.crt \
+     --private-key fileb://private/aws.key \
+     --certificate-chain fileb://ca.crt \
+     --region $REGION \
+     --query CertificateArn \ 
+     --output text)
     ```
 
 ## Create a Client VPN Endpoint
+
+1. Retrieve the VPN Client ID
 
    ```bash
     VPN_CLIENT_ID=$(aws ec2 create-client-vpn-endpoint \
@@ -126,7 +143,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
     --connection-log-options Enabled=false --split-tunnel --query ClientVpnEndpointId --output text)
    ```
 
-   Associate each private subnet with the client VPN endpoint
+1. Associate each private subnet with the client VPN endpoint
    
    ```bash
    while IFS= read -r subnet;
@@ -136,7 +153,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    done <<< "$PRIVATE_SUBNET_IDS"
    ```
 
-   Add an ingress authorization rule to a Client VPN endpoint
+1. Add an ingress authorization rule to a Client VPN endpoint
 
    ```bash
    aws ec2 authorize-client-vpn-ingress \
@@ -146,6 +163,8 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```
 
 ## Configure your OpenVPN Client
+
+1. Download the VPN Client Configuration
 
    ```bash
    aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id $VPN_CLIENT_ID --output text>client-config.ovpn
@@ -161,7 +180,8 @@ There are many ways and methods to create certificates for VPN, the guide below 
    cat private/aws.key >> client-config.ovpn
    echo '</key>' >> client-config.ovpn
    ```
-## Add DNS Entries
+
+1. Add DNS Entries
 
 In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluser to your VPN settings or /etc/hosts in machine you are connecting from.
 
@@ -173,17 +193,17 @@ rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.machine_ci
 ```
 
 You can find the ROSA base domain with this command:
-```
+
+```bash
 rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
 ``` 
-## Configure your OpenVPN Client
 
-1. Import the client-config.ovpn file into your VPN Software.
-* Mac users - just double click the client-config.ovpn and it will be imported automatically into your VPN client.
+2. Import the client-config.ovpn file into your VPN Software.
+   * Mac users - just double click the client-config.ovpn and it will be imported automatically into your VPN client.
 
-* Note: In order to connect to your cluster with the oc cli, you will need to update your OS DNS server with the DNS Server above after you connected to VPN.
+   * Note: In order to connect to your cluster with the oc cli, you will need to update your OS DNS server with the DNS Server above after you connected to VPN.
 
 
-1. Connect your VPN.
+3. Connect your VPN.
 
 ![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
