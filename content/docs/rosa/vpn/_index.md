@@ -183,22 +183,23 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
 1. Add DNS Entries
 
-In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluser to your VPN settings or /etc/hosts in machine you are connecting from.
+   In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluser to your VPN settings or /etc/hosts in machine you are connecting from.
 
-The DNS server will be the x.x.x.2 address of your VPC CIDR.  For example, if you VPC CIDR is 10.66.0.0/16 then your DNS server will be 10.66.0.2
+   The DNS server will be the x.x.x.2 address of your VPC CIDR.  For example, if you VPC CIDR is 10.66.0.0/16 then your DNS server will be 10.66.0.2
 
-You can find the VPC ( machine ) CIDR with this command:
-```
-rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.machine_cidr'
-```
+   You can find the VPC ( machine ) CIDR with this command:
+   ```bash
+   rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.machine_cidr'
+   ```
 
-You can find the ROSA base domain with this command:
+   You can find the ROSA base domain with this command:
 
-```bash
-rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
-``` 
+   ```bash
+   rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
+   ``` 
 
 2. Import the client-config.ovpn file into your VPN Software.
+   
    * Mac users - just double click the client-config.ovpn and it will be imported automatically into your VPN client.
 
    * Note: In order to connect to your cluster with the oc cli, you will need to update your OS DNS server with the DNS Server above after you connected to VPN.
