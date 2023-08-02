@@ -21,6 +21,7 @@ Start by setting environment variables that we will use to setup the VPN connect
 export ROSA_CLUSTER_NAME=<rosa cluster name>
 
 export REGION=$(rosa describe cluster -c $ROSA_CLUSTER_NAME  -o json | jq -r .region.id)
+
 export VPN_CLIENT_CIDR=172.16.0.0/16
 
 export PRIVATE_SUBNET_IDS=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[]')
