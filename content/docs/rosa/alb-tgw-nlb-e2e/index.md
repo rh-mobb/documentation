@@ -27,13 +27,13 @@ cd examples
 
 ### Deploy AWS Load Balancer Operator (ALBO)
 
-Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or use the following snippet or run the  script `./aws-lbo/deploy-aws-lbo.sh`
+Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or run the script `./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh`
 
 ```bash
-./aws-lbo/deploy-aws-lbo.sh
+./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh
 ```
 
- **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the script `./alb-operator/deploy-aws-lbo.sh`
+ **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the script `./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh`
 
 ```bash
  oc -n aws-load-balancer-operator create configmap trusted-ca
@@ -63,7 +63,7 @@ we use echo-server application to show an end to end encryption
 
 ```bash
 oc new-project echo-server
-oc apply -f ./aws-lbo/echo-server/echo-server.yaml
+oc apply -f ./apps/echo-server/echo-server.yaml
 ```
 
 ### Check TLS at the NLB layer
