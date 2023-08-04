@@ -31,7 +31,7 @@ cd examples
 
 Installing the OSSM(OpenShift Service Mesh) involves installing the OpenShift Elasticsearch, Jaeger, Kiali, and Service Mesh Operators, creating and managing a ServiceMeshControlPlane resource to deploy the control plane, and creating a ServiceMeshMemberRoll resource to specify the namespaces associated with the Service Mesh 
 
-Install service mesh operators by applying the following snippet on the cluster or or run the script inside the cloned git repo `./ossm-operator/deploy-ossm.sh`
+Install service mesh operators by applying the following snippet on the cluster or or run the script inside the cloned git repo `./commons/openshift-service-mesh-operator/deploy-ossm.sh`
 
 ```bash
 cat << EOF | oc apply -f -
@@ -89,7 +89,7 @@ spec:
 EOF
 ```
 
- Check the operator's status in each cluster with the following commands or run script `./ossm-operator/check-ossm.sh` in the cloned repo. if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
+ Check the operator's status in each cluster with the following commands or run script `./commons/openshift-service-mesh-operator/check-ossm.sh` in the cloned repo. if you need troubleshooting follow the [troubleshooting operator](https://docs.openshift.com/container-platform/4.12/support/troubleshooting/troubleshooting-operator-issues.html) : 
   
 ```bash
 oc get sub elasticsearch-operator -n openshift-operators --output jsonpath='{.status.conditions[?(@.type == "CatalogSourcesUnhealthy")].message}'
@@ -173,10 +173,10 @@ EOF
 
 ### Deploy AWS Load Balancer Operator (ALBO)
 
-Use the following snippet or run the script in the cloned repo `./aws-lbo/deploy-aws-lbo.sh` . see [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) article for more details about the ALB operator and its installtion.
+Use the following snippet or run the script in the cloned repo `./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh` . see [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) article for more details about the ALB operator and its installtion.
 
 ```bash
-./aws-lbo/deploy-aws-lbo.sh
+./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh
 ```
 
  **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the script `./alb-operator/deploy-aws-lbo.sh`
@@ -276,10 +276,10 @@ we use bookinfo application to show an end to end encryption
 
 ```bash
 oc new-project bookinfo
-oc apply -f ./app/smmr.yaml
-oc apply -f ./app/bookinfo.yaml
-oc apply -f ./app/destination-rule.yaml
-oc apply -f ./app/gateway.yaml
+oc apply -f ./apps/bookinfo/smmr.yaml
+oc apply -f ./apps/bookinfo/bookinfo.yaml
+oc apply -f ./apps/bookinfo/destination-rule.yaml
+oc apply -f ./apps/bookinfo/gateway.yaml
 ```
 
 ### Verify TLS 
