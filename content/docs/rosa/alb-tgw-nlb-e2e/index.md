@@ -1,3 +1,4 @@
+---
 date: '2023-07-31'
 title: Securely Exposing apps to the Internet with ALB, TGW, and NLB with fixed IP
 tags: ["ROSA", "AWS", "Private Link","ALB", "NLB", "TGW"]
@@ -6,8 +7,13 @@ authors:
   - Paul Czarkowski
 ---
 
-This Git repository demonstrates exposing an HTTPS endpoint on ROSA privatelink cluster to the internet, using ALB, TGW, and NLB with fixed IP addresses. 
-This repository demonstrates how to utilize a privatelink ROSA (Red Hat OpenShift on AWS) cluster to securely expose an application with end-to-end encryption. The provided architecture serves as a sample for application exposure. The deployment incorporates an Ingress/Egress VPC to route traffic to the cluster, which is deployed within a private VPC.
+It's not uncommon to want a private-link ROSA cluster but to also allow some traffic to come into the cluster from another VPC, often across a Transit Gateway. This can often satisfy security needs of traffic passing through an inspection point (like a WAF) or other DMZ use cases.
+
+This guide demonstrates setting up an NLB with static IP addresses (Using the AWS LoadBalancer Operator) which can then be used as a target for an ALB in another VPC.
+
+This can be utilized as a starting point for building your own architecture to securely expose applications on a Private Link cluster.
+
+> The deployment incorporates an Ingress/Egress VPC to route traffic to the cluster, which is deployed within a private VPC.
 
 ![architecture diagram showing privatelink with TGW](./images/rosa_alb_tgw_nlb_e2e.png)
 
@@ -15,86 +21,153 @@ This repository demonstrates how to utilize a privatelink ROSA (Red Hat OpenShif
 
 - A multi-az privatelink ROSA cluster
 - [ROSA CLI](https://github.com/openshift/rosa) - Download the latest release
-- oc CLI `bash rosa download openshift-client`
+- oc CLI `rosa download openshift-client`
 - [jq](https://jqlang.github.io/jq/download/)
 
-Clone the repository
+1. Clone the MOBB examples registry that contains scripts and tools to help deploy this.
 
-```bash
-git clone https://github.com/rh-mobb/examples.git
-cd examples
-```
+    ```bash
+    git clone https://github.com/rh-mobb/examples.git mobb-examples
+    cd mobb-examples
+    ```
+
+1. Set some environment variables (substitute the values inside `<>`)
+
+    ```bash
+    export CLUSTER_NAME=<your rosa cluster name>
+    export REGION=$(rosa describe cluster -c ${CLUSTER_NAME} \
+      -o json | jq -r '.region.id')
+    export SUBNETS=$(rosa describe cluster -c ${CLUSTER_NAME} \
+      -o json | jq -r '.aws.subnet_ids[]' | xargs)
+    ```
 
 ### Deploy AWS Load Balancer Operator (ALBO)
 
-Use this [mobb.ninja](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) to install ALB operator on ROSA cluster or run the script `./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh`
+1. Run `rosa/aws-load-balancer-operator/deploy-aws-lbo.sh` to install the ALB operator on your ROSA cluster.
 
-```bash
-./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh
-```
+    > This script creates the IAM and OCP resources necessary for the ALBO, See the following [guide](https://mobb.ninja/docs/rosa/aws-load-balancer-operator/) for a walkthrough of those resources.
 
- **Note:** If you have a cluster-wide proxy, you must run the following snippet or uncomment the "Configuring egress proxy for AWS Load Balancer Operator" section in the script `./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh`
+    > Note: If you have a cluster-wide proxy, run `export HAS_PROXY=true` before running the command.
 
-```bash
- oc -n aws-load-balancer-operator create configmap trusted-ca
- oc -n aws-load-balancer-operator label cm trusted-ca config.openshift.io/inject-trusted-cabundle=true
- oc -n aws-load-balancer-operator patch subscription aws-load-balancer-operator --type='merge' -p '{"spec":{"config":{"env":[{"name":"TRUSTED_CA_CONFIGMAP_NAME","value":"trusted-ca"}],"volumes":[{"name":"trusted-ca","configMap":{"name":"trusted-ca"}}],"volumeMounts":[{"name":"trusted-ca","mountPath":"/etc/pki/tls/certs/albo-tls-ca-bundle.crt","subPath":"ca-bundle.crt"}]}}}'
- oc -n aws-load-balancer-operator exec deploy/aws-load-balancer-operator-controller-manager -c manager -- bash -c "ls -l /etc/pki/tls/certs/albo-tls-ca-bundle.crt; printenv TRUSTED_CA_CONFIGMAP_NAME"
- oc -n aws-load-balancer-operator rollout restart deployment/aws-load-balancer-operator-controller-manager
-```
+    ```bash
+    ./rosa/aws-load-balancer-operator/deploy-aws-lbo.sh
+    ```
 
-Create AWS Load Balancer Controller
+1. With the ALBO deployed, we can use it to create an AWS Load Balancer Controller resource.
 
-```bash
-cat << EOF | oc apply -f -
-apiVersion: networking.olm.openshift.io/v1
-kind: AWSLoadBalancerController
-metadata:
-  name: cluster
-spec:
-  credentials:
-    name: aws-load-balancer-operator
-EOF
-```
+    ```bash
+    cat << EOF | oc apply -f -
+    apiVersion: networking.olm.openshift.io/v1
+    kind: AWSLoadBalancerController
+    metadata:
+      name: cluster
+    spec:
+      credentials:
+        name: aws-load-balancer-operator
+    EOF
+    ```
 
 ### Deploy application
 
-we use echo-server application to show an end to end encryption
+#### Static IPs for NLB
 
-```bash
-oc new-project echo-server
-oc apply -f ./apps/echo-server/echo-server.yaml
-```
+The application will be requesting an NLB with static IPs, in order to do that you need to find a spare IP from each of your ROSA subnets.
 
-### Check TLS at the NLB layer
+1. Run the following command to get your subnets
 
-```bash
-export NLB_URL=$(oc get svc -n ech-server http-https-echo -ojsonpath='{.status.loadBalancer.ingress[0].hostname}')
-echo "NLB's FQDN:  $NLB_URL"
-export NLB_IP=$(dig +short $NLB_URL | head -1)
-echo "NLP IP address $NLB_IP"
-```
-Check application  endpoint
+    ```bash
+    aws ec2 describe-subnets --region ${REGION} \
+      --subnet-ids $(echo "${SUBNETS}") \
+      --query 'Subnets[*].CidrBlock' --output text
+    ```
 
-```bash
- curl -v -k --resolve secured-echo-server.com:443:$NLB_IP https://secured-echo-server.com:443/productpage
-```
+    ```
+    10.0.16.0/22    10.0.12.0/22    10.0.20.0/22
+    ```
 
-### Create an ALB in the public subnet 
+1. Pick a an unused IP address from each of these CIDRs (you may need to use the AWS console to do this, although its a good bet a high IP in each CIDR is free).
 
-We need to create an ALB in the ingress/egress VPC. To do this, we first need to create a Target Group (TG) within this VPC and then associate this TG with the ALB's targets. To create the TG, we require the IP addresses of the NLB. 
+    > In this example we'll use `10.0.16.200`, `10.0.12.200`, and `10.0.20.200`.
+
+1. Edit the file `./apps/echo-server/echo-server.yaml` and find the line that contains the text `service.beta.kubernetes.io/aws-load-balancer-private-ipv4-addresses`.  Replace the example IPs with the ones you picked above.
+
+1. Create a project to run the echo server application in
+
+    ```bash
+    oc new-project echo-server
+    ```
+
+1. Deploy the echo server application
+
+    ```bash
+    oc apply -f ./apps/echo-server/echo-server.yaml
+    ```
+
+1. Wait until the deployment is running
+
+    ```bash
+    oc rollout status deployment/http-https-echo
+    ```
+
+1. Wait until the service has a Load Balancer attached
+
+    > Hint: the `EXTERNAL-IP` field should contain a DNS record, if not, wait a minute and run this command again.
+
+    ```bash
+    oc get service
+    ```
+
+    ```
+    NAME              TYPE           CLUSTER-IP     EXTERNAL-IP
+        PORT(S)                         AGE
+    http-https-echo   LoadBalancer   172.30.52.80   k8s-echoserv-httphttp-12c646e3a6-58ae04e547de7af0.elb.us-east-1.amazonaws.com   8080:30127/TCP,8443:32553/TCP   24s
+    ```
+
+1. Get the URL of the NLB
+
+    ```bash
+    export NLB_URL=$(oc get svc -n echo-server http-https-echo -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    echo "NLB's FQDN: $NLB_URL"
+    ```
+
+1. Check you can access the endpoint
+
+    > Note: The NLB inherits the security group of its targets, which in this case means you need to access it from inside the subnets that the ROSA worker nodes are in.  We do this by running the command through `oc debug`
+
+    ```bash
+    NODE=$(oc get nodes -l 'node-role.kubernetes.io/worker=' \
+      -o name | head -1)
+    oc debug $NODE -- curl -s -v -k https://$NLB_URL
+    ```
+
+    The output should include a JSON blob that looks something like this.  If it stalls out, you might just need to wait a while for the NLB to finish provisioning.
+
+    ```
+    {
+      "path": "/",
+      "headers": {
+        "host": "k8s-echoserv-httphttp-6fa3dbaa74-c7eab484590da975.elb.us-east-1.amazonaws.com",
+        "user-agent": "curl/7.61.1",
+        "accept": "*/*"
+      },
+      "method": "GET",
+    ```
+
+### Create an ALB in the public subnet
+
+We need to create an ALB in the ingress/egress VPC. To do this, we first need to create a Target Group (TG) within this VPC and then associate this TG with the ALB's targets. To create the TG, we require the IP addresses of the NLB.
 
 1. Define a Target Group
- 
+
     ```bash
     export ING_EGRESS_VPC_ID=<vpc-id>
     export ING_EGRESS_PUB_SUB_1=<public subnet-id 1>
     export ING_EGRESS_PUB_SUB_2=<public subnet-id 2>
     export BOOKINFO_CERT_ARN=<certificate arn>
-    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text) 
+    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text)
     ```
 
-1. Fetch NLB IP addresses 
+1. Fetch NLB IP addresses
 
     ```bash
     export NLB_FQDN=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
@@ -132,15 +205,15 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     ```
    4.2. Allow traffic from the internet
 
-    ```bash 
+    ```bash
     aws ec2 authorize-security-group-ingress \
        --group-id $ALB_SG_ID \
        --protocol tcp \
        --port 443 \
        --cidr 0.0.0.0/0
     ```
-   4.3 Create ALB 
-   
+   4.3 Create ALB
+
     ```bash
     ALB_ARN=$(aws elbv2 create-load-balancer \
         --name secured-echo-alb \
@@ -151,7 +224,7 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
         --query 'LoadBalancers[0].LoadBalancerArn' \
         --output text)
     ```
-   
+
    4.4 Create Listener
 
     ```bash
@@ -162,10 +235,10 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     --certificates CertificateArn=$ECHO_SERVER_CERT_ARN \
     --default-actions Type=forward,TargetGroupArn=$TG_ARN
     ```
-   
+
 ### Check application endpoint
 
-Fetch ALB's URL and generate traffic  
+Fetch ALB's URL and generate traffic
 
 ```bash
 ALB_DNS=$(aws elbv2 describe-load-balancers --load-balancer-arns $ALB_ARN --query 'LoadBalancers[0].DNSName' --output text)
