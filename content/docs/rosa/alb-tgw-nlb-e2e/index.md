@@ -240,9 +240,9 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
 
 Fetch ALB's URL and generate traffic
 
-```bash
-ALB_DNS=$(aws elbv2 describe-load-balancers --load-balancer-arns $ALB_ARN --query 'LoadBalancers[0].DNSName' --output text)
-
-curl -k  https://$ALB_DNS
-```
+    ```bash
+    ALB_DNS=$(aws elbv2 describe-load-balancers --load-balancer-arns $ALB_ARN --query 'LoadBalancers[0].DNSName' --output text)
+    
+    curl -k  https://$ALB_DNS
+    ```
 
