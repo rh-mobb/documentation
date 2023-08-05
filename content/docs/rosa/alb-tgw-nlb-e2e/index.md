@@ -34,7 +34,7 @@ This can be utilized as a starting point for building your own architecture to s
 1. Set some environment variables (substitute the values inside `<>`)
 
     ```bash
-    export CLUSTER_NAME=<your rosa cluster name>
+    export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}"  | sed 's/-[a-z0-9]\{5\}$//')
     export REGION=$(rosa describe cluster -c ${CLUSTER_NAME} \
       -o json | jq -r '.region.id')
     export SUBNETS=$(rosa describe cluster -c ${CLUSTER_NAME} \
@@ -163,14 +163,14 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     export ING_EGRESS_VPC_ID=<vpc-id>
     export ING_EGRESS_PUB_SUB_1=<public subnet-id 1>
     export ING_EGRESS_PUB_SUB_2=<public subnet-id 2>
-    export BOOKINFO_CERT_ARN=<certificate arn>
-    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 15021 --health-check-path /healthz/ready --query 'TargetGroups[0].TargetGroupArn' --output text)
+    export APP_CERT_ARN=<certificate arn>
+    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 443 --health-check-path / --query 'TargetGroups[0].TargetGroupArn' --output text)
     ```
 
 1. Fetch NLB IP addresses
 
     ```bash
-    export NLB_FQDN=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    export NLB_FQDN=$(oc get svc -n echo-server http-https-echo -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     echo "istio-ingressgateway's external IP: $NLB_FQDN"
     echo "--> Fetch the load balancer ARN"
     export NLB_ARN=$(aws elbv2 describe-load-balancers --query "LoadBalancers[?DNSName=='$NLB_FQDN'].LoadBalancerArn" --output text)
@@ -232,7 +232,7 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     --load-balancer-arn $ALB_ARN \
     --protocol HTTPS \
     --port 443 \
-    --certificates CertificateArn=$ECHO_SERVER_CERT_ARN \
+    --certificates CertificateArn=$APP_CERT_ARN \
     --default-actions Type=forward,TargetGroupArn=$TG_ARN
     ```
 
