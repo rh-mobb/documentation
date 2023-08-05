@@ -171,10 +171,10 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
 
     ```bash
     export NLB_FQDN=$(oc get svc -n ossm istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-    echo "The external IP address of istio-ingressgateway is: $NLB_FQDN"
-    # Fetch the load balancer ARN
+    echo "istio-ingressgateway's external IP: $NLB_FQDN"
+    echo "--> Fetch the load balancer ARN"
     export NLB_ARN=$(aws elbv2 describe-load-balancers --query "LoadBalancers[?DNSName=='$NLB_FQDN'].LoadBalancerArn" --output text)
-    echo "NLB arn: $NLB_ARN"
+    echo "NLB's arn: $NLB_ARN"
     export NLB_INFO=$(aws elbv2 describe-load-balancers --load-balancer-arns $NLB_ARN --output json )
     export NLB_PRV_IP_1=$(echo "$NLB_INFO" | jq -r '.LoadBalancers[0].AvailabilityZones[0].LoadBalancerAddresses[0].PrivateIPv4Address')
     export NLB_PRV_IP_2=$(echo "$NLB_INFO" | jq -r '.LoadBalancers[0].AvailabilityZones[1].LoadBalancerAddresses[0].PrivateIPv4Address')
@@ -240,9 +240,9 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
 
 Fetch ALB's URL and generate traffic
 
-    ```bash
+```bash
     ALB_DNS=$(aws elbv2 describe-load-balancers --load-balancer-arns $ALB_ARN --query 'LoadBalancers[0].DNSName' --output text)
     
     curl -k  https://$ALB_DNS
-    ```
+```
 
