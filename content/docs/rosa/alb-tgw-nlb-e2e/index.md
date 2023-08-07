@@ -247,8 +247,8 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     ```bash
     INSTANCE_ID=$(aws ec2 describe-instances --query "Reservations[].Instances[?Tags[?starts_with(Value,'$CLUSTER_NAME') && contains(Value,'worker')]].InstanceId" --output text | head -n 1)
     INSTANCE_SG_ID=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[].Instances[].SecurityGroups[].GroupId" --output text)
-
-    add rule security group
+    ```
+    Add rule to security group
 
     ```bash
     aws ec2 authorize-security-group-ingress --group-id $INSTANCE_SG_ID --protocol tcp --port 30000-32767 --cidr $(aws ec2 describe-vpcs --vpc-ids $ING_EGRESS_VPC_ID --query "Vpcs[].CidrBlock" --output text)
