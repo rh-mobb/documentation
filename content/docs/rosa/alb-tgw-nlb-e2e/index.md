@@ -169,6 +169,7 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     export ING_EGRESS_PUB_SUB_2=<public subnet-id 2>
     export APP_CERT_ARN=<certificate arn>
     export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTPS --health-check-port 443 --health-check-path / --query 'TargetGroups[0].TargetGroupArn' --output text)
+    ING_EGRESS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids   --query "Vpcs[].CidrBlock" --output text)
     ```
 
 1. Fetch NLB IP addresses
@@ -238,6 +239,19 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     --port 443 \
     --certificates CertificateArn=$APP_CERT_ARN \
     --default-actions Type=forward,TargetGroupArn=$TG_ARN
+    ```
+    4.5 Allow traffic from ALB CIDR range to Workers for port rage 30000-32767
+
+    Find worker security group
+
+    ```bash
+    INSTANCE_ID=$(aws ec2 describe-instances --query "Reservations[].Instances[?Tags[?starts_with(Value,'$CLUSTER_NAME') && contains(Value,'worker')]].InstanceId" --output text | head -n 1)
+    INSTANCE_SG_ID=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[].Instances[].SecurityGroups[].GroupId" --output text)
+
+    add rule security group
+
+    ```bash
+    aws ec2 authorize-security-group-ingress --group-id $INSTANCE_SG_ID --protocol tcp --port 30000-32767 --cidr $(aws ec2 describe-vpcs --vpc-ids $ING_EGRESS_VPC_ID --query "Vpcs[].CidrBlock" --output text)
     ```
 
 ### Check application endpoint
