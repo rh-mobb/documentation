@@ -168,7 +168,7 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
     export ING_EGRESS_PUB_SUB_1=<public subnet-id 1>
     export ING_EGRESS_PUB_SUB_2=<public subnet-id 2>
     export APP_CERT_ARN=<certificate arn>
-    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTP --health-check-port 443 --health-check-path / --query 'TargetGroups[0].TargetGroupArn' --output text)
+    export TG_ARN=$(aws elbv2 create-target-group --name nlb-e2e-tg --protocol HTTPS --port 443 --vpc-id $ING_EGRESS_VPC_ID --target-type ip --health-check-protocol HTTPS --health-check-port 443 --health-check-path / --query 'TargetGroups[0].TargetGroupArn' --output text)
     ```
 
 1. Fetch NLB IP addresses
