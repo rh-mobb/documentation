@@ -6,7 +6,8 @@ tags: ["ARO", "Azure"]
 
 ## Prerequisites
 
-* [A private ARO cluster](../private-cluster)
+* [A private ARO cluster](../private-cluster) created on version 4.10 or earlier
+  * Note that ARO clusters created on version 4.11 and later use OVNKubernetes as their Container Network Interface, and egressip-ipam-operator does not support OVNKubernetes. Please see [EgressIP](https://docs.openshift.com/container-platform/4.11/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) as a possible alternative.
 
 
 ## Deploy the Egressip Ipam Operator
