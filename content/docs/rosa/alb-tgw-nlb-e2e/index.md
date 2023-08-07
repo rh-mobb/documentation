@@ -242,6 +242,12 @@ We need to create an ALB in the ingress/egress VPC. To do this, we first need to
 
 ### Check application endpoint
 
+Wait for ALB activation 
+
+```bash
+aws elbv2 wait load-balancer-available --load-balancer-arns $(aws elbv2 describe-load-balancers --names secured-echo-alb --query 'LoadBalancers[0].LoadBalancerArn' --output text)
+
+```
 Fetch ALB's URL and generate traffic
 
 ```bash
