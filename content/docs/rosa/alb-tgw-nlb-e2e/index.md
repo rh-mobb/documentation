@@ -140,7 +140,11 @@ The application will be requesting an NLB with static IPs, in order to do that y
     oc debug $NODE -- curl -s -v -k https://$NLB_URL
     ```
 
-    The output should include a JSON blob that looks something like this.  If it stalls out, you might just need to wait a while for the NLB to finish provisioning.
+    The output should include a JSON blob that looks something like this.  If it stalls out, you might just need to wait a while for the NLB to finish provisioning. Run the following snippet and wait for NLB activation
+
+    ```bash
+    aws elbv2 wait load-balancer-available --load-balancer-arns $(aws elbv2 describe-load-balancers --query "LoadBalancers[?DNSName=='$(oc get svc -n echo-server http-https-echo -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')'].LoadBalancerArn" --output text)  && echo "NLB is active!"
+    ```
 
     ```
     {
@@ -152,7 +156,7 @@ The application will be requesting an NLB with static IPs, in order to do that y
       },
       "method": "GET",
     ```
-
+    
 ### Create an ALB in the public subnet
 
 We need to create an ALB in the ingress/egress VPC. To do this, we first need to create a Target Group (TG) within this VPC and then associate this TG with the ALB's targets. To create the TG, we require the IP addresses of the NLB.
