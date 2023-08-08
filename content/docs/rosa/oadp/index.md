@@ -12,8 +12,8 @@ export CLUSTER_NAME=my-cluster
 export ROSA_CLUSTER_ID=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .id)
 export REGION=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .region.id)
 export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed 's|^https://||')
-export AWS_ACCOUNT_ID='aws sts get-caller-identity --query Account --output text'
-export CLUSTER_VERSION='rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r .version.raw_id | but -f -2 -d '.' '
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export CLUSTER_VERSION=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r .version.raw_id |  cut -d'.' -f1,2)
 export ROLE_NAME="${CLUSTER_NAME}-openshift-oadp-aws-cloud-credentials"
 export SCRATCH="/tmp/${CLUSTER_NAME}/oadp"
 mkdir -p ${SCRATCH}
@@ -64,11 +64,10 @@ cat << EOF > ${SCRATCH}/policy.json
   }
  ]}
 EOF
-fi
 
-export POLICY_ARN=$(aws iam create-policy --policy-mane "RosaOadpVer1" \
---policy-document file:///${SCRATCH}/policy.json --query Policy.Arn \
---tags Key=rosa_openshift_version,Value=${CLUSTER_VERSION} Key-rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-oadp Key=operator_name,Value=openshift-oadp \
+export POLICY_ARN=$(aws iam create-policy --policy-name "RosaOadpVer1" \
+--policy-document "file:///${SCRATCH}/policy.json" --query "Policy.Arn" \
+--tags "Key=rosa_openshift_version,Value=${CLUSTER_VERSION}"  "Key=rosa_role_prefix,Value=ManagedOpenShift" "Key=operator_namespace,Value=openshift-oadp" "Key=operator_name,Value=openshift-oadp" \
 --output text)
 fi
 
