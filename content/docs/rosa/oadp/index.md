@@ -36,8 +36,8 @@ cat << EOF > ${SCRATCH}/policy.json
     "Action": [
       "s3:CreateBucket",echo ${POLICY_ARN}
       "s3:DeleteBucket",cd openshift-docs
-      "s3:PutBucketTegging",
-      "s3:GetBucketTegging",
+      "s3:PutBucketTagging",
+      "s3:GetBucketTagging",
       "s3:PutEncryptionConfiguration",
       "s3:GetEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
@@ -46,10 +46,10 @@ cat << EOF > ${SCRATCH}/policy.json
       "s3:ListBucket",
       "s3:GetObject",
       "s3:PutObject",
-      "s3:DeleteOgject",
-      "s3:ListBucketMultipartUpLoads",
-      "s3:AbortMultipartUpLoads",
-      "s3:ListMultipartUpLoadParts",
+      "s3:DeleteObject",
+      "s3:ListBucketMultipartUploads",
+      "s3:AbortMultipartUploads",
+      "s3:ListMultipartUploadParts",
       "s3:DescribeSnapshots",
       "ec2:DescribeVolumes",
       "ec2:DescribeVolumeAttribute",
@@ -59,7 +59,7 @@ cat << EOF > ${SCRATCH}/policy.json
       "ec2:CreateVolume",
       "ec2:CreateSnapshot",
       "ec2:DeleteSnapshot",
-    ]
+    ],
     "Resource": "*"
   }
  ]}
