@@ -34,8 +34,8 @@ cat << EOF > ${SCRATCH}/policy.json
   {
     "Effect": "Allow",
     "Action": [
-      "s3:CreateBucket",echo ${POLICY_ARN}
-      "s3:DeleteBucket",cd openshift-docs
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
       "s3:PutBucketTagging",
       "s3:GetBucketTagging",
       "s3:PutEncryptionConfiguration",
@@ -58,12 +58,14 @@ cat << EOF > ${SCRATCH}/policy.json
       "ec2:CreateTags",
       "ec2:CreateVolume",
       "ec2:CreateSnapshot",
-      "ec2:DeleteSnapshot",
+      "ec2:DeleteSnapshot"
     ],
     "Resource": "*"
   }
  ]}
 EOF
+fi
+
 export POLICY_ARN=$(aws iam create-policy --policy-mane "RosaOadpVer1" \
 --policy-document file:///${SCRATCH}/policy.json --query Policy.Arn \
 --tags Key=rosa_openshift_version,Value=${CLUSTER_VERSION} Key-rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-oadp Key=operator_name,Value=openshift-oadp \
