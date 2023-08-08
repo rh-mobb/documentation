@@ -9,7 +9,7 @@ OpenShift API for Data Protection (OADP) is a feature of Red Hat OpenShift that 
 
 ```bash
 export CLUSTER_NAME=my-cluster 
-export ROSA_CLUSTER_ID-$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .id)
+export ROSA_CLUSTER_ID=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .id)
 export REGION=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .region.id)
 export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed 's|^https://||')
 export AWS_ACCOUNT_ID='aws sts get-caller-identity --query Account --output text'
