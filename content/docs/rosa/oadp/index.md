@@ -24,7 +24,7 @@ ${OIDC_ENDPOINT}, AWS Account ID: ${AWS_ACCOUNT_ID}"
 create an IAM policy to allow access to S3.
 
 ```bash
-export POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaOadpVer1'].{ARN:Arn}" -- output text) 
+export POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='RosaOadpVer1'].{ARN:Arn}" --output text) 
 
 if [[ -z "${POLICY_ARN}" ]]; then
 cat << EOF > ${SCRATCH}/policy.json 
