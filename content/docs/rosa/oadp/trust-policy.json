@@ -1,0 +1,17 @@
+{
+    "Version": :2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::660250927410:oidc-provider/dvbwgdztaeq9o.cloudfront.net/25f9nvcsmnkbasdv1kmmabvurr49spev"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "dvbwgdztaeq9o.cloudfront.net/25f9nvcsmnkbasdv1kmmabvurr49spev:sub": [
+            "system:serviceaccount:openshift-adp:openshift-adp-controller-manager",
+            "system:serviceaccount:openshift-adp:velero:]
+        }
+      }
+    }]
+}
