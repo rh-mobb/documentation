@@ -7,7 +7,7 @@ title: Using Group Sync Operator with Okta and ROSA/OSD
 
 *15 July 2022*
 
-This guide focuses on how to synchronize Identity Provider (IDP) groups and users after configuring authentication in OpenShift Cluster Manager (OCM). For an IDP configuration example, please reference the [Configure Okta as an OIDC identity provider for ROSA/OSD](https://mobb.ninja/docs/idp/okta/) guide.
+This guide focuses on how to synchronize Identity Provider (IDP) groups and users after configuring authentication in OpenShift Cluster Manager (OCM).
 
 To set up group synchronization from Okta to ROSA/OSD you must:
 
