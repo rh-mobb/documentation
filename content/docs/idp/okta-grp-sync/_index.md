@@ -12,10 +12,10 @@ This guide focuses on how to synchronize Identity Provider (IDP) groups and user
 To set up group synchronization from Okta to ROSA/OSD you must:
 
 1. Define groups and assign users in Okta
-1. Install the Group Sync Operator from the OpenShift Operator Hub
-1. Create and configure a new Group Sync instance
-1. Set a synchronization schedule
-1. Test the synchronization process
+2. Install the Group Sync Operator from the OpenShift Operator Hub
+3. Create and configure a new Group Sync instance
+4. Set a synchronization schedule
+5. Test the synchronization process
 
 ## Define groups and assign users in Okta ##
 
