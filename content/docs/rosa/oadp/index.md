@@ -100,9 +100,9 @@ cat <<EOF > ${SCRATCH}/trust-policy.json
 EOF
 
 echo "create role"
-exportn ROLE_ARN=$(aws iam create-role --role-name "${ROLE_NAME}" --assume-role-policy-document file://${SCRATCH}/trust-policy.json --tags Key+rosa_cluster_id,Value=${ROSA_CLUSTER_ID} Key=rosa_openshift_verson,Value=${CLUSTER_VERSION} Key=rosa_role_prefix,Value=ManagedOpenShift Key=operator_namespace,Value=openshift-adp Key=operator_name,Value-openshift-oadp --query Role.Arn --output text)
+export ROLE_ARN=$(aws iam create-role --role-name "${ROLE_NAME}" --assume-role-policy-document file://${SCRATCH}/trust-policy.json --tags "Key=rosa_cluster_id,Value=${ROSA_CLUSTER_ID}" "Key=rosa_openshift_version,Value=${CLUSTER_VERSION}" "Key=rosa_role_prefix,Value=ManagedOpenShift" "Key=operator_namespace,Value=openshift-adp" "Key=operator_name,Value=openshift-oadp" --query Role.Arn --output text)
 
-echo "echo ${ROLE_ARN}"
+echo "${ROLE_ARN}"
 ```
 attach policy to IAM role
 
