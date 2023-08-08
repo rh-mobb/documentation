@@ -112,6 +112,38 @@ aws iam attach-role-policy --role-name "${ROLE_NAME}" --policy-arn ${POLICY_ARN}
 
 ### Installing the OADP Operator and providing the IAM role
 
+1. Install OADP operator
+
+```bash
+oc create ns openshift-adp
+
+cat <<EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: oadp-operatorgroup
+  namespace: openshift-adp
+spec:
+  targetNamespaces:
+  - openshift-adp
+EOF
+
+cat <<EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: redhat-oadp-operator
+  namespace: openshift-adp
+spec:
+  channel: stable-1.2
+  installPlanApproval: Automatic
+  name: redhat-oadp-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: oadp-operator.v1.2.0
+EOF
+```
+
 1. Create the credentials file
 
 ```bash
@@ -122,13 +154,11 @@ web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
 EOF
 ```
 
-1.  Creatn an openshoft secret
+1.  Creatn an openshift secret
 
 ```bash
 oc -n openshift-adp create secret generic cloud-credentials --from-file=${SCRATCH}/credentials
 ```
-
-1. Install the OADP Operator.
 
 1. Create AWS cloud storage using your AWS credentials:
 
@@ -180,10 +210,10 @@ spec:
   snapshotLocations:
   - velero:
       config:
-        credentialsFile: /tmp/credentials/openshift-adp/cloud-credentials-credentials 
-        enableSharedConfig: "true" 
-        profile: default 
-        region: ${REGION} 
+        credentialsFile: /tmp/credentials/openshift-adp/cloud-credentials-credentials
+        enableSharedConfig: "true"
+        profile: default
+        region: ${REGION}
       provider: aws
 EOF
 ```
