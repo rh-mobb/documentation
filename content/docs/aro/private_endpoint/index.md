@@ -8,11 +8,17 @@ authors:
 ---
 
 There are two way to configure this set up
-1. Self provision the storage account and file share
-2. Auto provision the storage account and file share
-   - can dynamically provision the storage via PVC
-   - dont have to create PVs, the PVC will create that for you 
+1. Self provision the storage account and file share (static method)
+  - Requires pre-existing storage account and file share
+2. Auto provision the storage account and file share (dynamic method)
+  - CSI will create the storage account and file share
 
+> **WARNING** please note that this approach does not work on FIPS-enabled clusters.  This is due to the CIFS
+protocol being largely non-compliant with FIPS cryptographic requirements.  Please see the following for more 
+information:
+
+- [Red Hat Article on CIFS/FIPS](https://access.redhat.com/solutions/256053)
+- [Microsoft Article on CIFS/FIPS](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-kubernetes/fail-to-mount-azure-file-share#fipsnodepool)
 
 ## Pre Requisites
 
@@ -33,7 +39,7 @@ export AZR_REGION=eastus \
 
 ```
 
-## Self-Provision Storage Account and Create/Configure the Private Endpoint  
+## Self-Provision Storage Account and File Share (Static Method) 
 
 * Note if you would like to dynamically provision the storage account using the CSI provisioner skip the first step
 
@@ -56,6 +62,8 @@ az storage share create \
     --name $AZR_FILE_SHARE \
     --quota 5
 ```
+
+## Create/Configure the Private Endpoint
 
 *NOTE make sure the share quota matches the quota set later when creating the PVC
 
@@ -166,12 +174,14 @@ Address: x.x.x.x
 2. Create a secret object containing azure file creds
 
 ```bash
-AZR_STORAGE_KEY=$(az storage account keys list --account-name $AZR_STORAGE_ACCOUNT_NAME --query "[0].value")
+AZR_STORAGE_KEY=$(az storage account keys list --account-name $AZR_STORAGE_ACCOUNT_NAME --query "[0].value" -o tsv)
 
 oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azurestorageaccountname=$AZR_STORAGE_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$AZR_STORAGE_KEY
 ```
 
-1. Create a custom storage class 
+1. Create a static storage class (see below for dynamic method)
+
+> **NOTE** only needed if using the static provisioning method
 
 - The CSI can either create volumes in pre created storage accounts or dynamically create the storage account with a volume inside the dynamic storage account
 
@@ -185,7 +195,7 @@ oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azuresto
       name: <static_sc_name>
     parameters:
       resourceGroup: <cluster_resource_group>
-      server: <storage_account>.privatelink.file.core.windows.net
+      server: <storage_account>.file.core.windows.net
       skuName: Standard_LRS
       storageAccount: <storage_account>
       secretName: <secret_name>
@@ -196,7 +206,9 @@ oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azuresto
     volumeBindingMode: Immediate
     ```
 
-- Configure so the provisioner dynamically creates the Storage Account in Azure
+- Create a dynamic storage class
+
+> **NOTE** only needed if using the dynamic provisioning method (see above for static method)
 
     ```yaml
     allowVolumeExpansion: true
@@ -220,10 +232,10 @@ oc create secret generic $OC_STORAGE_ACCOUNT_SECRET_NAME --from-literal=azuresto
 - PVCs are scoped at the namespace level so make sure you are creating this volume claim in the appropriate project
 
 ```yaml
-apiVersion: "v1"
-kind: "PersistentVolumeClaim"
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: "<claim_name>" 
+  name: <claim_name>
 spec:
   accessModes:
     - "ReadWriteOnce"
