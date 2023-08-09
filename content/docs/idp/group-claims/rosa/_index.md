@@ -100,7 +100,8 @@ rosa create idp \
     --email-claims email \
     --name-claims name \
     --username-claims preferred_username \
-    --groups-claims groups
+    --groups-claims groups \
+    --extra-scopes email,profile
 ```
 
 ## 4. Grant additional permissions to individual groups
