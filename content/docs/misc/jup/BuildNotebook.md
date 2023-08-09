@@ -88,7 +88,7 @@ The ``JUPYTER_NOTEBOOK_PASSWORD`` environment variable will allow you to access 
 Deployment should be quick if you build the minimal notebook from source code. If you used the image stream, the first deployment may be slow as the image will need to be pulled down from quay.io. You can monitor progress of the deployment if necessary by running:
 
 ```
-oc rollout status dc/minimal-notebook
+oc rollout status deployment/minimal-notebook
 ```
 
 Because the notebook instance is not exposed to the public network by default, you will need to expose it. To do this, and ensure that access is over a secure connection run:
