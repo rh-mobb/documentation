@@ -150,11 +150,6 @@ Next, we will install OpenShift Data Foundation via an Operator.
    EOF
    ```
 5. Create a Storage Cluster
-
-> **NOTE:** this will create the storage cluster and make it only accessible internally to the cluster.  
-If you need to make this storage cluster accessible outside of itself, you may use the `allowRemoteStorageConsumers: true`
-option to enable this behavior.
-
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: ocs.openshift.io/v1
@@ -166,7 +161,6 @@ option to enable this behavior.
      name: ocs-storagecluster
      namespace: openshift-storage
    spec:
-     allowRemoteStorageConsumers: false
      storageDeviceSets:
      - config: {}
        count: 1
