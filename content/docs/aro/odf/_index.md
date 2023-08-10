@@ -5,12 +5,10 @@ tags: ["ARO", "Azure"]
 authors:
   - Kevin Collins
   - Mohsen Houshmand Sarvestani
+  - Dustin Scott
 ---
-**Kevin Collins**
 
-*06/28/2022*
-
-Note:
+> **NOTE**:
 This guide demonstrates how to setup and configure self-managed OpenShift Data Foundation in Internal Mode on an ARO Cluster and test it out.
 
 ## Prerequisites
@@ -59,10 +57,10 @@ This guide demonstrates how to setup and configure self-managed OpenShift Data F
 
    ```bash
      while [[ $(oc get machinesets.machine.openshift.io -n openshift-machine-api | grep odf-worker-1 | awk '{ print $5 }') -ne 1 ]] 
-       do
-        echo "Waiting for worker machines to be ready..."
-        sleep 5
-       done
+     do
+       echo "Waiting for worker machines to be ready..."
+       sleep 5
+     done
    ```
 5. Label new compute nodes
 
@@ -85,9 +83,10 @@ This guide demonstrates how to setup and configure self-managed OpenShift Data F
      oc adm taint nodes $worker node.ocs.openshift.io/storage=true:NoSchedule
    done
    ```
-   Check nodes labels. The following command should list all three odf storage node
+   Check nodes labels. The following command should list all three ODF storage nodes, filtered by
+   the label we just applied:
    ```bash
-   oc get node --show-labels | grep storage | awk '{print $1}'
+   oc get node -l cluster.ocs.openshift.io/openshift-storage= --show-labels
    ```
 
 ## Deploy OpenShift Data Foundation
@@ -127,7 +126,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
      name: ocs-operator
      namespace: openshift-storage
    spec:
-     channel: "stable-4.10"  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
+     channel: stable-4.11  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
      installPlanApproval: Automatic
      name: ocs-operator
      source: redhat-operators  # <-- Modify the name of the redhat-operators catalogsource if not default
@@ -143,7 +142,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
      name: odf-operator
      namespace: openshift-storage
    spec:
-     channel: "stable-4.10" # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
+     channel: stable-4.11  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
      installPlanApproval: Automatic
      name: odf-operator
      source: redhat-operators  # <-- Modify the name of the redhat-operators catalogsource if not default
@@ -151,6 +150,11 @@ Next, we will install OpenShift Data Foundation via an Operator.
    EOF
    ```
 5. Create a Storage Cluster
+
+> **NOTE:** this will create the storage cluster and make it only accessible internally to the cluster.  
+If you need to make this storage cluster accessible outside of itself, you may use the `allowRemoteStorageConsumers: true`
+option to enable this behavior.
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: ocs.openshift.io/v1
@@ -159,10 +163,10 @@ Next, we will install OpenShift Data Foundation via an Operator.
      annotations:
        uninstall.ocs.openshift.io/cleanup-policy: delete
        uninstall.ocs.openshift.io/mode: graceful
-     generation: 2
      name: ocs-storagecluster
      namespace: openshift-storage
    spec:
+     allowRemoteStorageConsumers: false
      storageDeviceSets:
      - config: {}
        count: 1
@@ -173,7 +177,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
            resources:
              requests:
                storage: 2Ti
-           storageClassName: managed-premium
+           storageClassName: managed-csi
            volumeMode: Block
        name: ocs-deviceset-managed-premium
        portable: true
@@ -280,7 +284,6 @@ Next, we will install OpenShift Data Foundation via an Operator.
              command: ["sh", "-c"]
              resources:
                limits:
-                 cpu: 1
                  memory: "1Gi"
              args:
                [
@@ -329,7 +332,6 @@ Next, we will install OpenShift Data Foundation via an Operator.
          command: ["/bin/bash", "-c", "--"]
          resources:
            limits:
-             cpu: 1
              memory: "1Gi"
          args: ["tail -f /mnt/odf-data/verify-odf"]
          volumeMounts:
