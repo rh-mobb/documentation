@@ -4,11 +4,15 @@ title: Using the Egressip Ipam Operator with a Private ARO Cluster
 tags: ["ARO", "Azure"]
 ---
 
+{{% notice style="note" %}}
+This guide is only valid for ARO clusters created on version **4.10 or earlier**.
+
+Clusters created on version 4.11 and later use OVNKubernetes as their Container Network Interface, and egressip-ipam-operator does not support OVNKubernetes. Please see [EgressIP](https://docs.openshift.com/container-platform/4.11/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) as a possible alternative.
+{{% /notice %}}
+
 ## Prerequisites
 
-* [A private ARO cluster](../private-cluster) created on version 4.10 or earlier
-  * Note that ARO clusters created on version 4.11 and later use OVNKubernetes as their Container Network Interface, and egressip-ipam-operator does not support OVNKubernetes. Please see [EgressIP](https://docs.openshift.com/container-platform/4.11/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) as a possible alternative.
-
+* [A private ARO cluster](../private-cluster) that uses OpenShift SDN as its CNI
 
 ## Deploy the Egressip Ipam Operator
 
