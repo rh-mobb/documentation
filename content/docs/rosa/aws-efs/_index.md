@@ -69,6 +69,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
            "elasticfilesystem:DescribeAccessPoints",
            "elasticfilesystem:DescribeFileSystems",
            "elasticfilesystem:DescribeMountTargets",
+           "elasticfilesystem:TagResource",
            "ec2:DescribeAvailabilityZones"
          ],
          "Resource": "*"
