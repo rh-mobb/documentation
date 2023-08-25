@@ -40,14 +40,10 @@ Authors: Paul Czarkowski , Ricardo Macedo Martins Prerequisites Azure CLI Obviou
 MacOS
 See Azure Docs for alternative install options.
 Install Azure CLI using homebrew
-brew update &amp;amp;&amp;amp; brew install azure-cli Install sshuttle using homebrew</description></item><item><title>Using the Egressip Ipam Operator with a Private ARO Cluster</title><link>https://mobb.ninja/docs/aro/egress-ipam-operator/</link><pubDate>Tue, 29 Jun 2021 00:00:00 +0000</pubDate><guid>https://mobb.ninja/docs/aro/egress-ipam-operator/</guid><description>Prerequisites A private ARO cluster Deploy the Egressip Ipam Operator Via GUI Log into the ARO cluster&amp;rsquo;s Console
-Switch to the Administrator view
-Click on Operators -&amp;gt; Operator Hub
-Search for &amp;ldquo;Egressip Ipam Operator&amp;rdquo;
-Install it with the default settings
-or
-Via CLI Deploy the egress-ipam-operator
-cat &amp;lt;&amp;lt; EOF | kubectl apply -f - --- apiVersion: v1 kind: Namespace metadata: name: egressip-ipam-operator --- apiVersion: operators.coreos.com/v1alpha1 kind: Subscription metadata: name: egressip-ipam-operator namespace: openshift-operators labels: operators.</description></item><item><title>User Workload Monitoring on Azure Red Hat OpenShift</title><link>https://mobb.ninja/docs/aro/user-workload-monitoring/</link><pubDate>Mon, 07 Jun 2021 00:00:00 +0000</pubDate><guid>https://mobb.ninja/docs/aro/user-workload-monitoring/</guid><description>In Azure Red Hat OpenShift (ARO) Monitoring for User Defined Projects is disabled by default. Follow these instructions to enable it.
+brew update &amp;amp;&amp;amp; brew install azure-cli Install sshuttle using homebrew</description></item><item><title>Using the Egressip Ipam Operator with a Private ARO Cluster</title><link>https://mobb.ninja/docs/aro/egress-ipam-operator/</link><pubDate>Tue, 29 Jun 2021 00:00:00 +0000</pubDate><guid>https://mobb.ninja/docs/aro/egress-ipam-operator/</guid><description>Note This guide is only valid for ARO clusters created on version 4.10 or earlier.
+Clusters created on version 4.11 and later use OVNKubernetes as their Container Network Interface, and egressip-ipam-operator does not support OVNKubernetes. Please see EgressIP as a possible alternative.
+Prerequisites A private ARO cluster that uses OpenShift SDN as its CNI Deploy the Egressip Ipam Operator Via GUI Log into the ARO cluster&amp;rsquo;s Console
+Switch to the Administrator view</description></item><item><title>User Workload Monitoring on Azure Red Hat OpenShift</title><link>https://mobb.ninja/docs/aro/user-workload-monitoring/</link><pubDate>Mon, 07 Jun 2021 00:00:00 +0000</pubDate><guid>https://mobb.ninja/docs/aro/user-workload-monitoring/</guid><description>In Azure Red Hat OpenShift (ARO) Monitoring for User Defined Projects is disabled by default. Follow these instructions to enable it.
 Enabling See docs for more indepth details.
 Check the cluster-monitoring-config ConfigMap object
 oc -n openshift-monitoring get configmap cluster-monitoring-config -o yaml Enable User Workload Monitoring by doing one of the following
