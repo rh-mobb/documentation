@@ -120,15 +120,11 @@ export CSI_BLOB_PROJECT=csi-azure-blob4
 oc new-project ${CSI_BLOB_PROJECT}
 ```
 
-
 Assign permissions to the service accounts defined in the helm chart for the driver pods.
 
 ```bash 
-
 cat <<EOF | oc apply -f -
 allowHostPorts: true
-priority: null
-requiredDropCapabilities: null
 allowPrivilegedContainer: true
 runAsUser:
   type: RunAsAny
@@ -136,12 +132,10 @@ users:
   - 'system:serviceaccount:${CSI_BLOB_PROJECT}:csi-blob-controller-sa'
   - 'system:serviceaccount:${CSI_BLOB_PROJECT}:csi-blob-node-sa'
 allowHostDirVolumePlugin: true
-seccompProfiles:
+seccompProfiles: 
   - '*'
-allowHostIPC: true
 seLinuxContext:
   type: RunAsAny
-readOnlyRootFilesystem: false
 metadata:
   annotations:
     kubernetes.io/description: >-
@@ -156,25 +150,14 @@ groups:
   - 'system:nodes'
   - 'system:masters'
 kind: SecurityContextConstraints
-defaultAddCapabilities: null
-allowedUnsafeSysctls:
-  - '*'
-supplementalGroups:
-  type: RunAsAny
 volumes:
   - '*'
-allowHostPID: true
 allowHostNetwork: true
-allowPrivilegeEscalation: true
 apiVersion: security.openshift.io/v1
-allowedCapabilities:
-  - '*'
 EOF
 
 oc describe scc csi-azureblob-scc
 ```
-
-
 
 Use helm to install the driver. (Blob Fuse Proxy is not supported for ARO yet)
 
@@ -186,10 +169,6 @@ helm repo update
 helm install blob-csi-driver blob-csi-driver/blob-csi-driver --namespace ${CSI_BLOB_PROJECT} --set linux.distro=fedora --set node.enableBlobfuseProxy=false
 
 helm install blob-csi-driver blob-csi-driver/blob-csi-driver --set linux.distro=fedora --set node.enableBlobfuseProxy=false
-
-helm uninstall blob-csi-driver -n default
-
-helm uninstall blob-csi-driver -n ${CSI_BLOB_PROJECT}
 
 ```
 
@@ -206,7 +185,6 @@ export STORAGE_ACCOUNT_NAME="stweblob""${APP_NAME,,}"
 export STORAGE_ACCOUNT_NAME="stweblob""${APP_NAME:l}"
 
 export BLOB_CONTAINER_NAME=aroblob
-
 
 az storage account create --name $STORAGE_ACCOUNT_NAME --kind StorageV2 --sku Standard_LRS --location $LOCATION -g $RG_NAME 
 
@@ -243,7 +221,7 @@ oc new-project ${CSI_TESTING_PROJECT}
 Now, you are ready to create the storage class, the persistent volume claim and the testing pod. 
 
 ```bash
-cat << EOF > storageclass-blobfuse-existing-container.yaml
+cat <<EOF | oc apply -f -
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -264,10 +242,6 @@ mountOptions:
   - -o entry_timeout=120
   - -o negative_timeout=120
 EOF
-
-cat storageclass-blobfuse-existing-container.yaml
-
-oc create -f storageclass-blobfuse-existing-container.yaml
 
 cat <<EOF | oc apply -f -
 apiVersion: v1
