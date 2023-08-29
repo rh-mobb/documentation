@@ -75,7 +75,7 @@ When an ARO cluster is created, the installer creates also a secret named azure-
     "aadClientSecret": "$AAD_CLIENT_SECRET"
     }
     EOF
-```
+    ```
 
 1. Check all the attributes are populated. 
 
@@ -176,15 +176,15 @@ Now, we need to install the driver, which could be installed with a helm chart.
 
     You need to go to Azure Active Directory and identify the Identity for your cluster. 
 
-    ![Image](Images/blob-storage0.png)
+    ![Image](images/blob-storage0.png)
 
     After getting the name of your identity, you must give it access in the StorageAccount you created in the previous step.
 
-    ![Image](Images/blob-storage1.png)
-    ![Image](Images/blob-storage2.png)
-    ![Image](Images/blob-storage3.png)
-    ![Image](Images/blob-storage4.png)
-    ![Image](Images/blob-storage5.png)
+    ![Image](images/blob-storage1.png)
+    ![Image](images/blob-storage2.png)
+    ![Image](images/blob-storage3.png)
+    ![Image](images/blob-storage4.png)
+    ![Image](images/blob-storage5.png)
 
     We need to create another project where the testing pod will run. 
 
