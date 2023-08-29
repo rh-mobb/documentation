@@ -16,10 +16,8 @@ those different groups must be able to integrate with one another.  Often times,
 is difficult, complex, and confusing.  This document serves as a way to clear up some of 
 the confusion by walking you through scenarios for cross-tenancy in ARO.
 
-### Use Cases
-
-This guide covers the below use cases.  Feel free to ignore sections not related to your
-use case.
+This guide covers the below use case.  Feel free to ignore sections not related to your
+use case:
 
 - Use Encryption Keys that resides within a separate Azure subscription
 
@@ -70,7 +68,7 @@ KV_VAULT_NAME=${ARO_CLUSTER_NAME}-vault
 KV_KEY_NAME=${ARO_CLUSTER_NAME}-key
 ```
 
-## Use Case: Cross-Tenant Encryption Setup
+## Cross-Tenant Encryption Setup
 
 This section covers the guide for cross-tenant encryption.
 
