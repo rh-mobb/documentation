@@ -110,7 +110,7 @@ Now, we need to install the driver, which could be installed with a helm chart.
 Create the project where you are going to install the driver. 
 
 ```bash
-export CSI_BLOB_PROJECT=csi-azure-blob4
+export CSI_BLOB_PROJECT=csi-azure-blob
 oc new-project ${CSI_BLOB_PROJECT}
 ```
 
@@ -161,8 +161,6 @@ helm repo add blob-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/
 helm repo update
 
 helm install blob-csi-driver blob-csi-driver/blob-csi-driver --namespace ${CSI_BLOB_PROJECT} --set linux.distro=fedora --set node.enableBlobfuseProxy=false
-
-helm install blob-csi-driver blob-csi-driver/blob-csi-driver --set linux.distro=fedora --set node.enableBlobfuseProxy=false
 
 ```
 
