@@ -87,12 +87,9 @@ cat cloud.conf
 
 Then, override the existing azure-cloud-provider secret.
 ```bash
-
-oc create secret generic azure-cloud-provider --from-file=cloud-config=cloud.conf -n kube-system
-
 export AZURE_CLOUD_SECRET=`cat cloud.conf | base64 | awk '{printf $0}'; echo`
 
-cat << EOF > azure-cloud-provider.yaml
+cat << EOF | oc apply -f -
 apiVersion: v1
 data:
   cloud-config: ${AZURE_CLOUD_SECRET}
@@ -102,9 +99,6 @@ metadata:
   namespace: kube-system
 type: Opaque
 EOF
-
-cat azure-cloud-provider.yaml
-oc apply -f azure-cloud-provider.yaml
 
 ```
 
