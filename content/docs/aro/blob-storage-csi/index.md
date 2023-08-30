@@ -33,7 +33,8 @@ The cluster must use an identity with proper permissions to access the blob stor
 
 ![Image](Images/blob-sp1-1.png)
 
-    > Set an environment variable with the value of the Client ID.
+1. Set an environment variable with the value of the Client ID.
+
     ```bash
     export AAD_CLIENT_ID=REPLACE-WITH-YOUR-CLIENT-ID
     ```
@@ -46,7 +47,8 @@ The cluster must use an identity with proper permissions to access the blob stor
 
 ![Image](Images/blob-sp3.png)
 
-    > Set an environment variable with the value of the Client Secret Value.
+1. Set another environment variable with the value of the Client Secret Value.
+
     ```bash
     export AAD_CLIENT_SECRET=REPLACE-WITH-YOUR-CLIENT-SECRET-VALUE
     ```
@@ -86,9 +88,9 @@ The cluster must use an identity with proper permissions to access the blob stor
 
 >NOTE: Take care when executing this validation, since sensitive information should be disclosed in your screen. 
 
-    ```bash
-    cat cloud.conf
-    ```
+   ```bash
+   cat cloud.conf
+   ```
 
 1. Create the project where you are going to install the driver.
 
@@ -166,7 +168,7 @@ Now, we need to install the driver, which could be done using a helm chart.
 1. The first step for the test is the creation of the storage account and the blob container.
 
     ```bash
-    APP_NAME=Myapp
+    export APP_NAME=Myapp
 
     #bash
     export STORAGE_ACCOUNT_NAME="stweblob""${APP_NAME,,}"
@@ -285,6 +287,24 @@ Now, we need to install the driver, which could be done using a helm chart.
     ls -al /mnt/blob/outfile
     cat /mnt/blob/outfile
     ```
+1. You should see an output like this:
+
+    ![Image](images/blob-test.png)
+
+
+## Clean up
+   ```bash
+   oc delete pod nginx-blob -n ${CSI_TESTING_PROJECT}
+   oc delete project ${CSI_TESTING_PROJECT}
+   helm uninstall blob-csi-driver -n ${CSI_BLOB_PROJECT}
+   oc delete project ${CSI_BLOB_PROJECT}
+   oc delete pvc pvc-blob
+   oc delete sc blob
+   oc delete pv $(oc get pv -o json | jq -r '.items[] | select(.spec.csi.driver | test("blob.csi.azure.com")).metadata.name')
+   az storage account delete --name $STORAGE_ACCOUNT_NAME -g $RG_NAME 
+   az ad app delete --id $(az ad app list --app-id=${AAD_CLIENT_ID} | jq -r '.[0].id')
+
+   ```
 
 
 References:
