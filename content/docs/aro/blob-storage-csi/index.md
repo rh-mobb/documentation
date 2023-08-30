@@ -293,6 +293,9 @@ Now, we need to install the driver, which could be done using a helm chart.
 
 
 ## Clean up
+
+This section is to delete all the resources created with this guideline. 
+
    ```bash
    oc delete pod nginx-blob -n ${CSI_TESTING_PROJECT}
    oc delete project ${CSI_TESTING_PROJECT}
