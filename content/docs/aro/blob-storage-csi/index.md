@@ -8,9 +8,9 @@ authors:
 ---
 
 
-The Azure Blob storage Container Storage Interface (CSI) is a CSI compliant driver that can be installed to an Azure Red Hat OpenShift (ARO) cluster to manage the lifecycle of Azure Blob storage.
+The Azure Blob Storage Container Storage Interface (CSI) is a CSI compliant driver that can be installed to an Azure Red Hat OpenShift (ARO) cluster to manage the lifecycle of Azure Blob storage.
 
-When you use this CSI driver to mount an Azure Blob storage into an pod it allows you to use blob storage to work with massive amounts of data.
+When you use this CSI driver to mount an Azure Blob storage into a pod, it allows you to use blob storage to work with massive amounts of data.
 
 # Prerequisites
 
@@ -33,7 +33,7 @@ Once created, take note of the Client Id in the overview section.
 
 ![Image](Images/blob-sp1-1.png)
 
-Set an environment variable with the value of the Client Id.
+Set an environment variable with the value of the Client ID.
 ```bash
 export AAD_CLIENT_ID=REPLACE-WITH-YOUR-CLIENT-ID
 ```
@@ -93,7 +93,7 @@ EOF
 
 Check that all the attributes are populated. 
 
->NOTE: Take care when executing this validation, since sensitive information should be disclose in your screen. 
+>NOTE: Take care when executing this validation, since sensitive information should be disclosed in your screen. 
 
 ```bash
 cat cloud.conf
@@ -106,7 +106,7 @@ export CSI_BLOB_PROJECT=csi-azure-blob
 oc new-project ${CSI_BLOB_PROJECT}
 ```
 
-Then create the secret into the project just created.
+Then, create the secret into the project just created.
 ```bash
 export CSI_BLOB_SECRET=csi-azure-blob-secret
 oc create secret generic ${CSI_BLOB_SECRET} --from-file=cloud-config=cloud.conf
@@ -115,7 +115,7 @@ oc create secret generic ${CSI_BLOB_SECRET} --from-file=cloud-config=cloud.conf
 
 # Driver installation
 
-Now, we need to install the driver, which could be installed with a helm chart. 
+Now, we need to install the driver, which could be done using a helm chart. 
 
 
 
@@ -171,7 +171,7 @@ helm install blob-csi-driver blob-csi-driver/blob-csi-driver --namespace ${CSI_B
 
 # Test 
 
-The first step for the test is creation of the storage account and the blob container.
+The first step for the test is the creation of the storage account and the blob container.
 
 ```bash
 APP_NAME=Myapp
@@ -195,9 +195,9 @@ az storage container show --name $BLOB_CONTAINER_NAME --account-name $STORAGE_AC
 
 ```
 
-At this point you need to give permissions to the cluster to access the Blob storage.
+At this point, you must give permissions to the driver to access the Blob storage.
 
-You need to go to Azure Active Directory and identify the Identity for your cluster. 
+Go to Azure Active Directory and locate the  identity you created manually in the previous section. 
 ![Image](images/blob-storage0.png)
 
 After getting the name of your identity, you must give it access in the StorageAccount you created in the previous step.
