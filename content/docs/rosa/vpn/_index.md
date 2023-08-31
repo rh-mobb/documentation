@@ -25,6 +25,8 @@ export REGION=$(rosa describe cluster -c $ROSA_CLUSTER_NAME  -o json | jq -r .re
 export VPN_CLIENT_CIDR=172.16.0.0/16
 
 export PRIVATE_SUBNET_IDS=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[]')
+
+export VPC_DNS_SERVER=X.X.X.X
 ```
 
 ## Create certificates to use for your VPN Connection
@@ -141,6 +143,8 @@ There are many ways and methods to create certificates for VPN, the guide below 
     --client-cidr-block $VPN_CLIENT_CIDR \
     --server-certificate-arn $SERVER_CERT_ARN \
     --authentication-options Type=certificate-authentication,MutualAuthentication={ClientRootCertificateChainArn=$CLIENT_CERT_ARN} \
+    --dns-servers $VPC_DNS_SERVER \
+    --tag-specifications "ResourceType=client-vpn-endpoint,Tags=[{Key=ROSAClusterName,Value=$ROSA_CLUSTER_NAME}]" \
     --connection-log-options Enabled=false --split-tunnel --query ClientVpnEndpointId --output text)
    ```
 
