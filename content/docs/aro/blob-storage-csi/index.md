@@ -17,41 +17,19 @@ When you use this CSI driver to mount an Azure Blob storage into a pod, it allow
 * ARO cluster up and running.
 * [Helm - command line utility] (https://helm.sh/docs/intro/install/)
 * oc - command line utility. 
+* jq - command line utility.
 
 ## Create an identity for the CSI Driver to access the Blob Storage
 
-The cluster must use an identity with proper permissions to access the blob storage. To do that, the best approach is to create a specific service principal for this purpose. 
+The cluster must use an identity with proper permissions to access the blob storage. 
+1. Create a specific service principal for this purpose. 
 
-1. In the Azure Portal, go to AAD and register a new application with a proper name to identify that this registration is for the driver to access the Blob Storage
+   ```bash
+   export APP=az ad sp create-for-rbac --display-name aro-blob-csi
+   export AAD_CLIENT_ID=$(echo $APP | jq -r '.appId')
+   export AAD_CLIENT_SECRET=$(echo $APP | jq -r '.password')
 
-![Image](Images/blob-sp0.png)
-
-![Image](Images/blob-sp1.png)
-
-1. Once created, take note of the Client Id in the overview section.
-
-
-![Image](Images/blob-sp1-1.png)
-
-1. Set an environment variable with the value of the Client ID.
-
-    ```bash
-    export AAD_CLIENT_ID=REPLACE-WITH-YOUR-CLIENT-ID
-    ```
-
-1. Then, you need to create a secret for this registration. Go to "certificates & secrets" within the registration and create the new secret.
-
-![Image](Images/blob-sp2.png)
-
-1. Take note of the secret just created, and copy the value of it.
-
-![Image](Images/blob-sp3.png)
-
-1. Set another environment variable with the value of the Client Secret Value.
-
-    ```bash
-    export AAD_CLIENT_SECRET=REPLACE-WITH-YOUR-CLIENT-SECRET-VALUE
-    ```
+   ```
 
 1. Set other environment variables:
 
