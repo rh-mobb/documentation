@@ -111,22 +111,24 @@ There are many ways and methods to create certificates for VPN, the guide below 
     ```bash
    SERVER_CERT_ARN=$(aws acm import-certificate \
    --certificate fileb://issued/server.crt \
-   --private-key fileb://private/server.key \ 
+   --private-key fileb://private/server.key \
    --certificate-chain fileb://ca.crt \
    --region $REGION \
    --query CertificateArn \
+   --tags Key=ROSAClusterName,Value=$ROSA_CLUSTER_NAME \
    --output text)
     ```
 
 1. Import the client certificate
 
      ```bash
-     CLIENT_CERT_ARN=$(aws acm import-certificate  \ 
+     CLIENT_CERT_ARN=$(aws acm import-certificate  \
      --certificate fileb://issued/aws.crt \
      --private-key fileb://private/aws.key \
      --certificate-chain fileb://ca.crt \
      --region $REGION \
-     --query CertificateArn \ 
+     --query CertificateArn \
+     --tags Key=ROSAClusterName,Value=$ROSA_CLUSTER_NAME \
      --output text)
     ```
 
