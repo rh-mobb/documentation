@@ -15,7 +15,7 @@ When you use this CSI driver to mount an Azure Blob storage into a pod, it allow
 ## Prerequisites
 
 * ARO cluster up and running.
-* [Helm - command line utility] (https://helm.sh/docs/intro/install/)
+* [Helm - command line utility](https://helm.sh/docs/intro/install/)
 * oc - command line utility. 
 * jq - command line utility.
 
