@@ -46,9 +46,8 @@ You can refer also to the driver's documentation [here](https://github.com/kuber
 
     ```bash
     export APP_NAME=myapp
-    export STORAGE_ACCOUNT_NAME="$(echo "${CLUSTER_NAME}${APP_NAME}" | tr '[:upper:]' '[:lower:]')"
+    export STORAGE_ACCOUNT_NAME=aroblobsa
     export BLOB_CONTAINER_NAME=aroblob
-    
     ```
 
 ## Create an identity for the CSI Driver to access the Blob Storage
@@ -57,9 +56,10 @@ The cluster must use an identity with proper permissions to access the blob stor
 1. Create a specific service principal for this purpose. 
 
     ```bash
-    export APP=az ad sp create-for-rbac --display-name aro-blob-csi
+    export APP=$(az ad sp create-for-rbac --display-name aro-blob-csi)
     export AAD_CLIENT_ID=$(echo $APP | jq -r '.appId')
     export AAD_CLIENT_SECRET=$(echo $APP | jq -r '.password')
+    export AAD_OBJECT_ID=$(az ad app list --app-id=${AAD_CLIENT_ID} | jq -r '.[0].id')
 
     ```
 
@@ -114,6 +114,7 @@ Now, we need to install the driver, which could be done using a helm chart. This
     apiVersion: security.openshift.io/v1
     kind: SecurityContextConstraints
     metadata:
+      name: csi-azureblob-scc
       annotations:
         kubernetes.io/description: >-
           allows access to all privileged and host features and the
@@ -130,8 +131,7 @@ Now, we need to install the driver, which could be done using a helm chart. This
     seccompProfiles: 
       - '*'
     seLinuxContext:
-      type: RunAsAny
-      name: csi-azureblob-scc
+      type: RunAsAny 
     fsGroup:
       type: RunAsAny
     groups:
@@ -140,7 +140,7 @@ Now, we need to install the driver, which could be done using a helm chart. This
       - 'system:masters'
     volumes:
       - '*'
-    allowHostNetwork: true
+    allowHostNetwork: true    
     EOF
     ```
 
@@ -169,11 +169,11 @@ Now, we need to install the driver, which could be done using a helm chart. This
 1. The first step for the test is the creation of the storage account and the blob container.
 
     ```bash
-    az storage account create --name $STORAGE_ACCOUNT_NAME --kind StorageV2 --sku Standard_LRS --location $LOCATION -g $RG_NAME 
+    export AZURE_STORAGE_ACCOUNT=$(az storage account create --name $STORAGE_ACCOUNT_NAME --kind StorageV2 --sku Standard_LRS --location $LOCATION -g $RG_NAME)
+
+    export AZURE_STORAGE_ACCOUNT_ID=$(echo $AZURE_STORAGE_ACCOUNT | jq -r '.id')
 
     export AZURE_STORAGE_ACCESS_KEY=$(az storage account keys list --account-name $STORAGE_ACCOUNT_NAME -g $RG_NAME --query "[0].value" | tr -d '"')
-    
-    az storage account list -g $RG_NAME -o tsv
 
     az storage container create --name $BLOB_CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
 
@@ -181,17 +181,11 @@ Now, we need to install the driver, which could be done using a helm chart. This
     ```
 
 1. At this point, you must give permissions to the driver to access the Blob storage.
-
-    Go to Azure Active Directory and locate the  identity you created manually in the previous section. 
-    ![Image](images/blob-storage0.png)
-
-    After getting the name of your identity, you must give it access in the StorageAccount you created in the previous step.
-
-    ![Image](images/blob-storage1.png)
-    ![Image](images/blob-storage2.png)
-    ![Image](images/blob-storage3.png)
-    ![Image](images/blob-storage4.png)
-    ![Image](images/blob-storage5.png)
+    ```bash
+    az role assignment create --assignee $AAD_CLIENT_ID \
+      --role "Contributor" \
+      --scope ${AZURE_STORAGE_ACCOUNT_ID}
+    ```
 
 1. We need to create another project where the testing pod will run. 
 
@@ -295,6 +289,6 @@ This section is to delete all the resources created with this guideline.
    oc delete sc blob
    oc delete pv $(oc get pv -o json | jq -r '.items[] | select(.spec.csi.driver | test("blob.csi.azure.com")).metadata.name')
    az storage account delete --name $STORAGE_ACCOUNT_NAME -g $RG_NAME 
-   az ad app delete --id $(az ad app list --app-id=${AAD_CLIENT_ID} | jq -r '.[0].id')
+   az ad app delete --id ${AAD_OBJECT_ID}
 
    ```
