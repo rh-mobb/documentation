@@ -127,7 +127,7 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
 1. Log into Azure[Azure Log Insights](https://portal.azure.com/#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/logs) or you can login into portal and search for Log Analytics workspace
 
-   ! [screenshot of Log analytics workspace](./images/loganalyticsportal.png)
+   ![screenshot of Log analytics workspace](./images/loganalyticsportal.png)
 
 1. Select your workspace
 
