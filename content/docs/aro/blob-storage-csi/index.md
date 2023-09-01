@@ -12,6 +12,8 @@ The Azure Blob Storage Container Storage Interface (CSI) is a CSI compliant driv
 
 When you use this CSI driver to mount an Azure Blob storage into a pod, it allows you to use blob storage to work with massive amounts of data.
 
+You can refer also to the driver's documentation [here](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/charts/README.md).
+
 ## Prerequisites
 
 * ARO cluster up and running.
@@ -19,11 +21,11 @@ When you use this CSI driver to mount an Azure Blob storage into a pod, it allow
 * oc - command line utility. 
 * jq - command line utility.
 
-Set the environment variables related to your cluster environment:
+1. Set the environment variables related to your cluster environment:
 
-> Update the `LOCATION`, `CLUSTER_NAME`, and `RG_NAME` variables in the snippet below to match your cluster details:
+    > Update the `LOCATION`, `CLUSTER_NAME`, and `RG_NAME` variables in the snippet below to match your cluster details:
 
-   ```bash
+    ```bash
     export LOCATION=eastus
     export CLUSTER_NAME=my-cluster
     export RG_NAME=myresourcegroup 
@@ -31,21 +33,35 @@ Set the environment variables related to your cluster environment:
     export SUB_ID=$(az account show --query id)
     export MANAGED_RG=$(az aro show -n $CLUSTER_NAME -g $RG_NAME --query 'clusterProfile.resourceGroupId' -o tsv)
     export MANAGED_RG_NAME=`echo -e $MANAGED_RG | cut -d  "/" -f5`    
-   ```
+    ```
+1. Set some environment variables related to the project and secret names used to install the driver, and the testing project's name where a pod will be using the configured storage:
+
+    ```bash
+    export CSI_BLOB_PROJECT=csi-azure-blob
+    export CSI_BLOB_SECRET=csi-azure-blob-secret
+    export CSI_TESTING_PROJECT=testing-project
+    ```
+
+1. Set other environment variables to be used to create the testing resources, such as the azure storage account and its blob container:
+
+    ```bash
+    export APP_NAME=myapp
+    export STORAGE_ACCOUNT_NAME="$(echo "${CLUSTER_NAME}${APP_NAME}" | tr '[:upper:]' '[:lower:]')"
+    export BLOB_CONTAINER_NAME=aroblob
+    
+    ```
 
 ## Create an identity for the CSI Driver to access the Blob Storage
 
 The cluster must use an identity with proper permissions to access the blob storage. 
 1. Create a specific service principal for this purpose. 
 
-   ```bash
+    ```bash
     export APP=az ad sp create-for-rbac --display-name aro-blob-csi
     export AAD_CLIENT_ID=$(echo $APP | jq -r '.appId')
     export AAD_CLIENT_SECRET=$(echo $APP | jq -r '.password')
 
-   ```
-
-
+    ```
 
 1. Once we have all the environment variables set, we need to create the configuration file we will use to populate a json structure with all the data needed. 
 
@@ -66,35 +82,43 @@ The cluster must use an identity with proper permissions to access the blob stor
 
 1. Check that all the attributes are populated. 
 
->NOTE: Take care when executing this validation, since sensitive information should be disclosed in your screen. 
-
-   ```bash
-   cat cloud.conf
-   ```
-
-1. Create the project where you are going to install the driver.
+    >NOTE: Take care when executing this validation, since sensitive information should be disclosed in your screen. 
 
     ```bash
-    export CSI_BLOB_PROJECT=csi-azure-blob
-    oc new-project ${CSI_BLOB_PROJECT}
+    cat cloud.conf
     ```
 
-1. Then, create the secret into the project just created.
+1. Create the project where you are going to install the driver and then create the secret in it.
 
     ```bash
-    export CSI_BLOB_SECRET=csi-azure-blob-secret
+    oc new-project ${CSI_BLOB_PROJECT}
+
     oc create secret generic ${CSI_BLOB_SECRET} --from-file=cloud-config=cloud.conf
+    ```
+
+    >NOTE: It is good idea to delete the cloud.conf file, since it has sensitive information. 
+
+    ```bash
+    rm cloud.conf
     ```
 
 
 ## Driver installation
 
-Now, we need to install the driver, which could be done using a helm chart. 
+Now, we need to install the driver, which could be done using a helm chart. This helm chart will install two pods in the driver's project. 
 
-1. Assign permissions to the service accounts defined in the helm chart for the driver pods.
+1. Assign permissions to the defined driver service accounts prior to the helm chart installation.
 
     ```bash 
     cat <<EOF | oc apply -f -
+    apiVersion: security.openshift.io/v1
+    kind: SecurityContextConstraints
+    metadata:
+      annotations:
+        kubernetes.io/description: >-
+          allows access to all privileged and host features and the
+          ability to run as any user, any group, any fsGroup, and with any SELinux
+          context.
     allowHostPorts: true
     allowPrivilegedContainer: true
     runAsUser:
@@ -107,12 +131,6 @@ Now, we need to install the driver, which could be done using a helm chart.
       - '*'
     seLinuxContext:
       type: RunAsAny
-    metadata:
-      annotations:
-        kubernetes.io/description: >-
-          allows access to all privileged and host features and the
-          ability to run as any user, any group, any fsGroup, and with any SELinux
-          context.
       name: csi-azureblob-scc
     fsGroup:
       type: RunAsAny
@@ -120,17 +138,13 @@ Now, we need to install the driver, which could be done using a helm chart.
       - 'system:cluster-admins'
       - 'system:nodes'
       - 'system:masters'
-    kind: SecurityContextConstraints
     volumes:
       - '*'
     allowHostNetwork: true
-    apiVersion: security.openshift.io/v1
     EOF
-
-    oc describe scc csi-azureblob-scc
     ```
 
-1. Use helm to install the driver. 
+1. Use helm to install the driver once we have the permissions set. 
 
     > Note Blob Fuse Proxy is not supported for ARO yet, so we disable it.
 
@@ -139,7 +153,14 @@ Now, we need to install the driver, which could be done using a helm chart.
 
     helm repo update
 
-    helm install blob-csi-driver blob-csi-driver/blob-csi-driver --namespace ${CSI_BLOB_PROJECT} --set linux.distro=fedora --set node.enableBlobfuseProxy=false --set node.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} --set node.cloudConfigSecretName=${CSI_BLOB_SECRET} --set controller.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} --set controller.cloudConfigSecretName=${CSI_BLOB_SECRET}
+    helm install blob-csi-driver blob-csi-driver/blob-csi-driver \
+      --namespace ${CSI_BLOB_PROJECT} \
+      --set linux.distro=fedora \
+      --set node.enableBlobfuseProxy=false \
+      --set node.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} \
+      --set node.cloudConfigSecretName=${CSI_BLOB_SECRET} \
+      --set controller.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} \
+      --set controller.cloudConfigSecretName=${CSI_BLOB_SECRET}
 
     ```
 
@@ -148,15 +169,6 @@ Now, we need to install the driver, which could be done using a helm chart.
 1. The first step for the test is the creation of the storage account and the blob container.
 
     ```bash
-    export APP_NAME=Myapp
-
-    #bash
-    export STORAGE_ACCOUNT_NAME="stweblob""${APP_NAME,,}"
-    #zsh
-    export STORAGE_ACCOUNT_NAME="stweblob""${APP_NAME:l}"
-
-    export BLOB_CONTAINER_NAME=aroblob
-
     az storage account create --name $STORAGE_ACCOUNT_NAME --kind StorageV2 --sku Standard_LRS --location $LOCATION -g $RG_NAME 
 
     export AZURE_STORAGE_ACCESS_KEY=$(az storage account keys list --account-name $STORAGE_ACCOUNT_NAME -g $RG_NAME --query "[0].value" | tr -d '"')
@@ -166,7 +178,6 @@ Now, we need to install the driver, which could be done using a helm chart.
     az storage container create --name $BLOB_CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
 
     az storage container show --name $BLOB_CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
-
     ```
 
 1. At this point, you must give permissions to the driver to access the Blob storage.
@@ -182,9 +193,9 @@ Now, we need to install the driver, which could be done using a helm chart.
     ![Image](images/blob-storage4.png)
     ![Image](images/blob-storage5.png)
 
-    We need to create another project where the testing pod will run. 
+1. We need to create another project where the testing pod will run. 
+
     ```bash
-    export CSI_TESTING_PROJECT=testing-project
     oc new-project ${CSI_TESTING_PROJECT}
     ```
 
@@ -202,7 +213,6 @@ Now, we need to install the driver, which could be done using a helm chart.
       resourceGroup:  $RG_NAME
       storageAccount: $STORAGE_ACCOUNT_NAME
       containerName:  $BLOB_CONTAINER_NAME
-      # server: SERVER_ADDRESS  # optional, provide a new address to replace default "accountname.blob.core.windows.net"
     reclaimPolicy: Retain  # if set as "Delete" container would be removed after pvc deletion
     volumeBindingMode: Immediate
     mountOptions:
@@ -212,9 +222,9 @@ Now, we need to install the driver, which could be done using a helm chart.
       - -o attr_timeout=120
       - -o entry_timeout=120
       - -o negative_timeout=120
-    EOF
-
-    cat <<EOF | oc apply -f -
+    
+    ---
+    
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
@@ -226,9 +236,9 @@ Now, we need to install the driver, which could be done using a helm chart.
         requests:
           storage: 10Gi
       storageClassName: blob
-    EOF
-
-    cat <<EOF | oc apply -f -
+    
+    ---
+    
     kind: Pod
     apiVersion: v1
     metadata:
@@ -288,8 +298,3 @@ This section is to delete all the resources created with this guideline.
    az ad app delete --id $(az ad app list --app-id=${AAD_CLIENT_ID} | jq -r '.[0].id')
 
    ```
-
-
-References:
-
-- https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/charts/README.md
