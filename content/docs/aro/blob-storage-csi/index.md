@@ -282,10 +282,10 @@ This section is to delete all the resources created with this guideline.
 
    ```bash
    oc delete pod nginx-blob -n ${CSI_TESTING_PROJECT}
+   oc delete pvc pvc-blob -n ${CSI_TESTING_PROJECT}
    oc delete project ${CSI_TESTING_PROJECT}
    helm uninstall blob-csi-driver -n ${CSI_BLOB_PROJECT}
-   oc delete project ${CSI_BLOB_PROJECT}
-   oc delete pvc pvc-blob
+   oc delete project ${CSI_BLOB_PROJECT}   
    oc delete sc blob
    oc delete pv $(oc get pv -o json | jq -r '.items[] | select(.spec.csi.driver | test("blob.csi.azure.com")).metadata.name')
    az storage account delete --name $STORAGE_ACCOUNT_NAME -g $RG_NAME 
