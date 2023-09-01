@@ -1,0 +1,5 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": { "ghcr.io/devcontainers/features/hugo:1": {"version": "v0.102.3", "extended": "true"}
+  }
+}
