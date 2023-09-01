@@ -19,31 +19,33 @@ When you use this CSI driver to mount an Azure Blob storage into a pod, it allow
 * oc - command line utility. 
 * jq - command line utility.
 
-## Create an identity for the CSI Driver to access the Blob Storage
+Set the environment variables related to your cluster environment:
 
-The cluster must use an identity with proper permissions to access the blob storage. 
-1. Create a specific service principal for this purpose. 
+> Update the `LOCATION`, `CLUSTER_NAME`, and `RG_NAME` variables in the snippet below to match your cluster details:
 
    ```bash
-   export APP=az ad sp create-for-rbac --display-name aro-blob-csi
-   export AAD_CLIENT_ID=$(echo $APP | jq -r '.appId')
-   export AAD_CLIENT_SECRET=$(echo $APP | jq -r '.password')
-
-   ```
-
-1. Set other environment variables:
-
-    > Update the `LOCATION`, `CLUSTER_NAME`, and `RG_NAME` variables to match your cluster details
-
-    ```bash
     export LOCATION=eastus
     export CLUSTER_NAME=my-cluster
     export RG_NAME=myresourcegroup 
     export TENANT_ID=$(az account show --query tenantId -o tsv)
     export SUB_ID=$(az account show --query id)
     export MANAGED_RG=$(az aro show -n $CLUSTER_NAME -g $RG_NAME --query 'clusterProfile.resourceGroupId' -o tsv)
-    export MANAGED_RG_NAME=`echo -e $MANAGED_RG | cut -d  "/" -f5`
-    ```
+    export MANAGED_RG_NAME=`echo -e $MANAGED_RG | cut -d  "/" -f5`    
+   ```
+
+## Create an identity for the CSI Driver to access the Blob Storage
+
+The cluster must use an identity with proper permissions to access the blob storage. 
+1. Create a specific service principal for this purpose. 
+
+   ```bash
+    export APP=az ad sp create-for-rbac --display-name aro-blob-csi
+    export AAD_CLIENT_ID=$(echo $APP | jq -r '.appId')
+    export AAD_CLIENT_SECRET=$(echo $APP | jq -r '.password')
+
+   ```
+
+
 
 1. Once we have all the environment variables set, we need to create the configuration file we will use to populate a json structure with all the data needed. 
 
@@ -174,11 +176,11 @@ Now, we need to install the driver, which could be done using a helm chart.
 
     After getting the name of your identity, you must give it access in the StorageAccount you created in the previous step.
 
-    ![Image](Images/blob-storage1.png)
-    ![Image](Images/blob-storage2.png)
-    ![Image](Images/blob-storage3.png)
-    ![Image](Images/blob-storage4.png)
-    ![Image](Images/blob-storage5.png)
+    ![Image](images/blob-storage1.png)
+    ![Image](images/blob-storage2.png)
+    ![Image](images/blob-storage3.png)
+    ![Image](images/blob-storage4.png)
+    ![Image](images/blob-storage5.png)
 
     We need to create another project where the testing pod will run. 
     ```bash
