@@ -69,6 +69,7 @@ skipMetadata: true
 * [Upgrade a disconnected ARO cluster](/docs/aro/upgrade-disconnected-aro)
 * [Using Azure Container Registry in Private ARO clusters](/docs/aro/aro-acr)
 * [Configure a Private ARO cluster with Azure File via a Private Endpoint](/docs/aro/private_endpoint)
+* [Use Azure Blob storage Container Storage Interface (CSI) driver on an ARO cluster](/docs/aro/blob-storage-csi)
 * [Configure ARO with Cross-Tenant Encryption Keys](/docs/aro/cross-tenant-encryption-keys)
 
 ### GCP
