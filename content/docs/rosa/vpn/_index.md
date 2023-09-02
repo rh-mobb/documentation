@@ -26,8 +26,28 @@ export VPN_CLIENT_CIDR=172.16.0.0/16
 
 export PRIVATE_SUBNET_IDS=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[]')
 
-export VPC_DNS_SERVER=X.X.X.X
 ```
+
+DNS Entries:
+
+In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluster to your VPN settings or /etc/hosts in machine you are connecting from.
+The DNS server will be the x.x.x.2 address of your VPC CIDR. For example, if you VPC CIDR is 10.66.0.0/16 then your DNS server will be 10.66.0.2. 
+
+You can find the VPC ( machine ) CIDR with this command:
+
+```bash
+rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.machine_cidr'
+```
+
+Once you find DNS server set environment variable
+
+export VPC_DNS_SERVER=X.X.X.X
+
+You can find the ROSA base domain with this command:
+
+```bash
+export VPC_DNS_DOMAIN=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain')
+``` 
 
 ## Create certificates to use for your VPN Connection
 
@@ -175,7 +195,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id $VPN_CLIENT_ID --output text>client-config.ovpn
    ```
 
-1. Run the following commands to add the certificates created in the first step to the VPN Configuration file.
+1. Run the following commands to add the certificates created in the first step to the VPN Configuration file and DNS settings.
 
    * note: make sure you are still in the easy rsa / pki directory.
 
@@ -191,33 +211,21 @@ There are many ways and methods to create certificates for VPN, the guide below 
    cat private/aws.key >> client-config.ovpn
    
    echo '</key>' >> client-config.ovpn
+
+   echo "dhcp-option DNS ${VPC_DNS_SERVER}" >> client-config.ovpn
+
+   echo "dhcp-option DOMAIN $VPC_DNS_DOMAIN" >> client-config.ovpn
    ```
 
-1. Add DNS Entries
 
-   In order to resolve the ROSA Cluster domain name, you will need to either add the DNS server and the Route 53 Hosted Domain for the cluster to your VPN settings or /etc/hosts in machine you are connecting from.
 
-   The DNS server will be the x.x.x.2 address of your VPC CIDR.  For example, if you VPC CIDR is 10.66.0.0/16 then your DNS server will be 10.66.0.2
-
-   You can find the VPC ( machine ) CIDR with this command:
-
-   ```bash
-   rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.machine_cidr'
-   ```
-
-   You can find the ROSA base domain with this command:
-
-   ```bash
-   rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.dns.base_domain'
-   ``` 
-
-2. Import the client-config.ovpn file into your VPN Software.
+1. Import the client-config.ovpn file into your VPN Software.
    
    * Mac users - just double click the client-config.ovpn and it will be imported automatically into your VPN client.
 
    * Note: In order to connect to your cluster with the oc cli, you will need to update your OS DNS server with the DNS Server above after you connected to VPN.
 
 
-3. Connect your VPN.
+1. Connect your VPN.
 
    ![screenshot of Vpn Connected](./images/connect-vpn-settings.png)
