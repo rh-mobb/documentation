@@ -480,4 +480,8 @@ You can [replace the default ingress certificate](https://docs.openshift.com/con
     ```bash
     oc logout
     oc login -u kubeadmin -p $AROPASS --server=$AROURL
+<<<<<<< HEAD
     ```
+=======
+    ```
+>>>>>>> main
