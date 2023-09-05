@@ -440,7 +440,7 @@ You can [replace the default ingress certificate](https://docs.openshift.com/con
 
 1. Check that the Certificate when you access to the Console is the Cert issued by Let's Encrypt using Certbot:
 
-    [![](/images/aro-custom-domain.png "/aro-custom-domain")]({{site.url}}/images/aro-custom-domain.png)
+    ![ARO Custom Domain](aro-custom-domain.png)
 
 ### 4.2 Configure the API server with custom certificates
 
