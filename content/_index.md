@@ -71,6 +71,7 @@ skipMetadata: true
 * [Configure a Private ARO cluster with Azure File via a Private Endpoint](/docs/aro/private_endpoint)
 * [Use Azure Blob storage Container Storage Interface (CSI) driver on an ARO cluster](/docs/aro/blob-storage-csi)
 * [Configure ARO with Cross-Tenant Encryption Keys](/docs/aro/cross-tenant-encryption-keys)
+* [Deploying Private ARO clusters with Custom Domains](/docs/aro/custom-domain-private-cluster)
 
 ### GCP
 
