@@ -1,3 +1,37 @@
+## GitHub Flow
+
+It is expected that you will use the [GitHub flow](https://docs.github.com/en/get-started/quickstart/github-flow) for contributing to this repository.
+
+1. [Fork the repository](https://docs.github.com/en/get-started/quickstart/fork-a-repo) into your own GitHub account.
+
+1. Clone the `rh-mobb/documentation` repo locally and configure it to push to your fork, but pull from the upstream repo.
+
+   ```bash
+   git clone https://github.com/rh-mobb/documentation.git mobb-docs
+   cd mobb-docs
+   git remote set-url --push origin git@github.com:<username>/documentation.git
+   ```
+
+1. Create a feature branch
+
+   ```bash
+   git checkout -b my-feature-branch
+   ```
+
+1. Work on the Code
+
+1. Commit and push
+
+   ```bash
+   git add .
+   git commit -sm 'fix typo in /index.md'
+   git push origin my-feature-branch
+   ```
+
+1. Create a Pull request at https://github.com/rh-mobb/documentation
+
+
+
 ## Structure Overview
 
 The docs in this repo follow the structure of `/content/docs/[Section]/[Topic]/index.md`.
@@ -10,7 +44,7 @@ Docs that follow this structure will be automatically added to the content menu 
 
 ### Front Matter
 
-These fields are recommended and are used to auto-generate portions of the content body.  They belong at the 
+These fields are recommended and are used to auto-generate portions of the content body.  They belong at the
 top of each article that you publish.
 
 * Date - The original date of content creation, in YYYY-MM-DD format
