@@ -17,6 +17,12 @@ If we choose to specify a custom domain, for example aro.myorg.com, the OpenShif
 
 Furthermore, if we choose Custom DNS, after connecting to the cluster, we will need to configure a custom certificate for our ARO ingress controller and custom certificate of our API server.
 
+## Prerequisites
+
+* [Certbot](https://certbot.eff.org/)
+* [AZ CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+* [sshutle](https://github.com/sshuttle/sshuttle#obtaining-sshuttle)
+
 ## 1. Deploying ARO Prerequisites
 
 Before deploying Azure Red Hat OpenShift (ARO), there are certain prerequisites that need to be fulfilled.
