@@ -122,7 +122,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     oc -n $NAMESPACE get route grafana-route
     ```
 
-1. Once logged in go to **Dashboards->Manage** and expand the **thanos-receiver** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
+1. Once logged in go to **Dashboards->Manage** and expand the **aro-thanos-af** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
 
     > **Note:   If it complains about a missing datasource run the following: `oc annotate -n $NAMESPACE grafanadatasource aro-thanos-af-prometheus "retry=1"`**
 
