@@ -15,18 +15,19 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
 ## Pre-Prequsites
 
-1. An ARO cluster
+1. [An ARO cluster](/docs/quickstart-aro.md)
 
 1. Set some environment variables to use throughout to suit your environment
 
     > **Note: AZR_STORAGE_ACCOUNT_NAME must be unique**
 
     ```bash
-    export AZR_RESOURCE_LOCATION=eastus
-    export AZR_RESOURCE_GROUP=openshift
-    export AZR_STORAGE_ACCOUNT_NAME=arometrics$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | fold -w 5 | head -n 1)
-    export CLUSTER_NAME=openshift
-    export NAMESPACE=aro-thanos-af
+    export AZR_RESOURCE_LOCATION="eastus"
+    export AZR_RESOURCE_GROUP="openshift"
+    export CLUSTER_NAME="openshift"
+    export UNIQUE="$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | fold -w 5 | head -n 1)"
+    export AZR_STORAGE_ACCOUNT_NAME="arometrics${UNIQUE}"
+    export NAMESPACE="aro-thanos-af"
     ```
 
 ## Azure Preperation
@@ -72,33 +73,46 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 1. Use the `mobb/operatorhub` chart to deploy the grafana operator
 
     ```bash
-    helm upgrade -n $NAMESPACE $NAMESPACE-operators \
-      mobb/operatorhub --version 0.1.1 --install \
+    helm upgrade -n $NAMESPACE grafana-operator \
+      mobb/operatorhub --version 0.1.2 --install \
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/grafana-operator.yaml
     ```
 
-1. Use the `mobb/operatorhub` chart to deploy the resource-locker operator
-
-    **> Note: Skip this if you already have the resource-locker operator installed, or if you do not plan to use User Workload Metrics**
+1. Wait for the Operator to be ready
 
     ```bash
-    helm upgrade -n resource-locker-operator resource-locker-operator \
-      mobb/operatorhub --version 0.1.1 --create-namespace --install \
-      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/resourcelocker-operator.yaml
+    oc rollout status -n $NAMESPACE \
+      deployment/grafana-operator-controller-manager
+    ```
+
+1. Use Helm deploy the OpenShift Patch Operator
+
+    ```bash
+    helm upgrade -n patch-operator patch-operator --create-namespace \
+      mobb/operatorhub --version 0.1.2 --install \
+      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/patch-operator.yaml
+    ```
+
+1. Wait for the Operator to be ready
+
+    ```bash
+    oc rollout status -n patch-operator \
+      deployment/patch-operator-controller-manager
     ```
 
 1. Deploy ARO Thanos Azure Files Helm Chart (mobb/aro-thanos-af)
 
-    **> Note: `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics, remove it from the helm command below if you already have custom settings.  The Addendum at the end of this doc will explain the changes you'll need to make instead.**
+    **> Note: `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics. If you have customized them already, you may need to modify `patch-monitoring-configs.yaml` in the Helm chart to include your changes.
 
-   ```bash
-   helm upgrade -n $NAMESPACE aro-thanos-af \
-     --install mobb/aro-thanos-af --version 0.4.1 \
-     --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
-     --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
-     --set "aro.storageContainer=$CLUSTER_NAME" \
-     --set "enableUserWorkloadMetrics=true"
-   ```
+    ```bash
+    helm upgrade -n $NAMESPACE aro-thanos-af \
+      --install mobb/aro-thanos-af --version 0.6.1 \
+      --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
+      --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
+      --set "aro.storageContainer=$CLUSTER_NAME" \
+      --set "aro.clusterName=$CLUSTER_NAME" \
+      --set "enableUserWorkloadMetrics=true"
+    ```
 
 ## Validate Grafana is installed and seeing metrics from Azure Files
 
@@ -140,80 +154,4 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     az storage account delete \
       --name $AZR_STORAGE_ACCOUNT_NAME \
       --resource-group $AZR_RESOURCE_GROUP
-    ```
-
-## Addendum
-
-### Enabling User Workload Monitoring
-
-> See [docs](https://docs.openshift.com/container-platform/4.7/monitoring/enabling-monitoring-for-user-defined-projects.html) for more indepth details.
-
-1. Check the cluster-monitoring-config ConfigMap object
-
-    ```bash
-    oc -n openshift-monitoring get configmap cluster-monitoring-config -o yaml
-    ```
-
-1. Enable User Workload Monitoring by doing one of the following
-
-    **If the `data.config.yaml` is not `{}` you should edit it and add the `enableUserWorkload: true` line manually.**
-
-    ```bash
-    oc -n openshift-monitoring edit configmap cluster-monitoring-config
-    ```
-
-    **Otherwise if its `{}` then you can run the following command safely.**
-
-    ```bash
-    oc patch configmap cluster-monitoring-config -n openshift-monitoring \
-       -p='{"data":{"config.yaml": "enableUserWorkload: true\n"}}'
-    ```
-
-1. Check that the User workload monitoring is starting up
-
-    ```bash
-    oc -n openshift-user-workload-monitoring get pods
-    ```
-
-1. Append remoteWrite settings to the user-workload-monitoring config to forward user workload metrics to Thanos.
-
-    **Check if the User Workload Config Map exists:**
-
-    ```bash
-    oc -n openshift-user-workload-monitoring get \
-      configmaps user-workload-monitoring-config -o yaml
-    ```
-
-    **If the config doesn't exist (or is empty) run:**
-
-    ```bash
-    cat << EOF | kubectl apply -f -
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: user-workload-monitoring-config
-      namespace: openshift-user-workload-monitoring
-    data:
-      config.yaml: |
-        prometheus:
-          remoteWrite:
-            - url: "http://thanos-receive.$NAMESPACE.svc.cluster.local:9091/api/v1/receive"
-    EOF
-    ```
-
-    **Otherwise update it with the following:**
-
-    ```bash
-    oc -n openshift-user-workload-monitoring edit \
-      configmaps user-workload-monitoring-config
-    ```
-
-    ```yaml
-      data:
-        config.yaml: |
-          ...
-          prometheus:
-          ...
-            remoteWrite:
-              - url: "http://thanos-receive.thanos-receiver.svc.cluster.local:9091/api/v1/receive"
     ```
