@@ -19,7 +19,8 @@ You can find the original (and more detailed) document describing the process fo
 
 ## Create Infra Nodes
 
-We'll use the MOBB Helm Chart for adding ARO `machinesets` which defaults to creating `infra` nodes, it looks up an existing `machineset` to collect cluster specific settings and then creates a new `machineset` specific for `infra` nodes with the same settings.
+We'll use the MOBB Helm Chart for adding ARO `machinesets` which parameters for creating `infra` nodes, it looks up an existing `machineset` to collect cluster specific settings and then creates a new `machineset` specific for `infra` nodes with the same settings.
+The chart used to default to infra nodes up to version `0.2.0` from and including version 0.2.0 you need to specify the roles, labels and taints explicitly.
 
 1. Add the MOBB chart repository to your Helm
 
@@ -33,10 +34,22 @@ We'll use the MOBB Helm Chart for adding ARO `machinesets` which defaults to cre
    helm repo update
    ```
 
-1. Install the `mobb/aro-machinesets` Chart to create `infra` nodes
+1. Install the `mobb/aro-machinesets` Chart with parameters to create `infra` nodes
+
+  Create a `values.yaml` file like this:
+  ```yaml
+  machineRole: "infra"
+
+  machineLabels:
+    node-role.kubernetes.io/infra: ""
+  
+  machineTaints:
+    - key: node-role.kubernetes.io/infra
+      effect: NoSchedule
+  ```
 
    ```bash
-   helm upgrade --install -n openshift-machine-api \
+   helm upgrade --install -f values.yaml -n openshift-machine-api \
      infra mobb/aro-machinesets
    ```
 
