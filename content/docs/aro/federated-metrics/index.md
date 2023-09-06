@@ -74,7 +74,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     ```bash
     helm upgrade -n $NAMESPACE grafana-operator \
-      mobb/operatorhub --version 0.1.1 --install \
+      mobb/operatorhub --version 0.1.2 --install \
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/grafana-operator.yaml
     ```
 
@@ -89,7 +89,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     ```bash
     helm upgrade -n patch-operator patch-operator --create-namespace \
-      mobb/operatorhub --version 0.1.1 --install \
+      mobb/operatorhub --version 0.1.2 --install \
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/patch-operator.yaml
     ```
 
@@ -106,7 +106,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     ```bash
     helm upgrade -n $NAMESPACE aro-thanos-af \
-      --install mobb/aro-thanos-af --version 0.6.0 \
+      --install mobb/aro-thanos-af --version 0.6.1 \
       --set "aro.storageAccount=$AZR_STORAGE_ACCOUNT_NAME" \
       --set "aro.storageAccountKey=$AZR_STORAGE_KEY" \
       --set "aro.storageContainer=$CLUSTER_NAME" \
