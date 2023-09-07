@@ -154,8 +154,7 @@ Create a virtual network with two empty subnets
       --resource-group $AZR_RESOURCE_GROUP                            \
       --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"      \
       --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-      --address-prefixes $CONTROL_SUBNET                              \
-      --service-endpoints Microsoft.ContainerRegistry
+      --address-prefixes $CONTROL_SUBNET                              
     ```
 
 1. Create machine subnet
@@ -165,13 +164,12 @@ Create a virtual network with two empty subnets
       --resource-group $AZR_RESOURCE_GROUP                              \
       --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"        \
       --name "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION"   \
-      --address-prefixes $MACHINE_SUBNET                                \
-      --service-endpoints Microsoft.ContainerRegistry
+      --address-prefixes $MACHINE_SUBNET                                
     ```
 
-1. [Disable network policies](https://docs.microsoft.com/en-us/azure/private-link/disable-private-endpoint-network-policy) for Private Link Service on the control plane subnet
+1. [Disable network policies for Private Link Service](https://learn.microsoft.com/en-us/azure/private-link/disable-private-link-service-network-policy?tabs=private-link-network-policy-cli) on the control plane subnet
 
-    > This is required for the service to be able to connect to and manage the cluster.
+    > Optional. The ARO RP will disable this for you if you skip this step.
 
     ```bash
     az network vnet subnet update                                       \
