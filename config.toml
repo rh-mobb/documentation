@@ -27,7 +27,7 @@ home = [ "HTML", "RSS", "JSON"]
 [params]
 alwaysopen = false
 collapsibleMenu = true
-themeVariant = "red"
+themeVariant = ["red" , "relearn-dark"]
 disableShortcutsTitle = true
 # showVisitedLinks = true
 # ordersectionsby = "weight" # ordersectionsby = "title"
