@@ -1,6 +1,6 @@
 ---
 date: '2021-06-10'
-title: ROSA Quickstart
+title: ROSA Prerequisites
 weight: 1
 tags: ["AWS", "ROSA", "Quickstarts"]
 authors:
@@ -8,18 +8,7 @@ authors:
   - Paul Czarkowski
 ---
 
-A Quickstart guide to deploying a Red Hat OpenShift cluster on AWS.
-
-## Video Walkthrough
-
-Quick Introduction to ROSA by Charlotte Fung on [AWS YouTube channel](https://youtu.be/KRqXxek4GvQ)
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/KRqXxek4GvQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-
-If you prefer a more visual medium, you can watch [Steve Mirman](https://twitter.com/stevemirman) walk through this quickstart on [YouTube](https://www.youtube.com/watch?v=IFNig_Z_p2Y).
-<iframe width="560" height="315" src="https://www.youtube.com/embed/IFNig_Z_p2Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
+This document contains a set of pre-requisites that must be run once before you can create your first ROSA cluster.
 
 ## Prerequisites
 
@@ -27,7 +16,9 @@ If you prefer a more visual medium, you can watch [Steve Mirman](https://twitter
 
 an AWS account with the [AWS ROSA Prerequisites](https://console.aws.amazon.com/rosa/home?#/get-started) met.
 
-![AWS console rosa requisites](../images/rosa-aws-pre.png)
+![AWS console rosa requisites](/docs/images/rosa-aws-pre.png)
+
+### AWS CLI
 
 **MacOS**
 
@@ -151,98 +142,42 @@ an AWS account with the [AWS ROSA Prerequisites](https://console.aws.amazon.com/
   Logged in as <email address> on 'https://api.openshift.com'
   ```
 
-### Verify ROSA privileges
-
-1. Verify that ROSA has the minimal permissions
-
-  ```bash
-  rosa verify permissions
-  ```
-
-  >Expected output: `AWS SCP policies ok`
-
-
 1. Verify that ROSA has the minimal quota
 
   ```bash
   rosa verify quota
   ```
->Expected output: `AWS quota ok`
 
-1. Create ROSA Account Roles
+  > Expected output: `AWS quota ok`
+
+### Associate your AWS account with your Red Hat account
+
+To perform ROSA cluster provisioning tasks, you must create ocm-role and user-role IAM resources in your AWS account and link them to your Red Hat organization.
+
+1. Create the ocm-role which the OpenShift Cluster Manager (OCM) will use to be able to administer and Create ROSA clusters. If this has already been done for your OCM Organization, you can skip to creating the user-role.
+
+    > **Tip** If you have multiple AWS accounts that you want to associate with your Red Hat Organization, you can use the `--profile` option to specify the AWS profile you would like to associate.
+
+    ```bash
+    rosa create ocm-role --mode auto --yes
+    ```
+
+1. Create the User Role that allows OCM to verify that users creating a cluster have access to the current AWS account.
+
+    > **Tip** If you have multiple AWS accounts that you want to associate with your Red Hat Organization, you can use the `--profile` option to specify the AWS profile you would like to associate.
+
+    ```bash
+    rosa create user-role --mode auto --yes
+    ```
+
+1. Create the ROSA Account Roles which give the ROSA installer, and machines permissions to perform actions in your account.
+
+    ```bash
+    rosa create account-roles --mode auto --yes
+    ```
 
 
+## Conclusion
 
-## Deploy Red Hat OpenShift on AWS (ROSA)
+You are now ready to create your first cluster.  Browse back to the page that directed you here.
 
-### Interactive Installation
-
-ROSA can be installed using command line parameters or in interactive mode.  For an interactive installation run the following command
-
-  ```bash
-  rosa create cluster --interactive --mode auto
-  ```
-
-  As part of the interactive install you will be required to enter the following parameters or accept the default values (if applicable)
-
-  ```
-  Cluster name:
-  Multiple availability zones (y/N):
-  AWS region (select):
-  OpenShift version (select):
-  Install into an existing VPC (y/N):
-  Compute nodes instance type (optional):
-  Enable autoscaling (y/N):
-  Compute nodes [2]:
-  Machine CIDR [10.0.0.0/16]:
-  Service CIDR [172.30.0.0/16]:
-  Pod CIDR [10.128.0.0/14]:
-  Host prefix [23]:
-  Private cluster (y/N):
-  ```
-  >Note: the installation process should take between 30 - 45 minutes
-
-### Get the web console link to the ROSA cluster
-
-To get the web console link run the following command.
-
->Substitute your actual cluster name for `<cluster-name>`
-
-  ```bash
-  rosa describe cluster --cluster=<cluster-name>
-  ```
-
-### Create cluster-admin user
-
-By default, only the OpenShift SRE team will have access to the ROSA cluster.  To add a local admin user, run the following command to create the `cluster-admin` account in your cluster.
-
->Substitute your actual cluster name for `<cluster-name>`
-
-  ```bash
-  rosa create admin --cluster=<cluster-name>
-  ```
->Refresh your web browser and you should see the `cluster-admin` option to log in
-
-## Delete Red Hat OpenShift on AWS (ROSA)
-
-Deleting a ROSA cluster consists of two parts
-
-1. Delete the cluster instance, including the removal of AWS resources.
-
->Substitute your actual cluster name for `<cluster-name>`
-
-  ```bash
-  rosa delete cluster --cluster=<cluster-name>
-  ```
-  Delete Cluster's operator-roles and oidc-provider as shown in the above delete cluster command's output. For e.g.
-
-  ```bash
-  rosa delete operator-roles -c <cluster-name>
-  rosa delete oidc-provider -c <cluster-name>
-  ```
-
-2. Delete the CloudFormation stack, including the removal of the `osdCcsAdmin` user
-
-  ```bash
-  rosa init --delete-stack
-  ```
