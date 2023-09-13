@@ -16,7 +16,7 @@ ROSA guide to running Nvidia GPU workloads.
 * oc cli #logged-in-cluster-admin
 * jq
 
-If you need to install a ROSA cluster, please read our [ROSA Quickstart Guide]({{< ref "/docs/quickstart-rosa.md" >}}). Please be sure you are installing or using an existing ROSA cluster that it is 4.10.x or higher. 
+If you need to install a ROSA cluster, please read our [ROSA Quickstart Guide](/docs/quickstart-rosa.md). Please be sure you are installing or using an existing ROSA cluster that it is 4.10.x or higher.
 
 >As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator. This has greatly simplified the setup of the cluster for GPU workloads.
 
@@ -24,10 +24,10 @@ Enter the `oc login` command, username, and password from the output of the prev
 
 Example login:
 ```bash
-oc login https://api.cluster_name.t6k4.i1.organization.org:6443 \ 
+oc login https://api.cluster_name.t6k4.i1.organization.org:6443 \
 > --username cluster-admin \
 > --password mypa55w0rd
-Login successful. 
+Login successful.
 You have access to 77 projects, the list has been suppressed. You can list all projects with ' projects'
 ```
 
@@ -73,7 +73,7 @@ If you plan to use Helm to deploy the GPU operator, you will need to do the foll
    ```bash
    export GPU_INSTANCE_TYPE='g5.xlarge'
    ```
- 
+
 1. Login to AWS
 
    Login to [AWS Console](https://console.aws.amazon.com/console/home), type "quotas" in search by, click on "Service Quotas" -> "AWS services" -> "Amazon Elastic Compute Cloud (Amazon EC2). Search for "Running On-Demand [instance-family] instances" (e.g. Running On-Demand G and VT instances).
@@ -164,7 +164,7 @@ Two options: [Helm](#helm) or [Manual](#manually)
    ```bash
    oc wait --for=jsonpath='{.status.numberReady}'=5 -l app=nfd-worker ds -n openshift-nfd
    ```
-   
+
 
 1. Wait until Cluster Policy is ready
 
@@ -425,7 +425,7 @@ Official Documentation for Installing [Node Feature Discovery Operator](https://
    ```bash
    oc wait --for=jsonpath='{.status.numberReady}'=3 -l app=nfd-master ds -n openshift-nfd
    ```
-   
+
    ```bash
    oc wait --for=jsonpath='{.status.numberReady}'=5 -l app=nfd-worker ds -n openshift-nfd
    ```
@@ -499,7 +499,7 @@ We'll now apply the nvidia cluster config. Please read the [nvidia documentation
 
     ```bash
     oc describe node -l node.kubernetes.io/instance-type=$GPU_INSTANCE_TYPE \
-      | egrep 'Roles|pci-10de' | grep -v master    
+      | egrep 'Roles|pci-10de' | grep -v master
     ```
 
     You should see output like:
