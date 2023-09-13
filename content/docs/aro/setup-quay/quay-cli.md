@@ -64,9 +64,9 @@ authors:
             local_us:
             - AzureStorage
             - azure_account_key: <AZURE_STORAGE_ACCOUNT_KEY>
-                azure_account_name: <AZURE_STORAGE_ACCOUNT>
-                azure_container: <AZURE_CONTAINER_NAME>
-                storage_path: /datastorage/registry
+              azure_account_name: <AZURE_STORAGE_ACCOUNT>
+              azure_container: <AZURE_CONTAINER_NAME>
+              storage_path: /datastorage/registry
         DISTRIBUTED_STORAGE_DEFAULT_LOCATIONS:
         - local_us
         DISTRIBUTED_STORAGE_PREFERENCE:
@@ -91,27 +91,27 @@ authors:
                 configBundleSecret: <config_bundle_secret_name>
                 components:
                     - kind: clair
-                    managed: true
+                      managed: true
                     - kind: postgres
-                    managed: true
+                      managed: true
                     - kind: objectstorage
-                    managed: false
+                      managed: false
                     - kind: redis
-                    managed: true
+                      managed: true
                     - kind: horizontalpodautoscaler
-                    managed: true
+                      managed: true
                     - kind: route
-                    managed: true
+                      managed: true
                     - kind: mirror
-                    managed: true
+                      managed: true
                     - kind: monitoring
-                    managed: true
+                      managed: true
                     - kind: tls
-                    managed: true
+                      managed: true
                     - kind: quay
-                    managed: true
+                      managed: true
                     - kind: clairpostgres
-                    managed: true```
+                      managed: true```
         ```bash
         oc create -n <namespace> -f quayregistry.yaml
         ```
