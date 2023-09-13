@@ -5,9 +5,11 @@ MacOS
 See Azure Docs for alternative install options.
 Install Azure CLI using homebrew
 brew update &amp;amp;&amp;amp; brew install azure-cli Linux
-See Azure Docs for alternative install options.</description></item><item><title>ROSA Quickstart</title><link>https://mobb.ninja/docs/quickstart-rosa/</link><pubDate>Thu, 10 Jun 2021 00:00:00 +0000</pubDate><guid>https://mobb.ninja/docs/quickstart-rosa/</guid><description>A Quickstart guide to deploying a Red Hat OpenShift cluster on AWS.
-Video Walkthrough Quick Introduction to ROSA by Charlotte Fung on AWS YouTube channel If you prefer a more visual medium, you can watch Steve Mirman walk through this quickstart on YouTube .
+See Azure Docs for alternative install options.</description></item><item><title>ROSA Prerequisites</title><link>https://mobb.ninja/docs/rosa/sts/prereqs/</link><pubDate>Thu, 10 Jun 2021 00:00:00 +0000</pubDate><guid>https://mobb.ninja/docs/rosa/sts/prereqs/</guid><description>This document contains a set of pre-requisites that must be run once before you can create your first ROSA cluster.
 Prerequisites AWS an AWS account with the AWS ROSA Prerequisites met.
-MacOS
+AWS CLI MacOS
 See AWS Docs for alternative install options.
-Install AWS CLI using the macOS command line</description></item></channel></rss>
+Install AWS CLI using the macOS command line
+curl &amp;#34;https://awscli.amazonaws.com/AWSCLIV2.pkg&amp;#34; -o &amp;#34;AWSCLIV2.pkg&amp;#34; sudo installer -pkg AWSCLIV2.pkg -target / Linux
+See AWS Docs for alternative install options.
+Install AWS CLI using the Linux command line</description></item></channel></rss>
