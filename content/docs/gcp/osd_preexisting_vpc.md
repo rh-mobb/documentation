@@ -195,7 +195,7 @@ On the Cluster details page, provide a name for your cluster and specify the clu
 
 ## Cleanup
 
-Deleting a ROSA cluster consists of two parts:
+Deleting a OSD cluster consists of two parts:
 
 1. Deleting the OSD cluster can be done using the OCM console described in the [official OSD docs](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
 
