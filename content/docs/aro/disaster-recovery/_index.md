@@ -52,7 +52,7 @@ An ARO cluster can be deployed into Multiple Availability Zones (AZs) in a singl
 * Decide on RPO/RTO (Recovery Point Objective / Recovery Time Objective) for DR
 * Decide whether your regions should be hot/hot, hot/warm, or hot/cold.
 * Choose regions close to your consumers.
-* choose two [`"paired"` regions](https://docs.microsoft.com/en-us/azure/best-practices-availability-paired-regions).
+* choose two [`"paired`" regions](https://docs.microsoft.com/en-us/azure/best-practices-availability-paired-regions).
 * Use global virtual network peering to connect your networks together.
 * Use Front Door or Traffic Manager to route *public* traffic to the correct region.
 * Enable geo-replication for container images (If using ACR).
