@@ -214,7 +214,7 @@ kubectl get nodes --show-labels | grep submariner
 
 > **IMPORTANT**: To enable Submariner in ROSA - ARO clusters, the POD_CIDR and SERVICE_CIDR can’t overlap between them. To avoid IP address conflicts, the ARO cluster needs to modify the default IP CIDRs. Check the Submariner docs for more information.
 
-* Define the prerequisites for install the ROSA cluster
+* Define the prerequisites for install the ARO cluster
 
 ```sh
 AZR_RESOURCE_LOCATION=eastus
