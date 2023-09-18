@@ -177,9 +177,8 @@ This guide shows how to deploy the Cluster Log Forwarder operator and configure 
    spec:
      collection:
        logs:
-          type: fluentd
+          type: vector
      forwarder:
-       fluentd: {}
      managementState: Managed
    EOF
    ```
