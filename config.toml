@@ -36,8 +36,7 @@ disableShortcutsTitle = true
 # disableSearch = false # default is false
 # disableNavChevron = false # set true to hide next/prev chevron, default is false
 menushortcutsnewtab = true
-
-# #editURL = "https://github.com/vjeantet/hugo-theme-docport/edit/master/exampleSite/content/"
+editURL = 'https://github.com/rh-mobb/documentation/edit/main/content/'
 
 disableInlineCopyToClipBoard = true # Don't display the copy-to-clipboard button on inline code blocks, default is false
 
