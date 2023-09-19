@@ -1,5 +1,5 @@
 ---
-title: "Documentation from the MOBB"
+title: "Home"
 date: 2022-09-14
 description: MOBB Docs and Guides
 archetype: home

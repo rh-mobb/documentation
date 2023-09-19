@@ -7,6 +7,10 @@ html, body {
   box-sizing: border-box;
 }
 
+[aria-hidden=true] {
+  display: none;
+}
+
 body {
   color: #222;
   font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Malayalam', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans Thai', Helvetica, Arial, sans-serif);
@@ -136,4 +140,19 @@ main p {
     margin: 0 auto;
     max-width: 1320px;
   }
+}
+
+.breadcrumbs {
+  display: flex;
+  flex-direction: row;
+  list-style: none;
+  font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+  padding-inline: 0;
+}
+
+.breadcrumb:not(:last-of-type):after {
+  content: url(/images/breadcrumb-spacer.svg);
+  width: 11px;
+  height: 11px;
+  padding: var(--rh-space-md, 8px);
 }
