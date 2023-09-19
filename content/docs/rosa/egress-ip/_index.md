@@ -4,26 +4,24 @@ title: Assign Consistent Egress IP for External Traffic
 tags: ["OSD", "ROSA", "ARO"]
 authors:
   - 'Dustin Scott'
+summary: |
+  It may be desirable to assign a consistent IP address for traffic that leaves 
+  the cluster when configuring items such as security groups or other sorts of 
+  security controls which require an IP-based configuration.  By default, 
+  Kubernetes via the OVN-Kubernetes CNI will assign random IP addresses from a pool 
+  which will make configuring security lockdowns unpredictable or 
+  unnecessarily open.  This guide shows you how to configure a set of predictable 
+  IP addresses for egress cluster traffic to meet common security standards and 
+  guidance and other potential use cases.
+
+  See the [OpenShift documentation on this topic](https://docs.openshift.com/container-platform/4.12/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) 
+  for more information.
+prereqs:
+  - ROSA Cluster (4.10+)
+  - openshift-cli (`oc`)
+  - rosa-cli (`rosa`)
+  - jq
 ---
-
-It may be desirable to assign a consistent IP address for traffic that leaves 
-the cluster when configuring items such as security groups or other sorts of 
-security controls which require an IP-based configuration.  By default, 
-Kubernetes via the OVN-Kubernetes CNI will assign random IP addresses from a pool 
-which will make configuring security lockdowns unpredictable or 
-unnecessarily open.  This guide shows you how to configure a set of predictable 
-IP addresses for egress cluster traffic to meet common security standards and 
-guidance and other potential use cases.
-
-See the [OpenShift documentation on this topic](https://docs.openshift.com/container-platform/4.12/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) 
-for more information.
-
-## Prerequisites
-
-* ROSA Cluster
-* openshift-cli (`oc`)
-* rosa-cli (`rosa`)
-* jq
 
 ## Demo
 
