@@ -1,5 +1,6 @@
 {{ define "main" }}
-  {{- partial "partials/banner.html"}}
+  {{- partial "breadcrumbs.html" . }}
+  {{- partial "banner.html" . }}
   <h1>{{ .Title }}</h1>
   {{ .Content }}
   {{ range .Pages }}

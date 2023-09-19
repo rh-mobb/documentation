@@ -152,7 +152,7 @@ main p {
   flex-direction: row;
   list-style: none;
   font-size: var(--rh-font-size-body-text-sm, 0.875rem);
-  padding-inline: 0;
+  padding: var(--rh-space-lg, 16px) 0;
 }
 
 .breadcrumb:not(:last-of-type):after {
@@ -160,4 +160,16 @@ main p {
   width: 11px;
   height: 11px;
   padding: var(--rh-space-md, 8px);
+}
+
+.alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+.alert-warning {
+  background-color: #fcf8e3;
+  border-color: #fbeed5;
+  color: #c09853;
 }
