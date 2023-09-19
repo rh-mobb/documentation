@@ -1,0 +1,13 @@
+{{- with resources.Get "css/main.css" }}
+  {{- if eq hugo.Environment "development" }}
+    <link rel="stylesheet" href="{{ .RelPermalink }}">
+  {{- else }}
+    {{- with . | minify | fingerprint }}
+      <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous">
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+
+<link rel="stylesheet" href="https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
+<link rel="stylesheet" href="https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-footer/rh-footer-lightdom.css">

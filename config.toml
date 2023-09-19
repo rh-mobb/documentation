@@ -1,7 +1,7 @@
 baseURL = 'https://mobb.ninja/'
 languageCode = 'en-us'
 title = 'Managed OpenShift Black Belt - Unofficial Documentation'
-theme = "relearn"
+theme = "rhds"
 DefaultContentLanguage = "en"
 pygmentsCodeFences = true
 pygmentsStyle = "monokai"

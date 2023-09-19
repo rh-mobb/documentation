@@ -1,0 +1,56 @@
+<!--
+  JSPM Generator Import Map
+  Edit URL: https://generator.jspm.io/#U2VhYGBmD80rySzJSU1hcCjKSCnWT81JzU3NKyl2MNQDQv2iDN3kkkQopZdVjFNVWn5+SWoRgoVPbV5iWWZ6Yklmfp5ucWpyfl5KYlElLnGgOQB/OX2AqAA
+-->
+  <script type="importmap">
+{
+  "imports": {
+    "@rhds/elements/rh-cta/rh-cta.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-cta/rh-cta.js",
+    "@rhds/elements/rh-footer/rh-footer.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-footer/rh-footer.js",
+    "@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-navigation-secondary/rh-navigation-secondary.js"
+  },
+  "scopes": {
+    "https://ga.jspm.io/": {
+      "@lit/reactive-element": "https://ga.jspm.io/npm:@lit/reactive-element@1.6.3/development/reactive-element.js",
+      "@lit/reactive-element/decorators/": "https://ga.jspm.io/npm:@lit/reactive-element@1.6.3/development/decorators/",
+      "@patternfly/elements/": "https://ga.jspm.io/npm:@patternfly/elements@2.4.0/",
+      "@patternfly/pfe-core": "https://ga.jspm.io/npm:@patternfly/pfe-core@2.4.1/core.js",
+      "@patternfly/pfe-core/": "https://ga.jspm.io/npm:@patternfly/pfe-core@2.4.1/",
+      "@rhds/elements/rh-accordion/rh-accordion.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-accordion/rh-accordion.js",
+      "@rhds/tokens/media.js": "https://ga.jspm.io/npm:@rhds/tokens@1.1.2/js/media.js",
+      "lit": "https://ga.jspm.io/npm:lit@2.8.0/index.js",
+      "lit-element/lit-element.js": "https://ga.jspm.io/npm:lit-element@3.3.3/development/lit-element.js",
+      "lit-html": "https://ga.jspm.io/npm:lit-html@2.8.0/development/lit-html.js",
+      "lit-html/": "https://ga.jspm.io/npm:lit-html@2.8.0/development/",
+      "lit/": "https://ga.jspm.io/npm:lit@2.8.0/",
+      "tslib": "https://ga.jspm.io/npm:tslib@2.6.2/tslib.es6.mjs"
+    },
+    "https://ga.jspm.io/npm:@patternfly/elements@2.4.0/": {
+      "lit": "https://ga.jspm.io/npm:lit@2.6.1/index.js",
+      "lit/decorators/": "https://ga.jspm.io/npm:lit@2.6.1/decorators/"
+    }
+  }
+}
+</script>
+
+<!-- ES Module Shims: Import maps polyfill for older browsers without import maps support (eg Safari 16.3) -->
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.8.0/dist/es-module-shims.js" crossorigin="anonymous"></script>
+
+<script type="module">
+  import { RhNavigationSecondary } from '@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js';
+  import { RhFooter } from '@rhds/elements/rh-footer/rh-footer.js';
+  import { RhCta } from '@rhds/elements/rh-cta/rh-cta.js';
+</script>
+
+{{- with resources.Get "js/main.js" }}
+  {{- if eq hugo.Environment "development" }}
+    {{- with . | js.Build }}
+      <script src="{{ .RelPermalink }}"></script>
+    {{- end }}
+  {{- else }}
+    {{- $opts := dict "minify" true }}
+    {{- with . | js.Build $opts | fingerprint }}
+      <script src="{{ .RelPermalink }}" integrity="{{- .Data.Integrity }}" crossorigin="anonymous"></script>
+    {{- end }}
+  {{- end }}
+{{- end }}

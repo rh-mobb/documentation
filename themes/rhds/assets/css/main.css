@@ -1,0 +1,139 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+*, *:after, *:before {
+  box-sizing: border-box;
+}
+
+body {
+  color: #222;
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Malayalam', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans Thai', Helvetica, Arial, sans-serif);
+  font-size: 1rem;
+  line-height: var(--rh-line-height-body-text, 1.5);
+}
+
+a {
+  color: var(--rh-color-interactive-blue-darker, #0066cc);
+  text-decoration: none;
+}
+
+a:hover, 
+a:focus {
+  color: var(--rh-color-interactive-blue-darkest, #004080);
+  text-decoration: underline;
+}
+
+:is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Malayalam', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans Thai', Helvetica, Arial, sans-serif);
+  font-weight: var(--rh-font-weight-heading-medium, 500);
+}
+
+h1 {
+  font-size: var(--rh-font-size-heading-2xl, 3rem);
+}
+
+h2 {
+  font-size: var(--rh-font-size-heading-xl, 2.5rem);
+}
+
+h3 {
+  font-size: var(--rh-font-size-heading-lg, 2.25rem);
+}
+
+h4 {
+  font-size: var(--rh-font-size-heading-md, 1.75rem);
+}
+
+h5 {
+  font-size: var(--rh-font-size-heading-sm, 1.5rem);
+}
+
+h6 {
+  font-size: var(--rh-font-size-heading-xs, 1.25rem);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  background-color: var(--rh-color-gray-90, #151515);
+  color: var(--rh-color-text-primary-on-dark, #ffffff);
+  padding: var(--rh-space-md, 8px);
+  height: 72px;
+}
+
+header .logo {
+  margin-inline-start: var(--rh-space-md, 8px);
+  height: 100%;
+}
+
+header a {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+header :is(img, svg) {
+  max-width: 169px;
+}
+
+@media screen and (min-width: 768px) {
+  header {
+    padding: var(--rh-space-md, 8px) var(--rh-space-xl, 24px);
+  }
+
+  header .logo {
+    margin-inline-start: var(--rh-space-2xl, 32px);
+  } 
+}
+
+main {
+  margin: 0 auto;
+  max-width: 1320px;
+}
+
+@media screen and (min-width: 768px) {
+  main {
+    padding: var(--rh-space-2xl, 32px);
+  }
+}
+
+main p {
+  max-width: 60rem;
+}
+
+#hero {
+  padding-block: var(--rh-space-xl, 32px);
+  background-image: url(/images/openshift-desktop-hero.svg);
+  background-repeat: no-repeat;
+  background-color: var(--rh-color-surface-lighter, #f2f2f2);
+}
+
+#hero :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 400;
+}
+
+#hero p {
+  font-size: var(--rh-font-size-code-lg, 1.125rem);
+}
+
+#hero .hero-cta {
+  margin-block-start: var(--rh-space-xl, 32px);
+}
+
+@media screen and (min-width: 768px) {
+  #hero {
+    padding-block: var(--rh-length-4xl, 64px);
+  }
+
+  #hero .hero-content {
+    margin: 0 auto;
+    max-width: 1320px;
+  }
+}

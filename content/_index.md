@@ -5,12 +5,6 @@ description: MOBB Docs and Guides
 archetype: home
 skipMetadata: true
 ---
-
-## Quickstarts / Getting Started
-
-* [Red Hat OpenShift on AWS (ROSA)](/docs/quickstart-rosa.md)
-* [Azure Red Hat OpenShift (ARO)](/docs/quickstart-aro.md)
-
 ## Advanced Managed OpenShift
 
 ### ROSA
