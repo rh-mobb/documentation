@@ -2,9 +2,12 @@
 date: '2022-08-19'
 title: Configuring the Cluster Log Forwarder for CloudWatch Logs and STS
 tags: ["AWS", "ROSA"]
+aliases: ['/docs/rosa/clf-cloudwatch-vector']
 authors:
-  - Paul Czarkowski
+  - Thatcher Hubbard
   - Connor Wooley
+  - Paul Czarkowski
+  - Charlotte Fung
 ---
 
 This guide shows how to deploy the Cluster Log Forwarder operator and configure it to use STS authentication to forward logs to CloudWatch.
