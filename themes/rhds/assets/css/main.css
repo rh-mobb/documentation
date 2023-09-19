@@ -98,12 +98,13 @@ header :is(img, svg) {
 }
 
 main {
-  margin: 0 auto;
+  margin: var(--rh-space-lg, 16px);
   max-width: 1320px;
 }
 
 @media screen and (min-width: 768px) {
   main {
+    margin: 0 auto;
     padding: var(--rh-space-2xl, 32px);
   }
 }
