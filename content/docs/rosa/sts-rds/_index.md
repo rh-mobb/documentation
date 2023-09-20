@@ -2,6 +2,7 @@
 date: '2023-07-24'
 title: Connect to RDS database with STS from ROSA
 tags: ["AWS", "ROSA", "RDS", "STS"]
+aliases: ["/docs/rosa/using-sts-with-aws-services"]
 authors:
   - Florian Jacquin
 ---
@@ -12,7 +13,7 @@ This is a guide to quickly connect to RDS Database (Postgres engine) from ROSA.
 
 ## Amazon Web Services Relational Database Service
 
-Amazon Web Services Relational Database Service (AWS RDS) is a distributed relational database service by Amazon Web Services. 
+Amazon Web Services Relational Database Service (AWS RDS) is a distributed relational database service by Amazon Web Services.
 It is designed to simplify setup, operation, and scaling of a relational database for use in applications.
 It supports differents database engines such as Amazon Aurora, MySQL, MariaDB, Oracle, Microsoft SQL Server, and PostgreSQL.
 
@@ -29,7 +30,7 @@ In our example we will use PostgreSQL as engine.
 
 1. Export value of your cluster name (`rosa list cluster`)
    ```bash
-   export CLUSTER_NAME=<your_cluster_name>    
+   export CLUSTER_NAME=<your_cluster_name>
    ```
 
 2. Export list of environements variables from your cluster
@@ -61,7 +62,7 @@ In our example we will use PostgreSQL as engine.
    aws ec2 modify-vpc-attribute --vpc-id ${VPC_DB} --enable-dns-hostnames "{\"Value\":true}"
    aws ec2 modify-vpc-attribute --vpc-id ${VPC_DB} --enable-dns-support "{\"Value\":true}"
    SUBNET_A=$(aws ec2 create-subnet --vpc-id ${VPC_DB} --cidr-block 10.23.1.0/24 --availability-zone ${AWS_REGION}a | jq -r .Subnet.SubnetId)
-   SUBNET_B=$(aws ec2 create-subnet --vpc-id ${VPC_DB} --cidr-block 10.23.2.0/24 --availability-zone ${AWS_REGION}b | jq -r .Subnet.SubnetId) 
+   SUBNET_B=$(aws ec2 create-subnet --vpc-id ${VPC_DB} --cidr-block 10.23.2.0/24 --availability-zone ${AWS_REGION}b | jq -r .Subnet.SubnetId)
    SUBNET_C=$(aws ec2 create-subnet --vpc-id ${VPC_DB} --cidr-block 10.23.3.0/24 --availability-zone ${AWS_REGION}c | jq -r .Subnet.SubnetId)
    ```
 2. Internet Gateway
@@ -83,7 +84,7 @@ In our example we will use PostgreSQL as engine.
    ```
 ## Create RDS Database
 
-1. Create DB with aws cli 
+1. Create DB with aws cli
 
    ```bash
    RDS_DB="$(aws rds create-db-instance \
@@ -113,7 +114,7 @@ In our example we will use PostgreSQL as engine.
     --region ${AWS_REGION}
    ```
 
-## IAM Permissions 
+## IAM Permissions
 
 1. Build the RDS access Policy
 
@@ -157,12 +158,12 @@ In our example we will use PostgreSQL as engine.
            {
                "Effect": "Allow",
                "Principal": {
-                   "Federated": "arn:aws:iam::$(aws sts get-caller-identity --query 'Account' --output text):oidc-provider/${OIDC_PROVIDER}" 
+                   "Federated": "arn:aws:iam::$(aws sts get-caller-identity --query 'Account' --output text):oidc-provider/${OIDC_PROVIDER}"
                },
                "Action": "sts:AssumeRoleWithWebIdentity",
                "Condition": {
                    "StringEquals": {
-                       "${OIDC_PROVIDER}:sub": "system:serviceaccount:rds-sts-app:default" 
+                       "${OIDC_PROVIDER}:sub": "system:serviceaccount:rds-sts-app:default"
                    }
                }
            }
@@ -220,7 +221,7 @@ In our example we will use PostgreSQL as engine.
 2. Connect to DB, create user and DB (in the prompt of `oc run`)
    ```bash
    psql -h ${DB_ENDPOINT}
-   CREATE USER iamuser WITH LOGIN; 
+   CREATE USER iamuser WITH LOGIN;
    GRANT rds_iam TO iamuser;
    CREATE DATABASE iamdb;
    \c iamdb
@@ -255,7 +256,7 @@ In our example we will use PostgreSQL as engine.
    (
      iprange iprange,
      geoname varchar
-   
+
    );
    \copy ref_ip_blocks FROM 'geolite2-country-ipv4.csv' DELIMITER ',' CSV;
    CREATE INDEX ref_ip_blocks_ip4r_idx on ref_ip_blocks using gist(iprange);
@@ -284,19 +285,19 @@ In our example we will use PostgreSQL as engine.
    kind: Secret
    metadata:
      name: aws-creds
-   type: Opaque 
-   stringData: 
+   type: Opaque
+   stringData:
      credentials: |
        [default]
        role_arn = ${ROLE}
        web_identity_token_file = /var/run/secrets/openshift/serviceaccount/token
    EOF
-   
+
    oc patch deployment ip-finder-api --type=merge -p '{"spec":{"template":{"spec":{"volumes":[{"name":"bound-sa-token","projected":{"sources":[{"serviceAccountToken":{"audience":"openshift","expirationSeconds":3600,"path":"token"}}]}},{"name":"aws-creds","secret":{"secretName":"aws-creds"}}]}}}}'
-   
-   
+
+
    oc patch deployment ip-finder-api --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts", "value": [{"name":"bound-sa-token","readOnly":true,"mountPath":"/var/run/secrets/openshift/serviceaccount"},{"name":"aws-creds","mountPath":"/opt/app-root/src/.aws"}]}]'
-   
+
    ```
 
 3. Expose APP
