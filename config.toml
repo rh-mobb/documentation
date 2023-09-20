@@ -51,8 +51,6 @@ isPlainText = true
 isHTML = false
 notAlternative = true
 
-[markup.goldmark.renderer]
-unsafe = true
 
 # Code highlight configuration
 [markup.highlight]
@@ -70,6 +68,8 @@ tabWidth = 2
   [markup.goldmark]
     [markup.goldmark.parser]
       wrapStandAloneImageWithinParagraph = false
+    [markup.goldmark.renderer]
+    unsafe = true
 
 #
 # top menu shotcuts
