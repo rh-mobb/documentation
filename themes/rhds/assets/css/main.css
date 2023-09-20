@@ -57,6 +57,11 @@ h6 {
   font-size: var(--rh-font-size-heading-xs, 1.25rem);
 }
 
+p {
+  max-width: 60rem;
+  margin-block: 0 var(--rh-space-xl, 24px);
+}
+
 img {
   max-width: 100%;
   height: auto;
@@ -90,6 +95,7 @@ header :is(img, svg) {
   max-width: 169px;
 }
 
+
 @media screen and (min-width: 768px) {
   header {
     padding: var(--rh-space-md, 8px) var(--rh-space-xl, 24px);
@@ -105,15 +111,13 @@ main {
   padding: var(--rh-space-lg, 16px) var(--rh-space-lg, 16px) var(--rh-length-5xl, 80px);
 }
 
+
+
 @media screen and (min-width: 768px) {
   main {
     margin: 0 auto;
     padding: var(--rh-space-2xl, 32px) var(--rh-space-2xl, 32px) var(--rh-length-5xl, 80px);
   }
-}
-
-main p {
-  max-width: 60rem;
 }
 
 #hero {
@@ -192,6 +196,70 @@ main p {
     padding-block-start: 0;
   }
 }
+
+.surface-light {
+  background-color: var(--rh-color-surface-light, #e0e0e0);
+}
+
+.surface-lighter {
+  background-color: var(--rh-color-surface-lighter, #f2f2f2);
+}
+
+.surface-lightest {
+  background-color: var(--rh-color-surface-lightest, #ffffff);
+}
+
+.surface-light,
+.surface-lighter,
+.surface-lightest {
+  color: var(--rh-color-text-primary-on-light, #151515);
+}
+
+.surface-dark {
+  background-color: var(--rh-color-surface-dark, #383838);
+}
+
+.surface-darker {
+  background-color:var(--rh-color-surface-darker, #1f1f1f);
+}
+
+.surface-darkest {
+  background-color: var(--rh-color-surface-darkest, #151515);
+}
+
+.surface-dark,
+.surface-darker,
+.surface-darkest {
+  color: var(--rh-color-text-primary-on-dark, #ffffff);
+}
+
+rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a {
+  color: var(--rh-color-interactive-blue-lighter, #73bcf7);
+}
+
+rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a:hover {
+  color: var(--rh-color-interactive-blue-lightest, #bee1f4);
+}
+
+.collaborate {
+  position: relative;
+  padding: var(--rh-length-4xl, 64px);
+}
+
+.collaborate .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.collaborate .cta-group {
+  display: flex;
+  flex-direction: row;
+  gap: var(--rh-space-md, 16px);
+}
+
 
 /* Bug Fixes */
 rh-navigation-secondary a[slot="logo"]:visited {
