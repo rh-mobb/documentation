@@ -1,6 +1,6 @@
 {{ define "main" }}
   {{- partial "breadcrumbs.html" . }}
-  {{- partial "banner.html" . }}
+  {{- partial "rhds/alert.html" . }}
   <h1>{{ .Title }}</h1>
   {{ .Content }}
   {{ range .Pages }}

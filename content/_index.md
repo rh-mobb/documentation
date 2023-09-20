@@ -1,9 +1,8 @@
 ---
 title: "Home"
 date: 2022-09-14
-description: MOBB Docs and Guides
 archetype: home
-skipMetadata: true
+description: "Advanced Managed OpenShift Documentation and Guides"
 ---
 ## Advanced Managed OpenShift
 

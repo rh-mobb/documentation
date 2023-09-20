@@ -1,10 +1,11 @@
 <!--
   JSPM Generator Import Map
-  Edit URL: https://generator.jspm.io/#U2VhYGBmD80rySzJSU1hcCjKSCnWT81JzU3NKyl2MNQDQv2iDN3kkkQopZdVjFNVWn5+SWoRgoVPbV5iWWZ6Yklmfp5ucWpyfl5KYlElLnGgOQB/OX2AqAA
+  Edit URL: https://generator.jspm.io/#U2VhYGDhD80rySzJSU1hcCjKSCnWT81JzU3NKyl2MNQDQv2iDN3EnNSiEjhDL6sYp8rkkkQohU9VWn5+SWoRgoVPbV5iWWZ6Yklmfp5ucWpyfl5KYlElLnGgOQB1prEz0gA
 -->
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
+    "@rhds/elements/rh-alert/rh-alert.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-alert/rh-alert.js",
     "@rhds/elements/rh-cta/rh-cta.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-cta/rh-cta.js",
     "@rhds/elements/rh-footer/rh-footer.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-footer/rh-footer.js",
     "@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-navigation-secondary/rh-navigation-secondary.js"
@@ -40,17 +41,18 @@
   import { RhNavigationSecondary } from '@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js';
   import { RhFooter } from '@rhds/elements/rh-footer/rh-footer.js';
   import { RhCta } from '@rhds/elements/rh-cta/rh-cta.js';
+  import { RhAlert } from '@rhds/elements/rh-alert/rh-alert.js';
 </script>
 
 {{- with resources.Get "js/main.js" }}
   {{- if eq hugo.Environment "development" }}
     {{- with . | js.Build }}
-      <script src="{{ .RelPermalink }}"></script>
+<script src="{{ .RelPermalink }}"></script>
     {{- end }}
   {{- else }}
     {{- $opts := dict "minify" true }}
     {{- with . | js.Build $opts | fingerprint }}
-      <script src="{{ .RelPermalink }}" integrity="{{- .Data.Integrity }}" crossorigin="anonymous"></script>
+<script src="{{ .RelPermalink }}" integrity="{{- .Data.Integrity }}" crossorigin="anonymous"></script>
     {{- end }}
   {{- end }}
 {{- end }}
