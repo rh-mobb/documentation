@@ -139,6 +139,10 @@ main {
   margin-block-start: var(--rh-space-xl, 32px);
 }
 
+#hero .hero-cta rh-cta + rh-cta {
+  margin-inline-start: var(--rh-space-md, 8px);
+}
+
 @media screen and (min-width: 768px) {
   #hero {
     padding-block: var(--rh-length-4xl, 64px);
