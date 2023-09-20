@@ -1,4 +1,4 @@
-# baseURL = 'https://rh-cloud-experts.netlify.app/'
+baseURL = "/"
 languageCode = 'en-us'
 title = 'Managed OpenShift Black Belt - Unofficial Documentation'
 theme = "rhds"
