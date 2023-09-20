@@ -203,6 +203,5 @@ aws s3api put-bucket-policy --bucket my-thanos-metrics \
 
 1. Once logged in go to **Dashboards->Manage** and expand the **federated-metrics** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
 
-    {{< rawhtml >}}
     <img src="./grafana-metrics.png" alt="screenshot of grafana with federated cluster metrics" />
-    {{< /rawhtml >}}
+    

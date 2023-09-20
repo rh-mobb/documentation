@@ -66,6 +66,11 @@ noClasses = true
 style = "monokai"
 tabWidth = 2
 
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.parser]
+      wrapStandAloneImageWithinParagraph = false
+
 #
 # top menu shotcuts
 #
