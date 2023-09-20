@@ -1,8 +1,8 @@
 {{ define "main" }}
   <section class="list">
     {{- partial "breadcrumbs.html" . }}
-    {{- partial "rhds/alert.html" . }}
     <h1>{{ .Title }}</h1>
+    {{- partial "rhds/alert.html" . }}
     {{ .Content }}
     {{ range .Pages }}
       <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>

@@ -1,6 +1,5 @@
 {{ define "main" }}
   {{- partial "breadcrumbs.html" . }}
-  {{- partial "rhds/alert.html" . }}
 
   <article>
     <h1>{{ .Title }}</h1>
@@ -26,6 +25,7 @@
       {{- partial "tags.html" . }}
     </div>
     <section>
+      {{- partial "rhds/alert.html" . }}
       {{ .Content }}
     </section>
   </article>

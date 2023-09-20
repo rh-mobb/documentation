@@ -299,9 +299,12 @@ rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-
 .collaborate .cta-group {
   display: flex;
   flex-direction: row;
-  gap: var(--rh-space-md, 16px);
+  gap: var(--rh-space-lg, 16px);
 }
 
+rh-alert {
+  margin-bottom: var(--rh-space-xl, 24px);
+}
 
 /* Bug Fixes */
 rh-navigation-secondary a[slot="logo"]:visited {
