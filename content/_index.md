@@ -4,7 +4,10 @@ date: 2022-09-14
 archetype: home
 description: "Advanced Managed OpenShift Documentation and Guides"
 ---
-## Advanced Managed OpenShift
+
+## Quickstarts / Getting Started
+* [Red Hat OpenShift on AWS (ROSA)](/docs/rosa/sts/)
+* [Azure Red Hat OpenShift (ARO)](/docs/quickstart-aro/)
 
 ### ROSA
 
