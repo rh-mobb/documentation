@@ -143,11 +143,9 @@ main {
 }
 
 #hero .hero-cta {
-  margin-block-start: var(--rh-space-xl, 32px);
-}
-
-#hero .hero-cta rh-cta + rh-cta {
-  margin-inline-start: var(--rh-space-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 @media screen and (min-width: 576px) {
