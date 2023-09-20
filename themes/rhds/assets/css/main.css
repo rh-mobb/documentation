@@ -69,6 +69,7 @@ img {
 
 pre {
   padding: var(--rh-space-lg, 16px);
+  overflow: scroll;
 }
 
 header {
@@ -167,6 +168,10 @@ main {
   width: 11px;
   height: 11px;
   padding: var(--rh-space-md, 8px);
+}
+
+.article-meta {
+  padding-block-end: var(--rh-space-2xl, 32px);
 }
 
 .article-tags {
