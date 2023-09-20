@@ -129,7 +129,7 @@ main {
 }
 
 #hero h1 {
-  margin-bottom: var(--rh-spacer-lg, 16px);
+  margin-block-end: var(--rh-spacer-lg, 16px);
 }
 
 #hero p {
