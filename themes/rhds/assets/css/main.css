@@ -157,6 +157,7 @@ main {
 
 .breadcrumbs {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
   list-style: none;
   font-size: var(--rh-font-size-body-text-sm, 0.875rem);
@@ -168,6 +169,14 @@ main {
   width: 11px;
   height: 11px;
   padding: var(--rh-space-md, 8px);
+}
+
+.breadcrumb:nth-last-child(2):after {
+  display: none;
+}
+
+.breadcrumb:last-of-type {
+  display: none;
 }
 
 .article-meta {
