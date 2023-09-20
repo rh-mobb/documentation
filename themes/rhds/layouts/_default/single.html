@@ -1,15 +1,34 @@
 {{ define "main" }}
   {{- partial "breadcrumbs.html" . }}
   {{- partial "rhds/alert.html" . }}
-  <h1>{{ .Title }}</h1>
 
-  {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
-  {{ $dateHuman := .Date | time.Format ":date_long" }}
+  <article>
+    <h1>{{ .Title }}</h1>
 
-  <time datetime="{{ $dateMachine }}">{{ $dateHuman }}</time>
-  
-  {{- partial "tags.html" . }}
+    {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+    {{ $dateHuman := .Date | time.Format ":date_long" }}
 
-  {{ .Content }}
-  {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
+    <div class="article-meta">
+      <div>
+      <time class="article-date" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time> 
+      {{ if isset .Params "authors" }}
+        <span class="article-authors">
+          {{ range $index, $author := .Params.Authors }}
+            {{ if eq $index (sub (len $.Params.Authors) 1) }}
+              {{ $author }}
+            {{ else }}
+              {{ $author }},
+            {{ end }}
+          {{ end }}
+        </span>
+      {{ end }}
+      </div>
+      {{- partial "tags.html" . }}
+    </div>
+
+
+    <section>
+      {{ .Content }}
+    </section>
+  </article>
 {{ end }}

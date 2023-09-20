@@ -1,7 +1,8 @@
 {{- if .Params.tags }}
-<div class="tags">
+<div class="article-tags"> 
+<span>Tags:</span>
 {{- range sort .Params.tags }}
-  <a class="tag-link" href="{{ "/tags/" | relLangURL }}{{ . | urlize }}">{{ . }}</a>
+  <rh-tag><a class="tag-link" href="{{ "/tags/" | relLangURL }}{{ . | urlize }}">{{ . }}</a></rh-tag>
 {{- end }}
 </div>
 {{- end }}

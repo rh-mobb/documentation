@@ -1,10 +1,12 @@
 {{ define "main" }}
-  {{- partial "breadcrumbs.html" . }}
-  {{- partial "rhds/alert.html" . }}
-  <h1>{{ .Title }}</h1>
-  {{ .Content }}
-  {{ range .Pages }}
-    <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-    {{ .Summary }}
-  {{ end }}
+  <section class="list">
+    {{- partial "breadcrumbs.html" . }}
+    {{- partial "rhds/alert.html" . }}
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+    {{ range .Pages }}
+      <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+      {{ .Summary }}
+    {{ end }}
+  </section>
 {{ end }}
