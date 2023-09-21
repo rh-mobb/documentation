@@ -1,0 +1,50 @@
+{
+  "name": "cloud-experts",
+  "version": "1.0.0",
+  "description": "Red Hat Cloud Experts Documentation",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "wireit",
+    "bundle": "wireit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rh-mobb/documentation.git"
+  },
+  "contributors": [
+    "Michael McNeill <mmcneill@redhat.com>",
+    "Kyle Buchanan <kbuchana@redhat.com>",
+    "Steven Spriggs <sspriggs@redhat.com>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rh-mobb/documentation/issues"
+  },
+  "dependencies": {
+    "@patternfly/elements": "^2.4.0",
+    "@rhds/elements": "^1.1.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.1.0",
+    "@rollup/plugin-terser": "^0.4.3",
+    "rollup": "^2.79.1",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-import-css": "^3.3.1",
+    "rollup-plugin-minify-html-literals": "^1.2.6",
+    "rollup-plugin-terser": "^7.0.2",
+    "wireit": "^0.14.0"
+  },
+  "wireit": {
+    "start": {
+      "command": "hugo serve",
+      "dependencies": [
+        "bundle"
+      ]
+    },
+    "bundle": {
+      "command": "rollup -c rollup.config.js"
+    }
+  }
+}

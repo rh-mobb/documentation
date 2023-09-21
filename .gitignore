@@ -13,3 +13,12 @@ Thumbs.db
 *.vscode
 resources/
 public/
+
+node_modules/
+
+themes/rhds/static/css/rhds
+themes/rhds/static/css/patternfly
+themes/rhds/static/js/patternfly
+themes/rhds/static/js/rhds
+
+.wireit
