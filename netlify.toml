@@ -24,8 +24,20 @@
 [context.next.environment]
   HUGO_ENABLEGITINFO = "true"
 
+# Ensure redirect from / to /experts/ if user doesn't land on redhat.com domain
 [[redirects]]
-from = "/docs/rosa/prereq-list/"
+from = "/"
+to = "/experts/"
+status = 301
+
+# Ensure redirect from /docs/ to /experts/ to preserve previous links continue to function
+[[redirects]]
+from = "/docs/*"
+to = "/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "/experts/rosa/prereq-list/"
 to = "https://docs.openshift.com/rosa/rosa_tutorials/rosa-mobb-prerequisites-tutorial.html"
 status = 301
 force = true
