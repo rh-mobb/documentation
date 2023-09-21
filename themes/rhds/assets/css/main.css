@@ -1,3 +1,74 @@
+@font-face {
+  font-family: RedHatDisplay;
+  src: url("/fonts/RedHatDisplay/RedHatDisplay-Regular.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/fonts/RedHatDisplay/RedHatDisplay-Regular.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatDisplay/RedHatDisplay-Regular.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 300;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatDisplay;
+  src: url("/fonts/RedHatDisplay/RedHatDisplay-Medium.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/fonts/RedHatDisplay/RedHatDisplay-Medium.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatDisplay/RedHatDisplay-Medium.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 400;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatDisplay;
+  src: url("/fonts/RedHatDisplay/RedHatDisplay-Bold.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/fonts/RedHatDisplay/RedHatDisplay-Bold.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatDisplay/RedHatDisplay-Bold.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 700;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatText;
+  src: url("/fonts/RedHatText/RedHatText-Regular.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/fonts/RedHatText/RedHatText-Regular.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatText/RedHatText-Regular.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 400;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatText;
+  src: url("/fonts/RedHatText/RedHatText-Medium.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/fonts/RedHatText/RedHatText-Medium.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatText/RedHatText-Medium.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 700;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+
 html, body {
   margin: 0;
   padding: 0;
