@@ -63,7 +63,7 @@ There may be situations when you prefer not to use wild-card certificates. This 
 
    In order to make changes to the AWS Route53 Hosted Zone to add/remove DNS TXT challenge records by the cert-manager pod, we first need to create an IAM role with specific policy permissions & a trust relationship to allow access to the pod.
 
-  > My Custom Domain Hosted Zone is in the same accout as the ROSA cluster. If these are in different accounts, few additional steps for [Cross Account Access](https://cert-manager.io/experts/configuration/acme/dns01/route53/#cross-account-access) will be required.
+  > My Custom Domain Hosted Zone is in the same accout as the ROSA cluster. If these are in different accounts, few additional steps for [Cross Account Access](https://cert-manager.io/docs/configuration/acme/dns01/route53/#cross-account-access) will be required.
 
 1. Prepare an IAM Policy file
 
@@ -202,7 +202,7 @@ There may be situations when you prefer not to use wild-card certificates. This 
 5. Update the CA truststore of the cert-manager pod.
 
    This step is usually not required. However, it was noticed that the cert-manager pod had difficulties in trusting the [STS](https://docs.aws.amazon.com/iam/index.html#sts) & [LetsEncrypt](https://acme-v02.api.letsencrypt.org/) endpoints. So the below commands essentially downloads the CA chain of these endpoints, puts them into a ConfigMap, which then gets attached to the pod as a Volume.
-Along with this step, I'll also be [setting the NameServers that the cert-manager will use for DNS01 self-check](https://cert-manager.io/experts/configuration/acme/dns01/#setting-nameservers-for-dns01-self-check)
+Along with this step, I'll also be [setting the NameServers that the cert-manager will use for DNS01 self-check](https://cert-manager.io/docs/configuration/acme/dns01/#setting-nameservers-for-dns01-self-check)
 The Volume attachment to the pod and the setting of NameServers will be done together by patching the cert-manager CSV resource to persist these changes to the cert-manager deployment. This will cause the rollout of a new deployment and restart of the cert-manager pod.
 
    ```bash
@@ -434,6 +434,6 @@ If you face issues during certificate create step, run 'oc describe' against eac
 oc get certificate,certificaterequest,order,challenge
 ```
 
-This is a very [helpful guide in debugging certificates](https://cert-manager.io/experts/faq/acme/) as well.
+This is a very [helpful guide in debugging certificates](https://cert-manager.io/docs/faq/acme/) as well.
 
-You may also use the [cmctl](https://cert-manager.io/experts/reference/cmctl/) CLI tool for various certificate management activities such as to check the status of certificates, testing renewals etc.
+You may also use the [cmctl](https://cert-manager.io/docs/reference/cmctl/) CLI tool for various certificate management activities such as to check the status of certificates, testing renewals etc.

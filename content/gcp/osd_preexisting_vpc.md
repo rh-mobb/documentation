@@ -61,7 +61,7 @@ As mentioned before, for deploy OSD in GCP using existing GCP VPC, you need to p
    gcloud compute networks describe $OSD_VPC
    ```
 
-NOTE: we need to create the mode custom for the VPC network, because the auto mode generates automatically the subnets with IPv4 ranges with [predetermined set of ranges](https://cloud.google.com/vpc/experts/subnets#ip-ranges).
+NOTE: we need to create the mode custom for the VPC network, because the auto mode generates automatically the subnets with IPv4 ranges with [predetermined set of ranges](https://cloud.google.com/vpc/docs/subnets#ip-ranges).
 
 4. This example is using the standard configuration for these two subnets:
 
@@ -82,7 +82,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
    ![GCP VPC and Subnets](../images/osd-gcp1.png)
 
-6. Once the VPC and the two subnets are provided it is needed to create one [GCP Cloud Router](https://cloud.google.com/network-connectivity/experts/router/how-to/create-router-vpc-on-premises-network):
+6. Once the VPC and the two subnets are provided it is needed to create one [GCP Cloud Router](https://cloud.google.com/network-connectivity/docs/router/how-to/create-router-vpc-on-premises-network):
 
    ```sh
    export OSD_ROUTER=<router name>
@@ -93,7 +93,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
    ![GCP Routers](../images/osd-gcp2.png)
 
-7. Then, we will deploy two [GCP Cloud NATs](https://cloud.google.com/nat/experts/set-up-manage-network-address-translation#gcloud) and attach them within the GCP Router:
+7. Then, we will deploy two [GCP Cloud NATs](https://cloud.google.com/nat/docs/set-up-manage-network-address-translation#gcloud) and attach them within the GCP Router:
 
     * Generate the GCP Cloud Nat for the Master Subnets:
 

@@ -12,14 +12,14 @@ tags: ["ARO", "Azure"]
 
 The OpenShift developers have anticipated this needs and have provided ways to ship both metrics and logs outside of the cluster. In Azure we have the Azure Blob storage service which is perfect for storing the data.
 
-In this guide we'll be setting up [Thanos](https://thanos.io/) and [Grafana Agent](https://grafana.com/experts/agent/latest/) to forward cluster and user workload metrics to Azure Blob as well the Cluster Logging Operator to forward logs to [Loki](https://grafana.com/oss/loki/) which stores the logs in Azure Blob.
+In this guide we'll be setting up [Thanos](https://thanos.io/) and [Grafana Agent](https://grafana.com/docs/agent/latest/) to forward cluster and user workload metrics to Azure Blob as well the Cluster Logging Operator to forward logs to [Loki](https://grafana.com/oss/loki/) which stores the logs in Azure Blob.
 
 ## Prerequisites
 
 * [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 * [Terraform](https://www.terraform.io/downloads)
 * [OC CLI](https://docs.openshift.com/container-platform/4.11/cli_reference/openshift_cli/getting-started-cli.html)
-* [Helm](https://helm.sh/experts/intro/install/)
+* [Helm](https://helm.sh/docs/intro/install/)
 * [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
 ## Preparation

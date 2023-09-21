@@ -17,7 +17,7 @@ You can refer also to the driver's documentation [here](https://github.com/kuber
 ## Prerequisites
 
 * ARO cluster up and running.
-* [Helm - command line utility](https://helm.sh/experts/intro/install/)
+* [Helm - command line utility](https://helm.sh/docs/intro/install/)
 * oc - command line utility. 
 * jq - command line utility.
 

@@ -10,8 +10,8 @@ authors:
 
 [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/) is a controller to help manage Elastic Load Balancers for a Kubernetes cluster.
 
-* It satisfies Kubernetes [Ingress resources](https://kubernetes.io/experts/concepts/services-networking/ingress/) by provisioning [Application Load Balancers](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html).
-* It satisfies Kubernetes [Service resources](https://kubernetes.io/experts/concepts/services-networking/service/) by provisioning [Network Load Balancers](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html).
+* It satisfies Kubernetes [Ingress resources](https://kubernetes.io/docs/concepts/services-networking/ingress/) by provisioning [Application Load Balancers](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html).
+* It satisfies Kubernetes [Service resources](https://kubernetes.io/docs/concepts/services-networking/service/) by provisioning [Network Load Balancers](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html).
 
 Compared with default AWS In Tree Provider, this controller is actively developed with advanced annotations for both [ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/ingress/annotations/) and [NLB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/service/annotations/#lb-type). Some advanced usecases are:
 
@@ -84,7 +84,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 
 1. Create Policy for the aws load balancer controller
 
-   > **Note**: Policy is from [AWS Load Balancer Controller Policy](https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.4/experts/install/iam_policy.json) plus subnet create tags permission (required by the operator)
+   > **Note**: Policy is from [AWS Load Balancer Controller Policy](https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.4/docs/install/iam_policy.json) plus subnet create tags permission (required by the operator)
 
    ```bash
    oc new-project aws-load-balancer-operator
@@ -217,11 +217,11 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 1. Deploy Echo Server Ingress with ALB
 
    ```bash
-   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/experts/examples/echoservice/echoserver-namespace.yaml
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-namespace.yaml
    oc adm policy add-scc-to-user anyuid system:serviceaccount:echoserver:default
-   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/experts/examples/echoservice/echoserver-deployment.yaml
-   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/experts/examples/echoservice/echoserver-service.yaml
-   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/experts/examples/echoservice/echoserver-ingress.yaml
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-deployment.yaml
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-service.yaml
+   oc apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/examples/echoservice/echoserver-ingress.yaml
    ```
 
 1. Curl the ALB ingress endpoint to verify the echoserver pod is accessible

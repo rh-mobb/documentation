@@ -430,7 +430,7 @@ Either DPA configuration will work.
    Hello OpenShift!
    ```
 
-1. For troubleshooting tips please refer to the OADP team's [troubleshooting documentation](https://github.com/openshift/oadp-operator/blob/master/experts/TROUBLESHOOTING.md)
+1. For troubleshooting tips please refer to the OADP team's [troubleshooting documentation](https://github.com/openshift/oadp-operator/blob/master/docs/TROUBLESHOOTING.md)
 
 1. Additional sample applications can be found in the OADP team's [sample applications directory](https://github.com/openshift/oadp-operator/tree/master/tests/e2e/sample-applications)
 

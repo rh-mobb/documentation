@@ -65,7 +65,7 @@ Network Load Balancers in IP mode to satisfy Kubernetes service objects of type 
 1. Create AWS Policy and Service Account
 
     ```bash
-    curl -so iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/${ALB_VERSION}/experts/install/iam_policy.json
+    curl -so iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/${ALB_VERSION}/docs/install/iam_policy.json
 
     POLICY_ARN=$(aws iam create-policy --policy-name "AWSLoadBalancerControllerIAMPolicy" --policy-document file://iam-policy.json --query Policy.Arn --output text)
 

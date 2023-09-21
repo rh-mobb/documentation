@@ -21,7 +21,7 @@ In this example we will deploy the Amazon Ingress Controller that uses ALBs, and
 1. Download the IAM Policy for the AWS Load Balancer Hooks
 
     ```bash
-    wget https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/experts/install/iam_policy.json
+    wget https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.2.0/docs/install/iam_policy.json
     ```
 
 1. Create AWS Role with inline policy

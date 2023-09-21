@@ -10,7 +10,7 @@ authors:
   - Connor Wooley
 ---
 
-By default, within OSD in GCP only the [GCE-PD StorageClass](https://kubernetes.io/experts/concepts/storage/storage-classes/#gce-pd) is available in the cluster. With this StorageClass, only ReadWriteOnce mode is permitted, and the gcePersistentDisks can only be mounted by a [single consumer in read-write mode](https://kubernetes.io/experts/concepts/storage/volumes/#gcepersistentdisk).
+By default, within OSD in GCP only the [GCE-PD StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/#gce-pd) is available in the cluster. With this StorageClass, only ReadWriteOnce mode is permitted, and the gcePersistentDisks can only be mounted by a [single consumer in read-write mode](https://kubernetes.io/docs/concepts/storage/volumes/#gcepersistentdisk).
 
 Because of that, and for provide Storage with Shared Access (RWX) Access Mode to our OpenShift clusters a [GCP Filestore](https://cloud.google.com/filestore/docs) could be used.
 

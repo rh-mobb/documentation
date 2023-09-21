@@ -180,7 +180,7 @@ For ease of management, we're using the same resource group for domain as we hav
 
 1. Add CAA Record
 
-   >[CAA is a type of DNS record](https://letsencrypt.org/experts/caa/) that allows owners to specify which Certificate Authorities are allowed to issue certificates containing their domain names.
+   >[CAA is a type of DNS record](https://letsencrypt.org/docs/caa/) that allows owners to specify which Certificate Authorities are allowed to issue certificates containing their domain names.
 
    ```bash
    az network dns record-set caa add-record -g $RESOURCEGROUP -z $DOMAIN \
@@ -636,7 +636,7 @@ One of the most helpful commands i've seen for debugging is in regards to challe
 oc describe challenges
 ```
 
-This is a very [helpful guide in debugging certificates](https://cert-manager.io/experts/faq/acme/) as well.
+This is a very [helpful guide in debugging certificates](https://cert-manager.io/docs/faq/acme/) as well.
 
 ## Validate Certificates
 

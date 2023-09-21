@@ -8,7 +8,7 @@ authors:
   - Diana Sari
 ---
 
-This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/experts/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
+This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
 
 ## Prerequisites
 

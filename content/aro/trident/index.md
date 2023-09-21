@@ -15,7 +15,7 @@ This guide a simple "happy path" to show the path of least friction to showcasin
   * An Azure Red Hat OpenShift cluster installed with Service Principal role/credentials.
   * [kubectl cli](https://kubernetes.io/releases/download/#kubectl)
   * [oc cli](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html)
-  * [helm 3 cli](https://helm.sh/experts/intro/install/)
+  * [helm 3 cli](https://helm.sh/docs/intro/install/)
   * [Review official trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator)
 
 In this guide, you will need service principal and region details. Please have these handy.
@@ -30,7 +30,7 @@ If you don't have your existing ARO service principal credentials, you can creat
 
 ### Important Concepts
 
-Persistent Volume Claims are [namespaced objects](https://kubernetes.io/experts/concepts/storage/persistent-volumes/#a-note-on-namespaces).  Mounting RWX/ROX is only possible within the same namespace.
+Persistent Volume Claims are [namespaced objects](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#a-note-on-namespaces).  Mounting RWX/ROX is only possible within the same namespace.
 
 NetApp files must be have a delegated subnet within your ARO Vnet's and you must assign it to the Microsoft.Netapp/volumes service.
 

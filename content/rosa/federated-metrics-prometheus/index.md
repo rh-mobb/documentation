@@ -15,4 +15,4 @@ If you want to federate your metrics to a central location we recommend using on
 1. [Federating System and User metrics to S3 in Red Hat OpenShift for AWS](../federated-metrics/)
 2. [Using the AWS Cloud Watch agent to publish metrics to CloudWatch in ROSA](../metrics-to-cloudwatch-agent)
 
-If you wish to view the old (likely no longer functional) document you can find it in the [git history of the mobb.ninja site](https://github.com/rh-mobb/documentation/blob/c72f39d1ca82436cc2188b94cd659a01bf88b2a6/content/experts/rosa/federated-metrics-prometheus/_index.md).
+If you wish to view the old (likely no longer functional) document you can find it in the [git history of the mobb.ninja site](https://github.com/rh-mobb/documentation/blob/c72f39d1ca82436cc2188b94cd659a01bf88b2a6/content/docs/rosa/federated-metrics-prometheus/_index.md).

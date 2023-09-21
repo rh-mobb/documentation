@@ -10,7 +10,7 @@
 #      4. Installs Azure Monitor for containers HELM chart to the K8s cluster in provided via --kube-context
 # Prerequisites :
 #     Azure CLI:  https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
-#     Helm3 : https://helm.sh/experts/intro/install/
+#     Helm3 : https://helm.sh/docs/intro/install/
 #     OC: https://docs.microsoft.com/en-us/azure/openshift/tutorial-connect-cluster#install-the-openshift-cli # Applicable for only ARO v4
 # Note > 1. Format of the proxy endpoint should be http(s)://<user>:<pwd>@proxyhost:proxyport
 #        2. cluster and workspace resource should be in valid azure resoure id format

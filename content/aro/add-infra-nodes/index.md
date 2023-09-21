@@ -15,7 +15,7 @@ You can find the original (and more detailed) document describing the process fo
 ## Prerequisites
 
 * [Azure Red Hat OpenShift cluster](/experts/quickstart-aro)
-* [Helm CLI](https://helm.sh/experts/intro/install/)
+* [Helm CLI](https://helm.sh/docs/intro/install/)
 
 ## Create Infra Nodes
 
