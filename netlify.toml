@@ -24,7 +24,17 @@
 [context.next.environment]
   HUGO_ENABLEGITINFO = "true"
 
-# Ensure redirect from mobb.ninja to cloud.redhat.com/experts
+# Ensure redirect from mobb.ninja to cloud.redhat.com/experts (/docs first to prevent unnecessary double redirects)
+[[redirects]]
+from = "https://mobb.ninja/docs/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "http://mobb.ninja/docs/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
 [[redirects]]
 from = "https://mobb.ninja/*"
 to = "https://cloud.redhat.com/experts/:splat"
