@@ -1,4 +1,4 @@
-baseURL = "/"
+baseURL = "/experts/"
 languageCode = 'en-us'
 title = 'Managed OpenShift Black Belt - Unofficial Documentation'
 theme = "rhds"
@@ -7,9 +7,9 @@ pygmentsCodeFences = true
 pygmentsStyle = "monokai"
 # as the official Hugo documentation recommends, we turn this off for this
 # showcase; this allows the published site to be served by both http and https
-canonifyURLs = true
+canonifyURLs = false
 # required for official documentation served from subfolder
-relativeURLs = false
+relativeURLs = true
 enableGitInfo = true
 
 defaultContentLanguageInSubdir= false
