@@ -1,5 +1,5 @@
 [build]
-  publish = "public/experts"
+  publish = "public"
   command = "hugo --gc --minify --destination public/experts"
 
   [build.environment]
