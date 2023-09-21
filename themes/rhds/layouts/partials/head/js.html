@@ -1,10 +1,13 @@
 <!--
   JSPM Generator Import Map
-  Edit URL: https://generator.jspm.io/#fYxBCoAgEEVdRDdpmdEJ8hIdYNApDRthHIJuXwurVfIX7/N5/K5Rqp1mkiARnTLsXR4w4o4k2Yz6zsC+h4gsb9Fb/jUtsHtY9QQKataSkiB/reYSHGEFCYn6jDaRAz7/9tqPwFpwWxckTfsTIAE
+  Edit URL: https://generator.jspm.io/#hY8xDsIwDEUzsHAQxqaAOEAvwQFM47ZBwa6SX6SeHipUCAtBHv6T/WzJu40x24c5CzwCO9OMBHCULsw1B76xIDVHe7L7wqgeu+oyASqZ7DX92YBqgB+/8LUTB5eyfbBL1XGoKHDEB0pmS9G9s+iB1ihZneryQqaSK3T3PcGrVIlbFUdx/tUv3QH1ayzWExbzY8qiAQ
 -->
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
+    "@patternfly/elements": "https://ga.jspm.io/npm:@patternfly/elements@2.4.0/pfe.min.js",
+    "@patternfly/elements/pf-button/pf-button.js": "https://ga.jspm.io/npm:@patternfly/elements@2.4.0/pf-button/pf-button.js",
+    "@patternfly/elements/pf-tooltip/pf-tooltip.js": "https://ga.jspm.io/npm:@patternfly/elements@2.4.0/pf-tooltip/pf-tooltip.js",
     "@rhds/elements/rh-alert/rh-alert.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-alert/rh-alert.js",
     "@rhds/elements/rh-card/rh-card.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-card/rh-card.js",
     "@rhds/elements/rh-cta/rh-cta.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-cta/rh-cta.js",
@@ -14,6 +17,10 @@
   },
   "scopes": {
     "https://ga.jspm.io/": {
+      "@floating-ui/core": "https://ga.jspm.io/npm:@floating-ui/core@1.5.0/dist/floating-ui.core.mjs",
+      "@floating-ui/dom": "https://ga.jspm.io/npm:@floating-ui/dom@1.5.3/dist/floating-ui.dom.mjs",
+      "@floating-ui/utils": "https://ga.jspm.io/npm:@floating-ui/utils@0.1.4/dist/floating-ui.utils.mjs",
+      "@floating-ui/utils/dom": "https://ga.jspm.io/npm:@floating-ui/utils@0.1.4/dom/dist/floating-ui.utils.dom.mjs",
       "@lit/reactive-element": "https://ga.jspm.io/npm:@lit/reactive-element@1.6.3/development/reactive-element.js",
       "@lit/reactive-element/decorators/": "https://ga.jspm.io/npm:@lit/reactive-element@1.6.3/development/decorators/",
       "@patternfly/elements/": "https://ga.jspm.io/npm:@patternfly/elements@2.4.0/",
@@ -21,16 +28,19 @@
       "@patternfly/pfe-core/": "https://ga.jspm.io/npm:@patternfly/pfe-core@2.4.1/",
       "@rhds/elements/rh-accordion/rh-accordion.js": "https://ga.jspm.io/npm:@rhds/elements@1.1.1/elements/rh-accordion/rh-accordion.js",
       "@rhds/tokens/media.js": "https://ga.jspm.io/npm:@rhds/tokens@1.1.2/js/media.js",
-      "lit": "https://ga.jspm.io/npm:lit@2.8.0/index.js",
+      "lit": "https://ga.jspm.io/npm:lit@2.6.1/index.js",
       "lit-element/lit-element.js": "https://ga.jspm.io/npm:lit-element@3.3.3/development/lit-element.js",
       "lit-html": "https://ga.jspm.io/npm:lit-html@2.8.0/development/lit-html.js",
       "lit-html/": "https://ga.jspm.io/npm:lit-html@2.8.0/development/",
-      "lit/": "https://ga.jspm.io/npm:lit@2.8.0/",
+      "lit/": "https://ga.jspm.io/npm:lit@2.6.1/",
       "tslib": "https://ga.jspm.io/npm:tslib@2.6.2/tslib.es6.mjs"
     },
-    "https://ga.jspm.io/npm:@patternfly/elements@2.4.0/": {
-      "lit": "https://ga.jspm.io/npm:lit@2.6.1/index.js",
-      "lit/": "https://ga.jspm.io/npm:lit@2.6.1/"
+    "https://ga.jspm.io/npm:@patternfly/pfe-core@2.4.1/": {
+      "lit": "https://ga.jspm.io/npm:lit@2.8.0/index.js"
+    },
+    "https://ga.jspm.io/npm:@rhds/elements@1.1.1/": {
+      "lit": "https://ga.jspm.io/npm:lit@2.8.0/index.js",
+      "lit/": "https://ga.jspm.io/npm:lit@2.8.0/"
     }
   }
 }
@@ -45,17 +55,20 @@
   import { RhCta } from '@rhds/elements/rh-cta/rh-cta.js';
   import { RhAlert } from '@rhds/elements/rh-alert/rh-alert.js';
   import { RhTag } from '@rhds/elements/rh-tag/rh-tag.js';
+
+  import { PfTooltip } from '@patternfly/elements/pf-tooltip/pf-tooltip.js';
+  import { PfButton } from '@patternfly/elements/pf-button/pf-button.js';
 </script>
 
 {{- with resources.Get "js/main.js" }}
   {{- if eq hugo.Environment "development" }}
     {{- with . | js.Build }}
-<script src="{{ .RelPermalink }}"></script>
+<script defer src="{{ .RelPermalink }}"></script>
     {{- end }}
   {{- else }}
     {{- $opts := dict "minify" true }}
     {{- with . | js.Build $opts | fingerprint }}
-<script src="{{ .RelPermalink }}" integrity="{{- .Data.Integrity }}" crossorigin="anonymous"></script>
+<script defer src="{{ .RelPermalink }}" integrity="{{- .Data.Integrity }}" crossorigin="anonymous"></script>
     {{- end }}
   {{- end }}
 {{- end }}

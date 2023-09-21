@@ -68,7 +68,7 @@ img {
 }
 
 pre {
-  padding: var(--rh-space-lg, 16px);
+  padding: var(--rh-space-xl, 24px);
   overflow: scroll;
 }
 
@@ -129,7 +129,7 @@ main {
 }
 
 #hero h1 {
-  margin-block-end: var(--rh-spacer-lg, 16px);
+  margin-block-end: var(--rh-space-lg, 16px);
 }
 
 #hero p {
@@ -139,7 +139,7 @@ main {
 #hero .hero-container {
   display: grid;
   grid-template-columns: 1fr;
-  padding: var(--rh-spacer-lg, 16px);
+  padding: var(--rh-space-lg, 16px);
 }
 
 #hero .hero-cta {
@@ -163,7 +163,7 @@ main {
 @media screen and (min-width: 768px) {
   #hero {
     padding-block: var(--rh-length-4xl, 64px);
-    padding: var(--rh-spacer-lg, 16px) var(--rh-space-2xl, 32px);
+    padding: var(--rh-space-lg, 16px) var(--rh-space-2xl, 32px);
   }
 
   #hero .hero-container {
@@ -300,6 +300,24 @@ rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-
   display: flex;
   flex-direction: row;
   gap: var(--rh-space-lg, 16px);
+}
+
+.highlight {
+  position: relative;
+}
+
+.highlight > pf-tooltip {
+  position: absolute;
+  right: 0;
+}
+
+.highlight pf-button::part(button) {
+  --pf-icon--size: 14px;
+  color: var(--rh-color-text-secondary-on-dark, #c7c7c7);
+}
+
+.highlight pf-button:hover::part(button) {
+  color: var(--rh-color-icon-subtle-hover, #a3a3a3);
 }
 
 rh-alert {
