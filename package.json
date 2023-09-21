@@ -38,7 +38,7 @@
   },
   "wireit": {
     "start": {
-      "command": "hugo serve",
+      "command": "hugo server --appendPort -D -b //localhost/experts/",
       "dependencies": [
         "bundle"
       ]
