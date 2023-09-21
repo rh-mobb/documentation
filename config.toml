@@ -9,7 +9,7 @@ pygmentsStyle = "monokai"
 # showcase; this allows the published site to be served by both http and https
 canonifyURLs = false
 # required for official documentation served from subfolder
-relativeURLs = true
+relativeURLs = false
 enableGitInfo = true
 
 defaultContentLanguageInSubdir= false
