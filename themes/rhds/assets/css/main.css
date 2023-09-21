@@ -171,7 +171,7 @@ main {
 
 @media screen and (min-width: 768px) {
   #hero {
-    background-image: url(/images/openshift-desktop-hero.svg);
+    background-image: url(/experts/images/openshift-desktop-hero.svg);
     background-repeat: no-repeat;
     background-position: top center;
     
@@ -201,7 +201,7 @@ main {
 }
 
 .breadcrumb:not(:last-of-type):after {
-  content: url(/images/breadcrumb-spacer.svg);
+  content: url(/experts/images/breadcrumb-spacer.svg);
   width: 11px;
   height: 11px;
   padding: var(--rh-space-md, 8px);
