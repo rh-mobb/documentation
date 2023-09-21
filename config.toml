@@ -1,4 +1,5 @@
 baseURL = "/experts/"
+publishDir = "public/experts"
 languageCode = 'en-us'
 title = 'Managed OpenShift Black Belt - Unofficial Documentation'
 theme = "rhds"
