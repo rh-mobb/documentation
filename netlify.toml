@@ -16,16 +16,49 @@
     HUGO_ENV = "production"
 
 [context.deploy-preview]
-  command = "npm run bundle && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL"
+  command = "npm run bundle && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/"
 
 [context.branch-deploy]
-  command = "npm run bundle && hugo --gc --minify -b $DEPLOY_PRIME_URL"
+  command = "npm run bundle && hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/"
 
 [context.next.environment]
   HUGO_ENABLEGITINFO = "true"
 
+# Ensure redirect from mobb.ninja to cloud.redhat.com/experts (/docs first to prevent unnecessary double redirects)
 [[redirects]]
-from = "/docs/rosa/prereq-list/"
+from = "https://mobb.ninja/docs/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "http://mobb.ninja/docs/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "https://mobb.ninja/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "http://mobb.ninja/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+# Ensure redirect from / to /experts/ if user doesn't land on redhat.com domain
+[[redirects]]
+from = "/"
+to = "/experts/"
+status = 301
+
+# Ensure redirect from /docs/ to /experts/ to preserve previous links continue to function
+[[redirects]]
+from = "/docs/*"
+to = "/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "/experts/rosa/prereq-list/"
 to = "https://docs.openshift.com/rosa/rosa_tutorials/rosa-mobb-prerequisites-tutorial.html"
 status = 301
 force = true
