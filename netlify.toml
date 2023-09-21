@@ -1,6 +1,6 @@
 [build]
   publish = "public/experts"
-  command = "hugo --gc --minify"
+  command = "hugo --gc --minify --destination public/experts"
 
   [build.environment]
     HUGO_VERSION = "0.118.2"
@@ -10,7 +10,7 @@
   HUGO_ENABLEGITINFO = "true"
 
 [context.split1]
-  command = "hugo --gc --minify --enableGitInfo"
+  command = "hugo --gc --minify --enableGitInfo --destination public/experts"
 
   [context.split1.environment]
     HUGO_ENV = "production"
