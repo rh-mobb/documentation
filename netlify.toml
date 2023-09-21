@@ -62,4 +62,3 @@ from = "/experts/rosa/prereq-list/"
 to = "https://docs.openshift.com/rosa/rosa_tutorials/rosa-mobb-prerequisites-tutorial.html"
 status = 301
 force = true
-
