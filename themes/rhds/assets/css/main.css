@@ -1,9 +1,9 @@
 @font-face {
   font-family: RedHatDisplay;
-  src: url("/fonts/RedHatDisplay/RedHatDisplay-Regular.eot");
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.eot");
 
   /* IE9 Compat Modes */
-  src: url("/fonts/RedHatDisplay/RedHatDisplay-Regular.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatDisplay/RedHatDisplay-Regular.woff") format("woff");
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.woff") format("woff");
 
   /* Modern Browsers */
   font-style: normal;
@@ -14,10 +14,10 @@
 
 @font-face {
   font-family: RedHatDisplay;
-  src: url("/fonts/RedHatDisplay/RedHatDisplay-Medium.eot");
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.eot");
 
   /* IE9 Compat Modes */
-  src: url("/fonts/RedHatDisplay/RedHatDisplay-Medium.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatDisplay/RedHatDisplay-Medium.woff") format("woff");
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.woff") format("woff");
 
   /* Modern Browsers */
   font-style: normal;
@@ -28,10 +28,10 @@
 
 @font-face {
   font-family: RedHatDisplay;
-  src: url("/fonts/RedHatDisplay/RedHatDisplay-Bold.eot");
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.eot");
 
   /* IE9 Compat Modes */
-  src: url("/fonts/RedHatDisplay/RedHatDisplay-Bold.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatDisplay/RedHatDisplay-Bold.woff") format("woff");
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.woff") format("woff");
 
   /* Modern Browsers */
   font-style: normal;
@@ -42,10 +42,10 @@
 
 @font-face {
   font-family: RedHatText;
-  src: url("/fonts/RedHatText/RedHatText-Regular.eot");
+  src: url("/experts/fonts/RedHatText/RedHatText-Regular.eot");
 
   /* IE9 Compat Modes */
-  src: url("/fonts/RedHatText/RedHatText-Regular.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatText/RedHatText-Regular.woff") format("woff");
+  src: url("/experts/fonts/RedHatText/RedHatText-Regular.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatText/RedHatText-Regular.woff") format("woff");
 
   /* Modern Browsers */
   font-style: normal;
@@ -56,10 +56,10 @@
 
 @font-face {
   font-family: RedHatText;
-  src: url("/fonts/RedHatText/RedHatText-Medium.eot");
+  src: url("/experts/fonts/RedHatText/RedHatText-Medium.eot");
 
   /* IE9 Compat Modes */
-  src: url("/fonts/RedHatText/RedHatText-Medium.eot?#iefix") format("embedded-opentype"), url("/fonts/RedHatText/RedHatText-Medium.woff") format("woff");
+  src: url("/experts/fonts/RedHatText/RedHatText-Medium.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatText/RedHatText-Medium.woff") format("woff");
 
   /* Modern Browsers */
   font-style: normal;
