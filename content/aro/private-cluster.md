@@ -6,7 +6,7 @@ tags: ["ARO", "Azure"]
 
 A Quickstart guide to deploying a Private Azure Red Hat OpenShift cluster.
 
-> Once the cluster is running you will need a way to access the private network that ARO is deployed into.
+{{% alert state="info" %}}Once the cluster is running you will need a way to access the private network that ARO is deployed into.{{% /alert %}}
 
 Authors: [Paul Czarkowski](https://twitter.com/pczarkowski), [Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins)
 
@@ -18,7 +18,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 **MacOS**
 
-> See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-macos) for alternative install options.
+{{% alert state="info" %}}See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-macos) for alternative install options.{{% /alert %}}
 
 1. Install Azure CLI using homebrew
 
@@ -34,7 +34,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 **Linux**
 
-> See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf) for alternative install options.
+{{% alert state="info" %}}See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf) for alternative install options.{{% /alert %}}
 
 1. Import the Microsoft Keys
 
@@ -102,7 +102,7 @@ Set some environment variables to use later, and create an Azure Resource Group.
 
 1. Set the following environment variables
 
-    > Change the values to suit your environment, but these defaults should work.
+    {{% alert state="info" %}}Change the values to suit your environment, but these defaults should work.{{% /alert %}}
 
     ```bash
     export AZR_RESOURCE_LOCATION=eastus
@@ -169,7 +169,7 @@ Create a virtual network with two empty subnets
 
 1. [Disable network policies for Private Link Service](https://learn.microsoft.com/en-us/azure/private-link/disable-private-link-service-network-policy?tabs=private-link-network-policy-cli) on the control plane subnet
 
-    > Optional. The ARO RP will disable this for you if you skip this step.
+    {{% alert state="info" %}}Optional. The ARO RP will disable this for you if you skip this step.{{% /alert %}}
 
     ```bash
     az network vnet subnet update                                       \
@@ -239,7 +239,7 @@ This replaces the routes for the cluster to go through the Azure NAT GW service 
 
 This replaces the routes for the cluster to go through the Firewall for egress vs the LoadBalancer which we can later remove. It does come with extra Azure costs of course.
 
-> You can skip this step if you don't need to restrict egress.
+{{% alert state="info" %}}You can skip this step if you don't need to restrict egress.{{% /alert %}}
 
 1. Make sure you have the AZ CLI firewall extensions
 
@@ -296,7 +296,7 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 
 1. Create firewall rules for ARO resources
 
-    > Note: ARO clusters do not need access to the internet, however your own workloads running on them may. You can skip this step if you don't need any egress at all.
+    {{% alert state="info" %}}Note: ARO clusters do not need access to the internet, however your own workloads running on them may. You can skip this step if you don't need any egress at all.{{% /alert %}}
 
     * Create a Network Rule to allow all http/https egress traffic (not recommended)
 
@@ -310,7 +310,7 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 
     * Create Application Rules to allow to a restricted set of destinations
 
-        > replace the target-fqdns with your desired destinations
+        {{% alert state="info" %}}replace the target-fqdns with your desired destinations{{% /alert %}}
 
         ```bash
         az network firewall application-rule create -g $AZR_RESOURCE_GROUP -f aro-private     \
@@ -406,7 +406,7 @@ With the cluster in a private network, we can create a Jump host in order to con
 
 1. Use sshuttle to create a ssh vpn via the jump host (use a separate terminal session)
 
-    > replace the IP with the IP of the jump box from the previous step.
+    {{% alert state="info" %}}replace the IP with the IP of the jump box from the previous step.{{% /alert %}}
 
     ```bash
     sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
@@ -414,7 +414,7 @@ With the cluster in a private network, we can create a Jump host in order to con
 
 1. Get OpenShift console URL
 
-    > set these variables to match the ones you set at the start.
+    {{% alert state="info" %}}set these variables to match the ones you set at the start.{{% /alert %}}
 
     ```bash
     APISERVER=$(az aro show              \
@@ -456,7 +456,7 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
 
 1. Delete the Azure resource group
 
-    > Only do this if there's nothing else in the resource group.
+    {{% alert state="danger" %}}Only do this if there's nothing else in the resource group.{{% /alert %}}
 
     ```bash
     az group delete -y \

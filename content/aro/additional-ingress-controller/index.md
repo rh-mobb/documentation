@@ -75,9 +75,8 @@ authors:
    EOF
    ```
 
-    > NOTE: By default the ingress controller is created with `external` scope. This means that the corresponding Azure Load Balancer will have a public frontend IP. If you wish to deploy a privately visible ingress controller add the following lines to the `spec`:
+    {{% alert state="info" %}}NOTE: By default the ingress controller is created with `external` scope. This means that the corresponding Azure Load Balancer will have a public frontend IP. If you wish to deploy a privately visible ingress controller add the following lines to the `spec`:
 
-    ```yaml
     spec:
       ...
       endpointPublishingStrategy:
@@ -85,7 +84,8 @@ authors:
           scope: Internal
         type: LoadBalancerService
       ...
-    ```
+
+    {{% /alert %}}
 
 
 1. Wait a few moments then get the `EXTERNAL-IP` of the new ingress controller
@@ -115,7 +115,7 @@ authors:
 
 1. Test that the Ingress is working
 
-    > NOTE: For the Internal ingress controller, make sure that the test host has the necessary reachability to the VPC/subnet as well as the DNS resolver.
+    {{% alert state="info" %}}NOTE: For the Internal ingress controller, make sure that the test host has the necessary reachability to the VPC/subnet as well as the DNS resolver.{{% /alert %}}
 
    ```bash
    curl -s https://test.$DOMAIN | head

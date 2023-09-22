@@ -6,7 +6,7 @@ authors:
   - Connor Wooley
 ---
 
-> see [here](./README-public) for public clusters.
+{{% alert state="default" %}}see [here](./README-public) for public clusters.{{% /alert %}}
 
 This assumes you've already got a private ARO cluster installed. You could also follow the same instructions to create a public Astronomer, just use a regular DNS zone and skip the private parts.
 
