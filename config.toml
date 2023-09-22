@@ -1,4 +1,4 @@
-baseURL = "/"
+baseURL = "https://rh-cloud-experts.netlify.app/experts/"
 publishDir = "public/experts"
 languageCode = 'en-us'
 title = 'Red Hat Cloud Experts Documentation'
