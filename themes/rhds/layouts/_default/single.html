@@ -6,22 +6,30 @@
 
     {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
     {{ $dateHuman := .Date | time.Format ":date_long" }}
+    {{ $lastModifiedMachine := .Lastmod | time.Format "2006-01-02T15:04:05-07:00"}}
+    {{ $lastModifiedHuman := .Lastmod | time.Format ":date_long" }}
+    {{ $publishDateMachine := .PublishDate | time.Format "2006-01-02T15:04:05-07:00"}}
+    {{ $publishDateHuman := .PublishDate | time.Format ":date_long" }}
 
     <div class="article-meta">
-      <div>
-      <time class="article-date" datetime="{{ $dateMachine }}">{{ $dateHuman }}</time> 
-      {{ if isset .Params "authors" }}
-        <span class="article-authors">
+      <dl>
+        <dt>Last edited</dt>
+        <dd><time class="modified-date" datetime="{{ $lastModifiedMachine }}">{{ $lastModifiedHuman }}</time></dd>
+        {{ if isset .Params "date" }}
+          <dt>Published</dt>
+          <dd><time class="publish-date" datetime="{{ $publishDateMachine }}">{{ $publishDateHuman }}</time></dd>
+        {{ end }}
+        {{ if isset .Params "authors" }}
+          <dt>Authors</dt>
           {{ range $index, $author := .Params.Authors }}
             {{ if eq $index (sub (len $.Params.Authors) 1) }}
-              {{ $author }}
+              <dd>{{ $author }}</dd>
             {{ else }}
-              {{ $author }},
+              <dd>{{ $author }},&nbsp;</dd>
             {{ end }}
           {{ end }}
-        </span>
-      {{ end }}
-      </div>
+        {{ end }}
+      </dl>
       {{- partial "tags.html" . }}
     </div>
     <section>

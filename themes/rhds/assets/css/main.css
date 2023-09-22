@@ -290,15 +290,42 @@ main {
   font-weight: var(--rh-font-weight-body-text-medium, 500);
 }
 
+.article-meta dl {
+  flex: 1;
+}
+
+.article-meta dt {
+  float: left;
+  clear: left;
+  font-weight: bold;
+}
+
+.article-meta dt::after {
+  content: ":";
+  margin-right: 0.25rem;
+}
+
+.article-meta dd {
+  margin: 0;
+  float: left;
+}
+
+.article-meta dd + dd {
+  float: left;
+}
+
+.article-meta dd + dt {
+  clear: left;
+}
+
 .article-date,
 .article-authors {
   font-weight: var(--rh-font-weight-body-text-medium, 500);
 }
 
-.article-authors:before {
-  content: '|';
-  margin-inline: var(--rh-space-md, 8px);
-  font-weight: var(--rh-font-weight-body-text-regular, 400);
+.article-meta {
+  display: flex;
+  flex-direction: column;
 }
 
 @media screen and (min-width: 768px) {
