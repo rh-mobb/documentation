@@ -10,8 +10,8 @@ authors:
   - Michael Ducy
 ---
 
-> **Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).
 
+{{% alert state="info" %}}**Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).{{% /alert %}}
 
 Quick Introduction by Ryan Niksch (AWS) and Shaozen Ding (Red Hat) on [YouTube](https://youtu.be/R1T0yk9l6Ys)
 
