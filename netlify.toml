@@ -1,6 +1,6 @@
 [build]
   publish = "public"
-  command = "npm run bundle && hugo --gc --minify && cp public/experts/_redirects public/_redirects && echo build && ls -l ./public/; ls -l ./; ls -l ./public/experts/""
+  command = "npm run bundle && hugo --gc --minify && cp public/experts/_redirects public/_redirects && echo build && ls -l ./public/; ls -l ./; ls -l ./public/experts/"
 
   [build.environment]
     HUGO_VERSION = "0.118.2"
