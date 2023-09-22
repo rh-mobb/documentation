@@ -2,7 +2,7 @@
 <div class="article-tags"> 
 <span>Tags:</span>
 {{- range sort .Params.tags }}
-  <rh-tag><a class="tag-link" href="{{ "/tags/" | relLangURL }}{{ . | urlize }}">{{ . }}</a></rh-tag>
+  <rh-tag><a class="tag-link" href="{{ "tags/" | relLangURL }}{{ . | urlize }}">{{ . }}</a></rh-tag>
 {{- end }}
 </div>
 {{- end }}
