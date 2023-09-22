@@ -1,0 +1,7 @@
+{{ $_hugo_config := `{ "version": 1 }` }}
+<rh-alert variant="alternate" state="{{- if .IsNamedParams -}}
+{{- with .Get "state" -}}{{.}}{{- else -}}default{{- end -}}
+{{- else -}}
+	{{- with .Get 0 -}}{{.}}{{- else -}}default{{- end -}}
+{{- end -}} 
+">{{- .Inner -}}</rh-alert>
