@@ -1,11 +1,12 @@
-baseURL = "/experts/"
+baseURL = "/"
 publishDir = "public/experts"
 languageCode = 'en-us'
-title = 'Managed OpenShift Black Belt - Unofficial Documentation'
+title = 'Red Hat Cloud Experts Documentation'
 theme = "rhds"
 DefaultContentLanguage = "en"
-pygmentsCodeFences = true
-pygmentsStyle = "monokai"
+
+disableAliases = true
+
 # as the official Hugo documentation recommends, we turn this off for this
 # showcase; this allows the published site to be served by both http and https
 canonifyURLs = false
@@ -13,92 +14,42 @@ canonifyURLs = false
 relativeURLs = false
 enableGitInfo = true
 
-defaultContentLanguageInSubdir= false
-enableMissingTranslationPlaceholders = false
+# defaultContentLanguageInSubdir= false
+# enableMissingTranslationPlaceholders = false
 
-googleanalytics = "G-WM5QQ0P3P1"
-
-# disableKinds = ["taxonomy","taxonomyTerm", "category", "RSS"]
-
-# Keep this as is
 [outputs]
-home = [ "HTML", "RSS", "JSON"]
+  home = [ "HTML", "RSS", "REDIR" ]
+
+[mediaTypes]
+  [mediaTypes."text/netlify"]
+    delimiter = ""
+
+[outputFormats]
+  [outputFormats.REDIR]
+    mediatype      = "text/netlify"
+    baseName       = "_redirects"
+    isPlainText    = true
+    notAlternative = true
 
 # Site params
 [params]
-alwaysopen = false
-collapsibleMenu = true
-themeVariant = ["red" , "relearn-dark"]
-disableShortcutsTitle = true
-# showVisitedLinks = true
-# ordersectionsby = "weight" # ordersectionsby = "title"
-#color_main = "#CC0000"
-# color_second = "#b30000"
-# disableSearch = false # default is false
-# disableNavChevron = false # set true to hide next/prev chevron, default is false
-menushortcutsnewtab = true
-editURL = 'https://github.com/rh-mobb/documentation/edit/main/content/'
-
-disableInlineCopyToClipBoard = true # Don't display the copy-to-clipboard button on inline code blocks, default is false
-
-[mediaTypes]
-  [mediaTypes."application/netlifyconfig"]
-    suffixes = ["yml"]
-
-[outputFormats]
-[outputFormats.netlifyyaml]
-mediaType = "application/netlifyconfig"
-isPlainText = true
-isHTML = false
-notAlternative = true
-
+  disableInlineCopyToClipBoard = true
 
 # Code highlight configuration
 [markup.highlight]
-codeFences = true
-guessSyntax = true
-hl_Lines = ""
-lineNoStart = 1
-lineNos = false
-lineNumbersInTable = true
-noClasses = true
-style = "emacs"
-tabWidth = 2
+  codeFences = true
+  guessSyntax = true
+  hl_Lines = ""
+  lineNoStart = 1
+  lineNos = false
+  lineNumbersInTable = true
+  noClasses = true
+  style = "emacs"
+  tabWidth = 2
 
 [markup]
   [markup.goldmark]
     [markup.goldmark.parser]
       wrapStandAloneImageWithinParagraph = false
     [markup.goldmark.renderer]
-    unsafe = true
-
-#
-# top menu shotcuts
-#
-[[menu.shortcuts]]
-name = "<i class='fab fa-fw fa-github'></i> Github"
-identifier = "ds"
-icon = "<i class='fab fa-fw fa-github'></i>"
-url = "https://github.com/rh-mobb/documentation"
-weight = 10
-
-[[menu.shortcuts]]
-name = "<i class='fas fa-fw fa-file-download'></i> Download"
-url = "https://github.com/rh-mobb/documentation/archive/refs/heads/main.zip"
-weight = 11
-
-[[menu.shortcuts]]
-name = "<i class='fab fa-fw fa-redhat'></i> Red Hat Blog"
-identifier = "rhblog"
-url = "https://www.redhat.com/en/blog"
-weight = 20
-
-[[menu.shortcuts]]
-name = "<i class='fas fa-fw fa-tags'></i> Tags"
-url = "tags/"
-weight = 40
-
-[[menu.shortcuts]]
-name = "<i class='fas fa-fw fa-user-md'></i> Contact Us"
-url= "https://www.redhat.com/en/contact"
-weight = 30
+      unsafe = true

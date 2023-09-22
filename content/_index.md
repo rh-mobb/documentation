@@ -2,7 +2,7 @@
 title: "Home"
 date: 2022-09-14
 archetype: home
-description: "Advanced Managed OpenShift Documentation and Guides"
+description: "Step-by-step tutorials from Red Hat experts to help you get the most out of your Managed OpenShift cluster."
 ---
 
 ## Quickstarts / Getting Started
@@ -11,7 +11,7 @@ description: "Advanced Managed OpenShift Documentation and Guides"
 
 ### ROSA
 
-* [Prerequisites Checklist to Deploy ROSA Cluster with STS](docs/rosa/prereq-list)
+* [Prerequisites Checklist to Deploy ROSA Cluster with STS](/experts/rosa/prereq-list)
 * [Deploying ROSA in Private Link mode](/experts/rosa/private-link)
   * [Add Public Ingress to Private Link Cluster](/experts/rosa/private-link/public-ingress)
 * [Deploying ROSA PrivateLink Cluster with Ansible](/experts/rosa/ansible-rosa)
@@ -21,7 +21,7 @@ description: "Advanced Managed OpenShift Documentation and Guides"
 * [Deploying ROSA via CRD and GitOps](/experts/rosa/rosa-gitops)
 * [Installing the AWS Load Balancer Operator on ROSA](/experts/rosa/aws-load-balancer-operator)
 * [Assign Egress IP for External Traffic](/experts/rosa/egress-ip)
-* [Adding AWS WAF in front of ROSA / OSD](/experts/aws/waf)
+* [Adding AWS WAF in front of ROSA / OSD](/experts/rosa/waf/)
 * [Use AWS Secrets CSI with ROSA in STS mode](/experts/rosa/aws-secrets-manager-csi)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
 * [Configuring Alerts for User Workloads in ROSA](/experts/rosa/custom-alertmanager)
@@ -43,9 +43,9 @@ description: "Advanced Managed OpenShift Documentation and Guides"
 * [Deploying private ARO Cluster with Jump Host access](/experts/aro/private-cluster)
   * [Using the Egressip Ipam Operator with a Private ARO Cluster](/experts/aro/egress-ipam-operator)
 * [Considerations for Disaster Recovery with ARO](/experts/aro/disaster-recovery)
-* [Getting Started with the Azure Key Vault CSI Driver](/experts/aro/key-vault-csi)
-* [Deploy and use the Azure Service Operator V1(ASO)](/experts/aro/azure-service-operator-v1)
-* [Deploy and use the Azure Service Operator V2(ASO)](/experts/aro/azure-service-operator-v2)
+* [Getting Started with the Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
+* [Deploy and use the Azure Service Operator V1(ASO)](/experts/aro/azure-service-operator/v1)
+* [Deploy and use the Azure Service Operator V2(ASO)](/experts/aro/azure-service-operator/v2)
 * [Create an additional Ingress Controller for ARO](/experts/aro/additional-ingress-controller)
 * [Configure the Managed Upgrade Operator](/experts/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](/experts/aro/trident)
@@ -57,8 +57,8 @@ description: "Advanced Managed OpenShift Documentation and Guides"
 * [Configure access to ARO Image Registry](/experts/aro/registry)
 * [Configure ARO with OpenShift Data Foundation](/experts/aro/odf)
 * Setting Up Quay on an ARO Cluster using Azure Container Storage
-  * [via CLI ](/experts/aro/setup-quay/quay-cli.md)
-  * [via GUI ](/experts/aro/setup-quay/quay-console.md)
+  * [via CLI ](/experts/aro/setup-quay/quay-cli)
+  * [via GUI ](/experts/aro/setup-quay/quay-console)
 * [Configure ARO with Azure Policy](/experts/aro/azure-policy)
 * [Create infrastructure nodes on an ARO Cluster](/experts/aro/add-infra-nodes)
 * [Configure a load balancer service to use a static public IP](/experts/aro/static-ip-load-balancer)
@@ -71,8 +71,8 @@ description: "Advanced Managed OpenShift Documentation and Guides"
 
 ### GCP
 
-* [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/gcp/osd_preexisting_vpc.md)
-* [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore.md)
+* [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/gcp/osd_preexisting_vpc)
+* [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore)
 
 ## Advanced Cluster Manager (ACM)
 
@@ -95,10 +95,10 @@ description: "Advanced Managed OpenShift Documentation and Guides"
 
 ### Kubernetes Secret Store CSI Driver
 
-* [Just the CSI itself](/experts/security/secrets-store-csi)
-  * [+ HashiCorp CSI](/experts/security/secrets-store-csi/hashicorp-vault)
+* [Just the CSI itself](/experts/misc/secrets-store-csi)
+  * [+ HashiCorp CSI](/experts/misc/secrets-store-csi/hashicorp-vault)
   * [+ AWS Secrets CSI with ROSA in STS mode](/experts/rosa/aws-secrets-manager-csi)
-  * [+ Azure Key Vault CSI Driver](/experts/security/secrets-store-csi/azure-key-vault)
+  * [+ Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
 
 ## Configuring Specific Identity Providers
 
@@ -119,34 +119,31 @@ description: "Advanced Managed OpenShift Documentation and Guides"
 
 ### Deploying Advanced Security for Kubernetes in ROSA/ARO
 
-* [Deploying ACS in ROSA/ARO](/experts/security/rhacs.md)
+* [Deploying ACS in ROSA/ARO](/experts/redhat/rhacs)
 
 ## Applications
 
-* [Deploying Astronomer to OpenShift](/experts/aro/astronomer/)
-* [Deploying 3scale API Management to ROSA/OSD](/experts/app-services/3scale)
+* [Deploying Astronomer to OpenShift](/experts/aro/astronomer)
+* [Deploying 3scale API Management to ROSA/OSD](/experts/redhat/3scale)
 
 ## Ingress
-* [Configure a custom ingress TLS profile for ROSA/OSD](/experts/ingress/tls-cipher-customization/)
+* [Configure a custom ingress TLS profile for ROSA/OSD](/experts/misc/tls-cipher-customization)
 
 ## Data Science on Jupyter Notebook on OpenShift
 * [Prerequistes and Concepts](/experts/misc/jup/)
-  * [Build minimal notebook](/experts/misc/jup/BuildNotebook.md)
-  * [JupyterHub notebook with GPU](/experts/misc/jup/OpenDataHub-GPU.md)
+  * [Build minimal notebook](/experts/misc/jup/buildnotebook)
+  * [JupyterHub notebook with GPU](/experts/misc/jup/opendatahub-gpu)
 
 ## Miscellaneous
 
-* [Demonstrating GitOps - ArgoCD](/experts/demos/gitops/)
-* [Migrate Kubernetes Applications with Konveyor Crane](/experts/demos/crane/)
+* [Demonstrating GitOps - ArgoCD](/experts/redhat/gitops/)
+* [Migrate Kubernetes Applications with Konveyor Crane](/experts/redhat/crane/)
 * [Red Hat Cost Management for Cloud Services](/experts/misc/cost-management/)
 * [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
 * [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
 
 ## Fixes / Workarounds
 
-**Here be dragons - use at your own risk**
-
-* [Fix Cluster Logging Operator Addon for ROSA STS Clusters](/experts/rosa/sts-cluster-logging-addon)
-* [Stop default router from serving custom domain routes](/experts/ingress/default-router-custom-domain/README.md)
+* [Stop default router from serving custom domain routes](/experts/misc/default-router-custom-domain)
 * [Fix token-refresher pod CrashLoopBackOff when running a cluster behind a proxy](/experts/misc/token-refresher-proxy)
 

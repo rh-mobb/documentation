@@ -278,14 +278,6 @@ main {
   padding: var(--rh-space-md, 8px);
 }
 
-.breadcrumb:nth-last-child(2):after {
-  display: none;
-}
-
-.breadcrumb:last-of-type {
-  display: none;
-}
-
 .article-meta {
   padding-block-end: var(--rh-space-2xl, 32px);
 }

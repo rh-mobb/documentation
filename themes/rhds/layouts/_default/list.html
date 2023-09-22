@@ -2,7 +2,6 @@
   <section class="list">
     {{- partial "breadcrumbs.html" . }}
     <h1 class="h2">{{ .Title }}</h1>
-    {{- partial "rhds/alert.html" . }}
     {{ .Content }}
     {{ range .Pages }}
       <h2 class="h4"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>

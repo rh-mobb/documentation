@@ -40,8 +40,6 @@ This will create both a Private and Public subnet. All cluster resources will li
 
 ![architecture diagram showing privatelink with public subnet](./images/architecture-pl.png)
 
-> As an alternative use the Terraform instructions provided [here](../byo-vpc) then skip down to the rosa create command.
-
 1. Set a Cluster name
 
     ```
