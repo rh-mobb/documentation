@@ -34,6 +34,7 @@ enableGitInfo = true
 # Site params
 [params]
   disableInlineCopyToClipBoard = true
+  editURL = 'https://github.com/rh-mobb/documentation/edit/main/content/'
 
 # Code highlight configuration
 [markup.highlight]
