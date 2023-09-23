@@ -1,7 +1,7 @@
 ---
 date: '2021-06-11'
-title: Creating a ROSA cluster with Private Link enabled
-tags: ["AWS", "ROSA", "Private Link"]
+title: Creating a ROSA cluster with PrivateLink enabled
+tags: ["AWS", "ROSA", "PrivateLink"]
 ---
 ## Prerequisites
 
@@ -11,7 +11,7 @@ tags: ["AWS", "ROSA", "Private Link"]
 
 ## Create VPC and Subnets
 
-The following instructions use the AWS CLI to create the necessary networking to deploy a Private Link ROSA cluster into a Single AZ and are intended to be a guide. Ideally you would use an Automation tool like Ansible or Terraform to manage your VPCs.
+The following instructions use the AWS CLI to create the necessary networking to deploy a PrivateLink ROSA cluster into a Single AZ and are intended to be a guide. Ideally you would use an Automation tool like Ansible or Terraform to manage your VPCs.
 
 When creating subnets, make sure that subnet(s) are created to an availability zone that has ROSA instances types available. If AZ is not "forced", subnet is created to random AZ in the region. Force the AZ using `--availability-zone` argument in `create-subnet` command.
 
