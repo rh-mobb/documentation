@@ -1,0 +1,20 @@
+  <rh-context-provider color-palette="dark">
+    <section class="collaborate">
+      <div class="container">
+        <h2>Interested in contributing to these docs?</h2>
+        <p>Collaboration drives progress. Help improve our documentation <a href="https://www.redhat.com/en/open-source/red-hat-way">The Red Hat Way</a>.</p>
+        <div class="cta-group">
+          <rh-cta variant="brick"><pf-icon set="fab" icon="github"></pf-icon> <a href="https://github.com/rh-mobb/documentation">GitHub</a></rh-cta>
+          {{- if .Site.Params.editURL }}
+            {{- $File := .File }}
+            {{- $Site := .Site }}
+            {{- if $File }}
+              {{- with $File.Path }}
+                <rh-cta variant="brick" icon="edit"><a href="{{ $Site.Params.editURL }}{{ replace $File.Dir "\\" "/" }}{{ $File.LogicalName }}" target="blank">Edit this page</a></rh-cta>
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        </div>
+      </div>
+    </section>
+  </rh-context-provider>

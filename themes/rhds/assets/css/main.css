@@ -1,0 +1,432 @@
+@font-face {
+  font-family: RedHatDisplay;
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 300;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatDisplay;
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 400;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatDisplay;
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 700;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatText;
+  src: url("/experts/fonts/RedHatText/RedHatText-Regular.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/experts/fonts/RedHatText/RedHatText-Regular.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatText/RedHatText-Regular.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 400;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatText;
+  src: url("/experts/fonts/RedHatText/RedHatText-Medium.eot");
+
+  /* IE9 Compat Modes */
+  src: url("/experts/fonts/RedHatText/RedHatText-Medium.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatText/RedHatText-Medium.woff") format("woff");
+
+  /* Modern Browsers */
+  font-style: normal;
+  font-weight: 700;
+  text-rendering: optimizelegibility;
+  font-display: swap;
+}
+
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+*, *:after, *:before {
+  box-sizing: border-box;
+}
+
+[aria-hidden=true] {
+  display: none;
+}
+
+body {
+  color: #222;
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Malayalam', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans Thai', Helvetica, Arial, sans-serif);
+  font-size: var(--rh-font-size-body-text-lg, 1.125rem);
+  line-height: var(--rh-line-height-body-text, 1.5);
+}
+
+a,
+a:visited {
+  color: var(--rh-color-interactive-blue-darker, #0066cc);
+}
+
+a:hover, 
+a:focus {
+  color: var(--rh-color-interactive-blue-darkest, #004080);
+}
+
+:is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Malayalam', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans Thai', Helvetica, Arial, sans-serif);
+  font-weight: var(--rh-font-weight-heading-medium, 500);
+}
+
+h1,
+.h1 {
+  font-size: var(--rh-font-size-heading-2xl, 3rem);
+}
+
+h2,
+.h2 {
+  font-size: var(--rh-font-size-heading-xl, 2.5rem);
+}
+
+h3,
+.h3 {
+  font-size: var(--rh-font-size-heading-lg, 2.25rem);
+}
+
+h4,
+.h4 {
+  font-size: var(--rh-font-size-heading-md, 1.75rem);
+}
+
+h5,
+.h5 {
+  font-size: var(--rh-font-size-heading-sm, 1.5rem);
+}
+
+h6,
+.h6 {
+  font-size: var(--rh-font-size-heading-xs, 1.25rem);
+}
+
+:is(h1, h2, h3, h4, h5, h6),
+p {
+  max-width: 60rem;
+}
+
+h1,
+p {
+  margin-block: 0 var(--rh-space-xl, 24px);
+}
+
+:is(h2, h3, h4, h5, h6) {
+  margin-block: var(--rh-space-xl, 24px) var(--rh-space-lg, 16px);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+pre {
+  padding: var(--rh-space-xl, 24px);
+  overflow: scroll;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  background-color: var(--rh-color-gray-90, #151515);
+  color: var(--rh-color-text-primary-on-dark, #ffffff);
+  padding: var(--rh-space-md, 8px);
+  height: 72px;
+}
+
+header .logo {
+  margin-inline-start: var(--rh-space-md, 8px);
+  height: 100%;
+}
+
+header a {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+header :is(img, svg) {
+  max-width: 169px;
+}
+
+
+@media screen and (min-width: 768px) {
+  header {
+    padding: var(--rh-space-md, 8px) var(--rh-space-xl, 24px);
+  }
+
+  header .logo {
+    margin-inline-start: var(--rh-space-2xl, 32px);
+  } 
+}
+
+main {
+  max-width: 1320px;
+  padding: var(--rh-space-lg, 16px) var(--rh-space-lg, 16px) var(--rh-length-5xl, 80px);
+}
+
+@media screen and (min-width: 768px) {
+  main {
+    margin: 0 auto;
+    padding: var(--rh-space-2xl, 32px) var(--rh-space-2xl, 32px) var(--rh-length-5xl, 80px);
+  }
+}
+
+#hero {
+  padding-block: var(--rh-space-xl, 32px);
+  background-color: var(--rh-color-surface-lighter, #f2f2f2);
+}  
+
+#hero :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 400;
+}
+
+#hero h1 {
+  margin-block-end: var(--rh-space-lg, 16px);
+}
+
+#hero p {
+  font-size: var(--rh-font-size-code-lg, 1.125rem);
+}
+
+#hero .hero-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 0 var(--rh-space-lg, 16px);
+}
+
+#hero .hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media screen and (min-width: 576px) {
+  #hero {
+    padding-block: var(--rh-space-2xl, 48px);
+  }
+}
+
+@media screen and (min-width: 768px) {
+  #hero {
+    background-image: url(/experts/images/openshift-desktop-hero.svg);
+    background-repeat: no-repeat;
+    background-position: top center;
+    
+  }
+
+  #hero .hero-container {
+    margin: 0 auto;
+    max-width: 1320px;
+    padding: 0 var(--rh-space-2xl, 32px);
+    grid-template-columns: 1.5fr 0.5fr;
+  }
+}
+
+@media screen and (min-width: 992px) {
+  #hero .hero-container {
+    grid-template-columns: 1.75fr 1.25fr;
+  }
+}
+
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  list-style: none;
+  font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+  padding: var(--rh-space-lg, 16px) 0;
+}
+
+.breadcrumb:not(:last-of-type):after {
+  content: url(/experts/images/breadcrumb-spacer.svg);
+  width: 11px;
+  height: 11px;
+  padding: var(--rh-space-md, 8px);
+}
+
+.article-meta {
+  padding-block-end: var(--rh-space-2xl, 32px);
+}
+
+.article-tags {
+  padding-block-start: var(--rh-space-lg, 16px);
+}
+
+.article-tags span {
+  font-weight: var(--rh-font-weight-body-text-medium, 500);
+}
+
+.article-meta dl {
+  flex: 1;
+}
+
+.article-meta dt {
+  float: left;
+  clear: left;
+  font-weight: bold;
+}
+
+.article-meta dt::after {
+  content: ":";
+  margin-right: 0.25rem;
+}
+
+.article-meta dd {
+  margin: 0;
+  float: left;
+}
+
+.article-meta dd + dd {
+  float: left;
+}
+
+.article-meta dd + dt {
+  clear: left;
+}
+
+.article-date,
+.article-authors {
+  font-weight: var(--rh-font-weight-body-text-medium, 500);
+}
+
+.article-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+@media screen and (min-width: 768px) {
+  .article-meta {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .article-tags {
+    padding-block-start: 0;
+  }
+}
+
+.surface-light {
+  background-color: var(--rh-color-surface-light, #e0e0e0);
+}
+
+.surface-lighter {
+  background-color: var(--rh-color-surface-lighter, #f2f2f2);
+}
+
+.surface-lightest {
+  background-color: var(--rh-color-surface-lightest, #ffffff);
+}
+
+.surface-light,
+.surface-lighter,
+.surface-lightest {
+  color: var(--rh-color-text-primary-on-light, #151515);
+}
+
+.surface-dark {
+  background-color: var(--rh-color-surface-dark, #383838);
+}
+
+.surface-darker {
+  background-color:var(--rh-color-surface-darker, #1f1f1f);
+}
+
+.surface-darkest {
+  background-color: var(--rh-color-surface-darkest, #151515);
+}
+
+.surface-dark,
+.surface-darker,
+.surface-darkest {
+  color: var(--rh-color-text-primary-on-dark, #ffffff);
+}
+
+rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a {
+  color: var(--rh-color-interactive-blue-lighter, #73bcf7);
+}
+
+rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a:hover {
+  color: var(--rh-color-interactive-blue-lightest, #bee1f4);
+}
+
+.collaborate {
+  position: relative;
+  padding: var(--rh-length-4xl, 64px);
+}
+
+.collaborate .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.collaborate .cta-group {
+  display: flex;
+  flex-direction: row;
+  gap: var(--rh-space-lg, 16px);
+}
+
+.highlight {
+  position: relative;
+}
+
+.highlight > pf-tooltip {
+  position: absolute;
+  right: 0;
+}
+
+.highlight pf-button::part(button) {
+  --pf-icon--size: 14px;
+  color: var(--rh-color-text-secondary-on-dark, #c7c7c7);
+}
+
+.highlight pf-button:hover::part(button) {
+  color: var(--rh-color-icon-subtle-hover, #a3a3a3);
+}
+
+rh-alert {
+  margin-bottom: var(--rh-space-xl, 24px);
+}
+
+/* Bug Fixes */
+rh-navigation-secondary a[slot="logo"]:visited {
+  color: var(--rh-color-text-primary-on-light, #151515);
+}

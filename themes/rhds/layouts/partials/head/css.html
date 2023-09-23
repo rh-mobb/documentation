@@ -1,0 +1,12 @@
+<link rel="stylesheet" href="/experts/css/rhds/rh-navigation-secondary-lightdom.css">
+<link rel="stylesheet" href="/experts/css/rhds/rh-footer-lightdom.css">
+
+{{- with resources.Get "css/main.css" }}
+  {{- if eq hugo.Environment "development" }}
+<link rel="stylesheet" href="{{ .RelPermalink }}">
+  {{- else }}
+    {{- with . | minify | fingerprint }}
+<link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous">
+    {{- end }}
+  {{- end }}
+{{- end }}
