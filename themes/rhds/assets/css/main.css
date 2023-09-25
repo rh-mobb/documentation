@@ -415,7 +415,7 @@ rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-
 
 .highlight pf-button::part(button) {
   --pf-icon--size: 14px;
-  color: var(--rh-color-text-secondary-on-dark, #c7c7c7);
+  color: var(--rh-color-icon-subtle, #707070);
 }
 
 .highlight pf-button:hover::part(button) {
