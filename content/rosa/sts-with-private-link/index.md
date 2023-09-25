@@ -1,7 +1,7 @@
 ---
 date: '2021-08-09'
-title: Creating a ROSA cluster with Private Link enabled (custom VPC) and STS
-tags: ["AWS", "ROSA", "STS", "Private Link"]
+title: Creating a ROSA cluster with PrivateLink enabled (custom VPC) and STS
+tags: ["AWS", "ROSA", "STS", "PrivateLink"]
 authors:
   - Steve Mirman
   - Paul Czarkowski
@@ -293,7 +293,7 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
       --sts
     ```
 
-    > Confirm the Private Link set up
+    > Confirm the PrivateLink set up
     ![Route Table check output](./images/sts-pl8.png)
 
 1. Create the Operator Roles
@@ -324,7 +324,7 @@ This is a summary of the [official OpenShift docs](https://docs.openshift.com/ro
 
 ## Validate the cluster
 
-Once the cluster has finished installing it is time to validate. Validation when using Private Link requires the use of a **jump host**.
+Once the cluster has finished installing it is time to validate. Validation when using PrivateLink requires the use of a **jump host**.
 
  You can create them using the AWS Console or the AWS CLI as depicted below:
 

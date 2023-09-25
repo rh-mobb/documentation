@@ -1,7 +1,7 @@
 ---
 date: '2022-05-10'
-title: Adding a Public Ingress endpoint to a ROSA Private-Link Cluster
-tags: ["AWS", "ROSA", "Private Link"]
+title: Adding a Public Ingress endpoint to a ROSA PrivateLink Cluster
+tags: ["AWS", "ROSA", "PrivateLink"]
 authors:
   - Paul Czarkowski
   - Connor Wooley

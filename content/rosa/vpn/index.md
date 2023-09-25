@@ -1,6 +1,6 @@
 ---
 date: '2023-07-28'
-title: Setup a VPN Connection into a Private Link ROSA Cluster with OpenVPN
+title: Setup a VPN Connection into a PrivateLink ROSA Cluster with OpenVPN
 tags: ["ROSA", "AWS"]
 authors:
   - Kevin Collins & Kumudu Herath

@@ -12,11 +12,11 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 ### ROSA
 
 * [Prerequisites Checklist to Deploy ROSA Cluster with STS](/experts/rosa/prereq-list)
-* [Deploying ROSA in Private Link mode](/experts/rosa/private-link)
-  * [Add Public Ingress to Private Link Cluster](/experts/rosa/private-link/public-ingress)
+* [Deploying ROSA in PrivateLink mode](/experts/rosa/private-link)
+  * [Add Public Ingress to PrivateLink Cluster](/experts/rosa/private-link/public-ingress)
 * [Deploying ROSA PrivateLink Cluster with Ansible](/experts/rosa/ansible-rosa)
 * [Deploying ROSA in STS mode](/experts/rosa/sts)
-* [Deploying ROSA in STS mode with Private Link](/experts/rosa/sts-with-private-link)
+* [Deploying ROSA in STS mode with PrivateLink](/experts/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](/experts/rosa/kms)
 * [Deploying ROSA via CRD and GitOps](/experts/rosa/rosa-gitops)
 * [Installing the AWS Load Balancer Operator on ROSA](/experts/rosa/aws-load-balancer-operator)

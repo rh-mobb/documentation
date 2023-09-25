@@ -135,7 +135,7 @@ The strategy here is to keep our taxonomy simple and helpful for traversing the 
 * Observability
 * OCP
 * OSD
-* Private Link
+* PrivateLink
 * Quickstarts
 * ROSA
 * STS
