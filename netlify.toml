@@ -64,6 +64,7 @@ status = 301
 force = true
 
 # Redirect old Private Link tag to new PrivateLink tag
+[[redirects]]
 from = "/experts/tags/private-link/"
 to = "/experts/tags/privatelink/"
 status = 301
