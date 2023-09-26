@@ -71,7 +71,7 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
 1. Download the Cloud Watch Agent Kubernetes manifests
 
    ```bash
-   wget -O $SCRATCH_DIR/cloud-watch.yaml https://mobb.ninja/experts/rosa/metrics-to-cloudwatch-agent/cloud-watch.yaml
+   wget -O $SCRATCH_DIR/cloud-watch.yaml https://raw.githubusercontent.com/rh-mobb/documentation/main/content/rosa/metrics-to-cloudwatch-agent/cloud-watch.yaml
    ```
 
 1. Update the Cloud Watch Agent Kubernetes manifests

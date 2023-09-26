@@ -19,7 +19,7 @@ This guide will walk through the following steps:
 
 ## Prerequisites
 
-- An existing ARO cluster. If you need an ARO cluster, see the quickstart [here](https://mobb.ninja/experts/quickstart-aro.html).
+- An existing ARO cluster. If you need an ARO cluster, see the quickstart [here](/experts/quickstart-aro.html).
 - The Azure CLI. If you need to install the Azure CLI, see the Microsoft documentation [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
 
 ## Before you begin

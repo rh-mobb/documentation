@@ -1,4 +1,10 @@
-## Deploying Grafana on Openshift 4
+---
+date: '2023-03-16'
+title: Deploying Grafana on Openshift 4
+tags: ["Observability", "Grafana"]
+authors:
+  - Paul Czarkowski
+---
 
 OpenShift users want access to a Grafana interface in order to build custom dashboards for their cluster and application workloads. The Grafana that shipped with OpenShift was read-only and has been [deprecated in OpenShift 4.11 and removed in OpenShift 4.12](https://issues.redhat.com/browse/MON-1591?focusedCommentId=19239654&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-19239654).
 

@@ -30,7 +30,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     export AZ_TENANT_ID=$(az account show -o tsv --query tenantId)
     ```
 
-{{< readfile file="/experts/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
+{{< readfile file="/content/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
 
 ## Deploy Azure Key Store CSI
 
@@ -231,4 +231,4 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     az ad sp delete --id ${SERVICE_PRINCIPAL_CLIENT_ID}
     ```
 
-{{< readfile file="/experts/misc/secrets-store-csi/uninstall-kubernetes-secret-store-driver.md" markdown="true" >}}
+{{< readfile file="/content/misc/secrets-store-csi/uninstall-kubernetes-secret-store-driver.md" markdown="true" >}}

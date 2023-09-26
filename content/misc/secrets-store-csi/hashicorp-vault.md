@@ -15,7 +15,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 1. kubectl
 1. helm v3
 
-{{< readfile file="/experts/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
+{{< readfile file="/content/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
 
 ## Install HashiCorp Vault with CSI driver enabled
 
@@ -245,4 +245,4 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
     oc delete project hashicorp-vault
     ```
 
-{{< readfile file="/experts/misc/secrets-store-csi/uninstall-kubernetes-secret-store-driver.md" markdown="true" >}}
+{{< readfile file="/content/misc/secrets-store-csi/uninstall-kubernetes-secret-store-driver.md" markdown="true" >}}

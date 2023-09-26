@@ -33,7 +33,7 @@ Make sure to use the same terminal session while going through guide for all com
 
   * Create a private ARO cluster.
 
-    Follow this guide to [Create a private ARO cluster](https://mobb.ninja/experts/aro/private-cluster)
+    Follow this guide to [Create a private ARO cluster](/experts/aro/private-cluster)
     or simply run this [bash script](../private-cluster/create-cluster.sh)
 
 ## Set Evironment Variables
@@ -483,7 +483,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 
 ## Test the application
 Point your broswer to your domain!!
-<img src="images/minesweeper.png">
+![Minesweeper application](images/minesweeper.png)
 
 ## Clean up
 To clean up everything you created, simply delete the resource group

@@ -23,7 +23,7 @@ This guide will walk through the following steps:
 
 1. Please review the [Official Red Hat SSO Operator Documentation](https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.4/html/server_installation_and_configuration_guide/operator) 
 on this topic.
-2. Please ensure you have stood up an ARO cluster.  See the [Quick Start](https://mobb.ninja/experts/quickstart-aro/) for
+2. Please ensure you have stood up an ARO cluster.  See the [Quick Start](/experts/quickstart-aro/) for
 to get started if needed.
 
 > **NOTE:** there is also a Keycloak operator which is community supported.  This is not covered as 
@@ -568,11 +568,11 @@ Azure AD:
 
 ![Microsoft Redirect URI](images/microsoft-redirect-uri.png)
 
-3. [Register an application in Azure AD for Red Hat SSO](https://mobb.ninja/experts/idp/azuread-aro/#register-a-new-application-in-azure-ad).  
+3. [Register an application in Azure AD for Red Hat SSO](/experts/idp/azuread-aro/#register-a-new-application-in-azure-ad).  
 Be sure to use the redirect URI captured in the last step when setting this up.  Also be sure to take note of the client ID
 and client secret as those will be used to finish configuration in Red Hat SSO.
 
-4. [Enable optional claims and enable necessary Microsoft Graph permissions](https://mobb.ninja/experts/idp/azuread-aro/#2-configure-optional-claims).
+4. [Enable optional claims and enable necessary Microsoft Graph permissions](/experts/idp/azuread-aro/#2-configure-optional-claims).
 
 5. Input the client ID and client secret from the application registration into the 
 identity provider:

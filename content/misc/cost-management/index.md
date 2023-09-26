@@ -24,7 +24,7 @@ In this document, I will show you how to connect your OpenShift and Cloud provid
 ## Prerequisites
 
 * A Public Cloud subscritption (Azure Subscription)
-* An OpenShift Cluster *(to create an Azure Red Hat OpenShift (ARO) cluster, click [here](https://mobb.ninja/experts/quickstart-aro.html))*
+* An OpenShift Cluster *(to create an Azure Red Hat OpenShift (ARO) cluster, click [here](/experts/quickstart-aro.html))*
 
 
 ## Adding your OpenShift source to Cost Management

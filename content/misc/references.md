@@ -21,7 +21,7 @@ title: Common Managed OpenShift References / Tasks
 ## Common Customer Topics
 
 ### Red Hat OpenShift on AWS - ROSA
-- [Creating a ROSA cluster with PrivateLink enabled](https://mobb.ninja/experts/rosa/private-link/)
+- [Creating a ROSA cluster with PrivateLink enabled](/experts/rosa/private-link/)
 - [ROSA Installation Prerequisites](https://docs.openshift.com/rosa/rosa_getting_started/rosa-aws-prereqs.html)
 - [ROSA STS Workflow](https://docs.openshift.com/rosa/rosa_getting_started/rosa-sts-getting-started-workflow.html)
 - [Shared Responsiblity Matrix (who does what)](https://docs.openshift.com/rosa/rosa_policy/rosa-policy-responsibility-matrix.html)
@@ -37,5 +37,5 @@ title: Common Managed OpenShift References / Tasks
 
 
 ## Education
-- [ARO Getting Started](https://mobb.ninja/experts/quickstart-aro.html)
-- [ROSA Getting Started](https://mobb.ninja/experts/quickstart-rosa.html)
+- [ARO Getting Started](/experts/quickstart-aro.html)
+- [ROSA Getting Started](/experts/quickstart-rosa.html)
