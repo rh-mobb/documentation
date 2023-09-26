@@ -7,7 +7,7 @@ authors:
   - Kumudu Herath
 ---
 
-This guide focuses on how to synchronize Identity Provider (IDP) groups and users after configuring authentication in OpenShift Cluster Manager (OCM). For an IDP configuration example, please reference the [Configure Azure AD as an OIDC identity provider for ROSA/OSD](https://mobb.ninja/experts/idp/azuread/) guide.
+This guide focuses on how to synchronize Identity Provider (IDP) groups and users after configuring authentication in OpenShift Cluster Manager (OCM). For an IDP configuration example, please reference the [Configure Azure AD as an OIDC identity provider for ROSA/OSD](/experts/idp/azuread/) guide.
 
 To set up group synchronization from Azure Active Directory (AD) to ROSA/OSD you must:
 

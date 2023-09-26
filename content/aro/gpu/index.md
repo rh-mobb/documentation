@@ -16,7 +16,7 @@ ARO guide to running Nvidia GPU workloads.
 * jq, moreutils, and gettext package
 * ARO 4.10
 
-If you need to install an ARO cluster, please read our [ARO Quick start guide](https://mobb.ninja/experts/quickstart-aro/). Please be sure if you're installing or using an existing ARO cluster that it is 4.10.x or higher.
+If you need to install an ARO cluster, please read our [ARO Quick start guide](/experts/quickstart-aro/). Please be sure if you're installing or using an existing ARO cluster that it is 4.10.x or higher.
 
 >As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator. This has greatly simplified the setup of the cluster for GPU workloads.
 

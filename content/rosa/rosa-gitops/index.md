@@ -22,7 +22,7 @@ as Clusters, Machine Pools and Identity Providers.
 
 ## Prerequisites
 
-* [ROSA Cluster](https://mobb.ninja/experts/rosa/sts/)
+* [ROSA Cluster](/experts/rosa/sts/)
 * [rosa](https://docs.openshift.com/rosa/rosa_cli/rosa-get-started-cli.html)
 * [aws](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 * [oc](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/)

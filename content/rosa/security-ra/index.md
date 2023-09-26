@@ -65,7 +65,7 @@ Using a [Customer Managed KMS](https://docs.aws.amazon.com/kms/latest/developerg
 To configure a cluster with a custom KMS Key, consider the following references:
 
 - [ROSA STS Customizations](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa-sts-creating-a-cluster-with-customizations.html#rosa-sts-creating-cluster-customizations_rosa-sts-creating-a-cluster-with-customizations)
-- [Deploy ROSA with a Custom KMS Key](https://mobb.ninja/experts/rosa/kms/)
+- [Deploy ROSA with a Custom KMS Key](/experts/rosa/kms/)
 
 ### Multi-Availability Zone
 
@@ -316,9 +316,9 @@ ROSA supports several commercially available IDPs and common protocols. The full
 - [https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa-sts-config-identity-providers.html#understanding-idp-supported_rosa-sts-config-identity-providers](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa-sts-config-identity-providers.html#understanding-idp-supported_rosa-sts-config-identity-providers)
 
 Some examples of how to configure an IDP can be found on the `mobb.ninja` website:
-- [Configure Azure AD as an identity provider for ROSA/OSD](https://mobb.ninja/experts/idp/azuread)
-- [Configure GitLab as an identity provider for ROSA/OSD](https://mobb.ninja/experts/idp/gitlab)
-- [Configure Azure AD as an identity provider for ROSA with group claims](https://mobb.ninja/experts/idp/group-claims/rosa/)
+- [Configure Azure AD as an identity provider for ROSA/OSD](/experts/idp/azuread)
+- [Configure GitLab as an identity provider for ROSA/OSD](/experts/idp/gitlab)
+- [Configure Azure AD as an identity provider for ROSA with group claims](/experts/idp/group-claims/rosa/)
 
 ### Configure CloudWatch Log Forwarding
 
@@ -341,7 +341,7 @@ The cluster-logging operator has the following limits when configured for CloudW
 | 2,048                    | 450                                             |
 
 Details on this configuration can be found at the following links:
-- [Configuring the Cluster Log Forwarder for CloudWatch Logs and STS](https://mobb.ninja/experts/rosa/clf-cloudwatch-sts/)
+- [Configuring the Cluster Log Forwarder for CloudWatch Logs and STS](/experts/rosa/clf-cloudwatch-sts/)
 - [Viewing cluster logs in the AWS Console](https://docs.openshift.com/rosa/rosa_cluster_admin/rosa_logging/rosa-viewing-logs.html)
 
 ### Configure Custom Ingress TLS Profile
@@ -355,7 +355,7 @@ Review the OpenShift Documentation that explains the options for the `tlsSecurit
 
 The `tlsSecurityProfile` can be modified by following these instructions:
 
-- [Configure ROSA/OSD to use custom TLS ciphers on the ingress controllers](https://mobb.ninja/experts/ingress/tls-cipher-customization/)
+- [Configure ROSA/OSD to use custom TLS ciphers on the ingress controllers](/experts/ingress/tls-cipher-customization/)
 
 ### Compliance Operator
 
@@ -404,7 +404,7 @@ As part of the Shared Responsibility Model for ROSA, consumers of the service ar
 You can learn how to install and use OADP from the following resources:
 
 - [OADP features and plug-ins](https://docs.openshift.com/container-platform/4.11/backup_and_restore/application_backup_and_restore/oadp-features-plugins.html)
-- [Deploying OpenShift Advanced Data Protection on a ROSA cluster](https://mobb.ninja/experts/misc/oadp/rosa-sts/)
+- [Deploying OpenShift Advanced Data Protection on a ROSA cluster](/experts/misc/oadp/rosa-sts/)
 
 ### Configure AWS WAF and CloudFront for Application Ingress
 
@@ -419,8 +419,8 @@ To learn more about these services and how to configure them for ROSA, read the 
 - [AWS WAF FAQ](https://aws.amazon.com/waf/faqs/)
 - [Amazon CloudFront FAQ](https://aws.amazon.com/cloudfront/faqs/)
 - [AWS Shield FAQ](https://aws.amazon.com/shield/faqs/)
-- [Using CloudFront + WAF on ROSA](https://mobb.ninja/experts/aws/waf/cloud-front.html)
-- [Using ALB + WAF on ROSA](https://mobb.ninja/experts/aws/waf/alb.html)
+- [Using CloudFront + WAF on ROSA](/experts/aws/waf/cloud-front.html)
+- [Using ALB + WAF on ROSA](/experts/aws/waf/alb.html)
 
 ### Use and Store Secrets Securely in AWS
 
@@ -449,4 +449,4 @@ To learn more, or to install the EFS CSI driver, review the following documentat
 
 - [Persistent Storage using EFS](https://docs.openshift.com/rosa/storage/persistent_storage/osd-persistent-storage-aws.html)
 - [Persistent Storage using EBS](https://docs.openshift.com/rosa/storage/persistent_storage/rosa-persistent-storage-aws-ebs.html)
-- [Enabling the AWS EFS CSI Driver Operator on ROSA](https://mobb.ninja/experts/rosa/aws-efs-csi-operator-sts/)
+- [Enabling the AWS EFS CSI Driver Operator on ROSA](/experts/rosa/aws-efs-csi-operator-sts/)
