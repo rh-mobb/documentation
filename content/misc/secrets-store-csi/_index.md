@@ -15,10 +15,8 @@ It comes in two parts, the Secret Store CSI, and a Secret provider driver. This 
 1. kubectl
 1. helm v3
 
-{{< readfile file="/experts/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
+{{< readfile file="/content/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
 
-{{< readfile file="/experts/misc/secrets-store-csi/uninstall-kubernetes-secret-store-driver.md" markdown="true" >}}
+{{< readfile file="/content/misc/secrets-store-csi/uninstall-kubernetes-secret-store-driver.md" markdown="true" >}}
 
 ## Provider Specifics
-
-[HashiCorp Vault](./hashicorp-vault)
