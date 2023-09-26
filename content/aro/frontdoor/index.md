@@ -483,7 +483,7 @@ We will be deploying a Java based application called [microsweeper](https://gith
 
 ## Test the application
 Point your broswer to your domain!!
-<img src="images/minesweeper.png">
+![Minesweeper application](images/minesweeper.png)
 
 ## Clean up
 To clean up everything you created, simply delete the resource group
