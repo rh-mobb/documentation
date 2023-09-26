@@ -72,7 +72,7 @@ To use the script, run the following commands in a `bash` terminal (the -p optio
 ```bash
 mkdir scratch
 cd scratch
-curl https://raw.githubusercontent.com/rh-mobb/documentation/main/content/experts/rosa/verify-permissions/verify-permissions.sh --output verify-permissions.sh
+curl https://raw.githubusercontent.com/rh-mobb/documentation/main/content/rosa/verify-permissions/verify-permissions.sh --output verify-permissions.sh
 chmod +x verify-permissions.sh
 ./verify-permissions.sh -p SimPolTest
 ```
