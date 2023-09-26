@@ -9,7 +9,7 @@ You will need the following prerequistes in order to run a basic Jupyter noteboo
 ### 1. A OpenShift Cluster
 This will assume you have already provisioned a OpenShift cluster succesfully and are able to use it.
 
-You will need to log in as cluster admin to deploy [GPU Operator](https://github.com/rh-mobb/documentation/tree/main/experts/aro/gpu).
+You will need to log in as cluster admin to deploy [GPU Operator](/experts/aro/gpu/).
 
 ### 2. OpenShift Command Line Interface
 Please see the [OpenShift Command Line section](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html) for more information on installing.

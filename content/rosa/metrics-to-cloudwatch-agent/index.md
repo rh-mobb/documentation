@@ -126,7 +126,7 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
 1. Download the Sample Dashboard
 
    ```bash
-   wget -O $SCRATCH_DIR/dashboard.json https://raw.githubusercontent.com/rh-mobb/documentation/main/content/experts/rosa/metrics-to-cloudwatch-agent/dashboard.json
+   wget -O $SCRATCH_DIR/dashboard.json https://raw.githubusercontent.com/rh-mobb/documentation/main/content/rosa/metrics-to-cloudwatch-agent/dashboard.json
    ```
 
 1. Update the Sample Dashboard

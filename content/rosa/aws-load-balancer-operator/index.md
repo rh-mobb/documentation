@@ -93,7 +93,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
      --output text)
    if [[ -z "${POLICY_ARN}" ]]; then
      wget -O "${SCRATCH}/load-balancer-operator-policy.json" \
-       https://raw.githubusercontent.com/rh-mobb/documentation/main/content/experts/rosa/aws-load-balancer-operator/load-balancer-operator-policy.json
+       https://raw.githubusercontent.com/rh-mobb/documentation/main/content/rosa/aws-load-balancer-operator/load-balancer-operator-policy.json
      POLICY_ARN=$(aws --region "$REGION" --query Policy.Arn \
      --output text iam create-policy \
      --policy-name aws-load-balancer-operator-policy \

@@ -270,7 +270,7 @@ This is made even easier and more secure through the use of AWS STS and Kubernet
 
     ```bash
     oc -n csi-secrets-store delete -f \
-      https://raw.githubusercontent.com/rh-mobb/documentation/main/content/experts/misc/secrets-store-csi/aws-provider-installer.yaml
+      https://raw.githubusercontent.com/rh-mobb/documentation/main/content/misc/secrets-store-csi/aws-provider-installer.yaml
     ```
 
 1. Delete AWS Roles and Policies
