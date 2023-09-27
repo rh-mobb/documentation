@@ -59,7 +59,7 @@ status = 301
 
 [[redirects]]
 from = "/experts/rosa/prereq-list/"
-to = "https://docs.openshift.com/rosa/rosa_tutorials/rosa-mobb-prerequisites-tutorial.html"
+to = "https://docs.openshift.com/rosa/rosa_planning/rosa-cloud-expert-prereq-checklist.html"
 status = 301
 force = true
 
