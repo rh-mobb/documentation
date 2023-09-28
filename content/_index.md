@@ -146,4 +146,3 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 * [Stop default router from serving custom domain routes](/experts/misc/default-router-custom-domain)
 * [Fix token-refresher pod CrashLoopBackOff when running a cluster behind a proxy](/experts/misc/token-refresher-proxy)
-
