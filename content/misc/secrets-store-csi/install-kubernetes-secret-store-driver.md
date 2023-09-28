@@ -48,3 +48,11 @@
     csi-secrets-store-secrets-store-csi-driver-cl7dv   3/3     Running   0          57s
     csi-secrets-store-secrets-store-csi-driver-gbz27   3/3     Running   0          57s
     ```
+
+1. Add pod security profile label for CSI Driver
+
+   {{% alert state="info" %}} This is required starting in OpenShift v4.13 {{% /alert %}}
+
+   ```bash
+   oc label csidriver/secrets-store.csi.k8s.io security.openshift.io/csi-ephemeral-volume-profile=restricted
+   ```

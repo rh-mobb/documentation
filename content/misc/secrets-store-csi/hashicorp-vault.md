@@ -12,7 +12,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 ## Prerequisites
 
 1. An OpenShift Cluster (ROSA, ARO, OSD, and OCP 4.x all work)
-1. kubectl
+1. oc
 1. helm v3
 
 {{< readfile file="/content/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
@@ -77,7 +77,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
     > Currently the CSI has a bug in its manifest which we need to patch
 
     ```bash
-    kubectl patch daemonset vault-csi-provider --type='json' \
+    oc patch daemonset vault-csi-provider --type='json' \
         -p='[{"op": "add", "path": "/spec/template/spec/containers/0/securityContext", "value": {"privileged": true} }]'
     ```
 
@@ -101,7 +101,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
     vault auth enable kubernetes
     ```
 
-1. Check your Cluster's token issuer
+1. Check your Cluster's token issuer in another terminal
 
     ```bash
     oc get authentication.config cluster \
@@ -151,7 +151,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 1. Create a SecretProviderClass in the default namespace
 
     ```bash
-    cat <<EOF | kubectl apply -f -
+    cat <<EOF | oc apply -f -
     apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
     kind: SecretProviderClass
     metadata:
@@ -172,13 +172,13 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 1. Create a service account `webapp-sa`
 
     ```bash
-    kubectl create serviceaccount -n default webapp-sa
+    oc create serviceaccount -n default webapp-sa
     ```
 
 1. Create a Pod to use the secret
 
     ```bash
-    cat << EOF | kubectl apply -f -
+    cat << EOF | oc apply -f -
     kind: Pod
     apiVersion: v1
     metadata:
@@ -206,7 +206,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 1. Check the Pod has the secret
 
     ```bash
-    kubectl -n default exec webapp \
+    oc -n default exec webapp \
       -- cat /mnt/secrets-store/db-password
     ```
 
@@ -221,9 +221,9 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 1. Delete the pod and
 
     ```bash
-    kubectl delete -n default pod webapp
-    kubectl delete -n default secretproviderclass vault-database
-    kubectl delete -n default serviceaccount webapp-sa
+    oc delete -n default pod webapp
+    oc delete -n default secretproviderclass vault-database
+    oc delete -n default serviceaccount webapp-sa
     ```
 
 1. Delete the Hashicorp Vault Helm
