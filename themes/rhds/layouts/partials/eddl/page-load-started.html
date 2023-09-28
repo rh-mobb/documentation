@@ -39,7 +39,7 @@
       dataObject: 'appEventData',
       destinationURL: window.location.href,
       gated: 'false',
-      pageCategory: 'Documentation',
+      pageCategory: (subsections[1]) ? subsections[1]: '',
       pageName: siteName + pageNameCategories,
       siteName: siteName,
       pageTitle: '{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}',
@@ -48,9 +48,9 @@
       pageStatus: '',
       siteExperience: '',
       siteLanguage: '{{ or site.Language.LanguageCode site.Language.Lang }}',
-      subsection: (subsections[1]) ? subsections[1]: '',
-      subsection2: (subsections[2]) ? subsections[2]: '',
-      subsection3: (subsections[3]) ? subsections[3]: '',
+      subsection: (subsections[2]) ? subsections[2]: '',
+      subsection2: (subsections[3]) ? subsections[3]: '',
+      subsection3: (subsections[4]) ? subsections[4]: '',
     };
 
     window.appEventData.push({
