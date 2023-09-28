@@ -63,6 +63,12 @@ to = "https://docs.openshift.com/rosa/rosa_planning/rosa-cloud-expert-prereq-che
 status = 301
 force = true
 
+[[redirects]]
+from = "/experts/rosa/clf-cloudwatch-sts/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-cloudwatch-sts.html"
+status = 301
+force = true
+
 # Redirect old Private Link tag to new PrivateLink tag
 [[redirects]]
 from = "/experts/tags/private-link/"
