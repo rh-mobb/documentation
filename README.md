@@ -21,9 +21,6 @@ You should be able to review PRs, preview branches, and even write new posts dir
 You should now have a github space ready for writing content or reviewing PRs.
 
 
-### Contributing 
+### Contributing
 
 For contributing to this repository, please follow the guidelines specified in the [contributing.md](./CONTRIBUTING.md)
-
-
-

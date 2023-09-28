@@ -1,0 +1,60 @@
+<script>
+    window.appEventData = window.appEventData || [];
+
+    // Determine authors
+    let authors = '';
+    {{ if isset .Params "authors" }}
+      {{ range $index, $author := .Params.Authors }}
+        {{ if eq $index (sub (len $.Params.Authors) 1) }}
+            authors += '{{ $author }}';
+        {{ else }}
+            authors += '{{ $author }},'
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+    // Determine published date
+    let publishDateMachine = '';
+    {{ if isset .Params "date" }}
+      publishDateMachine = '{{ .PublishDate | time.Format "2006-01-02"}}';
+    {{ else }}
+      publishDateMachine = '';
+    {{ end }}
+
+    // Determine pageName, siteName, and subsections.
+    const siteName = 'RH|cloud'
+    const pathname = new URL(window.location.href).pathname;
+    const subsections = pathname.split('/');
+    let pageNameCategories = subsections.join('|');
+    if (pageNameCategories.endsWith('|')) {
+      pageNameCategories = pageNameCategories.substring(0, pageNameCategories.length-1);
+    }
+
+    const pageData = {
+      analyticsTitle: '',
+      blogAuthor: authors,
+      contentID: '',
+      contentType: '',
+      contentPublishDate: publishDateMachine,
+      dataObject: 'appEventData',
+      destinationURL: window.location.href,
+      gated: 'false',
+      pageCategory: (subsections[1]) ? subsections[1]: '',
+      pageName: siteName + pageNameCategories,
+      siteName: siteName,
+      pageTitle: '{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}',
+      pageType: '',
+      pageSubType: '',
+      pageStatus: '',
+      siteExperience: '',
+      siteLanguage: '{{ or site.Language.LanguageCode site.Language.Lang }}',
+      subsection: (subsections[2]) ? subsections[2]: '',
+      subsection2: (subsections[3]) ? subsections[3]: '',
+      subsection3: (subsections[4]) ? subsections[4]: '',
+    };
+
+    window.appEventData.push({
+      event: 'Page Load Started',
+      page: pageData
+    });
+</script>
