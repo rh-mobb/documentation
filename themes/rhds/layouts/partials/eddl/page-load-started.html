@@ -1,8 +1,8 @@
 <script>
     window.appEventData = window.appEventData || [];
 
+    // Determine authors
     let authors = '';
-
     {{ if isset .Params "authors" }}
       {{ range $index, $author := .Params.Authors }}
         {{ if eq $index (sub (len $.Params.Authors) 1) }}
@@ -13,29 +13,44 @@
       {{ end }}
     {{ end }}
 
-    // TODO: Parse url to generate pageName
+    // Determine published date
+    let publishDateMachine = '';
+    {{ if isset .Params "date" }}
+      publishDateMachine = '{{ .PublishDate | time.Format "2006-01-02"}}';
+    {{ else }}
+      publishDateMachine = '';
+    {{ end }}
+
+    // Determine pageName, siteName, and subsections.
+    const siteName = 'RH|cloud'
+    const pathname = new URL(window.location.href).pathname;
+    const subsections = pathname.split('/');
+    let pageNameCategories = subsections.join('|');
+    if (pageNameCategories.endsWith('|')) {
+      pageNameCategories = pageNameCategories.substring(0, pageNameCategories.length-1);
+    }
+
     const pageData = {
       analyticsTitle: '',
       blogAuthor: authors,
       contentID: '',
       contentType: '',
-      contentPublishDate: '{{ if isset .Params "date" }} {{ .PublishDate.Format "YYYY-MM-DD" }} {{ else }} {{ "" }} {{ end }}',
+      contentPublishDate: publishDateMachine,
       dataObject: 'appEventData',
       destinationURL: window.location.href,
       gated: 'false',
       pageCategory: 'Documentation',
-      pageName: 'RH|cloud|{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}',
-      siteName: 'RH|cloud',
+      pageName: siteName + pageNameCategories,
+      siteName: siteName,
       pageTitle: '{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}',
-      pageType: 'page',
+      pageType: '',
       pageSubType: '',
       pageStatus: '',
-      queryParameters: '',
       siteExperience: '',
-      siteLanguage: '',
-      subsection: '',
-      subsection2: '',
-      subsection3: '',
+      siteLanguage: '{{ or site.Language.LanguageCode site.Language.Lang }}',
+      subsection: (subsections[1]) ? subsections[1]: '',
+      subsection2: (subsections[2]) ? subsections[2]: '',
+      subsection3: (subsections[3]) ? subsections[3]: '',
     };
 
     window.appEventData.push({
