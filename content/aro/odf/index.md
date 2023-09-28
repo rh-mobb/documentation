@@ -168,11 +168,6 @@ plugin is available via the `Storage` section in the dashboard:
        port: 9001
    EOF
    ```
-
-Here is an example of what ODF looks like in the console with a working cluster:
-
-![ODF Dashboard](images/odf-dashboard.png)
-
 6. Create a Storage Cluster
    ```bash
    cat <<EOF | oc apply -f -
@@ -242,6 +237,12 @@ Here is an example of what ODF looks like in the console with a working cluster:
    ocs-storagecluster-ceph-rbd   openshift-storage.rbd.csi.ceph.com      Delete          Immediate              true                   15s
    ocs-storagecluster-cephfs     openshift-storage.cephfs.csi.ceph.com   Delete          Immediate              true                   15s
    ```
+
+Here is an example of what ODF looks like in the console with a working cluster:
+
+![ODF Dashboard](images/odf-dashboard.png)
+
+   
 ## Test it out
    To test out ODF, we will create 'writer' pods on each node across all zones and then a reader pod to read the data that is written.  This will prove both regional storage along with "read write many" mode is working correctly.
 
