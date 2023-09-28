@@ -69,6 +69,12 @@ to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-cloudwat
 status = 301
 force = true
 
+[[redirects]]
+from = "/experts/rosa/verify-permissions/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-verify-permissions-sts-deployment.html"
+status = 301
+force = true
+
 # Redirect old Private Link tag to new PrivateLink tag
 [[redirects]]
 from = "/experts/tags/private-link/"
