@@ -1,0 +1,22 @@
+<script>
+    window.appEventData = window.appEventData || [];
+    const pageData = {
+      "analyticsTitle": "",
+      "blogAuthor": "",
+      "contentID": "",
+      "contentPublishDate": "",
+      "dataObject": "appEventData",
+      "pageCategory": "page",
+      "pageName": `RH|cloud|${(IsHome ? site.Title : Title)}`,
+      "pageTitle": IsHome ? site.Title : `${Title} | ${site.Title}`,
+      "destinationURL": window.location.href,
+      "gated": 'false',
+      'pageCategory': '',
+
+    };
+
+    window.appEventData.push({
+      "event": "Page Load Started",
+      "page": pageData
+    });
+</script>
