@@ -91,6 +91,14 @@ This is made even easier and more secure through the use of AWS STS and Kubernet
       csi-secrets-store-driver-secrets-store-csi-driver
     ```
 
+1. Add pod security profile label for CSI Driver 
+
+   {{% alert state="info" %}} This is required starting in OpenShift v4.13 {{% /alert %}}
+
+   ```bash
+   oc label csidriver/secrets-store.csi.k8s.io security.openshift.io/csi-ephemeral-volume-profile=restricted
+   ```
+
 ## Creating a Secret and IAM Access Policies
 
 1. Create a secret in Secrets Manager
