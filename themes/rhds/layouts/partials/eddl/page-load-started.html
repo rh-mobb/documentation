@@ -46,7 +46,7 @@
       pageType: '',
       pageSubType: '',
       pageStatus: '',
-      siteExperience: '',
+      siteExperience: (window.innerWidth > 992) ? "desktop": (window.innerWidth > 768 ? "tablet" : "mobile"),
       siteLanguage: '{{ or site.Language.LanguageCode site.Language.Lang }}',
       subsection: (subsections[2]) ? subsections[2]: '',
       subsection2: (subsections[3]) ? subsections[3]: '',
