@@ -1,22 +1,45 @@
 <script>
     window.appEventData = window.appEventData || [];
-    const pageData = {
-      "analyticsTitle": "",
-      "blogAuthor": "",
-      "contentID": "",
-      "contentPublishDate": "",
-      "dataObject": "appEventData",
-      "pageCategory": "page",
-      "pageName": `RH|cloud|${(IsHome ? site.Title : Title)}`,
-      "pageTitle": IsHome ? site.Title : `${Title} | ${site.Title}`,
-      "destinationURL": window.location.href,
-      "gated": 'false',
-      'pageCategory': '',
 
+    let authors = '';
+
+    {{ if isset .Params "authors" }}
+      {{ range $index, $author := .Params.Authors }}
+        {{ if eq $index (sub (len $.Params.Authors) 1) }}
+            authors += '{{ $author }}';
+        {{ else }}
+            authors += '{{ $author }},'
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+    // TODO: Parse url to generate pageName
+    const pageData = {
+      analyticsTitle: '',
+      blogAuthor: authors,
+      contentID: '',
+      contentType: '',
+      contentPublishDate: '{{ if isset .Params "date" }} {{ .PublishDate.Format "YYYY-MM-DD" }} {{ else }} {{ "" }} {{ end }}',
+      dataObject: 'appEventData',
+      destinationURL: window.location.href,
+      gated: 'false',
+      pageCategory: 'Documentation',
+      pageName: 'RH|cloud|{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}',
+      siteName: 'RH|cloud',
+      pageTitle: '{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}',
+      pageType: 'page',
+      pageSubType: '',
+      pageStatus: '',
+      queryParameters: '',
+      siteExperience: '',
+      siteLanguage: '',
+      subsection: '',
+      subsection2: '',
+      subsection3: '',
     };
 
     window.appEventData.push({
-      "event": "Page Load Started",
-      "page": pageData
+      event: 'Page Load Started',
+      page: pageData
     });
 </script>
