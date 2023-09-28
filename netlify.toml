@@ -57,6 +57,14 @@ from = "/docs/*"
 to = "/experts/:splat"
 status = 301
 
+# Redirect old Private Link tag to new PrivateLink tag
+[[redirects]]
+from = "/experts/tags/private-link/"
+to = "/experts/tags/privatelink/"
+status = 301
+force = true
+
+# The below are redirects to official product docs
 [[redirects]]
 from = "/experts/rosa/prereq-list/"
 to = "https://docs.openshift.com/rosa/rosa_planning/rosa-cloud-expert-prereq-checklist.html"
@@ -72,12 +80,5 @@ force = true
 [[redirects]]
 from = "/experts/rosa/verify-permissions/"
 to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-verify-permissions-sts-deployment.html"
-status = 301
-force = true
-
-# Redirect old Private Link tag to new PrivateLink tag
-[[redirects]]
-from = "/experts/tags/private-link/"
-to = "/experts/tags/privatelink/"
 status = 301
 force = true
