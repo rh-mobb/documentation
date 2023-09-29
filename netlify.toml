@@ -82,3 +82,45 @@ from = "/experts/rosa/verify-permissions/"
 to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-verify-permissions-sts-deployment.html"
 status = 301
 force = true
+
+[[redirects]]
+from = "/experts/misc/oadp/rosa-sts/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-deploy-api-data-protection.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/waf/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-cloudfront-and-waf.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/waf/cloud-front/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-cloudfront-and-waf.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/aws-secrets-manager-csi/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-aws-secret-manager.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/idp/group-claims/rosa/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-entra-id-idp.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/idp/azuread/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-entra-id-idp.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/waf/alb/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-alb-and-waf.html"
+status = 301
+force = true
