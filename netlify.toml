@@ -90,12 +90,6 @@ status = 301
 force = true
 
 [[redirects]]
-from = "/experts/rosa/waf/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-cloudfront-and-waf.html"
-status = 301
-force = true
-
-[[redirects]]
 from = "/experts/rosa/waf/cloud-front/"
 to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-cloudfront-and-waf.html"
 status = 301
