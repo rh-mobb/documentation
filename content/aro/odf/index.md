@@ -167,7 +167,7 @@ refresh itself, as the console pods must restart to inherit this new configurati
        port: 9001
    EOF
    ```
-  After install the plugin, you shold enable through Console > Installed Operators > OpenShift Data Foundation > Details. Change the option **Console plugin** from Disabled to Enabled then Save. After a few minutes you will be able to see new itens under the menu Storage, including the option Data Foundation.
+  After install the plugin, you should enable through Console > Installed Operators > OpenShift Data Foundation > Details. Change the option **Console plugin** from Disabled to Enabled then Save. After a few minutes you will be able to see new itens under the menu Storage, including the option Data Foundation.
    
 6. Create a Storage Cluster
    ```bash
