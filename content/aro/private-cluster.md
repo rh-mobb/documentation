@@ -181,13 +181,17 @@ Create a virtual network with two empty subnets
 
 ### Egress
 
-You have the choice of running a NAT GW or Firewall service for your Internet Egress.
+Public and Private clusters will have [--outbound-type](https://learn.microsoft.com/en-us/cli/azure/aro?view=azure-cli-latest#az-aro-create) defined to LoadBalancer by default. It means all clusters by default have open egress to the internet through the public load balancer.  
 
-Run through the step of one of the two following options
+If you want to change the default behavior to restrict the Internet Egress, you have to set --outbound-type during the creation of the cluster to UserDefinedRouting and use Azure Firewall or Azure NAT Gateway.
+
+If you want to proceed with the UserDefinedRouting option for the Internet Egress, run through the step of one of the two following options
 
 #### Nat GW
 
-This replaces the routes for the cluster to go through the Azure NAT GW service for egress vs the LoadBalancer which we can later remove. It does come with extra Azure costs of course.
+This replaces the routes for the cluster to go through the Azure NAT GW service for egress vs the LoadBalancer. It does come with extra Azure costs of course.
+
+{{% alert state="info" %}}You can skip this step if you don't need to restrict egress.{{% /alert %}}
 
 1. Create a Public IP
 
@@ -237,7 +241,7 @@ This replaces the routes for the cluster to go through the Azure NAT GW service 
 
 #### Firewall + Internet Egress
 
-This replaces the routes for the cluster to go through the Firewall for egress vs the LoadBalancer which we can later remove. It does come with extra Azure costs of course.
+This replaces the routes for the cluster to go through the Firewall for egress vs the LoadBalancer. It does come with extra Azure costs of course.
 
 {{% alert state="info" %}}You can skip this step if you don't need to restrict egress.{{% /alert %}}
 
