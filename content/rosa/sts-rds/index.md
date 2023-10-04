@@ -241,6 +241,7 @@ In our example we will use PostgreSQL as engine.
    );
    \copy ref_ip_blocks FROM 'geolite2-country-ipv4.csv' DELIMITER ',' CSV;
    CREATE INDEX ref_ip_blocks_ip4r_idx on ref_ip_blocks using gist(iprange);
+   GRANT SELECT ON TABLE ref_ip_blocks TO iamuser;
    quit
    exit
    ```
