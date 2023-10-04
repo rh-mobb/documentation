@@ -1113,13 +1113,13 @@ az aro delete -y                \
   --name hub-cluster
 
 az aro delete -y                \
-  --resource-group rg-eastus 	  \
+  --resource-group rg-eastus    \
   --name primary-cluster
 
 az group delete --name rg-eastus
 
 az aro delete -y                \
-  --resource-group rg-centralus \ 
+  --resource-group rg-centralus  \ 
   --name secondary-cluster
 
 az group delete --name rg-centralus
