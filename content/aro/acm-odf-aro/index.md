@@ -1127,9 +1127,9 @@ az group delete --name rg-centralus
 
 # Additional reference resources:
 
-* https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview
-* https://access.redhat.com/documentation/en-us/red_hat_openshift_data_foundation/4.12/html/configuring_openshift_data_foundation_disaster_recovery_for_openshift_workloads/rdr-solution
-* https://mobb.ninja/docs/aro/private-cluster/
-* https://mobb.ninja/docs/redhat/acm/submariner/aro/
-* https://mobb.ninja/docs/aro/odf/
-* https://red-hat-storage.github.io/ocs-training/training/ocs4/odf4-multisite-ramen.html#_create_drplacementcontrol_resource
+* [Virtual Network Peering](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
+* [Regional-DR solution for OpenShift Data Foundation](https://access.redhat.com/documentation/en-us/red_hat_openshift_data_foundation/4.12/html/configuring_openshift_data_foundation_disaster_recovery_for_openshift_workloads/rdr-solution)
+* [Private ARO Cluster with access via JumpHost](https://mobb.ninja/docs/aro/private-cluster/)
+* [Deploy ACM Submariner for connect overlay networks ARO - ROSA clusters](https://mobb.ninja/docs/redhat/acm/submariner/aro/)
+* [Configure ARO with OpenShift Data Foundation](https://mobb.ninja/docs/aro/odf/)
+* [OpenShift Regional Disaster Recovery with Advanced Cluster Management](https://red-hat-storage.github.io/ocs-training/training/ocs4/odf4-multisite-ramen.html#_create_drplacementcontrol_resource)
