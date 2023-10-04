@@ -151,8 +151,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
    ```
 5. Install the Console Plugin if needed.  This gives you a specific tile in the OpenShift console
 to manage your ODF Storage Cluster.  By running this command, you will see the OpenShift console
-refresh itself, as the console pods must restart to inherit this new configuration.  The console
-plugin is available via the `Storage` section in the dashboard:
+refresh itself, as the console pods must restart to inherit this new configuration.  
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: console.openshift.io/v1alpha1
@@ -168,6 +167,8 @@ plugin is available via the `Storage` section in the dashboard:
        port: 9001
    EOF
    ```
+  After install the plugin, you should enable through Console > Installed Operators > OpenShift Data Foundation > Details. Change the option **Console plugin** from Disabled to Enabled then Save. After a few minutes you will be able to see new itens under the menu Storage, including the option Data Foundation.
+   
 6. Create a Storage Cluster
    ```bash
    cat <<EOF | oc apply -f -
@@ -242,6 +243,7 @@ Here is an example of what ODF looks like in the console with a working cluster:
 
 ![ODF Dashboard](images/odf-dashboard.png)
 
+You can access it after enabling the Console plugin, going through Storage > Data Foundation > Storage Systems > ocs-storagecluster-storagesystem
    
 ## Test it out
    To test out ODF, we will create 'writer' pods on each node across all zones and then a reader pod to read the data that is written.  This will prove both regional storage along with "read write many" mode is working correctly.
