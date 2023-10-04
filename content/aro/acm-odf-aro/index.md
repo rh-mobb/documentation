@@ -229,27 +229,6 @@ ADMINPW=$(az aro list-credentials    	\
 oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 ```
 
-### Registering the Hub Cluster to OpenShift Cluster Manager
-
-
-1. To register the HUB Cluster with the OpenShift Cluster Manager, follow these steps: [https://cloud.redhat.com/experts/aro/ocm/](https://cloud.redhat.com/experts/aro/ocm/) 
-
-2. After successfully registering, you will be able to see your cluster on ACM through this URL: [https://console.redhat.com/openshift](https://console.redhat.com/openshift)
-
-![Hub OCM](images/hub-ocm.png)
-
-1. By default you will see the Cluster ID as the name of the cluster. To change it,  you can click on the icon on the left and select Edit display name:
-
-![Hub OCM Edit Display Name](images/hub-ocm-edit-display-name.png)
-
-2. Then you can give the appropriate name:
-
-<img src="images/hub-ocm-set-name.png" alt="Hub OCM Set Display Name" width="50%" height="auto">
-
-Then will look like this:
-
-![Hub OCM Overview](images/hub-ocm-overview.png) 
-
 ### Setting up the Hub Cluster with the Advanced Cluster Management for Kubernetes 
 
 1. To install using the console, basically you should go to Operators > OperatorHub and search by **Advanced Cluster Management for Kubernetes**
@@ -432,15 +411,6 @@ ADMINPW=$(az aro list-credentials    		\
 ```
 oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 ```
-
-### Registering the Primary Cluster with the OpenShift Cluster Manager
-
-To register the HUB Cluster with the OpenShift Cluster Manager, follow these steps: [https://cloud.redhat.com/experts/aro/ocm/](https://cloud.redhat.com/experts/aro/ocm/) 
-
-After the registration will be able to see the Hub Cluster and the Primary Cluster when accessing [https://console.redhat.com/openshift/](https://console.redhat.com/openshift/)
-
-![Primary Cluster OCP](images/primary-ocp.png)
-
 
 ### Importing the Primary Cluster into the Advanced Cluster Management
 
@@ -775,16 +745,6 @@ ADMINPW=$(az aro list-credentials    	\
 ```
 oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 ```
-
-### Registering the Secondary Cluster with the OpenShift Cluster Manager
-
-To register the HUB Cluster with the OpenShift Cluster Manager, follow these steps: [https://cloud.redhat.com/experts/aro/ocm/](https://cloud.redhat.com/experts/aro/ocm/ ) 
-
-After the registration will be able to see the Hub Cluster and the Primary Cluster when accessing [https://console.redhat.com/openshift/](https://console.redhat.com/openshift/)
-
-
-![OCM Secondary Cluster](images/ocm-secondary-cluster.png)
-
 
 ### Importing the Secondary Cluster into the Advanced Cluster Management
 
