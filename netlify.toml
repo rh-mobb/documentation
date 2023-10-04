@@ -118,3 +118,9 @@ from = "/experts/rosa/waf/alb/"
 to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-alb-and-waf.html"
 status = 301
 force = true
+
+[[redirects]]
+from = "/experts/rosa/ack/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-aws-ack.html"
+status = 301
+force = true
