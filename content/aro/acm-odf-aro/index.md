@@ -193,9 +193,7 @@ az aro create  \
     --version 4.12.25  \
     --apiserver-visibility Private  \
     --ingress-visibility Private  \
-    --pull-secret @$AZR_PULL_SECRET  \
-    --client-id "${AZ_SP_ID}"  \
-    --client-secret "${AZ_SP_PASS}"
+    --pull-secret @$AZR_PULL_SECRET
 ```
 
 1. To connect, get OpenShift console URL
@@ -466,8 +464,6 @@ This will take between 30 and 45 minutes
     --apiserver-visibility Private  \
     --ingress-visibility Private  \
     --pull-secret @$AZR_PULL_SECRET  \
-    --client-id "${AZ_SP_ID}"  \
-    --client-secret "${AZ_SP_PASS}"  \
     --pod-cidr $POD_CIDR  \
     --service-cidr $SERVICE_CIDR
 
@@ -789,8 +785,6 @@ This will take between 30 and 45 minutes
     --apiserver-visibility Private  \
     --ingress-visibility Private  \
     --pull-secret @$AZR_PULL_SECRET  \
-    --client-id "${AZ_SP_ID}"  \
-    --client-secret "${AZ_SP_PASS}"  \
     --pod-cidr $POD_CIDR  \
     --service-cidr $SERVICE_CIDR
 ```
