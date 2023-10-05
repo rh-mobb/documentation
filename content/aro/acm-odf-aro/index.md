@@ -95,15 +95,16 @@ export JUMPHOST_SUBNET=10.0.10.0/24
 
 2. Create an Azure resource group
 
-```az group create                		\
+```
+az group create                		\
   --name $AZR_RESOURCE_GROUP   	        \
   --location $AZR_RESOURCE_LOCATION
-  ```
+```
 
-  3. Create an Azure Service Principal
+3. Create an Azure Service Principal
 
-  ```
-  AZ_SUB_ID=$(az account show --query id -o tsv)
+```
+AZ_SUB_ID=$(az account show --query id -o tsv)
 AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor \
   --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}" 	\
   --query "password" -o tsv)
@@ -126,21 +127,23 @@ az network vnet create                                    	\
 
 2. Create control plane subnet
 
-```  az network vnet subnet create                                  \
+```
+az network vnet subnet create                                  \
   --resource-group $AZR_RESOURCE_GROUP                            	\
   --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"      	\
   --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" 	\
   --address-prefixes $CONTROL_SUBNET 
-  ```
+```
 
 3. Create worker subnet
 
-```  az network vnet subnet create                                \
+```
+az network vnet subnet create                                \
   --resource-group $AZR_RESOURCE_GROUP                            \
   --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"      \
   --name "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
   --address-prefixes $WORKER_SUBNET   
-  ```
+```
 
 ### Jump Host
 
@@ -148,16 +151,18 @@ With the cluster in a private network, we can create a jump host in order to con
 
 1. Create the jump subnet
 
-```az network vnet subnet create                                \
+```
+az network vnet subnet create                                \
   --resource-group $AZR_RESOURCE_GROUP                       	\
   --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" 	\
   --name JumpSubnet                                          	\
   --address-prefixes $JUMPHOST_SUBNET    
-  ```
+```
 
 2. Create a jump host
 
-``` az vm create --name jumphost                 		\
+```
+az vm create --name jumphost                 		\
     --resource-group $AZR_RESOURCE_GROUP     	        \
     --ssh-key-values $HOME/.ssh/id_rsa.pub   	        \
     --admin-username aro                     			\
@@ -170,7 +175,8 @@ With the cluster in a private network, we can create a jump host in order to con
 
 3. Save the jump host public IP address
 
-```JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv \
+```
+JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv \
 --query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
 
 echo $JUMP_IP
@@ -189,7 +195,7 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
 This will take between 30 and 45 minutes
 
 ```
-    az aro create                                                            	\
+az aro create                                                            	\
     --resource-group $AZR_RESOURCE_GROUP                                     	\
     --name $AZR_CLUSTER                                                     	\
     --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"                       \
@@ -424,18 +430,15 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 
 3. Now click on **Import cluster** and fill out with the appropriate information regarding the Primary Cluster:
 
-![ACM Importing Primary 1](images/importing-primary-1.png
-)
+![ACM Importing Primary 1](images/importing-primary-1.png)
 
 4. When you click **Next** you will be presented to the below screen:
 
-![ACM Importing Primary 2](images/importing-primary-2.png
-)
+![ACM Importing Primary 2](images/importing-primary-2.png)
 
 5. In this example stick the defaults. Just click **Next** again and you will be presented to the Review section:
 
-![ACM Importing Primary 3](images/importing-primary-3.png
-)
+![ACM Importing Primary 3](images/importing-primary-3.png)
 
 6. Click on **Generate command** and you will be redirected to this screen:
 
@@ -566,7 +569,8 @@ export SERVICE_CIDR=172.30.128.0/18
 
 2. Create an Azure resource group
 
-```az group create                	\
+```
+az group create                	\
   --name $AZR_RESOURCE_GROUP   	    \
   --location $AZR_RESOURCE_LOCATION
 ```
