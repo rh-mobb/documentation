@@ -74,6 +74,16 @@ az provider register -n Microsoft.Authorization --wait
 2. Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned
 3. Click the **Download pull secret** button and remember where you saved it, you’ll reference it later.
 
+## Manage Multiple Logins
+
+1. In order to manage several clusters, we will add a new Kubeconfig file to manage the logins and change quickly from one context to another:
+
+```
+rm -rf /var/tmp/acm-odf-kubeconfig
+touch /var/tmp/acm-odf-kubeconfig
+export KUBECONFIG=/var/tmp/acm-odf-kubeconfig
+```
+
 # Deploying the Hub Cluster 
 
 ### Environment Variables
@@ -229,10 +239,12 @@ ADMINPW=$(az aro list-credentials  \
 -o tsv)
 ```
 
-3. Log into OpenShift
+3. Log into Hub OpenShift
 
 ```
 oc login $APISERVER --username kubeadmin --password ${ADMINPW}
+oc config rename-context $(oc config current-context) hub
+oc config use hub
 ```
 
 ### Setting up the Hub Cluster with the Advanced Cluster Management for Kubernetes 
@@ -453,6 +465,8 @@ ADMINPW=$(az aro list-credentials  \
 
 ```
 oc login $APISERVER --username kubeadmin --password ${ADMINPW}
+oc config rename-context $(oc config current-context) primary
+oc config use primary
 ```
 
 ### Importing the Primary Cluster into the Advanced Cluster Management
@@ -785,6 +799,8 @@ ADMINPW=$(az aro list-credentials  \
 
 ```
 oc login $APISERVER --username kubeadmin --password ${ADMINPW}
+oc config rename-context $(oc config current-context) secondary
+oc config use secondary
 ```
 
 ### Importing the Secondary Cluster into the Advanced Cluster Management
