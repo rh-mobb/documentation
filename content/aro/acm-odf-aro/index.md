@@ -536,50 +536,67 @@ EOF
 oc get managedclusters
 ```
 
-### Setting up the Primary Cluster with the Submariner Add-On
+### Configure Submariner between Primary and Secondary Clusters
 
 
-1. To deploy the Submariner Add-On, login into the Hub Cluster Console then using the Advanced Cluster Management Menu, select All Clusters:
+1. Create `Broker` configuration
 
-![ACM All Clusters](images/acm-all-clusters.png)
+```
+MANAGED_CLUSTER_SET_NAME=aro-clusters
+```
 
-2. Then go to **Infrastructure** > **Clusters**
+```
+cat << EOF | oc apply -f -
+apiVersion: submariner.io/v1alpha1
+kind: Broker
+metadata:
+  name: submariner-broker
+  namespace: $MANAGED_CLUSTER_SET_NAME-broker
+  labels:
+    cluster.open-cluster-management.io/backup: submariner
+spec:
+  globalnetEnabled: false
+EOF
+```
 
-![ACM Infrastructure Clusters 2 ](images/acm-infrastructure-clusters-2.png)
+2. Deploy Submariner to Primary cluster
 
-3. Click on **Cluster sets** then select the **default**
+```
+cat << EOF | oc apply -f -
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ManagedClusterAddOn
+metadata:
+     name: submariner
+     namespace: $PRIMARY_CLUSTER
+spec:
+     installNamespace: submariner-operator
+```
 
-![ACM Select Default Cluster](images/acm-select-default.png)
+3. Deploy Submariner to Secondary cluster
 
-{{% alert state="info" %}}Note that the global cluster set exists by default and contains all of the managed clusters, imported or created. [More information here.](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.8/html-single/clusters/index#managedclustersets_global){{% /alert %}} 
+```
+cat << EOF | oc apply -f -
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ManagedClusterAddOn
+metadata:
+     name: submariner
+     namespace: $SECONDARY_CLUSTER
+spec:
+     installNamespace: submariner-operator
+```
 
+4. Check connection status for primary cluster
 
-4. After select the default cluster set, you will see the following screen where you should click on **Submariner add-ons**:
+```
+oc -n $PRIMARY_CLUSTER get managedclusteraddons submariner -o yaml
+```
 
-![ACM Default Cluster View](images/acm-default-cluster-view.png)
-
-5. Now click on **Install Submariner add-ons** and set the configuration like below:
-
-![ACM Default Cluster Submariner](images/default-cluster-submariner.png)
-
-6. Add the **primary-cluster** as **Target clusters** then click **Next**
-
-![install Submariner Primary 1](images/install-submariner-primary-1.png)
-
-7. On the next screen keep the default settings and click **Next**:
-
-![install Submariner Primary 2](images/install-submariner-primary-2.png)
-
-8. Review the configuration then click to **Install**
-
-![install Submariner Primary 3](images/install-submariner-primary-3.png)
-
-9. The installation will start and after 5-10 min the installation will be complete:
-
-![install Submariner Primary 4](images/install-submariner-primary-4.png)
+5. Check connection status for secondary cluster
 
 
-Since the secondary cluster isn't up and running with the Submariner add-on installed, you will see the message saying that the connection is Degraded (since there isn't a connection established yet). It will be fixed when the setup of the Submariner add-on is completed at the secondary cluster.
+```
+oc -n $SECONDARY_CLUSTER get managedclusteraddons submariner -o yaml
+```
 
 ### Setting up the Primary Cluster with the ODF
 
@@ -861,55 +878,6 @@ EOF
 ```
 oc get managedclusters
 ```
-
-### Setting up the Secondary  Cluster with the Submariner Add-On
-
-1. To deploy the Submariner Add-On, login into the Hub Cluster Console then using the Advanced Cluster Management Menu, select **All Clusters**:
-
-![ACM All Clusters](images/acm-all-clusters.png)
-
-2. Then go to **Infrastructure** > **Clusters**
-
-![ACM Infrastructure Secxondary Cluster ](images/acm-infrastructure-secondary-cluster.png)
-
-3. Click on **Cluster sets** then select the **default**
-
-![ACM Infrastructure Secxondary Cluster 2 ](images/acm-infrastructure-secondary-cluster-2.png)
-
-{{% alert state="info" %}}Note that the global cluster set exists by default and contains all of the managed clusters, imported or created. [More information here](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.8/html-single/clusters/index#managedclustersets_global).{{% /alert %}} 
-
-4. After select the default cluster set, you will see the following screen where you should click on **Submariner add-ons**:
-
-![Submariner Secondary Default ](images/submariner-secondary-default.png)
-
-
-5. Now click on Install Submariner add-ons
-
-![Submariner Secondary Install ](images/submariner-secondary-install.png)
-
-6. Add the **secondary-cluster** as **Target cluster**s then click **Next**
-
-![Submariner Secondary Install 1 ](images/submariner-secondary-install-1.png)
-
-7. On the next screen keep the default settings for both clusters and click **Next**
-
-![Submariner Secondary Install 2 ](images/submariner-secondary-install-2.png)
-
-8. Review the configuration then click to **Install**
-
-![Submariner Secondary Install 3 ](images/submariner-secondary-install-3.png)
-
-
-9. After a few minutes, the installation will be done and with **Healthy** status
-
-![Submariner Secondary Installed ](images/submariner-secondary-installed.png)
-
-### Setting up the Secondary Cluster with the ODF
-
-In this document, there are all steps required to deploy the ODF into the Primary Cluster:
-[https://cloud.redhat.com/experts/aro/odf](https://cloud.redhat.com/experts/aro/odf)
-
-{{% alert state="info" %}}Please note that when you subscribe to the ocs-operator and to odf-operator, you should change the channel from  channel: stable-4.**11** to channel:stable-4.**12** since we are using the version 4.12 in this example.{{% /alert %}} 
 
 # Finishing the setup of the disaster recovery solution
 
