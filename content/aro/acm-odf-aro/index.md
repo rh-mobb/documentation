@@ -237,6 +237,109 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 
 ### Setting up the Hub Cluster with the Advanced Cluster Management for Kubernetes 
 
+
+1. Create ACM namespace
+
+```
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: open-cluster-management
+  labels:
+    openshift.io/cluster-monitoring: "true"
+EOF
+```
+
+2. Create ACM Operator Group
+
+```
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: open-cluster-management
+  namespace: open-cluster-management
+spec:
+  targetNamespaces:
+    - open-cluster-management
+EOF
+```
+
+3. Install ACM version 2.8
+
+```
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: advanced-cluster-management
+  namespace: open-cluster-management
+spec:
+  channel: release-2.8
+  installPlanApproval: Automatic
+  name: advanced-cluster-management
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+```
+
+4. Check if installation succeeded
+
+```
+oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n open-cluster-management \
+  -l operators.coreos.com/advanced-cluster-management.open-cluster-management=''
+```
+
+5. Install MultiClusterHub instance in the ACM namespace
+
+```
+cat << EOF | oc apply -f -
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  namespace: open-cluster-management
+  name: multiclusterhub
+spec: {}
+EOF
+```
+
+6. Check that the `MultiClusterHub` is installed and running properly
+
+```
+oc wait --for=jsonpath='{.status.phase}'='Running' multiclusterhub multiclusterhub -n open-cluster-management \
+  --timeout=600s
+```
+
+### Setting up the Hub Cluster with the ODF Multicluster Orchestrator
+
+1. Install the ODF Multicluster Orchestrator version 4.12
+
+```
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    operators.coreos.com/odf-multicluster-orchestrator.openshift-operators: ""
+  name: odf-multicluster-orchestrator
+  namespace: openshift-operators
+spec:
+  channel: stable-4.12
+  installPlanApproval: Automatic
+  name: odf-multicluster-orchestrator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+```
+
+2. Check if installation succeeded
+
+```
+oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n openshift-operators \
+  -l operators.coreos.com/odf-multicluster-orchestrator.openshift-operators=''
+```
+
 1. To install using the console, go to Operators > OperatorHub and search by **Advanced Cluster Management for Kubernetes**
 
 ![ACM](images/acm.png) 
@@ -966,6 +1069,15 @@ EOF
 ```
 
 ### Creating a sample application
+
+1. Create an application with ACM
+
+```
+cat <<EOF | oc apply -f -
+
+
+EOF
+```
 
 1. From the ACM panel, go to Applications > Create application
 
