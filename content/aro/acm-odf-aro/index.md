@@ -8,10 +8,11 @@ A guide to deploying Advanced Cluster Management (ACM) and OpenShift Data Founda
 
 Authors: [Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins), [Chris Kang](https://www.linkedin.com/in/theckang/)
 
+## Overview
+
 In today's fast-paced and data-driven world, ensuring the resilience and availability of your applications and data has never been more critical. The unexpected can happen at any moment, and the ability to recover quickly and efficiently is paramount. That's where OpenShift Advanced Cluster Management (ACM) and OpenShift Data Foundation (ODF) come into play. In this guide, we will explore the deployment of ACM and ODF for disaster recovery (DR) purposes, empowering you to safeguard your applications and data across multiple clusters.
 
-# Sample Architecture
-
+**Sample Architecture**
 ![Sample architecture](images/sample-architecture.png)
 *Download a [Visio file](images/sample-architecture.vsdx) of this architecture* 
 
@@ -42,8 +43,9 @@ In summary, this multi-cluster topology is designed for high availability and di
 
 * [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 * [SShuttle](https://github.com/sshuttle/sshuttle) to create a SSH VPN (or create an  [Azure VPN](https://learn.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-about-vpngateways))
+* oc cli
 
-## Prepare Azure Account for Azure OpenShift
+#### Azure Account
 
 1. Log into the Azure CLI by running the following and then authorizing through your Web Browser
 
@@ -68,83 +70,166 @@ az provider register -n Microsoft.Storage --wait
 az provider register -n Microsoft.Authorization --wait
 ```
 
-## Get Red Hat pull secret
+#### Red Hat pull secret
 
 1. Log into [https://cloud.redhat.com](https://cloud.redhat.com)
 2. Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned
 3. Click the **Download pull secret** button and remember where you saved it, you’ll reference it later.
 
-## Manage Multiple Logins
+#### Manage Multiple Logins
 
-1. In order to manage several clusters, we will add a new Kubeconfig file to manage the logins and change quickly from one context to another:
-
-```
-rm -rf /var/tmp/acm-odf-kubeconfig
-touch /var/tmp/acm-odf-kubeconfig
-export KUBECONFIG=/var/tmp/acm-odf-kubeconfig
-```
-
-# Deploying the Hub Cluster 
-
-### Environment Variables
-
-Set some environment variables to use later, and create an Azure Resource Group.
-
-1. Set the following environment variables
+1. In order to manage several clusters, we will add a new Kubeconfig file to manage the logins and change quickly from one context to another
 
 ```
-export AZR_RESOURCE_LOCATION=eastus
-export AZR_RESOURCE_GROUP=rg-eastus
-export AZR_CLUSTER=hub-cluster
+rm -rf /var/tmp/acm-odf-aro-kubeconfig
+touch /var/tmp/acm-odf-aro-kubeconfig
+export KUBECONFIG=/var/tmp/acm-odf-aro-kubeconfig
+```
+
+## Create clusters
+
+1. Set environment variables
+
+```
 export AZR_PULL_SECRET=~/Downloads/pull-secret.txt
-export VIRTUAL_NETWORK=10.0.0.0/20
-export CONTROL_SUBNET=10.0.0.0/24
-export WORKER_SUBNET=10.0.1.0/24
-export JUMPHOST_SUBNET=10.0.10.0/24
+export EAST_RESOURCE_LOCATION=eastus
+export EAST_RESOURCE_GROUP=rg-eastus
+export CENTRAL_RESOURCE_LOCATION=centralus
+export CENTRAL_RESOURCE_GROUP=rg-centralus
 ```
 
-2. Create an Azure resource group
+2. Create environment variables for hub cluster
+
+```
+export HUB_VIRTUAL_NETWORK=10.0.0.0/20
+export HUB_CLUSTER=hub-cluster
+export HUB_CONTROL_SUBNET=10.0.0.0/24
+export HUB_WORKER_SUBNET=10.0.1.0/24
+export HUB_JUMPHOST_SUBNET=10.0.10.0/24
+```
+
+3. Set environment variables for primary cluster
+
+```
+export PRIMARY_CLUSTER=primary-cluster
+export PRIMARY_CONTROL_SUBNET=10.0.2.0/24
+export PRIMARY_WORKER_SUBNET=10.0.3.0/24
+export PRIMARY_POD_CIDR=10.128.0.0/18
+export PRIMARY_SERVICE_CIDR=172.30.0.0/18
+```
+
+4. Set environment variables for secondary cluster
+
+{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap between primary and secondary clusters (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid using the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}}
+
+```
+export SECONDARY_CLUSTER=secondary-cluster
+export SECONDARY_VIRTUAL_NETWORK=192.168.0.0/20
+export SECONDARY_CONTROL_SUBNET=192.168.0.0/24
+export SECONDARY_WORKER_SUBNET=192.168.1.0/24
+export SECONDARY_JUMPHOST_SUBNET=192.168.10.0/24
+export SECONDARY_POD_CIDR=10.130.0.0/18
+export SECONDARY_SERVICE_CIDR=172.30.128.0/18
+```
+
+### Deploying the Hub Cluster 
+
+1. Create an Azure resource group
 
 ```
 az group create  \
-  --name $AZR_RESOURCE_GROUP  \
-  --location $AZR_RESOURCE_LOCATION
+  --name $EAST_RESOURCE_GROUP  \
+  --location $EAST_RESOURCE_LOCATION
 ```
 
-### Networking
-
-Create a virtual network with two empty subnets
-
-1. Create virtual network
+2. Create virtual network
 
 ```
 az network vnet create  \
-  --address-prefixes $VIRTUAL_NETWORK  \
-  --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --resource-group $AZR_RESOURCE_GROUP
+  --address-prefixes $HUB_VIRTUAL_NETWORK  \
+  --name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+  --resource-group $EAST_RESOURCE_GROUP
 ```
 
-2. Create control plane subnet
-
-```
-az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
-  --address-prefixes $CONTROL_SUBNET 
-```
-
-3. Create worker subnet
+3. Create control plane subnet
 
 ```
 az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --name "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
-  --address-prefixes $WORKER_SUBNET   
+  --resource-group $EAST_RESOURCE_GROUP  \
+  --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+  --name "$HUB_CLUSTER-aro-control-subnet-$EAST_RESOURCE_LOCATION"  \
+  --address-prefixes $HUB_CONTROL_SUBNET 
 ```
 
-### Jump Host
+4. Create worker subnet
+
+```
+az network vnet subnet create  \
+  --resource-group $EAST_RESOURCE_GROUP  \
+  --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+  --name "$HUB_CLUSTER-aro-worker-subnet-$EAST_RESOURCE_LOCATION"  \
+  --address-prefixes $HUB_WORKER_SUBNET   
+```
+
+5. Create the cluster
+
+This will take between 30 and 45 minutes
+
+```
+az aro create  \
+    --resource-group $EAST_RESOURCE_GROUP  \
+    --name $HUB_CLUSTER  \
+    --vnet "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+    --master-subnet "$HUB_CLUSTER-aro-control-subnet-$EAST_RESOURCE_LOCATION"  \
+    --worker-subnet "$HUB_CLUSTER-aro-worker-subnet-$EAST_RESOURCE_LOCATION"  \
+    --version 4.12.25  \
+    --apiserver-visibility Private  \
+    --ingress-visibility Private  \
+    --pull-secret @$AZR_PULL_SECRET
+```
+
+### Deploying the Primary cluster
+
+1. Create control plane subnet
+
+```
+az network vnet subnet create  \
+  --resource-group $EAST_RESOURCE_GROUP  \
+  --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+  --name "$PRIMARY_CLUSTER-aro-control-subnet-$EAST_RESOURCE_LOCATION"  \
+  --address-prefixes $PRIMARY_CONTROL_SUBNET 
+```
+
+2. Create worker subnet
+
+```
+az network vnet subnet create  \
+  --resource-group $EAST_RESOURCE_GROUP  \
+  --vnet-name "$PRIMARY_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+  --name "$PRIMARY_CLUSTER-aro-worker-subnet-$EAST_RESOURCE_LOCATION"  \
+  --address-prefixes $PRIMARY_WORKER_SUBNET
+```
+
+3. Create the cluster
+
+This will take between 30 and 45 minutes
+
+```
+az aro create  \
+  --resource-group $EAST_RESOURCE_GROUP  \
+  --name $PRIMARY_CLUSTER  \
+  --vnet "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+  --master-subnet "$PRIMARY_CLUSTER-aro-control-subnet-$EAST_RESOURCE_LOCATION"  \
+  --worker-subnet "$PRIMARY_CLUSTER-aro-worker-subnet-$EAST_RESOURCE_LOCATION"  \
+  --version 4.12.25  \
+  --apiserver-visibility Private  \
+  --ingress-visibility Private  \
+  --pull-secret @$AZR_PULL_SECRET  \
+  --pod-cidr $PRIMARY_POD_CIDR  \
+  --service-cidr $PRIMARY_SERVICE_CIDR
+```
+
+### Connect to Hub and Primary Clusters
 
 With the cluster in a private network, we can create a jump host in order to connect to it. 
 
@@ -152,90 +237,280 @@ With the cluster in a private network, we can create a jump host in order to con
 
 ```
 az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+  --resource-group $EAST_RESOURCE_GROUP  \
+  --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
   --name JumpSubnet  \
-  --address-prefixes $JUMPHOST_SUBNET    
+  --address-prefixes $HUB_JUMPHOST_SUBNET    
 ```
 
 2. Create a jump host
 
 ```
 az vm create --name jumphost  \
-    --resource-group $AZR_RESOURCE_GROUP  \
+    --resource-group $EAST_RESOURCE_GROUP  \
     --ssh-key-values $HOME/.ssh/id_rsa.pub  \
     --admin-username aro  \
     --image "RedHat:RHEL:9_1:9.1.2022112113"  \
     --subnet JumpSubnet  \
     --public-ip-address jumphost-ip  \
     --public-ip-sku Standard  \
-    --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
+    --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"
 ```
 
 3. Save the jump host public IP address
 
+> Run this command in a second terminal
+
 ```
-JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv  \
+EAST_JUMP_IP=$(az vm list-ip-addresses -g $EAST_RESOURCE_GROUP -n jumphost -o tsv  \
 --query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
 
-echo $JUMP_IP
+echo $EAST_JUMP_IP
 ```
 
 4. Use sshuttle to create a SSH VPN via the jump host (use a separate terminal session)
 
+> Run this command in a second terminal
+
 Replace the IP with the IP of the jump box from the previous step
 
 ```
-sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
+sshuttle --dns -NHr "aro@${EAST_JUMP_IP}" $HUB_VIRTUAL_NETWORK
 ```
 
-### Create the Cluster
 
-This will take between 30 and 45 minutes
-
-```
-az aro create  \
-    --resource-group $AZR_RESOURCE_GROUP  \
-    --name $AZR_CLUSTER  \
-    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
-    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
-    --version 4.12.25  \
-    --apiserver-visibility Private  \
-    --ingress-visibility Private  \
-    --pull-secret @$AZR_PULL_SECRET
-```
-
-1. To connect, get OpenShift console URL
+1. Get OpenShift API routes
 
 ```
-APISERVER=$(az aro show  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
+HUB_APISERVER=$(az aro show  \
+--name $HUB_CLUSTER  \
+--resource-group $EAST_RESOURCE_GROUP  \
 -o tsv --query apiserverProfile.url)
-echo $APISERVER
+
+PRIMARY_APISERVER=$(az aro show  \
+--name $PRIMARY_CLUSTER  \
+--resource-group $EAST_RESOURCE_GROUP  \
+-o tsv --query apiserverProfile.url)
 ```
 
 2. Get OpenShift credentials
 
 ```
-ADMINPW=$(az aro list-credentials  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
+HUB_ADMINPW=$(az aro list-credentials  \
+--name $HUB_CLUSTER  \
+--resource-group $EAST_RESOURCE_GROUP  \
+--query kubeadminPassword  \
+-o tsv)
+
+PRIMARY_ADMINPW=$(az aro list-credentials  \
+--name $PRIMARY_CLUSTER  \
+--resource-group $EAST_RESOURCE_GROUP  \
 --query kubeadminPassword  \
 -o tsv)
 ```
 
-3. Log into Hub OpenShift
+3. Log into Hub and configure context
 
 ```
-oc login $APISERVER --username kubeadmin --password ${ADMINPW}
+oc login $HUB_APISERVER --username kubeadmin --password ${HUB_ADMINPW}
 oc config rename-context $(oc config current-context) hub
 oc config use hub
 ```
 
-### Setting up the Hub Cluster with the Advanced Cluster Management for Kubernetes 
+4. Log into Primary and configure context
 
+```
+oc login $PRIMARY_APISERVER --username kubeadmin --password ${PRIMARY_ADMINPW}
+oc config rename-context $(oc config current-context) primary
+oc config use primary
+```
+
+You can now switch between the hub and primary clusters with `oc config`
+
+### Deploying the Secondary Cluster 
+
+1. Create an Azure resource group
+
+```
+az group create  \
+  --name $CENTRAL_RESOURCE_GROUP  \
+  --location $CENTRAL_RESOURCE_LOCATION
+```
+
+2. Create virtual network
+
+```
+az network vnet create  \
+  --address-prefixes $SECONDARY_VIRTUAL_NETWORK  \
+  --name "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"  \
+  --resource-group $CENTRAL_RESOURCE_GROUP
+```
+
+3. Create control plane subnet
+
+```
+az network vnet subnet create  \
+  --resource-group $CENTRAL_RESOURCE_GROUP  \
+  --vnet-name "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"  \
+  --name "$SECONDARY_CLUSTER-aro-control-subnet-$CENTRAL_RESOURCE_LOCATION"  \
+  --address-prefixes $SECONDARY_CONTROL_SUBNET 
+```
+
+4. Create worker subnet
+
+```
+az network vnet subnet create  \
+  --resource-group $CENTRAL_RESOURCE_GROUP  \
+  --vnet-name "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"  \
+  --name "$SECONDARY_CLUSTER-aro-worker-subnet-$CENTRAL_RESOURCE_LOCATION"  \
+  --address-prefixes $SECONDARY_WORKER_SUBNET   
+```
+
+5. Create the cluster
+
+This will take between 30 and 45 minutes
+
+```
+az aro create  \
+    --resource-group $CENTRAL_RESOURCE_GROUP  \
+    --name $SECONDARY_CLUSTER  \
+    --vnet "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"  \
+    --master-subnet "$SECONDARY_CLUSTER-aro-control-subnet-$CENTRAL_RESOURCE_LOCATION"  \
+    --worker-subnet "$SECONDARY_CLUSTER-aro-worker-subnet-$CENTRAL_RESOURCE_LOCATION"  \
+    --version 4.12.25  \
+    --apiserver-visibility Private  \
+    --ingress-visibility Private  \
+    --pull-secret @$AZR_PULL_SECRET \
+    --pod-cidr $SECONDARY_POD_CIDR \
+    --service-cidr $SECONDARY_SERVICE_CIDR
+```
+
+### VNet Peering
+
+1. Create a peering between both VNETs (Hub Cluster in EastUS and Secondary Cluster in Central US)
+
+```
+export RG_EASTUS=$EAST_RESOURCE_GROUP
+export RG_CENTRALUS=$CENTRAL_RESORCE_GROUP
+export VNET_EASTUS=$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION
+export VNET_CENTRALUS=$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION
+
+# Get the id for $VNET_EASTUS.
+echo "Getting the id for $VNET_EASTUS"
+VNET_EASTUS_ID=$(az network vnet show --resource-group $RG_EASTUS --name $VNET_EASTUS --query id --out tsv)
+
+# Get the id for $VNET_CENTRALUS.
+echo "Getting the id for $VNET_CENTRALUS"
+VNET_CENTRALUS_ID=$(az network vnet show --resource-group $RG_CENTRALUS --name $VNET_CENTRALUS --query id --out tsv)
+
+# Peer $VNET_EASTUS to $VNET_CENTRALUS.
+echo "Peering $VNET_EASTUS to $VNET_CENTRALUS"
+az network vnet peering create --name "Link"-$VNET_EASTUS-"To"-$VNET_CENTRALUS  \
+  --resource-group $RG_EASTUS  \
+  --vnet-name $VNET_EASTUS  \
+  --remote-vnet $VNET_CENTRALUS_ID  \                         
+  --allow-vnet-access  \
+  --allow-forwarded-traffic=True  \
+  --allow-gateway-transit=True
+
+# Peer$VNET_CENTRALUS to $VNET_EASTUS.
+echo "Peering $VNET_CENTRALUS to $vNet1"
+az network vnet peering create --name "Link"-$VNET_CENTRALUS-"To"-$VNET_EASTUS  \
+  --resource-group $RG_CENTRALUS  \
+  --vnet-name $VNET_CENTRALUS  \
+  --remote-vnet $VNET_EASTUS_ID  \
+  --allow-vnet-access  \
+  --allow-forwarded-traffic=True  \
+  --allow-gateway-transit=True
+```
+
+### Connect to Secondary cluster
+
+Since this cluster will reside in a different virtual network, we should create another jump host.
+
+1. Create the jump subnet
+
+```
+az network vnet subnet create  \
+  --resource-group $CENTRAL_RESOURCE_GROUP  \
+  --vnet-name "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"  \
+  --name JumpSubnet  \
+  --address-prefixes $SECONDARY_JUMPHOST_SUBNET                  
+```
+
+2. Create a jump host
+
+```
+ az vm create --name jumphost  \
+    --resource-group $CENTRAL_RESOURCE_GROUP  \
+    --ssh-key-values $HOME/.ssh/id_rsa.pub  \
+    --admin-username aro  \
+    --image "RedHat:RHEL:9_1:9.1.2022112113"  \
+    --subnet JumpSubnet  \
+    --public-ip-address jumphost-ip  \
+    --public-ip-sku Standard  \
+    --vnet-name "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"
+```
+
+3. Save the jump host public IP address
+
+> Run this command in a second terminal
+
+```
+CENTRAL_JUMP_IP=$(az vm list-ip-addresses -g $CENTRAL_RESOURCE_GROUP -n jumphost -o tsv  \
+--query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
+
+echo $CENTRAL_JUMP_IP
+```
+
+4. Use sshuttle to create a SSH VPN via the jump host
+
+> Run this command in a second terminal
+
+Replace the IP with the IP of the jump box from the previous step
+
+```
+sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK
+```
+
+5. Get OpenShift API routes
+
+```
+SECONDARY_APISERVER=$(az aro show  \
+--name $SECONDARY_CLUSTER  \
+--resource-group $CENTRAL_RESOURCE_GROUP  \
+-o tsv --query apiserverProfile.url)
+```
+
+6. Get OpenShift credentials
+
+```
+SECONDARY_ADMINPW=$(az aro list-credentials  \
+--name $SECONDARY_CLUSTER  \
+--resource-group $CENTRAL_RESOURCE_GROUP  \
+--query kubeadminPassword  \
+-o tsv)
+```
+
+7. Log into Secondary and configure context
+
+```
+oc login $SECONDARY_APISERVER --username kubeadmin --password ${SECONDARY_ADMINPW}
+oc config rename-context $(oc config current-context) secondary
+oc config use secondary
+```
+
+You can switch to the secondary cluster with `oc config`
+
+## Setup Hub Cluster
+
+* Ensure you are in the right context
+
+```
+oc config use hub
+```
+
+### Configure ACM
 
 1. Create ACM namespace
 
@@ -310,7 +585,7 @@ oc wait --for=jsonpath='{.status.phase}'='Running' multiclusterhub multiclusterh
   --timeout=600s
 ```
 
-### Setting up the Hub Cluster with the ODF Multicluster Orchestrator
+### Configure ODF Multicluster Orchestrator
 
 1. Install the ODF Multicluster Orchestrator version 4.12
 
@@ -339,125 +614,24 @@ oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n openshift-operators 
   -l operators.coreos.com/odf-multicluster-orchestrator.openshift-operators=''
 ```
 
-# Deploying the ARO Primary Cluster 
-
-### Environment Variables
-
-1. Set the following environment variables
-
-```
-export AZR_RESOURCE_LOCATION=eastus
-export AZR_RESOURCE_GROUP=rg-eastus
-export AZR_CLUSTER=primary-cluster
-export AZR_PULL_SECRET=~/Downloads/pull-secret.txt
-export VIRTUAL_NETWORK=10.0.0.0/20
-export CONTROL_SUBNET=10.0.2.0/24
-export WORKER_SUBNET=10.0.3.0/24
-export JUMPHOST_SUBNET=10.0.10.0/24
-export POD_CIDR=10.128.0.0/18
-export SERVICE_CIDR=172.30.0.0/18
-```
-
-### Networking
-
-Create two empty subnets on the existing virtual network
-
-1. Create control plane subnet
-
-```
-  az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
-  --address-prefixes $CONTROL_SUBNET 
-  ```
-
-2. Create worker subnet
-
-```
-  az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --name "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
-  --address-prefixes $WORKER_SUBNET   
-  ```
-
-### Jump Host
-
-Since this Primary Cluster will use the same virtual network from the HUB Cluster, we will use the same jump host and there is no reason to create a new one.
-
-1. Use sshuttle to create a SSH VPN via the jump host (use a separate terminal session)
-
-{{% alert state="info" %}}Replace the IP with the IP of the jump box from the previous step{{% /alert %}} 
-
-```
-sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
-```
-
-### Create the Cluster
-
-{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the secondary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid using the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
-
-This will take between 30 and 45 minutes
-
-```
-    az aro create  \
-    --resource-group $AZR_RESOURCE_GROUP  \
-    --name $AZR_CLUSTER  \
-    --vnet "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
-    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
-    --version 4.12.25  \
-    --apiserver-visibility Private  \
-    --ingress-visibility Private  \
-    --pull-secret @$AZR_PULL_SECRET  \
-    --pod-cidr $POD_CIDR  \
-    --service-cidr $SERVICE_CIDR
-
-```
-
-1. To connect, get OpenShift console URL
-
-```
-APISERVER=$(az aro show  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
--o tsv --query apiserverProfile.url)
-echo $APISERVER
-```
-
-2. Get OpenShift credentials
-
-```
-ADMINPW=$(az aro list-credentials  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
---query kubeadminPassword  \
--o tsv)
-```
-
-3. Log into OpenShift
-
-```
-oc login $APISERVER --username kubeadmin --password ${ADMINPW}
-oc config rename-context $(oc config current-context) primary
-oc config use primary
-```
-
-### Importing the Primary Cluster into the Advanced Cluster Management
+### Import Clusters into ACM
 
 1. Create a Managed Cluster Set
 
 ```
+oc config use hub
+
+export MANAGED_CLUSTER_SET_NAME=aro-clusters
+
 cat << EOF | oc apply -f -
 apiVersion: cluster.open-cluster-management.io/v1
 kind: ManagedClusterSet
 metadata:
-  name: aro-clusters
+  name: $MANAGED_CLUSTER_SET_NAME
 EOF
 ```
 
-1. Retrieve token and server from primary cluster
+2. Retrive token and server from primary cluster
 
 ```
 oc config use primary
@@ -466,17 +640,27 @@ PRIMARY_API=$(oc whoami --show-server)
 PRIMARY_TOKEN=$(oc whoami -t)
 ```
 
+2. Retrieve token and server from secondary cluster
 
-2. Import the Primary Cluster
+```
+oc config use secondary
+
+SECONDARY_API=$(oc whoami --show-server)
+SECONDARY_TOKEN=$(oc whoami -t)
+```
+
+#### Import Primary Cluster
+
+1. Create Managed Cluster
 
 ```
 cat << EOF | oc apply -f - 
 apiVersion: cluster.open-cluster-management.io/v1
 kind: ManagedCluster
 metadata:
-  name: primary-cluster
+  name: $PRIMARY_CLUSTER
   labels:
-    cluster.open-cluster-management.io/clusterset: aro-clusters
+    cluster.open-cluster-management.io/clusterset: $MANAGED_CLUSTER_SET_NAME
     cloud: auto-detect
     vendor: auto-detect
 spec:
@@ -492,7 +676,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: auto-import-secret
-  namespace: primary-cluster
+  namespace: $PRIMARY_CLUSTER
 stringData:
   autoImportRetry: "2"
   token: "${PRIMARY_TOKEN}"
@@ -516,7 +700,7 @@ spec:
   clusterLabels:
     cloud: auto-detect
     vendor: auto-detect
-    cluster.open-cluster-management.io/clusterset: aro-clusters
+    cluster.open-cluster-management.io/clusterset: $MANAGED_CLUSTER_SET_NAME
   applicationManager:
     enabled: true
   policyController:
@@ -536,14 +720,81 @@ EOF
 oc get managedclusters
 ```
 
-### Configure Submariner between Primary and Secondary Clusters
+#### Import Secondary Cluster
+
+1. Create Managed Cluster
+
+```
+cat << EOF | oc apply -f - 
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedCluster
+metadata:
+  name: $SECONDARY_CLUSTER
+  labels:
+    cluster.open-cluster-management.io/clusterset: $MANAGED_CLUSTER_SET_NAME
+    cloud: auto-detect
+    vendor: auto-detect
+spec:
+  hubAcceptsClient: true
+EOF 
+``` 
+
+3. Create `auto-import-secret.yaml` secret
+
+```
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auto-import-secret
+  namespace: $SECONDARY_CLUSTER
+stringData:
+  autoImportRetry: "2"
+  token: "${SECONDARY_TOKEN}"
+  server: "${SECONDARY_API}"
+type: Opaque
+EOF
+```
+
+4. Create add config for Submariner
+
+```
+cat << EOF | oc apply -f -
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: $SECONDARY_CLUSTER
+  namespace: $SECONDARY_CLUSTER
+spec:
+  clusterName: $SECONDARY_CLUSTER
+  clusterNamespace: $SECONDARY_CLUSTER
+  clusterLabels:
+    cloud: auto-detect
+    vendor: auto-detect
+    cluster.open-cluster-management.io/clusterset: $MANAGED_CLUSTER_SET_NAME
+  applicationManager:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  iamPolicyController:
+    enabled: true
+EOF
+```
+
+5. Check if cluster imported
+
+```
+oc get managedclusters
+```
+
+### Configure Submariner Add-On
 
 
 1. Create `Broker` configuration
-
-```
-MANAGED_CLUSTER_SET_NAME=aro-clusters
-```
 
 ```
 cat << EOF | oc apply -f -
@@ -598,286 +849,19 @@ oc -n $PRIMARY_CLUSTER get managedclusteraddons submariner -o yaml
 oc -n $SECONDARY_CLUSTER get managedclusteraddons submariner -o yaml
 ```
 
-### Setting up the Primary Cluster with the ODF
+## Install ODF
 
-1. In this document, there are all steps required to deploy the ODF into the Primary Cluster:
-[https://cloud.redhat.com/experts/aro/odf/](https://cloud.redhat.com/experts/aro/odf/) 
+{{% alert state="info" %}}Please note that when you subscribe to the ocs-operator and to odf-operator, you should change the channel from channel: stable-4.**11** to channel:stable-4.**12** since we are using the version 4.12 in this example.{{% /alert %}}
 
-{{% alert state="info" %}}Please note that when you subscribe to the ocs-operator and to odf-operator, you should change the channel from channel: stable-4.**11** to channel:stable-4.**12** since we are using the version 4.12 in this example.{{% /alert %}} 
+### Primary Cluster
 
-# Deploying the Secondary Cluster 
+1. Follow these steps to deploy ODF into the Primary Cluster:
+[https://cloud.redhat.com/experts/aro/odf/](https://cloud.redhat.com/experts/aro/odf/)
 
-### Environment variables
+### Secondary Cluster
 
-1. Set the following environment variables
-
-```
-export AZR_RESOURCE_LOCATION=centralus
-export AZR_RESOURCE_GROUP=rg-centralus
-export AZR_CLUSTER=secondary-cluster
-export AZR_PULL_SECRET=~/Downloads/pull-secret.txt
-export VIRTUAL_NETWORK=192.168.0.0/20
-export CONTROL_SUBNET=192.168.0.0/24
-export WORKER_SUBNET=192.168.1.0/24
-export JUMPHOST_SUBNET=192.168.10.0/24
-export POD_CIDR=10.130.0.0/18
-export SERVICE_CIDR=172.30.128.0/18
-```
-
-2. Create an Azure resource group
-
-```
-az group create  \
-  --name $AZR_RESOURCE_GROUP  \
-  --location $AZR_RESOURCE_LOCATION
-```
-
-### Networking
-
-Create a virtual network with two empty subnets
-
-1. Create virtual network
-
-```
-az network vnet create  \
-  --address-prefixes $VIRTUAL_NETWORK  \
-  --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --resource-group $AZR_RESOURCE_GROUP
- ```
-
- 2. Create control plane subnet
-
-```
-  az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
-  --address-prefixes $CONTROL_SUBNET 
-```
-
-3. Create worker subnet
-
-```
-az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --name "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
-  --address-prefixes $WORKER_SUBNET   
-```
-
-4. Create a peering between both VNETs (Hub Cluster in EastUS and Secondary Cluster in Central US)
-
-```
-export RG_EASTUS=rg-eastus
-export RG_CENTRALUS=rg-centralus
-export VNET_EASTUS=hub-cluster-aro-vnet-eastus
-export VNET_CENTRALUS=secondary-cluster-aro-vnet-centralus
-
-# Get the id for $VNET_EASTUS.
-echo "Getting the id for $VNET_EASTUS"
-VNET_EASTUS_ID=$(az network vnet show --resource-group $RG_EASTUS --name $VNET_EASTUS --query id --out tsv)
-
-# Get the id for $VNET_CENTRALUS.
-echo "Getting the id for $VNET_CENTRALUS"
-VNET_CENTRALUS_ID=$(az network vnet show --resource-group $RG_CENTRALUS --name $VNET_CENTRALUS --query id --out tsv)
-
-# Peer $VNET_EASTUS to $VNET_CENTRALUS.
-echo "Peering $VNET_EASTUS to $VNET_CENTRALUS"
-az network vnet peering create --name "Link"-$VNET_EASTUS-"To"-$VNET_CENTRALUS  \
-  --resource-group $RG_EASTUS  \
-  --vnet-name $VNET_EASTUS  \
-  --remote-vnet $VNET_CENTRALUS_ID  \                         
-  --allow-vnet-access  \
-  --allow-forwarded-traffic=True  \
-  --allow-gateway-transit=True
-
-# Peer$VNET_CENTRALUS to $VNET_EASTUS.
-echo "Peering $VNET_CENTRALUS to $vNet1"
-az network vnet peering create --name "Link"-$VNET_CENTRALUS-"To"-$VNET_EASTUS  \
-  --resource-group $RG_CENTRALUS  \
-  --vnet-name $VNET_CENTRALUS  \
-  --remote-vnet $VNET_EASTUS_ID  \
-  --allow-vnet-access  \
-  --allow-forwarded-traffic=True  \
-  --allow-gateway-transit=True
-```
-
-### Jump Host
-
-Since this cluster will reside in a different virtual network, we should create another jump host.
-
-1. Create the jump subnet
-
-```
-az network vnet subnet create  \
-  --resource-group $AZR_RESOURCE_GROUP  \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-  --name JumpSubnet  \
-  --address-prefixes $JUMPHOST_SUBNET                  
-```
-
-2. Create a jump host
-
-```
- az vm create --name jumphost  \
-    --resource-group $AZR_RESOURCE_GROUP  \
-    --ssh-key-values $HOME/.ssh/id_rsa.pub  \
-    --admin-username aro  \
-    --image "RedHat:RHEL:9_1:9.1.2022112113"  \
-    --subnet JumpSubnet  \
-    --public-ip-address jumphost-ip  \
-    --public-ip-sku Standard  \
-    --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
-```
-
-3. Save the jump host public IP address
-
-```
-JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv  \
---query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
-
-echo $JUMP_IP
-```
-
-4. Use sshuttle to create a SSH VPN via the jump host (use a separate terminal session)
-
-Replace the IP with the IP of the jump box from the previous step
-
-```
-sshuttle --dns -NHr "aro@${JUMP_IP}"  192.168.0.0/8
-```
-
-### Create the Cluster
-
-{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the primary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid using the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
-
-
-This will take between 30 and 45 minutes
-
-```
- az aro create  \
-    --resource-group $AZR_RESOURCE_GROUP  \
-    --name $AZR_CLUSTER  \
-    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
-    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
-    --version 4.12.25  \
-    --apiserver-visibility Private  \
-    --ingress-visibility Private  \
-    --pull-secret @$AZR_PULL_SECRET  \
-    --pod-cidr $POD_CIDR  \
-    --service-cidr $SERVICE_CIDR
-```
-
-1. To connect on the cluster, get OpenShift console URL
-
-```
-APISERVER=$(az aro show  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
--o tsv --query apiserverProfile.url)
-echo $APISERVER
-```
-
-2. Get OpenShift credentials
-
-```
-ADMINPW=$(az aro list-credentials  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
---query kubeadminPassword  \
--o tsv)
-```
-
-3. Log into OpenShift
-
-```
-oc login $APISERVER --username kubeadmin --password ${ADMINPW}
-oc config rename-context $(oc config current-context) secondary
-oc config use secondary
-```
-
-### Importing the Secondary Cluster into the Advanced Cluster Management
-
-
-1. Retrieve token and server for secondary cluster
-
-```
-oc config use secondary
-
-SECONDARY_API=$(oc whoami --show-server)
-SECONDARY_TOKEN=$(oc whoami -t)
-```
-
-
-2. Import the secondary cluster
-
-```
-cat << EOF | oc apply -f - 
-apiVersion: cluster.open-cluster-management.io/v1
-kind: ManagedCluster
-metadata:
-  name: secondary-cluster
-  labels:
-    cluster.open-cluster-management.io/clusterset: aro-clusters
-    cloud: auto-detect
-    vendor: auto-detect
-spec:
-  hubAcceptsClient: true
-EOF 
-``` 
-
-3. Create `auto-import-secret.yaml` secret
-
-```
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: auto-import-secret
-  namespace: primary-cluster
-stringData:
-  autoImportRetry: "2"
-  token: "${SECONDARY_TOKEN}"
-  server: "${SECONDARY_API}"
-type: Opaque
-EOF
-```
-
-4. Configure add-on components
-
-```sh
-cat << EOF | oc apply -f -
-apiVersion: agent.open-cluster-management.io/v1
-kind: KlusterletAddonConfig
-metadata:
-  name: $SECONDARY_CLUSTER
-  namespace: $SECONDARY_CLUSTER
-spec:
-  clusterName: $SECONDARY_CLUSTER
-  clusterNamespace: $SECONDARY_CLUSTER
-  clusterLabels:
-    cloud: auto-detect
-    vendor: auto-detect
-    cluster.open-cluster-management.io/clusterset: aro-clusters
-  applicationManager:
-    enabled: true
-  policyController:
-    enabled: true
-  searchCollector:
-    enabled: true
-  certPolicyController:
-    enabled: true
-  iamPolicyController:
-    enabled: true
-EOF
-```
-
-5. Check if cluster imported
-
-```
-oc get managedclusters
-```
+1. Follow these steps to deploy ODF into the Secondary Cluster:
+[https://cloud.redhat.com/experts/aro/odf/](https://cloud.redhat.com/experts/aro/odf/)
 
 # Finishing the setup of the disaster recovery solution
 
