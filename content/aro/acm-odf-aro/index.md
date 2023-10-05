@@ -96,8 +96,8 @@ export JUMPHOST_SUBNET=10.0.10.0/24
 2. Create an Azure resource group
 
 ```
-az group create                		\
-  --name $AZR_RESOURCE_GROUP   	        \
+az group create  \
+  --name $AZR_RESOURCE_GROUP  \
   --location $AZR_RESOURCE_LOCATION
 ```
 
@@ -105,8 +105,8 @@ az group create                		\
 
 ```
 AZ_SUB_ID=$(az account show --query id -o tsv)
-AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor \
-  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}" 	\
+AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor  \
+  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}"  \
   --query "password" -o tsv)
 AZ_SP_ID=$(az ad sp list --display-name "${AZR_CLUSTER}-SP" --query "[0].appId" -o tsv)
 ```
@@ -119,28 +119,28 @@ Create a virtual network with two empty subnets
 1. Create virtual network
 
 ```
-az network vnet create                                    	\
-  --address-prefixes $VIRTUAL_NETWORK                    	\
-  --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"   	\
+az network vnet create  \
+  --address-prefixes $VIRTUAL_NETWORK  \
+  --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
   --resource-group $AZR_RESOURCE_GROUP
 ```
 
 2. Create control plane subnet
 
 ```
-az network vnet subnet create                                  \
-  --resource-group $AZR_RESOURCE_GROUP                            	\
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"      	\
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" 	\
+az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
   --address-prefixes $CONTROL_SUBNET 
 ```
 
 3. Create worker subnet
 
 ```
-az network vnet subnet create                                \
-  --resource-group $AZR_RESOURCE_GROUP                            \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"      \
+az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
   --name "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
   --address-prefixes $WORKER_SUBNET   
 ```
@@ -152,31 +152,31 @@ With the cluster in a private network, we can create a jump host in order to con
 1. Create the jump subnet
 
 ```
-az network vnet subnet create                                \
-  --resource-group $AZR_RESOURCE_GROUP                       	\
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" 	\
-  --name JumpSubnet                                          	\
+az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+  --name JumpSubnet  \
   --address-prefixes $JUMPHOST_SUBNET    
 ```
 
 2. Create a jump host
 
 ```
-az vm create --name jumphost                 		\
-    --resource-group $AZR_RESOURCE_GROUP     	        \
-    --ssh-key-values $HOME/.ssh/id_rsa.pub   	        \
-    --admin-username aro                     			\
-    --image "RedHat:RHEL:9_1:9.1.2022112113" 		    \
-    --subnet JumpSubnet                      			\
-    --public-ip-address jumphost-ip          		    \
-    --public-ip-sku Standard                 			\
+az vm create --name jumphost  \
+    --resource-group $AZR_RESOURCE_GROUP  \
+    --ssh-key-values $HOME/.ssh/id_rsa.pub  \
+    --admin-username aro  \
+    --image "RedHat:RHEL:9_1:9.1.2022112113"  \
+    --subnet JumpSubnet  \
+    --public-ip-address jumphost-ip  \
+    --public-ip-sku Standard  \
     --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
 ```
 
 3. Save the jump host public IP address
 
 ```
-JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv \
+JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv  \
 --query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
 
 echo $JUMP_IP
@@ -195,26 +195,26 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
 This will take between 30 and 45 minutes
 
 ```
-az aro create                                                            	\
-    --resource-group $AZR_RESOURCE_GROUP                                     	\
-    --name $AZR_CLUSTER                                                     	\
-    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"                       \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" 	\
-    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION" 	\
-    --version 4.12.25                                                           \
-    --apiserver-visibility Private                                           	\
-    --ingress-visibility Private                                             	\
-    --pull-secret @$AZR_PULL_SECRET                                          	\
-    --client-id "${AZ_SP_ID}"                                               	\
+az aro create  \
+    --resource-group $AZR_RESOURCE_GROUP  \
+    --name $AZR_CLUSTER  \
+    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
+    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
+    --version 4.12.25  \
+    --apiserver-visibility Private  \
+    --ingress-visibility Private  \
+    --pull-secret @$AZR_PULL_SECRET  \
+    --client-id "${AZ_SP_ID}"  \
     --client-secret "${AZ_SP_PASS}"
 ```
 
 1. To connect, get OpenShift console URL
 
 ```
-APISERVER=$(az aro show              	\
---name $AZR_CLUSTER                  	\
---resource-group $AZR_RESOURCE_GROUP 	\
+APISERVER=$(az aro show  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
 -o tsv --query apiserverProfile.url)
 echo $APISERVER
 ```
@@ -222,10 +222,10 @@ echo $APISERVER
 2. Get OpenShift credentials
 
 ```
-ADMINPW=$(az aro list-credentials    	\
---name $AZR_CLUSTER                  	\
---resource-group $AZR_RESOURCE_GROUP 	\
---query kubeadminPassword            	\
+ADMINPW=$(az aro list-credentials  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
+--query kubeadminPassword  \
 -o tsv)
 ```
 
@@ -326,8 +326,8 @@ export SERVICE_CIDR=172.30.0.0/18
 
 ```
 AZ_SUB_ID=$(az account show --query id -o tsv)
-AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor \
-  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}" 	\
+AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor  \
+  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}"  \
   --query "password" -o tsv)
 AZ_SP_ID=$(az ad sp list --display-name "${AZR_CLUSTER}-SP" --query "[0].appId" -o tsv)
 ```
@@ -339,19 +339,19 @@ Create two empty subnets on the existing virtual network
 1. Create control plane subnet
 
 ```
-  az network vnet subnet create                                   \
-  --resource-group $AZR_RESOURCE_GROUP                            \
-  --vnet-name "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"      	\
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+  az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
   --address-prefixes $CONTROL_SUBNET 
   ```
 
 2. Create worker subnet
 
 ```
-  az network vnet subnet create                                   \
-  --resource-group $AZR_RESOURCE_GROUP                            \
-  --vnet-name "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"       \
+  az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"  \
   --name "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
   --address-prefixes $WORKER_SUBNET   
   ```
@@ -375,19 +375,19 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
 This will take between 30 and 45 minutes
 
 ```
-    az aro create                                                            	\
-    --resource-group $AZR_RESOURCE_GROUP                                     	\
-    --name $AZR_CLUSTER                                                     	\
-    --vnet "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"                      \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" 	\
-    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION" 	\
-    --version 4.12.25                                                         \
-    --apiserver-visibility Private                                           	\
-    --ingress-visibility Private                                             	\
-    --pull-secret @$AZR_PULL_SECRET                                          	\
-    --client-id "${AZ_SP_ID}"                                               	\
-    --client-secret "${AZ_SP_PASS}"                               						\
-    --pod-cidr $POD_CIDR							                                        \
+    az aro create  \
+    --resource-group $AZR_RESOURCE_GROUP  \
+    --name $AZR_CLUSTER  \
+    --vnet "hub-cluster-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
+    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
+    --version 4.12.25  \
+    --apiserver-visibility Private  \
+    --ingress-visibility Private  \
+    --pull-secret @$AZR_PULL_SECRET  \
+    --client-id "${AZ_SP_ID}"  \
+    --client-secret "${AZ_SP_PASS}"  \
+    --pod-cidr $POD_CIDR  \
     --service-cidr $SERVICE_CIDR
 
 ```
@@ -395,9 +395,9 @@ This will take between 30 and 45 minutes
 1. To connect, get OpenShift console URL
 
 ```
-APISERVER=$(az aro show              			\
---name $AZR_CLUSTER                  			\
---resource-group $AZR_RESOURCE_GROUP 	    \
+APISERVER=$(az aro show  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
 -o tsv --query apiserverProfile.url)
 echo $APISERVER
 ```
@@ -405,10 +405,10 @@ echo $APISERVER
 2. Get OpenShift credentials
 
 ```
-ADMINPW=$(az aro list-credentials    		\
---name $AZR_CLUSTER                  			\
---resource-group $AZR_RESOURCE_GROUP 	\
---query kubeadminPassword            			\
+ADMINPW=$(az aro list-credentials  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
+--query kubeadminPassword  \
 -o tsv)
 ```
 
@@ -449,9 +449,9 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 8. Get OpenShift console URL
 
 ```
-APISERVER=$(az aro show              	\
---name $AZR_CLUSTER                  	\
---resource-group $AZR_RESOURCE_GROUP 	\
+APISERVER=$(az aro show  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
 -o tsv --query apiserverProfile.url)
 echo $APISERVER
 ```
@@ -459,10 +459,10 @@ echo $APISERVER
 9. Get OpenShift credentials
 
 ```
-ADMINPW=$(az aro list-credentials    	\
---name $AZR_CLUSTER                  	\
---resource-group $AZR_RESOURCE_GROUP 	\
---query kubeadminPassword            	\
+ADMINPW=$(az aro list-credentials  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
+--query kubeadminPassword  \
 -o tsv)
 ```
 
@@ -570,8 +570,8 @@ export SERVICE_CIDR=172.30.128.0/18
 2. Create an Azure resource group
 
 ```
-az group create                	\
-  --name $AZR_RESOURCE_GROUP   	    \
+az group create  \
+  --name $AZR_RESOURCE_GROUP  \
   --location $AZR_RESOURCE_LOCATION
 ```
 
@@ -579,8 +579,8 @@ az group create                	\
 
 ```
 AZ_SUB_ID=$(az account show --query id -o tsv)
-AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor \
-  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}" 	\
+AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor  \
+  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}"  \
   --query "password" -o tsv)
 AZ_SP_ID=$(az ad sp list --display-name "${AZR_CLUSTER}-SP" --query "[0].appId" -o tsv)
 ```
@@ -592,28 +592,28 @@ Create a virtual network with two empty subnets
 1. Create virtual network
 
 ```
-az network vnet create                                    	\
-  --address-prefixes $VIRTUAL_NETWORK                      	\
-  --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"   	\
+az network vnet create  \
+  --address-prefixes $VIRTUAL_NETWORK  \
+  --name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
   --resource-group $AZR_RESOURCE_GROUP
  ```
 
  2. Create control plane subnet
 
 ```
-  az network vnet subnet create                                   	\
-  --resource-group $AZR_RESOURCE_GROUP                            	\
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"      	\
-  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" 	\
+  az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+  --name "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
   --address-prefixes $CONTROL_SUBNET 
 ```
 
 3. Create worker subnet
 
 ```
-az network vnet subnet create                                     \
-  --resource-group $AZR_RESOURCE_GROUP                            \
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"      \
+az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
   --name "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
   --address-prefixes $WORKER_SUBNET   
 ```
@@ -637,21 +637,21 @@ VNET_CENTRALUS_ID=$(az network vnet show --resource-group $RG_CENTRALUS --name $
 # Peer $VNET_EASTUS to $VNET_CENTRALUS.
 echo "Peering $VNET_EASTUS to $VNET_CENTRALUS"
 az network vnet peering create --name "Link"-$VNET_EASTUS-"To"-$VNET_CENTRALUS  \
-  --resource-group $RG_EASTUS                                                   \
-  --vnet-name $VNET_EASTUS                                                      \
-  --remote-vnet $VNET_CENTRALUS_ID                                              \                         
-  --allow-vnet-access                                                           \
-  --allow-forwarded-traffic=True                                                \
+  --resource-group $RG_EASTUS  \
+  --vnet-name $VNET_EASTUS  \
+  --remote-vnet $VNET_CENTRALUS_ID  \                         
+  --allow-vnet-access  \
+  --allow-forwarded-traffic=True  \
   --allow-gateway-transit=True
 
 # Peer$VNET_CENTRALUS to $VNET_EASTUS.
 echo "Peering $VNET_CENTRALUS to $vNet1"
 az network vnet peering create --name "Link"-$VNET_CENTRALUS-"To"-$VNET_EASTUS  \
-  --resource-group $RG_CENTRALUS                                                 \
-  --vnet-name $VNET_CENTRALUS                                                    \
-  --remote-vnet $VNET_EASTUS_ID                                                  \
-  --allow-vnet-access                                                            \
-  --allow-forwarded-traffic=True                                                 \
+  --resource-group $RG_CENTRALUS  \
+  --vnet-name $VNET_CENTRALUS  \
+  --remote-vnet $VNET_EASTUS_ID  \
+  --allow-vnet-access  \
+  --allow-forwarded-traffic=True  \
   --allow-gateway-transit=True
 ```
 
@@ -662,31 +662,31 @@ Since this cluster will reside in a different virtual network, we should create 
 1. Create the jump subnet
 
 ```
-az network vnet subnet create                                	\
-  --resource-group $AZR_RESOURCE_GROUP                       	\
-  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" 	\
-  --name JumpSubnet                                          	\
+az network vnet subnet create  \
+  --resource-group $AZR_RESOURCE_GROUP  \
+  --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+  --name JumpSubnet  \
   --address-prefixes $JUMPHOST_SUBNET                  
 ```
 
 2. Create a jump host
 
 ```
- az vm create --name jumphost                \
-    --resource-group $AZR_RESOURCE_GROUP     \
-    --ssh-key-values $HOME/.ssh/id_rsa.pub   \
-    --admin-username aro                     \
-    --image "RedHat:RHEL:9_1:9.1.2022112113" \
-    --subnet JumpSubnet                      \
-    --public-ip-address jumphost-ip          \
-    --public-ip-sku Standard                 \
+ az vm create --name jumphost  \
+    --resource-group $AZR_RESOURCE_GROUP  \
+    --ssh-key-values $HOME/.ssh/id_rsa.pub  \
+    --admin-username aro  \
+    --image "RedHat:RHEL:9_1:9.1.2022112113"  \
+    --subnet JumpSubnet  \
+    --public-ip-address jumphost-ip  \
+    --public-ip-sku Standard  \
     --vnet-name "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"
 ```
 
 3. Save the jump host public IP address
 
 ```
-JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv \
+JUMP_IP=$(az vm list-ip-addresses -g $AZR_RESOURCE_GROUP -n jumphost -o tsv  \
 --query '[].virtualMachine.network.publicIpAddresses[0].ipAddress')
 
 echo $JUMP_IP
@@ -708,28 +708,28 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  192.168.0.0/8
 This will take between 30 and 45 minutes
 
 ```
- az aro create                                                            		\
-    --resource-group $AZR_RESOURCE_GROUP                                     	\
-    --name $AZR_CLUSTER                                                     	\
-    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"                     \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" 	\
-    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION" 	\
-    --version 4.12.25                                                         \
-    --apiserver-visibility Private                                           	\
-    --ingress-visibility Private                                             	\
-    --pull-secret @$AZR_PULL_SECRET                                          	\
-    --client-id "${AZ_SP_ID}"                                               	\
-    --client-secret "${AZ_SP_PASS}"						                                \
-    --pod-cidr $POD_CIDR								                                      \
+ az aro create  \
+    --resource-group $AZR_RESOURCE_GROUP  \
+    --name $AZR_CLUSTER  \
+    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"  \
+    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION"  \
+    --worker-subnet "$AZR_CLUSTER-aro-worker-subnet-$AZR_RESOURCE_LOCATION"  \
+    --version 4.12.25  \
+    --apiserver-visibility Private  \
+    --ingress-visibility Private  \
+    --pull-secret @$AZR_PULL_SECRET  \
+    --client-id "${AZ_SP_ID}"  \
+    --client-secret "${AZ_SP_PASS}"  \
+    --pod-cidr $POD_CIDR  \
     --service-cidr $SERVICE_CIDR
 ```
 
 1. To connect on the cluster, get OpenShift console URL
 
 ```
-APISERVER=$(az aro show              	\
---name $AZR_CLUSTER                  	\
---resource-group $AZR_RESOURCE_GROUP 	\
+APISERVER=$(az aro show  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
 -o tsv --query apiserverProfile.url)
 echo $APISERVER
 ```
@@ -737,10 +737,10 @@ echo $APISERVER
 2. Get OpenShift credentials
 
 ```
-ADMINPW=$(az aro list-credentials    	\
---name $AZR_CLUSTER                  	\
---resource-group $AZR_RESOURCE_GROUP 	\
---query kubeadminPassword            	\
+ADMINPW=$(az aro list-credentials  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
+--query kubeadminPassword  \
 -o tsv)
 ```
 
@@ -782,9 +782,9 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 8. Get OpenShift console URL
 
 ```
-APISERVER=$(az aro show              	\
---name $AZR_CLUSTER                  	\
---resource-group $AZR_RESOURCE_GROUP 	\
+APISERVER=$(az aro show  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
 -o tsv --query apiserverProfile.url)
 echo $APISERVER
 ```
@@ -792,10 +792,10 @@ echo $APISERVER
 9. Get OpenShift credentials
 
 ```
-ADMINPW=$(az aro list-credentials    	\
---name $AZR_CLUSTER                 	\
---resource-group $AZR_RESOURCE_GROUP 	\
---query kubeadminPassword            	\
+ADMINPW=$(az aro list-credentials  \
+--name $AZR_CLUSTER  \
+--resource-group $AZR_RESOURCE_GROUP  \
+--query kubeadminPassword  \
 -o tsv)
 ```
 
@@ -1072,17 +1072,17 @@ Once you’re done it's a good idea to delete the cluster to ensure that you don
 1. Delete the clusters and resources
 
 ```
-az aro delete -y                \
-  --resource-group rg-eastus    \
+az aro delete -y  \
+  --resource-group rg-eastus  \
   --name hub-cluster
 
-az aro delete -y                \
-  --resource-group rg-eastus    \
+az aro delete -y  \
+  --resource-group rg-eastus  \
   --name primary-cluster
 
 az group delete --name rg-eastus
 
-az aro delete -y                \
+az aro delete -y  \
   --resource-group rg-centralus  \ 
   --name secondary-cluster
 
