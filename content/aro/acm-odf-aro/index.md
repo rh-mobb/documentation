@@ -364,7 +364,7 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
 
 ### Create the Cluster
 
-{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the secondary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters --pod-cidr and --service-cidr to avoid use the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
+{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the secondary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid use the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
 
 This will take between 30 and 45 minutes
 
@@ -698,7 +698,7 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  192.168.0.0/8
 
 ### Create the Cluster
 
-{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the primary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters --pod-cidr and --service-cidr to avoid use the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
+{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the primary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid use the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
 
 
 This will take between 30 and 45 minutes
