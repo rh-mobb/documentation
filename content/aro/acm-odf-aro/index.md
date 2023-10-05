@@ -237,6 +237,7 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 
 ### Setting up the Hub Cluster with the Advanced Cluster Management for Kubernetes 
 
+
 1. Create ACM namespace
 
 ```
@@ -338,6 +339,71 @@ EOF
 oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n openshift-operators \
   -l operators.coreos.com/odf-multicluster-orchestrator.openshift-operators=''
 ```
+
+1. To install using the console, go to Operators > OperatorHub and search by **Advanced Cluster Management for Kubernetes**
+
+![ACM](images/acm.png) 
+
+2. Select the first one, then the following screen will be displayed:
+
+![ACM](images/acm-install.png) 
+
+3. Click to Install button and the following options will appear. Keep the default choices and click to install
+
+![ACM Install](images/acm-install-1.png) 
+
+4. The installation will begin
+
+<img src="images/acm-install-2.png" alt="ACM Install - 2" width="50%" height="auto">
+
+<img src="images/acm-install-3.png" alt="ACM Install - 3" width="50%" height="auto">
+
+5. After the installation is complete you will have to create the MulticlusterHub:
+
+<img src="images/acm-install-4.png" alt="ACM Install - 4" width="50%" height="auto">
+
+6. Click to create and you can keep the default settings:
+
+![Create MultiClusterHub](images/create-multiclusterhub.png) 
+
+7. In a few minutes will be ready and with the status of Running:
+
+![MultiClusterHubs](images/acm-hubs.png)
+
+8. After the installation is done, now you will notice a new option within the menu:
+
+<img src="images/acm-menu.png" alt="ACM Menu" width="25%" height="auto">
+
+10. When local-cluster is selected you will see the dafaut configuration for your local cluster where the ACM was installed.
+
+11. If you click you can change to see details of All Clusters:
+
+<img src="images/acm-menu-1.png" alt="ACM Menu" width="25%" height="auto">
+
+Then see the Overview panel from the Advanced Cluster Management:
+
+![ACM Overview](images/acm-overview.png) 
+
+### Setting up the Hub Cluster with the ODF Multicluster Orchestrator
+
+1. To install using the console, you should go to Operators > OperatorHub and search by **ODF Multicluster Orchestrator**
+
+![ODF Operator Hub](images/odf-operatorhub.png) 
+
+
+![ODF Install](images/odf-install.png) 
+
+3. In the next screen, you can keep the default settings then click to Install
+
+![ODF Install 1](images/odf-install-1.png) 
+
+4. The installation process will start and in a few minutes the installation will be completed:
+
+<img src="images/odf-install-complete.png" alt="ACM Menu" width="50%" height="auto">
+
+5. If you click to View Operator, you can confirm the details of the installation:
+
+![ODF Install Completed](images/odf-install-completed.png)
 
 # Deploying the ARO Primary Cluster 
 
@@ -1012,7 +1078,6 @@ cat <<EOF | oc apply -f -
 
 EOF
 ```
-
 
 1. From the ACM panel, go to Applications > Create application
 
