@@ -231,7 +231,7 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 
 ### Setting up the Hub Cluster with the Advanced Cluster Management for Kubernetes 
 
-1. To install using the console, basically you should go to Operators > OperatorHub and search by **Advanced Cluster Management for Kubernetes**
+1. To install using the console, go to Operators > OperatorHub and search by **Advanced Cluster Management for Kubernetes**
 
 ![ACM](images/acm.png) 
 
@@ -364,7 +364,7 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
 
 ### Create the Cluster
 
-{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the secondary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid use the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
+{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the secondary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid using the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
 
 This will take between 30 and 45 minutes
 
@@ -432,7 +432,7 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 ![ACM Importing Primary 2](images/importing-primary-2.png
 )
 
-5. In this example you don’t need to change nothing. Just click **Next** again and you will be presented to the Review section:
+5. In this example stick the defaults. Just click **Next** again and you will be presented to the Review section:
 
 ![ACM Importing Primary 3](images/importing-primary-3.png
 )
@@ -698,7 +698,7 @@ sshuttle --dns -NHr "aro@${JUMP_IP}"  192.168.0.0/8
 
 ### Create the Cluster
 
-{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the primary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid use the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
+{{% alert state="warning" %}}Note: Pod and Service CIDRs CANNOT overlap with the primary cluster and must be /18 minimum (because we are using Submariner). So we will use the parameters "--pod-cidr" and "--service-cidr" to avoid using the default ranges. Details about POD and Service CIDRs are [available here](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift).{{% /alert %}} 
 
 
 This will take between 30 and 45 minutes
