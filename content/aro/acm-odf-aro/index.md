@@ -352,71 +352,6 @@ oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n openshift-operators 
   -l operators.coreos.com/odf-multicluster-orchestrator.openshift-operators=''
 ```
 
-1. To install using the console, go to Operators > OperatorHub and search by **Advanced Cluster Management for Kubernetes**
-
-![ACM](images/acm.png) 
-
-2. Select the first one, then the following screen will be displayed:
-
-![ACM](images/acm-install.png) 
-
-3. Click to Install button and the following options will appear. Keep the default choices and click to install
-
-![ACM Install](images/acm-install-1.png) 
-
-4. The installation will begin
-
-<img src="images/acm-install-2.png" alt="ACM Install - 2" width="50%" height="auto">
-
-<img src="images/acm-install-3.png" alt="ACM Install - 3" width="50%" height="auto">
-
-5. After the installation is complete you will have to create the MulticlusterHub:
-
-<img src="images/acm-install-4.png" alt="ACM Install - 4" width="50%" height="auto">
-
-6. Click to create and you can keep the default settings:
-
-![Create MultiClusterHub](images/create-multiclusterhub.png) 
-
-7. In a few minutes will be ready and with the status of Running:
-
-![MultiClusterHubs](images/acm-hubs.png)
-
-8. After the installation is done, now you will notice a new option within the menu:
-
-<img src="images/acm-menu.png" alt="ACM Menu" width="25%" height="auto">
-
-10. When local-cluster is selected you will see the dafaut configuration for your local cluster where the ACM was installed.
-
-11. If you click you can change to see details of All Clusters:
-
-<img src="images/acm-menu-1.png" alt="ACM Menu" width="25%" height="auto">
-
-Then see the Overview panel from the Advanced Cluster Management:
-
-![ACM Overview](images/acm-overview.png) 
-
-### Setting up the Hub Cluster with the ODF Multicluster Orchestrator
-
-1. To install using the console, you should go to Operators > OperatorHub and search by **ODF Multicluster Orchestrator**
-
-![ODF Operator Hub](images/odf-operatorhub.png) 
-
-
-![ODF Install](images/odf-install.png) 
-
-3. In the next screen, you can keep the default settings then click to Install
-
-![ODF Install 1](images/odf-install-1.png) 
-
-4. The installation process will start and in a few minutes the installation will be completed:
-
-<img src="images/odf-install-complete.png" alt="ACM Menu" width="50%" height="auto">
-
-5. If you click to View Operator, you can confirm the details of the installation:
-
-![ODF Install Completed](images/odf-install-completed.png)
-
 # Deploying the ARO Primary Cluster 
 
 ### Environment Variables
@@ -537,81 +472,95 @@ oc config use primary
 
 ### Importing the Primary Cluster into the Advanced Cluster Management
 
-1. To import this cluster into the ACM, login into the Hub Cluster Console then using the Advanced Cluster Management Menu, select **All Clusters**:
-
-![ACM All Clusters](images/acm-all-clusters.png)
-
-2. Then go to **Infrastructure** > **Clusters**
-
-![ACM Infrastructure Clusters](images/acm-infrastructure-clusters.png)
-
-3. Now click on **Import cluster** and fill out with the appropriate information regarding the Primary Cluster:
-
-![ACM Importing Primary 1](images/importing-primary-1.png)
-
-4. When you click **Next** you will be presented to the below screen:
-
-![ACM Importing Primary 2](images/importing-primary-2.png)
-
-5. In this example stick the defaults. Just click **Next** again and you will be presented to the Review section:
-
-![ACM Importing Primary 3](images/importing-primary-3.png)
-
-6. Click on **Generate command** and you will be redirected to this screen:
-
-![ACM Generate Command Primary](images/acm-generate-command-primary.png)
-
-7. Click on **Copy command** and paste the command into the Primary Cluster. To do it, follow these steps:
-
-8. Get OpenShift console URL
+1. Create a Managed Cluster Set
 
 ```
-APISERVER=$(az aro show  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
--o tsv --query apiserverProfile.url)
-echo $APISERVER
+cat << EOF | oc apply -f -
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedClusterSet
+metadata:
+  name: aro-clusters
+EOF
 ```
 
-9. Get OpenShift credentials
+1. Retrieve token and server from primary cluster
 
 ```
-ADMINPW=$(az aro list-credentials  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
---query kubeadminPassword  \
--o tsv)
+oc config use primary
+
+PRIMARY_API=$(oc whoami --show-server)
+PRIMARY_TOKEN=$(oc whoami -t)
 ```
 
-10. Log into OpenShift
+
+2. Import the Primary Cluster
 
 ```
-oc login $APISERVER --username kubeadmin --password ${ADMINPW}
+cat << EOF | oc apply -f - 
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedCluster
+metadata:
+  name: primary-cluster
+  labels:
+    cluster.open-cluster-management.io/clusterset: aro-clusters
+    cloud: auto-detect
+    vendor: auto-detect
+spec:
+  hubAcceptsClient: true
+EOF 
+``` 
+
+3. Create `auto-import-secret.yaml` secret
+
+```
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auto-import-secret
+  namespace: primary-cluster
+stringData:
+  autoImportRetry: "2"
+  token: "${PRIMARY_TOKEN}"
+  server: "${PRIMARY_API}"
+type: Opaque
+EOF
 ```
 
-11. Paste the command and the output should be similar to it:
+4. Create add config for Submariner
+
+```sh
+cat << EOF | oc apply -f -
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: $PRIMARY_CLUSTER
+  namespace: $PRIMARY_CLUSTER
+spec:
+  clusterName: $PRIMARY_CLUSTER
+  clusterNamespace: $PRIMARY_CLUSTER
+  clusterLabels:
+    cloud: auto-detect
+    vendor: auto-detect
+    cluster.open-cluster-management.io/clusterset: aro-clusters
+  applicationManager:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  iamPolicyController:
+    enabled: true
+EOF
+```
+
+5. Check if cluster imported
 
 ```
-customresourcedefinition.apiextensions.k8s.io/klusterlets.operator.open-cluster-management.io created
-namespace/open-cluster-management-agent created
-serviceaccount/klusterlet created
-clusterrole.rbac.authorization.k8s.io/klusterlet created
-clusterrole.rbac.authorization.k8s.io/klusterlet-bootstrap-kubeconfig created
-clusterrole.rbac.authorization.k8s.io/open-cluster-management:klusterlet-admin-aggregate-clusterrole created
-clusterrolebinding.rbac.authorization.k8s.io/klusterlet created
-Warning: would violate PodSecurity "restricted:v1.24": allowPrivilegeEscalation != false (container "klusterlet" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "klusterlet" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "klusterlet" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "klusterlet" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
-deployment.apps/klusterlet created
-secret/bootstrap-hub-kubeconfig created
-klusterlet.operator.open-cluster-management.io/klusterlet created
+oc get managedclusters
 ```
-
-12. From the ACM, select **Infrastructure** > **Clusters**. Then under Cluster sets, select the default:
-
-![ACM Select Default Cluster Set](images/acm-select-default-cluster-set.png)
-
-13. Now click on **Cluster list** and you will be able to see both clusters, the hub (named as local-cluster) and the primary-cluster:
-
-![ACM Default Cluster Set](images/acm-default-cluster-set.png)
 
 ### Setting up the Primary Cluster with the Submariner Add-On
 
@@ -871,83 +820,85 @@ oc config use secondary
 
 ### Importing the Secondary Cluster into the Advanced Cluster Management
 
-1. To import this cluster into the ACM, login into the Hub Cluster Console then using the Advanced Cluster Management Menu, select All Clusters:
 
-
-![ACM All Clusters](images/acm-all-clusters.png)
-
-2. Then go to **Infrastructure** > **Clusters**
-
-![ACM Infrastructure Clusters 3 ](images/acm-infrastructure-clusters-3.png)
-
-3. Now click on **Import cluster** and fill out with the appropriate information regarding the Primary Cluster:
-
-![Import a Secondary Cluster ](images/import-secondary.png)
-
-4. When you click **Next** you will be presented to the below screen. 
-
-![Import a Secondary Cluster ](images/import-secondary-2.png)
-
-5. In this example, you don’t need to change anything. Just click **Next** again and you will be presented to the Review section:
-
-![Import a Secondary Cluster ](images/import-secondary-3.png)
-
-6. Click on **Generate command** and you will be redirected to this screen:
-
-![Import a Secondary Cluster ](images/import-secondary-4.png)
-
-7. Click on **Copy command** and paste the command into the Primary Cluster. To do it, follow these steps:
-
-8. Get OpenShift console URL
+1. Retrieve token and server for secondary cluster
 
 ```
-APISERVER=$(az aro show  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
--o tsv --query apiserverProfile.url)
-echo $APISERVER
+oc config use secondary
+
+SECONDARY_API=$(oc whoami --show-server)
+SECONDARY_TOKEN=$(oc whoami -t)
 ```
 
-9. Get OpenShift credentials
+
+2. Import the secondary cluster
 
 ```
-ADMINPW=$(az aro list-credentials  \
---name $AZR_CLUSTER  \
---resource-group $AZR_RESOURCE_GROUP  \
---query kubeadminPassword  \
--o tsv)
+cat << EOF | oc apply -f - 
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedCluster
+metadata:
+  name: secondary-cluster
+  labels:
+    cluster.open-cluster-management.io/clusterset: aro-clusters
+    cloud: auto-detect
+    vendor: auto-detect
+spec:
+  hubAcceptsClient: true
+EOF 
+``` 
+
+3. Create `auto-import-secret.yaml` secret
+
+```
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auto-import-secret
+  namespace: primary-cluster
+stringData:
+  autoImportRetry: "2"
+  token: "${SECONDARY_TOKEN}"
+  server: "${SECONDARY_API}"
+type: Opaque
+EOF
 ```
 
-10. Log into OpenShift
+4. Configure add-on components
+
+```sh
+cat << EOF | oc apply -f -
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: $SECONDARY_CLUSTER
+  namespace: $SECONDARY_CLUSTER
+spec:
+  clusterName: $SECONDARY_CLUSTER
+  clusterNamespace: $SECONDARY_CLUSTER
+  clusterLabels:
+    cloud: auto-detect
+    vendor: auto-detect
+    cluster.open-cluster-management.io/clusterset: aro-clusters
+  applicationManager:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  iamPolicyController:
+    enabled: true
+EOF
+```
+
+5. Check if cluster imported
 
 ```
-oc login $APISERVER --username kubeadmin --password ${ADMINPW}
+oc get managedclusters
 ```
-
-11. Paste the command and the output should be similar to it:
-
-```
-customresourcedefinition.apiextensions.k8s.io/klusterlets.operator.open-cluster-management.io created
-namespace/open-cluster-management-agent created
-serviceaccount/klusterlet created
-clusterrole.rbac.authorization.k8s.io/klusterlet created
-clusterrole.rbac.authorization.k8s.io/klusterlet-bootstrap-kubeconfig created
-clusterrole.rbac.authorization.k8s.io/open-cluster-management:klusterlet-admin-aggregate-clusterrole created
-clusterrolebinding.rbac.authorization.k8s.io/klusterlet created
-Warning: would violate PodSecurity "restricted:v1.24": allowPrivilegeEscalation != false (container "klusterlet" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "klusterlet" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "klusterlet" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "klusterlet" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
-deployment.apps/klusterlet created
-secret/bootstrap-hub-kubeconfig created
-klusterlet.operator.open-cluster-management.io/klusterlet created
-```
-
-12. From the ACM, select **Infrastructure** > **Clusters**. Then under Cluster sets, select the default:
-
-![Import a Secondary Cluster ](images/acm-secondary.png)
-
-
-13. Now click on **Cluster list** and you will be able to see all clusters, the hub (named as local-cluster), the primary-cluster, and the secondary-cluster:
-
-![Import a Secondary Cluster ](images/acm-secondary-2.png)
 
 ### Setting up the Secondary  Cluster with the Submariner Add-On
 
