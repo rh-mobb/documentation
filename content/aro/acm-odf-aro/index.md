@@ -237,70 +237,107 @@ oc login $APISERVER --username kubeadmin --password ${ADMINPW}
 
 ### Setting up the Hub Cluster with the Advanced Cluster Management for Kubernetes 
 
-1. To install using the console, go to Operators > OperatorHub and search by **Advanced Cluster Management for Kubernetes**
+1. Create ACM namespace
 
-![ACM](images/acm.png) 
+```
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: open-cluster-management
+  labels:
+    openshift.io/cluster-monitoring: "true"
+EOF
+```
 
-2. Select the first one, then the following screen will be displayed:
+2. Create ACM Operator Group
 
-![ACM](images/acm-install.png) 
+```
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: open-cluster-management
+  namespace: open-cluster-management
+spec:
+  targetNamespaces:
+    - open-cluster-management
+EOF
+```
 
-3. Click to Install button and the following options will appear. Keep the default choices and click to install
+3. Install ACM version 2.8
 
-![ACM Install](images/acm-install-1.png) 
+```
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: advanced-cluster-management
+  namespace: open-cluster-management
+spec:
+  channel: release-2.8
+  installPlanApproval: Automatic
+  name: advanced-cluster-management
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+```
 
-4. The installation will begin
+4. Check if installation succeeded
 
-<img src="images/acm-install-2.png" alt="ACM Install - 2" width="50%" height="auto">
+```
+oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n open-cluster-management \
+  -l operators.coreos.com/advanced-cluster-management.open-cluster-management=''
+```
 
-<img src="images/acm-install-3.png" alt="ACM Install - 3" width="50%" height="auto">
+5. Install MultiClusterHub instance in the ACM namespace
 
-5. After the installation is complete you will have to create the MulticlusterHub:
+```
+cat << EOF | oc apply -f -
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  namespace: open-cluster-management
+  name: multiclusterhub
+spec: {}
+EOF
+```
 
-<img src="images/acm-install-4.png" alt="ACM Install - 4" width="50%" height="auto">
+6. Check that the `MultiClusterHub` is installed and running properly
 
-6. Click to create and you can keep the default settings:
-
-![Create MultiClusterHub](images/create-multiclusterhub.png) 
-
-7. In a few minutes will be ready and with the status of Running:
-
-![MultiClusterHubs](images/acm-hubs.png)
-
-8. After the installation is done, now you will notice a new option within the menu:
-
-<img src="images/acm-menu.png" alt="ACM Menu" width="25%" height="auto">
-
-10. When local-cluster is selected you will see the dafaut configuration for your local cluster where the ACM was installed.
-
-11. If you click you can change to see details of All Clusters:
-
-<img src="images/acm-menu-1.png" alt="ACM Menu" width="25%" height="auto">
-
-Then see the Overview panel from the Advanced Cluster Management:
-
-![ACM Overview](images/acm-overview.png) 
+```
+oc wait --for=jsonpath='{.status.phase}'='Running' multiclusterhub multiclusterhub -n open-cluster-management \
+  --timeout=600s
+```
 
 ### Setting up the Hub Cluster with the ODF Multicluster Orchestrator
 
-1. To install using the console, you should go to Operators > OperatorHub and search by **ODF Multicluster Orchestrator**
+1. Install the ODF Multicluster Orchestrator version 4.12
 
-![ODF Operator Hub](images/odf-operatorhub.png) 
+```
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    operators.coreos.com/odf-multicluster-orchestrator.openshift-operators: ""
+  name: odf-multicluster-orchestrator
+  namespace: openshift-operators
+spec:
+  channel: stable-4.12
+  installPlanApproval: Automatic
+  name: odf-multicluster-orchestrator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+```
 
+2. Check if installation succeeded
 
-![ODF Install](images/odf-install.png) 
-
-3. In the next screen, you can keep the default settings then click to Install
-
-![ODF Install 1](images/odf-install-1.png) 
-
-4. The installation process will start and in a few minutes the installation will be completed:
-
-<img src="images/odf-install-complete.png" alt="ACM Menu" width="50%" height="auto">
-
-5. If you click to View Operator, you can confirm the details of the installation:
-
-![ODF Install Completed](images/odf-install-completed.png)
+```
+oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n openshift-operators \
+  -l operators.coreos.com/odf-multicluster-orchestrator.openshift-operators=''
+```
 
 # Deploying the ARO Primary Cluster 
 
@@ -966,6 +1003,16 @@ EOF
 ```
 
 ### Creating a sample application
+
+1. Create an application with ACM
+
+```
+cat <<EOF | oc apply -f -
+
+
+EOF
+```
+
 
 1. From the ACM panel, go to Applications > Create application
 
