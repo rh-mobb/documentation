@@ -101,17 +101,6 @@ az group create  \
   --location $AZR_RESOURCE_LOCATION
 ```
 
-3. Create an Azure Service Principal
-
-```
-AZ_SUB_ID=$(az account show --query id -o tsv)
-AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor  \
-  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}"  \
-  --query "password" -o tsv)
-AZ_SP_ID=$(az ad sp list --display-name "${AZR_CLUSTER}-SP" --query "[0].appId" -o tsv)
-```
-
-
 ### Networking
 
 Create a virtual network with two empty subnets
@@ -424,17 +413,6 @@ export POD_CIDR=10.128.0.0/18
 export SERVICE_CIDR=172.30.0.0/18
 ```
 
-2. Create an Azure Service Principal
-
-
-```
-AZ_SUB_ID=$(az account show --query id -o tsv)
-AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor  \
-  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}"  \
-  --query "password" -o tsv)
-AZ_SP_ID=$(az ad sp list --display-name "${AZR_CLUSTER}-SP" --query "[0].appId" -o tsv)
-```
-
 ### Networking
 
 Create two empty subnets on the existing virtual network
@@ -676,16 +654,6 @@ export SERVICE_CIDR=172.30.128.0/18
 az group create  \
   --name $AZR_RESOURCE_GROUP  \
   --location $AZR_RESOURCE_LOCATION
-```
-
-3. Create an Azure Service Principal
-
-```
-AZ_SUB_ID=$(az account show --query id -o tsv)
-AZ_SP_PASS=$(az ad sp create-for-rbac -n "${AZR_CLUSTER}-SP" --role contributor  \
-  --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}"  \
-  --query "password" -o tsv)
-AZ_SP_ID=$(az ad sp list --display-name "${AZR_CLUSTER}-SP" --query "[0].appId" -o tsv)
 ```
 
 ### Networking
