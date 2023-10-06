@@ -823,7 +823,26 @@ spec:
 EOF
 ```
 
-2. Deploy Submariner to Primary cluster
+2. Deploy Submariner config to Primary cluster
+
+```
+cat << EOF | oc apply -f -
+apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
+kind: SubmarinerConfig
+metadata:
+  name: submariner
+  namespace: $PRIMARY_CLUSTER
+spec:
+  IPSecNATTPort: 4500
+  NATTEnable: true
+  cableDriver: libreswan
+  loadBalancerEnable: true
+  gatewayConfig:
+    gateways: 1
+EOF
+```
+
+3. Deploy Submariner to Primary cluster
 
 ```
 cat << EOF | oc apply -f -
@@ -837,7 +856,26 @@ spec:
 EOF
 ```
 
-3. Deploy Submariner to Secondary cluster
+4. Deploy Submariner config to Secondary cluster
+
+```
+cat << EOF | oc apply -f -
+apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
+kind: SubmarinerConfig
+metadata:
+  name: submariner
+  namespace: $SECONDARY_CLUSTER
+spec:
+  IPSecNATTPort: 4500
+  NATTEnable: true
+  cableDriver: libreswan
+  loadBalancerEnable: true
+  gatewayConfig:
+    gateways: 1
+EOF
+```
+
+5. Deploy Submariner to Secondary cluster
 
 ```
 cat << EOF | oc apply -f -
@@ -851,17 +889,36 @@ spec:
 EOF
 ```
 
-4. Check connection status for primary cluster
+6. Check connection status for primary cluster (wait a few minutes)
 
 ```
 oc -n $PRIMARY_CLUSTER get managedclusteraddons submariner -o yaml
 ```
 
-5. Check connection status for secondary cluster
+Look for the connection established status. The status indicates the connection is **not degraded** and healthy.
 
+```
+    message: The connection between clusters "primary-cluster" and "secondary-cluster"
+      is established
+    reason: ConnectionsEstablished
+    status: "False"
+    type: SubmarinerConnectionDegraded
+```
+
+7. Check connection status for secondary cluster
 
 ```
 oc -n $SECONDARY_CLUSTER get managedclusteraddons submariner -o yaml
+```
+
+Look for the connection established status. The status indicates the connection is **not degraded** and healthy.
+
+```
+    message: The connection between clusters "primary-cluster" and "secondary-cluster"
+      is established
+    reason: ConnectionsEstablished
+    status: "False"
+    type: SubmarinerConnectionDegraded
 ```
 
 ## Install ODF
