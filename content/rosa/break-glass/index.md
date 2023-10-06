@@ -1,6 +1,6 @@
 ---
 date: '2023-10-05'
-title: ROSA Break Glass
+title: ROSA Break Glass Troubleshooting
 tags: ["ROSA"]
 authors:
   - Dustin Scott
@@ -8,11 +8,11 @@ authors:
 
 ## Background
 
-> **WARN**: this procedure should only be initiated by a member of the Black Belt team or someone 
-incredibly familiar with ROSA as a whole.  **THIS IS NOT COMMON!!!***
+> **WARNING**: this procedure should only be initiated by a member of the Black Belt team or someone 
+incredibly familiar with ROSA as a whole.  **THIS IS NOT COMMON!!!**
 
-This guide shows how to access ROSA worker nodes in the instance that a break glass scenario is required 
-by the account in which ROSA is deployed.  This procedure should only be performed under unusual circumstances 
+This guide shows how to access ROSA instances in the situation that a break glass scenario is required 
+in the account where ROSA is deployed.  This procedure should only be performed under unusual circumstances 
 like a failed provision in order to collect logs.  This may be necessary if the control plane 
 fails and SRE is unable to connect or do much to assist with troubleshooting.
 
@@ -97,8 +97,13 @@ make configuration changes via `machineconfig` objects:
 [root@ip-10-10-0-216 ~]# 
 ```
 
+> **NOTE**: if SSH login is required, you may have to adjust the settings in 
+`/etc/ssh/sshd…/40-rhcos-defaults.conf` and `sshd_config` to allow password 
+authentication, otherwise you should be able to push logs by whichever means you 
+prefer.
+
 ## Logs
 
 Some helpful log locations:
 
-- `/var/log/containers` - location of the container logs running on the logged in node.
+- `/var/log/pods` - location of the container logs running on the logged in node
