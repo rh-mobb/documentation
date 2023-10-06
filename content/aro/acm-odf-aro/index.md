@@ -391,7 +391,7 @@ az aro create  \
 
 ```
 export RG_EASTUS=$EAST_RESOURCE_GROUP
-export RG_CENTRALUS=$CENTRAL_RESORCE_GROUP
+export RG_CENTRALUS=$CENTRAL_RESOURCE_GROUP
 export VNET_EASTUS=$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION
 export VNET_CENTRALUS=$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION
 
@@ -408,13 +408,13 @@ echo "Peering $VNET_EASTUS to $VNET_CENTRALUS"
 az network vnet peering create --name "Link"-$VNET_EASTUS-"To"-$VNET_CENTRALUS  \
   --resource-group $RG_EASTUS  \
   --vnet-name $VNET_EASTUS  \
-  --remote-vnet $VNET_CENTRALUS_ID  \                         
-  --allow-vnet-access  \
+  --remote-vnet $VNET_CENTRALUS_ID  \
+  --allow-vnet-access=True  \
   --allow-forwarded-traffic=True  \
   --allow-gateway-transit=True
 
 # Peer$VNET_CENTRALUS to $VNET_EASTUS.
-echo "Peering $VNET_CENTRALUS to $vNet1"
+echo "Peering $VNET_CENTRALUS to $VNET_EASTUS"
 az network vnet peering create --name "Link"-$VNET_CENTRALUS-"To"-$VNET_EASTUS  \
   --resource-group $RG_CENTRALUS  \
   --vnet-name $VNET_CENTRALUS  \
@@ -618,16 +618,19 @@ oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n openshift-operators 
 
 1. Create a Managed Cluster Set
 
+Note: Make sure you are running `sshuttle --dns -NHr "aro@${EAST_JUMP_IP}" $HUB_VIRTUAL_NETWORK` in second terminal
+
 ```
 oc config use hub
 
 export MANAGED_CLUSTER_SET_NAME=aro-clusters
 
 cat << EOF | oc apply -f -
-apiVersion: cluster.open-cluster-management.io/v1
+apiVersion: cluster.open-cluster-management.io/v1beta2
 kind: ManagedClusterSet
 metadata:
   name: $MANAGED_CLUSTER_SET_NAME
+
 EOF
 ```
 
@@ -642,6 +645,8 @@ PRIMARY_TOKEN=$(oc whoami -t)
 
 2. Retrieve token and server from secondary cluster
 
+Note: Make sure you are running `sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK` in second terminal
+
 ```
 oc config use secondary
 
@@ -650,6 +655,14 @@ SECONDARY_TOKEN=$(oc whoami -t)
 ```
 
 #### Import Primary Cluster
+
+* Ensure you are in the right context
+
+Note: Make sure you are running `sshuttle --dns -NHr "aro@${EAST_JUMP_IP}" $HUB_VIRTUAL_NETWORK` in second terminal
+
+```
+oc config use hub
+```
 
 1. Create Managed Cluster
 
@@ -665,7 +678,7 @@ metadata:
     vendor: auto-detect
 spec:
   hubAcceptsClient: true
-EOF 
+EOF
 ``` 
 
 3. Create `auto-import-secret.yaml` secret
@@ -736,7 +749,7 @@ metadata:
     vendor: auto-detect
 spec:
   hubAcceptsClient: true
-EOF 
+EOF
 ``` 
 
 3. Create `auto-import-secret.yaml` secret
@@ -821,6 +834,7 @@ metadata:
      namespace: $PRIMARY_CLUSTER
 spec:
      installNamespace: submariner-operator
+EOF
 ```
 
 3. Deploy Submariner to Secondary cluster
@@ -834,6 +848,7 @@ metadata:
      namespace: $SECONDARY_CLUSTER
 spec:
      installNamespace: submariner-operator
+EOF
 ```
 
 4. Check connection status for primary cluster
