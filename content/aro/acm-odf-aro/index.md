@@ -10,6 +10,8 @@ Authors: [Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins), [Chr
 
 ## Overview
 
+{{% alert state="warning" %}}VolSync is not supported for ARO in ACM: [https://access.redhat.com/articles/7006295](https://access.redhat.com/articles/7006295) so if you  run into issues and file a support ticket, you will receive the information that ARO is not supported.{{% /alert %}}
+
 In today's fast-paced and data-driven world, ensuring the resilience and availability of your applications and data has never been more critical. The unexpected can happen at any moment, and the ability to recover quickly and efficiently is paramount. That's where OpenShift Advanced Cluster Management (ACM) and OpenShift Data Foundation (ODF) come into play. In this guide, we will explore the deployment of ACM and ODF for disaster recovery (DR) purposes, empowering you to safeguard your applications and data across multiple clusters.
 
 **Sample Architecture**
@@ -938,32 +940,55 @@ Look for the connection established status. The status indicates the connection 
 # Finishing the setup of the disaster recovery solution
 
 ### Creating Disaster Recovery Policy on Hub cluster
+
+1. Create a DR policy to enable replication between primary and secondary cluster
+
+```
+cat << EOF | oc apply -f -
+apiVersion: ramendr.openshift.io/v1alpha1
+kind: DRPolicy
+metadata:
+  name: drpolicy
+spec:
+  drClusters:
+    - primary-cluster
+    - secondary-cluster
+  schedulingInterval: 5m
+EOF
+```
+
+2. Wait for DR policy to be validated
+
+> Note: This can take up to 10 minutes
+
+```
+oc get drpolicy drpolicy -o yaml
+```
+
+You should see
+
+```
+  status:
+    conditions:
+    - lastTransitionTime: "2023-10-06T22:54:48Z"
+      message: drpolicy validated
+      observedGeneration: 2
+      reason: Succeeded
+      status: "True"
+      type: Validated
+```
+
+3. Two DRClusters are also created
+
+```
+oc get drclusters
+
+NAME                AGE
+primary-cluster     16m
+secondary-cluster   16m
+```
  
-1. On the ACM, go to **Data Services** > **Data Policies** and click on **Create DRPolicy**
-
-![Data policies 1](images/data-policies-1.png)
-
-2. On the next screen, set a name for the policy, select the clusters where the replication will be enabled (primary and secondary), set the replication policy for asynchronous and the sync schedule, then click to Create.
-
-![Data policies 2](images/data-policies-2.png)
-
-3. After the creation,  you should see something like it:
-
-![Data policies 3](images/data-policies-3.png)
-
-When a DRPolicy is created, along with it, two DRCluster resources are also created. It could take up to 10 minutes for all resources to be validated.  
-
-4. Verify the names of the **DRClusters** on the Hub cluster accessing the console then go to  Operators > Installed Operators > OpenShift DR Hub Operator
-
-![DR Clusters](images/drclusters.png)
-
-5. Select DRCluster and you will be able to see both clusters:
-
-![DR Clusters 1](images/drclusters-1.png)
-
 ### Creating the Namespace, the Custom Resource Definition, and the PlacementRule
-
-{{% alert state="warning" %}}VolSync is not supported for ARO in ACM: [https://access.redhat.com/articles/7006295](https://access.redhat.com/articles/7006295) so if you  run into issues and file a support ticket, you will receive the information that ARO is not supported.{{% /alert %}} 
 
 1. First, log into the Hub Cluster and create a namespace for the application: 
 
@@ -1021,12 +1046,12 @@ spec:
 EOF
 ```
 
-### Creating a sample application
+### Create application and failover
 
 1. Create an application with ACM
 
 ```
-cat <<EOF | oc apply -f -
+cat << EOF | oc apply -f -
 apiVersion: apps.open-cluster-management.io/v1
 kind: Subscription
 metadata:
@@ -1050,70 +1075,68 @@ spec:
 EOF
 ```
 
-8. Edit the Disaster recovery policy to connect our application busybox to it. Go to Data Services > Data policies
+2. Associate the DR policy to the application
 
-![Data Policies 4](images/data-policies-4.png)
+```
+cat <<EOF | oc apply -f -
+apiVersion: ramendr.openshift.io/v1alpha1
+kind: DRPlacementControl
+metadata:
+  labels:
+    cluster.open-cluster-management.io/backup: resource
+  name: busybox-placementrule-drpc
+  namespace: busybox-sample
+spec:
+  drPolicyRef:
+    name: drpolicy
+  placementRef:
+    kind: PlacementRule
+    name: busybox-placementrule
+    namespace: busybox-sample
+  preferredCluster: $PRIMARY_CLUSTER
+  pvcSelector:
+    matchLabels:
+      appname: busybox
+EOF
+```
 
-9. On the right side, click on the three dots then select Apply DRPolicy
+3. Failover sample application to secondary cluster
 
-![Data Policies 5](images/data-policies-5.png)
+```
+cat <<EOF | oc apply -f -
+apiVersion: ramendr.openshift.io/v1alpha1
+kind: DRPlacementControl
+metadata:
+  labels:
+    cluster.open-cluster-management.io/backup: resource
+  name: busybox-placementrule-drpc
+  namespace: busybox-sample
+spec:
+  action: Failover
+  failoverCluster: $SECONDARY_CLUSTER
+  drPolicyRef:
+    name: drpolicy
+  placementRef:
+    kind: PlacementRule
+    name: busybox-placementrule
+    namespace: busybox-sample
+  pvcSelector:
+    matchLabels:
+      appname: busybox
+EOF
+``` 
 
-10. Select busybox, type appname=busybox on the PVC label, then click Apply
+4. Verify application runs in secondary cluster
 
-<img src="images/data-policies-6.png" alt="ACM Menu" width="50%" height="auto">
+Note: Make sure you are running `sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK` in second terminal
 
-11. Notice that the policy was connected to the application:
+```
+oc config use secondary
 
-![Data Policies 7](images/data-policies-7.png)
+oc get pods -n busybox-sample
+```
 
-12. Go to Applications then select busybox
-
-![Busybox](images/busybox.png)
-
-13. Check the Topology
-
-![Busybox 1](images/busybox-1.png)
-
-14. Click on the Pod to see more details
-
-![Busybox 2](images/busybox-2.png)
-
-15. Click on **Launch resource in Search** to see  where the application is running
-
-![Busybox 3](images/busybox-3.png)
-
-Notice that the application is running in the **primary cluster**.
-
-16. Go back to the ACM console > Applications
-
-![Busybox 4](images/busybox-4.png)
-
-17. Select busybox
-
-![Busybox 5](images/busybox-5.png)
-
-18. Under the menu Actions, click on **Failover application**:
-
-![Busybox 6](images/busybox-6.png)
-
-Select the policy, set the secondary-cluster as target cluster then click on **Initiate**:
-
-![Busybox 7](images/busybox-7.png)
-
-20. Close and go to Topology. In a few seconds you will see this result:
-
-![Busybox 8](images/busybox-8.png)
-
-21. Click on the Pod again, then **Launch resource in Search**
-
-![Busybox 9](images/busybox-9.png)
-
-22. Notice that the application is running in the **secondary-cluster** now
-
-![Busybox 10](images/busybox-10.png)
-
-
-# Cleanup
+### Cleanup
 
 Once you’re done it's a good idea to delete the cluster to ensure that you don’t get a surprise bill.
 
@@ -1137,7 +1160,7 @@ az aro delete -y  \
 az group delete --name rg-centralus
 ```
 
-# Additional reference resources:
+## Additional reference resources:
 
 * [Virtual Network Peering](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
 * [Regional-DR solution for OpenShift Data Foundation](https://access.redhat.com/documentation/en-us/red_hat_openshift_data_foundation/4.12/html/configuring_openshift_data_foundation_disaster_recovery_for_openshift_workloads/rdr-solution)
