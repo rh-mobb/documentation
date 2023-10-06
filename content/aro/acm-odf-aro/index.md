@@ -43,7 +43,7 @@ In summary, this multi-cluster topology is designed for high availability and di
 
 * [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 * [SShuttle](https://github.com/sshuttle/sshuttle) to create a SSH VPN (or create an  [Azure VPN](https://learn.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-about-vpngateways))
-* oc cli
+* [oc cli](https://console.redhat.com/openshift/downloads#tool-oc)
 
 #### Azure Account
 
