@@ -1027,44 +1027,27 @@ EOF
 
 ```
 cat <<EOF | oc apply -f -
-
+apiVersion: apps.open-cluster-management.io/v1
+kind: Subscription
+metadata:
+  annotations:
+    apps.open-cluster-management.io/git-branch: main
+    apps.open-cluster-management.io/git-path: busybox-odr
+    apps.open-cluster-management.io/reconcile-option: merge
+  labels:
+    app: busybox-sample
+    app.kubernetes.io/part-of: busybox-sample
+    apps.open-cluster-management.io/reconcile-rate: medium
+  name: busybox-sample-subscription-1
+  namespace: busybox-sample
+spec:
+  channel: ggithubcom-ramendr-ocm-ramen-samples-ns/ggithubcom-ramendr-ocm-ramen-samples
+  placement:
+    placementRef:
+      kind: PlacementRule
+      name: busybox-placementrule
 
 EOF
-```
-
-1. From the ACM panel, go to Applications > Create application
-
-![Applications](images/applications.png)
-
-2. Select Subscription type
-
-![Applications 1](images/applications-1.png)
-
-3. Set the name and namespace to be used
-
-![Applications 2](images/applications-2.png)
-
-4. For the repository location choose Git, then fill in the fields as below
-
-* URL: https://github.com/RamenDR/ocm-ramen-samples
-* Branch: Main
-* Path: busybox-odr
-
-![Applications 3](images/applications-3.png)
-
-5. For the "**Select clusters for application deployment**", choose "**Select an existing placement configuration**" and set it to the Placement created on the previous step then click Create
-
-![Applications 4](images/applications-4.png)
-
-6. After the creation, you should be able to see this screen
-
-![Applications 5](images/applications-5.png)
-
-7. Edit the app subscription
-
-```
-oc edit subscription -n busybox-sample
-# replace kind: **Placement** by kind: **PlacementRule**
 ```
 
 8. Edit the Disaster recovery policy to connect our application busybox to it. Go to Data Services > Data policies
