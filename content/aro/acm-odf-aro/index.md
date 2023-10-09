@@ -563,7 +563,7 @@ EOF
 4. Check if installation succeeded
 
 ```
-watch oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n open-cluster-management \
+oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n open-cluster-management \
   -l operators.coreos.com/advanced-cluster-management.open-cluster-management=''
 ```
 
