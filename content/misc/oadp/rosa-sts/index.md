@@ -140,6 +140,10 @@ authors:
    oc -n openshift-adp create secret generic cloud-credentials \
      --from-file=${SCRATCH}/credentials
    ```
+> **NOTE:** If your OCP version is 4.14+, a new standardized STS workflow via OLM (Operator Lifecycle Manager)
+and CCO (Cloud Credentials Operator) is supported by OADP Operator. In this workflow you do not need to create the above
+secret, you just need to supply the role ARN during the operator installtion via OLM UI.
+The above secret gets created automatically via CCO.
 
 1. Deploy OADP Operator
 
