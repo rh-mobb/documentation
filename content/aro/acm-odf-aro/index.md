@@ -241,7 +241,7 @@ With the cluster in a private network, we can create a jump host in order to con
 az network vnet subnet create  \
   --resource-group $EAST_RESOURCE_GROUP  \
   --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
-  --name JumpSubnet  \
+  --name jump-subnet  \
   --address-prefixes $HUB_JUMPHOST_SUBNET    
 ```
 
@@ -253,7 +253,7 @@ az vm create --name jumphost  \
     --ssh-key-values $HOME/.ssh/id_rsa.pub  \
     --admin-username aro  \
     --image "RedHat:RHEL:9_1:9.1.2022112113"  \
-    --subnet JumpSubnet  \
+    --subnet jump-subnet  \
     --public-ip-address jumphost-ip  \
     --public-ip-sku Standard  \
     --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"
@@ -436,7 +436,7 @@ Since this cluster will reside in a different virtual network, we should create 
 az network vnet subnet create  \
   --resource-group $CENTRAL_RESOURCE_GROUP  \
   --vnet-name "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"  \
-  --name JumpSubnet  \
+  --name jump-subnet  \
   --address-prefixes $SECONDARY_JUMPHOST_SUBNET                  
 ```
 
@@ -448,7 +448,7 @@ az network vnet subnet create  \
     --ssh-key-values $HOME/.ssh/id_rsa.pub  \
     --admin-username aro  \
     --image "RedHat:RHEL:9_1:9.1.2022112113"  \
-    --subnet JumpSubnet  \
+    --subnet jump-subnet  \
     --public-ip-address jumphost-ip  \
     --public-ip-sku Standard  \
     --vnet-name "$SECONDARY_CLUSTER-aro-vnet-$CENTRAL_RESOURCE_LOCATION"
