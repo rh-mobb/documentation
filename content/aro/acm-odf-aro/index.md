@@ -567,7 +567,13 @@ oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n open-cluster-managem
   -l operators.coreos.com/advanced-cluster-management.open-cluster-management=''
 ```
 
-In a few seconds will you see the following output with the information that the condition was met:
+If you get the following error, it means that the installation wasn't completed yet. Wait 3-5 minutes and run the last command again.
+
+```
+error: no matching resources found
+```
+
+A successful output should be similar to:
 
 ```
 clusterserviceversion.operators.coreos.com/advanced-cluster-management.v2.8.2 condit
