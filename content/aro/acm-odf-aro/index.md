@@ -563,9 +563,17 @@ EOF
 4. Check if installation succeeded
 
 ```
-oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n open-cluster-management \
+watch oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n open-cluster-management \
   -l operators.coreos.com/advanced-cluster-management.open-cluster-management=''
 ```
+
+In a few seconds will you see the following output with the information that the condition was met:
+
+```
+clusterserviceversion.operators.coreos.com/advanced-cluster-management.v2.8.2 condit
+ion met
+```
+
 
 5. Install MultiClusterHub instance in the ACM namespace
 
