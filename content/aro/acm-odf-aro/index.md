@@ -630,6 +630,20 @@ oc wait --for=jsonpath='{.status.phase}'='Succeeded' csv -n openshift-operators 
   -l operators.coreos.com/odf-multicluster-orchestrator.openshift-operators=''
 ```
 
+If you get the following error, it means that the installation wasn't completed yet. Wait 3-5 minutes and run the last command again.
+
+```
+error: no matching resources found
+```
+
+A successful output should be similar to:
+
+```
+clusterserviceversion.operators.coreos.com/advanced-cluster-management.v2.8.2 condit
+ion met
+```
+
+
 ### Import Clusters into ACM
 
 1. Create a Managed Cluster Set
