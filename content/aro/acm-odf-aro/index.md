@@ -207,7 +207,7 @@ az network vnet subnet create  \
 ```
 az network vnet subnet create  \
   --resource-group $EAST_RESOURCE_GROUP  \
-  --vnet-name "$PRIMARY_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
+  --vnet-name "$HUB_CLUSTER-aro-vnet-$EAST_RESOURCE_LOCATION"  \
   --name "$PRIMARY_CLUSTER-aro-worker-subnet-$EAST_RESOURCE_LOCATION"  \
   --address-prefixes $PRIMARY_WORKER_SUBNET
 ```
