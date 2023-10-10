@@ -1102,52 +1102,27 @@ EOF
 
 ```
 cat << EOF | oc apply -f -
-apiVersion: app.k8s.io/v1beta1
-kind: Application
-metadata:
-  name: busybox-sample
-  namespace: busybox-sample
-spec:
-  componentKinds:
-    - group: apps.open-cluster-management.io
-      kind: Subscription
-  descriptor: {}
-  selector:
-    matchExpressions:
-      - key: app
-        operator: In
-        values:
-          - busybox-sample
----
-apiVersion: apps.open-cluster-management.io/v1
-kind: Channel
-metadata:
-  name: busybox-sample
-  namespace: busybox-sample
-  annotations:
-    apps.open-cluster-management.io/reconcile-rate: medium
-spec:
-  type: Git
-  pathname: https://github.com/RamenDR/ocm-ramen-samples
----
 apiVersion: apps.open-cluster-management.io/v1
 kind: Subscription
 metadata:
-  name: busybox-sample
-  namespace: busybox-sample
   annotations:
     apps.open-cluster-management.io/git-branch: main
     apps.open-cluster-management.io/git-path: busybox-odr
     apps.open-cluster-management.io/reconcile-option: merge
   labels:
     app: busybox-sample
+    app.kubernetes.io/part-of: busybox-sample
+    apps.open-cluster-management.io/reconcile-rate: medium
+  name: busybox-sample-subscription-1
+  namespace: busybox-sample
 spec:
-  channel: busybox-sample
+  channel: ggithubcom-ramendr-ocm-ramen-samples-ns/ggithubcom-ramendr-ocm-ramen-samples
   placement:
     placementRef:
-      name: busybox-placementrule
       kind: PlacementRule
+      name: busybox-placementrule
 EOF
+
 ```
 
 2. Associate the DR policy to the application
