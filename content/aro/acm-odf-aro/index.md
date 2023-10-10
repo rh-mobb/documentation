@@ -957,12 +957,24 @@ Look for the connection established status. The status indicates the connection 
 
 ### Primary Cluster
 
-1. Follow these steps to deploy ODF into the Primary Cluster:
+1. Swtich the context to the primary cluster
+
+```
+oc config use primary
+```
+
+2. Follow these steps to deploy ODF into the Primary Cluster:
 [https://cloud.redhat.com/experts/aro/odf/](https://cloud.redhat.com/experts/aro/odf/)
 
 ### Secondary Cluster
 
-1. Follow these steps to deploy ODF into the Secondary Cluster:
+1. Swtich the context to the secondary cluster
+
+```
+oc config use secondary
+```
+
+2. Follow these steps to deploy ODF into the Secondary Cluster:
 [https://cloud.redhat.com/experts/aro/odf/](https://cloud.redhat.com/experts/aro/odf/)
 
 # Finishing the setup of the disaster recovery solution
