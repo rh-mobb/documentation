@@ -1102,6 +1102,34 @@ EOF
 
 ```
 cat << EOF | oc apply -f -
+apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: busybox-sample
+  namespace: busybox-sample
+spec:
+  componentKinds:
+  - group: apps.open-cluster-management.io
+    kind: Subscription
+  descriptor: {}
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: 
+          - busybox-sample
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: Channel
+metadata:
+  annotations:
+    apps.open-cluster-management.io/reconcile-rate: medium
+  name: busybox-sample
+  namespace: busybox-sample
+spec:
+  type: Git
+  pathname: 'https://github.com/RamenDR/ocm-ramen-samples'
+---
 apiVersion: apps.open-cluster-management.io/v1
 kind: Subscription
 metadata:
@@ -1111,12 +1139,10 @@ metadata:
     apps.open-cluster-management.io/reconcile-option: merge
   labels:
     app: busybox-sample
-    app.kubernetes.io/part-of: busybox-sample
-    apps.open-cluster-management.io/reconcile-rate: medium
   name: busybox-sample-subscription-1
   namespace: busybox-sample
 spec:
-  channel: ggithubcom-ramendr-ocm-ramen-samples-ns/ggithubcom-ramendr-ocm-ramen-samples
+  channel: busybox-sample/busybox-sample
   placement:
     placementRef:
       kind: PlacementRule
