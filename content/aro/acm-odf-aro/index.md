@@ -1028,7 +1028,11 @@ You should see
 
 ```
 oc get drclusters
+```
 
+You should see
+
+```
 NAME                AGE
 primary-cluster     16m
 secondary-cluster   16m
