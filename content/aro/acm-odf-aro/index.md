@@ -957,7 +957,7 @@ Look for the connection established status. The status indicates the connection 
 
 ### Primary Cluster
 
-1. Swtich the context to the primary cluster
+1. Switch the context to the primary cluster
 
 ```
 oc config use primary
@@ -968,7 +968,7 @@ oc config use primary
 
 ### Secondary Cluster
 
-1. Swtich the context to the secondary cluster
+1. Switch the context to the secondary cluster
 
 ```
 oc config use secondary
