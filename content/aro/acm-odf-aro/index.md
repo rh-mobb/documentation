@@ -1119,16 +1119,11 @@ spec:
         values:
           - busybox-sample
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ggithubcom-ramendr-ocm-ramen-samples-ns
----
 apiVersion: apps.open-cluster-management.io/v1
 kind: Channel
 metadata:
-  name: ggithubcom-ramendr-ocm-ramen-samples
-  namespace: ggithubcom-ramendr-ocm-ramen-samples-ns
+  name: busybox-sample
+  namespace: busybox-sample
   annotations:
     apps.open-cluster-management.io/reconcile-rate: medium
 spec:
@@ -1138,7 +1133,7 @@ spec:
 apiVersion: apps.open-cluster-management.io/v1
 kind: Subscription
 metadata:
-  name: busybox-sample-subscription-1
+  name: busybox-sample
   namespace: busybox-sample
   annotations:
     apps.open-cluster-management.io/git-branch: main
@@ -1147,7 +1142,7 @@ metadata:
   labels:
     app: busybox-sample
 spec:
-  channel: ggithubcom-ramendr-ocm-ramen-samples-ns/ggithubcom-ramendr-ocm-ramen-samples
+  channel: busybox-sample
   placement:
     placementRef:
       name: busybox-placementrule
