@@ -981,7 +981,13 @@ oc config use secondary
 
 ### Creating Disaster Recovery Policy on Hub cluster
 
-1. Create a DR policy to enable replication between primary and secondary cluster
+1. Switch the context to the hub cluster
+
+```
+oc config use hub
+```
+
+2. Create a DR policy to enable replication between primary and secondary cluster
 
 ```
 cat << EOF | oc apply -f -
@@ -997,7 +1003,7 @@ spec:
 EOF
 ```
 
-2. Wait for DR policy to be validated
+3. Wait for DR policy to be validated
 
 > Note: This can take up to 10 minutes
 
@@ -1018,7 +1024,7 @@ You should see
       type: Validated
 ```
 
-3. Two DRClusters are also created
+4. Two DRClusters are also created
 
 ```
 oc get drclusters
