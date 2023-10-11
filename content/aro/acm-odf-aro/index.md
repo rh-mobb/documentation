@@ -711,7 +711,7 @@ spec:
 EOF
 ``` 
 
-3. Create `auto-import-secret.yaml` secret
+2. Create `auto-import-secret.yaml` secret
 
 ```
 cat << EOF | oc apply -f -
@@ -728,7 +728,7 @@ type: Opaque
 EOF
 ```
 
-4. Create add config for Submariner
+3. Create add config for Submariner
 
 ```sh
 cat << EOF | oc apply -f -
@@ -757,7 +757,7 @@ spec:
 EOF
 ```
 
-5. Check if cluster imported
+4. Check if cluster imported
 
 ```
 oc get managedclusters
@@ -782,7 +782,7 @@ spec:
 EOF
 ``` 
 
-3. Create `auto-import-secret.yaml` secret
+2. Create `auto-import-secret.yaml` secret
 
 ```
 cat << EOF | oc apply -f -
@@ -799,7 +799,7 @@ type: Opaque
 EOF
 ```
 
-4. Create add config for Submariner
+3. Create add config for Submariner
 
 ```
 cat << EOF | oc apply -f -
@@ -828,7 +828,7 @@ spec:
 EOF
 ```
 
-5. Check if cluster imported
+4. Check if cluster imported
 
 ```
 oc get managedclusters
@@ -1054,7 +1054,7 @@ EOF
 
 Now, still logged into the Hub Cluster create a Custom Resource Definition (CRD) for the PlacementRule installed in the **busybox-sample** namespace. You can do this by applying the CRD YAML file before creating the **PlacementRule**. Here are the steps: 
 
-1. Install the CRD for PlacementRule
+2. Install the CRD for PlacementRule
 
 ```
 cat <<EOF | oc apply -f -
@@ -1080,7 +1080,7 @@ spec:
 EOF
 ```
 
-2. Create the PlacementRule
+3. Create the PlacementRule
 
 ```
 cat <<EOF | oc apply -f -
