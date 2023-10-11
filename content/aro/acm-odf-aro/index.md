@@ -1093,6 +1093,7 @@ spec:
   clusterSelector:
     matchLabels:
       name: primary-cluster
+  schedulerName: ramen
 EOF
 ```
 
@@ -1172,7 +1173,7 @@ spec:
   preferredCluster: $PRIMARY_CLUSTER
   pvcSelector:
     matchLabels:
-      appname: busybox
+      appname: busybox-sample
 EOF
 ```
 
@@ -1198,7 +1199,7 @@ spec:
     namespace: busybox-sample
   pvcSelector:
     matchLabels:
-      appname: busybox
+      appname: busybox-sample
 EOF
 ``` 
 
