@@ -673,7 +673,7 @@ PRIMARY_API=$(oc whoami --show-server)
 PRIMARY_TOKEN=$(oc whoami -t)
 ```
 
-2. Retrieve token and server from secondary cluster
+3. Retrieve token and server from secondary cluster
 
 Note: Make sure you are running `sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK` in second terminal
 
