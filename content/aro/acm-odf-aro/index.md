@@ -3,7 +3,7 @@ date: '2023-10-04'
 title: Deploying Advanced Cluster Management and OpenShift Data Foundation for ARO Disaster Recovery 
 tags: ["ARO", "Azure", "ACM", "ODF"]
 authors:
-  - "Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins)"
+  - "[Ricardo Macedo Martins](https://www.linkedin.com/in/ricmmartins)"
   - "[Chris Kang](https://www.linkedin.com/in/theckang/)"
 ---
 
