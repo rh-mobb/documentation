@@ -183,7 +183,7 @@ Create a virtual network with two empty subnets
 
 Public and Private clusters will have [--outbound-type](https://learn.microsoft.com/en-us/cli/azure/aro?view=azure-cli-latest#az-aro-create) defined to LoadBalancer by default. It means all clusters by default have open egress to the internet through the public load balancer.  
 
-If you want to change the default behavior to restrict the Internet Egress, you have to set --outbound-type during the creation of the cluster to UserDefinedRouting and use Azure Firewall or Azure NAT Gateway.
+If you want to change the default behavior to restrict the Internet Egress, you have to set --outbound-type during the creation of the cluster to UserDefinedRouting and use a Firewall solution from your choice or even Azure native solutions like Azure Firewall or Azure NAT Gateway.
 
 If you want to proceed with the UserDefinedRouting option for the Internet Egress, run through the step of one of the two following options
 
