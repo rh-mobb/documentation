@@ -263,7 +263,7 @@ With the cluster in a private network, we can create a jump host in order to con
 
 3. Save the jump host public IP address
 
-   {{% alert state="note" %}}Run this command in a second terminal{{% /alert %}}
+   {{% alert state="info" %}}Run this command in a second terminal{{% /alert %}}
     
     ```
     EAST_JUMP_IP=$(az vm list-ip-addresses -g $EAST_RESOURCE_GROUP -n jumphost -o tsv  \
@@ -274,7 +274,7 @@ With the cluster in a private network, we can create a jump host in order to con
 
 4. Use sshuttle to create a SSH VPN via the jump host (use a separate terminal session)
 
-   {{% alert state="note" %}}Run this command in a second terminal{{% /alert %}}
+   {{% alert state="info" %}}Run this command in a second terminal{{% /alert %}}
 
     Replace the IP with the IP of the jump box from the previous step
     
@@ -458,7 +458,7 @@ Since this cluster will reside in a different virtual network, we should create 
 
 3. Save the jump host public IP address
 
-   {{% alert state="note" %}}Run this command in a second terminal{{% /alert %}}
+   {{% alert state="info" %}}Run this command in a second terminal{{% /alert %}}
 
     ```
     CENTRAL_JUMP_IP=$(az vm list-ip-addresses -g $CENTRAL_RESOURCE_GROUP -n jumphost -o tsv  \
@@ -469,7 +469,7 @@ Since this cluster will reside in a different virtual network, we should create 
 
 4. Use sshuttle to create a SSH VPN via the jump host
 
-   {{% alert state="note" %}}Run this command in a second terminal{{% /alert %}}
+   {{% alert state="info" %}}Run this command in a second terminal{{% /alert %}}
 
     Replace the IP with the IP of the jump box from the previous step
     
@@ -650,7 +650,7 @@ Since this cluster will reside in a different virtual network, we should create 
 
 1. Create a Managed Cluster Set
 
-   {{% alert state="note" %}}Make sure you are running `sshuttle --dns -NHr "aro@${EAST_JUMP_IP}" $HUB_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
+   {{% alert state="info" %}}Make sure you are running `sshuttle --dns -NHr "aro@${EAST_JUMP_IP}" $HUB_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
 
     ```
     oc config use hub
@@ -677,7 +677,7 @@ Since this cluster will reside in a different virtual network, we should create 
 
 3. Retrieve token and server from secondary cluster
 
-   {{% alert state="note" %}}Make sure you are running `sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
+   {{% alert state="info" %}}Make sure you are running `sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
 
     ```
     oc config use secondary
@@ -690,7 +690,7 @@ Since this cluster will reside in a different virtual network, we should create 
 
 1. Ensure you are in the right context
 
-    {{% alert state="note" %}}Make sure you are running `sshuttle --dns -NHr "aro@${EAST_JUMP_IP}" $HUB_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
+    {{% alert state="info" %}}Make sure you are running `sshuttle --dns -NHr "aro@${EAST_JUMP_IP}" $HUB_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
 
     ```
     oc config use hub
@@ -1007,7 +1007,7 @@ Since this cluster will reside in a different virtual network, we should create 
 
 3. Wait for DR policy to be validated
 
-    {{% alert state="note" %}}This can take up to 10 minutes{{% /alert %}}
+    {{% alert state="info" %}}This can take up to 10 minutes{{% /alert %}}
 
     ```
     oc get drpolicy drpolicy -o yaml
@@ -1205,7 +1205,7 @@ Since this cluster will reside in a different virtual network, we should create 
 
 4. Verify application runs in secondary cluster
 
-    {{% alert state="note" %}}Make sure you are running `sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
+    {{% alert state="info" %}}Make sure you are running `sshuttle --dns -NHr "aro@${CENTRAL_JUMP_IP}" $SECONDARY_VIRTUAL_NETWORK` in second terminal{{% /alert %}}
 
     ```
     oc config use secondary
