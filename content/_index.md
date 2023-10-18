@@ -38,6 +38,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Connect to RDS from ROSA with STS](/experts/rosa/sts-rds)
 * [Create an AWS Client VPN connection for a private ROSA Cluster](/experts/rosa/vpn)
 * [ROSA Break Glass Troubleshooting](/experts/rosa/break-glass)
+* [Running RH OpenShift Data Sciences on ROSA](/experts/rosa/rhods)
 
 ### ARO
 
