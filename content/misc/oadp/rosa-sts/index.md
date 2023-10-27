@@ -142,8 +142,9 @@ authors:
    ```
 > **NOTE:** If your OCP version is 4.14+, a new standardized STS workflow via OLM (Operator Lifecycle Manager)
 and CCO (Cloud Credentials Operator) is supported by OADP Operator. In this workflow you do not need to create the above
-secret, you just need to supply the role ARN during the operator installtion via OLM UI.
+secret, you just need to supply the role ARN during the operator installtion via OLM UI (Refer the screenshot below).
 The above secret gets created automatically via CCO.
+![STS workflow via OLM and CCO](images/oadp-sts-olm-cco.png)
 
 1. Deploy OADP Operator
 
@@ -240,7 +241,6 @@ the CSI plugin in the OADP DPA configuration.
      name: ${CLUSTER_NAME}-dpa
      namespace: openshift-adp
    spec:
-     backupImages: false
      features:
        dataMover:
          enable: false
@@ -274,7 +274,6 @@ the CSI plugin in the OADP DPA configuration.
      name: ${CLUSTER_NAME}-dpa
      namespace: openshift-adp
    spec:
-     backupImages: false
      features:
        dataMover:
          enable: false
@@ -307,8 +306,6 @@ the CSI plugin in the OADP DPA configuration.
    ```
 
 **Note** 
-* Container image backup and restore ( spec.backupImages=false ) is disabled and not supported in OADP 1.1.x
-or OADP 1.2.0 Rosa STS environments.
 * The Restic feature ( restic.enable=false ) is disabled and not supported in Rosa STS environments.
 * The DataMover feature ( dataMover.enable=false ) is disabled and not supported in Rosa STS environments.
 
