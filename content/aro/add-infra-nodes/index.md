@@ -56,7 +56,7 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
 1. Wait for the new nodes to be available
 
    ```bash
-   watch oc get machines
+   watch oc get machines -n openshift-machine-api
    ```
 
 ## Moving Infra workloads
