@@ -14,7 +14,7 @@ In addition, please refer [here](https://learn.microsoft.com/en-us/azure/openshi
 
 ## Prerequisites
 
-* [A private ARO cluster](../private-cluster) that uses OpenShift SDN as its CNI
+* [A private ARO cluster](https://github.com/rh-mobb/documentation/blob/main/content/aro/private-cluster.md) that uses OpenShift SDN as its CNI
 
 ## Deploy the Egressip Ipam Operator
 
