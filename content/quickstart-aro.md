@@ -35,7 +35,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 **Linux**
 
-{{% alert state="info" %}}See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf) for alternative install options.{{% /alert %}}
+{{% notice style="note" %}}See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf) for alternative install options.{{% /notice %}}
 
 1. Import the Microsoft Keys
 
@@ -90,7 +90,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 ### Get Red Hat pull secret
 
-{{% alert state="info" %}}This step is optional, but highly recommended{{% /alert %}}
+{{% notice style="note" %}}This step is optional, but highly recommended{{% /notice %}}
 
 1. Log into <https://console.redhat.com>
 
@@ -106,7 +106,7 @@ Set some environment variables to use later, and create an Azure Resource Group.
 
 1. Set the following environment variables
 
-    {{% alert state="info" %}}Change the values to suit your environment, but these defaults should work.{{% /alert %}}
+    {{% notice style="note" %}}Change the values to suit your environment, but these defaults should work.{{% /notice%}}
 
     ```bash
     AZR_RESOURCE_LOCATION=eastus
@@ -159,7 +159,7 @@ Create a virtual network with two empty subnets
 
 1. [Disable network policies for Private Link Service](https://learn.microsoft.com/en-us/azure/private-link/disable-private-link-service-network-policy?tabs=private-link-network-policy-cli) on the control plane subnet
 
-    {{% alert state="info" %}}Optional. The ARO RP will disable this for you if you skip this step.{{% /alert %}}
+    {{% notice style="note" %}}Optional. The ARO RP will disable this for you if you skip this step.{{% /notice %}}
 
     ```bash
     az network vnet subnet update \
@@ -171,7 +171,7 @@ Create a virtual network with two empty subnets
 
 1. Create the cluster
 
-    {{% alert state="info" %}}This will take between 30 and 45 minutes.{{% /alert %}}
+    {{% notice style="note" %}}This will take between 30 and 45 minutes.{{% /notice %}}
 
     ```bash
     az aro create \
@@ -208,7 +208,7 @@ Create a virtual network with two empty subnets
 
 1. Deploy an application to OpenShift
 
-    {{% alert state="info" %}}See the following video for a guide on easy application deployment on OpenShift.{{% /alert %}}
+    {{% notice style="note" %}}See the following video for a guide on easy application deployment on OpenShift.{{% /notice %}}
 
     <iframe width="560" height="315" src="https://www.youtube.com/embed/8uFUFJS9TA4?start=0:43" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
@@ -226,7 +226,7 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
 
 1. Delete the Azure resource group
 
-    {{% alert state="danger" %}}Only do this if there's nothing else in the resource group.{{% /alert %}}
+    {{% notice style="note" %}}Only do this if there's nothing else in the resource group.{{% /notice %}}
 
     ```bash
     az group delete -y \
