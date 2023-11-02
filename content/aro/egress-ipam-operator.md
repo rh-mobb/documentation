@@ -7,7 +7,9 @@ tags: ["ARO", "Azure"]
 {{% notice style="note" %}}
 This guide is only valid for ARO clusters created on version **4.10 or earlier**.
 
-Clusters created on version 4.11 and later use OVNKubernetes as their Container Network Interface, and egressip-ipam-operator does not support OVNKubernetes. Please see [EgressIP](https://docs.openshift.com/container-platform/4.11/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html) as a possible alternative.
+Clusters created on version 4.11 and later use OVNKubernetes as their Container Network Interface, and egressip-ipam-operator does not support OVNKubernetes.
+
+In addition, please refer [here](https://learn.microsoft.com/en-us/azure/openshift/howto-create-private-cluster-4x#create-a-private-cluster-without-a-public-ip-address) to create a private ARO cluster without using public IP address. This way, you will be using `UserDefinedRouting` for [egress](https://learn.microsoft.com/en-us/azure/openshift/howto-restrict-egress).
 {{% /notice %}}
 
 ## Prerequisites
