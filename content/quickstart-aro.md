@@ -25,7 +25,7 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 **MacOS**
 
-{{% alert state="info" %}}See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-macos) for alternative install options.{{% /alert %}}
+{{% notice style="note" %}}See [Azure Docs](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-macos) for alternative install options.{{% /alert %}}
 
 1. Install Azure CLI using homebrew
 
