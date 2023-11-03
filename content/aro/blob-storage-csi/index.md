@@ -140,6 +140,7 @@ Now, we need to install the driver, which could be done using a helm chart. This
       - 'system:masters'
     volumes:
       - '*'
+    allowHostPID: true
     allowHostNetwork: true    
     EOF
     ```
