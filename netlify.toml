@@ -73,7 +73,7 @@ force = true
 
 [[redirects]]
 from = "/experts/rosa/clf-cloudwatch-sts/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-cloudwatch-sts.html"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-rosa-cloudwatch-sts.html"
 status = 301
 force = true
 
