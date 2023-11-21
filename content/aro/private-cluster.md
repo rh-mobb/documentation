@@ -357,17 +357,17 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 This will take between 30 and 45 minutes.
 
 ```bash
-    az aro create                                                            \
-    --resource-group $AZR_RESOURCE_GROUP                                     \
-    --name $AZR_CLUSTER                                                      \
-    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"                    \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-    --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-    --apiserver-visibility Private                                           \
-    --ingress-visibility Private                                             \
-    --pull-secret @$AZR_PULL_SECRET                                          \
-    --client-id "${AZ_SP_ID}"                                                \
-    --client-secret "${AZ_SP_PASS}"
+az aro create                                                            \
+--resource-group $AZR_RESOURCE_GROUP                                     \
+--name $AZR_CLUSTER                                                      \
+--vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"                    \
+--master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+--worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+--apiserver-visibility Private                                           \
+--ingress-visibility Private                                             \
+--pull-secret @$AZR_PULL_SECRET                                          \
+--client-id "${AZ_SP_ID}"                                                \
+--client-secret "${AZ_SP_PASS}"
  ```
 
 
