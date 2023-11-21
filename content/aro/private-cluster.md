@@ -413,7 +413,7 @@ With the cluster in a private network, we can create a Jump host in order to con
     {{% alert state="info" %}}replace the IP with the IP of the jump box from the previous step.{{% /alert %}}
 
     ```bash
-    sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
+    sshuttle --dns -NHr "aro@${JUMP_IP}" $NETWORK_SUBNET
     ```
 
 1. Get OpenShift console URL
