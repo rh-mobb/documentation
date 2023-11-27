@@ -357,17 +357,17 @@ This replaces the routes for the cluster to go through the Firewall for egress v
 This will take between 30 and 45 minutes.
 
 ```bash
-    az aro create                                                            \
-    --resource-group $AZR_RESOURCE_GROUP                                     \
-    --name $AZR_CLUSTER                                                      \
-    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"                    \
-    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
-    --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
-    --apiserver-visibility Private                                           \
-    --ingress-visibility Private                                             \
-    --pull-secret @$AZR_PULL_SECRET                                          \
-    --client-id "${AZ_SP_ID}"                                                \
-    --client-secret "${AZ_SP_PASS}"
+az aro create                                                            \
+--resource-group $AZR_RESOURCE_GROUP                                     \
+--name $AZR_CLUSTER                                                      \
+--vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION"                    \
+--master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
+--worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+--apiserver-visibility Private                                           \
+--ingress-visibility Private                                             \
+--pull-secret @$AZR_PULL_SECRET                                          \
+--client-id "${AZ_SP_ID}"                                                \
+--client-secret "${AZ_SP_PASS}"
  ```
 
 
@@ -413,7 +413,7 @@ With the cluster in a private network, we can create a Jump host in order to con
     {{% alert state="info" %}}replace the IP with the IP of the jump box from the previous step.{{% /alert %}}
 
     ```bash
-    sshuttle --dns -NHr "aro@${JUMP_IP}"  10.0.0.0/8
+    sshuttle --dns -NHr "aro@${JUMP_IP}" $NETWORK_SUBNET
     ```
 
 1. Get OpenShift console URL
@@ -471,30 +471,24 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
 
 ### Adding Quota to ARO account
 
-![aro quota support ticket request example](../../images/aro-quota.png)
+![ARO Console "My Quotas" page with cursor hovering over "Request Adjustment" pencil for a quota named "Total Regional vCPUs"](../../images/aro-quota-request.png)
 
-1. [Create an Azure Support Request](https://portal.azure.com/#blade/Microsoft_Azure_Support/HelpAndSupportBlade/newsupportrequest)
+1. [Visit **My Quotas** in the Azure Console](https://portal.azure.com/#view/Microsoft_Azure_Capacity/QuotaMenuBlade/~/myQuotas)
 
-1. Set **Issue Type** to "Service and subscription limits (quotas)"
+1. Choose the appropriate filters:
 
-1. Set **Quota Type** to "Compute-VM (cores-vCPUs) subscription limit increases"
+    1. Set **Provider** to "Compute"
 
-1. Click **Next Solutions >>**
+    1. Set **Subscription** to the subscription you are creating the cluster in
 
-1. Click **Enter details**
+    1. Set **Region** to "East US" and uncheck the other region boxes
 
-1. Set **Deployment Model** to "Resource Manager
+1. Search for the quota name that you want to increase. This may be "Total Regional vCPUs" if you checked that prior to creating the cluster, or it may be a specific resource quota named in a `ResourceQuotaExceeded` error message. Note that in the latter case, the Azure console uses a localized display name (for example `Standard DSv3 Family vCPUs` rather than an identifier name `standardDSv3Family` mentioned in the error message.
 
-1. Set **Locations** to "(US) East US"
+1. Next to the quota name you wish to increase, click the pencil in the Adjustable column to request adjustment
 
-1. Set **Types** to "Standard"
+1. Enter the new desired quota in the **New limit** text box. By default, a cluster will need 36 additional Regional vCPUs beyond current usage, or the `ResourceQuotaExceeded` error message will tell you how much more of an additional resource is needed.
 
-1. Under **Standard** check "DSv3" and "DSv4"
+1. Click **Submit**. You may need to go through additional authentication.
 
-1. Set **New vCPU Limit** for each (example "60")
-
-1. Click **Save and continue**
-
-1. Click **Review + create >>**
-
-1. Wait until quota is increased.
+1. Azure will review your request to adjust your quota. This may take several minutes.
