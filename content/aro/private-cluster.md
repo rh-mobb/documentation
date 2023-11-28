@@ -183,11 +183,11 @@ Create a virtual network with two empty subnets
 
 Public and Private clusters will have [--outbound-type](https://learn.microsoft.com/en-us/cli/azure/aro?view=azure-cli-latest#az-aro-create) defined to LoadBalancer by default. It means all clusters by default have open egress to the internet through the public load balancer.  
 
-If you want to change the default behavior to restrict the Internet Egress, you have to set --outbound-type during the creation of the cluster to UserDefinedRouting and use a Firewall solution from your choice or even Azure native solutions like Azure Firewall or Azure NAT Gateway.
+To change the default behavior and restrict the Internet Egress, you have to set `--outbound-type` during the creation of the cluster to `UserDefinedRouting` and use a Firewall solution of your choice or even Azure native solutions like Azure Firewall or Azure NAT Gateway.
 
-If you want to proceed with the UserDefinedRouting option for the Internet Egress, run through the step of one of the two following options
+If you want to proceed with the `UserDefinedRouting`, **choose either** NAT gateway **or** Firewall + Internet Egress:
 
-#### Nat GW
+#### 1a. NAT Gateway
 
 This replaces the routes for the cluster to go through the Azure NAT GW service for egress vs the LoadBalancer. It does come with extra Azure costs of course.
 
@@ -238,8 +238,7 @@ This replaces the routes for the cluster to go through the Azure NAT GW service 
       --nat-gateway "${AZR_CLUSTER}-natgw"
     ```
 
-
-#### Firewall + Internet Egress
+#### 1b. Firewall + Internet Egress
 
 This replaces the routes for the cluster to go through the Firewall for egress vs the LoadBalancer. It does come with extra Azure costs of course.
 
@@ -370,6 +369,7 @@ az aro create                                                            \
 --client-secret "${AZ_SP_PASS}"
  ```
 
+{{% alert state="info" %}} Be sure to add the `--outbound-type UserDefinedRouting` flag if you are not using the default routing.{{% /alert %}}
 
 ### Jump Host
 
@@ -443,8 +443,6 @@ With the cluster in a private network, we can create a Jump host in order to con
     ```bash
     oc login $APISERVER --username kubeadmin --password ${ADMINPW}
     ```
-
-
 
 ### Delete Cluster
 
