@@ -183,13 +183,13 @@ Create a virtual network with two empty subnets
 
 Public and Private clusters will have [--outbound-type](https://learn.microsoft.com/en-us/cli/azure/aro?view=azure-cli-latest#az-aro-create) defined to LoadBalancer by default. It means all clusters by default have open egress to the internet through the public load balancer.  
 
-To change the default behavior and restrict the Internet Egress, you have to set `--outbound-type` during the creation of the cluster to `UserDefinedRouting` and use a Firewall solution of your choice or even Azure native solutions like Azure Firewall or Azure NAT Gateway.
+To change the default behavior and restrict the Internet Egress you have to set `--outbound-type` to `UserDefinedRouting` during cluster creation, and set up a traffic to run through a Firewall solution. This can either be a 3rd party solution or a native Azure solution such as Azure Firewall/Azure NAT Gateway.
 
-If you want to proceed with the `UserDefinedRouting`, **choose either** NAT gateway **or** Firewall + Internet Egress:
+If you want to proceed with the `UserDefinedRouting` the two examples below show how this can be achieved through either Azure NAT gateway **or** Azure Firewall + Internet Egress.
 
 #### 1a. NAT Gateway
 
-This replaces the routes for the cluster to go through the Azure NAT GW service for egress vs the LoadBalancer. It does come with extra Azure costs of course.
+This option replaces the routes for the cluster to go through the Azure NAT GW service for egress vs the LoadBalancer. This will incur extra Azure costs.
 
 {{% alert state="info" %}}You can skip this step if you don't need to restrict egress.{{% /alert %}}
 
@@ -240,7 +240,7 @@ This replaces the routes for the cluster to go through the Azure NAT GW service 
 
 #### 1b. Firewall + Internet Egress
 
-This replaces the routes for the cluster to go through the Firewall for egress vs the LoadBalancer. It does come with extra Azure costs of course.
+This option replaces the routes for the cluster to go through Azure Firewall for egress traffic, rather than the LoadBalancer. This will incur extra Azure costs.
 
 {{% alert state="info" %}}You can skip this step if you don't need to restrict egress.{{% /alert %}}
 
