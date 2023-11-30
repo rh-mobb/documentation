@@ -41,6 +41,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 ### ARO
 
+* [Prerequisites Checklist to Deploy ARO Cluster](/experts/aro/prereq-list)
 * [Deploying private ARO Cluster with Jump Host access](/experts/aro/private-cluster)
   * [Using the Egressip Ipam Operator with a Private ARO Cluster](/experts/aro/egress-ipam-operator)
 * [Considerations for Disaster Recovery with ARO](/experts/aro/disaster-recovery)
