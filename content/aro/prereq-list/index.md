@@ -6,8 +6,6 @@ authors:
   - Ricardo Macedo Martins
 ---
 
-# Azure Red Hat OpenShift (ARO) Prerequisites
-
 Before deploying an ARO cluster, ensure you meet the following prerequisites:
 
 ## Setup Tools
@@ -24,17 +22,14 @@ Before deploying an ARO cluster, ensure you meet the following prerequisites:
   - Ensure you have **Contributor** and **User Access Administrator** roles on the cluster resource group.
   - Assign **Network Contributor** role on the virtual network, if using a separate resource group.
   - For stricter security policies, [create a custom role](https://learn.microsoft.com/azure/role-based-access-control/custom-roles) with necessary permissions. [Reference link](https://docs.openshift.com/container-platform/4.14/installing/installing_azure/installing-azure-account.html#minimum-required-permissions-ipi-azure_installing-azure-account).
-
 - **Microsoft Entra (Former Azure AD)**:
   - Have a member user of the tenant or a guest with **Application administrator** role for the tooling to create an application and service principal on your behalf for the cluster.
- 
 - **Terraform**: If you plan to use Terraform for the deployment of the cluster, [see here](https://github.com/rh-mobb/terraform-aro-permissions) the required permissions.
 
 ## Azure Integration
 
 - **Resource Provider**:
   - Register the `Microsoft.RedHatOpenshift` resource provider. [Reference link](https://learn.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider).
-
 - **Red Hat Integration**:
   - Obtain a [Red Hat pull secret](https://console.redhat.com/openshift/install/azure/aro-provisioned) (Recommended for access to additional content like Operators and Container Registries).
 
@@ -55,7 +50,6 @@ This step is optional since you can use the built-in domain.
 - **Virtual Network**:
   - Create or provide a VNet with two subnets for master and worker nodes.
   - Ensure Pod and Service Network CIDRs do not overlap with other network ranges. [Reference link.](https://learn.microsoft.com/azure/openshift/concepts-networking#networking-for-azure-red-hat-openshift)
-
 - **Outbound Traffic**:
   - Default deployment is with `outboundType: LoadBalancer`, meaning that a Public IP is associated with the Load Balancer for the cluster egress connectivity.
   - To restrict Internet Egress, set `--outbound-type` to `UserDefinedRouting`.
@@ -66,7 +60,6 @@ This step is optional since you can use the built-in domain.
 - **Egress Lockdown**:
   - Note that ARO clusters do not require Internet connectivity. Learn about [Egress Lockdown](https://learn.microsoft.com/azure/openshift/concepts-egress-lockdown).
   - All of the required connections for an ARO cluster are proxied through the service, see the [list of endpoints here](https://learn.microsoft.com/azure/openshift/howto-restrict-egress#endpoints-proxied-through-the-aro-service).
-
 - **Create the Cluster**:
   - Proceed to [create your ARO cluster](/aro/private-cluster/) once all prerequisites are met.
 
