@@ -10,7 +10,7 @@ Before deploying an ARO cluster, ensure you meet the following prerequisites:
 
 ## Setup Tools
 
-- **Install Azure CLI**: Essential for managing Azure resources. Refer to the [oficial documentation](https://learn.microsoft.com/cli/azure/install-azure-cli)
+- **Install Azure CLI**: Essential for managing Azure resources. Refer to the [official documentation](https://learn.microsoft.com/cli/azure/install-azure-cli)
 
 ## Verify Resources
 
