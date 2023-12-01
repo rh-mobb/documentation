@@ -61,6 +61,6 @@ This step is optional since you can use the built-in domain.
   - Note that ARO clusters do not require Internet connectivity. Learn about [Egress Lockdown](https://learn.microsoft.com/azure/openshift/concepts-egress-lockdown).
   - All of the required connections for an ARO cluster are proxied through the service, see the [list of endpoints here](https://learn.microsoft.com/azure/openshift/howto-restrict-egress#endpoints-proxied-through-the-aro-service).
 - **Create the Cluster**:
-  - Proceed to [create your ARO cluster](/aro/private-cluster/) once all prerequisites are met.
+  - Proceed to [create your ARO cluster](/experts/aro/private-cluster/) once all prerequisites are met.
 
 For a detailed step-by-step guide on creating your ARO cluster, refer to the official [ARO documentation](https://learn.microsoft.com/en-us/azure/openshift/).
