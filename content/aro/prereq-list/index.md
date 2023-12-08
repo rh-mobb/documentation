@@ -57,10 +57,15 @@ This step is optional since you can use the built-in domain.
 
 ## Cluster Creation
 
+- **Private vs Public Clusters**:
+  - Private Cluster:
+    - This is typically the most suitable option for production use. A Private Cluster makes the cluster API and `*.apps` endpoints private. Utilize Azure Frontdoor for Internet access to applications on a private cluster. This approach significantly enhances security by keeping the cluster and Azure resources private, managing traffic at the edge, and offering benefits such as Web Application Firewall (WAF), DDoS protection, SSL management, and offloading. For detailed implementation guidance, refer to [Azure Frontdoor documentation](/experts/aro/frontdoor/).
+  - Public Cluster:
+    - Opt for a Public Cluster only in situations like a "sandbox cluster" or where establishing a private method for console and API access is not feasible or desired, since the cluster API and `*.apps` endpoints will be exposed to the Internet.
 - **Egress Lockdown**:
   - Note that ARO clusters do not require Internet connectivity. Learn about [Egress Lockdown](https://learn.microsoft.com/azure/openshift/concepts-egress-lockdown).
   - All of the required connections for an ARO cluster are proxied through the service, see the [list of endpoints here](https://learn.microsoft.com/azure/openshift/howto-restrict-egress#endpoints-proxied-through-the-aro-service).
 - **Create the Cluster**:
-  - Proceed to [create your ARO cluster](/aro/private-cluster/) once all prerequisites are met.
+  - Proceed to [create your ARO cluster](/experts/aro/private-cluster/) once all prerequisites are met.
 
 For a detailed step-by-step guide on creating your ARO cluster, refer to the official [ARO documentation](https://learn.microsoft.com/en-us/azure/openshift/).
