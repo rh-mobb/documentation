@@ -7,7 +7,7 @@ authors:
   - Thatcher Hubbard 
 ---
 
-Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certificate of componentRoutes post-install. These are the OAuth, Console, and Downloads routes. For example, the default ROSA console uses the built-in domain  https://console-openshift-console.apps.<cluster_name>.<random>.p1.openshiftapps.com. You can now specify a custom domain, for example test.example.com, and the ROSA console will be available at a URL such as https://console-openshift-console.test.example.com.   
+Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certificate of component Routes post-install. These are the `OAuth`, `Console`, and `Downloads` routes. For example, the default ROSA console uses the built-in domain `https://console-openshift-console.apps.<cluster_name>.<random>.p1.openshiftapps.com`. You can now specify a custom domain, for example `test.example.com`, and the ROSA console will be available at a URL such as `https://console-openshift-console.test.example.com`.   
 
 ## Prerequisites
 
@@ -16,8 +16,8 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
 * Route53 Hosted Zone
 * A custom domain
 * A wildcard certificate 
-* rosa cli
-* oc cli
+* `rosa` cli
+* `oc` cli
 
 ## Deploy 
 
