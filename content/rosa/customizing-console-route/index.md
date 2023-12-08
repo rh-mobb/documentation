@@ -7,7 +7,7 @@ authors:
   - Thatcher Hubbard 
 ---
 
-Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certificate of component Routes post-install. These are the `OAuth`, `Console`, and `Downloads` routes. For example, the default ROSA console uses the built-in domain `https://console-openshift-console.apps.<cluster_name>.<random>.p1.openshiftapps.com`. You can now specify a custom domain, for example `test.example.com`, and the ROSA console will be available at a URL such as `https://console-openshift-console.test.example.com`.   
+Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certificate of component Routes post-install. These are the `OAuth`, `Console`, and `Downloads` routes. For example, the default ROSA console uses the built-in domain `https://console-openshift-console.apps.<cluster_name>.<random>.p1.openshiftapps.com`. You can now specify a custom domain, for example `test.example.com`, and the ROSA console will be available at a URL such as `https://console-openshift-console.test.example.com`. This guide will walk you through how to customize the console url for a ROSA Classic cluster (not tested on ROSA HCP yet).
 
 ## Prerequisites
 
@@ -34,8 +34,6 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
    
      ```bash
      export SCRATCH_DIR=/tmp/scratch
-     export ZONE_ID=$(aws route53 list-hosted-zones-by-name --output json \
-     --dns-name "$DOMAIN." --query 'HostedZones[0]'.Id --out text | sed 's/\/hostedzone\///')
      mkdir -p $SCRATCH_DIR
      ```
 
@@ -110,7 +108,7 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
      oc whoami --show-console
      ```
 
-1. Navigate to your console domain in the browser to access the login page. 
+1. Navigate to your console domain in the browser to access the login page. If logged into the console already, logout before logging back in again. 
  
    > The Oauth componentRoute is also accessible on the custom domain
 
