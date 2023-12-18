@@ -26,7 +26,7 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
 
 * [A ROSA cluster deployed with STS](/experts/rosa/sts/) - **Hub Account**
 * Secondary AWS Account (no cluster required) - **Spoke Account**
-* Helm 3
+  * Accounts must have network access
 * aws CLI
 * oc CLI
 * jq
@@ -62,30 +62,30 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
     export SPOKE_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
     ```
 
+    {{% alert state="warning" %}}This method may not work Cross Region{{% /alert %}}
+
 ## Create ODIC Provider on the Spoke Account
 
 1. Obtain the ARN for the OpenID Connect associated with your Openshift Environment from the **Hub Account**
 
-    Find using the list from command below:
+    Find using command below:
 
     ```bash
-    aws iam list-open-id-connect-providers
+    aws iam list-open-id-connect-providers | grep $OIDC_ENDPOINT
     ```
-
-    {{% alert state="info" %}}If multiple ARNs exist use `aws iam get-open-id-connect-provider --open-id-connect-provider-arn <ARN>` to find the one that includes `openshift` in the client list.{{% /alert %}}
 
     ```bash
     export OIDC_ARN=<OIDC's ARN>
     ```
 
-1. Obtain the OIDC thumbprint from the OIDC Provider in the **Hub Account**
+2. Obtain the OIDC thumbprint from the OIDC Provider in the **Hub Account**
 
     ```bash
     export OIDC_THUMBPRINT=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn $OIDC_ARN --query ThumbprintList --output text)
     echo $OIDC_THUMBPRINT
     ```
 
-1. On the **Spoke Account** create a new OpenID Connect Provider file using the values obtained from the hub account
+3. On the **Spoke Account** create a new OpenID Connect Provider file using the values obtained from the hub account
 
     {{% alert state="warning" %}}Make sure the `OIDC_ENDPOINT` and `OIDC_THUMBPRINT` variables have been transferred from the hub to spoke account
     +
@@ -99,7 +99,7 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
 
 ## Create Trust Policy between Provider and IAM Role
 
-1. Create IAM Role trust policy document the **Spoke Account**
+1. Create IAM Role trust policy document on the **Spoke Account**
 
     ```json
     cat <<EOF > trust-policy-spoke.json
