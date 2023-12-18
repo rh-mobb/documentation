@@ -1,4 +1,4 @@
-# Documentation from the MOBB/MOST team
+# Documentation from the MOBB team
 
 ## Welcome to the MOBB Ninja Documentation repo!
 
