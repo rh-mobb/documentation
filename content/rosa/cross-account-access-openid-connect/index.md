@@ -75,7 +75,7 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
     {{% alert state="info" %}}If multiple ARNs exist use `aws iam get-open-id-connect-provider --open-id-connect-provider-arn <ARN>` to find the one that includes `openshift` in the client list.{{% /alert %}}
 
     ```bash
-    export OIDC_ARN = <OIDC's ARN>
+    export OIDC_ARN=<OIDC's ARN>
     ```
 
 1. Obtain the OIDC thumbprint from the OIDC Provider in the **Hub Account**
@@ -87,7 +87,9 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
 
 1. On the **Spoke Account** create a new OpenID Connect Provider file using the values obtained from the hub account
 
-    >Important: Make sure the `OIDC_ENDPOINT` and `OIDC_THUMBPRINT` variables have been transferred from the hub to spoke account
+    {{% alert state="warning" %}}Make sure the `OIDC_ENDPOINT` and `OIDC_THUMBPRINT` variables have been transferred from the hub to spoke account
+    +
+    Tip: Can be done by copying the output from `env | grep OIDC_` command into your Spoke Account{{% /alert %}}
 
     ```bash
     aws iam create-open-id-connect-provider \
@@ -135,6 +137,8 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
 
 Verify our capability to assume the role established in our spoke account using the recently generated OIDC provider.
 
+1. Login to Openshift on the **Spoke Account**
+
 1. Create an OpenShift project
 
     ```bash
@@ -146,16 +150,18 @@ Verify our capability to assume the role established in our spoke account using 
     ```bash
     oc annotate -n my-application-ca serviceaccount default \
       eks.amazonaws.com/role-arn=$SPOKE_ROLE_ARN
+    
+    oc describe sa default -n my-application-ca
     ```
 
-1. Create a Pod with the AWS CLI
+1. Create a Pod using a container that has access to the AWS CLI
 
     ```yaml
     cat << EOF | oc apply -f -
     apiVersion: v1
     kind: Pod
     metadata:
-      name: my-application-ca2
+      name: my-application-ca
       labels:
         app: my-application-ca
     spec:
