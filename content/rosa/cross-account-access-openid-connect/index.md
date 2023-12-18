@@ -72,7 +72,7 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
     aws iam list-open-id-connect-providers
     ```
 
-    > Note: If multiple ARNs exist use `aws iam get-open-id-connect-provider --open-id-connect-provider-arn <ARN>` to find the one that includes `openshift` in the client list
+    {{% alert state="info" %}}If multiple ARNs exist use `aws iam get-open-id-connect-provider --open-id-connect-provider-arn <ARN>` to find the one that includes `openshift` in the client list.{{% /alert %}}
 
     ```bash
     export OIDC_ARN = <OIDC's ARN>
@@ -175,15 +175,17 @@ Verify our capability to assume the role established in our spoke account using 
     EOF
     ```
 
-1. Verify the Pod is using the correct AWS identity, should be the role we created in our Spoke Account
+1. Verify the Pod is using the correct AWS identity
 
     ```bash
     oc exec -it my-application-ca -- aws sts get-caller-identity
     ```
 
+{{% alert state="success" %}}Should be showing the role we created in our Spoke Account{{% /alert %}}
+
 ## Stretch Goal
 
-Utilize the previously established custom OIDC provider to finalize the [AWS Secrets Experts Article](../aws-secrets-manager-csi/index.md), where the SecretManager secret is stored in your **Spoke Account**.
+Utilize the previously established custom OIDC provider to finalize the [AWS Secrets Experts Article](/experts/rosa/ecr-secret-operator), where the SecretManager secret is stored in your **Spoke Account**.
 
 ## Cleanup
 
