@@ -28,6 +28,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [AWS EFS on ROSA](/experts/rosa/aws-efs)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/experts/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
+* [Access AWS Cross Account resources using OIDC](/experts/rosa/cross-account-access-openid-connect)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](/experts/rosa/ack)
 * [Verify Required Permissions for a ROSA STS deployment](/experts/rosa/verify-permissions)
 * [STS OIDC flow in ROSA Operators](/experts/rosa/sts-oidc-flow)
