@@ -1,5 +1,5 @@
 ---
-date: '2023-12-20'
+date: '2023-12-18'
 title: Cross-account Access using Custom OIDC Provider
 tags: ["AWS", "ROSA", "IRSA", "IAM"]
 authors:
