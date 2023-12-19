@@ -116,7 +116,7 @@ Get the NLB environment variables:
    ```
  
   Create an alias record json statement.
-   ```json
+   ```bash
    cat <<EOF > $SCRATCH_DIR/add_alias_record.json
    {
 	   "Comment":"Adding an alias record for the NLB in Route 53",
