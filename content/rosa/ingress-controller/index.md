@@ -34,6 +34,8 @@ If you are adding an additional Ingress Controller to the openshiftapps.com doma
    export HOSTED_ZONE_ID=ABCDEFGHEXAMPLE
    export HOSTED_ZONE_REGION=us-east-2
    export DOMAIN=lab.domain.com   #Custom Hosted Zone Domain for apps 
+   export SCRATCH_DIR=/tmp/scratch
+   mkdir -p $SCRATCH_DIR
    ```
 
 ## Create the Ingress Controller.
