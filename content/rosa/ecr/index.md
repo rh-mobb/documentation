@@ -82,7 +82,7 @@ ECR has several pre-defined policies that give permissions to interact with the 
 4. Set Registry ID
 
    ```
-   REGISTRYID=`aws ecr describe-repositories --repository-name hello-ecr | jq -r '.repositories[].registryId'`
+   REGISTRYID=`aws ecr describe-repositories --repository-name $REGISTRY | jq -r '.repositories[].registryId'`
    ```
 
 5. Log into ECR  
