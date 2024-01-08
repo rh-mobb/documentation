@@ -29,7 +29,6 @@ If you are adding an additional Ingress Controller to the openshiftapps.com doma
    export INGRESS_NAME=public-ingress #name of the new ingress controller
    export CERT_NAME="lab-domain-com-tls-cert" 
    export SCOPE="External" 
-   export SCRATCH_DIR=/tmp/scratch
    export AWS_PAGER=""
    export HOSTED_ZONE_ID=ABCDEFGHEXAMPLE
    export HOSTED_ZONE_REGION=us-east-2
