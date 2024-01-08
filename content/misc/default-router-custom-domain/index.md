@@ -7,6 +7,8 @@ authors:
   - Connor Wooley
 ---
 
+> Note: This page is only valid for clusters using the Custom Domain Operator (CDO), which are ROSA clusters prior to version 4.14
+
 OSD and ROSA supports [custom domain operator](https://docs.openshift.com/rosa/applications/deployments/osd-config-custom-domains-applications.html) to serve application custom domain, which provisions openshift ingress controller and cloud load balancers. However, when a route with custom domain is created, both default router and custom domain router serve routes. This article describes how to use route labels to stop default router from serving custom domain routes.
 
 ## Prerequisites
