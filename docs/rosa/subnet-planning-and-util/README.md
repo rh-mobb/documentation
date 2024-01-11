@@ -1,3 +1,11 @@
+---
+date: "2023-01-06"
+title: "VPC and Subnet IP Address Considerations with ROSA"
+tags: ["rosa","vpc", "subnet"]
+authors:
+   - Thatcher Hubbard
+---
+
 # VPC and Subnet IP Address Considerations with ROSA
 
 ROSA clusters can be built to be highly available using the fundamental capability that underlies most HA configurations on AWS: Availability Zones. By spreading the resources of a cluster across three separate (but regionally co-located) datacenters, ROSA users can ensure the cluster continues to run even if an entire AWS AZ goes down.
