@@ -234,6 +234,17 @@ main {
   gap: 1rem;
 }
 
+#hero .hero-cta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--rh-space-lg, 16px);
+}
+
+#hero .hero-cta rh-cta[variant="brick"] {
+  max-width: max-content;
+}
+
+
 @media screen and (min-width: 576px) {
   #hero {
     padding-block: var(--rh-space-2xl, 48px);
@@ -377,13 +388,14 @@ main {
   color: var(--rh-color-text-primary-on-dark, #ffffff);
 }
 
-rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a {
+rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a {
   color: var(--rh-color-interactive-blue-lighter, #73bcf7);
 }
 
-rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a:hover {
+rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a:hover {
   color: var(--rh-color-interactive-blue-lightest, #bee1f4);
 }
+
 
 .collaborate {
   position: relative;
@@ -399,9 +411,15 @@ rh-context-provider:is([color-palette="dark"], [color-palette="darker"], [color-
 }
 
 .collaborate .cta-group {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--rh-space-lg, 16px);
+}
+
+@media (min-width: 567px) {
+  .collaborate .cta-group {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .highlight {

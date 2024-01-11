@@ -1,4 +1,4 @@
-  <rh-context-provider color-palette="dark">
+  <rh-surface color-palette="dark">
     <section class="collaborate">
       <div class="container">
         <h2>Interested in contributing to these docs?</h2>
@@ -10,11 +10,11 @@
             {{- $Site := .Site }}
             {{- if $File }}
               {{- with $File.Path }}
-                <rh-cta variant="brick" icon="edit"><a href="{{ $Site.Params.editURL }}{{ replace $File.Dir "\\" "/" }}{{ $File.LogicalName }}" target="blank" data-analytics-linktype="cta">Edit this page</a></rh-cta>
+                <rh-cta variant="brick" icon="edit" id="github-edit"><a href="{{ $Site.Params.editURL }}{{ replace $File.Dir "\\" "/" }}{{ $File.LogicalName }}" target="blank" data-analytics-linktype="cta">Edit this page</a></rh-cta>
               {{- end }}
             {{- end }}
           {{- end }}
         </div>
       </div>
     </section>
-  </rh-context-provider>
+  </rh-surface>
