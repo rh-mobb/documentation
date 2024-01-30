@@ -34,7 +34,7 @@ aws iam create-policy \
 
 ```
 aws iam create-user --user-name ecr-bot
-aws create-access-key --user-name ecr-bot
+aws iam create-access-key --user-name ecr-bot
 aws iam attach-user-policy --policy-arn arn:aws:iam::[ACCOUNT_ID]:policy/ECRLoginPolicy --user-name ecr-bot
 ```
 

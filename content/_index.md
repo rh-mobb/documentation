@@ -28,6 +28,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [AWS EFS on ROSA](/experts/rosa/aws-efs)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/experts/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
+* [Access AWS Cross Account resources using OIDC](/experts/rosa/cross-account-access-openid-connect)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](/experts/rosa/ack)
 * [Verify Required Permissions for a ROSA STS deployment](/experts/rosa/verify-permissions)
 * [STS OIDC flow in ROSA Operators](/experts/rosa/sts-oidc-flow)
@@ -38,9 +39,11 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Connect to RDS from ROSA with STS](/experts/rosa/sts-rds)
 * [Create an AWS Client VPN connection for a private ROSA Cluster](/experts/rosa/vpn)
 * [ROSA Break Glass Troubleshooting](/experts/rosa/break-glass)
+* [Add an Ingress Controller to ROSA with a custom domain](/experts/rosa/ingress-controller)
 
 ### ARO
 
+* [Prerequisites Checklist to Deploy ARO Cluster](/experts/aro/prereq-list)
 * [Deploying private ARO Cluster with Jump Host access](/experts/aro/private-cluster)
   * [Using the Egressip Ipam Operator with a Private ARO Cluster](/experts/aro/egress-ipam-operator)
 * [Considerations for Disaster Recovery with ARO](/experts/aro/disaster-recovery)
@@ -143,6 +146,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Red Hat Cost Management for Cloud Services](/experts/misc/cost-management/)
 * [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
 * [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
+* [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
 
 ## Fixes / Workarounds
 

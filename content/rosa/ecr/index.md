@@ -12,6 +12,9 @@ authors:
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 * [Openshift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.11+
 * [Podman Desktop](https://podman-desktop.io/)
+* [ROSA Cluster](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-sts-auto.html)
+
+> Note your ROSA cluster must be a classic STS cluster
 
 ### Background
 Quick Introduction by Ryan Niksch & Charlotte Fung on [YouTube](https://youtu.be/1PBFtpCIMBo).
@@ -38,23 +41,11 @@ A second, and preferred method, is to attach an ECR Policy to your cluster's wor
 
 ## Attach ECR Policy Role
 
-You can attach an ECR policy to your cluster giving the cluster permissions to pull images from your registries.  ROSA worker machine instances comes with pre-defined IAM roles, named differently depending on whether its a STS cluster or a non-STS cluster.
-
-### STS Cluster Role
-
-`ManagedOpenShift-Worker-Role` is the IAM role attached to ROSA STS compute instances.
-
-### non-STS Cluster Role
-
-`<cluster name>-<identifier>-worker-role` is the IAM role attached to ROSA non-STS compute instances.
-
-> Tip: To find the non-STS cluster role run the following command with your cluster name:
-
-```
-aws iam list-roles | grep <cluster_name>
-```
+You can attach an ECR policy to your cluster giving the cluster permissions to pull images from your registries.  ROSA worker machine instances comes with pre-defined IAM roles (`ManagedOpenShift-Worker-Role`) which we can add the ECR policy to.
 
 ![resulting output](./images/nonsts-roles.png)
+
+> Note: If you used a different prefix for your Account Roles, you will need to change the following `aws iam attach-role-policy` command to suit.
 
 ## Configure ECR with ROSA
 
@@ -91,7 +82,7 @@ ECR has several pre-defined policies that give permissions to interact with the 
 4. Set Registry ID
 
    ```
-   REGISTRYID=`aws ecr describe-repositories --repository-name hello-ecr | jq -r '.repositories[].registryId'`
+   REGISTRYID=`aws ecr describe-repositories --repository-name $REGISTRY | jq -r '.repositories[].registryId'`
    ```
 
 5. Log into ECR  
@@ -118,13 +109,6 @@ ECR has several pre-defined policies that give permissions to interact with the 
    podman push $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
    ```
 
-9. Create OC pull secret for new ECR registry
-   
-   ```
-   oc create secret docker-registry ecr-pull-secret  --docker-server=$REGISTRYID.dkr.ecr.$REGION.amazonaws.com  \
-   --docker-username=AWS --docker-password=$(aws ecr get-login-password)  --namespace=hello-ecr
-   ```
-
 10. Create a new project  
 
    ```
@@ -134,7 +118,8 @@ ECR has several pre-defined policies that give permissions to interact with the 
 11. Create a new app using the image on ECR  
 
    ```
-   oc new-app --name hello-ecr --image $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
+   oc new-app --name hello-ecr --allow-missing-images \
+     --image $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest 
    ```
 
 12. View a list of pods in the namespace you created:

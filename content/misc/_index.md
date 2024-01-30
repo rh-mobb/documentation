@@ -18,3 +18,4 @@ skipMetadata: true
 * [OADP](./oadp)
 * [Sharing Common Images](./common-images-namespace) 
 * [Stop Default Router from Serving Custom Domains](./default-router-custom-domain)
+* [Configuring OpenShift Dev Spaces to serve Custom Domains](./devspaces-custom-domain)

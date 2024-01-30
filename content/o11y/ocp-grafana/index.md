@@ -57,7 +57,7 @@ Since OpenShift uses Prometheus for both Cluster and User Workload metrics, its 
 1. Add the Managed OpenShift Black Belt helm repo
 
     ```bash
-    helm repo add mobb https://mobb.github.io/helm-charts
+    helm repo add mobb https://rh-mobb.github.io/helm-charts/
     ```
 
 1. Deploy Grafana
