@@ -26,6 +26,19 @@ This article will go over using the Terraform's official [azurerm provider](http
 
 * [ROSA CLI](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-installing-rosa.html)
 * [Terraform](https://developer.hashicorp.com/terraform/install)
+* (Optional) Resource Group and [Storage Account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview#storage-account-name) used to store state information
+  * Create a blob container named `tfstate` using the storage account
+
+Create the following environment variables
+
+```sh
+export CLIENT_ID=xxxxxx
+
+# Resource group and storage provider class for state storage
+export STORAGE_ACCOUNT_RESOURCE_GROUP=xxxxxxx
+export STORAGE_ACCOUNT_NAME=xxxxxxx
+export STORAGE_CONTAINER_NAME=tfstate
+```
 
 ## Create Terraform Config
 
@@ -60,12 +73,13 @@ The [azurerm backend](https://developer.hashicorp.com/terraform/language/setting
           version = "3.89.0"
         }
       }
+
+      // Backend state is recommended but not required, this block can be removed for testing environments
       backend "azurerm" {
-        // Note these values need to be modified and can not use the resource group being created during this terraform install
-        resource_group_name  = "<RESOURCE_GROUP_NAME>"
-        storage_account_name = "<STORAGE_ACCOUNT>"
-        container_name       = "tfstate"
-        key                  = "prod.terraform.tfstate"
+        resource_group_name  = "$STORAGE_ACCOUNT_RESOURCE_GROUP"
+        storage_account_name = "$STORAGE_ACCOUNT_NAME"
+        container_name       = "$STORAGE_CONTAINER_NAME"
+        key                  = "example.terraform.tfstate"
       }
     }
 
@@ -78,7 +92,7 @@ The [azurerm backend](https://developer.hashicorp.com/terraform/language/setting
     EOF
     ```
 
-    {{% alert state="info" %}} The backend's resource group and storage account must be created beforehand and values provided. Note this is not required but it is recommended in order to store the state file. {{% /alert %}}
+    {{% alert state="info" %}} Note that the Backend `azurerm` his is not required but it is recommended in order to store the state file. {{% /alert %}}
 
 ### Reference Install Service Principle
 
@@ -120,7 +134,7 @@ If you want to create a new Application/SP the [example in the module's full doc
 
     ```properties
     cat <<EOF > terraform.tfvars 
-    client_id = "<CLIENT_ID>"
+    client_id = "$CLIENT_ID"
     EOF
     ```
 
@@ -234,7 +248,7 @@ If you want to create a new Application/SP the [example in the module's full doc
     resource "azurerm_role_assignment" "role_network1" {
       scope                = azurerm_virtual_network.example.id
       role_definition_name = "Network Contributor"
-      // Note: remove `data.` prefix to create a new service principal
+      // Note: remove "data." prefix to create a new service principal
       principal_id         = data.azuread_service_principal.example.object_id
     }
 
