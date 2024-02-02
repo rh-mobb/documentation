@@ -34,7 +34,7 @@ Create the following environment variables
 ```sh
 export CLIENT_ID=xxxxxx
 export GUID=$(tr -dc a-z0-9 </dev/urandom | head -c 6; echo)
-export CLUSTER_DOMAIN=$GUID.azure.mobb.ninja
+export CLUSTER_DOMAIN=$GUID-azure-ninja
 
 # Resource group and storage provider class for state storage
 export STORAGE_ACCOUNT_RESOURCE_GROUP=xxxxxxx
