@@ -73,6 +73,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Use Azure Blob storage Container Storage Interface (CSI) driver on an ARO cluster](/experts/aro/blob-storage-csi)
 * [Configure ARO with Cross-Tenant Encryption Keys](/experts/aro/cross-tenant-encryption-keys)
 * [Deploying Private ARO clusters with Custom Domains](/experts/aro/custom-domain-private-cluster)
+* [Deploying ARO using azurerm Terraform Provider](/experts/aro/terraform-install)
 * [Deploying ACM and ODF for ARO Disaster Recovery](/experts/aro/acm-odf-aro)
 
 ### GCP
