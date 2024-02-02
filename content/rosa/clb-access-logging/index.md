@@ -64,4 +64,6 @@ This guide will show you how to enable access logging on the default Classic Loa
     service.beta.kubernetes.io/aws-load-balancer-access-log-enabled='true'
     ```
 
-Congratulations! You have now enabled access logging on your Classic Load Balancer.
+Congratulations! You have now enabled access logging on your Classic Load Balancer. Your logs will begin to flow into the bucket that you have created, as shown below:
+
+![AWS Console - Amazon S3 Bucket Directory Listing](bucket.png)
