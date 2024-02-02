@@ -22,6 +22,11 @@ variable "cluster_name" {
     default = "MyExampleCluster"
 }
 
+variable "cluster_domain" {
+    type = string
+    default = "ebjk6v.azure.mobb.ninja"
+}
+
 variable "cluster_version" {
     type = string
     default = "4.12.25"

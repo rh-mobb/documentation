@@ -33,6 +33,8 @@ Create the following environment variables
 
 ```sh
 export CLIENT_ID=xxxxxx
+export GUID=$(tr -dc a-z0-9 </dev/urandom | head -c 6; echo)
+export CLUSTER_DOMAIN=$GUID.azure.mobb.ninja
 
 # Resource group and storage provider class for state storage
 export STORAGE_ACCOUNT_RESOURCE_GROUP=xxxxxxx
@@ -277,7 +279,7 @@ If you want to create a new Application/SP the [example in the module's full doc
       resource_group_name = azurerm_resource_group.example.name
 
       cluster_profile {
-        domain = random_string.random.result
+        domain = var.cluster_domain
         version = var.cluster_version
         pull_secret = var.pull_secret
       }
@@ -317,13 +319,6 @@ If you want to create a new Application/SP the [example in the module's full doc
         azurerm_role_assignment.role_network2,
       ]
     }
-
-    // Gives a random 6 character string to use for our domain name
-    resource "random_string" "random" {
-      length           = 6
-      upper            = false
-      special          = false
-    }
     EOF
     ```
 
@@ -335,6 +330,11 @@ If you want to create a new Application/SP the [example in the module's full doc
     variable "cluster_name" {
         type = string
         default = "MyExampleCluster"
+    }
+
+    variable "cluster_domain" {
+        type = string
+        default = "$CLUSTER_DOMAIN"
     }
 
     variable "cluster_version" {

@@ -6,9 +6,9 @@ terraform {
     }
   }
   backend "azurerm" {
-    // resource_group_name and storage_account_name need to be modified
-    resource_group_name  = "openenv-XXXX"
-    storage_account_name = "statestorageXXXX"
+    // Note these values need to be modified and can not use the resource group being created during this terraform install
+    resource_group_name  = "openenv-xgs6l"
+    storage_account_name = "statestorage321"
     container_name       = "tfstate"
     key                  = "prod.terraform.tfstate"
   }
@@ -99,7 +99,7 @@ resource "azurerm_redhat_openshift_cluster" "example" {
   resource_group_name = azurerm_resource_group.example.name
 
   cluster_profile {
-    domain = random_string.random.result
+    domain = var.cluster_domain
     version = var.cluster_version
     pull_secret = var.pull_secret
   }
@@ -138,13 +138,6 @@ resource "azurerm_redhat_openshift_cluster" "example" {
     azurerm_role_assignment.role_network1,
     azurerm_role_assignment.role_network2,
   ]
-}
-
-// Gives a random 6 character string to use for our domain name
-resource "random_string" "random" {
-  length           = 6
-  upper            = false
-  special          = false
 }
 
 ####################
