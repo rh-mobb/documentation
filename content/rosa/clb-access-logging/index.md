@@ -1,5 +1,5 @@
 ---
-date: '2022-08-19'
+date: '2024-02-01'
 title: Configuring AWS CLB Access Logging
 tags: ["AWS", "ROSA"]
 aliases: ['/experts/rosa/clb-access-logging']

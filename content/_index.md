@@ -40,6 +40,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Create an AWS Client VPN connection for a private ROSA Cluster](/experts/rosa/vpn)
 * [ROSA Break Glass Troubleshooting](/experts/rosa/break-glass)
 * [Add an Ingress Controller to ROSA with a custom domain](/experts/rosa/ingress-controller)
+* [Configuring AWS CLB Access Logging](/experts/rosa/clb-access-logging/)
 
 ### ARO
 
