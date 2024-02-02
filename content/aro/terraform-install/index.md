@@ -385,6 +385,16 @@ Only thing left is to run and validate our Terraform config works succesfully
       `az aro list-credentials --name <CLUSTER_NAME> --resource-group aro-example-resource-group -o tsv --query kubeadminPassword`
       {{% /alert %}}
 
+  If there are issues with the commands compare your terraform configuration to the solution [here](https://github.com/jland-redhat/documentation/tree/main/content/aro/terraform-install/solution).
+
+## Stretch Goal
+
+Retrieve your `tfstate` file from the Blob Storage container created earlier (or locally if the backend was not used). Review the information stored inside of the state file to identify the different Azure Resources that were created when the `terraform apply` command was run.
+
+![Retrieve Blog Storage](assets/retrieve-blob-storage.png)
+
 ## Conclusion
 
-In this article we showed how to build out a Terraform configuration and apply it to your Azure Account.
+This article demonstrates the deployment of OpenShift clusters in a consistent manner using Terraform and the azurerm provider. The provided configuration is highly adaptable, allowing for more intricate and customizable deployments. For instance, it could easily be modified for the use of a custom domain zone with your cluster.
+
+Utilizing this provider allows your enterprise to streamline maintenance efforts, as the centralized `main.tf` and `variable.tf` files require minimal changes. Deploying new Azure Red Hat OpenShift (ARO) clusters simply involves updating the variables in the `terraform.tfvars` file.
