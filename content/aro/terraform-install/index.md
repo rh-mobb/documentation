@@ -25,7 +25,7 @@ This article will go over using the Terraform's official [azurerm provider](http
 
 ## Prerequisites
 
-* [ROSA CLI](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-installing-rosa.html)
+* [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 * [Terraform](https://developer.hashicorp.com/terraform/install)
 * (Optional) Resource Group and [Storage Account](https://learn.microsoft.com/en-us/azure/storage/common/storage-account-overview#storage-account-name) used to store state information
   * Create a blob container named `tfstate` using the storage account
@@ -374,6 +374,7 @@ If you want to create a new Application/SP the [example in the module's full doc
 
 Only thing left is to run and validate our Terraform config works succesfully
 
+   1. Log into your Azure cluster with the `az login` command.
    1. Run `terraform init` in order to download the required providers
    1. Inside the directly optionally run `terraform plan` in order to view the resources that will be created during the apply.
    1. Run `terraform apply` to start the creation of the resources, this should prompt you for
