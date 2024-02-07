@@ -34,7 +34,7 @@ This guide will show you how to migrate the default Red Hat OpenShift Service on
     Your output may have one or more ingresses listed, as shown below:
 
     ```
-    ID    APPLICATION ROUTER                                  PRIVATE  DEFAULT  ROUTE SELECTORS  LB-TYPE  EXCLUDED NAMESPACE  WILDCARD POLICY      NAMESPACE OWNERSHIP  HOSTNAME  TLS SECRET REF
+    ID    APPLICATION ROUTER                                      PRIVATE  DEFAULT  ROUTE SELECTORS  LB-TYPE  EXCLUDED NAMESPACE  WILDCARD POLICY      NAMESPACE OWNERSHIP  HOSTNAME  TLS SECRET REF
     ab12  https://apps.my-rosa-cluster.fx4f.p1.openshiftapps.com  no       yes                       classic                      WildcardsDisallowed  Strict
     ```
 
