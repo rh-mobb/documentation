@@ -1,6 +1,6 @@
 ---
 date: '2024-02-06'
-title: Migrating the Default Ingress Controller from a CLB to NLB
+title: Migrating ROSA Ingress Controllers from a CLB to NLB
 tags: ["AWS", "ROSA"]
 aliases: ['/experts/rosa/clb-to-nlb-migration']
 authors:
@@ -38,9 +38,9 @@ In version 4.14 of ROSA, Red Hat introduced changes to IngressControllers to giv
     ab12  https://apps.my-rosa-cluster.fx4f.p1.openshiftapps.com  no       yes                       classic                      WildcardsDisallowed  Strict
     ```
 
-    {{% alert state="danger" %}}If your `LB-TYPE` is set to NLB, do not follow the rest of this guide, your load balancer has already been upgraded.{{% /alert %}}
+    {{% alert state="danger" %}}If your `LB-TYPE` is set to `nlb`, do not follow the rest of this guide, your load balancer has already been upgraded.{{% /alert %}}
 
-    Take note of the ID, which you will need in the next step.
+    Take note of the `ID`, which you will need in the next step.
 
 1. Run the following command, making sure to update the ID of the ingress you wish to upgrade from the above step:
 
