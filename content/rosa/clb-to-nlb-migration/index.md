@@ -9,7 +9,7 @@ authors:
 
 This guide will show you how to migrate the default Red Hat OpenShift Service on AWS (ROSA) IngressController from an AWS Classic Load Balancer to an AWS Network Load Balancer. 
 
-In version 4.14 of ROSA, Red Hat introduced changes to IngressControllers to give customers more control over their workloads and configuration. The operation below requires a cluster running version 4.14 or higher. To request early access to this additional functionality in version 4.13, please contact Red Hat support and open a case to request access.
+[In version 4.14 of ROSA, Red Hat introduced changes to IngressControllers to give customers more control over their workloads and configuration.](https://access.redhat.com/articles/7028653) The operation below requires a cluster running version 4.14 or higher. To request early access to this additional functionality in version 4.13, please [contact Red Hat support and open a case to request access](https://access.redhat.com/support/).
 
 ## Prerequisites
 
