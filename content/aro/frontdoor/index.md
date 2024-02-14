@@ -226,7 +226,8 @@ After we have the cluster up and running, we need to create a private link servi
    --resource-group $ARORG \
    --profile-name $AFD_NAME \
    --custom-domain-name $AFD_MINE_CUSTOM_DOMAIN_NAME \
-   --query "validationProperties.validationToken")
+   --query "validationProperties.validationToken"
+   -o tsv)
    ```
 
 1. Create a DNS Zone
