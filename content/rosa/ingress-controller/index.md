@@ -21,7 +21,7 @@ Starting with OpenShift 4.14, ROSA supports adding additional Ingress Controller
 
 1. Export few environment variables
 > **Important**: The variables below can be customized to fit your needs for your ingress controller.
-**CERT_NAME** this is the name of the tls secret for the domain of your ingress controller.  This tls secret must be stored in the openshit-ingress namespace.  
+**CERT_NAME** this is the name of the tls secret for the domain of your ingress controller.  This tls secret must be stored in the openshift-ingress namespace.
 If you are adding an additional Ingress Controller to the openshiftapps.com domain that comes with ROSA use the name of the secret in the openshift-ingress namespace that has the naming format of (ID)-primary-cert-bundle-secret.
 **SCOPE** this will be the scope of the Network Load Balancer that will be provisioned.  The scope can be either **Internal** for a private network load balancer or **External** for an Internet facing network load balancer.
 
