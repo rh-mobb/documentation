@@ -59,7 +59,7 @@ oc login $apiServer -u kubeadmin -p $kubeadmin_password
 
 Run the following command:
 ```bash
-az connectedk8s connect --resource-group $resourceGroupName --name $clusterName --distribution openshift --infrastructure auto
+az connectedk8s connect --resource-group $resourceGroupName --name $clusterName --distribution openshift --infrastructure azure
 ```
 
 After running the commnad. grant the following permissions and restart kube-aad-proxy pod
