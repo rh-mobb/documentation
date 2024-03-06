@@ -161,7 +161,7 @@ oc apply -f azure-arc-secret.yaml
 ```
 
 ```bash
-TOKEN=$(oc get secret azure-arc-observability-secret -o jsonpath='{$.data.token}' | base64 -d | sed 's/$/\\n/g')
+TOKEN=$(oc get secret azure-arc-observability-secret -o jsonpath='{$.data.token}' | base64 -d ; echo)
 echo $TOKEN
 ```
 
