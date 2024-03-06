@@ -730,7 +730,7 @@ Since this cluster will reside in a different virtual network, we should create 
     EOF
     ```
 
-3. Create add config for Submariner
+3. Create addon config for cluster
 
     ```sh
     cat << EOF | oc apply -f -
@@ -801,7 +801,7 @@ Since this cluster will reside in a different virtual network, we should create 
     EOF
     ```
 
-3. Create add config for Submariner
+3. Create addon config for cluster
 
     ```
     cat << EOF | oc apply -f -
