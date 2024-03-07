@@ -59,7 +59,7 @@ oc login $apiServer -u kubeadmin -p $kubeadmin_password
 
 Run the following command:
 ```bash
-az connectedk8s connect --resource-group $resourceGroupName --name $clusterName --distribution openshift --infrastructure auto
+az connectedk8s connect --resource-group $resourceGroupName --name $clusterName --distribution openshift
 ```
 
 After running the commnad. grant the following permissions and restart kube-aad-proxy pod
@@ -67,7 +67,7 @@ After running the commnad. grant the following permissions and restart kube-aad-
 oc project azure-arc
 oc adm policy add-scc-to-user privileged system:serviceaccount:azure-arc:azure-arc-kube-aad-proxy-sa
 
-oc get pod | grep
+oc get pod | grep kube-aad-proxy
 kube-aad-proxy-6d9b66b9cd-g27xr              0/2     ContainerCreating   0          26s
 
 oc delete pod kube-aad-proxy-6d9b66b9cd-g27xr
@@ -161,7 +161,7 @@ oc apply -f azure-arc-secret.yaml
 ```
 
 ```bash
-TOKEN=$(oc get secret azure-arc-observability-secret -o jsonpath='{$.data.token}' | base64 -d | sed 's/$/\\n/g')
+TOKEN=$(oc get secret azure-arc-observability-secret -o jsonpath='{$.data.token}' | base64 -d ; echo)
 echo $TOKEN
 ```
 
@@ -273,24 +273,35 @@ az k8s-extension show --cluster-type connectedClusters --cluster-name <<cluster 
 ### Create or Select an Azure Key Vault
 
 ```bash
-az keyvault create -n <<cluster name>> -g <<resource group>> -l eastus
-az keyvault secret set --vault-name <<cluster name>> -n DemoSecret --value MyExampleSecret
+export KEYVAULT_NAME=<<cluster name>>-v
+az keyvault create -n $KEYVAULT_NAME -g <<resource group>> -l <<cluster location>
+az keyvault secret set --vault-name $KEYVAULT_NAME -n DemoSecret --value MyExampleSecret
 ```
 
 ### Provide identity to access Azure Key Vault
 
-Currently, the Secrets Store CSI Driver on Arc-enabled clusters can be accessed through a service principal. Follow the steps below to provide an identity that can access your Key Vault.
+Currently, the Secrets Store CSI Driver on Arc-enabled clusters can be accessed through a service principal.
 
-Use the provided Service Principal credentials provided with the lab and create a secret in ARO cluster
+First, create the service principal and set an access policy to allow it to get secrets from the keyvault.
 
 ```bash
-oc create secret generic secrets-store-creds --from-literal clientid="<client-id>" --from-literal clientsecret="<client-secret>"
+export KV_SERVICE_PRINCIPAL_CLIENT_SECRET="$(az ad sp create-for-rbac --skip-assignment --name http://$KEYVAULT_NAME --query 'password' -otsv)"
+export KV_SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list --display-name http://$KEYVAULT_NAME --query '[0].appId' -otsv)"
+az keyvault set-policy -n ${KEYVAULT_NAME} --secret-permissions get --spn ${KV_SERVICE_PRINCIPAL_CLIENT_ID}
+```
+
+Then, store the service principal's credentials as a secret in your cluster.
+
+```bash
+oc create secret generic secrets-store-creds --from-literal clientid="$KV_SERVICE_PRINCIPAL_CLIENT_ID" --from-literal clientsecret="$KV_SERVICE_PRINCIPAL_CLIENT_SECRET"
 oc label secret secrets-store-creds secrets-store.csi.k8s.io/used=true
 ```
 
 Create a SecretProviderClass with the following YAML, filling in your values for key vault name, tenant ID, and objects to retrieve from your AKV instance
 
 ```bash
+TENANT_ID="$(az account show --query tenantId --output tsv)"
+
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
@@ -299,14 +310,14 @@ spec:
   provider: azure
   parameters:
     usePodIdentity: "false"
-    keyvaultName: <key-vault-name>
+    keyvaultName: $KEYVAULT_NAME
     objects:  |
       array:
         - |
           objectName: DemoSecret
           objectType: secret
           objectVersion: ""
-    tenantId: <tenant-Id>
+    tenantId: $TENANT_ID
 ```
 
 ```bash
