@@ -77,8 +77,8 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
 1. Update the Cloud Watch Agent Kubernetes manifests
 
    ```bash
-   sed -i .bak "s/__cluster_name__/$CLUSTER_NAME/g" $SCRATCH_DIR/cloud-watch.yaml
-   sed -i .bak "s/__cluster_region__/$CLUSTER_REGION/g" $SCRATCH_DIR/cloud-watch.yaml
+   sed -i.bak "s/__cluster_name__/$CLUSTER_NAME/g" $SCRATCH_DIR/cloud-watch.yaml
+   sed -i.bak "s/__cluster_region__/$CLUSTER_REGION/g" $SCRATCH_DIR/cloud-watch.yaml
    ```
 
 1. Provide AWS Creds to the Cloud Watch Agent
@@ -87,7 +87,7 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
    AWS_ID=`cat $SCRATCH_DIR/aws-access-key.json | jq -r '.AccessKey.AccessKeyId'`
    AWS_KEY=`cat $SCRATCH_DIR/aws-access-key.json | jq -r '.AccessKey.SecretAccessKey'`
 
-   echo "[AmazonCloudWatchAgent]\naws_access_key_id = $AWS_ID\naws_secret_access_key = $AWS_KEY" \
+   echo -e "[AmazonCloudWatchAgent]\naws_access_key_id = $AWS_ID\naws_secret_access_key = $AWS_KEY" \
      > $SCRATCH_DIR/credentials
 
    oc --namespace amazon-cloudwatch \
@@ -132,8 +132,8 @@ Currently the AWS Cloud Watch Agent does [not support](https://github.com/aws/am
 1. Update the Sample Dashboard
 
    ```bash
-   sed -i .bak "s/__CLUSTER_NAME__/$CLUSTER_NAME/g" $SCRATCH_DIR/dashboard.json
-   sed -i .bak "s/__REGION_NAME__/$CLUSTER_REGION/g" $SCRATCH_DIR/dashboard.json
+   sed -i.bak "s/__CLUSTER_NAME__/$CLUSTER_NAME/g" $SCRATCH_DIR/dashboard.json
+   sed -i.bak "s/__REGION_NAME__/$CLUSTER_REGION/g" $SCRATCH_DIR/dashboard.json
    ```
 
 1. Browse to https://us-east-2.console.aws.amazon.com/cloudwatch
