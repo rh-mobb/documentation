@@ -100,7 +100,7 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
    ```bash
    helm upgrade -n $NAMESPACE clf-operators \
-    mobb/operatorhub --version 0.1.1 --install \
+    mobb/operatorhub --install \
     --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-clf-am/files/operators.yaml
    ```
 
