@@ -270,7 +270,7 @@ Next we can configure Metrics Federation to Azure Blob Storage. This is done by 
 
    ```bash
    helm upgrade -n "${NAMESPACE}" aro-thanos-af \
-      --install mobb/aro-thanos-af --version 0.4.1 \
+      --install mobb/aro-thanos-af \
       --set "aro.storageAccount=${AZR_STORAGE_ACCOUNT_NAME}" \
       --set "aro.storageAccountKey=${AZR_STORAGE_KEY}" \
       --set "aro.storageContainer=${CLUSTER}-metrics" \
@@ -332,7 +332,7 @@ Next we need to deploy the Cluster Logging and Loki Operators so that we can use
 
    ```bash
    helm upgrade -n "${NAMESPACE}" aro-clf-blob \
-      --install mobb/aro-clf-blob --version 0.1.1 \
+      --install mobb/aro-clf-blob \
       --set "azure.storageAccount=${AZR_STORAGE_ACCOUNT_NAME}" \
       --set "azure.storageAccountKey=${AZR_STORAGE_KEY}" \
       --set "azure.storageContainer=${CLUSTER}-logs"
