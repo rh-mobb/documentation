@@ -97,6 +97,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configure ROSA STS Cluster Logging to CloudWatch](/experts/rosa/clf-cloudwatch-sts)
 * [Federating ARO metrics to Azure Files](/experts/aro/federated-metrics)
 * [Sending ARO cluster logs to Azure Log Analytics](/experts/aro/clf-to-azure)
+* [Shipping logs and metrics to Azure Blob storage](/experts/aro/shipping-logs-and-metrics-to-azure-blob)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
 
 ## Security
