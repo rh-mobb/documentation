@@ -270,7 +270,7 @@ Next we can configure Metrics Federation to Azure Blob Storage. This is done by 
 
     ```bash
     helm upgrade -n patch-operator patch-operator --create-namespace \
-      mobb/operatorhub --version 0.1.2 --install \
+      mobb/operatorhub --install \
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/patch-operator.yaml
     ```
 
