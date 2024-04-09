@@ -264,6 +264,22 @@ Next we can configure Metrics Federation to Azure Blob Storage. This is done by 
    No resources found in mobb-aro-obs namespace.
    ```
 
+### Deploy OpenShift Path Operator
+
+1. Use Helm deploy the OpenShift Patch Operator
+
+    ```bash
+    helm upgrade -n patch-operator patch-operator --create-namespace \
+      mobb/operatorhub --install \
+      --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-thanos-af/files/patch-operator.yaml
+    ```
+
+1. Wait for the Operator to be ready
+
+    ```bash
+    oc rollout status -n patch-operator \
+      deployment/patch-operator-controller-manager
+
 ### Configure Metrics Federation
 
 1. Deploy `mobb/aro-thanos-af` Helm Chart to configure metrics federation
