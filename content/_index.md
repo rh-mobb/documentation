@@ -53,7 +53,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy and use the Azure Service Operator V1(ASO)](/experts/aro/azure-service-operator/v1)
 * [Deploy and use the Azure Service Operator V2(ASO)](/experts/aro/azure-service-operator/v2)
 * [Create an additional Ingress Controller for ARO](/experts/aro/additional-ingress-controller)
-* [Configure the Managed Upgrade Operator](/experts/aro/managed-upgrade-operator)
 * [Configure ARO with Azure NetApp Trident Operator](/experts/aro/trident)
 * [IBM Cloud Paks for Data Operator Setup](/experts/aro/ibm-cloud-paks-for-data)
 * [Install ARO with Custom Domain using LetsEncrypt with cert manager](/experts/aro/cert-manager)

@@ -7,6 +7,8 @@ authors:
   - Connor Wooley
 ---
 
+  **THIS DOCUMENT IS OUTDATED, please reference the official MUO documentation [here](https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade)**
+
 ## Prerequisites
 
   * an Azure Red Hat OpenShift cluster
