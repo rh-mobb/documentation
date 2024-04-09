@@ -96,12 +96,6 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ./easyrsa build-client-full aws nopass
    ```
 
-1. Set environment variables for the CA certificate you just created.
-
-   ```bash
-   CACERT=$(openssl x509 -in pki/ca.crt -outform der | base64)
-   ```
-
 ## Import certficates into AWS Certificate Manager
 
 1. Import the server certificate
