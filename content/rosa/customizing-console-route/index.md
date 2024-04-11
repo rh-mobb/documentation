@@ -5,9 +5,11 @@ tags: ["ROSA", "AWS"]
 authors:
   - Charlotte Fung
   - Thatcher Hubbard 
+  - Dustin Scott
 ---
 
 Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certificate of component Routes post-install. These are the `OAuth`, `Console`, and `Downloads` routes. For example, the default ROSA console uses the built-in domain `https://console-openshift-console.apps.<cluster_name>.<random>.p1.openshiftapps.com`. You can now specify a custom domain, for example `test.example.com`, and the ROSA console will be available at a URL such as `https://console-openshift-console.test.example.com`. This guide will walk you through how to customize the console url for a ROSA Classic cluster (not tested on ROSA HCP yet).
+
 
 ## Prerequisites
 
@@ -39,6 +41,8 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
 
 ### Custom Domain
 
+> **NOTE:** you can use cert-manager if preferred > https://cloud.redhat.com/experts/rosa/dynamic-certificates/
+
 1. Create TLS Key Pair for custom domain using certbot
  
     > Skip this step if you already have a key pair
@@ -59,8 +63,44 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
 
      ```bash
      CERTS=/tmp/scratch/config/live/$DOMAIN
-     oc create secret tls acme-tls --cert=$CERTS/fullchain. pem --key=$CERTS/privkey.pem -n openshift-config
+     oc create secret tls acme-tls --cert=$CERTS/fullchain. pem --key=$CERTS/privkey.pem -n openshift-ingress
      ```
+
+### Individual Component Route Certificates
+
+
+1. Create TLS Key Pair for individual component routes.
+
+> **NOTE:** you can use cert-manager if preferred > https://cloud.redhat.com/experts/rosa/dynamic-certificates/
+
+> **NOTE:** this is required because the component routes require their own individual certs
+
+     > Skip this step if you already have key pairs for the individual component routes
+
+     ```bash
+     for CERT in oauth downloads console; do
+       mkdir -p $SCRATCH_DIR/$CERT
+       certbot certonly --manual \
+         --preferred-challenges=dns \
+         --email $EMAIL \
+         --server https://acme-v02.api.letsencrypt.org/directory \
+         --agree-tos \
+         --config-dir "$SCRATCH_DIR/$CERT/config" \
+         --work-dir "$SCRATCH_DIR/$CERT/work" \
+         --logs-dir "$SCRATCH_DIR/$CERT/logs" \
+         -d "$CERT.$DOMAIN"
+     done
+     ```
+
+2. Create TLS secrets for your custom domain in the openshift-config namespace
+
+     ```bash
+     for CERT in oauth downloads console; do
+       CERTS=/tmp/scratch/$CERT/config/live/$DOMAIN
+       oc create secret tls $CERT-cert --cert=$CERTS/fullchain. pem --key=$CERTS/privkey.pem -n openshift-config
+     done
+     ```
+
 
 ### Create wildcard DNS record and point to DNS entry of Ingress controller
 
@@ -78,7 +118,7 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
      rosa edit ingress -c <cluster_name> <default-ingress_id> --wildcard-policy WildcardsAllowed
      ```
 
-1. Retrieve the ROSA default ingress load balancer DNS name (can use the AWS console or run the command below)
+1. Retrieve the ROSA default ingress load balancer DNS name (can use the AWS console or run the command below).
      
      ```bash
      oc get services -n openshift-ingress | grep default
@@ -91,14 +131,15 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
 
    ![wildcard record](images/wildcardrecord.png)
 
-1. Edit the ingress controller to use custom route and certificate
+1. Update each component route to include the custom domain you are choosing, as well as each of the certificates
+that were provisioned above.  It should be noted that the `tlsSecretRef` refers to the component certs created as secrets and they cannot be shared amongst one another:
 
      ```bash
-     rosa edit ingress -c <cluster-id> <default-ingress-id> --cluster-routes-hostname <$DOMAIN> --cluster-routes-tls-secret-ref <tls-secret-created-for-custom-domain>
+     rosa edit ingress -c <cluster-id> <default-ingress-id> \
+       --component-routes="oauth: hostname=oauth.$DOMAIN;tlsSecretRef=oauth-cert,\
+       downloads: hostname=downloads.$DOMAIN;tlsSecretRef=downloads-cert,\
+       console: hostname=console.$DOMAIN;tlsSecretRef=console-cert"
      ```
-
-
-   **Important Note**: All routes created on the default ingress will be accessible on .$DOMAIN url
 
 
 ### Test

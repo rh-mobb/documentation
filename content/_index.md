@@ -33,6 +33,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Verify Required Permissions for a ROSA STS deployment](/experts/rosa/verify-permissions)
 * [STS OIDC flow in ROSA Operators](/experts/rosa/sts-oidc-flow)
 * [Dynamic Certificates for ROSA Custom Domain](/experts/rosa/dynamic-certificates)
+* [Custom Domain for Component Routes](/experts/rosa/customizing-console-route)
 * [External DNS for ROSA Custom Domain](/experts/rosa/external-dns)
 * [Security Reference Architecture for ROSA](/experts/rosa/security-ra)
 * [Configure ROSA for Nvidia GPU Workloads](/experts/rosa/gpu)
