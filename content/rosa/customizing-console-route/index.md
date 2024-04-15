@@ -41,14 +41,14 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
 
 ### Individual Component Route Certificates
 
+1. Create TLS Key Pair for individual component routes
 
-1. Create TLS Key Pair for individual component routes.
+   > **NOTE:** you can use cert-manager if preferred > https://cloud.redhat.com/experts/rosa/dynamic-certificates/
 
-> **NOTE:** you can use cert-manager if preferred > https://cloud.redhat.com/experts/rosa/dynamic-certificates/
+   > **NOTE:** this is required because the component routes require their own individual certs
 
-> **NOTE:** this is required because the component routes require their own individual certs
-
-     > Skip this step if you already have key pairs for the individual component routes
+   > Skip this step if you already have key pairs for the individual component routes.  You will use those key 
+   pairs to create as secrets in the next step instead
 
      ```bash
      for CERT in oauth downloads console; do
@@ -65,7 +65,7 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
      done
      ```
 
-2. Create TLS secrets for your custom domain in the openshift-config namespace
+1. Create TLS secrets for your custom domain in the openshift-config namespace
 
      ```bash
      for CERT in oauth downloads console; do
@@ -83,7 +83,7 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
      ```
      > Take note of the default ingress ID.  
 
-2. Retrieve the ROSA default ingress load balancer DNS name (can use the AWS console or run the command below).
+1. Retrieve the ROSA default ingress load balancer DNS name (can use the AWS console or run the command below).
      
      ```bash
      oc get services -n openshift-ingress | grep default
@@ -92,11 +92,11 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
 
    ![aws loadbalancer console](images/ingress-dns.png)
 
-3. Add a wildcard DNS record in your custom domain Route53 Hosted Zone to CNAME to the router-default 
+1. Add a wildcard DNS record in your custom domain Route53 Hosted Zone to CNAME to the router-default 
 
    ![wildcard record](images/wildcardrecord.png)
 
-4. Update each component route to include the custom domain you are choosing, as well as each of the certificates
+1. Update each component route to include the custom domain you are choosing, as well as each of the certificates
 that were provisioned above.  It should be noted that the `tlsSecretRef` refers to the component certs created as secrets and they cannot be shared amongst one another:
 
      ```bash
