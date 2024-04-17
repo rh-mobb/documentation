@@ -1,7 +1,7 @@
 ---
 date: '2024-04-20'
 title: Install Portworx on Red Hat OpenShift Service on AWS (ROSA) with hosted control planes (HCP)
-tags: ["ROSA-HCP", "Portworx" "ROSA"]
+tags: ["ROSA-HCP", "Portworx", "ROSA"]
 authors:
   - Nerav Doshi
 ---
@@ -14,7 +14,7 @@ Your cluster must be running OpenShift 4 or higher
 Your cluster must meet AWS prerequisites for ROSA-HCP
 * [Create Portworx user and set policies](https://docs.portworx.com/portworx-enterprise/install-portworx/openshift/rosa/aws-redhat-openshift#create-a-portworx-user)
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.0.8) v1.0.8
+* [Rosa CLI](https://github.com/openshift/rosa/releases/tag/v1.2.37) v1.2.37
 
 ## Generate Portworx spec
 
