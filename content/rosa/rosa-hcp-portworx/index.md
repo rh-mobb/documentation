@@ -88,9 +88,9 @@ Copy and paste the above Portworx spec from above step into the text-editor, and
 
 ![Install-Portworx-from-OpenShift-Console](./images/rosa-hcp-workernodes-storageclusteryaml.png)
 
-Verify that Portworx has deployed successfully by navigating to the Storage Cluster tab of the Installed Operators page. Once Portworx has been fully deployed, the status will show as Running:
+3. Verify that Portworx has deployed successfully by navigating to the Storage Cluster tab of the Installed Operators page. Once Portworx has been fully deployed, the status will show as Running:
 
-![Portworx-status-running](./images/rosa-hcp-workernodes-storagecluster-status.png))
+![Portworx-status-running](./images/rosa-hcp-workernodes-storagecluster-status.png)
 
 ## Verify your Portworx installation
 
