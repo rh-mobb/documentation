@@ -18,18 +18,18 @@ Your cluster must meet AWS prerequisites for ROSA-HCP
 
 ## Generate Portworx spec
 
-Navigate to [Portworx Central](https://central.portworx.com/landing/login) and log in, or create an account.
+1. Navigate to [Portworx Central](https://central.portworx.com/landing/login) and log in, or create an account.
 
-1. Click Get Started. Select Portworx Enterprise from the Product Catalog page.
+2. Click Get Started. Select Portworx Enterprise from the Product Catalog page.
 
-2. On the Product Line page, choose any option depending on which license you intend to use, then click Continue to start the spec generator.
+3. On the Product Line page, choose any option depending on which license you intend to use, then click Continue to start the spec generator.
 
-For Platform, choose AWS. Under Distribution Name, select Red Hat OpenShift Service on AWS (ROSA). Enter your cluster's Kubernetes version, then click Customize at the bottom of the window.
+4. For Platform, choose **AWS**. Under Distribution Name, select **Red Hat OpenShift Service on AWS (ROSA)**. Enter your cluster's Kubernetes version, then click **Customize** at the bottom of the window.
 
 3. Click Next and navigate to the Customize window to specify your previously created AWS security credentials in the Environment Variables section as follows:
 
-name: AWS_ACCESS_KEY_ID; value: <your-aws-access-key>
-name: AWS_SECRET_ACCESS_KEY; value: <your-aws-secret-access-key>
+    - name: AWS_ACCESS_KEY_ID; value: <your-aws-access-key>
+    - name: AWS_SECRET_ACCESS_KEY; value: <your-aws-secret-access-key>
 
 4. Click Finish to generate the specs and download yaml file.
 
@@ -46,11 +46,11 @@ Perform the following to add the inbound rules so that the AWS EC2 instance uses
 
 4. Click Add Rule at the bottom of the screen to add each of the following rules:
 
-Allow inbound Custom TCP traffic with Protocol: TCP on ports 17001 - 17022
-Allow inbound Custom TCP traffic with Protocol: TCP on port 20048
-Allow inbound Custom TCP traffic with Protocol: TCP on port 111
-Allow inbound Custom UDP traffic with Protocol: UDP on port 17002
-Allow inbound NFS traffic with Protocol: TCP on port 2049
+    - Allow inbound Custom TCP traffic with Protocol: TCP on ports 17001 - 17022
+    - Allow inbound Custom TCP traffic with Protocol: TCP on port 20048
+    - Allow inbound Custom TCP traffic with Protocol: TCP on port 111
+    - Allow inbound Custom UDP traffic with Protocol: UDP on port 17002
+    - Allow inbound NFS traffic with Protocol: TCP on port 2049
 
 Make sure to specify the security group ID of the same worker security group that is mentioned in step 2.
 
@@ -67,6 +67,7 @@ Log in to the OpenShift console by following the quick access instructions on th
 ![PX-operator from OperatorHub](./images/rosa-hcp-portworx-operator.png)
 
 3. Install
+
 ![PX-operator-install-from-OperatorHub](./images/rosa-hcp-portworx-operator-install.png)
 
 4. The Portworx Operator begins to install and takes you to the Install Operator page. On this page, select the A specific namespace on the cluster option for Installation mode. Select the Create Project option from the Installed Namespace dropdown:
@@ -102,7 +103,7 @@ Enter the following oc get pods command to list and filter the results for Portw
 oc get pods -n portworx -o wide | grep -e portworx -e px
 ```
 
-Output should be something like this 
+**Output**
 
 ```
 portworx-api-kql78                                      2/2     Running   6 (121m ago)    128m   10.0.0.217    ip-10-0-0-217.ec2.internal   <none>           <none>
@@ -136,7 +137,7 @@ Note the name of one of your px-cluster pods. You'll run pxctl commands from the
 oc exec px-cluster-c007e7c4-9347-464d-95bf-4cbaebe3ff42-849df -n portworx -- /opt/pwx/bin/pxctl status
 ```
 
-Output should be something like this
+**Output**
 
 ```
 Status: PX is operational
@@ -174,22 +175,22 @@ Global Storage Pool
 The Portworx status will display PX is operational if your cluster is running as intended.        
 
 ## Verify pxctl cluster provision status
-
+1.Find the storage cluster, the status should show as Online:
 ```
 oc -n portworx get storagecluster
 ```
+**Output**
 
-Find the storage cluster, the status should show as Online:
 ```
 NAME                                              CLUSTER UUID                           STATUS    VERSION   AGE
 px-cluster-c007e7c4-9347-464d-95bf-4cbaebe3ff42   7ea3aeb4-74dc-43cb-acac-de9948abb8dd   Running   3.1.1     139m
 ```
-
+2. Find the storage nodes status should show Online
 ```
 oc -n portworx get storagenodes
 ```
+**Output**
 
-Find the storage nodes status should show Online
 ```
 NAME                         ID                                     STATUS   VERSION           AGE
 ip-10-0-0-217.ec2.internal   e2248cd5-8bf0-42e2-8572-d3b3a20ead6c   Online   3.1.1.0-519c78f   140m
@@ -203,7 +204,8 @@ For your apps to use persistent volumes powered by Portworx, you must use a Stor
 Perform the following steps to create a PVC:
 
 1. Create a PVC referencing the px-csi-db default StorageClass and save the file:
-```bash
+
+```
 cat << EOF | oc apply -f -
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -216,14 +218,19 @@ spec:
   resources:
     requests:
       storage: 1Gi
-EOF      
-```      
+EOF
+```
+**Output**
+```
+persistentvolumeclaim/px-example-pvc created
+```
 
 2. Verify your StorageClass and PVC
 ```
 oc get storageclass px-csi-db  
 ```
-Output
+
+**Output**
 ```
 NAME        PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
 px-csi-db   pxd.portworx.com   Delete          Immediate           true                   164m
@@ -234,7 +241,7 @@ px-csi-db   pxd.portworx.com   Delete          Immediate           true         
 oc get pvc px-example-pvc -n portworx
 ```
 
-Output 
+**Output**
 ```
 NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 px-example-pvc   Bound    pvc-a3cb32df-8ebe-4806-91d3-2155cccc87cb   1Gi        RWO            px-csi-db      3m
