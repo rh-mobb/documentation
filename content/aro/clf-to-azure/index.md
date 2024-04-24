@@ -7,7 +7,7 @@ authors:
   - Thatcher Hubbard
 ---
 
-> These instructions are now only necessary for clusters on verions less than or equal to 4.12. The OpenShift Cluster Logging Operator supports a simplified configuration with Azure Monitor as of verison 5.9, which is available on clusters of version 4.13 or greater. For clusters on 4.12 or less, see the [legacy setup document here](/experts/aro/clf-to-azure/index-old.md) for help with configuration.
+> **NOTE**: OpenShift Logging 5.9 supports native forwarding to Azure Monitor and Azure Log Analytics, which is available on clusters running OpenShift 4.13 or higher. For clusters running OpenShift 4.12 or earlier, see the [legacy setup document here](/experts/aro/clf-to-azure-old/) for help with configuration.
 
 If you're running Azure Red Hat OpenShift (ARO), you may want to be able to view and query the logs the platform and your workloads generate in Azure Monitor. With the release of the Cluster Logging Operator version 5.9, this can be done in a single step with some YAML configuration.
 
