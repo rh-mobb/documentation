@@ -17,7 +17,7 @@ Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certifi
 * Cluster admin privileges (required to be able to modify cluster ingress)
 * Route53 Hosted Zone
 * A custom domain
-* A wildcard certificate 
+* Three individual component route certificates (Console, Oauth and Downloads)
 * `rosa` cli
 * `oc` cli
 
