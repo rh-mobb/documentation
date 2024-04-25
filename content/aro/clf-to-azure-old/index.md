@@ -9,7 +9,7 @@ authors:
   - Roberto Carratalá
 ---
 
-> **NOTE**: These instructions are now only necessary for clusters on verions less than or equal to 4.12. The OpenShift Cluster Logging Operator supports a simplified configuration with Azure Monitor as of verison 5.9, which is available on clusters of version 4.13 or greater. See the [setup document here](/experts/aro/clf-to-azure/).
+> **NOTE**: These instructions are now only necessary for clusters on verions less than or equal to 4.12. The OpenShift Cluster Logging Operator supports a simplified configuration with Azure Monitor as of verison 5.9, which is available on clusters of version 4.13 or greater. Ideally, clusters should be ugpraded to keep them in support, so that's a good first step to consider. If you ultimately still need the older procedure, see the [setup document here](/experts/aro/clf-to-azure/).
 
 In Azure Red Hat OpenShift (ARO) you can fairly easily set up cluster logging to an in-cluster Elasticsearch using the OpenShift Elasticsearch Operator
 and the Cluster Logging Operator, but what if you want to use the Azure native Log Analytics service?
