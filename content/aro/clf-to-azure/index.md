@@ -1,31 +1,25 @@
 ---
 date: '2023-03-26T22:07:09.774151'
-title: Using Cluster Logging Forwarder in ARO with Azure Monitor
+title: Using Cluster Logging Forwarder in ARO with Azure Monitor (>=4.13)
 tags: ["ARO", "Azure"]
 authors:
   - Paul Czarkowski
-  - Steve Mirman
-  - Nerav Doshi
-  - Roberto Carratalá
+  - Thatcher Hubbard
 ---
 
-In Azure Red Hat OpenShift (ARO) you can fairly easily set up cluster logging to an in-cluster Elasticsearch using the OpenShift Elasticsearch Operator
-and the Cluster Logging Operator, but what if you want to use the Azure native Log Analytics service?
+> **NOTE**: OpenShift Logging 5.9 supports native forwarding to Azure Monitor and Azure Log Analytics, which is available on clusters running OpenShift 4.13 or higher. For clusters running OpenShift 4.12 or earlier, see the [legacy setup document here](/experts/aro/clf-to-azure-old/) for help with configuration.
 
-There's a number of ways to do this, for example installing agents onto the VMs (in this case, it would be a DaemonSet with hostvar mounts) but that isn't ideal in a managed system like ARO.
-
-Fluentd is the log collection and forwarding tool used by OpenShift, however it does not have native support for Azure Log Analytics. However Fluent-bit which supports many of the same protocols as Fluentd does have [native support](https://docs.fluentbit.io/manual/pipeline/outputs/azure) for Azure Log Analytics.
-
-Armed with this knowledge we can create a fluent-bit service on the cluster to accept logs from fluentd and forward them to Azure Log Analytics.
+If you're running Azure Red Hat OpenShift (ARO), you may want to be able to view and query the logs the platform and your workloads generate in Azure Monitor. With the release of the Cluster Logging Operator version 5.9, this can be done in a single step with some YAML configuration.
 
 ## Prepare your ARO cluster
 
 1. [Deploy](/experts/quickstart-aro) an ARO cluster
 
+1. Follow the OpenShift documentation for [installing the OpenShift Logging Operator](https://docs.openshift.com/container-platform/4.14/logging/cluster-logging-deploying.html) for your version of OpenShift. These instructions cover the various methods (CLI, Web Console) of installation.
+
 1. Set some environment variables
 
    ```bash
-   export NAMESPACE=aro-clf-am
    export AZR_RESOURCE_LOCATION=eastus
    export AZR_RESOURCE_GROUP=openshift
    # this value must be unique
@@ -48,7 +42,7 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
    az group create -n $AZR_RESOURCE_GROUP -l $AZR_RESOURCE_LOCATION
    ```
 
-1. Create workspace
+1. Create workspace 
 
    ```bash
    az monitor log-analytics workspace create \
@@ -69,48 +63,68 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
 ## Configure OpenShift
 
-1. Create a Project to run the log forwarding in
+1. Create a `Secret` to hold the shared key:
 
    ```bash
-   oc new-project $NAMESPACE
+   oc -n openshift-logging create secret generic azure-monitor-shared-key --from-literal=shared_key=${SHARED_KEY}
    ```
 
-1. Create namespaces for logging operators
+1. Create a `ClusterLogging` resource. Because logs aren't staying on the cluster with a local store, this is quite simple:
 
    ```bash
-   kubectl create ns openshift-logging
-   kubectl create ns openshift-operators-redhat
+   cat <<EOF | oc apply -f -
+   apiVersion: logging.openshift.io/v1
+   kind: ClusterLogging
+   metadata:
+     name: instance
+     namespace: openshift-logging
+   spec:
+     collection:
+       type: vector
+       vector: {}
+   EOF
    ```
 
-1. Add the MOBB chart repository to Helm
+1. Create a `ClusterLogForwarder` resource. This will contain the configuration to forward to Azure Monitor:
 
    ```bash
-   helm repo add mobb https://rh-mobb.github.io/helm-charts/
+   cat <<EOF | oc apply -f -
+   apiVersion: logging.openshift.io/v1
+   kind: ClusterLogForwarder
+   metadata:
+     name: instance
+     namespace: openshift-logging
+   spec:
+     outputs:
+     - name: azure-monitor-app
+       type: azureMonitor
+       azureMonitor:
+         customerId: $WORKSPACE_ID
+         logType: aro_application_logs
+       secret:
+         name: azure-monitor-shared-key
+     - name: azure-monitor-infra
+       type: azureMonitor
+       azureMonitor:
+         customerId: $WORKSPACE_ID
+         logType: aro_infrastructure_logs
+       secret:
+         name: azure-monitor-shared-key
+     pipelines:
+     - name: app-pipeline
+       inputRefs:
+       - application
+       outputRefs:
+       - azure-monitor-app
+     - name: infra-pipeline
+       inputRefs:
+       - infrastructure
+       outputRefs:
+       - azure-monitor-infra
+   EOF
    ```
-
-1. Update your Helm repositories
-
-   ```bash
-   helm repo update
-   ```
-
-1. Deploy the OpenShift Elasticsearch Operator and the Red Hat OpenShift Logging Operator
-
-   **> Note: You can skip this if you already have them installed, or install them via the OpenShift Console.**
-
-   ```bash
-   helm upgrade -n $NAMESPACE clf-operators \
-    mobb/operatorhub --install \
-    --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/aro-clf-am/files/operators.yaml
-   ```
-
-1. Configure cluster logging forwarder
-
-   ```bash
-   helm upgrade -n $NAMESPACE clf \
-    mobb/aro-clf-am --install \
-    --set "azure.workspaceId=$WORKSPACE_ID" --set "azure.sharedKey=$SHARED_KEY"
-   ```
+   
+See the [logging pipeline documentation](https://docs.openshift.com/container-platform/4.14/logging/log_collection_forwarding/configuring-log-forwarding.html#cluster-logging-collector-log-forwarding-about_configuring-log-forwarding) for the specifics of how to add `audit` logs to this configuration.
 
 ## Check for logs in Azure
 
@@ -120,7 +134,7 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 
    ```bash
    az monitor log-analytics query -w $WORKSPACE_ID  \
-      --analytics-query "openshift_CL | take 10" --output tsv
+      --analytics-query "aro_infrastructure_logs_CL | take 10" --output tsv
    ```
 
   or
@@ -136,7 +150,7 @@ Armed with this knowledge we can create a fluent-bit service on the cluster to a
 1. Run the Query
 
    ```
-   openshift_CL
+   aro_infrastructure_logs_CL
       | take 10
    ```
 

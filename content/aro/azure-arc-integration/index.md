@@ -369,24 +369,6 @@ oc exec secret-store-pod -- cat /mnt/secrets-store/DemoSecret
 MyExampleSecret
 ```
 
-
-## Enable log aggregation
-In order to collect logs from ARO cluster and store it in Azure ARC. configure azure monitor
-
-Create Azure Log Analytics Workspace
-```
-az monitor log-analytics workspace create --resource-group <<same as above>> --workspace-name loganalyticsworkspace
-```
-Goto Azure ARC portal and click on ```logs```
-
-![Image](Images/aro-arc-integration-image2.png)
-
-Click on ```configure azure monitor``` button and select the workspace created in last step and click on configure.
-
-![Image](Images/aro-arc-integration-image3.png)
-
-Now you can go see logs and metrics for your cluster.
-
 ## Monitor ARO cluster against Goverance Policies
 Azure Policy extends Gatekeeper v3, an admission controller webhook for Open Policy Agent (OPA), to apply at-scale enforcements and safeguards on your clusters in a centralized, consistent manner. Azure Policy makes it possible to manage and report on the compliance state of your Kubernetes clusters from one place. The add-on enacts the following functions:
 - Checks with Azure Policy service for policy assignments to the cluster.
