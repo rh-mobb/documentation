@@ -67,67 +67,80 @@ Make sure to specify the security group ID of the same worker security group tha
 
 1. Get a Private Subnet ID from the cluster.
 
-`PRIVATE_SUBNET_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json \
+```
+PRIVATE_SUBNET_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json \
    | jq -r '.aws.subnet_ids[0]')
-echo $PRIVATE_SUBNET_ID`
+echo $PRIVATE_SUBNET_ID
+```
 
 2. Get the VPC ID from the subnet ID.
 
-` VPC_ID=$(aws ec2 describe-subnets --subnet-ids $PRIVATE_SUBNET_ID --region $REGION\
-   --query 'Subnets[0].VpcId' --output text)
- echo $VPC_ID`
+```
+VPC_ID=$(aws ec2 describe-subnets --subnet-ids $PRIVATE_SUBNET_ID --region $REGION --query 'Subnets[0].VpcId' --output text)
+ echo $VPC_ID
+```
 
 3. Get the cluster ID
 
-` ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.id')
-echo $ID`
+````
+ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.id')
+echo $ID
+```
 
 4. Create an new security group
-` aws ec2 create-security-group --group-name ${ROSA_CLUSTER_NAME}-storage-sg --description ${ROSA_CLUSTER_NAME}-portworx-sg --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]"`
+```
+aws ec2 create-security-group --group-name ${ROSA_CLUSTER_NAME}-storage-sg --description ${ROSA_CLUSTER_NAME}-portworx-sg --vpc-id ${VPC_ID} --region ${REGION} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]"
+```
 
 5. Get security group id
-` SecurityGroupId=$(aws ec2 describe-security-groups --region ${REGION} --filters "Name=tag:Name,Values=${ROSA_CLUSTER_NAME}-storage-sg" | jq -r '.SecurityGroups[0].GroupId')
-echo $ID`
+```
+SecurityGroupId=$(aws ec2 describe-security-groups --region ${REGION} --filters "Name=tag:Name,Values=${ROSA_CLUSTER_NAME}-storage-sg" | jq -r '.SecurityGroups[0].GroupId')
+echo $SecurityGroupId
+```
 
 6. Get VPC Source Security group id
-` Source_SecurityGroupId=$(aws ec2 describe-security-groups --region ${REGION} --filters "Name=tag:Name,Values=${ID}-default-sg" | jq -r '.SecurityGroups[0].GroupId')
-echo $Source_SecurityGroupId`
+```
+Source_SecurityGroupId=$(aws ec2 describe-security-groups --region ${REGION} --filters "Name=tag:Name,Values=${ID}-default-sg" | jq -r '.SecurityGroups[0].GroupId')
+echo $Source_SecurityGroupId
+```
 
 7. Add inbound rules to newly created Security group id
-`  aws ec2 authorize-security-group-ingress \
+```
+aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 17001-17022 \
-    --source-group ${Source_SecurityGroupId}`
+    --source-group ${Source_SecurityGroupId}
 
-` aws ec2 authorize-security-group-ingress \
+aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 111 \
-    --source-group ${Source_SecurityGroupId} `
+    --source-group ${Source_SecurityGroupId}
 
-` aws ec2 authorize-security-group-ingress \
+aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 20048 \
-    --source-group ${Source_SecurityGroupId} `
+    --source-group ${Source_SecurityGroupId}
 
-` aws ec2 authorize-security-group-ingress \
+aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol udp \
     --port 17002 \
-    --source-group ${Source_SecurityGroupId} `
+    --source-group ${Source_SecurityGroupId}
 
-`    aws ec2 authorize-security-group-ingress \
+aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 2049 \
-    --source-group ${Source_SecurityGroupId} `
+    --source-group ${Source_SecurityGroupId}
+```
 
 
 ## Log in to OpenShift UI
