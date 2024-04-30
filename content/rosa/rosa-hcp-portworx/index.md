@@ -68,8 +68,7 @@ Make sure to specify the security group ID of the same worker security group tha
 1. Get a Private Subnet ID from the cluster.
 
 ```
-PRIVATE_SUBNET_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json \
-   | jq -r '.aws.subnet_ids[0]')
+PRIVATE_SUBNET_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[0]')
 echo $PRIVATE_SUBNET_ID
 ```
 
@@ -77,12 +76,12 @@ echo $PRIVATE_SUBNET_ID
 
 ```
 VPC_ID=$(aws ec2 describe-subnets --subnet-ids $PRIVATE_SUBNET_ID --region $REGION --query 'Subnets[0].VpcId' --output text)
- echo $VPC_ID
+echo $VPC_ID
 ```
 
 3. Get the cluster ID
 
-````
+```
 ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.id')
 echo $ID
 ```
