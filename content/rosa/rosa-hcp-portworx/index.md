@@ -16,38 +16,20 @@ You must have a Red Hat OpenShift Service on AWS (ROSA) with [hosted control pla
 ## Set environment variable adjusting for ROSA_HCP_CLUSTER_NAME and REGION as necessary
 
    ```bash
-   export VERSION=4.15 \
+   export VERSION=4.15.8 \
           ROSA_CLUSTER_NAME=portworx-hcp-cluster \
           AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
-          REGION=us-east-1 \
-          TAG_SG="$ROSA_CLUSTER_NAME-storage-sg"
+          REGION=us-east-1 
    ```
-
-## Generate Portworx spec
-
-1. Navigate to [Portworx Central](https://central.portworx.com/landing/login) and log in, or create an account.
-
-2. Click Get Started. Select Portworx Enterprise from the Product Catalog page.
-
-3. On the Product Line page, choose any option depending on which license you intend to use, then click Continue to start the spec generator.
-
-4. For Platform, choose **AWS**. Under Distribution Name, select **Red Hat OpenShift Service on AWS (ROSA)**. Enter your cluster's Kubernetes version, then click **Customize** at the bottom of the window.
-
-3. Click Next and navigate to the Customize window to specify your previously created AWS security credentials in the Environment Variables section as follows:
-
-    - name: AWS_ACCESS_KEY_ID; value: <your-aws-access-key>
-    - name: AWS_SECRET_ACCESS_KEY; value: <your-aws-secret-access-key>
-
-4. Click Finish to generate the specs and download yaml file.
 
 ## Open ports for worker nodes via Web console (Note to use cli skip this step)
 Perform the following to add the inbound rules so that the AWS EC2 instance uses your specified security groups to control the incoming traffic.
 
-1. From the EC2 page of your AWS console, click Security Groups, under Network & Security, in the left pane.
-
-2. On the Security Groups page, type your ROSA cluster name in the search bar and press enter. You will see a list of security groups associated with your cluster. Click the link under Security group ID of your cluster's worker security group:
+1. From the EC2 page of your AWS console find EC2 instances for hcp cluster worker nodes, click Security Groups, under Network & Security, in the left pane.
 
 ![HCP-worker-nodes-security-groups](./images/rosa-hcp-workernodes-securityGroup.png)
+
+2. On the Security Groups page, type your ROSA cluster name in the search bar and press enter. You will see a list of security groups associated with your cluster. Click the link under Security group ID of your cluster's worker security group:
 
 3. From your security group page, click Actions in the upper-right corner, and choose Edit inbound rules from the dropdown menu.
 
@@ -86,59 +68,48 @@ ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.id')
 echo $ID
 ```
 
-4. Create an new security group
+4. Get Security group id associated with VPC
 ```
-aws ec2 create-security-group --group-name ${ROSA_CLUSTER_NAME}-storage-sg --description ${ROSA_CLUSTER_NAME}-portworx-sg --vpc-id ${VPC_ID} --region ${REGION} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]"
-```
-
-5. Get security group id
-```
-SecurityGroupId=$(aws ec2 describe-security-groups --region ${REGION} --filters "Name=tag:Name,Values=${ROSA_CLUSTER_NAME}-storage-sg" | jq -r '.SecurityGroups[0].GroupId')
+SecurityGroupId=$(aws ec2 describe-security-groups --region ${REGION} --filters "Name=tag:Name,Values=${ID}-default-sg" | jq -r '.SecurityGroups[0].GroupId')
 echo $SecurityGroupId
 ```
 
-6. Get VPC Source Security group id
-```
-Source_SecurityGroupId=$(aws ec2 describe-security-groups --region ${REGION} --filters "Name=tag:Name,Values=${ID}-default-sg" | jq -r '.SecurityGroups[0].GroupId')
-echo $Source_SecurityGroupId
-```
-
-7. Add inbound rules to newly created Security group id
+5. Add inbound rules to default Security group id for 
 ```
 aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 17001-17022 \
-    --source-group ${Source_SecurityGroupId}
+    --source-group ${SecurityGroupId}
 
 aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 111 \
-    --source-group ${Source_SecurityGroupId}
+    --source-group ${SecurityGroupId}
 
 aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 20048 \
-    --source-group ${Source_SecurityGroupId}
+    --source-group ${SecurityGroupId}
 
 aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol udp \
     --port 17002 \
-    --source-group ${Source_SecurityGroupId}
+    --source-group ${SecurityGroupId}
 
 aws ec2 authorize-security-group-ingress \
     --group-id ${SecurityGroupId} \
     --region ${REGION} \
     --protocol tcp \
     --port 2049 \
-    --source-group ${Source_SecurityGroupId}
+    --source-group ${SecurityGroupId}
 ```
 
 
@@ -146,13 +117,36 @@ aws ec2 authorize-security-group-ingress \
 Log in to the OpenShift console by following the quick access instructions on the [Accessing your cluster quickly page](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa-sts-accessing-cluster.html) in the Red Hat OpenShift Service on AWS documentation.
 
 1. Create `portworx` namespace
-` oc new-project portworx `
+
+```
+ oc new-project portworx 
+```
+
+**Output**
+
+```
+Now using project "portworx" on server "https://api.ans-nerav.lb33.p3.openshiftapps.com:443".
+
+You can add applications to this project with the 'new-app' command. For example, try:
+
+    oc new-app rails-postgresql-example
+
+to build a new example application in Ruby. Or use kubectl to deploy a simple Kubernetes application:
+
+    kubectl create deployment hello-node --image=registry.k8s.io/e2e-test-images/agnhost:2.43 -- /agnhost serve-hostname
+```    
+
 
 2. Get AWS credentials for AWS IAM user (replace <name> with user ) and copy AccessKeyId and SecretAccessKey
-` aws iam create-access-key --user-name <name> `
+
+```
+aws iam create-access-key --user-name <name>
+```
 
 3. Create secret in portworx namespace in ROSA-HCP cluster (get aws credentials from step2)
-` oc create secret generic my-aws-credentials --from-literal=AWS_ACCESS_KEY_ID=<your_access_key_id> --from-literal=AWS_SECRET_ACCESS_KEY=<your_secret_access_key> -n portworx
+```
+oc create secret generic my-aws-credentials --from-literal=AWS_ACCESS_KEY_ID=<your_access_key_id> --from-literal=AWS_SECRET_ACCESS_KEY=<your_secret_access_key> -n portworx
+```
 
 ## Install Portworx Operator using the OpenShift UI
 1. From your OpenShift console, select OperatorHub in the left pane.
@@ -174,11 +168,9 @@ Log in to the OpenShift console by following the quick access instructions on th
 
 ![Portworx-Enterprise-Operator](./images/rosa-hcp-portworx-enterprise-operator-installed.png)
 
-2. On the Create StorageCluster page, choose YAML view to configure a StorageCluster.
+2. On the Create StorageCluster page, choose YAML view to configure a StorageCluster. Copy and paste the below Portworx spec into the text-editor, and click Create to deploy Portworx:
 
-Copy and paste the above Portworx spec from above step (yaml downloaded from portworx central) into the text-editor, and click Create to deploy Portworx:
-```bash
-cat << EOF | oc apply -f -
+```
 kind: StorageCluster
 apiVersion: core.libopenstorage.org/v1
 metadata:
@@ -214,24 +206,22 @@ spec:
       exportMetrics: true
   env:
   - name: "AWS_ACCESS_KEY_ID"
-    valueFROM:
+    valueFrom:
       secretKeyRef:
         name: my-aws-credentials
         key: AWS_ACCESS_KEY_ID
   - name: "AWS_SECRET_ACCESS_KEY"
-    valueFROM:
+    valueFrom:
       secretKeyRef:
         name: my-aws-credentials
         key: AWS_SECRET_ACCESS_KEY
-EOF
 ```
 
+### Note: One can generate Portworx spec from Portworx Central using the [instructions](https://docs.portworx.com/portworx-enterprise/install-portworx/openshift/rosa/aws-redhat-openshift#generate-portworx-spec)
 
 ![Install-Portworx-from-OpenShift-Console](./images/rosa-hcp-workernodes-storageclusteryaml.png)
 
-
-
-6. Verify that Portworx has deployed successfully by navigating to the Storage Cluster tab of the Installed Operators page. Once Portworx has been fully deployed, the status will show as Running:
+3. Verify that Portworx has deployed successfully by navigating to the Storage Cluster tab of the Installed Operators page. Once Portworx has been fully deployed, the status will show as Running:
 
 ![Portworx-status-running](./images/rosa-hcp-workernodes-storagecluster-status.png)
 
