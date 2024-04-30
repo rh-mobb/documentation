@@ -219,7 +219,6 @@ spec:
         key: AWS_SECRET_ACCESS_KEY
 ```
 
-### Note: One can generate Portworx spec from Portworx Central using the [instructions](https://docs.portworx.com/portworx-enterprise/install-portworx/openshift/rosa/aws-redhat-openshift#generate-portworx-spec)
 
 ![Install-Portworx-from-OpenShift-Console](./images/rosa-hcp-workernodes-storageclusteryaml.png)
 
