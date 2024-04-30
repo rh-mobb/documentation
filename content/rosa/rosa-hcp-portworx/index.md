@@ -170,6 +170,8 @@ oc create secret generic my-aws-credentials --from-literal=AWS_ACCESS_KEY_ID=<yo
 
 2. On the Create StorageCluster page, choose YAML view to configure a StorageCluster. Copy and paste the below Portworx spec into the text-editor, and click Create to deploy Portworx:
 
+#### Note: One can generate Portworx spec from Portworx Central using the [instructions](https://docs.portworx.com/portworx-enterprise/install-portworx/openshift/rosa/aws-redhat-openshift#generate-portworx-spec)
+
 ```
 kind: StorageCluster
 apiVersion: core.libopenstorage.org/v1
