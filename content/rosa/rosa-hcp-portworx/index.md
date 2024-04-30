@@ -17,7 +17,7 @@ You must have a Red Hat OpenShift Service on AWS (ROSA) with [hosted control pla
 
    ```bash
    export VERSION=4.15 \
-          ROSA_CLUSTER_NAME=pl-sts-cluster \
+          ROSA_CLUSTER_NAME=portworx-hcp-cluster \
           AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text` \
           REGION=us-east-1 \
           TAG_SG="$ROSA_CLUSTER_NAME-storage-sg"
