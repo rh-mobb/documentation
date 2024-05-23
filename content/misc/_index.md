@@ -19,3 +19,4 @@ skipMetadata: true
 * [Sharing Common Images](./common-images-namespace) 
 * [Stop Default Router from Serving Custom Domains](./default-router-custom-domain)
 * [Configuring OpenShift Dev Spaces to serve Custom Domains](./devspaces-custom-domain)
+* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](./rhoai-s3)
