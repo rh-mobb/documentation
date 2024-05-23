@@ -91,8 +91,10 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 ## OpenShift Virtualization
 
-* [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA)](/experts/rosa/ocp-virt/basic)
-  * [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
+* Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA)
+  * [via CLI](/experts/rosa/ocp-virt/basic)
+  * [via GUI](/experts/rosa/ocp-virt/basic-gui)
+* [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 
 ## Advanced Cluster Manager (ACM)
 
