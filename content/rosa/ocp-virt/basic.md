@@ -1,6 +1,6 @@
 ---
 date: '2024-05-14'
-title: Deploying OpenShift Virtualization on ROSA
+title: Deploying OpenShift Virtualization on ROSA (CLI)
 tags: ["ROSA", "STS"]
 authors:
   - Paul Czarkowski
