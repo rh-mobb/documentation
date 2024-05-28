@@ -283,7 +283,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
    ```bash
    for SUBNET in $(aws ec2 describe-subnets \
-     --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private*' \
+     --filters Name=vpc-id,Values=$VPC Name='tag:kubernetes.io/role/internal-elb',Values='*' \
      --query 'Subnets[*].{SubnetId:SubnetId}' \
      --region $AWS_REGION \
      | jq -r '.[].SubnetId'); do \
@@ -300,9 +300,10 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 > Note: If you followed the instructions above to create a region wide EFS mount, skip the following steps and proceed to "Create a Storage Class for the EFS volume"
 
 1. Select the first subnet that you will make your EFS mount in (this will by default select the same Subnet your first node is in)
+
    ```bash
    SUBNET=$(aws ec2 describe-subnets \
-     --filters Name=vpc-id,Values=$VPC Name=tag:Name,Values='*-private*' \
+     --filters Name=vpc-id,Values=$VPC Name='tag:kubernetes.io/role/internal-elb',Values='*' \
      --query 'Subnets[*].{SubnetId:SubnetId}' \
      --region $AWS_REGION \
      | jq -r '.[0].SubnetId')
@@ -330,6 +331,8 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    echo $MOUNT_TARGET
    ```
 
+## Create a Storage Class for the EFS volume and verify a pod can access it.
+
 1. Create a Storage Class for the EFS volume
 
    ```bash
@@ -348,10 +351,6 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
      basePath: "/dynamic_provisioning"
    EOF
    ```
-
-
-## Test
-
 
 1. Create a namespace
 
