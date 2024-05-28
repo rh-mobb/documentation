@@ -209,7 +209,7 @@ In our example we will use PostgreSQL as engine.
    &Version=2011-06-15" | jq
    ```
 
-## Prepare Database
+## Prepare/Populate Database
 
 1. Create a Pod for connecting to DB with postgres user
 
@@ -217,8 +217,15 @@ In our example we will use PostgreSQL as engine.
    DB_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier psql-${CLUSTER_NAME} --query 'DBInstances[*].[Endpoint.Address]' --output text --region ${AWS_REGION})
    oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 prep-db --env PGPASSWORD=${PSQL_PASSWORD} --env DB_ENDPOINT=${DB_ENDPOINT} -- /bin/sh
    ```
+   
+2. Download dataset IPrange / Country (in the prompt of `oc run`)
 
-2. Connect to DB, create user and DB (in the prompt of `oc run`)
+   ```bash
+   curl -O -L https://github.com/sapics/ip-location-db/raw/main/geolite2-country/geolite2-country-ipv4.csv
+   sed -i 's/\,/\-/' geolite2-country-ipv4.csv
+   ```
+
+2. Connect to DB, create user, DB and populate it (in the prompt of `oc run`)
    ```bash
    psql -h ${DB_ENDPOINT}
    CREATE USER iamuser WITH LOGIN; 
@@ -226,32 +233,6 @@ In our example we will use PostgreSQL as engine.
    CREATE DATABASE iamdb;
    \c iamdb
    CREATE EXTENSION if not exists ip4r;
-   GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO iamuser;
-   quit
-   ```
-
-## Connection with IAM / Populate DB
-
-1. Create pod to populate database and accessing with a IAM user this time
-   ```bash
-   oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 iamdb-connect \
-     --env PGSSLMODE=require \
-     --env PGPASSWORD=$(aws rds generate-db-auth-token --hostname $DB_ENDPOINT --port 5432 --region ${AWS_REGION} --username iamuser) \
-     --env DB_ENDPOINT=${DB_ENDPOINT} \
-    -- /bin/sh
-   ```
-
-2. Download dataset IPrange / Country
-
-   ```bash
-   curl -O -L https://github.com/sapics/ip-location-db/raw/master/geolite2-country/geolite2-country-ipv4.csv
-   sed -i 's/\,/\-/' geolite2-country-ipv4.csv
-   ```
-
-3. Populate DB
-
-   ```bash
-   psql -h ${DB_ENDPOINT} -U iamuser -d iamdb
    CREATE TABLE if not exists ref_ip_blocks
    (
      iprange iprange,
@@ -260,6 +241,27 @@ In our example we will use PostgreSQL as engine.
    );
    \copy ref_ip_blocks FROM 'geolite2-country-ipv4.csv' DELIMITER ',' CSV;
    CREATE INDEX ref_ip_blocks_ip4r_idx on ref_ip_blocks using gist(iprange);
+   GRANT SELECT ON TABLE ref_ip_blocks TO iamuser;
+   quit
+   exit
+   ```
+
+## Connection with IAM
+
+1. Create pod to access with a IAM user this time
+   ```bash
+   oc run -it --tty --rm --image registry.redhat.io/rhel8/postgresql-15 iamdb-connect \
+     --env PGSSLMODE=require \
+     --env PGPASSWORD=$(aws rds generate-db-auth-token --hostname $DB_ENDPOINT --port 5432 --region ${AWS_REGION} --username iamuser) \
+     --env DB_ENDPOINT=${DB_ENDPOINT} \
+    -- /bin/sh
+   ```
+
+2. Test request
+
+   ```bash
+   psql -h ${DB_ENDPOINT} -U iamuser -d iamdb
+   SELECT iprange,geoname FROM ref_ip_blocks where iprange >>= '104.123.30.45'::ip4r;
    quit
    exit
    ```
