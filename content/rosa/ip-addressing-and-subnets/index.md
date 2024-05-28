@@ -20,7 +20,7 @@ Configuring a ROSA cluster requires the provision of three non-overlapping CIDR 
 1. The Service CIDR range (the range that OpenShift will assign Service IPs from)
 1. The Pod CIDR range (the range that OpenShift will assign Pod IPs from)
 
-The Service and Pod CIDR ranges are typically safe to overlap with other clusters because they are used exclusively for intra-cluster communication.
+The Service and Pod CIDR ranges are typically safe to overlap with other clusters because they are used exclusively for intra-cluster communication, however they should never conflict with other non-OCP resources on your network, while they're non-routable, if they overlap with another service elsewhere on the network, they may not be able to route to that service (as the traffic will think it should stay local).
 
 For most users, the Machine CIDR range should be unique across all environments and be assigned out of some kind of IPAM scheme.
 
