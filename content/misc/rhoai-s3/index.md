@@ -14,8 +14,9 @@ This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenS
 *Please note that the UI may change from time to time so what you see in the snippets below might change as well.*
 
 ## 2. Prerequisites
-* ROSA cluster 
+* [ROSA cluster](/experts/rosa/sts/) 
     - In this case I'm using a single-AZ ROSA 4.15.10 cluster with m5.4xlarge node with auto-scaling enabled up to 10 nodes. The cluster has 64 vCPUs with ~278Gi memory. 
+    - Note that ROSA and RHOAI also support [GPU](https://cloud.redhat.com/experts/rosa/gpu/), however, for the sake of simplicity, I'll only be using CPU for compute in this guide.
     - Please be sure that you have cluster admin access of the cluster.
 * oc cli
 
@@ -56,7 +57,7 @@ This below is how the notebook looks like on the new tab:
 ![Jupyter-start](images/Jupyter-start.png)  
 
 ## 4. Creating and granting access to S3 bucket
-There are actually several ways to go about granting S3 access to the EC2 cluster where your ROSA cluster runs, e.g. setting the credentials as environment variables in the notebook, attaching IAM roles to the ROSA EC2 instance, and installing AWS CLI in the cluster. [Attaching the IAM policy](https://repost.aws/knowledge-center/ec2-instance-access-s3-bucket) is the better option here since you don't need to manage the credentials yourself, however, in this guide, I'll install the CLI in the cluster instead and then using `aws configure` to provide the credentials. That said, be sure that you have your AWS access key and secret access key handy. You could [create new keys](https://aws.amazon.com/blogs/security/how-to-find-update-access-keys-password-mfa-aws-management-console/) in the IAM section from the AWS console if you lost yours.  
+There are actually several ways to go about granting S3 access to the pods running in your ROSA cluster, e.g. setting the credentials as environment variables in the notebook, using pod identity/IRSA (IAM Roles for Service Accounts) to authenticate the pods to S3, and installing AWS CLI in the cluster, among others. [Using pod identity/IRSA](https://docs.openshift.com/rosa/authentication/assuming-an-aws-iam-role-for-a-service-account.html#how-service-accounts-assume-aws-iam-roles-in-user-defined-projects_assuming-an-aws-iam-role-for-a-service-account) is the better option here since you don't need to manage the credentials yourself, however, for the sake of simplicity, in this guide, I'll install the CLI in the cluster instead and then using `aws configure` to provide the credentials. That said, be sure that you have your AWS access key and secret access key handy. You could [create new keys](https://aws.amazon.com/blogs/security/how-to-find-update-access-keys-password-mfa-aws-management-console/) in the IAM section from the AWS console if you lost yours.  
 
 Now login to your cluster and go to the namespace where your notebook is located.
 ```
