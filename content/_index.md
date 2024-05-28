@@ -43,6 +43,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Add an Ingress Controller to ROSA with a custom domain](/experts/rosa/ingress-controller)
 * [Configuring AWS CLB Access Logging](/experts/rosa/clb-access-logging/)
 * [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
+* [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
 * [Deploying OpenShift Virtualization on ROSA](/experts/rosa/ocp-virt/)
 
 ### ARO
