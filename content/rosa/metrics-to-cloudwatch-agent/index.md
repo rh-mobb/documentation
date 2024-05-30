@@ -87,35 +87,34 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
 
    ```yaml
    cat << EOF | oc apply -f -
+   apiVersion: v1
    kind: ConfigMap
    metadata:
-   name: prometheus-cwagentconfig
-   namespace: amazon-cloudwatch
-   apiVersion: v1
+     name: prometheus-cwagentconfig
+     namespace: amazon-cloudwatch
    data:
-   # cwagent json config
-   cwagentconfig.json: |
-      {
+     cwagentconfig.json: |
+       {
          "agent": {
-         "region": "${REGION}",
-         "debug": true
+           "region": "${REGION}",
+           "debug": true
          },
          "logs": {
-         "metrics_collected": {
-            "prometheus": {
+           "metrics_collected": {
+             "prometheus": {
                "cluster_name": "${ROSA_CLUSTER_NAME}",
                "log_group_name": "/aws/containerinsights/${ROSA_CLUSTER_NAME}/prometheus",
                "prometheus_config_path": "/etc/prometheusconfig/prometheus.yaml",
                "emf_processor": {
-               "metric_declaration": [
-                  {"source_labels": ["job", "resource"],
+                 "metric_declaration": [
+                   {"source_labels": ["job", "resource"],
                      "label_matcher": "^kubernetes-apiservers;(services|daemonsets.apps|deployments.apps|configmaps|endpoints|secrets|serviceaccounts|replicasets.apps)",
                      "dimensions": [["ClusterName","Service","resource"]],
                      "metric_selectors": [
                      "^etcd_object_counts$"
                      ]
-                  },
-                  {"source_labels": ["job", "name"],
+                   },
+                   {"source_labels": ["job", "name"],
                      "label_matcher": "^kubernetes-apiservers;APIServiceRegistrationController$",
                      "dimensions": [["ClusterName","Service","name"]],
                      "metric_selectors": [
@@ -123,28 +122,28 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
                      "^workqueue_adds_total$",
                      "^workqueue_retries_total$"
                      ]
-                  },
-                  {"source_labels": ["job","code"],
+                   },
+                   {"source_labels": ["job","code"],
                      "label_matcher": "^kubernetes-apiservers;2[0-9]{2}$",
                      "dimensions": [["ClusterName","Service","code"]],
                      "metric_selectors": [
                      "^apiserver_request_total$"
                      ]
-                  },
-                  {"source_labels": ["job"],
+                   },
+                   {"source_labels": ["job"],
                      "label_matcher": "^kubernetes-apiservers",
                      "dimensions": [["ClusterName","Service"]],
                      "metric_selectors": [
                      "^apiserver_request_total$"
                      ]
-                  }
-               ]
+                   }
+                 ]
                }
-            }
-         },
-         "force_flush_interval": 5
+             }
+           },
+           "force_flush_interval": 5
          }
-      }
+       }
    EOF
    ```
 
@@ -152,41 +151,41 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
 
    ```yaml
    cat << EOF | oc apply -f -
+   apiVersion: v1
    kind: ConfigMap
    metadata:
-   name: prometheus-config
-   namespace: amazon-cloudwatch
-   apiVersion: v1
+     name: prometheus-config
+     namespace: amazon-cloudwatch
    data:
-   # prometheus config
-   prometheus.yaml: |
-      global:
+     # prometheus config
+     prometheus.yaml: |
+       global:
          scrape_interval: 1m
          scrape_timeout: 10s
-      scrape_configs:
+       scrape_configs:
          - job_name: 'kubernetes-apiservers'
-         kubernetes_sd_configs:
-            - role: endpoints
+           kubernetes_sd_configs:
+             - role: endpoints
                namespaces:
-               names:
-                  - default
-         scheme: https
-         tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            insecure_skip_verify: true
-         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-         relabel_configs:
-         - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-            action: keep
-            regex: kubernetes;https
-         - action: replace
-            source_labels:
-            - __meta_kubernetes_namespace
-            target_label: Namespace
-         - action: replace
-            source_labels:
-            - __meta_kubernetes_service_name
-            target_label: Service
+                 names:
+                   - default
+           scheme: https
+           tls_config:
+             ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+             insecure_skip_verify: true
+           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+           relabel_configs:
+           - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+             action: keep
+             regex: kubernetes;https
+           - action: replace
+             source_labels:
+             - __meta_kubernetes_namespace
+             target_label: Namespace
+           - action: replace
+             source_labels:
+             - __meta_kubernetes_service_name
+             target_label: Service
    EOF
    ```
 
@@ -197,10 +196,10 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
    apiVersion: v1
    kind: ServiceAccount
    metadata:
-   name: cwagent-prometheus
-   namespace: amazon-cloudwatch
-   annotations:
-      eks.amazonaws.com/role-arn: "${ROLE_ARN}"
+     name: cwagent-prometheus
+     namespace: amazon-cloudwatch
+     annotations:
+       eks.amazonaws.com/role-arn: "${ROLE_ARN}"
    EOF
    ```
 
@@ -208,39 +207,40 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
 
    ```yaml
    cat << EOF | oc apply -f -
-   kind: ClusterRole
    apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
    metadata:
-   name: cwagent-prometheus-role
+     name: cwagent-prometheus-role
    rules:
-   - apiGroups: [""]
-      resources:
-      - nodes
-      - nodes/proxy
-      - services
-      - endpoints
-      - pods
-      verbs: ["get", "list", "watch"]
-   - apiGroups:
-      - extensions
-      resources:
-      - ingresses
-      verbs: ["get", "list", "watch"]
-   - nonResourceURLs: ["/metrics"]
-      verbs: ["get"]
+     - apiGroups: [""]
+       resources:
+       - nodes
+       - nodes/proxy
+       - services
+       - endpoints
+       - pods
+       verbs: ["get", "list", "watch"]
+     - apiGroups:
+       - extensions
+       resources:
+       - ingresses
+       verbs: ["get", "list", "watch"]
+     - nonResourceURLs: ["/metrics"]
+       verbs: ["get"]
+
    ---
-   kind: ClusterRoleBinding
    apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
    metadata:
-   name: cwagent-prometheus-role-binding
+     name: cwagent-prometheus-role-binding
    subjects:
-   - kind: ServiceAccount
-      name: cwagent-prometheus
-      namespace: amazon-cloudwatch
+     - kind: ServiceAccount
+       name: cwagent-prometheus
+       namespace: amazon-cloudwatch
    roleRef:
-   kind: ClusterRole
-   name: cwagent-prometheus-role
-   apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: cwagent-prometheus-role
+     apiGroup: rbac.authorization.k8s.io
    EOF
    ```
 
@@ -257,45 +257,45 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
    apiVersion: apps/v1
    kind: Deployment
    metadata:
-   name: cwagent-prometheus
-   namespace: amazon-cloudwatch
+     name: cwagent-prometheus
+     namespace: amazon-cloudwatch
    spec:
-   replicas: 1
-   selector:
-      matchLabels:
+     replicas: 1
+     selector:
+       matchLabels:
          app: cwagent-prometheus
-   template:
-      metadata:
+     template:
+       metadata:
          labels:
-         app: cwagent-prometheus
-      spec:
+           app: cwagent-prometheus
+       spec:
          containers:
-         - name: cloudwatch-agent
-            image: amazon/cloudwatch-agent:1.300040.0b650
-            imagePullPolicy: Always
-            resources:
+           - name: cloudwatch-agent
+             image: amazon/cloudwatch-agent:1.247348.0b251302
+             imagePullPolicy: Always
+             resources:
                limits:
-               cpu:  1000m
-               memory: 1000Mi
+                 cpu:  1000m
+                 memory: 1000Mi
                requests:
-               cpu: 200m
-               memory: 200Mi
-            env:
+                 cpu: 200m
+                 memory: 200Mi
+             env:
                - name: CI_VERSION
-               value: "k8s/1.3.8"
+                 value: "k8s/1.3.8"
                - name: RUN_WITH_IRSA
-               value: "True"
-            volumeMounts:
+                 value: "True"
+             volumeMounts:
                - name: prometheus-cwagentconfig
-               mountPath: /etc/cwagentconfig
+                 mountPath: /etc/cwagentconfig
                - name: prometheus-config
-               mountPath: /etc/prometheusconfig
+                 mountPath: /etc/prometheusconfig
          volumes:
-         - name: prometheus-cwagentconfig
-            configMap:
+           - name: prometheus-cwagentconfig
+             configMap:
                name: prometheus-cwagentconfig
-         - name: prometheus-config
-            configMap:
+           - name: prometheus-config
+             configMap:
                name: prometheus-config
          terminationGracePeriodSeconds: 60
          serviceAccountName: cwagent-prometheus
