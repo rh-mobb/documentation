@@ -271,7 +271,7 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
        spec:
          containers:
            - name: cloudwatch-agent
-             image: amazon/cloudwatch-agent:1.247348.0b251302
+             image: amazon/cloudwatch-agent:1.300040.0b650
              imagePullPolicy: Always
              resources:
                limits:
@@ -282,7 +282,7 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
                  memory: 200Mi
              env:
                - name: CI_VERSION
-                 value: "k8s/1.3.8"
+                 value: "k8s/1.3.23"
                - name: RUN_WITH_IRSA
                  value: "True"
              volumeMounts:
