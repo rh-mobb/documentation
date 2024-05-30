@@ -11,6 +11,12 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 ### ROSA
 
+#### Hosted Control Plane (HCP)
+
+* [Deploying a ROSA HCP cluster with Terraform](/experts/rosa/terraform/hcp/)
+
+#### Classic
+
 * [Prerequisites Checklist to Deploy ROSA Cluster with STS](/experts/rosa/prereq-list)
 * [Deploying ROSA in PrivateLink mode](/experts/rosa/private-link)
   * [Add Public Ingress to PrivateLink Cluster](/experts/rosa/private-link/public-ingress)
@@ -45,7 +51,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configuring AWS CLB Access Logging](/experts/rosa/clb-access-logging/)
 * [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
 * [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
-* [Deploying OpenShift Virtualization on ROSA](/experts/rosa/ocp-virt/)
 
 ### ARO
 
@@ -84,6 +89,13 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/gcp/osd_preexisting_vpc)
 * [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore)
+
+## OpenShift Virtualization
+
+* Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA)
+  * [via CLI](/experts/rosa/ocp-virt/basic)
+  * [via GUI](/experts/rosa/ocp-virt/basic-gui)
+* [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 
 ## Advanced Cluster Manager (ACM)
 
