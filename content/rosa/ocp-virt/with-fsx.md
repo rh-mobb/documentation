@@ -8,7 +8,7 @@ authors:
 
 OpenShift Virtualization is a feature of OpenShift that allows you to run virtual machines alongside your containers.  This is useful for running legacy applications that can't be containerized, or for running applications that require special hardware or software that isn't available in a container.
 
-In this tutorial, I'll show you how to deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) using the AWS NetApp FSx service (specfically NFS, not ISCSI or SAN) to provide resiliance and live migration .  I'll show you how to create a ROSA cluster, deploy the OpenShift Virtualization operator, deploy the NetApp Trident Operator and create a virtual machine.
+In this tutorial, I'll show you how to deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) using the AWS NetApp FSx service (specifically NFS, not ISCSI or SAN) to provide resilience and live migration.  I'll show you how to create a ROSA cluster, deploy the OpenShift Virtualization operator, deploy the NetApp Trident Operator and create a virtual machine.
 
 If you're planning to deploy OpenShift Virtualization in a production environment, you should follow the official documentation and best practices.
 
