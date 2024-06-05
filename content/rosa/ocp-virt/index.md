@@ -84,12 +84,13 @@ If everything goes to plan, after about 20 minutes you should have a cluster ava
 ## Deploy the OpenShift Virtualization Operator
 
 1. Create a bare metal machine pool
-	> Note bare metal machines are not cheap, so be warned!
 
-    ```
-     rosa create machine-pool -c $TF_VAR_cluster_name \
-       --replicas 1 --availability-zone us-east-1a \
-       --instance-type c5d.metal --name virt
+    > Note bare metal machines are not cheap, so be warned!
+
+    ```bash
+    rosa create machine-pool -c $TF_VAR_cluster_name \
+        --replicas 1 --availability-zone us-east-1a \
+        --instance-type m5zn.metal --name virt
     ```
 
 1. Deploy the OpenShift Virtualization Operator
@@ -128,9 +129,15 @@ If everything goes to plan, after about 20 minutes you should have a cluster ava
 
     ![list of installed operators](installed-operators.png)
 
+1. Wait until the operator is deployed
+
+    ```bash
+    oc -n openshift-cnv rollout status deployment/hco-webhook
+    ```
+
 1. Create an OpenShift Virtualization operand
 
-	> Note: this is all defaults, so will not support a lot of the more advanced features you might want such as live migration.
+    > Note: this is all defaults, so will not support a lot of the more advanced features you might want such as live migration.
 
     ```
     cat << EOF | oc apply -f -
