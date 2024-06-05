@@ -18,6 +18,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 #### Classic
 
 * [Prerequisites Checklist to Deploy ROSA Cluster with STS](/experts/rosa/prereq-list)
+* [Deploying a ROSA cluster with Terraform](/experts/rosa/terraform/classic/)
 * [Deploying ROSA in PrivateLink mode](/experts/rosa/private-link)
   * [Add Public Ingress to PrivateLink Cluster](/experts/rosa/private-link/public-ingress)
 * [Deploying ROSA PrivateLink Cluster with Ansible](/experts/rosa/ansible-rosa)
