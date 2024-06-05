@@ -1,12 +1,12 @@
 ---
 date: '2024-05-20'
-title: Deploying a ROSA HCP cluster with Terraform
-tags: ["ROSA", "terraform", "hcp"]
+title: Deploying a ROSA Classic cluster with Terraform
+tags: ["ROSA", "terraform"]
 authors:
   - Paul Czarkowski
 ---
 
-This guide will walk you through deploying a ROSA HCP cluster using Terraform.  This is a great way to get started with ROSA and to automate the deployment of your clusters.
+This guide will walk you through deploying a ROSA cluster using Terraform.  This is a great way to get started with ROSA and to automate the deployment of your clusters.
 
 {{< readfile file="/content/rosa/terraform/tf-prereqs.md" markdown="true" >}}
 
@@ -25,21 +25,24 @@ This guide will walk you through deploying a ROSA HCP cluster using Terraform.  
 
     ```bash
     export TF_VAR_token="$(jq -r .refresh_token ~/.config/ocm/ocm.json)"
-    export TF_VAR_cluster_name="$(whoami)-hcp"
+    export TF_VAR_cluster_name="$(whoami)"
     export TF_VAR_admin_password='Passw0rd12345!'
     export TF_VAR_developer_password=''
     export TF_VAR_private=false
     export TF_VAR_ocp_version=4.15.11
-    export TF_VAR_hosted_control_plane=true
-    export TF_VAR_multi_az=true
+    export TF_VAR_hosted_control_plane=false
+    export TF_VAR_multi_az=false
     ```
 
 3. Create a Plan and Apply it
 
     ```bash
-    terraform init && \
-      terraform plan -out tf.plan && \
-      terraform apply tf.plan
+    terraform init
+
+    terraform plan -out tf.plan
+
+    terraform apply tf.plan
+
     ```
 
     If everything goes to plan, after about 20 minutes you should have a cluster available to use.
