@@ -162,8 +162,6 @@ Login to the CLI:
 2. Refresh the bgd application window and notice the change in box color<br>
     ![screenshot of app_blue](./app_blue.png)
 
-### Details from GitHub perspective
-TBD
 
 
 
