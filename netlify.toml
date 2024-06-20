@@ -130,3 +130,11 @@ from = "/experts/aro/managed-upgrade-operator/"
 to = "https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade"
 status = 301
 force = true
+
+
+[[redirects]]
+from = "/experts/rosa/customizing-console-route/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-update-component-routes.html"
+status = 301
+force = true
+

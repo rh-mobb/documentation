@@ -8,6 +8,8 @@ authors:
   - Dustin Scott
 ---
 
+# UPDATED DOCUMENT: This article has been moved to the official ROSA documentation [here](https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-update-component-routes.html). 
+
 Starting with ROSA 4.14.X, it is possible to modify the hostname and TLS certificate of component Routes post-install. These are the `OAuth`, `Console`, and `Downloads` routes. For example, the default ROSA console uses the built-in domain `https://console-openshift-console.apps.<cluster_name>.<random>.p1.openshiftapps.com`. You can now specify a custom domain, for example `test.example.com`, and the ROSA console will be available at a URL such as `https://console-openshift-console.test.example.com`. This guide will walk you through how to customize the console url for a ROSA Classic cluster (not tested on ROSA HCP yet).
 
 
