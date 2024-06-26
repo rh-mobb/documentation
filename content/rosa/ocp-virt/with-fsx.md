@@ -33,8 +33,8 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
     export FSX_VPC="$(terraform output -raw vpc_id)"
     export FSX_VPC_CIDR="$(terraform output -raw vpc_cidr)"
     export FSX_ROUTE_TABLES="$(terraform output -json private_route_table_ids | jq -r '. | join(",")')"
-    export FSX_ADMIN_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
-    export SVM_ADMIN_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
+    export FSX_ADMIN_PASS=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
+    export SVM_ADMIN_PASS=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
     export METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
     ```
 
