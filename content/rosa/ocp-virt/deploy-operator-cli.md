@@ -46,15 +46,12 @@
     apiVersion: hco.kubevirt.io/v1beta1
     kind: HyperConverged
     metadata:
-      annotations:
-        deployOVS: "false"
-      finalizers:
-      - kubevirt.io/hyperconverged
-      generation: 2
-      labels:
-        app: kubevirt-hyperconverged
       name: kubevirt-hyperconverged
       namespace: openshift-cnv
+      annotations:
+        deployOVS: "false"
+      labels:
+        app: kubevirt-hyperconverged
     spec:
       applicationAwareConfig:
         allowApplicationAwareClusterResourceQuota: false

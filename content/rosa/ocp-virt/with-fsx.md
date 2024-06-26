@@ -17,6 +17,7 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
 * A ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/))
 * An AWS account with permissions to create FSx for ONTAP
 * The `git` binary installed on your machine.  You can download it from the [git website](https://git-scm.com/downloads).
+* The `virtctl` binary installed on your machine.  You can follow installation instructions on the [OpenShift website](https://docs.openshift.com/container-platform/4.15/virt/getting_started/virt-using-the-cli-tools.html).
 
 > Note: This guide re-uses environment variables from the [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) guide. If you have an existing cluster, you'll need to set them appropriately for the cluster.
 
@@ -33,8 +34,8 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
     export FSX_VPC="$(terraform output -raw vpc_id)"
     export FSX_VPC_CIDR="$(terraform output -raw vpc_cidr)"
     export FSX_ROUTE_TABLES="$(terraform output -json private_route_table_ids | jq -r '. | join(",")')"
-    export FSX_ADMIN_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
-    export SVM_ADMIN_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
+    export FSX_ADMIN_PASS=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
+    export SVM_ADMIN_PASS=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 16; echo)
     export METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
     ```
 
@@ -60,6 +61,12 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
     ```
 
 1. Create the CloudFormation Stack
+
+> Note: As of this writing, you may need to open the `./FSxONTAP.yaml` file and edit the `TridentIAMPolicy` name if there 
+> are multiple Cloudformation Stack instances deployed, because this stack attempts to create an IAM policy with a hard-coded name and duplicate policy 
+> names are not allowed via the AWS API.  The conflict is in the YAML file around line `299` and looks as 
+> follows: `ManagedPolicyName: 'TridentIAMPolicy'`.  Until this is corrected in the upstream Git repo, the Cloudformation
+> Stack cannot be run multiple times.
 
     ```bash
     aws cloudformation create-stack \
@@ -203,8 +210,6 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
     kind: VirtualMachine
     metadata:
       name: my-first-fedora-vm
-      finalizers:
-        - kubevirt.io/virtualMachineControllerFinalize
       labels:
         app: my-first-fedora-vm
     spec:
@@ -285,15 +290,20 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
 1. Watch for the VM to be ready
 
     ```bash
-    watch oc get my-first-fedora-vm
-
+    watch oc get virtualmachine my-first-fedora-vm
     ```
+    
+    ```output
     Every 2.0s: oc get vm
     NAME         AGE     STATUS         READY
     my-first-fedora-vm   3m16s   Running   False
     ```
 
 1. SSH into the VM
+
+> Note: Be sure you have a compatible `virtctl` binary otherwise this command may fail if you installed an 
+> incompatible version (e.g. `brew install virtctl`).  Proper installation instructions will always be
+> located in the OpenShift documentation (https://docs.openshift.com/container-platform/4.15/virt/getting_started/virt-using-the-cli-tools.html).
 
     ```bash
     virtctl ssh fedora@my-first-fedora-vm -i ~/.ssh/id_rsa
