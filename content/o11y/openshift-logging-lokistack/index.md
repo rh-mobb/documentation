@@ -174,20 +174,21 @@ spec:
 EOF
 ```
 
-    1. Verify Operator Installation
+  1. Verify Operator Installation
 
-        ```bash
-        oc get csv -n openshift-operators-redhat
-        ```
+  ```bash
+  oc get csv -n openshift-operators-redhat
+  ```
 
-        > Example Output
-        ```
- oc get csv -n openshift-operators-redhat
-NAME                     DISPLAY                     VERSION   REPLACES                 PHASE
-loki-operator.v5.9.3     Loki Operator               5.9.3     loki-operator.v5.9.2     Succeeded
-        ```
+  Example Output
+
+  ```
+  NAME                     DISPLAY                     VERSION   REPLACES                 PHASE
+  loki-operator.v5.9.3     Loki Operator               5.9.3     loki-operator.v5.9.2     Succeeded
+  ```
 
 ### If you are using OpenShift 4.14 or higher on AWS (ROSA)
+
 1. Create a secret for the LokiStack Operator to consume by running the following command:
 
 ```bash
@@ -281,35 +282,35 @@ oc get pods -n openshift-logging
 
     1. The Cluster Logging OperatorGroup
 
-        ```bash
-        oc create -f - <<EOF
-        apiVersion: operators.coreos.com/v1
-        kind: OperatorGroup
-        metadata:
-          name: cluster-logging
-          namespace: openshift-logging
-        spec:
-          targetNamespaces:
-          - openshift-logging
-        EOF
-        ```
+    ```bash
+    oc create -f - <<EOF
+    apiVersion: operators.coreos.com/v1
+    kind: OperatorGroup
+    metadata:
+      name: cluster-logging
+      namespace: openshift-logging
+    spec:
+      targetNamespaces:
+      - openshift-logging
+    EOF
+    ```
 
     1. Subscription Object to subscribe a Namespace to the Red Hat OpenShift Logging Operator
 
-        ```bash
-        oc create -f - <<EOF
-        apiVersion: operators.coreos.com/v1alpha1
-        kind: Subscription
-        metadata:
-          name: cluster-logging
-          namespace: openshift-logging
-        spec:
-          channel: "stable"
-          name: cluster-logging
-          source: redhat-operators
-          sourceNamespace: openshift-marketplace
-        EOF
-        ```
+    ```bash
+    oc create -f - <<EOF
+    apiVersion: operators.coreos.com/v1alpha1
+    kind: Subscription
+    metadata:
+      name: cluster-logging
+      namespace: openshift-logging
+    spec:
+      channel: "stable"
+      name: cluster-logging
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+    EOF
+    ```
 
     1. Verify the Operator installation, the `PHASE` should be `Succeeded`
 
@@ -319,12 +320,10 @@ oc get pods -n openshift-logging
 
     > Example Output
     ```
-NAME                     DISPLAY                     VERSION   REPLACES                 PHASE
-cluster-logging.v5.9.3   Red Hat OpenShift Logging   5.9.3     cluster-logging.v5.9.2   Succeeded
-loki-operator.v5.9.3     Loki Operator               5.9.3     loki-operator.v5.9.2     Succeeded
+    NAME                     DISPLAY                     VERSION   REPLACES                 PHASE
+    cluster-logging.v5.9.3   Red Hat OpenShift Logging   5.9.3     cluster-logging.v5.9.2   Succeeded
+    loki-operator.v5.9.3     Loki Operator               5.9.3     loki-operator.v5.9.2     Succeeded
     ```
-
-## 
 
 1. Create an OpenShift Logging instance, specifying the logStore:
 
@@ -371,8 +370,8 @@ loki-operator.v5.9.3     Loki Operator               5.9.3     loki-operator.v5.
 
   ```bash
   oc get consoles.operator.openshift.io cluster -o yaml |grep logging-view-plugin  \
-|| oc patch consoles.operator.openshift.io cluster  --type=merge \
---patch '{ "spec": { "plugins": ["logging-view-plugin"]}}'
+  || oc patch consoles.operator.openshift.io cluster  --type=merge \
+  --patch '{ "spec": { "plugins": ["logging-view-plugin"]}}'
   ```
 
   Example output:
@@ -399,27 +398,27 @@ loki-operator.v5.9.3     Loki Operator               5.9.3     loki-operator.v5.
 
 1. Edit your OpenShift Logging instance, adding the collection section to create vector collection pods:
 
-    ```bash
-    oc replace -f - <<EOF
-    apiVersion: "logging.openshift.io/v1"
-    kind: "ClusterLogging"
-    metadata:
-      name: "instance"
-      namespace: "openshift-logging"
-    spec:
-      managementState: "Managed"
-      logStore:
-        type: "lokistack"
-        lokistack:
-          name: logging-loki
-      visualization:
-        type: "ocp-console"
-        ocpConsole: {}
-      collection:
-        type: "vector"
-        vector: {}
-    EOF
-    ```
+```bash
+oc replace -f - <<EOF
+apiVersion: "logging.openshift.io/v1"
+kind: "ClusterLogging"
+metadata:
+  name: "instance"
+  namespace: "openshift-logging"
+spec:
+  managementState: "Managed"
+  logStore:
+    type: "lokistack"
+    lokistack:
+      name: logging-loki
+  visualization:
+    type: "ocp-console"
+    ocpConsole: {}
+  collection:
+    type: "vector"
+    vector: {}
+EOF
+```
 
   1. Confirm you can see collector pods starting up using the following command. There should be one per node.
 
