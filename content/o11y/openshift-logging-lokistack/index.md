@@ -1,12 +1,16 @@
 ---
 date: '2021-07-27'
-title: OpenShift Logging
+title: Configuring OpenShift Logging using LokiStack on ROSA and (soon) ARO
 tags: ["Observability", "OCP"]
 authors:
   - Andy Repton
 ---
 
 A guide to shipping logs and metrics on OpenShift using the new LokiStack setup
+
+## Overview of the components of OpenShift Cluster Logging
+
+![logging overview](./logging-overview.png)
 
 ## Prerequisites
 
