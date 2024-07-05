@@ -52,6 +52,9 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
 * [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
 
+##### AWS GovCloud
+* [Creating a ROSA Cluster in AWS GovCloud](/experts/rosa/rosa-govcloud/)
+
 ### ARO
 
 * [Prerequisites Checklist to Deploy ARO Cluster](/experts/aro/prereq-list)
