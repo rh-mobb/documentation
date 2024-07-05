@@ -268,6 +268,8 @@ spec:
 EOF
 ```
 
+## Configuring LokiStack
+
 1. Confirm your LokiStack is running successfully by running the following command:
 
 ```bash
