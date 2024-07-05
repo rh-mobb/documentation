@@ -72,7 +72,7 @@ POLICY_ARN=$(aws --region "$REGION" --query Policy.Arn \
 --policy-name "${CLUSTER_NAME}-lokistack-access-policy" \
 --policy-document file://policy.json)
 
-$ echo $POLICY_ARN
+echo $POLICY_ARN
 ```
 
 ### If you are using OpenShift 4.14 or higher on AWS (ROSA)
@@ -129,7 +129,7 @@ aws iam attach-user-policy --user-name "${CLUSTER_NAME}-lokistack-access-user" -
 1. Create an AWS Access key and Secret key for your IAM user using the following command:
 
 ```bash
-AWS_KEYS=$(aws iam create-access-key --user-name "${CLUSTER_NAME}-lokistack-access-user"
+AWS_KEYS=$(aws iam create-access-key --user-name "${CLUSTER_NAME}-lokistack-access-user")
 ```
 
 You are ready to proceed to the next step
@@ -240,7 +240,8 @@ oc -n openshift-logging create secret generic "logging-loki-aws" \
 --from-literal=bucketnames="${LOKISTACK_BUCKET_NAME}" \
 --from-literal=region="${REGION}" \
 --from-literal=access_key_id="${AWS_ACCESS_KEY_ID}" \
---from-literal=access_key_secret="${AWS_SECRET_ACCESS_KEY}"
+--from-literal=access_key_secret="${AWS_SECRET_ACCESS_KEY}" \
+--from-literal=endpoint="https://s3.${REGION}.amazonaws.com"
 ```
 
 1. Create a LokiStack installation by creating the following object:
@@ -530,6 +531,7 @@ oc -n openshift-logging delete csv cluster-logging.v5.9.3
 1. Remove the LokiStack Operator:
 
 ```bash
+oc -n openshift-logging delete subscription loki-operator
 oc -n openshift-logging delete csv loki-operator.v5.9.3
 ```
 
