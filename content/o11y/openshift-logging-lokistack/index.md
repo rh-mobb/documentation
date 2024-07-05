@@ -348,6 +348,43 @@ oc get pods -n openshift-logging
 
   1. Here, we have configured the ClusterLogging Operator to use the existing LokiStack we have created in the cluster as it's LogStorage. If you are using ElasticSearch as your LogStore, this would point at ElasticSearch (now deprecated)
 
+1. Edit your OpenShift Logging instance, adding the collection section to create vector collection pods:
+
+```bash
+oc replace -f - <<EOF
+apiVersion: "logging.openshift.io/v1"
+kind: "ClusterLogging"
+metadata:
+  name: "instance"
+  namespace: "openshift-logging"
+spec:
+  managementState: "Managed"
+  logStore:
+    type: "lokistack"
+    lokistack:
+      name: logging-loki
+  collection:
+    type: "vector"
+    vector: {}
+EOF
+```
+
+  1. Confirm you can see collector pods starting up using the following command. There should be one per node.
+
+  ```bash
+  oc get pods -n openshift-logging | grep collector
+  ```
+
+  Example output:
+  
+  ```
+  collector-49qnt                                1/1     Running   0          11m
+  collector-gvd5x                                1/1     Running   0          11m
+  collector-qfqxs                                1/1     Running   0          11m
+  collector-r7scm                                1/1     Running   0          11m
+  collector-zlzpf                                1/1     Running   0          11m
+  ```
+
 1. Edit your OpenShift Logging instance, adding the visualisation section to show logs in the console:
 
     ```bash
@@ -363,6 +400,9 @@ oc get pods -n openshift-logging
         type: "lokistack"
         lokistack:
           name: logging-loki
+      collection:
+        type: "vector"
+        vector: {}
       visualization:
         type: "ocp-console"
         ocpConsole: {}
@@ -399,45 +439,6 @@ oc get pods -n openshift-logging
 
   ![logging in console](./logging-in-console.png)
 
-1. Edit your OpenShift Logging instance, adding the collection section to create vector collection pods:
-
-```bash
-oc replace -f - <<EOF
-apiVersion: "logging.openshift.io/v1"
-kind: "ClusterLogging"
-metadata:
-  name: "instance"
-  namespace: "openshift-logging"
-spec:
-  managementState: "Managed"
-  logStore:
-    type: "lokistack"
-    lokistack:
-      name: logging-loki
-  visualization:
-    type: "ocp-console"
-    ocpConsole: {}
-  collection:
-    type: "vector"
-    vector: {}
-EOF
-```
-
-  1. Confirm you can see collector pods starting up using the following command. There should be one per node.
-
-  ```bash
-  oc get pods -n openshift-logging | grep collector
-  ```
-
-  Example output:
-  
-  ```
-  collector-49qnt                                1/1     Running   0          11m
-  collector-gvd5x                                1/1     Running   0          11m
-  collector-qfqxs                                1/1     Running   0          11m
-  collector-r7scm                                1/1     Running   0          11m
-  collector-zlzpf                                1/1     Running   0          11m
-  ```
 
 1. At this point OpenShift logging is installed and configured and is ready to receive logs.
 
