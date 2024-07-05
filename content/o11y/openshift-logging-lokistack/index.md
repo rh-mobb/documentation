@@ -468,7 +468,7 @@ Separately from the ClusterLogging storage system, the OpenShift Cluster Logging
 
 This example selects all infrastructure logs and forwards them to "default", which is a reference to our LokiStack Logging Store. If we go to the Console and browse to Observer -> Logs, then change the dropdown from "application" to "infrastructure" we can now see logs:
 
-!(infra logs example)[./infra-logs-example.png]
+![infra logs example](./infra-logs-example.png)
 
 1. Adjust your ClusterLogForwarder to pick up Application logs from a specific namespace by running the following command:
 
