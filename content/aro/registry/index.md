@@ -5,6 +5,7 @@ tags: ["ARO", "Azure"]
 authors:
   - Kevin Collins
   - Connor Wooley
+  - Thatcher Hubbard
 ---
 
 **Kevin Collins**
@@ -22,17 +23,13 @@ One of the advantages of using OpenShift is the internal registry that comes wit
 ## Expose the Registry
 1. Expose the registry service
    ```bash
-   oc create route reencrypt --service=image-registry -n openshift-image-registry
-   ```
-
-1. Annotate the route
-   ```bash
-   oc annotate route image-registry haproxy.router.openshift.io/balance=source -n openshift-image-registry
+   oc patch config.imageregistry.operator.openshift.io/cluster --patch='{"spec":{"defaultRoute":true}}' --type=merge
+   oc patch config.imageregistry.operator.openshift.io/cluster --patch='[{"op": "add", "path": "/spec/disableRedirect", "value": true}]' --type=json
    ```
 
 1.  Get the route host name
     ```bash
-    HOST=$(oc get route image-registry -n openshift-image-registry --template='{{ .spec.host }}')
+    HOST=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
     ```
 1. Log into the image registry
    ```bash
@@ -40,12 +37,13 @@ One of the advantages of using OpenShift is the internal registry that comes wit
    ```
 ## Test it out
    ```bash
-   podman pull openshift/hello-openshift
+   podman pull $HOST/openshift/cli
 
    podman images
    ```
 
-   expected output
+   Expected output:
+
    ```bash
-    openshift/hello-openshift                                   latest    7af3297a3fb4   4 years ago    6.09MB
+   default-route-openshift-image-registry.apps.<domain>/openshift/cli                latest      aa85757767cb  3 weeks ago    615 MB
    ```
