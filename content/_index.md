@@ -117,6 +117,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Sending ARO cluster logs to Azure Log Analytics](/experts/aro/clf-to-azure)
 * [Shipping logs and metrics to Azure Blob storage](/experts/aro/shipping-logs-and-metrics-to-azure-blob)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
+* [Installing and configuring LokiStack on ROSA](/experts/o11y/openshift-logging-lokistack)
 
 ## Security
 
