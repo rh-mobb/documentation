@@ -25,7 +25,7 @@ OpenShift offering like Azure Red Hat OpenShift (ARO).
 
 ## High-Level Architecture
 
-Below represents a high-level architecture.  It is intended to show a simplified architecture with all components
+Below represents a high-level architecture.  It is intended to show a simplified architecture with *most* components
 deployed.  Please note that components can easily be spread across multiple availability zones to achieve high 
 availability requirements, which is not represented in the overly simplified diagram below:
 
@@ -39,7 +39,7 @@ This step simply sets up your environment with variables to be used during insta
 export AZR_RESOURCE_GROUP='aro-cluster-rg'
 export AZR_CLUSTER='aro-cluster'
 export AAP_ADMIN_USERNAME='admin'
-export AAP_ADMIN_PASSWORD='MySecureP@$$w0rd'
+export AAP_ADMIN_PASSWORD='MySecureP@$$w0rd' # notsecret
 export AAP_ADMIN_EMAIL='myemail@mydomain.com'
 export AAP_APPS_DOMAIN="$(az aro show -n $AZR_CLUSTER -g $AZR_RESOURCE_GROUP | jq -r '.clusterProfile.domain')"
 ```
