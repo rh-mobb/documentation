@@ -6,7 +6,7 @@ authors:
   - Andy Repton
 ---
 
-A guide to shipping logs and metrics on OpenShift using the new LokiStack setup
+A guide to shipping logs and metrics on OpenShift using the new LokiStack setup. Recently, the default logging system with OpenShift swapped from ElasticSearch/FluentD/Kibana to a system based on LokiStack/Vector/OCP Console. LokiStack requires an object store in order to function, and this guide is designed to walk the user through the steps required to set this up.
 
 ## Overview of the components of OpenShift Cluster Logging
 
@@ -18,7 +18,7 @@ A guide to shipping logs and metrics on OpenShift using the new LokiStack setup
 1. Rights to install operators on the cluster
 1. Access to create S3 buckets (AWS/ROSA), Blob Storage Container (Azure), Storage Bucket (GCP)
 
-## For ROSA
+## Setting up your environment for ROSA
 
 1. Create environment variables to use later in this process by running the following commands:
 
@@ -78,7 +78,7 @@ A guide to shipping logs and metrics on OpenShift using the new LokiStack setup
     echo $POLICY_ARN
     ```
 
-### If you are using OpenShift 4.14 or higher on AWS (ROSA)
+### Create the LokiStack installation (OpenShift 4.14 or higher on AWS (ROSA))
 
 1. Create an IAM Role trust policy document by running the following command:
 
@@ -115,7 +115,7 @@ A guide to shipping logs and metrics on OpenShift using the new LokiStack setup
 
 Save this role_arn for installation of the lokistack operator later.
 
-### If you are using OpenShift 4.13 or lower on AWS (ROSA), or are using a Non-STS cluster
+### Create the LokiStack installation (OpenShift 4.13 or lower on AWS (ROSA) and non-STS clusters)
 
 1. Create an IAM user that will allow your LokiStack to access the bucket using the following command:
 
@@ -441,7 +441,7 @@ You are ready to proceed to the next step
         ![logging in console](./logging-in-console.png)
 
 
-1. At this point OpenShift logging is installed and configured and is ready to receive logs.
+At this point OpenShift logging is installed and configured and is ready to receive logs.
 
 ## Install the ClusterLogForwarder Custom Resource
 
