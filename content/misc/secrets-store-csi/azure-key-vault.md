@@ -6,6 +6,7 @@ tags: ["Azure", "ARO"]
 authors:
   - Paul Czarkowski
   - Diana Sari
+  - Charlotte Fung
 ---
 
 This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
@@ -28,6 +29,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     export KEYVAULT_LOCATION=${AZR_RESOURCE_LOCATION:-"eastus"}
     export KEYVAULT_NAME=secret-store-$(cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
     export AZ_TENANT_ID=$(az account show -o tsv --query tenantId)
+    export AZ_SUB_ID=$(az account show -o tsv --query id)
     ```
 
 {{< readfile file="/content/misc/secrets-store-csi/install-kubernetes-secret-store-driver.md" markdown="true" >}}
@@ -80,6 +82,15 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
       --location ${KEYVAULT_LOCATION}
     ```
 
+1. Give your user account permissions to manage secrets in Key Vault
+
+     ```bash
+    az role assignment create --role "Key Vault Administrator" \
+      --assignee "<your-email-address>" \
+      --scope “/subscriptions/$SUB_ID/resourcegroups/$KEYVAULT_RESOURCE_GROUP/providers/microsoft.keyvault/vaults/$KEYVAULT_NAME"
+    ```
+   Replace \<your-email-address\> with your actual value, which is your sign-in name.   
+
 1. Create a secret in the Keyvault
 
     ```bash
@@ -88,7 +99,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
       --name secret1 --value "Hello"
     ```
 
-1. Create a Service Principal for the keyvault
+1. Create a Service Principal for the key Vault
 
    > Note: If this gives you an error, you may need upgrade your Azure CLI to the latest version.
 
@@ -100,12 +111,12 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
      --display-name http://$KEYVAULT_NAME --query '[0].appId' -otsv)"
    ```
 
-1. Set an Access Policy for the Service Principal
+1. Give the Service Principal permissions to use secrets in Key Vault
 
     ```bash
-    az keyvault set-policy -n ${KEYVAULT_NAME} \
-      --secret-permissions get \
-      --spn ${SERVICE_PRINCIPAL_CLIENT_ID}
+    az role assignment create --role "Key Vault Secrets User" \
+      --assignee ${SERVICE_PRINCIPAL_CLIENT_ID} \
+      --scope “/subscriptions/$SUB_ID/resourcegroups/$KEYVAULT_RESOURCE_GROUP/providers/microsoft.keyvault/vaults/$KEYVAULT_NAME" 
     ```
 
 1. Create and label a secret for Kubernetes to use to access the Key Vault
