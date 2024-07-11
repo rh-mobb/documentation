@@ -10,7 +10,7 @@ This guide will walk you through deploying a ROSA cluster using Terraform.  This
 
 {{< readfile file="/content/rosa/terraform/tf-prereqs.md" markdown="true" >}}
 
-## HCP ROSA Cluster
+## ROSA Classic Cluster
 
 1. Clone down the terraform repository
 
