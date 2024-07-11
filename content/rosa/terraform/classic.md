@@ -45,7 +45,7 @@ This guide will walk you through deploying a ROSA cluster using Terraform.  This
 
     ```
 
-    If everything goes to plan, after about 20 minutes you should have a cluster available to use.
+    If everything goes to plan, after about 45 minutes you should have a cluster available to use.
 
     ```
     Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
