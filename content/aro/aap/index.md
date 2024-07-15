@@ -20,7 +20,7 @@ OpenShift offering like Azure Red Hat OpenShift (ARO).
 ## Prerequisites
 
 * [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
-* [An Azure Red Hat OpenShift (ARO) cluster](/quickstart-aro)
+* [An Azure Red Hat OpenShift (ARO) cluster](/experts/quickstart-aro)
 
 
 ## High-Level Architecture
