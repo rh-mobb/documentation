@@ -3,7 +3,9 @@ date: '2021-07-15'
 title: ARO - Considerations for Disaster Recovery
 tags: ["ARO", "Azure"]
 authors:
+  - Paul Czarkowski
   - Connor Wooley
+  - Diana Sari
 ---
 
 This is a high level overview of disaster recovery options for Azure Red Hat OpenShift. It is not a detailed design, but rather a starting point for a more detailed design.
