@@ -21,10 +21,21 @@ This guide will walk you through deploying a ROSA cluster using Terraform.  This
 
 1. Save some environment variables
 
-    > Note: You may want to customize some of these settings to match your needs. see the `variables.tf` file for options.
+    **Mac**
+
+    ```bash
+    export TF_VAR_token="$(jq -r .refresh_token ~/Library/Application\ Support/ocm/ocm.json)"
+    ```
+
+    **Linux**
 
     ```bash
     export TF_VAR_token="$(jq -r .refresh_token ~/.config/ocm/ocm.json)"
+    ```
+
+    > Note: You may want to customize some of these settings to match your needs. see the `variables.tf` file for options.
+
+    ```bash
     export TF_VAR_cluster_name="$(whoami)"
     export TF_VAR_admin_password='Passw0rd12345!'
     export TF_VAR_developer_password=''
@@ -32,6 +43,7 @@ This guide will walk you through deploying a ROSA cluster using Terraform.  This
     export TF_VAR_ocp_version=4.15.11
     export TF_VAR_hosted_control_plane=false
     export TF_VAR_multi_az=false
+    export TF_VAR_replicas=2
     ```
 
 3. Create a Plan and Apply it
