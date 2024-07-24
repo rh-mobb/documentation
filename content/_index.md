@@ -175,7 +175,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying 3scale API Management to ROSA/OSD](/experts/redhat/3scale)
 
 ### Ingress
-
 * [Configure a custom ingress TLS profile for ROSA/OSD](/experts/misc/tls-cipher-customization)
 * [Demonstrating GitOps - ArgoCD](/experts/redhat/gitops/)
 * [Migrate Kubernetes Applications with Konveyor Crane](/experts/redhat/crane/)
