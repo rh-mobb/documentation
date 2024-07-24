@@ -21,10 +21,21 @@ This guide will walk you through deploying a ROSA HCP cluster using Terraform.  
 
 1. Save some environment variables
 
-    > Note: You may want to customize some of these settings to match your needs. see the `variables.tf` file for options.
+    **Mac**
+
+    ```bash
+    export TF_VAR_token="$(jq -r .refresh_token ~/Library/Application\ Support/ocm/ocm.json)"
+    ```
+
+    **Linux**
 
     ```bash
     export TF_VAR_token="$(jq -r .refresh_token ~/.config/ocm/ocm.json)"
+    ```
+
+    > Note: You may want to customize some of these settings to match your needs. see the `variables.tf` file for options.
+
+    ```bash
     export TF_VAR_cluster_name="$(whoami)-hcp"
     export TF_VAR_admin_password='Passw0rd12345!'
     export TF_VAR_developer_password=''
