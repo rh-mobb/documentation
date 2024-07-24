@@ -105,10 +105,10 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
   * [via GUI](/experts/rosa/ocp-virt/basic-gui)
 * [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 
-
 ### Red Hat OpenShift AI (RHOAI)
 
 * [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/rhoai/rosa-s3)
+* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA with GPUs](/experts/rhoai/rosa-gpu)
 
 ### Data Science on Jupyter Notebook on OpenShift
 
