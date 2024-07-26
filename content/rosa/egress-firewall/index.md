@@ -1,6 +1,6 @@
 ---
 date: '2024-07-26'
-title: Configure Pod Security Policies and Egress Firewalls for a ROSA Cluster
+title: Configure Network Policies and Egress Firewalls for a ROSA Cluster
 tags: ["OSD", "ROSA", "security","egressfirewall", "networkpolicy"]
 authors:
   - 'Paul Czarkowski'
