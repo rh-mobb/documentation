@@ -29,6 +29,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [ROSA IP addressing best practices](/experts/rosa/ip-addressing-and-subnets)
 * [Installing the AWS Load Balancer Operator on ROSA](/experts/rosa/aws-load-balancer-operator)
 * [Assign Egress IP for External Traffic](/experts/rosa/egress-ip)
+* [Configure Network Policies and Egress Firewalls](/experts/rosa/egress-firewall)
 * [Adding AWS WAF in front of ROSA / OSD](/experts/rosa/waf/)
 * [Use AWS Secrets CSI with ROSA in STS mode](/experts/rosa/aws-secrets-manager-csi)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
