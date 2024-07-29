@@ -17,7 +17,7 @@ ROSA guide to running Nvidia GPU workloads.
 * oc cli #logged-in-cluster-admin
 * jq
 
-If you need to install a ROSA cluster, please read our [ROSA Quickstart Guide](/experts/quickstart-rosa.md), or better yet [Use Terraform to create an HCP Cluster](/experts/terraform/hcp).
+If you need to install a ROSA cluster, please read our [ROSA Quickstart Guide](/experts/quickstart-rosa.md), or better yet [Use Terraform to create an HCP Cluster](/experts/rosa/terraform/hcp).
 
 Enter the `oc login` command, username, and password from the output of the previous command:
 
@@ -180,7 +180,7 @@ This section configures the Node Feature Discovery Operator (to allow OpenShift 
     ```
 
     ```bash
-    oc wait --for=jsonpath='{.status.numberReady}'=$(oc get nodes --no-headers | wc -l) \
+    oc wait --for=jsonpath='{.status.numberReady}'=$(oc get nodes -o json | jq '.items | length') \
       daemonset nfd-worker -n openshift-nfd --timeout=600s
     ```
 
