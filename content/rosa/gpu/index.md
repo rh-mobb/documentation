@@ -124,7 +124,7 @@ brew install jq
 1. Double check that the cluster shows the node as ready
 
     ```bash
-    oc get nodes -l "node.kubernetes.io/instance-type=$GPU_INSTANCE_TYPE"
+    watch oc get nodes -l "node.kubernetes.io/instance-type=$GPU_INSTANCE_TYPE"
     ```
 
     ```
@@ -180,7 +180,8 @@ This section configures the Node Feature Discovery Operator (to allow OpenShift 
     ```
 
     ```bash
-    oc wait --for=jsonpath='{.status.numberReady}'=$(oc get nodes -o json | jq '.items | length') \
+    NODES=$(oc get nodes -l "node-role.kubernetes.io/worker=" -o json | jq '.items | length')
+    oc wait --for=jsonpath='{.status.numberReady}'=${NODES} \
       daemonset nfd-worker -n openshift-nfd --timeout=600s
     ```
 
