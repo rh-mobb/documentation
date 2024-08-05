@@ -9,7 +9,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Red Hat OpenShift on AWS (ROSA)](/experts/rosa/sts/)
 * [Azure Red Hat OpenShift (ARO)](/experts/quickstart-aro/)
 
-### ROSA
+## ROSA
 
 #### Hosted Control Plane (HCP)
 
@@ -57,7 +57,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 ##### AWS GovCloud
 * [Creating a ROSA Cluster in AWS GovCloud](/experts/rosa/rosa-govcloud/)
 
-### ARO
+## ARO
 
 * [Prerequisites Checklist to Deploy ARO Cluster](/experts/aro/prereq-list)
 * [Deploying private ARO Cluster with Jump Host access](/experts/aro/private-cluster)
@@ -91,23 +91,40 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ACM and ODF for ARO Disaster Recovery](/experts/aro/acm-odf-aro)
 * [Deploy Ansible Automation Platform (AAP) on ARO](/experts/aro/aap)
 
-### GCP
+## GCP
 
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/gcp/osd_preexisting_vpc)
 * [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore)
 
-## OpenShift Virtualization
+## Layered Products
+
+### OpenShift Virtualization
 
 * Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA)
   * [via CLI](/experts/rosa/ocp-virt/basic)
   * [via GUI](/experts/rosa/ocp-virt/basic-gui)
 * [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 
-## Advanced Cluster Manager (ACM)
+
+### Red Hat OpenShift AI (RHOAI)
+
+* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/rhoai/rosa-s3)
+
+### Data Science on Jupyter Notebook on OpenShift
+
+* [Prerequistes and Concepts](/experts/misc/jup/)
+  * [Build minimal notebook](/experts/misc/jup/buildnotebook)
+  * [JupyterHub notebook with GPU](/experts/misc/jup/opendatahub-gpu)
+
+### Advanced Cluster Manager (ACM)
 
 * [Deploy ACM Observability to a ROSA cluster](/experts/redhat/acm/observability/rosa)
 * [Deploy ACM Submariner for connecting overlay networks of ROSA clusters](/experts/redhat/acm/submariner/rosa)
 * [Deploy ACM Submariner for connect overlay networks ARO - ROSA clusters](/experts/redhat/acm/submariner/aro)
+
+### Deploying Advanced Cluster Security for Kubernetes in ROSA/ARO
+
+* [Deploying ACS in ROSA/ARO](/experts/redhat/rhacs)
 
 ## Observability
 
@@ -131,7 +148,9 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
   * [+ AWS Secrets CSI with ROSA in STS mode](/experts/rosa/aws-secrets-manager-csi)
   * [+ Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
 
-## Configuring Specific Identity Providers
+## Identity Providers (Idp)
+
+### Configuring Specific Identity Providers
 
 * [Configure GitLab as an identity provider for ROSA/OSD](/experts/idp/gitlab)
 * [Configure GitLab as an identity provider for ARO](/experts/idp/gitlab-aro)
@@ -143,39 +162,29 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configure Red Hat SSO with Azure AD as a Federated Identity Provider for ARO](/experts/idp/azuread-red-hat-sso)
 * [Considerations when using AAD as IDP](/experts/idp/considerations-aad-ipd)
 
-## Configuring Group Synchronization
+### Configuring Group Synchronization
 
 * [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](/experts/idp/az-ad-grp-sync)
 * [Using Group Sync Operator with Okta and ROSA/OSD](/experts/idp/okta-grp-sync)
 
-### Deploying Advanced Security for Kubernetes in ROSA/ARO
+## Miscellaneous
 
-* [Deploying ACS in ROSA/ARO](/experts/redhat/rhacs)
-
-## Applications
+### Applications
 
 * [Deploying Astronomer to OpenShift](/experts/aro/astronomer)
 * [Deploying 3scale API Management to ROSA/OSD](/experts/redhat/3scale)
 
-## Ingress
+### Ingress
+
 * [Configure a custom ingress TLS profile for ROSA/OSD](/experts/misc/tls-cipher-customization)
-
-## Data Science on Jupyter Notebook on OpenShift
-* [Prerequistes and Concepts](/experts/misc/jup/)
-  * [Build minimal notebook](/experts/misc/jup/buildnotebook)
-  * [JupyterHub notebook with GPU](/experts/misc/jup/opendatahub-gpu)
-
-## Miscellaneous
-
 * [Demonstrating GitOps - ArgoCD](/experts/redhat/gitops/)
 * [Migrate Kubernetes Applications with Konveyor Crane](/experts/redhat/crane/)
 * [Red Hat Cost Management for Cloud Services](/experts/misc/cost-management/)
 * [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
 * [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
 * [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
-* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/misc/rhoai-s3)
 
-## Fixes / Workarounds
+### Fixes / Workarounds
 
 * [Stop default router from serving custom domain routes](/experts/misc/default-router-custom-domain)
 * [Fix token-refresher pod CrashLoopBackOff when running a cluster behind a proxy](/experts/misc/token-refresher-proxy)
