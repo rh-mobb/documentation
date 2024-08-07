@@ -13,23 +13,28 @@ ARO guide to running Nvidia GPU workloads.
 ## Prerequisites
 
 * oc cli
+* Helm
 * jq, moreutils, and gettext package
-* ARO 4.10
+* An [ARO 4.14 cluster](/experts/aro/terraform-install)
 
-If you need to install an ARO cluster, please read our [ARO Quick start guide](/experts/quickstart-aro/). Please be sure if you're installing or using an existing ARO cluster that it is 4.10.x or higher.
+> **Note:** If you need to install an ARO cluster, please read our [ARO Terraform Install Guide](/experts/aro/terraform-install). Please be sure if you're installing or using an existing ARO cluster that it is 4.14.x or higher.
 
->As of OpenShift 4.10, it is no longer necessary to set up entitlements to use the nVidia Operator. This has greatly simplified the setup of the cluster for GPU workloads.
+> **Note:** Please ensure your ARO cluster was created with a valid pull secret (to verify make sure you can see the Operator Hub in the cluster's console).  If not, you can follow [these](/experts/aro/pull-secret) instructions.
 
+
+{{% expand title="Install Prepreqs instructions" %}}
 Linux:
 
 ```bash
 sudo dnf install jq moreutils gettext
 ```
 
-MacOS
+MacOS:
+
 ```bash
-brew install jq moreutils gettext
+brew install jq moreutils gettext helm openshift-cli
 ```
+{{% /expand %}}
 
 ### Helm Prerequisites
 
@@ -76,88 +81,6 @@ ARO supports the following GPU workers:
 
    ```bash
    oc login <apiserver> -u kubeadmin -p <kubeadminpass>
-   ```
-
-## Pull secret (Conditional)
-
-We'll update our pull secret to make sure that we can install operators as well as connect to cloud.redhat.com.
-
-   >If you have already re-created a full pull secret with cloud.redhat.com enabled you can skip this step
-
-### Using Helm
-
-1. Before Deploying the chart you need it to adopt the existing pull secret
-
-   ```bash
-   kubectl -n openshift-config annotate secret \
-    pull-secret meta.helm.sh/release-name=pull-secret
-   kubectl -n openshift-config annotate secret \
-     pull-secret meta.helm.sh/release-namespace=openshift-config
-   kubectl -n openshift-config label secret \
-     pull-secret app.kubernetes.io/managed-by=Helm
-   ```
-
-1. Download your new pull secret from **https://console.redhat.com/openshift/downloads -> Tokens -> Pull secret** and use it to update create the pull secret in your cluster.
-
-1. Update the pull secret
-
-   > This chart will merge the in-cluster pull secret with the new pull secret.
-
-   ```
-   helm upgrade --install pull-secret mobb/aro-pull-secret \
-     -n openshift-config --set-file pullSecret=$HOME/Downloads/pull-secret.txt
-   ```
-
-1. Enable Operator Hub
-
-   ```bash
-   oc patch configs.samples.operator.openshift.io cluster --type=merge \
-         -p='{"spec":{"managementState":"Managed"}}'
-   oc patch operatorhub cluster --type=merge \
-         -p='{"spec":{"sources":[
-           {"name":"redhat-operators","disabled":false},
-           {"name":"certified-operators","disabled":false},
-           {"name":"community-operators","disabled":false},
-           {"name":"redhat-marketplace","disabled":false}
-         ]}}'
-   ```
-
-1. Skip to [GPU Machine Set](#gpu-machine-set)
-
-### Manually
-
-1. Log into [cloud.redhat.com](cloud.redhat.com)
-
-1. Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned
-
-1. click the **Download pull secret** button and save it as pull-secret.txt
-
-   >The following steps will need to be ran in the same working directory as your pull-secret.txt
-
-1. Export existing pull secret
-
-   ```bash
-   oc get secret pull-secret -n openshift-config -o json | jq -r '.data.".dockerconfigjson"' | base64 --decode > export-pull.json
-   ```
-
-1. Merge downloaded pull secret with system pull secret to add cloud.redhat.com
-
-   ```bash
-   jq -s '.[0] * .[1]' export-pull.json pull-secret.txt | tr -d "\n\r" > new-pull-secret.json
-   ```
-
-1. Upload new secret file
-
-   ```bash
-   oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=new-pull-secret.json
-   ```
-
-> You may need to wait for about ~1hr for everything to sync up with cloud.redhat.com.
-
-1. Delete secrets
-
-   ```bash
-   rm pull-secret.txt export-pull.json new-pull-secret.json
    ```
 
 ## GPU Machine Set
@@ -361,13 +284,13 @@ This will create the nvidia-gpu-operator name space, set up the operator group a
    ```
 
 1. Get latest nvidia channel
-    
+
    ```bash
    CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
    ```
-> If your cluster was created without providing the pull secret, the cluster won't include samples or operators from Red Hat or from certified partners. This will result in the following error message: 
-> 
-> *Error from server (NotFound): packagemanifests.packages.operators.coreos.com "gpu-operator-certified" not found.* 
+> If your cluster was created without providing the pull secret, the cluster won't include samples or operators from Red Hat or from certified partners. This will result in the following error message:
+>
+> *Error from server (NotFound): packagemanifests.packages.operators.coreos.com "gpu-operator-certified" not found.*
 >
 > To add your Red Hat pull secret on an Azure Red Hat OpenShift cluster, [follow this guidance](https://learn.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret).
 
