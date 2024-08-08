@@ -300,10 +300,10 @@ oc delete pod cuda-vector-add -n nvidia-gpu-operator || echo "Failed to delete t
 echo "GPU validation process completed."
 ```
 
-In essence, here you verify that NFD can detect the GPUs, run `nvidia-smi` on the GPU driver daemonset pod, run a simple CUDA vector addition test pod, and delete it.
+In essence, here we verify that NFD can detect the GPUs, run `nvidia-smi` on the GPU driver daemonset pod, run a simple CUDA vector addition test pod, and delete it.
 
 
-Note that the script could take a few minutes to complete. And if you were seeing any error, e,g, `No GPU nodes detected`, etc., then you might want to try again in the next few minutes. 
+Note that the script could take a few minutes to complete. And if you were seeing any error(s) such as "No GPU nodes detected", etc., then you might want to try again in the next few minutes. 
 
 
 
