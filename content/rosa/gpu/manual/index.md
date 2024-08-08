@@ -1,6 +1,6 @@
 ---
 date: '2023-02-21'
-title: Manual steps for ROSA with Nvidia GPU Workloads
+title: ROSA with Nvidia GPU Workloads - Manual
 tags: ["AWS", "ROSA", "GPU"]
 authors:
   - Chris Kang
@@ -8,319 +8,302 @@ authors:
 ---
 
 
-### Manually
+This is a guide to install GPU on ROSA cluster manually, which is an alternative to our [Helm chart guide](https://cloud.redhat.com/experts/rosa/gpu/).
 
-#### Install Nvidia GPU Operator
+## Prerequisites
 
-1. Create Nvidia namespace
+* ROSA cluster (4.14+) 
+    - You can install a Classic version using [CLI](https://cloud.redhat.com/experts/rosa/sts/) or an HCP one using [Terraform](https://cloud.redhat.com/experts/rosa/terraform/hcp/).
+    - Please be sure you are logged in to the cluster with a cluster admin access.
+* rosa cli
+* oc cli
 
-   ```bash
-   oc create namespace nvidia-gpu-operator
-   ```
 
-1. Create Operator Group
+## Setting up GPU machine pools
 
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: operators.coreos.com/v1
-   kind: OperatorGroup
-   metadata:
-     name: nvidia-gpu-operator-group
-     namespace: nvidia-gpu-operator
-   spec:
-    targetNamespaces:
-    - nvidia-gpu-operator
-   EOF
-   ```
+In this tutorial, I'm using `g5.4xlarge node` for the GPU machine pools with auto-scaling enabled up to 4 nodes. Please replace `your-cluster-name` with the name of your cluster. 
 
-1. Get latest nvidia channel
+*Note that you can also use another instance type and not using auto-scaling.* 
 
-   ```bash
-   CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
-   ```
+```
+rosa create machinepool --cluster=<your-cluster-name> --name=gpu-pool --instance-type=g5.4xlarge --min-replicas=1 --max-replicas=4 --enable-autoscaling --labels='gpu-node=true' --taints='nvidia.com/gpu=present:NoSchedule'
+```
 
-1. Get latest nvidia package
+## Installing NFD operator
 
-   ```bash
-   PACKAGE=$(oc get packagemanifests/gpu-operator-certified -n openshift-marketplace -ojson | jq -r '.status.channels[] | select(.name == "'$CHANNEL'") | .currentCSV')
-   ```
+The [Node Feature Discovery operator](https://github.com/kubernetes-sigs/node-feature-discovery-operator) will discover the GPU on your nodes and NFD instance will appropriately label the nodes so you can target them for workloads. Please refer to the [official OpenShift documentation](https://docs.openshift.com/container-platform/4.16/hardware_enablement/psap-node-feature-discovery-operator.html) for more details.  
 
-1. Create Subscription
+```
+#!/bin/bash
 
-   ```yaml
-   envsubst  <<EOF | oc apply -f -
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     name: gpu-operator-certified
-     namespace: nvidia-gpu-operator
-   spec:
-     channel: "$CHANNEL"
-     installPlanApproval: Automatic
-     name: gpu-operator-certified
-     source: certified-operators
-     sourceNamespace: openshift-marketplace
-     startingCSV: "$PACKAGE"
-   EOF
-   ```
+set -e
 
-1. Wait for Operator to finish installing
+# create the openshift-nfd namespace
+oc create namespace openshift-nfd
 
-   ```bash
-   oc rollout status deploy/gpu-operator -n nvidia-gpu-operator --timeout=300s
-   ```
+# apply the OperatorGroup and Subscription
+cat <<EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  generateName: openshift-nfd-
+  name: openshift-nfd
+  namespace: openshift-nfd
+spec:
+  targetNamespaces:
+  - openshift-nfd
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: nfd
+  namespace: openshift-nfd
+spec:
+  channel: "stable"
+  installPlanApproval: Automatic
+  name: nfd
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
 
-#### Install Node Feature Discovery Operator
+echo "Waiting for NFD Operator to be deployed..."
 
-The node feature discovery operator will discover the GPU on your nodes and appropriately label the nodes so you can target them for workloads.  We'll install the NFD operator into the opneshift-ndf namespace and create the "subscription" which is the configuration for NFD.
+# wait for the NFD Operator deployment to be available
+while ! oc get deployment -n openshift-nfd | grep -q nfd-controller-manager; do
+  sleep 5
+done
 
-Official Documentation for Installing [Node Feature Discovery Operator](https://docs.openshift.com/container-platform/4.10/hardware_enablement/psap-node-feature-discovery-operator.html)
+# wait for the deployment to be ready
+oc wait --for=condition=available --timeout=300s deployment/nfd-controller-manager -n openshift-nfd
 
-1. Set up namespace
+# check if the deployment is ready
+if [ $? -eq 0 ]; then
+  echo "NFD Operator is deployed and ready."
+else
+  echo "Timeout waiting for NFD Operator to be ready. Please check the deployment status manually."
+fi
 
-   ```bash
-   oc create namespace openshift-nfd
-   ```
+# display the pods in the openshift-nfd namespace
+echo "Pods in openshift-nfd namespace:"
+oc get pods -n openshift-nfd
+```
 
-1. Create OperatorGroup
+Note that this above might take a few minutes. And then next, we will create the NFD instance.
 
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: operators.coreos.com/v1
-   kind: OperatorGroup
-   metadata:
-     generateName: openshift-nfd-
-     name: openshift-nfd
-     namespace: openshift-nfd
-   EOF
-   ```
+```
+#!/bin/bash
 
-1. Create Subscription
+set -e
 
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     name: nfd
-     namespace: openshift-nfd
-   spec:
-     channel: "stable"
-     installPlanApproval: Automatic
-     name: nfd
-     source: redhat-operators
-     sourceNamespace: openshift-marketplace
-   EOF
-   ```
-1. Wait for Node Feature discovery to complete installation
+# apply the NodeFeatureDiscovery configuration
+cat <<EOF | oc apply -f -
+kind: NodeFeatureDiscovery
+apiVersion: nfd.openshift.io/v1
+metadata:
+  name: nfd-instance
+  namespace: openshift-nfd
+spec:
+  operand:
+    image: registry.redhat.io/openshift4/ose-node-feature-discovery@sha256:07658ef3df4b264b02396e67af813a52ba416b47ab6e1d2d08025a350ccd2b7b
+    servicePort: 12000
+EOF
 
-   ```bash
-   oc rollout status deploy/nfd-controller-manager -n openshift-nfd --timeout=300s
-   ```
+echo "Waiting for NFD instance to be created..."
+timeout 300 bash -c 'until oc get nodefeaturediscovery nfd-instance -n openshift-nfd &>/dev/null; do sleep 5; done'
 
-1. Create NFD Instance
+if [ $? -eq 0 ]; then
+    echo "NFD instance has been successfully created."
+else
+    echo "Timed out waiting for NFD instance to be created."
+    exit 1
+fi
+```
 
-   ```yaml
-   cat <<EOF | oc apply -f -
-   kind: NodeFeatureDiscovery
-   apiVersion: nfd.openshift.io/v1
-   metadata:
-     name: nfd-instance
-     namespace: openshift-nfd
-   spec:
-     customConfig:
-       configData: |
-         #    - name: "more.kernel.features"
-         #      matchOn:
-         #      - loadedKMod: ["example_kmod3"]
-         #    - name: "more.features.by.nodename"
-         #      value: customValue
-         #      matchOn:
-         #      - nodename: ["special-.*-node-.*"]
-     operand:
-       image: >-
-         registry.redhat.io/openshift4/ose-node-feature-discovery@sha256:07658ef3df4b264b02396e67af813a52ba416b47ab6e1d2d08025a350ccd2b7b
-       servicePort: 12000
-     workerConfig:
-       configData: |
-         core:
-         #  labelWhiteList:
-         #  noPublish: false
-           sleepInterval: 60s
-         #  sources: [all]
-         #  klog:
-         #    addDirHeader: false
-         #    alsologtostderr: false
-         #    logBacktraceAt:
-         #    logtostderr: true
-         #    skipHeaders: false
-         #    stderrthreshold: 2
-         #    v: 0
-         #    vmodule:
-         ##   NOTE: the following options are not dynamically run-time
-         ##          configurable and require a nfd-worker restart to take effect
-         ##          after being changed
-         #    logDir:
-         #    logFile:
-         #    logFileMaxSize: 1800
-         #    skipLogHeaders: false
-         sources:
-         #  cpu:
-         #    cpuid:
-         ##     NOTE: whitelist has priority over blacklist
-         #      attributeBlacklist:
-         #        - "BMI1"
-         #        - "BMI2"
-         #        - "CLMUL"
-         #        - "CMOV"
-         #        - "CX16"
-         #        - "ERMS"
-         #        - "F16C"
-         #        - "HTT"
-         #        - "LZCNT"
-         #        - "MMX"
-         #        - "MMXEXT"
-         #        - "NX"
-         #        - "POPCNT"
-         #        - "RDRAND"
-         #        - "RDSEED"
-         #        - "RDTSCP"
-         #        - "SGX"
-         #        - "SSE"
-         #        - "SSE2"
-         #        - "SSE3"
-         #        - "SSE4.1"
-         #        - "SSE4.2"
-         #        - "SSSE3"
-         #      attributeWhitelist:
-         #  kernel:
-         #    kconfigFile: "/path/to/kconfig"
-         #    configOpts:
-         #      - "NO_HZ"
-         #      - "X86"
-         #      - "DMI"
-           pci:
-             deviceClassWhitelist:
-               - "0200"
-               - "03"
-               - "12"
-             deviceLabelFields:
-         #      - "class"
-               - "vendor"
-         #      - "device"
-         #      - "subsystem_vendor"
-         #      - "subsystem_device"
-         #  usb:
-         #    deviceClassWhitelist:
-         #      - "0e"
-         #      - "ef"
-         #      - "fe"
-         #      - "ff"
-         #    deviceLabelFields:
-         #      - "class"
-         #      - "vendor"
-         #      - "device"
-         #  custom:
-         #    - name: "my.kernel.feature"
-         #      matchOn:
-         #        - loadedKMod: ["example_kmod1", "example_kmod2"]
-         #    - name: "my.pci.feature"
-         #      matchOn:
-         #        - pciId:
-         #            class: ["0200"]
-         #            vendor: ["15b3"]
-         #            device: ["1014", "1017"]
-         #        - pciId :
-         #            vendor: ["8086"]
-         #            device: ["1000", "1100"]
-         #    - name: "my.usb.feature"
-         #      matchOn:
-         #        - usbId:
-         #          class: ["ff"]
-         #          vendor: ["03e7"]
-         #          device: ["2485"]
-         #        - usbId:
-         #          class: ["fe"]
-         #          vendor: ["1a6e"]
-         #          device: ["089a"]
-         #    - name: "my.combined.feature"
-         #      matchOn:
-         #        - pciId:
-         #            vendor: ["15b3"]
-         #            device: ["1014", "1017"]
-         #          loadedKMod : ["vendor_kmod1", "vendor_kmod2"]
-   EOF
-   ```
 
-1. Wait until NFD instances are ready
+## Installing GPU operator
 
-   ```bash
-   oc wait --for=jsonpath='{.status.numberReady}'=3 -l app=nfd-master ds -n openshift-nfd
-   ```
+Next, we will set up [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) that manages NVIDIA software components and `ClusterPolicy` object to ensure the right setup for NVIDIA GPU in the OpenShift environment. Please refer to the [official NVIDIA documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/openshift/install-gpu-ocp.html) for more details.
 
-   ```bash
-   oc wait --for=jsonpath='{.status.numberReady}'=5 -l app=nfd-worker ds -n openshift-nfd
-   ```
+```
+#!/bin/bash
 
-#### Apply nVidia Cluster Config
+set -e
 
-We'll now apply the nvidia cluster config. Please read the [nvidia documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/openshift/install-gpu-ocp.html) on customizing this if you have your own private repos or specific settings. This will be another process that takes a few minutes to complete.
+# fetch the latest channel
+CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
 
-1. Create cluster config
+# fetch the latest CSV
+STARTINGCSV=$(oc get packagemanifests/gpu-operator-certified -n openshift-marketplace -o json | jq -r --arg CHANNEL "$CHANNEL" '.status.channels[] | select(.name == $CHANNEL) | .currentCSV')
 
-   ```yaml
-   cat <<EOF | oc create -f -
-   apiVersion: nvidia.com/v1
-   kind: ClusterPolicy
-   metadata:
-     name: gpu-cluster-policy
-   spec:
-     migManager:
-       enabled: true
-     operator:
-       defaultRuntime: crio
-       initContainer: {}
-       runtimeClass: nvidia
-       deployGFD: true
-     dcgm:
-       enabled: true
-     gfd: {}
-     dcgmExporter:
-       config:
-         name: ''
-     driver:
-       licensingConfig:
-         nlsEnabled: false
-         configMapName: ''
-       certConfig:
-         name: ''
-       kernelModuleConfig:
-         name: ''
-       repoConfig:
-         configMapName: ''
-       virtualTopology:
-         config: ''
-       enabled: true
-       use_ocp_driver_toolkit: true
-     devicePlugin: {}
-     mig:
-       strategy: single
-     validator:
-       plugin:
-         env:
-           - name: WITH_WORKLOAD
-             value: 'true'
-     nodeStatusExporter:
-       enabled: true
-     daemonsets: {}
-     toolkit:
-       enabled: true
-   EOF
-   ```
+# create namespace if it doesn't exist
+oc create namespace nvidia-gpu-operator 2>/dev/null || true
 
-1. Wait until Cluster Policy is ready
+# apply the OperatorGroup and Subscription
+cat << EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: nvidia-gpu-operator-group
+  namespace: nvidia-gpu-operator
+spec:
+ targetNamespaces:
+ - nvidia-gpu-operator
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: gpu-operator-certified
+  namespace: nvidia-gpu-operator
+spec:
+  channel: "${CHANNEL}"
+  installPlanApproval: Automatic
+  name: gpu-operator-certified
+  source: certified-operators
+  sourceNamespace: openshift-marketplace
+EOF
 
-   ```bash
-   oc wait --for=jsonpath='{.status.state}'=ready clusterpolicy \
-    gpu-cluster-policy -n nvidia-gpu-operator --timeout=600s
-   ```
+# wait for the CSV to be available
+echo "Waiting for ClusterServiceVersion to be available..."
+while ! oc get csv -n nvidia-gpu-operator ${STARTINGCSV} &>/dev/null; do
+    sleep 5
+done
+
+# apply the ClusterPolicy
+oc get csv -n nvidia-gpu-operator ${STARTINGCSV} -ojsonpath='{.metadata.annotations.alm-examples}' | jq '.[0]' | oc apply -f -
+
+echo "GPU Operator installation completed successfully."
+```
+
+And finally, let's update the `ClusterPolicy`.
+
+```
+#!/bin/bash
+
+set -e
+
+# apply the ClusterPolicy for the GPU operator
+cat <<EOF | oc apply -f -
+apiVersion: nvidia.com/v1
+kind: ClusterPolicy
+metadata:
+  name: gpu-cluster-policy
+spec:
+  operator:
+    defaultRuntime: crio
+  daemonsets:
+    enabled: true
+  dcgm:
+    enabled: true
+  dcgmExporter:
+    enabled: true
+  devicePlugin:
+    enabled: true
+  driver:
+    enabled: true
+  gfd:
+    enabled: true
+  migManager:
+    enabled: true
+  nodeStatusExporter:
+    enabled: true
+  toolkit:
+    enabled: true
+EOF
+
+echo "Waiting for ClusterPolicy to be ready..."
+if oc wait clusterpolicy/gpu-cluster-policy --for=condition=Ready --timeout=300s -n gpu-operator-resources; then
+    echo "ClusterPolicy has been successfully created and is ready."
+    echo "ClusterPolicy status:"
+    oc get clusterpolicy -n gpu-operator-resources
+else
+    echo "Timed out waiting for ClusterPolicy to be ready."
+    exit 1
+fi
+```
+
+## Validating GPU (optional)
+
+By now you should have your GPU setup correctly, however, if you'd like to validate it, you could run the following on terminal. 
+
+
+```
+#!/bin/bash
+
+# wait for GPU operator components
+wait_for_gpu_operator() {
+    echo "Waiting for GPU Operator components to be ready..."
+    while [[ $(oc get pods -n nvidia-gpu-operator -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}' | grep -v True) != "" ]]; do
+        echo "Waiting for all pods to be ready in nvidia-gpu-operator namespace..."
+        sleep 10
+    done
+    echo "All GPU Operator components are ready."
+}
+
+# verify NFD can see your GPU(s)
+echo "Verifying NFD GPU detection:"
+oc describe node -l node-role.kubernetes.io/worker="" | grep nvidia.com/gpu.present || echo "No GPU nodes detected"
+
+# verify GPU Operator added node label to your GPU nodes
+echo -e "\nVerifying GPU node labels:"
+oc get node -l nvidia.com/gpu.present || echo "No nodes with GPU labels found"
+
+# wait for GPU operator components
+wait_for_gpu_operator
+
+# test GPU access using NVIDIA SMI
+echo -e "\nTesting GPU access with NVIDIA SMI:"
+DRIVER_POD=$(oc get pods -n nvidia-gpu-operator | grep nvidia-driver | grep Running | awk '{print $1}' | head -n 1)
+if [ -n "$DRIVER_POD" ]; then
+    echo "Running nvidia-smi in pod $DRIVER_POD"
+    oc exec -n nvidia-gpu-operator $DRIVER_POD -c nvidia-driver-ctr -- nvidia-smi || echo "Failed to run nvidia-smi"
+else
+    echo "No NVIDIA driver pod found. Checking all pods in nvidia-gpu-operator namespace:"
+    oc get pods -n nvidia-gpu-operator
+    echo "Unable to find a running NVIDIA driver pod. Please check if the NVIDIA GPU Operator is installed correctly."
+fi
+
+# create and run a test pod
+echo -e "\nRunning a test GPU workload:"
+cat <<EOF | oc create -f - || echo "Failed to create test pod"
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cuda-vector-add
+  namespace: nvidia-gpu-operator
+spec:
+  restartPolicy: OnFailure
+  containers:
+    - name: cuda-vector-add
+      image: "nvidia/samples:vectoradd-cuda11.2.1"
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+  tolerations:
+  - key: "nvidia.com/gpu"
+    operator: "Exists"
+    effect: "NoSchedule"
+EOF
+
+# wait for the pod to complete and check its logs
+echo "Waiting for test pod to complete..."
+if oc wait --for=condition=completed pod/cuda-vector-add -n nvidia-gpu-operator --timeout=120s; then
+    oc logs cuda-vector-add -n nvidia-gpu-operator || echo "Failed to retrieve logs"
+else
+    echo "Test pod did not complete within the expected time. Checking pod status:"
+    oc describe pod cuda-vector-add -n nvidia-gpu-operator
+fi
+
+# clean up
+echo -e "\nCleaning up:"
+oc delete pod cuda-vector-add -n nvidia-gpu-operator || echo "Failed to delete test pod"
+
+echo "GPU validation process completed."
+```
+
+In essence, here you verify that NFD can detect the GPUs, run `nvidia-smi` on the GPU driver daemonset pod, run a simple CUDA vector addition test pod, and delete it.
+
+
+Note that the script could take a few minutes to complete. And if you were seeing any error, e,g, `No GPU nodes detected`, etc., then you might want to try again in the next few minutes. 
+
+
+
