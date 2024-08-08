@@ -6,6 +6,7 @@ authors:
   - Chris Kang
   - Diana Sari
   - Paul Czarkowski
+layout: single
 ---
 
 ROSA guide to running Nvidia GPU workloads.

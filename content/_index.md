@@ -105,10 +105,10 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
   * [via GUI](/experts/rosa/ocp-virt/basic-gui)
 * [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 
-
 ### Red Hat OpenShift AI (RHOAI)
 
 * [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/rhoai/rosa-s3)
+* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA with GPUs](/experts/rhoai/rosa-gpu)
 
 ### Data Science on Jupyter Notebook on OpenShift
 
@@ -169,20 +169,20 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 ## Miscellaneous
 
-### Applications
-
-* [Deploying Astronomer to OpenShift](/experts/aro/astronomer)
-* [Deploying 3scale API Management to ROSA/OSD](/experts/redhat/3scale)
-
-### Ingress
-
-* [Configure a custom ingress TLS profile for ROSA/OSD](/experts/misc/tls-cipher-customization)
 * [Demonstrating GitOps - ArgoCD](/experts/redhat/gitops/)
 * [Migrate Kubernetes Applications with Konveyor Crane](/experts/redhat/crane/)
 * [Red Hat Cost Management for Cloud Services](/experts/misc/cost-management/)
 * [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
 * [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
 * [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
+
+### Applications
+
+* [Deploying Astronomer to OpenShift](/experts/aro/astronomer)
+* [Deploying 3scale API Management to ROSA/OSD](/experts/redhat/3scale)
+
+### Ingress
+* [Configure a custom ingress TLS profile for ROSA/OSD](/experts/misc/tls-cipher-customization)
 
 ### Fixes / Workarounds
 
