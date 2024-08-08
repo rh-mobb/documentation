@@ -10,7 +10,7 @@ authors:
 
 This is a guide to install GPU on ROSA cluster manually, which is an alternative to our [Helm chart guide](https://cloud.redhat.com/experts/rosa/gpu/).
 
-## Prerequisites
+### Prerequisites
 
 * ROSA cluster (4.14+) 
     - You can install a Classic version using [CLI](https://cloud.redhat.com/experts/rosa/sts/) or an HCP one using [Terraform](https://cloud.redhat.com/experts/rosa/terraform/hcp/).
@@ -19,7 +19,7 @@ This is a guide to install GPU on ROSA cluster manually, which is an alternative
 * oc cli
 
 
-## Setting up GPU machine pools
+### 1. Setting up GPU machine pools
 
 In this tutorial, I'm using `g5.4xlarge node` for the GPU machine pools with auto-scaling enabled up to 4 nodes. Please replace `your-cluster-name` with the name of your cluster. 
 
@@ -29,7 +29,7 @@ In this tutorial, I'm using `g5.4xlarge node` for the GPU machine pools with aut
 rosa create machinepool --cluster=<your-cluster-name> --name=gpu-pool --instance-type=g5.4xlarge --min-replicas=1 --max-replicas=4 --enable-autoscaling --labels='gpu-node=true' --taints='nvidia.com/gpu=present:NoSchedule'
 ```
 
-## Installing NFD operator
+### 2. Installing NFD operator
 
 The [Node Feature Discovery operator](https://github.com/kubernetes-sigs/node-feature-discovery-operator) will discover the GPU on your nodes and NFD instance will appropriately label the nodes so you can target them for workloads. Please refer to the [official OpenShift documentation](https://docs.openshift.com/container-platform/4.16/hardware_enablement/psap-node-feature-discovery-operator.html) for more details.  
 
@@ -120,7 +120,7 @@ fi
 ```
 
 
-## Installing GPU operator
+### 3. Installing GPU operator
 
 Next, we will set up [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) that manages NVIDIA software components and `ClusterPolicy` object to ensure the right setup for NVIDIA GPU in the OpenShift environment. Please refer to the [official NVIDIA documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/openshift/install-gpu-ocp.html) for more details.
 
@@ -221,7 +221,7 @@ else
 fi
 ```
 
-## Validating GPU (optional)
+### Validating GPU (optional)
 
 By now you should have your GPU setup correctly, however, if you'd like to validate it, you could run the following on terminal. 
 
