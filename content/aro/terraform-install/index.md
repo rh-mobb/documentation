@@ -87,6 +87,25 @@ This article will go over using the Terraform's official [azurerm provider](http
         --username kubeadmin --password "${ARO_PASS}"
     ```
 
+## Cleanup
+
+1. Terraform makes it very easy to clean up the resources when you're finished with them.
+
+    ```
+    terraform destroy
+    ```
+
+1. When prompted type in `yes`
+
+    ```
+    Do you really want to destroy all resources?
+    Terraform will destroy all your managed infrastructure, as shown above.
+    There is no undo. Only 'yes' will be accepted to confirm.
+
+    Enter a value: yes
+    ```
+
+
 ## Conclusion
 
 This article demonstrates the deployment of OpenShift clusters in a consistent manner using Terraform and the azurerm provider. The provided configuration is highly adaptable, allowing for more intricate and customizable deployments. For instance, it could easily be modified for the use of a custom domain zone with your cluster.
