@@ -40,7 +40,6 @@ This guide will walk you through deploying a ROSA HCP cluster using Terraform.  
     export TF_VAR_admin_password='Passw0rd12345!'
     export TF_VAR_developer_password=''
     export TF_VAR_private=false
-    export TF_VAR_ocp_version=4.15.11
     export TF_VAR_hosted_control_plane=true
     export TF_VAR_multi_az=true
     ```
