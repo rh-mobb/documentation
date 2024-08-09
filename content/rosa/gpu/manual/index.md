@@ -34,10 +34,6 @@ rosa create machinepool --cluster=<your-cluster-name> --name=gpu-pool --instance
 The [Node Feature Discovery operator](https://github.com/kubernetes-sigs/node-feature-discovery-operator) will discover the GPU on your nodes and NFD instance will appropriately label the nodes so you can target them for workloads. Please refer to the [official OpenShift documentation](https://docs.openshift.com/container-platform/4.16/hardware_enablement/psap-node-feature-discovery-operator.html) for more details.  
 
 ```
-#!/bin/bash
-
-set -e
-
 # create the openshift-nfd namespace
 oc create namespace openshift-nfd
 
@@ -91,10 +87,6 @@ oc get pods -n openshift-nfd
 Note that this above might take a few minutes. And then next, we will create the NFD instance.
 
 ```
-#!/bin/bash
-
-set -e
-
 # apply the NodeFeatureDiscovery configuration
 cat <<EOF | oc apply -f -
 kind: NodeFeatureDiscovery
@@ -125,10 +117,6 @@ fi
 Next, we will set up [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) that manages NVIDIA software components and `ClusterPolicy` object to ensure the right setup for NVIDIA GPU in the OpenShift environment. Please refer to the [official NVIDIA documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/openshift/install-gpu-ocp.html) for more details.
 
 ```
-#!/bin/bash
-
-set -e
-
 # fetch the latest channel
 CHANNEL=$(oc get packagemanifest gpu-operator-certified -n openshift-marketplace -o jsonpath='{.status.defaultChannel}')
 
@@ -177,10 +165,6 @@ echo "GPU Operator installation completed successfully."
 And finally, let's update the `ClusterPolicy`.
 
 ```
-#!/bin/bash
-
-set -e
-
 # apply the ClusterPolicy for the GPU operator
 cat <<EOF | oc apply -f -
 apiVersion: nvidia.com/v1
@@ -227,8 +211,6 @@ By now you should have your GPU setup correctly, however, if you'd like to valid
 
 
 ```
-#!/bin/bash
-
 # wait for GPU operator components
 wait_for_gpu_operator() {
     echo "Waiting for GPU Operator components to be ready..."
@@ -303,7 +285,7 @@ echo "GPU validation process completed."
 In essence, here we verify that NFD can detect the GPUs, run `nvidia-smi` on the GPU driver daemonset pod, run a simple CUDA vector addition test pod, and delete it.
 
 
-Note that the script could take a few minutes to complete. And if you were seeing any error(s) such as "No GPU nodes detected", etc., then you might want to try again in the next few minutes. 
+Note that this validation step could take a few minutes to complete. And if you were seeing any error(s) such as "No GPU nodes detected", "Failed to run nvidia-smi", etc., then you might want to try again in the next few minutes. 
 
 
 
