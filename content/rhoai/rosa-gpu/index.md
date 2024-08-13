@@ -80,7 +80,6 @@ This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenS
       name: rhods-operator
       source: redhat-operators
       sourceNamespace: openshift-marketplace
-      startingCSV: rhods-operator.2.9.1
     EOF
     ```
 
@@ -132,7 +131,7 @@ This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenS
 
     ```bash
     oc wait --for=jsonpath='{.status.phase}'=Ready datasciencecluster \
-      instance
+      default-dsc
     ```
 
 ## Accessing the Jupyter notebook
