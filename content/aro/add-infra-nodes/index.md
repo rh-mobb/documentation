@@ -24,40 +24,45 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
 
 1. Add the MOBB chart repository to your Helm
 
-   ```bash
-   helm repo add mobb https://rh-mobb.github.io/helm-charts/
-   ```
+    ```bash
+    helm repo add mobb https://rh-mobb.github.io/helm-charts/
+    ```
 
 1. Update your repositories
 
-   ```bash
-   helm repo update
-   ```
+    ```bash
+    helm repo update
+    ```
 
 1. Install the `mobb/aro-machinesets` Chart with parameters to create `infra` nodes
 
-  Create a `values.yaml` file like this:
-  ```yaml
-  machineRole: "infra"
+    Create a `values.yaml` file like this:
 
-  machineLabels:
-    node-role.kubernetes.io/infra: ""
-  
-  machineTaints:
-    - key: node-role.kubernetes.io/infra
-      effect: NoSchedule
-  ```
+    ```yaml
+    machineRole: "infra"
 
-   ```bash
-   helm upgrade --install -f values.yaml -n openshift-machine-api \
-     infra mobb/aro-machinesets
-   ```
+    machineLabels:
+      node-role.kubernetes.io/infra: ""
+
+    machineTaints:
+      - key: node-role.kubernetes.io/infra
+        effect: NoSchedule
+
+    machineSetSpec:
+      tags:
+        node_role: infra
+    ```
+
+    ```bash
+    helm upgrade --install -f values.yaml -n openshift-machine-api \
+      infra mobb/aro-machinesets
+    ```
 
 1. Wait for the new nodes to be available
 
-   ```bash
-   watch oc get machines -n openshift-machine-api
-   ```
+    ```bash
+    watch oc get machines -n openshift-machine-api
+    ```
 
 ## Moving Infra workloads
 
@@ -67,38 +72,38 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
 
 1. Set the `nodePlacement` on the `ingresscontroller` to `node-role.kubernetes.io/infra` and increase the `replicas` to match the number of infra nodes
 
-   ```bash
-   oc patch -n openshift-ingress-operator ingresscontroller default --type=merge  \
-      -p='{"spec":{"replicas":3,"nodePlacement":{"nodeSelector":{"matchLabels":{"node-role.kubernetes.io/infra":""}},"tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/infra","operator":"Exists"}]}}}'
-   ```
+    ```bash
+    oc patch -n openshift-ingress-operator ingresscontroller default --type=merge  \
+        -p='{"spec":{"replicas":3,"nodePlacement":{"nodeSelector":{"matchLabels":{"node-role.kubernetes.io/infra":""}},"tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/infra","operator":"Exists"}]}}}'
+    ```
 
 1. Check the Ingress Controller Operator  is starting `pods` on the new `infra` nodes
 
-   ```bash
-   oc -n openshift-ingress get pods -o wide
-   ```
+    ```bash
+    oc -n openshift-ingress get pods -o wide
+    ```
 
-   ```
-   NAME                              READY   STATUS        RESTARTS   AGE   IP            NODE                                                    NOMINATED NODE   READINESS GATES
-   router-default-69f58645b7-6xkvh   1/1     Running       0          66s   10.129.6.6    cz-cluster-hsmtw-infra-aro-machinesets-eastus-3-l6dqw   <none>           <none>
-   router-default-69f58645b7-vttqz   1/1     Running       0          66s   10.131.4.6    cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
-   router-default-6cb5ccf9f5-xjgcp   1/1     Terminating   0          23h   10.131.0.11   cz-cluster-hsmtw-worker-eastus2-xj9qx                   <none>           <none>
-   ```
+    ```
+    NAME                              READY   STATUS        RESTARTS   AGE   IP            NODE                                                    NOMINATED NODE   READINESS GATES
+    router-default-69f58645b7-6xkvh   1/1     Running       0          66s   10.129.6.6    cz-cluster-hsmtw-infra-aro-machinesets-eastus-3-l6dqw   <none>           <none>
+    router-default-69f58645b7-vttqz   1/1     Running       0          66s   10.131.4.6    cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
+    router-default-6cb5ccf9f5-xjgcp   1/1     Terminating   0          23h   10.131.0.11   cz-cluster-hsmtw-worker-eastus2-xj9qx                   <none>           <none>
+    ```
 
 ### Registry
 
 1. Set the `nodePlacement` on the `registry` to `node-role.kubernetes.io/infra`
 
-   ```bash
-   oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge \
-     -p='{"spec":{"affinity":{"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"podAffinityTerm":{"namespaces":["openshift-image-registry"],"topologyKey":"kubernetes.io/hostname"},"weight":100}]}},"logLevel":"Normal","managementState":"Managed","nodeSelector":{"node-role.kubernetes.io/infra":""},"tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/infra","operator":"Exists"}]}}'
-   ```
+    ```bash
+    oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge \
+      -p='{"spec":{"affinity":{"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"podAffinityTerm":{"namespaces":["openshift-image-registry"],"topologyKey":"kubernetes.io/hostname"},"weight":100}]}},"logLevel":"Normal","managementState":"Managed","nodeSelector":{"node-role.kubernetes.io/infra":""},"tolerations":[{"effect":"NoSchedule","key":"node-role.kubernetes.io/infra","operator":"Exists"}]}}'
+    ```
 
 1. Check the Registry Operator is starting `pods` on the new `infra` nodes
 
-   ```bash
-   oc -n openshift-image-registry get pods -l "docker-registry" -o wide
-   ```
+    ```bash
+    oc -n openshift-image-registry get pods -l "docker-registry" -o wide
+    ```
 
     ```
     NAME                              READY   STATUS    RESTARTS   AGE     IP           NODE                                                    NOMINATED NODE   READINESS GATES
@@ -112,90 +117,90 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
 
    > Note: This will override any other customizations to the cluster monitoring stack, so you may want to merge your existing customizations into this before running the command.
 
-   ```bash
-   cat << EOF | oc apply -f -
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: cluster-monitoring-config
-     namespace: openshift-monitoring
-   data:
-     config.yaml: |+
-       alertmanagerMain:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-       prometheusK8s:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-       prometheusOperator: {}
-       grafana:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-       k8sPrometheusAdapter:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-       kubeStateMetrics:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-       telemeterClient:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-       openshiftStateMetrics:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-       thanosQuerier:
-         nodeSelector:
-           node-role.kubernetes.io/infra: ""
-         tolerations:
-           - effect: "NoSchedule"
-             key: "node-role.kubernetes.io/infra"
-             operator: "Exists"
-   EOF
-   ```
+    ```bash
+    cat << EOF | oc apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: cluster-monitoring-config
+      namespace: openshift-monitoring
+    data:
+      config.yaml: |+
+        alertmanagerMain:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        prometheusK8s:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        prometheusOperator: {}
+        grafana:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        k8sPrometheusAdapter:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        kubeStateMetrics:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        telemeterClient:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        openshiftStateMetrics:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        thanosQuerier:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+    EOF
+    ```
 
 1. Check the OpenShift Monitoring Operator is starting `pods` on the new `infra` nodes
 
-   > some Pods like `prometheus-operator` will remain on `master` nodes.
+    > some Pods like `prometheus-operator` will remain on `master` nodes.
 
-   ```bash
-   oc -n openshift-monitoring get pods -o wide
-   ```
+    ```bash
+    oc -n openshift-monitoring get pods -o wide
+    ```
 
-    ```
-    NAME                                           READY   STATUS    RESTARTS   AGE     IP            NODE                                                    NOMINATED NODE   READINESS GATES
-    alertmanager-main-0                            6/6     Running   0          2m14s   10.128.6.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-2-kljml   <none>           <none>
-    alertmanager-main-1                            6/6     Running   0          2m46s   10.131.4.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
-    cluster-monitoring-operator-5bbfd998c6-m9w62   2/2     Running   0          28h     10.128.0.23   cz-cluster-hsmtw-master-1                               <none>           <none>
-    grafana-599d4b948c-btlp2                       3/3     Running   0          2m48s   10.131.4.10   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
-    kube-state-metrics-574c5bfdd7-f7fjk            3/3     Running   0          2m49s   10.131.4.8    cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
-    ...
-    ...
-    ```
+      ```
+      NAME                                           READY   STATUS    RESTARTS   AGE     IP            NODE                                                    NOMINATED NODE   READINESS GATES
+      alertmanager-main-0                            6/6     Running   0          2m14s   10.128.6.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-2-kljml   <none>           <none>
+      alertmanager-main-1                            6/6     Running   0          2m46s   10.131.4.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
+      cluster-monitoring-operator-5bbfd998c6-m9w62   2/2     Running   0          28h     10.128.0.23   cz-cluster-hsmtw-master-1                               <none>           <none>
+      grafana-599d4b948c-btlp2                       3/3     Running   0          2m48s   10.131.4.10   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
+      kube-state-metrics-574c5bfdd7-f7fjk            3/3     Running   0          2m49s   10.131.4.8    cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
+      ...
+      ...
+      ```
