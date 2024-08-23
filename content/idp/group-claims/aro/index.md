@@ -131,7 +131,7 @@ spec:
         name:
         - name
         preferredUsername:
-        - email
+        - preferred_username
       clientID: ${APP_ID}
       clientSecret:
         name: openid-client-secret
