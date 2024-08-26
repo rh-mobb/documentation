@@ -234,8 +234,6 @@ As a last step we need to apply the OpenShift OpenID authentication for Azure Ac
          extraScopes:
          - email
          - profile
-         extraAuthorizeParameters:
-           include_granted_scopes: "true"
          claims:
            preferredUsername:
            - preferred_username
