@@ -1,5 +1,5 @@
 ---
-date: '2024-08-26'
+date: '2024-08-27'
 title: Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled
 tags: ["ROSA", "HCP", "RHOAI", "Jupyter", "GPU", "Stable Diffusion"]
 authors:
@@ -11,7 +11,7 @@ authors:
 
 [Stable Diffusion](https://en.wikipedia.org/wiki/Stable_Diffusion) is an AI model to generate images from text description. It uses a diffusion process to iteratively denoise random Gaussian noise into coherent images. This is a simple tutorial to create images using Stable Diffusion model using [Red Hat OpenShift AI (RHOAI)](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai), formerly called Red Hat OpenShift Data Science (RHODS), which is our OpenShift platform for AI/ML projects lifecycle management, running on a [Red Hat OpenShift Services on AWS (ROSA)](https://www.redhat.com/en/technologies/cloud-computing/openshift/aws) cluster, which is our managed service OpenShift platform on AWS, with NVIDIA GPU enabled. 
 
-Note that this guide requires a ROSA cluster with GPU enabled. The first half in this tutorial is installing service mesh operator, followed by installing RHOAI operator and creating DataScienceCluster instance. And the second half, we'll be running Stable Diffusion model to create cat and dog images on RHOAI's Jupyter notebook. In addition, the RHOAI operator version used in this tutorial is version 2.10.0 and please note that as RHOAI undergoes ongoing development and refinement, certain features may evolve or change over time.
+Note that this guide requires a ROSA cluster with GPU enabled. The first half in this tutorial is installing service mesh operator, followed by installing RHOAI operator and creating DataScienceCluster instance. And the second half, we'll be running Stable Diffusion model to create cat and dog images on RHOAI's Jupyter notebook. In addition, the RHOAI operator version used in this tutorial is version 2.12.0 and please note that as RHOAI undergoes ongoing development and refinement, certain features and GUI may evolve or change over time.
 
 *Disclaimer: When using Stable Diffusion or other open-source image generation models, please be aware that while these tools include certain content filters and safety features, these are not foolproof. Therefore, it is your responsibility to use this tool in a safe manner, ensure the prompts you input are appropriate, and verify that the generated images are suitable for your intended audience. Neither the author of this tutorial nor the infrastructure providers can be held responsible for any inappropriate or unwanted results you may generate. By proceeding with this tutorial, you acknowledge that you understand the potential risks and agree to use the tool responsibly. Remember that the output of AI image generation models can sometimes be unpredictable and thus it is important to review all the generated images before sharing or using them in any context.*
 
@@ -26,12 +26,12 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
 ### Environment
 
 1. You will need a ROSA cluster (classic or HCP), if you don't have one, you can follow the [ROSA guide](/experts/rosa/terraform/hcp) to create an HCP ROSA cluster.
-  - I ran this tutorial on an HCP ROSA 4.16.3 cluster with `m5.xlarge` node with 28 vCPUs and ~108Gi memory.
-  - Please be sure that you have cluster admin access to the cluster.
+    - I ran this tutorial on an HCP ROSA 4.16.8 cluster with `m5.4xlarge` node with 48 vCPUs and ~185Gi memory.
+    - Please be sure that you have cluster admin access to the cluster.
 
 
 2. You will need a GPU enabled machine pool in your ROSA cluster. If you don't have one, you can follow the [Adding GPUs to a ROSA cluster](/experts/rosa/gpu) guide to add GPUs to your cluster. 
-  - I also ran this tutorial using `g5.4xlarge` node with autoscaling enabled up to 4 nodes.  
+    - I also ran this tutorial using `g5.4xlarge` node with autoscaling enabled up to 4 nodes.  
 
 
 ## Installing RHOAI Operator
@@ -141,36 +141,20 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
       default-dsc
     ```
 
-
-### Accessing the Jupyter notebook
-
-1. Log into the OpenShift AI console using your web browser and the output of this command
+Finally, you can now log into the OpenShift AI console using your web browser and the output of this command
 
     ```bash
     oc -n redhat-ods-applications get route rhods-dashboard -o jsonpath='{.spec.host}'
     ```
 
-Once logged in, go to the server page and on the left tab, look under **Applications** and select **Enabled**. And then launch **Jupyter** to see the notebook options available to install. In this case, I choose **TensorFlow 2024.1** and I leave the size of container to **small** which is the default. And finally, click **Start server** button at the bottom. Note that if the server failed to start, then you might want to scale up your worker nodes.
 
-![RHOAI-notebooks](../rosa-s3/images/RHOAI-notebooks.png)
-<br />
-
-The server installation will take several minutes. Once installed, you'll see the main page of your Jupyter notebook like below and select a Python 3.9 notebook to start the next section.
-
-![RHOAI-start-success](../rosa-s3/images/RHOAI-start-success.png)
-<br />
-
-This below is how the notebook looks like on the new tab:
-
-![Jupyter-start](../rosa-s3/images/Jupyter-start.png)
-<br />
 
 
 ## Deploying Stable Diffusion model
 
 In this tutorial, we'll use the [Stable Diffusion 2.1](https://huggingface.co/stabilityai/stable-diffusion-2-1) model from Stability AI to generate images based on text prompts. We'll generate three images based on prompts about cats and dogs, using 50 inference steps and a guidance scale of 7.5. These images are then displayed vertically using matplotlib, with each image titled by its corresponding prompt. 
 
-And now that we have the environment ready, let's go to the console and go to the RHOAI dashboard links (select it from the 9-box icon on the upper right side of the console). And then once you're at the RHOAI dashboard console, from the navigator pane on the left hand side, select **Applications**, and click **Enabled**, which will then lead you to launch a Jupyter notebook.
+And now that we have the environment ready, let's go to the RHOAI dashboard. From the navigator pane on the left hand side, select **Applications**, and click **Enabled**, which will then lead you to launch a Jupyter notebook. FYI, you could also take a look at the third section of our other guide [here]() for more details on the console. 
 
 Click **Launch application** and then select **TensorFlow 2024.1** notebook. You can leave the container size to **Small**. And then select **NVIDIA GPU** as the accelerator from the dropdown option. 
 
