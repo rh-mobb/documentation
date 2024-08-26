@@ -29,7 +29,7 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
     - I ran this tutorial on an HCP ROSA 4.16.8 cluster with `m5.4xlarge` node with 48 vCPUs and ~185Gi memory.
     - Please be sure that you have cluster admin access to the cluster.
 
-
+<br />
 2. You will need a GPU enabled machine pool in your ROSA cluster. If you don't have one, you can follow the [Adding GPUs to a ROSA cluster](/experts/rosa/gpu) guide to add GPUs to your cluster. 
     - I also ran this tutorial using `g5.4xlarge` node with autoscaling enabled up to 4 nodes.  
 
@@ -98,6 +98,8 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
       -n redhat-ods-operator rhods-operator
     ```
 
+  If you're on Linux and seeing error message like *Error from server (NotFound): deployments.apps "rhods-operator" not found*, then please wait a couple of minutes and rerun the above command again. 
+
 1. Create a DataScienceCluster
 
     ```bash
@@ -134,27 +136,26 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
     EOF
     ```
 
-    1. Wait for the DataScienceCluster to be ready
+    Wait for the DataScienceCluster to be ready
 
     ```bash
     oc wait --for=jsonpath='{.status.phase}'=Ready datasciencecluster \
       default-dsc
     ```
 
-Finally, you can now log into the OpenShift AI console using your web browser and the output of this command
+1. Finally, you can now log into the OpenShift AI console using your web browser and the output of this command
 
     ```bash
     oc -n redhat-ods-applications get route rhods-dashboard -o jsonpath='{.spec.host}'
     ```
 
-
-
+  
 
 ## Deploying Stable Diffusion model
 
 In this tutorial, we'll use the [Stable Diffusion 2.1](https://huggingface.co/stabilityai/stable-diffusion-2-1) model from Stability AI to generate images based on text prompts. We'll generate three images based on prompts about cats and dogs, using 50 inference steps and a guidance scale of 7.5. These images are then displayed vertically using matplotlib, with each image titled by its corresponding prompt. 
 
-And now that we have the environment ready, let's go to the RHOAI dashboard. From the navigator pane on the left hand side, select **Applications**, and click **Enabled**, which will then lead you to launch a Jupyter notebook. FYI, you could also take a look at the third section of our other guide [here]() for more details on the console. 
+And now that we have the environment ready, let's go to the RHOAI dashboard. From the navigator pane on the left hand side, select **Applications**, and click **Enabled**, which will then lead you to launch a Jupyter notebook. FYI, you could also take a look at the third section of our other guide [here](https://cloud.redhat.com/experts/misc/rhoai-s3/) for more details on the console. 
 
 Click **Launch application** and then select **TensorFlow 2024.1** notebook. You can leave the container size to **Small**. And then select **NVIDIA GPU** as the accelerator from the dropdown option. 
 
