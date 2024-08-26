@@ -111,7 +111,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 ### Red Hat OpenShift AI (RHOAI)
 
 * [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/rhoai/rosa-s3)
-* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA with GPUs](/experts/rhoai/rosa-gpu)
+* [Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled](/experts/rhoai/rosa-gpu)
 
 ### Data Science on Jupyter Notebook on OpenShift
 
