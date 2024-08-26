@@ -61,31 +61,32 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
     ```
 
 1. Create the CloudFormation Stack
-> Note: As of this writing, you may need to open the `./FSxONTAP.yaml` file and edit the `TridentIAMPolicy` name if there are multiple Cloudformation Stack instances deployed, because this stack attempts to create an IAM policy with a hard-coded name and duplicate policy names are not allowed via the AWS API.  The conflict is in the YAML file around line `299` and looks as follows: `ManagedPolicyName: 'TridentIAMPolicy'`.  Until this is corrected in the upstream Git repo, the Cloudformation Stack cannot be run multiple times.  
 
-> Note: Make sure generated FSX_ADMIN_PASS and SVM_ADMIN_PASS passwords are per [Fsx password policy](https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/updating-admin-password.html),otherwise following clodformation will fail.  
+		> Note: As of this writing, you may need to open the `./FSxONTAP.yaml` file and edit the `TridentIAMPolicy` name if there are multiple Cloudformation Stack instances deployed, because this stack attempts to create an IAM policy with a hard-coded name and duplicate policy names are not allowed via the AWS API.  The conflict is in the YAML file around line `299` and looks as follows: `ManagedPolicyName: 'TridentIAMPolicy'`.  Until this is corrected in the upstream Git repo, the Cloudformation Stack cannot be run multiple times.  
+
+		> Note: Make sure generated FSX_ADMIN_PASS and SVM_ADMIN_PASS passwords are per [Fsx password policy](https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/updating-admin-password.html),otherwise following clodformation will fail.  
 
 
-```bash
-aws cloudformation create-stack \
-       --stack-name "${CLUSTER}-FSXONTAP" \
-       --template-body file://./FSxONTAP.yaml \
-       --region "${FSX_REGION}" \
-       --parameters \
-       ParameterKey=Subnet1ID,ParameterValue=${FSX_SUBNET1} \
-       ParameterKey=Subnet2ID,ParameterValue=${FSX_SUBNET2} \
-       ParameterKey=myVpc,ParameterValue=${FSX_VPC} \
-       ParameterKey=FSxONTAPRouteTable,ParameterValue=\"$FSX_ROUTE_TABLES\" \
-       ParameterKey=FileSystemName,ParameterValue=ROSA-myFSxONTAP \
-       ParameterKey=ThroughputCapacity,ParameterValue=512 \
-       ParameterKey=FSxAllowedCIDR,ParameterValue=${FSX_VPC_CIDR} \
-       ParameterKey=FsxAdminPassword,ParameterValue=\"${FSX_ADMIN_PASS}\" \
-       ParameterKey=SvmAdminPassword,ParameterValue=\"${SVM_ADMIN_PASS}\" \
-       --capabilities CAPABILITY_NAMED_IAM
+		```bash
+		aws cloudformation create-stack \
+		       --stack-name "${CLUSTER}-FSXONTAP" \
+		       --template-body file://./FSxONTAP.yaml \
+		       --region "${FSX_REGION}" \
+		       --parameters \
+		       ParameterKey=Subnet1ID,ParameterValue=${FSX_SUBNET1} \
+		       ParameterKey=Subnet2ID,ParameterValue=${FSX_SUBNET2} \
+		       ParameterKey=myVpc,ParameterValue=${FSX_VPC} \
+		       ParameterKey=FSxONTAPRouteTable,ParameterValue=\"$FSX_ROUTE_TABLES\" \
+		       ParameterKey=FileSystemName,ParameterValue=ROSA-myFSxONTAP \
+		       ParameterKey=ThroughputCapacity,ParameterValue=512 \
+		       ParameterKey=FSxAllowedCIDR,ParameterValue=${FSX_VPC_CIDR} \
+		       ParameterKey=FsxAdminPassword,ParameterValue=\"${FSX_ADMIN_PASS}\" \
+		       ParameterKey=SvmAdminPassword,ParameterValue=\"${SVM_ADMIN_PASS}\" \
+		       --capabilities CAPABILITY_NAMED_IAM
+		
+		```
 
-```
-
-This can take some time, so we can go ahead and deploy the OpenShift Virtualization Operator while we wait.
+		This can take some time, so we can go ahead and deploy the OpenShift Virtualization Operator while we wait.
 
 {{< readfile file="/content/rosa/ocp-virt/deploy-operator-cli.md" markdown="true" >}}
 
