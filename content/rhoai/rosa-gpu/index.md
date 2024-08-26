@@ -1,34 +1,42 @@
 ---
-date: '2024-05-23'
-title: Running Red Hat OpenShift AI on a ROSA HCP cluster with GPUs
-tags: ["ROSA", "RHOAI", "Jupyter", "LLM", "S3"]
+date: '2024-08-26'
+title: Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled
+tags: ["ROSA", "HCP", "RHOAI", "Jupyter", "GPU", "Stable Diffusion"]
 authors:
   - Diana Sari
   - Paul Czarkowski
 ---
 
 ## Introduction
-[Large Language Models (LLMs)](https://en.wikipedia.org/wiki/Large_language_model) are a specific type of generative AI focused on processing and generating human language. They can understand, generate, and manipulate human language in response to various tasks and prompts.
 
-This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenShift Services on AWS (ROSA)](https://www.redhat.com/en/technologies/cloud-computing/openshift/aws) cluster, which is our managed service OpenShift platform on AWS, using [Red Hat OpenShift AI (RHOAI)](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai), which is formerly called Red Hat OpenShift Data Science (RHODS) and is our OpenShift platform for managing the entire lifecycle of AI/ML projects.
+[Stable Diffusion](https://en.wikipedia.org/wiki/Stable_Diffusion) is an AI model to generate images from text description. It uses a diffusion process to iteratively denoise random Gaussian noise into coherent images. This is a simple tutorial to create images using Stable Diffusion model using [Red Hat OpenShift AI (RHOAI)](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai), formerly called Red Hat OpenShift Data Science (RHODS), which is our OpenShift platform for AI/ML projects lifecycle management, running on a [Red Hat OpenShift Services on AWS (ROSA)](https://www.redhat.com/en/technologies/cloud-computing/openshift/aws) cluster, which is our managed service OpenShift platform on AWS, with NVIDIA GPU enabled. 
 
-*Please note that the UI may change from time to time so what you see in the snippets below might change as well.*
+Note that this guide requires a ROSA cluster with GPU enabled. The first half in this tutorial is installing service mesh operator, followed by installing RHOAI operator and creating DataScienceCluster instance. And the second half, we'll be running Stable Diffusion model to create cat and dog images on RHOAI's Jupyter notebook. In addition, the RHOAI operator version used in this tutorial is version 2.10.0 and please note that as RHOAI undergoes ongoing development and refinement, certain features may evolve or change over time.
+
+*Disclaimer: When using Stable Diffusion or other open-source image generation models, please be aware that while these tools include certain content filters and safety features, these are not foolproof. Therefore, it is your responsibility to use this tool in a safe manner, ensure the prompts you input are appropriate, and verify that the generated images are suitable for your intended audience. Neither the author of this tutorial nor the infrastructure providers can be held responsible for any inappropriate or unwanted results you may generate. By proceeding with this tutorial, you acknowledge that you understand the potential risks and agree to use the tool responsibly. Remember that the output of AI image generation models can sometimes be unpredictable and thus it is important to review all the generated images before sharing or using them in any context.*
+
 
 ## Prerequisites
 
 ### Tools
 
-* [AWS CLI](https://aws.amazon.com/cli/)
 * [OpenShift CLI](https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html)
 * [ROSA CLI](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-installing-rosa.html)
 
 ### Environment
 
-1. You will need a ROSA cluster, if you don't have one, you can follow the [ROSA guide](/experts/rosa/terraform/hcp) to create a ROSA cluster.
+1. You will need a ROSA cluster (classic or HCP), if you don't have one, you can follow the [ROSA guide](/experts/rosa/terraform/hcp) to create an HCP ROSA cluster.
+  - I ran this tutorial on an HCP ROSA 4.16.3 cluster with `m5.xlarge` node with 28 vCPUs and ~108Gi memory.
+  - Please be sure that you have cluster admin access to the cluster.
 
-2. You will need a GPU enabled machine pool in your ROSA cluster. If you don't have one, you can follow the [Adding GPUs to a ROSA cluster](/experts/rosa/gpu) guide to add GPUs to your cluster.
 
-## Install OpenShift Service Mesh Operator
+2. You will need a GPU enabled machine pool in your ROSA cluster. If you don't have one, you can follow the [Adding GPUs to a ROSA cluster](/experts/rosa/gpu) guide to add GPUs to your cluster. 
+  - I also ran this tutorial using `g5.4xlarge` node with autoscaling enabled up to 4 nodes.  
+
+
+## Installing RHOAI Operator
+
+### Install OpenShift Service Mesh Operator
 
 1. Deploy the Operator
 
@@ -48,7 +56,7 @@ This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenS
     EOF
     ```
 
-## Installing RHOAI and Jupyter notebook
+### Installing RHOAI and Jupyter notebook
 
 1. Create a project for the RHOAI operator:
 
@@ -90,7 +98,7 @@ This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenS
       -n redhat-ods-operator rhods-operator
     ```
 
-1. Create a DataScience Cluster
+1. Create a DataScienceCluster
 
     ```bash
     cat << EOF | oc apply -f -
@@ -133,7 +141,8 @@ This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenS
       default-dsc
     ```
 
-## Accessing the Jupyter notebook
+
+### Accessing the Jupyter notebook
 
 1. Log into the OpenShift AI console using your web browser and the output of this command
 
@@ -153,226 +162,147 @@ The server installation will take several minutes. Once installed, you'll see th
 
 This below is how the notebook looks like on the new tab:
 
-![Jupyter-start](images/Jupyter-start.png)
+![Jupyter-start](../rosa-s3/images/Jupyter-start.png)
+<br />
 
-## Training LLM model
-Now that you have the notebook installed, AWS CLI and credentials configured, and an S3 bucket created, let's run your model on the notebook. In this guide, we will use Hugging Face Transformers library to fine-tune a pre-trained model, i.e. `prajjwal1/bert-tiny`, on a small subset of the `AG News` dataset for text classification. [Hugging Face](https://huggingface.co/) (also referred to as 🤗) is an open-source library providing a wide range pre-trained models and tools for [natural language processing](https://en.wikipedia.org/wiki/Natural_language_processing) tasks. [AG News](https://huggingface.co/datasets/ag_news) is a dataset consisting of news articles from various sources and it is commonly used for text classification tasks. [prajwall1/bert-tiny](https://huggingface.co/prajjwal1/bert-tiny) is a very small version of the [BERT](https://en.wikipedia.org/wiki/BERT_(language_model)) model, which is a transformer-based model pre-trained on a large corpus of text data.
 
-1. Paste in the code for the notebook (You can break it up into sections, or just paste the whole thing in).
+## Deploying Stable Diffusion model
+
+In this tutorial, we'll use the [Stable Diffusion 2.1](https://huggingface.co/stabilityai/stable-diffusion-2-1) model from Stability AI to generate images based on text prompts. We'll generate three images based on prompts about cats and dogs, using 50 inference steps and a guidance scale of 7.5. These images are then displayed vertically using matplotlib, with each image titled by its corresponding prompt. 
+
+And now that we have the environment ready, let's go to the console and go to the RHOAI dashboard links (select it from the 9-box icon on the upper right side of the console). And then once you're at the RHOAI dashboard console, from the navigator pane on the left hand side, select **Applications**, and click **Enabled**, which will then lead you to launch a Jupyter notebook.
+
+Click **Launch application** and then select **TensorFlow 2024.1** notebook. You can leave the container size to **Small**. And then select **NVIDIA GPU** as the accelerator from the dropdown option. 
+
+![NVIDIA-GPU](images/nvidiagpu-accl.png)
+<br />
+
+Click the **Start** server button and wait until the notebook is ready, and click **Open in new tab**. And once you're routed to the Jupyter notebook, click **Python 3.9** notebook button on top, and run the following script in a single cell.
 
 ```python
-# install the necessary libraries
-!pip install transformers datasets torch evaluate accelerate boto3
+# install the necessary dependencies and libraries
+!pip install --upgrade diffusers transformers torch accelerate matplotlib datasets torchvision
 
-# import the necessary functions and APIs
-import numpy as np
-import evaluate
-import boto3
-import os
+import torch
+from diffusers import StableDiffusionPipeline
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
+import random
+from torchvision import transforms
+from PIL import Image
+import matplotlib.pyplot as plt
+import gc
 
-# disable tokenizers parallelism warning
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+# clean up memory and reset CUDA cache
+def cleanup_memory():
+    gc.collect()
+    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
 
-# load a portion of the AG News dataset (500 examples)
-dataset = load_dataset("ag_news")
-small_dataset = dataset["train"].shuffle(seed=42).select(range(500))
+# load the Stable Diffusion model
+def load_model(model_id):
+    pipeline = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+    pipeline = pipeline.to("cuda" if torch.cuda.is_available() else "cpu")
+    return pipeline
 
-# load the model (prajjwal1/bert-tiny), tokenizer, and pre-trained model
-model_name = "prajjwal1/bert-tiny"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=4)
+# generate the images
+def generate_images(pipeline, prompts, num_images_per_prompt=1, num_inference_steps=50, guidance_scale=7.5):
+    images = []
+    for prompt in prompts:
+        batch = pipeline(
+            prompt, 
+            num_images_per_prompt=num_images_per_prompt, 
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            output_type="pil"
+        )
+        images.extend(batch.images)
+        cleanup_memory()
+    return images
 
-# define the function to tokenize text examples using the loaded tokenizer
-def tokenize_function(examples):
-    return tokenizer(examples["text"], padding="max_length", truncation=True)
+# display the images
+def display_images(images, prompts):
+    rows = len(images)
+    fig, axs = plt.subplots(rows, 1, figsize=(15, 5*rows))
+    
+    if rows == 1:
+        axs = [axs]  
+    
+    for img, ax, prompt in zip(images, axs, prompts):
+        ax.imshow(img)
+        ax.set_title(prompt, fontsize=10)
+        ax.axis('off')
+    
+    plt.tight_layout()
+    plt.show()
 
-# apply the tokenize_function to the small_dataset using map function
-tokenized_datasets = small_dataset.map(tokenize_function, batched=True)
-
-# specify the training arguments, i.e. output directory, evaluation strategy, learning rate, batch size, number of epochs, weight decay, and load the best model at the end
-training_args = TrainingArguments(
-    output_dir="./results",
-    eval_strategy="epoch",
-    save_strategy="epoch",
-    learning_rate=2e-5,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=8,
-    num_train_epochs=3,
-    weight_decay=0.01,
-    load_best_model_at_end=True,
-)
-
-# load the accuracy metric from the evaluate library
-metric = evaluate.load("accuracy")
-
-# compute evaluate metrics by taking the eval predictions (logits and labels) and calculate the accuracy using the loaded metric
-def compute_metrics(eval_pred):
-    logits, labels = eval_pred
-    predictions = np.argmax(logits, axis=-1)
-    return metric.compute(predictions=predictions, references=labels)
-
-# set up the training process by taking the model, training arguments, train and eval datasets, tokenizer and the compute_metrics function
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=tokenized_datasets,
-    eval_dataset=tokenized_datasets,
-    tokenizer=tokenizer,
-    compute_metrics=compute_metrics,
-)
-
-# start the training process using the configured trainer
-trainer.train()
-
-# save the model and tokenizer into model folder
-model_save_dir = "./model"
-tokenizer.save_pretrained(model_save_dir)
-model.save_pretrained(model_save_dir)
-
+# execute the script
+if __name__ == "__main__":
+    try:        
+        pipeline = load_model('stabilityai/stable-diffusion-2-1')
+                
+        prompts = [
+            "A cute cat",
+            "A cute dog",
+            "A cute cat and a cute dog sit next to each other"
+        ]
+        num_images_per_prompt = 1
+        
+        generated_images = generate_images(pipeline, prompts, num_images_per_prompt, num_inference_steps=50, guidance_scale=7.5)
+        display_images(generated_images, prompts)
+        
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+    finally:
+        cleanup_memory()
 ```
 
-In summary, the code loads the dataset, tokenizes the text examples, sets up the training arguments, defines the evaluation metrics, and trains the model using the `Trainer` class.
+Here are some pictures that I've gotten from my run (note that the pictures may vary every run):
 
 
-After you run it, you should see an output similar to the following (note that this may vary):
-
-![Output](images/Output.png)
+![cat](images/cat.png)
 <br />
 
-Here the results suggest that the model is learning and improving over the epochs based on the increasing accuracy and decreasing losses. However, the final accuracy of only 45.8% is low indicating that the model's performance is suboptimal. This is understandable because the model is trained on a very small subset of the dataset, i.e. 500 examples, and we're also using a very small version of BERT model, i.e. `prajjwal1/bert-tiny`. That said, you might want to try larger dataset and larger model in your experiment if you like. In addition, you could also fine-tune the hyperparameters to make it more optimal for the training process (FYI, I have a bonus section on this one at the end if you're interested in doing it).
 
-Some error notes that you might see:
-- *Unable to register cuDNN/cuFFT/cuBLAS factory...*: These errors are informational and generally harmless. They indicate that multiple components are trying to initialize the same CUDA libraries, but it shouldn't affect the training process.
-- *This TensorFlow binary is optimized to use available CPU instructions...*: This is a warning from TensorFlow indicating that your CPU may not support certain instructions (AVX2, AVX512F, FMA), and since we're not using a GPU, this warning is expected.
-- *TF-TRT Warning: Could not find TensorRT*: TensorRT is NVIDIA's library for optimizing deep learning models. This warning just means it's not available, which is fine since we're not using it.
-- *Some weights of BertForSequenceClassification were not initialized...*: This is a standard message when you're fine-tuning a model. It indicates that some parts of the model will be trained from scratch to adapt to your specific task, i.e. text classification on AG News.
-
-Last but not least, do not forget to save your notebook. On your left tab, you would see the `model` folder where the results, i.e. the model and tokenizer, were saved. You can also see `results` folder where inside it you'll see `runs` folder for every runs you make.
-
-## 6. Future research
-This is a very simple guide aimed to get you started with RHOAI on ROSA. As mentioned previously, you could improve the accuracy by increasing the dataset size and running a more robust model, and we can leverage GPU to support that. Another idea is to extend the workload to AWS SageMaker and/or AWS Lambda. In addition, RHOAI itself has a section where you can run the code as pipeline which I haven't had a chance to venture at this time. All of these would be great topic for future blogs.
-<br />
+![dog](images/dog.png)
 <br />
 
-#### Bonus section: Performing hyperparameter tuning
-**This is an optional section so feel free to skip it.**
 
-There are many ways to go about performing [hyperparameter tuning](https://en.wikipedia.org/wiki/Hyperparameter_optimization) for your model to improve the model accuracy. Here I'll be using [optuna](https://optuna.readthedocs.io/en/stable/), which is a popular library to optimize hyperparameter. It essentially allows you to define the search space for each hyperparameter and automatically finds the best combination based on the specified objective.
-
-This is the code example that you can run on the notebook:
-
-```python
-!pip install transformers datasets torch evaluate accelerate boto3 optuna
-
-import numpy as np
-import evaluate
-import optuna
-import boto3
-import os
-from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-dataset = load_dataset("ag_news")
-small_dataset = dataset["train"].shuffle(seed=42).select(range(500))
-
-model_name = "prajjwal1/bert-tiny"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=4)
-
-def tokenize_function(examples):
-    return tokenizer(examples["text"], padding="max_length", truncation=True)
-
-tokenized_datasets = small_dataset.map(tokenize_function, batched=True)
-
-def compute_metrics(eval_pred):
-    metric = evaluate.load("accuracy")
-    logits, labels = eval_pred
-    predictions = np.argmax(logits, axis=-1)
-    return metric.compute(predictions=predictions, references=labels)
-
-# define the objectives, i.e. the hyperparameters to tune, the training arguments, train the model, and evaluate them
-def objective(trial):
-    learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 5e-5)
-    per_device_train_batch_size = trial.suggest_categorical("per_device_train_batch_size", [4, 8, 16])
-    num_train_epochs = trial.suggest_int("num_train_epochs", 2, 4)
-
-    training_args = TrainingArguments(
-        output_dir="./results",
-        eval_strategy="epoch",
-        save_strategy="epoch",
-        learning_rate=learning_rate,
-        per_device_train_batch_size=per_device_train_batch_size,
-        num_train_epochs=num_train_epochs,
-        weight_decay=0.01,
-        load_best_model_at_end=True,
-    )
-
-    metric = evaluate.load("accuracy")
-
-    def compute_metrics(eval_pred):
-        logits, labels = eval_pred
-        predictions = np.argmax(logits, axis=-1)
-        return metric.compute(predictions=predictions, references=labels)
-
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=tokenized_datasets,
-        eval_dataset=tokenized_datasets,
-        tokenizer=tokenizer,
-        compute_metrics=compute_metrics,
-    )
-
-    trainer.train()
-
-    eval_metrics = trainer.evaluate()
-    return eval_metrics["eval_accuracy"]
-
-# run hyperparameter search
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=9)
-
-# find the best parameter and accuracy
-best_params = study.best_params
-best_accuracy = study.best_value
-
-print("Best hyperparameters:", best_params)
-print("Best accuracy:", best_accuracy)
-
-# train the model with the best hyperparameters
-best_model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=4)
-trainer = Trainer(
-    model=best_model,
-    args=TrainingArguments(
-        output_dir="./results",
-        eval_strategy="epoch",
-        save_strategy="epoch",
-        learning_rate=best_params["learning_rate"],
-        per_device_train_batch_size=best_params["per_device_train_batch_size"],
-        num_train_epochs=best_params["num_train_epochs"],
-        weight_decay=0.01,
-        load_best_model_at_end=True,
-    ),
-    train_dataset=tokenized_datasets,
-    eval_dataset=tokenized_datasets,
-    tokenizer=tokenizer,
-    compute_metrics=compute_metrics,
-)
-trainer.train()
-
-model_save_dir = "./model"
-tokenizer.save_pretrained(model_save_dir)
-best_model.save_pretrained(model_save_dir)
-
-```
-
-Here we are using the same dataset and the same model, however, the main difference between this code and the one before is that here we define an `objective` function that takes an `optuna` trial as input and we create `Trainer` instance with the tuned hyperparameters and train the model. Then, we create an `optuna` study and optimize the `objective` function and lastly, we retrieve the best hyperparameter and its accuracy. Note that the code could run for a bit longer than before as it keeps running trials and the final results may vary, but in my case, the final epoch reach 94.6% accuracy.
-
-![Tuned-output](images/Tuned-output.png)
+![catdog](images/catdog.png)
 <br />
 
-Note that this is just an example of hyperparameter tuning and there are many other methods that you can try such as [grid and random search](https://www.kaggle.com/code/willkoehrsen/intro-to-model-tuning-grid-and-random-search),[Bayesian optimization](https://towardsdatascience.com/a-conceptual-explanation-of-bayesian-model-based-hyperparameter-optimization-for-machine-learning-b8172278050f), and so forth. And the good thing is that many ML frameworks and libraries already have built-in utilities for hyperparameter tuning which makes it easier to apply in practice.
+
+Note that these prompts, e.g. “A cute cat”, “A cute dog”, and “A cute cat and a cute dog sit next to each other”, are just examples, and you can modify your prompts to your liking by modifying the prompts in the main function. 
+
+If you experience hung kernel or something similar, please restart/refresh RHOAI dashboard and relaunch the notebook. Alternatively, if you were using an HCP cluster, you might also want to add more nodes into the machine pool.
+
+Please note that you may also have seen following warning messages which are informational and generally harmless:
+- *The cache for model files in Transformers v4.22.0 has been updated...*: This is just an informational message that can be safely ignored once the cache migration is complete.
+- *Unable to register cuDNN/cuFFT/cuBLAS factory...*: These messages indicate that these CUDA libraries are being initialized multiple times.
+- *This TensorFlow binary is optimized to use available CPU instructions...*: This is also just an informational message that TensorFlow installation is working but could potentially be optimized further. 
+- *TF-TRT Warning: Could not find TensorRT*: This warning indicates that TensorRT is not available, which might affect performance but not functionality.
+
+
+## Future research
+Note that this is a simple tutorial intended to guide you through the necessary environment setup once you have a ROSA cluster spun up and followed by a simple deployment of generating images using the Stable Diffusion model. If you happen to get unsatisfactory results, i.e. inaccurate images, there are many ways you can go about improving them, such as by adjusting the parameters and using more specific prompts.
+
+In one of my runs, I noticed that the model generated an inaccurate image of a cat and a dog (for the third prompt) as follows.
+
+
+![dogdog](images/dogdog.png)
+<br />
+
+So here I adjusted the `num_inference_steps` from 50 to 75, `guidance_scale` from 7.5 to 8.5, and modified the last prompt into “A cute cat and a cute dog sitting next to each other, both faces and bodies are in the same image and background”. And thus, I got the following image as a result (note that results may vary).
+
+
+![catdog1](images/catdog1.png)
+<br />
+
+Increasing `num_inference_steps` will allow the model more iterations to refine the image, adjusting `guidance_scale` can lead to images that are more closely matching the prompt, and using more detailed prompts can help guide the model better. 
+
+However, please note that even with these optimizations, generating images with multiple specific elements can be tricky due to the inherent nature of generative models. You might still need to run the code multiple times to get the desired results.
+
+Note that there are many other ways to improve the accuracy that I’m not going to delve further in this blog, such as using [negative prompts](https://medium.com/stablediffusion/100-negative-prompts-everyone-are-using-c71d0ba33980) to exclude what you don’t want to see in the image, fine-tuning the model, using another [model](https://huggingface.co/models?other=stable-diffusion), increasing the batch size, etc. These are all potential topics for future research. 
+
+
+
