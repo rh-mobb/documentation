@@ -1,5 +1,5 @@
 ---
-date: '2024-08-27'
+date: '2024-08-26'
 title: Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled
 tags: ["ROSA", "HCP", "RHOAI", "Jupyter", "GPU", "Stable Diffusion"]
 authors:
