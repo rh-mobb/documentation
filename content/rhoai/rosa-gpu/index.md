@@ -7,7 +7,7 @@ authors:
   - Paul Czarkowski
 ---
 
-## Introduction
+## 1. Introduction
 
 [Stable Diffusion](https://en.wikipedia.org/wiki/Stable_Diffusion) is an AI model to generate images from text description. It uses a diffusion process to iteratively denoise random Gaussian noise into coherent images. This is a simple tutorial to create images using Stable Diffusion model using [Red Hat OpenShift AI (RHOAI)](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai), formerly called Red Hat OpenShift Data Science (RHODS), which is our OpenShift platform for AI/ML projects lifecycle management, running on a [Red Hat OpenShift Services on AWS (ROSA)](https://www.redhat.com/en/technologies/cloud-computing/openshift/aws) cluster, which is our managed service OpenShift platform on AWS, with NVIDIA GPU enabled. 
 
@@ -16,27 +16,26 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
 *Disclaimer: When using Stable Diffusion or other open-source image generation models, please be aware that while these tools include certain content filters and safety features, these are not foolproof. Therefore, it is your responsibility to use this tool in a safe manner, ensure the prompts you input are appropriate, and verify that the generated images are suitable for your intended audience. Neither the author of this tutorial nor the infrastructure providers can be held responsible for any inappropriate or unwanted results you may generate. By proceeding with this tutorial, you acknowledge that you understand the potential risks and agree to use the tool responsibly. Remember that the output of AI image generation models can sometimes be unpredictable and thus it is important to review all the generated images before sharing or using them in any context.*
 
 
-## Prerequisites
+## 2. Prerequisites
 
-### Tools
+### 2.1 Tools
 
 * [OpenShift CLI](https://docs.openshift.com/container-platform/4.14/cli_reference/openshift_cli/getting-started-cli.html)
 * [ROSA CLI](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-installing-rosa.html)
 
-### Environment
+### 2.2 Environment
 
 1. You will need a ROSA cluster (classic or HCP), if you don't have one, you can follow the [ROSA guide](/experts/rosa/terraform/hcp) to create an HCP ROSA cluster.
     - I ran this tutorial on an HCP ROSA 4.16.8 cluster with `m5.4xlarge` node with 48 vCPUs and ~185Gi memory.
     - Please be sure that you have cluster admin access to the cluster.
 
-<br />
-2. You will need a GPU enabled machine pool in your ROSA cluster. If you don't have one, you can follow the [Adding GPUs to a ROSA cluster](/experts/rosa/gpu) guide to add GPUs to your cluster. 
+1. You will need a GPU enabled machine pool in your ROSA cluster. If you don't have one, you can follow the [Adding GPUs to a ROSA cluster](/experts/rosa/gpu) guide to add GPUs to your cluster. 
     - I also ran this tutorial using `g5.4xlarge` node with autoscaling enabled up to 4 nodes.  
 
 
-## Installing RHOAI Operator
+## 3. Setting up RHOAI
 
-### Install OpenShift Service Mesh Operator
+### 3.1 Installing OpenShift Service Mesh Operator
 
 1. Deploy the Operator
 
@@ -56,7 +55,7 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
     EOF
     ```
 
-### Installing RHOAI and Jupyter notebook
+### 3.2 Installing RHOAI Operator and DataScienceCluster Instance
 
 1. Create a project for the RHOAI operator:
 
@@ -98,7 +97,7 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
       -n redhat-ods-operator rhods-operator
     ```
 
-  If you're on Linux and seeing error message like *Error from server (NotFound): deployments.apps "rhods-operator" not found*, then please wait a couple of minutes and rerun the above command again. 
+    If you're on Linux and seeing error message like *Error from server (NotFound): deployments.apps "rhods-operator" not found*, then please wait a couple of minutes and rerun the above command again. 
 
 1. Create a DataScienceCluster
 
@@ -143,7 +142,7 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
       default-dsc
     ```
 
-1. Finally, you can now log into the OpenShift AI console using your web browser and the output of this command
+1. Finally, log into the OpenShift AI console using your web browser and the output of this command
 
     ```bash
     oc -n redhat-ods-applications get route rhods-dashboard -o jsonpath='{.spec.host}'
@@ -151,7 +150,7 @@ Note that this guide requires a ROSA cluster with GPU enabled. The first half in
 
   
 
-## Deploying Stable Diffusion model
+## 3. Deploying Stable Diffusion Model
 
 In this tutorial, we'll use the [Stable Diffusion 2.1](https://huggingface.co/stabilityai/stable-diffusion-2-1) model from Stability AI to generate images based on text prompts. We'll generate three images based on prompts about cats and dogs, using 50 inference steps and a guidance scale of 7.5. These images are then displayed vertically using matplotlib, with each image titled by its corresponding prompt. 
 
@@ -268,7 +267,8 @@ Please note that you may also have seen following warning messages which are inf
 - *TF-TRT Warning: Could not find TensorRT*: This warning indicates that TensorRT is not available, which might affect performance but not functionality.
 
 
-## Future research
+## 4. Future research
+
 Note that this is a simple tutorial intended to guide you through the necessary environment setup once you have a ROSA cluster spun up and followed by a simple deployment of generating images using the Stable Diffusion model. If you happen to get unsatisfactory results, i.e. inaccurate images, there are many ways you can go about improving them, such as by adjusting the parameters and using more specific prompts.
 
 In one of my runs, I noticed that the model generated an inaccurate image of a cat and a dog (for the third prompt) as follows.
