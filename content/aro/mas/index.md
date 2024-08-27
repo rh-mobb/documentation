@@ -141,6 +141,37 @@ Open the MAS Dashboard URL in your browser and log in with the given username an
 > Note: If you are using the default aroapp.io domain that comes with ARO, the URL will show it's insecure due to an untrusted CA.
 For a production level Maximo installation with ARO, the cluster should be created with a [custom domain](https://cloud.redhat.com/experts/aro/cert-manager/) where you control the certificates.  Follow these [directions](https://www.ibm.com/docs/en/mas-cd/continuous-delivery?topic=management-manual-certificate) from IBM in manually appling the certificates for MAS.
 
+If you see a blue spinning circle from the admin page like this:
+![MAS Blue Circle](images/mas-blue-circle.png)
+
+In the browswer, change admin to api and hit enter.
+For example: change https://admin.inst1.apps.mobb.eastus.aroapp.io/ to
+https://api.inst1.apps.mobb.eastus.aroapp.io/
+
+This will return a message like the following:
+![MAS API](images/mas-api.png)
+
+Try to load the admin screen and this time it should work.
+
+## Install Maximo Applications ( Optional )
+
+Optionally install Maximo applications you would like to use.  In this example, we will install IT and Asset Configuration Manager.
+
+On the Admin page, click on Catalog and then under applications click on Manage.
+![MAS Manage](images/mas-manage.png)
+
+Select both IT and Asset Configuration Manager and then clikc on Continue.
+![MAS Componenets](images/mas-it-asset.png)
+
+Keep the defaults and click on Subscribe to channel.
+![MAS Subscribe](images/mas-subscribe.png)
+
+Once you see thate Manage is ready to be activated, click on Activate
+![MAS Activate](images/mas-activate.png)
+
+Finally, click on Start activation on the next screen.
+![MAS Start Activation](images/mas-start-activation.png)
+
 
 
 
