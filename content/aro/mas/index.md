@@ -8,12 +8,11 @@ authors:
 
 IBM Maximo Application Suite (MAS) is a set of applications for asset monitoring, management, predictive maintenance and reliability planning.  When combined with Azure Red Hat OpenShift ( ARO ), this frees up your Maximo and operations team to focus on what is important to them ( Maximo ) rather than having to worry about managing and building clusters.
 
-This document outlines how to get started with ARO and installing Maximo.
+This document outlines how to get quickly get started with ARO and installing Maximo all through automation.
 
 
 ## Prerequisites
 * an ARO Cluster (see [Deploying ARO with Terraform](/experts/aro/terraform-install/))
-* az cli
 * oc cli
 * ansible cli
 * a Maximo License Key
@@ -91,7 +90,7 @@ az aro list --query \
 
     ```yaml
     cat << EOF | oc apply -f -
-    apiVersion: storage.k8s.io
+    apiVersion: storage.k8s.io/v1
     kind: StorageClass
     metadata:
       name: azurefiles-premium
