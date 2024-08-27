@@ -163,13 +163,13 @@ On the Admin page, click on Catalog and then under applications click on Manage.
 Select both IT and Asset Configuration Manager and then clikc on Continue.
 ![MAS Componenets](images/mas-it-asset.png)
 
-Keep the defaults and click on Subscribe to channel.
+Keep the defaults and click on Subscribe to channel.  Note that this can take 10+ minutes.
 ![MAS Subscribe](images/mas-subscribe.png)
 
 Once you see thate Manage is ready to be activated, click on Activate
 ![MAS Activate](images/mas-activate.png)
 
-Finally, click on Start activation on the next screen.
+Finally, click on Start activation on the next screen.  Note that this step can take several hours.
 ![MAS Start Activation](images/mas-start-activation.png)
 
 
