@@ -23,6 +23,8 @@ This document outlines how to get started with ARO and installing Maximo.
 
 ## Prepare the Environment
 
+> Note: This guide re-uses environment variables from the [Deploying ARO using azurerm Terraform Provider](/experts/aro/terraform-install/) guide. If you have an existing cluster, you'll need to set them appropriately for the cluster.
+
 1. Run this these commands to set some environment variables to use throughout (Terraform commands need to be run in the directory you ran Terraform)
 <br>
 
@@ -39,7 +41,7 @@ export DRO_CONTACT_LASTNAME=Last
 export MAS_INSTANCE_ID=inst1
 export SLS_LICENSE_ID=
 export SLS_LICENSE_FILE=
-mkdir -p $SCRATCH_DIR
+mkdir -p $MAS_CONFIG_DIR
 ```
 
 <br>
