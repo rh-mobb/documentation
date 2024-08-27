@@ -26,34 +26,35 @@ This document outlines how to get started with ARO and installing Maximo.
 1. Run this these commands to set some environment variables to use throughout (Terraform commands need to be run in the directory you ran Terraform)
 <br>
 
-    <b>Maximo environment variables.
-    You do need both an IBM entitlement key and a Maximo license ID and file.  These can be obtained from IBM.</b>
+<b>Maximo environment variables.</b>
+    
+You do need both an IBM entitlement key and a Maximo license ID and file.  These can be obtained from IBM.</b>
 
-    ```bash
-    export IBM_ENTITLEMENT_KEY=XYZ
-    export MAS_CONFIG_DIR=~/tmp/masconfig
-    export DRO_CONTACT_EMAIL=name@company.com
-    export DRO_CONTACT_FIRSTNAME=First
-    export DRO_CONTACT_LASTNAME=Last
-    export MAS_INSTANCE_ID=inst1
-    export SLS_LICENSE_ID=
-    export SLS_LICENSE_FILE=
-    mkdir -p $SCRATCH_DIR
-    ```
+```bash
+export IBM_ENTITLEMENT_KEY=XYZ
+export MAS_CONFIG_DIR=~/tmp/masconfig
+export DRO_CONTACT_EMAIL=name@company.com
+export DRO_CONTACT_FIRSTNAME=First
+export DRO_CONTACT_LASTNAME=Last
+export MAS_INSTANCE_ID=inst1
+export SLS_LICENSE_ID=
+export SLS_LICENSE_FILE=
+mkdir -p $SCRATCH_DIR
+```
 
-    <br>
+<br>
 
-    <b>OpenShift Environment Variables </b>
+<b>OpenShift Environment Variables </b>
 
-    ```bash
-    export CLUSTER=${TF_VAR_cluster_name}
+```bash
+export CLUSTER=${TF_VAR_cluster_name}
 
-    INGRESS_SECRET_NAME=$(oc get secret -n openshift-ingress -o json | jq -r '.items[] | select(.metadata.name|contains("ingress")) | .metadata.name')
+INGRESS_SECRET_NAME=$(oc get secret -n openshift-ingress -o json | jq -r '.items[] | select(.metadata.name|contains("ingress")) | .metadata.name')
 
-    az aro list --query \
-      "[?name=='$CLUSTER'].{ ResourceGroup:resourceGroup,Location:location}" \
-      -o tsv | read -r RESOURCEGROUP LOCATION
-    ```
+az aro list --query \
+    "[?name=='$CLUSTER'].{ ResourceGroup:resourceGroup,Location:location}" \
+    -o tsv | read -r RESOURCEGROUP LOCATION
+```
     
 
 ## Prepare the Storage Accounts for MAS
