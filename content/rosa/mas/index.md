@@ -284,7 +284,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
    ```bash
    EFS=$(aws efs create-file-system --creation-token efs-token-1 \
-      --region ${AWS_REGION} \
+      --region ${REGION} \
       --encrypted | jq -r '.FileSystemId')
    echo $EFS
    ```
@@ -295,11 +295,11 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    for SUBNET in $(aws ec2 describe-subnets \
      --filters Name=vpc-id,Values=$VPC Name='tag:kubernetes.io/role/internal-elb',Values='*' \
      --query 'Subnets[*].{SubnetId:SubnetId}' \
-     --region $AWS_REGION \
+     --region $REGION \
      | jq -r '.[].SubnetId'); do \
        MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
           --subnet-id $SUBNET --security-groups $SG \
-          --region $AWS_REGION \
+          --region $REGION \
           | jq -r '.MountTargetId'); \
        echo $MOUNT_TARGET; \
     done
