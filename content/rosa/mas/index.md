@@ -13,6 +13,8 @@ This document outlines how to get quickly get started with ROSA and installing M
 
 ## Prerequisites
 * a ROSA Cluster (see [Deploying ROSA with Terraform](/experts/rosa/terraform-install/))
+> Note: Please check the latest Maximo support matrix, at the time of this writing, OpenShift 4.14 is latest OpenShift version supported by Maximo.
+
 * oc cli
 * aws cli
 * ansible cli
@@ -331,58 +333,6 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
      basePath: "/dynamic_provisioning"
    EOF
    ```
-
-
-
-
-
-
-1. Change the default storage class
-
-```bash
-  oc patch storageclass managed-csi -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
-```
-
-1. Create an Azure Premium Disk for Maximo
-
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: managed-premium
-      annotations: 
-        storageclass.kubernetes.io/is-default-class: 'true'
-    provisioner: kubernetes.io/azure-disk
-    parameters:
-      kind: Managed
-      storageaccounttype: Premium_LRS
-    reclaimPolicy: Delete
-    allowVolumeExpansion: true
-    volumeBiningMode: WaitForFirstConsumer
-    EOF
-    ```
-
-1. Create an Azure Premium File Storage for Maximo
-
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: azurefiles-premium
-    provisioner: file.csi.azure.com
-    parameters:
-      protocol: nfs
-      networkEndpointType: privateEndpoint
-      location: $LOCATION
-      resourceGroup: $RESOURCEGROUP
-      skuName: Premium:LRS
-    reclaimPolicy: Retain
-    allowVolumeExpansion: true
-    volumeBiningMode: Immediate
-    EOF
-    ```
 
 ## Install IBM Maximo Application Suite with Ansible
 
