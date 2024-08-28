@@ -171,7 +171,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
       --policy-arn $POLICY
    ```
 
-## Deploy and test the AWS EFS Operator
+### Deploy the AWS EFS Operator
 
 1. Create a Secret to tell the AWS EFS Operator which IAM role to request.
 
@@ -241,7 +241,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    watch oc get daemonset aws-efs-csi-driver-node -n openshift-cluster-csi-drivers
    ```
 
-## Prepare an AWS EFS Volume for dynamic provisioning
+### Prepare an AWS EFS Volume for dynamic provisioning
 
 1. Run this set of commands to update the VPC to allow EFS access
 
@@ -273,6 +273,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
     --group-id $SG \
     --protocol tcp \
     --port 2049 \
+    --region $REGION \
     --cidr $CIDR | jq .
    ```
 
@@ -305,6 +306,25 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
     done
    ```
 
+### Create a storage class for EFS
+1. Create a Storage Class for the EFS volume
+
+   ```bash
+   cat <<EOF | oc apply -f -
+   kind: StorageClass
+   apiVersion: storage.k8s.io/v1
+   metadata:
+     name: efs-sc
+   provisioner: efs.csi.aws.com
+   parameters:
+     provisioningMode: efs-ap
+     fileSystemId: $EFS
+     directoryPerms: "700"
+     gidRangeStart: "1000"
+     gidRangeEnd: "2000"
+     basePath: "/dynamic_provisioning"
+   EOF
+   ```
 
 
 
