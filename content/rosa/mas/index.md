@@ -49,7 +49,7 @@ mkdir -p $MAS_CONFIG_DIR
 <b>OpenShift Environment Variables </b>
 
 ```bash
-export CLUSTER=${TF_VAR_cluster_name}
+export CLUSTER=${TF_VAR_CLUSTER}
 export REGION=$(rosa describe cluster -c ${CLUSTER} -o json | jq -r '.region.id')
 export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json \
 | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
@@ -117,7 +117,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    > This creates a named policy for the cluster, you could use a generic policy for multiple clusters to keep things simpler.
 
    ```bash
-   POLICY=$(aws iam create-policy --policy-name "${CLUSTER_NAME}-rosa-efs-csi" \
+   POLICY=$(aws iam create-policy --policy-name "${CLUSTER}-rosa-efs-csi" \
       --policy-document file://$MAS_CONFIG_DIR/efs-policy.json \
       --query 'Policy.Arn' --output text) || \
       POLICY=$(aws iam list-policies \
@@ -157,7 +157,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
    ```bash
    ROLE=$(aws iam create-role \
-     --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" \
+     --role-name "${CLUSTER}-aws-efs-csi-operator" \
      --assume-role-policy-document file://$MAS_CONFIG_DIR/TrustPolicy.json \
      --query "Role.Arn" --output text)
    echo $ROLE
@@ -167,7 +167,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
    ```bash
    aws iam attach-role-policy \
-      --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" \
+      --role-name "${CLUSTER}-aws-efs-csi-operator" \
       --policy-arn $POLICY
    ```
 
