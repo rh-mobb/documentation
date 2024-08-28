@@ -69,7 +69,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Create an IAM Policy
 
    ```bash
-   cat << EOF > $SCRATCH_DIR/efs-policy.json
+   cat << EOF > $MAS_CONFIG_DIR/efs-policy.json
    {
      "Version": "2012-10-17",
      "Statement": [
@@ -118,7 +118,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
    ```bash
    POLICY=$(aws iam create-policy --policy-name "${CLUSTER_NAME}-rosa-efs-csi" \
-      --policy-document file://$SCRATCH_DIR/efs-policy.json \
+      --policy-document file://$MAS_CONFIG_DIR/efs-policy.json \
       --query 'Policy.Arn' --output text) || \
       POLICY=$(aws iam list-policies \
       --query 'Policies[?PolicyName==`rosa-efs-csi`].Arn' \
@@ -129,7 +129,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Create a Trust Policy
 
    ```bash
-   cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
+   cat <<EOF > $MAS_CONFIG_DIR/TrustPolicy.json
    {
      "Version": "2012-10-17",
      "Statement": [
@@ -158,7 +158,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    ```bash
    ROLE=$(aws iam create-role \
      --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" \
-     --assume-role-policy-document file://$SCRATCH_DIR/TrustPolicy.json \
+     --assume-role-policy-document file://$MAS_CONFIG_DIR/TrustPolicy.json \
      --query "Role.Arn" --output text)
    echo $ROLE
    ```
