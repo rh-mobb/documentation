@@ -251,17 +251,17 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
    VPC=$(aws ec2 describe-instances \
      --filters "Name=private-dns-name,Values=$NODE" \
      --query 'Reservations[*].Instances[*].{VpcId:VpcId}' \
-     --region $AWS_REGION \
+     --region $REGION \
      | jq -r '.[0][0].VpcId')
    CIDR=$(aws ec2 describe-vpcs \
      --filters "Name=vpc-id,Values=$VPC" \
      --query 'Vpcs[*].CidrBlock' \
-     --region $AWS_REGION \
+     --region $REGION \
      | jq -r '.[0]')
    SG=$(aws ec2 describe-instances --filters \
      "Name=private-dns-name,Values=$NODE" \
      --query 'Reservations[*].Instances[*].{SecurityGroups:SecurityGroups}' \
-     --region $AWS_REGION \
+     --region $REGION \
      | jq -r '.[0][0].SecurityGroups[0].GroupId')
    echo "CIDR - $CIDR,  SG - $SG"
    ```
