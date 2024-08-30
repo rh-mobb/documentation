@@ -64,9 +64,6 @@ export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json
 export AWS_PAGER=""
 INGRESS_SECRET_NAME=$(oc get secret -n openshift-ingress -o json | jq -r '.items[] | select(.metadata.name|contains("ingress")) | .metadata.name')
 
-az aro list --query \
-    "[?name=='$CLUSTER'].{ ResourceGroup:resourceGroup,Location:location}" \
-    -o tsv | read -r RESOURCEGROUP LOCATION
 ```
   
 ## Prepare the Storage Accounts for MAS
