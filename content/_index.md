@@ -55,7 +55,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configuring AWS CLB Access Logging](/experts/rosa/clb-access-logging/)
 * [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
 * [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
-
+* [Install Maximo Application Suite on Red Hat OpenShift Service on AWS with automation](/experts/rosa/mas/)
 ##### AWS GovCloud
 * [Creating a ROSA Cluster in AWS GovCloud](/experts/rosa/rosa-govcloud/)
 
@@ -92,6 +92,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ARO using azurerm Terraform Provider](/experts/aro/terraform-install)
 * [Deploying ACM and ODF for ARO Disaster Recovery](/experts/aro/acm-odf-aro)
 * [Deploy Ansible Automation Platform (AAP) on ARO](/experts/aro/aap)
+* [Deploy Maximo Application Suite (MAS) on ARO](/experts/aro/mas)
 
 ## GCP
 
