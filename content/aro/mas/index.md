@@ -160,7 +160,7 @@ Optionally install Maximo applications you would like to use.  In this example, 
 On the Admin page, click on Catalog and then under applications click on Manage.
 ![MAS Manage](images/mas-manage.png)
 
-Select both IT and Asset Configuration Manager and then clikc on Continue.
+Select both IT and Asset Configuration Manager and then click on Continue.
 ![MAS Componenets](images/mas-it-asset.png)
 
 Keep the defaults and click on Subscribe to channel.  Note that this can take 10+ minutes.
