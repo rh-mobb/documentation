@@ -12,7 +12,7 @@ This document outlines how to get quickly get started with ROSA and installing M
 
 
 ## Prerequisites
-* a ROSA Cluster (see [Deploying ROSA with Terraform](/experts/rosa/terraform-install/))
+* a ROSA Cluster (see [Deploying ROSA with Terraform](/experts/rosa/terraform/hcp/))
 > Note: Please check the latest Maximo support matrix, at the time of this writing, OpenShift 4.14 is latest OpenShift version supported by Maximo.
 
 * oc cli
