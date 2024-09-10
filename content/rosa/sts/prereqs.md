@@ -1,3 +1,5 @@
+# UPDATED DOCUMENT: This article has been moved to the official ROSA documentation [here](https://docs.openshift.com/rosa/rosa_planning/rosa-cloud-expert-prereq-checklist.html). 
+
 ---
 date: '2021-06-10'
 title: ROSA Prerequisites
