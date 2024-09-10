@@ -177,6 +177,9 @@ Now you can see all of your ARO resources inside ARC UI. you can see the followi
 - Storage
 - Configurations
 
+## Enable Container Insights
+
+Follow the Azure documentation to [Enable Container insights](https://learn.microsoft.com/en-us/azure/azure-monitor/containers/kubernetes-monitoring-enable?tabs=cli#enable-container-insights). Be sure to use "Arc-enabled cluster with ARO" command for ARO-specific instructions.
 
 ## Access Secrets from Azure Key Vault
 The Azure Key Vault Provider for Secrets Store CSI Driver allows for the integration of Azure Key Vault as a secrets store with a Kubernetes cluster via a CSI volume. For Azure Arc-enabled Kubernetes clusters, you can install the Azure Key Vault Secrets Provider extension to fetch secrets.
