@@ -23,7 +23,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
 ## Prerequisites
 
-**If this is your first time deploying ROSA you need to do some preparation as described [here](./prereqs).**
+**If this is your first time deploying ROSA you need to do some preparation as described [here](https://docs.openshift.com/rosa/rosa_planning/rosa-cloud-expert-prereq-checklist.html).**
 
 **Once completing those steps you can continue below.**
 
