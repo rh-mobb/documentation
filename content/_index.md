@@ -56,6 +56,8 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
 * [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
 * [Install Maximo Application Suite on Red Hat OpenShift Service on AWS with automation](/experts/rosa/mas/)
+* [Configuring ROSA with HCP Private Cluster API Access](/experts/rosa/hcp-private-api-access/)
+
 ##### AWS GovCloud
 * [Creating a ROSA Cluster in AWS GovCloud](/experts/rosa/rosa-govcloud/)
 
