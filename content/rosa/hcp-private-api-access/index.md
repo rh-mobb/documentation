@@ -6,8 +6,6 @@ authors:
    - Michael McNeill
 ---
 
-# Configuring ROSA with HCP Private Cluster API Access
-
 With ROSA with HCP private clusters, the AWS PrivateLink endpoint exposed in the customer's VPC has a default security group. This security group has access to the PrivateLink endpoint that is limited to only those resources that exist within the VPC or resources that are present with an IP address associated with the VPC CIDR range. In order to grant access to any entities outside of the VPC, through VPC peering and transit gateway, you must create and attach another security group to the PrivateLink endpoint to grant the necessary access.
 
 ### Prerequisites
