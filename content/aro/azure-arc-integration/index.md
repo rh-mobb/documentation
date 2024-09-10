@@ -17,7 +17,7 @@ Azure Arc-enabled Kubernetes supports the following scenarios for connected clus
 
 - Connect Kubernetes running outside of Azure for inventory, grouping, and tagging.
 - Deploy applications and apply configuration using GitOps-based configuration management.
-- View and monitor your clusters using Azure Monitor for containers.
+- View and monitor your clusters using Container Insights.
 - Enforce threat protection using Microsoft Defender for Kubernetes.
 - Apply policy definitions using Azure Policy for Kubernetes.
 - Use Azure Active Directory for authentication and authorization checks on your cluster
@@ -135,7 +135,7 @@ Name                 Location    ResourceGroup
 << cluster name >>>  eastus      << resource group >>
 ```
 
-## Enable observability
+## Enable Resource Viewing
 In order to see ARO resource inside Azure Arc, you need to create a service account and provide it to Azure Arc.
 
 ```bash
@@ -170,13 +170,16 @@ Select Namespaces from the left side menu and paste the token in "Service accoun
 
 ![Image](Images/aro-arc-integration-image1.png)
 
-Now you can see all of your ARO rearouses inside ARC UI. you can see the following resources inside Azure ARC portal:
+Now you can see all of your ARO resources inside ARC UI. you can see the following resources inside Azure ARC portal:
 - Namespaces
 - Workloads
 - Services and Ingress
 - Storage
 - Configurations
 
+## Enable Container Insights
+
+Follow the Azure documentation to [Enable Container insights](https://learn.microsoft.com/en-us/azure/azure-monitor/containers/kubernetes-monitoring-enable?tabs=cli#enable-container-insights). Be sure to use "Arc-enabled cluster with ARO" command for ARO-specific instructions.
 
 ## Access Secrets from Azure Key Vault
 The Azure Key Vault Provider for Secrets Store CSI Driver allows for the integration of Azure Key Vault as a secrets store with a Kubernetes cluster via a CSI volume. For Azure Arc-enabled Kubernetes clusters, you can install the Azure Key Vault Secrets Provider extension to fetch secrets.
