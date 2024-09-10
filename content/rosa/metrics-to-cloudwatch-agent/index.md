@@ -27,7 +27,7 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
    ```bash
    export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}"  | sed 's/-[a-z0-9]\{5\}$//')
    export REGION=$(rosa describe cluster -c ${ROSA_CLUSTER_NAME} --output json | jq -r .region.id)
-   export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer | sed  's|^https://||')
+   export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer | sed 's|^https://||')
    export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
    export AWS_PAGER=""
    export SCRATCH="/tmp/${ROSA_CLUSTER_NAME}/cloudwatch-agent-metrics"
@@ -325,8 +325,8 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
 1. Update the Sample Dashboard
 
    ```bash
-   sed -i .bak "s/__CLUSTER_NAME__/${ROSA_CLUSTER_NAME}/g" ${SCRATCH}/dashboard.json
-   sed -i .bak "s/__REGION_NAME__/${REGION}/g" ${SCRATCH}/dashboard.json
+   sed -i.bak "s/__CLUSTER_NAME__/${ROSA_CLUSTER_NAME}/g" ${SCRATCH}/dashboard.json
+   sed -i.bak "s/__REGION_NAME__/${REGION}/g" ${SCRATCH}/dashboard.json
    ```
 
 1. Browse to https://console.aws.amazon.com/cloudwatch
