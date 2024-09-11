@@ -1,6 +1,6 @@
 ---
 date: '2024-09-11'
-title: Deploy Ollama and OpenWebUI on ROSA with Graviton GPUs
+title: Deploying and Running Ollama and Open WebUI in a ROSA Cluster with GPUs
 tags: ["AWS", "ROSA", "GPU", "Ollama", "OpenWebUI"]
 aliases: ["/docs/misc/ollama-openwebui-graviton-gpu"]
 authors:
@@ -17,7 +17,7 @@ Red Hat OpenShift Service on AWS (ROSA) provides a managed OpenShift environment
 
 ## Set up GPU-enabled Machine Pool
 
-First we need to check availability of our instance type used here (g5g.2xlarge), it should be in same region of the cluster.
+First we need to check availability of our instance type used here (g5g.2xlarge), it should be in same region of the cluster. Note you can use also x86_64 based instance like g4dn*.
 
 ```bash
 for region in $(aws ec2 describe-regions --query 'Regions[].RegionName' --output text); do
@@ -35,11 +35,13 @@ And then we can create a machine pool with GPU-enabled instances, in our example
 rosa create machine-pool -c $CLUSTER_NAME --name gpu --replicas=1 --availability-zone eu-central-1c --instance-type g5g.2xlarge --use-spot-instances
 ```
 
-This command creates a machine pool named "gpu" with one replica using the g5g.2xlarge spot instance type, which is a Graviton-based CPU instance with Nvidia T4 16GB GPU. A.K.A best performance/price at the moment. (0.2610$/h) 
+This command creates a machine pool named "gpu" with one replica using the g5g.2xlarge spot instance, which is a Graviton-based CPU instance (ARM64) with Nvidia T4 16GB GPU. A.K.A best performance/price at the moment. (0.2610$/h)
+
+Note that mixed architecture for nodes is available only on HCP since 4.16.
 
 ## Deploy Required Operators
 
-We'll use kustomize to deploy the necessary operators thanks to this awesome repository provided by Red Hat COP (Communnity of Practices) https://github.com/redhat-cop/gitops-catalog
+We'll use kustomize to deploy the necessary operators thanks to this repository provided by Red Hat COP (Community of Practices) https://github.com/redhat-cop/gitops-catalog
 
 1. Node Feature Discovery (NFD) Operator:
    ```bash
@@ -61,7 +63,7 @@ After the operators are installed, create their instances:
    ```bash
    oc apply -k https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia
    ```
-   This creates an NFD instance configured for NVIDIA GPUs.
+   This creates an NFD instance for cluster.
 
 2. GPU Operator Instance:
    ```bash
