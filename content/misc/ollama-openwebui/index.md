@@ -12,7 +12,7 @@ Red Hat OpenShift Service on AWS (ROSA) provides a managed OpenShift environment
 ## Prerequisites
 
 * A Red Hat OpenShift on AWS (ROSA classic or HCP) 4.14+ cluster
-* OC CLI
+* OC CLI (Admin access to cluster)
 * ROSA CLI
 
 ## Set up GPU-enabled Machine Pool
@@ -173,20 +173,46 @@ If you want to give best experience for multiple users, for improving response t
 Note that here you should use EFS (RWX access) instead or EBS (RWO access) for storage of ollama models, you can install EFS operator using [this tutorial](https://cloud.redhat.com/experts/rosa/aws-efs/)
 
 1. Add new GPU node to machine pool
+
    ```bash
    rosa edit machine-pool -c $CLUSTER_NAME  gpu --replicas=2
    ```
 
 2. Change storage type for ollama app for using EFS
+
    ```bash
    oc set volume deployment/ollama --add --claim-class=efs-sc --type=pvc --claim-size=50Gi --mount-path=/.ollama --name=config
    ```
 
 3. Scale ollama deployment
+
    ```bash
    oc scale deployment/ollama --replicas=2
    ```
 
+## Uninstalling
+
+1. Delete llm namespace
+   ```bash
+   oc delete project llm
+   ```
+
+2. Delete operators
+   ```bash
+   oc delete -k https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia
+   oc delete -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/instance/overlays/aws
+   oc delete -k https://github.com/redhat-cop/gitops-catalog/nfd/operator/overlays/stable
+   oc delete -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/operator/overlays/stable
+   ```
+
+3. Delete machine pool
+   ```bash
+   rosa delete machine-pool -c $CLUSTER_NAME gpu
+   ````
+
 ## Conclusion
 
-You now have Ollama and OpenWebUI deployed on your ROSA cluster, leveraging AWS GPU instances for inference. This setup allows you to run and interact with large language models efficiently using the power of AWS's GPU instances within a managed OpenShift environment. This approach represents the best of both worlds: the reliability and support of a managed OpenShift service and AWS, combined with the innovation and rapid advancement of the open-source AI community. It allows organizations to stay at the forefront of AI technology while maintaining the security, compliance, and operational standards required in enterprise environments.
+You now have Ollama and OpenWebUI deployed on your ROSA cluster, leveraging AWS GPU instances for inference. 
+This setup allows you to run and interact with large language models efficiently using the power of AWS's GPU instances within a managed OpenShift environment. 
+This approach represents the best of both worlds: the reliability and support of a managed OpenShift service and AWS, combined with the innovation and rapid advancement of the open-source AI community. 
+It allows organizations to stay at the forefront of AI technology while maintaining the security, compliance, and operational standards required in enterprise environments.
