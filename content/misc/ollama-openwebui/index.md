@@ -151,18 +151,22 @@ After deploying OpenWebUI, follow these steps to access and configure it:
    - The first time you access OpenWebUI, you'll need to register.
    - Choose a strong password for the admin account.
 
+
 4. Configuring Models:
    - Once logged in, go to the "Models" section to choose the LLMs you want to use.
+
 
 5. Testing Your Setup:
    - Create a new chat and select one of the models you've configured.
    - Try sending a test prompt to ensure everything is working correctly.
+
 
 6. Discover OpenWeb UI! You get lot of feature like :
    - Model Builder
    - Local and Remote RAG Integration
    - Web Browsing Capabilities
    - Role-Based Access Control (RBAC)
+
    more here : [https://docs.openwebui.com/features](https://docs.openwebui.com/features)
 
 
@@ -208,11 +212,11 @@ Note that here you should use EFS (RWX access) instead or EBS (RWO access) for s
 3. Delete machine pool
    ```bash
    rosa delete machine-pool -c $CLUSTER_NAME gpu
-   ````
+   ```
 
 ## Conclusion
 
-You now have Ollama and OpenWebUI deployed on your ROSA cluster, leveraging AWS GPU instances for inference. 
-This setup allows you to run and interact with large language models efficiently using the power of AWS's GPU instances within a managed OpenShift environment. 
-This approach represents the best of both worlds: the reliability and support of a managed OpenShift service and AWS, combined with the innovation and rapid advancement of the open-source AI community. 
-It allows organizations to stay at the forefront of AI technology while maintaining the security, compliance, and operational standards required in enterprise environments.
+- You now have Ollama and OpenWebUI deployed on your ROSA cluster, leveraging AWS GPU instances for inference. 
+- This setup allows you to run and interact with large language models efficiently using AWS's GPU instances within a managed OpenShift environment.
+- This approach represents the best of both worlds: the reliability and support of a managed OpenShift service and AWS, combined with the innovation and rapid advancement of the open-source AI community.
+- It allows organizations to stay at the forefront of AI technology while maintaining the security, compliance, and operational standards required in enterprise environments.
