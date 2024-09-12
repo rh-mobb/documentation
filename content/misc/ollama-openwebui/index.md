@@ -145,7 +145,7 @@ After deploying OpenWebUI, follow these steps to access and configure it:
    oc get route open-webui
    ```
 
-2. Open the URL in your web browser. You should see the OpenWebUI login page.
+2. Open the URL in your web browser. You should see the OpenWebUI login page. [https://docs.openwebui.com/](https://docs.openwebui.com/)
 
 3. Initial Setup:
    - The first time you access OpenWebUI, you'll need to register.
@@ -157,6 +157,14 @@ After deploying OpenWebUI, follow these steps to access and configure it:
 5. Testing Your Setup:
    - Create a new chat and select one of the models you've configured.
    - Try sending a test prompt to ensure everything is working correctly.
+
+6. Discover OpenWeb UI! You get lot of feature like :
+   - Model Builder
+   - Local and Remote RAG Integration
+   - Web Browsing Capabilities
+   - Role-Based Access Control (RBAC)
+   more here : [https://docs.openwebui.com/features](https://docs.openwebui.com/features)
+
 
 ## Scaling
 
