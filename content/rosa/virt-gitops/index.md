@@ -6,7 +6,7 @@ authors:
   - Kevin Collins, Kumudu Herath, John Quigley
 ---
 
-One of the great things about OpenShift Virtualization is that it brings new capabilies to run virtual machines alongside your containers AND using DevOps processes to manage them.
+One of the great things about OpenShift Virtualization is that it brings new capabilities to run virtual machines alongside your containers AND using DevOps processes to manage them.
 
 This tutorial will show how to configure OpenShift GitOps ( based on ArgoCD ) to deploy and managed virtual machines.
 
@@ -101,7 +101,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 
     In the OpenShift console, from the menu click on Virtualization and the Virtual Machines.   Make sure All Projects is selected.
 
-    ![screenshot of ArgoCD Apps](./images/vm-list.png)
+    ![screenshot of vms](./images/vm-list.png)
 
     Notice that there is a dev-vm which is in the dev-vm namespace and a prod-vm in the prod-vm namespace.
 
@@ -139,6 +139,79 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 
 4. Make changes to the virtual machines through git.
 
+Start by deleting the ArgoCD application set, VMs that we created using this tutorials github repo.
+
+```bash
+ oc delete ApplicationSet vms -n openshift-gitops
+```
+
+Next, fork the tutorial github [repo](https://github.com/rh-mobb/rosa-virt-gitops)
+![screenshot of fork repo](./images/fork-repo.png)
+
+Export an environment variable with your GitHub username
+```
+ export GIT_USERNAME=<YOUR GITHUB USERNAME>
+```
+
+Clone the repo in YOUR github account locally:
+```bash
+ git clone https://github.com/$GIT_USERNAME/rosa-virt-gitops
+
+ cd rosa-virt-gitops
+```
+
+Create an ApplicationSet and VMs using your github repo
+```bash
+  oc apply -n openshift-gitops -f applicationsets/vm/applicationset-vm.yaml
+```
+
+The result should look exactly like you saw previously with 2 ArgoCD apps and 2 VMs one for dev and one more prod.
+
+Argo UI
+![screenshot of ArgoCD Apps](./images/argo-dev-vm.png)    
+
+List of VMs.
+![screenshot of vms](./images/vm-list.png)
+
+Now, let's make a change to VirtualMachine definition in having the Virtual Machine state being stopped and increasing the amount of memory requested.
+
+Open the dev kustomization file located at
+/applicationsets/vm/kustomize/dev/kustomization.yaml
+
+Change the patch section with the following:
+```yaml
+- patch: |
+      - op: replace
+        path: /spec/running
+        value: false
+      - op: replace
+        path: /spec/template/spec/domain/memory/guest
+        value: 3Gi
+      - op: replace
+        path: /spec/template/spec/volumes/1/cloudInitNoCloud/userData
+        value: |-
+          #cloud-config
+          user: fedora
+          password: fedora123
+          chpasswd: { expire: False }
+```
+
+Save the file, and push to git.
+
+```bash
+  git commit -am "stopping the VM and increasing memory"
+  git push
+```
+
+Next, let's switch back over to ArgoCD and sync our changes.  From the dev-vm application in ArgoCD, slick on Sync.
+
+![screenshot of vms](./images/argo-sync.png)
+
+on the next popup screen, keep the default and click synchronize
+![screenshot of vms](./images/argo-sync2.png)
+
+This will stop the dev vm and increase the memory to 3GB.  To verify, click into the dev-vm and see the results.
+![screenshot of vms](./images/vm-stopped-memory.png)
 
 
 
