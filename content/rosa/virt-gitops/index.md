@@ -1,6 +1,6 @@
 ---
 date: '2024-05-20'
-title: Deploying and Managing Virtual Machines on ROSA with OpenShift GitOps.
+title: Deploying and Managing Virtual Machines on ROSA with OpenShift GitOps
 tags: ["ROSA", "ocp-virt", "virtualization", "argo", "gitops"]
 authors:
   - Kevin Collins, Kumudu Herath, John Quigley
@@ -136,7 +136,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
     ![screenshot of vms running](./images/vms-running.png)
 
     That is one of the superpowers of OpenShift GitOps in that it keeps you applications in sync as there were specified in Git, elimiating application drift.
-    
+
 4. Make changes to the virtual machines through git.
 
 
