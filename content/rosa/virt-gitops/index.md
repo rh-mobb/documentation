@@ -113,11 +113,12 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
     [VirtualMachine](https://raw.githubusercontent.com/rh-mobb/rosa-virt-gitops/main/applicationsets/vm/kustomize/base/virtualmachine.yaml) 
     
     notice that the Virtual Machine is specified as it should be running.
+
     ![screenshot of VM Spec](./images/vm-running.png)
 
-    When the ArogCD ApplicationSet was applied, self healing was set to true.
+    When the ArogCD [ApplicationSet](https://raw.githubusercontent.com/rh-mobb/rosa-virt-gitops/main/applicationsets/vm/applicationset-vm.yaml) was applied, self healing was set to true.
 
-    [ApplicationSet](https://raw.githubusercontent.com/rh-mobb/rosa-virt-gitops/main/applicationsets/vm/applicationset-vm.yaml)
+
     ![screenshot of self heal](./images/argo-self-heal.png)
 
     What this means is if we do something like stop the VM, Argo will restart it automatically.  Let's test it out.
