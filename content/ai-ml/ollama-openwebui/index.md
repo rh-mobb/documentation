@@ -19,8 +19,10 @@ Red Hat OpenShift Service on AWS (ROSA) provides a managed OpenShift environment
 
 First we need to check availability of our instance type used here (g4dn.xlarge), it should be in same region of the cluster. Note you can use also Graviton based instance (ARM64) like g5g* but only on HCP 4.16+ cluster.
 
+Here i check availability of instance g4dn.xlarge in eu-* region :
+
 ```bash
-for region in $(aws ec2 describe-regions --query 'Regions[].RegionName' --output text); do
+for region in $(aws ec2 describe-regions --query 'Regions[?starts_with(RegionName, `eu`)].RegionName' --output text); do
     echo "Region: $region"
     aws ec2 describe-instance-type-offerings --location-type availability-zone \
     --filters Name=instance-type,Values=g4dn.xlarge --region $region \
@@ -29,14 +31,76 @@ for region in $(aws ec2 describe-regions --query 'Regions[].RegionName' --output
 done
 ```
 
-And then we can create a machine pool with GPU-enabled instances, in our example i use eu-central-1c AZ:
+Example output :
+
+```bash
+Region: eu-south-1
+-------------------------------
+|DescribeInstanceTypeOfferings|
++-----------------------------+
+|  eu-south-1c                |
+|  eu-south-1b                |
++-----------------------------+
+
+Region: eu-south-2
+
+Region: eu-central-1
+-------------------------------
+|DescribeInstanceTypeOfferings|
++-----------------------------+
+|  eu-central-1a              |
+|  eu-central-1b              |
+|  eu-central-1c              |
++-----------------------------+
+
+Region: eu-central-2
+
+Region: eu-north-1
+-------------------------------
+|DescribeInstanceTypeOfferings|
++-----------------------------+
+|  eu-north-1c                |
+|  eu-north-1a                |
+|  eu-north-1b                |
++-----------------------------+
+
+Region: eu-west-3
+-------------------------------
+|DescribeInstanceTypeOfferings|
++-----------------------------+
+|  eu-west-3b                 |
+|  eu-west-3a                 |
+|  eu-west-3c                 |
++-----------------------------+
+
+Region: eu-west-2
+-------------------------------
+|DescribeInstanceTypeOfferings|
++-----------------------------+
+|  eu-west-2c                 |
+|  eu-west-2a                 |
+|  eu-west-2b                 |
++-----------------------------+
+
+Region: eu-west-1
+-------------------------------
+|DescribeInstanceTypeOfferings|
++-----------------------------+
+|  eu-west-1c                 |
+|  eu-west-1b                 |
+|  eu-west-1a                 |
++-----------------------------+
+```
+> Here we see that this instance is available everywhere in 3 AZ except in eu-south-2 and eu-central-2.
+
+With the region and zone known, now create a machine pool with GPU Enabled Instances. In this example I have used region eu-central-1c:
 
 ```bash
 export CLUSTER_NAME=mycluster
 rosa create machine-pool -c $CLUSTER_NAME --name gpu --replicas=1 --availability-zone eu-central-1c --instance-type g4dn.xlarge --use-spot-instances
 ```
 
-This command creates a machine pool named "gpu" with one replica using the g4dn.xlarge spot instance, which is x86_64 instance with Nvidia T4 16GB GPU.
+This command creates a machine pool named "gpu" with one replica using the g4dn.xlarge spot instance, which is x86_64 instance with Nvidia T4 16GB GPU. It's the cheapest GPU instance you can have at the moment (0.2114$/h at the moment); 16GB of VRAM is enought for running small/medium models. 
 
 ## Deploy Required Operators
 
@@ -72,14 +136,15 @@ After the operators are installed, create their instances:
 
 ## Deploy Ollama and OpenWebUI
 
-Now, let's deploy Ollama for inference and OpenWebUI for interacting with the LLM:
+Next, we'll deploy Ollama for model inference and OpenWebUI as the interface for interacting with the language model.
 
 1. Create a new project:
    ```bash
    oc new-project llm
    ```
 
-2. Deploy Ollama:
+2. The following command deploys Ollama, sets up persistent storage, and allocates a GPU to the deployment:
+
    ```bash
    oc new-app docker.io/ollama/ollama:0.3.10 --import-mode=PreserveOriginal
    oc patch deployment ollama --type=json -p '[
@@ -89,21 +154,14 @@ Now, let's deploy Ollama for inference and OpenWebUI for interacting with the LL
    oc set volume deployment/ollama --add --type=pvc --claim-size=50Gi --mount-path=/.ollama --name=config
    oc set resources deployment/ollama --limits=nvidia.com/gpu=1
    ```
-   This deploys Ollama, sets up persistent storage, and allocates a GPU to the deployment.
 
-3. Deploy OpenWebUI:
+3. The following command deploys OpenWebUI and sets up the necessary storage and environment variables and then expose the service with a route:
    ```bash
    oc new-app ghcr.io/open-webui/open-webui:0.3.19 -e WEBUI_SECRET_KEY=secret -e OLLAMA_BASE_URL=http://ollama:11434 --import-mode=PreserveOriginal
    oc set volume deployment/open-webui --add --type=pvc --claim-size=5Gi --mount-path=/app/backend/data --name=data
    oc set volume deployment/open-webui --add --type=emptyDir --mount-path=/app/backend/static --name=static
-   ```
-   This deploys OpenWebUI and sets up the necessary storage and environment variables.
-
-4. Create a route for OpenWebUI:
-   ```bash
    oc create route edge --service=open-webui
    ```
-   This creates an edge-terminated route to access OpenWebUI.
 
 ## Verify deployment
 
@@ -148,29 +206,26 @@ After deploying OpenWebUI, follow these steps to access and configure it:
 2. Open the URL in your web browser. You should see the OpenWebUI login page. [https://docs.openwebui.com/](https://docs.openwebui.com/)
 
 3. Initial Setup:
-   - The first time you access OpenWebUI, you'll need to register.
-   - Choose a strong password for the admin account.
-
+- The first time you access OpenWebUI, you'll need to register.
+- Choose a strong password for the admin account.
 
 4. Configuring Models:
-   - Once logged in, go to the "Models" section to choose the LLMs you want to use.
-
+- Once logged in, go to the "Models" section to choose the LLMs you want to use.
 
 5. Testing Your Setup:
-   - Create a new chat and select one of the models you've configured.
-   - Try sending a test prompt to ensure everything is working correctly.
+- Create a new chat and select one of the models you've configured.
+- Try sending a test prompt to ensure everything is working correctly.
+
+6. Discover OpenWeb UI! You get lot of features like :
+- Model Builder
+- Local and Remote RAG Integration
+- Web Browsing Capabilities
+- Role-Based Access Control (RBAC)
+
+More here : [https://docs.openwebui.com/features](https://docs.openwebui.com/features)
 
 
-6. Discover OpenWeb UI! You get lot of feature like :
-   - Model Builder
-   - Local and Remote RAG Integration
-   - Web Browsing Capabilities
-   - Role-Based Access Control (RBAC)
-
-   more here : [https://docs.openwebui.com/features](https://docs.openwebui.com/features)
-
-
-## Scaling
+## Scale
 
 If you want to give best experience for multiple users, for improving response time and token/s you can scale Ollama app.
 
@@ -192,6 +247,14 @@ Note that here you should use EFS (RWX access) instead or EBS (RWO access) for s
 
    ```bash
    oc scale deployment/ollama --replicas=2
+   ```
+
+## Downscale
+
+For cost optimization, you can scale you machine pool of GPU to 0 :
+
+   ```bash
+   rosa edit machine-pool -c $CLUSTER_NAME  gpu --replicas=0
    ```
 
 ## Uninstalling
