@@ -110,9 +110,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
     One of the great benefits of OpenShift GitOps is that it will keep the state of the resources that you specified.  
 
     If you look at the VirtualMachine definition at 
-    [VirtualMachine](https://raw.githubusercontent.com/rh-mobb/rosa-virt-gitops/main/applicationsets/vm/kustomize/base/virtualmachine.yaml) 
-    
-    notice that the Virtual Machine is specified as it should be running.
+    [VirtualMachine](https://raw.githubusercontent.com/rh-mobb/rosa-virt-gitops/main/applicationsets/vm/kustomize/base/virtualmachine.yaml), notice that the Virtual Machine is specified as it should be running.
 
     ![screenshot of VM Spec](./images/vm-running.png)
 
@@ -137,6 +135,8 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
     Navigating back to the list of VMs in OpenShift, both VMs are running.
     ![screenshot of vms running](./images/vms-running.png)
 
+    That is one of the superpowers of OpenShift GitOps in that it keeps you applications in sync as there were specified in Git, elimiating application drift.
+    
 4. Make changes to the virtual machines through git.
 
 
