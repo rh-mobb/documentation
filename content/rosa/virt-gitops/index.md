@@ -30,7 +30,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 
 ## Install the OpenShift GitOps Operator
 
-    ```bash
+    ```
     cat << EOF | oc apply -f -
     apiVersion: v1
     kind: Namespace
