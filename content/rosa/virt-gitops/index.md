@@ -22,9 +22,9 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 1. Retrieve the source code to deploy VMs with OpenShift GitOps
 
     ```bash
-        git clone https://github.com/rh-mobb/rosa-virt-gitops
+    git clone https://github.com/rh-mobb/rosa-virt-gitops
 
-        cd rosa-virt-gitops
+    cd rosa-virt-gitops
     ```
 
 
@@ -65,7 +65,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
     users:
         - admin
     EOF
-    ```
+   ```
 
 ## Configure OpenShift GitOps
 
@@ -74,19 +74,19 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
     For demonstrations purposes, we will deploy two VMs, one for Dev and one for Production.  Usually, these VMs would be deployed to different clusters but the sake a simplicity, we will deploy these VMs to different namespaces.
 
     ```bash
-        oc apply -n openshift-gitops -f applicationsets/vm/applicationset-vm.yaml
+    oc apply -n openshift-gitops -f applicationsets/vm/applicationset-vm.yaml
     ```
 
 2. Verify the applications ( VMs ) were created in OpenShift GitOps.
 
     Retrieve and open the OpenShift GitOps URL.
     ```bash
-        oc get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}{"\n"}'
+    oc get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}{"\n"}'
     ```
 
     expected output
     ```text
-        openshift-gitops-server-openshift-gitops.apps.rosa.kevcolli-hcp1.dp4i.p3.openshiftapps.com
+    openshift-gitops-server-openshift-gitops.apps.rosa.kevcolli-hcp1.dp4i.p3.openshiftapps.com
     ```
 
     Open the url in a browser and notice there are two ArgoCD applications that were created.
