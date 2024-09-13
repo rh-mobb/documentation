@@ -208,9 +208,11 @@ Next, let's switch back over to ArgoCD and sync our changes.  From the dev-vm ap
 ![screenshot of vms](./images/argo-sync.png)
 
 on the next popup screen, keep the default and click synchronize
+
 ![screenshot of vms](./images/argo-sync2.png)
 
 This will stop the dev vm and increase the memory to 3GB.  To verify, click into the dev-vm and see the results.
+
 ![screenshot of vms](./images/vm-stopped-memory.png)
 
 
