@@ -173,6 +173,10 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](/experts/idp/az-ad-grp-sync)
 * [Using Group Sync Operator with Okta and ROSA/OSD](/experts/idp/okta-grp-sync)
 
+## AI / ML
+
+* [Deploying and Running Ollama and Open WebUI in a ROSA Cluster with GPUs](/experts/ai-ml/ollama-openwebui)
+
 ## Miscellaneous
 
 * [Demonstrating GitOps - ArgoCD](/experts/redhat/gitops/)
