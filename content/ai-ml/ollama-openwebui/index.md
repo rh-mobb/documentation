@@ -19,7 +19,7 @@ Red Hat OpenShift Service on AWS (ROSA) provides a managed OpenShift environment
 
 First we need to check availability of our instance type used here (g4dn.xlarge), it should be in same region of the cluster. Note you can use also Graviton based instance (ARM64) like g5g* but only on HCP 4.16+ cluster.
 
-Here i check availability of instance g4dn.xlarge in eu-* region :
+Using the following command, you can check for the availability of the g4dn.xlarge instance type in all eu-* regions:
 
 ```bash
 for region in $(aws ec2 describe-regions --query 'Regions[?starts_with(RegionName, `eu`)].RegionName' --output text); do
@@ -93,14 +93,15 @@ Region: eu-west-1
 ```
 > Here we see that this instance is available everywhere in 3 AZ except in eu-south-2 and eu-central-2.
 
-With the region and zone known, now create a machine pool with GPU Enabled Instances. In this example I have used region eu-central-1c:
+With the region and zone known, use the following command to create a machine pool with GPU Enabled Instances. In this example I have used region eu-central-1c:
 
 ```bash
-export CLUSTER_NAME=mycluster
+# Replace $mycluster with the name of your ROSA cluster
+export CLUSTER_NAME=$mycluster
 rosa create machine-pool -c $CLUSTER_NAME --name gpu --replicas=1 --availability-zone eu-central-1c --instance-type g4dn.xlarge --use-spot-instances
 ```
 
-This command creates a machine pool named "gpu" with one replica using the g4dn.xlarge spot instance, which is x86_64 instance with Nvidia T4 16GB GPU. It's the cheapest GPU instance you can have at the moment (0.2114$/h at the moment); 16GB of VRAM is enought for running small/medium models. 
+This command creates a machine pool named "gpu" with one replica using the g4dn.xlarge spot instance, which is an x86_64 instance with Nvidia T4 16GB GPU. It's the cheapest GPU instance you can have at the moment (0.2114$/h at the moment); 16GB of VRAM is enough for running small/medium models. 
 
 ## Deploy Required Operators
 
@@ -120,7 +121,7 @@ We'll use kustomize to deploy the necessary operators thanks to this repository 
 
 ## Create Operator Instances
 
-After the operators are installed, create their instances:
+After the operators are installed, use the following commands to create their instances:
 
 1. NFD Instance:
    ```bash
@@ -136,7 +137,7 @@ After the operators are installed, create their instances:
 
 ## Deploy Ollama and OpenWebUI
 
-Next, we'll deploy Ollama for model inference and OpenWebUI as the interface for interacting with the language model.
+Next, use the following commands to deploy Ollama for model inference and OpenWebUI as the interface for interacting with the language model.
 
 1. Create a new project:
    ```bash
@@ -165,7 +166,7 @@ Next, we'll deploy Ollama for model inference and OpenWebUI as the interface for
 
 ## Verify deployment
 
-1. All nvidia pods should be running or completed
+1. Use the following commands to ensure all nvidia pods are either running or completed
    ```bash
    oc get pods -n nvidia-gpu-operator
    ```
@@ -222,14 +223,14 @@ After deploying OpenWebUI, follow these steps to access and configure it:
 - Web Browsing Capabilities
 - Role-Based Access Control (RBAC)
 
-More here : [https://docs.openwebui.com/features](https://docs.openwebui.com/features)
+You can read more about OpenWebUI here : [https://docs.openwebui.com/features](https://docs.openwebui.com/features)
 
 
-## Scale
+## Implement scaling
 
-If you want to give best experience for multiple users, for improving response time and token/s you can scale Ollama app.
+If you would like to give best experience for multiple users, for example to improve response time and token/s you can scale the Ollama app.
 
-Note that here you should use EFS (RWX access) instead or EBS (RWO access) for storage of ollama models, you can install EFS operator using [this tutorial](https://cloud.redhat.com/experts/rosa/aws-efs/)
+Note that here you should use the EFS (RWX access) storage class instead of the EBS (RWO access) storage class for the storage of ollama models. For instructions on how to set this up, please see [this tutorial](https://cloud.redhat.com/experts/rosa/aws-efs/)
 
 1. Add new GPU node to machine pool
 
@@ -249,7 +250,7 @@ Note that here you should use EFS (RWX access) instead or EBS (RWO access) for s
    oc scale deployment/ollama --replicas=2
    ```
 
-## Downscale
+## Implement downscaling
 
 For cost optimization, you can scale you machine pool of GPU to 0 :
 
