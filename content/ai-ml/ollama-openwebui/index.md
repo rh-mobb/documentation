@@ -108,12 +108,14 @@ This command creates a machine pool named "gpu" with one replica using the g4dn.
 We'll use kustomize to deploy the necessary operators thanks to this repository provided by Red Hat COP (Community of Practices) [link](https://github.com/redhat-cop/gitops-catalog)
 
 1. Node Feature Discovery (NFD) Operator:
+
    ```bash
    oc apply -k https://github.com/redhat-cop/gitops-catalog/nfd/operator/overlays/stable
    ```
    The NFD Operator detects hardware features and configuration in your cluster.
 
 2. GPU Operator:
+
    ```bash
    oc apply -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/operator/overlays/stable
    ```
@@ -124,12 +126,14 @@ We'll use kustomize to deploy the necessary operators thanks to this repository 
 After the operators are installed, use the following commands to create their instances:
 
 1. NFD Instance:
+
    ```bash
    oc apply -k https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia
    ```
    This creates an NFD instance for cluster.
 
 2. GPU Operator Instance:
+
    ```bash
    oc apply -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/instance/overlays/aws
    ```
@@ -140,6 +144,7 @@ After the operators are installed, use the following commands to create their in
 Next, use the following commands to deploy Ollama for model inference and OpenWebUI as the interface for interacting with the language model.
 
 1. Create a new project:
+
    ```bash
    oc new-project llm
    ```
@@ -157,6 +162,7 @@ Next, use the following commands to deploy Ollama for model inference and OpenWe
    ```
 
 3. The following command deploys OpenWebUI and sets up the necessary storage and environment variables and then expose the service with a route:
+
    ```bash
    oc new-app ghcr.io/open-webui/open-webui:0.3.19 -e WEBUI_SECRET_KEY=secret -e OLLAMA_BASE_URL=http://ollama:11434 --import-mode=PreserveOriginal
    oc set volume deployment/open-webui --add --type=pvc --claim-size=5Gi --mount-path=/app/backend/data --name=data
@@ -167,16 +173,19 @@ Next, use the following commands to deploy Ollama for model inference and OpenWe
 ## Verify deployment
 
 1. Use the following commands to ensure all nvidia pods are either running or completed
+
    ```bash
    oc get pods -n nvidia-gpu-operator
    ```
 
 2. All pods of llm namespace should be running
+
    ```bash
    oc get pods -n llm
    ```
 
 3. Check logs of ollama, it should detect inference compute card
+
    ```bash
    oc logs -l deployment=ollama
    time=2024-09-12T07:28:40.446Z level=INFO source=images.go:753 msg="total blobs: 0"
@@ -190,6 +199,7 @@ Next, use the following commands to deploy Ollama for model inference and OpenWe
 ## Download a model
 
 1. Download llama3.1 8B using Ollama CLI
+
    ```bash
    oc exec svc/ollama -- ollama pull llama3.1
    ```
@@ -200,6 +210,7 @@ Next, use the following commands to deploy Ollama for model inference and OpenWe
 After deploying OpenWebUI, follow these steps to access and configure it:
 
 1. Get the route URL:
+
    ```bash
    oc get route open-webui
    ```
@@ -261,11 +272,13 @@ For cost optimization, you can scale you machine pool of GPU to 0 :
 ## Uninstalling
 
 1. Delete llm namespace
+
    ```bash
    oc delete project llm
    ```
 
 2. Delete operators
+
    ```bash
    oc delete -k https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia
    oc delete -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/instance/overlays/aws
@@ -274,6 +287,7 @@ For cost optimization, you can scale you machine pool of GPU to 0 :
    ```
 
 3. Delete machine pool
+
    ```bash
    rosa delete machine-pool -c $CLUSTER_NAME gpu
    ```
