@@ -161,6 +161,21 @@ Clone the repo in YOUR github account locally:
 
  cd rosa-virt-gitops
 ```
+Open the applicationset-vm.yaml file located at applicationsets/vm/applicationset-vm.yaml and change the repoURL to your repo. 
+Ex. 
+```yaml
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/<GIT_USERNAME>/rosa-virt-gitops.git
+```
+
+Save the file, and push to git.
+
+```bash
+  git commit -am "update applicationset-vm repo usrl"
+  git push
+```
 
 Create an ApplicationSet and VMs using your github repo
 ```bash
