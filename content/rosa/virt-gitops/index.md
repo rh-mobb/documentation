@@ -31,7 +31,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 
 ## Install the OpenShift GitOps Operator
 
-```bash
+ ```
  cat << EOF | oc apply -f -
  apiVersion: v1
  kind: Namespace
@@ -58,7 +58,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
      sourceNamespace: openshift-marketplace
      name: openshift-gitops-operator
      channel: "latest"
-```
+ ```
 
 
 ## Configure OpenShift GitOps
