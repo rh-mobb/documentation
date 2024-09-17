@@ -69,6 +69,14 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 
 ## Configure OpenShift GitOps
 
+1. Give OpenShift GitOps Permissions
+   
+   The following command will give the OpenShift GitOps service account cluster admin privileges so it can deploy VMs to any namespace.
+
+   ```bash
+    oc adm policy add-cluster-role-to-user cluster-admin system:serviceaccount:openshift-gitops:openshift-gitops-argocd-application-controller
+    ```
+
 1. Create an OpenShift GitOps Application Set
 
     For demonstrations purposes, we will deploy two VMs, one for Dev and one for Production.  Usually, these VMs would be deployed to different clusters but the sake a simplicity, we will deploy these VMs to different namespaces.
