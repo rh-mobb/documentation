@@ -14,6 +14,7 @@ This tutorial will show how to configure OpenShift GitOps ( based on ArgoCD ) to
 
 * A ROSA Cluster with OpenShift Virtualization (see [Deploying OpenShift Virtualization on ROSA](/experts/rosa/ocp-virt/basic/))
 If you follow the guide above, you can skip the *Create a Virtual Machine* section as we will be using OpenShift GitOps to deploy the cluster.
+> Note: If you get a 404 error when you depoy "HyperConverged", make sure your metal nodes are ready and have enough capacity. 
 * The `git` binary installed on your machine.  You can download it from the [git website](https://git-scm.com/downloads).
 
 
@@ -30,42 +31,36 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 
 ## Install the OpenShift GitOps Operator
 
-   ```bash
-    cat << EOF | oc apply -f -
-    apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: openshift-gitops-operator
-    ---
-    apiVersion: operators.coreos.com/v1
-    kind: OperatorGroup
-    metadata:
-      name: kubevirt-hyperconverged-group
-      namespace: openshift-gitops-operator
-    spec:
-      targetNamespaces:
-        - openshift-gitops-operator
-    ---
-    apiVersion: operators.coreos.com/v1alpha1
-    kind: Subscription
-    metadata:
-      name: openshift-gitops-operator
-      namespace: openshift-gitops-operator
-    spec:
-      source: redhat-operators
-      installPlanApproval: Automatic
-      sourceNamespace: openshift-marketplace
-      name: openshift-gitops-operator
-      channel: "stable"
-    ---
-    apiVersion: user.openshift.io/v1
-    kind: Group
-    metadata:
-        name: cluster-admins
-    users:
-        - admin
-    EOF
-   ```
+```
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-gitops-operator
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: kubevirt-hyperconverged-group
+  namespace: openshift-gitops-operator
+spec:
+  targetNamespaces:
+    - openshift-gitops-operator
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-gitops-operator
+  namespace: openshift-gitops-operator
+spec:
+  source: redhat-operators
+  installPlanApproval: Automatic
+  sourceNamespace: openshift-marketplace
+  name: openshift-gitops-operator
+  channel: "stable"
+EOF
+```
+
 
 ## Configure OpenShift GitOps
 
