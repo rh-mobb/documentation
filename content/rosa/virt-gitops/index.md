@@ -30,7 +30,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 
 ## Install the OpenShift GitOps Operator
 
-   ```bash
+```bash
 cat << EOF | oc apply -f -
 apiVersion: v1
 kind: Namespace
@@ -61,11 +61,11 @@ spec:
 apiVersion: user.openshift.io/v1
 kind: Group
 metadata:
-    name: cluster-admins
+  name: cluster-admins
 users:
-    - admin
+- admin
 EOF
-   ```
+```
 
 ## Configure OpenShift GitOps
 
