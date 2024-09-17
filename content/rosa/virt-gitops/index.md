@@ -44,8 +44,7 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
      name: openshift-gitops-operator
      namespace: openshift-gitops-operator
  spec:
-     targetNamespaces:
-     - openshift-gitops-operator
+    upgradeStrategy: Default 
  ---
  apiVersion: operators.coreos.com/v1alpha1
  kind: Subscription
