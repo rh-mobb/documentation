@@ -31,40 +31,40 @@ If you follow the guide above, you can skip the *Create a Virtual Machine* secti
 ## Install the OpenShift GitOps Operator
 
    ```bash
-    cat << EOF | oc apply -f -
-    apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: openshift-gitops-operator
-    ---
-    apiVersion: operators.coreos.com/v1
-    kind: OperatorGroup
-    metadata:
-      name: kubevirt-hyperconverged-group
-      namespace: openshift-gitops-operator
-    spec:
-      targetNamespaces:
-        - openshift-gitops-operator
-    ---
-    apiVersion: operators.coreos.com/v1alpha1
-    kind: Subscription
-    metadata:
-      name: openshift-gitops-operator
-      namespace: openshift-gitops-operator
-    spec:
-      source: redhat-operators
-      installPlanApproval: Automatic
-      sourceNamespace: openshift-marketplace
-      name: openshift-gitops-operator
-      channel: "stable"
-    ---
-    apiVersion: user.openshift.io/v1
-    kind: Group
-    metadata:
-        name: cluster-admins
-    users:
-        - admin
-    EOF
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-gitops-operator
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: kubevirt-hyperconverged-group
+  namespace: openshift-gitops-operator
+spec:
+  targetNamespaces:
+    - openshift-gitops-operator
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-gitops-operator
+  namespace: openshift-gitops-operator
+spec:
+  source: redhat-operators
+  installPlanApproval: Automatic
+  sourceNamespace: openshift-marketplace
+  name: openshift-gitops-operator
+  channel: "stable"
+---
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+    name: cluster-admins
+users:
+    - admin
+EOF
    ```
 
 ## Configure OpenShift GitOps
