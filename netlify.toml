@@ -140,6 +140,6 @@ force = true
 
 [[redirects]]
 from = "/experts/misc/tls-cipher-customization/"
-to = "https://docs.openshift.com/dedicated/networking/ingress-operator.html#configuring-ingress-controller-tls"
+to = "https://docs.openshift.com/rosa/networking/ingress-operator.html#configuring-ingress-controller-tls"
 status = 301
 force = true
