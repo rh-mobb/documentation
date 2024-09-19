@@ -1,3 +1,5 @@
+# UPDATED DOCUMENT: This article is out of date and should not be used. Please refer to the official documentation for [ROSA](https://docs.openshift.com/rosa/networking/ingress-operator.html#configuring-ingress-controller-tls) and [OSD](https://docs.openshift.com/dedicated/networking/ingress-operator.html#configuring-ingress-controller-tls). 
+
 ---
 date: '2022-08-24'
 title: Configure ROSA/OSD to use custom TLS ciphers on the ingress controllers
@@ -47,10 +49,10 @@ Before we create the CronJob, we first want to apply the `tlsSecurityProfile` co
 If you are only using the default ingress controller, and not using the [Custom Domain Operator](https://docs.openshift.com/rosa/applications/deployments/osd-config-custom-domains-applications.html), you will run the following command to patch the ingress controller:
 
 ```
-oc patch ingresscontroller/default -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"],"minTLSVersion":"VersionTLS12"}}}}'
+oc patch ingresscontroller/default -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","ECDHE-RSA-AES128-SHA"],"minTLSVersion":"VersionTLS12"}}}}'
 ```
 
-This patch will add the `TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA` cipher which allows access from IE 11 on Windows Server 2008 R2 when using RSA certificates.
+This patch will add the `ECDHE-RSA-AES128-SHA` cipher which allows access from IE 11 on Windows Server 2008 R2 when using RSA certificates.
 
 Once you've run the command, you'll receive a response that looks like this:
 
@@ -63,7 +65,7 @@ ingresscontroller.operator.openshift.io/default patched
 Customers who are using the [Custom Domain Operator](https://docs.openshift.com/rosa/applications/deployments/osd-config-custom-domains-applications.html) will need to loop through each of their ingress controllers to patch each one. To patch all of your cluster's ingress controllers, run the following command:
 
 ```
-for ic in $(oc get ingresscontroller -o name -n openshift-ingress-operator); do oc patch ${ic} -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"],"minTLSVersion":"VersionTLS12"}}}}'; done
+for ic in $(oc get ingresscontroller -o name -n openshift-ingress-operator); do oc patch ${ic} -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","ECDHE-RSA-AES128-SHA"],"minTLSVersion":"VersionTLS12"}}}}'; done
 ```
 
 Once you've run the command, you'll receive a response that looks like this:
@@ -101,7 +103,7 @@ spec:
               args:
                 - /bin/sh
                 - '-c'
-                - oc patch ingresscontroller/default -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"],"minTLSVersion":"VersionTLS12"}}}}'
+                - oc patch ingresscontroller/default -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","ECDHE-RSA-AES128-SHA"],"minTLSVersion":"VersionTLS12"}}}}'
           restartPolicy: Never
           serviceAccountName: cron-ingress-patch-sa
 EOF
@@ -136,7 +138,7 @@ spec:
               args:
                 - /bin/sh
                 - '-c'
-                - for ic in $(oc get ingresscontroller -o name -n openshift-ingress-operator); do oc patch ${ic} -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"],"minTLSVersion":"VersionTLS12"}}}}'; done
+                - for ic in $(oc get ingresscontroller -o name -n openshift-ingress-operator); do oc patch ${ic} -n openshift-ingress-operator --type=merge -p '{"spec":{"tlsSecurityProfile":{"type":"Custom","custom":{"ciphers":["TLS_AES_128_GCM_SHA256","TLS_AES_256_GCM_SHA384","ECDHE-ECDSA-AES128-GCM-SHA256","ECDHE-RSA-AES128-GCM-SHA256","ECDHE-ECDSA-AES256-GCM-SHA384","ECDHE-RSA-AES256-GCM-SHA384","ECDHE-ECDSA-CHACHA20-POLY1305","ECDHE-RSA-CHACHA20-POLY1305","DHE-RSA-AES128-GCM-SHA256","DHE-RSA-AES256-GCM-SHA384","TLS_CHACHA20_POLY1305_SHA256","ECDHE-RSA-AES128-SHA"],"minTLSVersion":"VersionTLS12"}}}}'; done
           restartPolicy: Never
           serviceAccountName: cron-ingress-patch-sa
 EOF
