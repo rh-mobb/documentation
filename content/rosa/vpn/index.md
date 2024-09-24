@@ -54,7 +54,11 @@ There are many ways and methods to create certificates for VPN, the guide below 
    Uncomment and edit the copied template with your values
 
    ```bash
-   vim pki/vars
+   cd pki
+
+   cp vars.example vars
+
+   vim vars
    ```
 
    ```
@@ -72,17 +76,27 @@ There are many ways and methods to create certificates for VPN, the guide below 
    #set_var EASYRSA_KEY_SIZE        2048
    ```
 
+   Change back up a directory
+
+   ```bash
+    cd ..
+   ```
+
 1. Create the CA:
 
    ```bash
    ./easyrsa build-ca nopass
    ```
 
+   enter your domain name
+
 1. Generate the Server Certificate and Key
 
    ```bash
    ./easyrsa build-server-full server nopass
    ```
+
+   type 'yes' when prompted
 
 1. Generate Diffie-Hellman (DH) parameters
 
@@ -96,16 +110,21 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ./easyrsa build-client-full aws nopass
    ```
 
+   type 'yes' when prompted
 ## Import certficates into AWS Certificate Manager
 
 1. Import the server certificate
 
-   * Before running the below commands, make sure you are still in the pki directory under the easyrsa3 directory
+   * Before running the below commands, make sure you are  in the pki directory under the easyrsa3 directory
+
+   ```bash
+   cd pki
+   ```
 
     ```bash
    SERVER_CERT_ARN=$(aws acm import-certificate \
    --certificate fileb://issued/server.crt \
-   --private-key fileb://private/server.key \ 
+   --private-key fileb://private/server.key \
    --certificate-chain fileb://ca.crt \
    --region $REGION \
    --query CertificateArn \
@@ -115,12 +134,12 @@ There are many ways and methods to create certificates for VPN, the guide below 
 1. Import the client certificate
 
      ```bash
-     CLIENT_CERT_ARN=$(aws acm import-certificate  \ 
+     CLIENT_CERT_ARN=$(aws acm import-certificate \
      --certificate fileb://issued/aws.crt \
      --private-key fileb://private/aws.key \
      --certificate-chain fileb://ca.crt \
      --region $REGION \
-     --query CertificateArn \ 
+     --query CertificateArn \
      --output text)
     ```
 
@@ -131,6 +150,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```bash
     VPN_CLIENT_ID=$(aws ec2 create-client-vpn-endpoint \
     --client-cidr-block $VPN_CLIENT_CIDR \
+    --region $REGION \
     --server-certificate-arn $SERVER_CERT_ARN \
     --authentication-options Type=certificate-authentication,MutualAuthentication={ClientRootCertificateChainArn=$CLIENT_CERT_ARN} \
     --connection-log-options Enabled=false --split-tunnel --query ClientVpnEndpointId --output text)
@@ -142,7 +162,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    while IFS= read -r subnet;
    do
       echo "Associcating subnet '$subnet'"
-      aws ec2 associate-client-vpn-target-network --subnet-id $subnet --client-vpn-endpoint-id $VPN_CLIENT_ID
+      aws ec2 associate-client-vpn-target-network --region $REGION --subnet-id $subnet --client-vpn-endpoint-id $VPN_CLIENT_ID
    done <<< "$PRIVATE_SUBNET_IDS"
    ```
 
@@ -152,6 +172,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    aws ec2 authorize-client-vpn-ingress \
     --client-vpn-endpoint-id $VPN_CLIENT_ID \
     --target-network-cidr 0.0.0.0/0 \
+    --region $REGION \
     --authorize-all-groups
    ```
 
@@ -160,7 +181,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 1. Download the VPN Client Configuration
 
    ```bash
-   aws ec2 export-client-vpn-client-configuration --client-vpn-endpoint-id $VPN_CLIENT_ID --output text>client-config.ovpn
+   aws ec2 export-client-vpn-client-configuration --region $REGION --client-vpn-endpoint-id $VPN_CLIENT_ID --output text>client-config.ovpn
    ```
 
 1. Run the following commands to add the certificates created in the first step to the VPN Configuration file.
