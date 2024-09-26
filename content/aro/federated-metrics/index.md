@@ -104,8 +104,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     **> Note: `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics. If you have customized them already, you may need to modify `patch-monitoring-configs.yaml` in the Helm chart to include your changes.
    
-   **> Note: If you do not explicitly define values for either retention or retentionSize, retention time defaults to 15 days for core platform monitoring and 24 hours for user-defined project monitoring. For specifying the retention time you need to modify the `patch-monitoring-configs.yaml` with the relevant retention parameters following [Modifying the retention time and size for Prometheus metrics data
-]([/experts/quickstart-aro.md](https://docs.openshift.com/container-platform/4.14/observability/monitoring/configuring-the-monitoring-stack.html#modifying-retention-time-and-size-for-prometheus-metrics-data_configuring-the-monitoring-stack))
+   **> Note: If you do not explicitly define values for either retention or retentionSize, retention time defaults to 15 days for core platform monitoring and 24 hours for user-defined project monitoring. For specifying the retention time you need to modify the `patch-monitoring-configs.yaml` with the relevant retention parameters following [Modifying the retention time and size for Prometheus metrics data](https://docs.openshift.com/container-platform/4.14/observability/monitoring/configuring-the-monitoring-stack.html#modifying-retention-time-and-size-for-prometheus-metrics-data_configuring-the-monitoring-stack))
 
 
     ```bash
