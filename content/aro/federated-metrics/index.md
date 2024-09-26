@@ -1,6 +1,6 @@
 ---
 date: '2021-06-04'
-title: 'Federating System and User metrics to Azure Files in Azure Red Hat OpenShift'
+title: 'Federating System and User metrics to Azure Blob storage in Azure Red Hat OpenShift'
 tags: ["ARO", "Azure"]
 authors:
   - Paul Czarkowski
@@ -9,7 +9,7 @@ authors:
 
 By default Azure Red Hat OpenShift (ARO) stores metrics in Ephemeral volumes, and its advised that users do not change this setting. However its not unreasonable to expect that metrics should be persisted for a set amount of time.
 
-This guide shows how to set up Thanos to federate both System and User Workload Metrics to a Thanos gateway that stores the metrics in Azure Files and makes them available via a Grafana instance (managed by the Grafana Operator).
+This guide shows how to set up Thanos to federate both System and User Workload Metrics to a Thanos gateway that stores the metrics in Azure Blob Container and makes them available via a Grafana instance (managed by the Grafana Operator).
 
 > ToDo - Add Authorization in front of Thanos APIs
 
@@ -100,9 +100,13 @@ This guide shows how to set up Thanos to federate both System and User Workload 
       deployment/patch-operator-controller-manager
     ```
 
-1. Deploy ARO Thanos Azure Files Helm Chart (mobb/aro-thanos-af)
+1. Deploy ARO Thanos Azure Blob container Helm Chart (mobb/aro-thanos-af)
 
     **> Note: `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics. If you have customized them already, you may need to modify `patch-monitoring-configs.yaml` in the Helm chart to include your changes.
+   
+   **> Note: If you do not explicitly define values for either retention or retentionSize, retention time defaults to 15 days for core platform monitoring and 24 hours for user-defined project monitoring. For specifying the retention time you need to modify the `patch-monitoring-configs.yaml` with the relevant retention parameters following [Modifying the retention time and size for Prometheus metrics data
+]([/experts/quickstart-aro.md](https://docs.openshift.com/container-platform/4.14/observability/monitoring/configuring-the-monitoring-stack.html#modifying-retention-time-and-size-for-prometheus-metrics-data_configuring-the-monitoring-stack))
+
 
     ```bash
     helm upgrade -n $NAMESPACE aro-thanos-af \
@@ -114,7 +118,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
       --set "enableUserWorkloadMetrics=true"
     ```
 
-## Validate Grafana is installed and seeing metrics from Azure Files
+## Validate Grafana is installed and seeing metrics from Azure Blob storage
 
 1. get the Route URL for Grafana (remember its https) and login using username `admin` and the password `password`.
 
