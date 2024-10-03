@@ -160,13 +160,14 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 * [Configure GitLab as an identity provider for ROSA/OSD](/experts/idp/gitlab)
 * [Configure GitLab as an identity provider for ARO](/experts/idp/gitlab-aro)
-* [Configure Azure AD as an identity provider for ARO](/experts/idp/azuread-aro)
-* [Configure Azure AD as an identitiy provider for ARO with group claims](/experts/idp/group-claims/aro/)
-* [Configure Azure AD as an identitiy provider for ROSA with group claims](/experts/idp/group-claims/rosa/)
-* [Configure Azure AD as an identity provider for ROSA/OSD](/experts/idp/azuread)
-* [Configure Azure AD as an identity provider for ARO via the CLI](/experts/idp/azuread-aro-cli)
-* [Configure Red Hat SSO with Azure AD as a Federated Identity Provider for ARO](/experts/idp/azuread-red-hat-sso)
+* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identity provider for ARO](/experts/idp/azuread-aro)
+* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identitiy provider for ARO with group claims](/experts/idp/group-claims/aro/)
+* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identitiy provider for ROSA with group claims](/experts/idp/group-claims/rosa/)
+* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identity provider for ROSA/OSD](/experts/idp/azuread)
+* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identity provider for ARO via the CLI](/experts/idp/azuread-aro-cli)
+* [Configure Red Hat SSO with Microsoft Entra ID (formerly Azure Active Directory) as a Federated Identity Provider for ARO](/experts/idp/azuread-red-hat-sso)
 * [Considerations when using AAD as IDP](/experts/idp/considerations-aad-ipd)
+* [Configuring Microsoft Entra ID (formerly Azure Active Directory) to emit group names instead of group IDs](/experts/idp/entra-id-with-group-names)
 
 ### Configuring Group Synchronization
 

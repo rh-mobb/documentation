@@ -1,6 +1,6 @@
 ---
 date: '2023-06-20'
-title: Configure Red Hat SSO with Azure AD as a Federated Identity Provider
+title: Configure Red Hat SSO with Microsoft Entra ID as a Federated Identity Provider
 tags: ["Azure", "SSO", "Keycloak"]
 authors:
   - Dustin Scott

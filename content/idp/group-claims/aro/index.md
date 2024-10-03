@@ -1,6 +1,6 @@
 ---
 date: '2023-05-24'
-title: Configure ARO to use Azure AD Group Claims
+title: Configure ARO to use Microsoft Entra ID Group Claims
 authors:
   - Michael McNeill
   - Ricardo Martins

@@ -1,6 +1,6 @@
 ---
 date: '2022-09-19'
-title: Configure ROSA to use Azure AD Group Claims
+title: Configure ROSA to use Microsoft Entra ID Group Claims
 authors:
   - Michael McNeill
   - Paul Czarkowski
