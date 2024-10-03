@@ -8,6 +8,10 @@ authors:
 
 In this guide, we will configure an existing Microsoft Entra ID (formerly Azure Active Directory) identity provider to emit the group name instead of the group ID for optional group claims. This will allow you to reference group names in your role bindings instead of the group ID. 
 
+{{% alert state="warning" %}}
+The ability to [emit group names instead of group IDs](https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-fed-group-claims#emit-cloud-only-group-display-name-in-token) is a preview feature made available by Microsoft and is subject to their terms and conditions around preview features of their services. 
+{{% /alert %}}
+
 ### Prerequisites
 
 Before we begin, ensure that you have properly configured Microsoft Entra ID as an identity provider in your cluster following the guide specific to your platform:
