@@ -40,8 +40,8 @@ Microsoft Entra ID Free is not able to emit group names instead of group IDs.
 1. Locate the setting `groupMembershipClaims` and ensure it is set to `ApplicationGroup`. This option includes only groups that are assigned to the application.
 
     {{% alert state="warning" %}}
-    Before changing this value, ensure that the groups you wish to include in your claims are attached to your Microsoft Entra ID application. Failure to do so may result in unexpected behavior including the removal of group memberships used for role bindings. For more information on how to add groups to your Microsoft Entra ID application, see the [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/assign-user-or-group-access-portal).
-    {{% /alert %}}
+Before changing this value, ensure that the groups you wish to include in your claims are attached to your Microsoft Entra ID application. Failure to do so may result in unexpected behavior including the removal of group memberships used for role bindings. For more information on how to add groups to your Microsoft Entra ID application, see the [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/assign-user-or-group-access-portal).
+{{% /alert %}}
 
     ![Azure Portal - App registration manifest with groupMembershipClaims value highlighted](./images/entra-id-manifest-groupmembershipclaims.png)
 
