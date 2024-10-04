@@ -1,6 +1,6 @@
 ---
 date: '2022-09-23'
-title: Configure ARO to use Azure AD
+title: Configure ARO to use Microsoft Entra ID
 tags: ["Azure", "ARO"]
 authors:
   - Michael McNeill

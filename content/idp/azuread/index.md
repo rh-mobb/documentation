@@ -1,6 +1,6 @@
 ---
 date: '2022-09-23'
-title: Configure Azure AD as an OIDC identity provider for ROSA/OSD
+title: Configure Microsoft Entra ID as an OIDC identity provider for ROSA/OSD
 tags: ["Azure", "ROSA", "OSD"]
 authors:
   - Michael McNeill
