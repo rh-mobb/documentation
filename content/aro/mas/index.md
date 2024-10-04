@@ -100,7 +100,7 @@ az aro list --query \
       networkEndpointType: privateEndpoint
       location: $LOCATION
       resourceGroup: $RESOURCEGROUP
-      skuName: Premium:LRS
+      skuName: Premium_LRS
     reclaimPolicy: Retain
     allowVolumeExpansion: true
     volumeBiningMode: Immediate
