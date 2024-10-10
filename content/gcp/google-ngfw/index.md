@@ -152,7 +152,7 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --zone=${prefix}-googleapis \
         --ttl=300
     ```
-    {{% alert state="note" %}}
+    {{% alert state="info" %}}
     OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.com`) which is [not provided by the Google Private Access restricted VIP](https://cloud.google.com/vpc-service-controls/docs/restricted-vip-services). To circumvent this, we expose the Service Usage API using the [Google Private Access private VIP](https://cloud.google.com/vpc/docs/configure-private-google-access#domain-options). This is the only service exposed by the Google Private Access private VIP in this tutorial. 
     {{% /alert %}}
 
