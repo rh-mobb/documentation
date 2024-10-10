@@ -226,5 +226,8 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
         --layer4-configs=all \
         --dest-ip-ranges=0.0.0.0/0 
     ```
+    {{% alert state="important" %}}
+If there is not a matching rule, the traffic will be blocked. To allow access to other resources, such as internal networks or other external endpoints, **create additional rules with a priority of less than 1000**. For more information on how to create firewall rules, see the [documentation](https://cloud.google.com/firewall/docs/use-network-firewall-policies).
+{{% /alert %}}
 
 You are now ready to deploy your cluster following the [OpenShift Dedicated documentation](https://docs.openshift.com/dedicated/osd_install_access_delete_cluster/creating-a-gcp-cluster.html).
