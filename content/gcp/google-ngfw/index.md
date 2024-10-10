@@ -107,12 +107,12 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
     ```
 
 1. Create a Cloud NAT by running the following command:
-```bash
-gcloud compute routers nats create ${prefix}-cloudnat-${region} \
-    --router=${prefix}-router --router-region ${region} \
-    --nat-all-subnet-ip-ranges \
-    --nat-external-ip-pool=${prefix}-${region}-cloudnatip
-```
+    ```bash
+    gcloud compute routers nats create ${prefix}-cloudnat-${region} \
+        --router=${prefix}-router --router-region ${region} \
+        --nat-all-subnet-ip-ranges \
+        --nat-external-ip-pool=${prefix}-${region}-cloudnatip
+    ```
 
 ### Create private DNS records for Google Private Access
 
