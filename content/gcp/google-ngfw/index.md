@@ -86,7 +86,7 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --global-firewall-policy
     ```
 
-### Create a Cloud NAT and Cloud Router Instance
+### Create a Cloud Router and a Cloud NAT gateway
 
 1. Reserve an IP address for Cloud NAT by running the following command:
     ```bash
