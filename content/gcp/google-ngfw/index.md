@@ -142,7 +142,7 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --type=A \
         --zone=${prefix}-googleapis \
         --ttl=300
-    gcloud dns record-sets transaction add --name=".googleapis.com." \
+    gcloud dns record-sets transaction add --name="*.googleapis.com." \
         --type=CNAME restricted.googleapis.com. \
         --zone=${prefix}-googleapis \
         --ttl=300
