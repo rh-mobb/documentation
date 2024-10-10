@@ -33,9 +33,9 @@ Prepare the environment variables:
 export project_id=$(gcloud config list --format="value(core.project)")
 export region=us-east1
 export prefix=osd-ngfw
-export service_cidr=
+export service_cidr="172.30.0.0/16"
 export machine_cidr="10.0.0.0/22"
-export pod_cidr=
+export pod_cidr="10.128.0.0/14"
 ```
 
 In this example, we will use us-east1 as the region to deploy into and we will prefix all of our resources with `osd-ngfw`. We will use the default CIDR ranges for the service and pod networks, and will configure our machine CIDR to be based on our subnet ranges we set below. Modify the parameters to meet your needs.
