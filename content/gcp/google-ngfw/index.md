@@ -50,12 +50,12 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
 1. Create the worker, control plane, and Private Service Connect subnets by running the following commands:
     ```bash
     gcloud compute networks subnets create ${prefix}-worker \
-        --range=10.0.1.0/23 \
+        --range=10.0.2.0/23 \
         --network=${prefix}-vpc \
         --region=${region} \
         --enable-private-ip-google-access
     gcloud compute networks subnets create ${prefix}-control-plane \
-        --range=10.0.0.0/23 \
+        --range=10.0.0.0/25 \
         --network=${prefix}-vpc \
         --region=${region} \
         --enable-private-ip-google-access
@@ -63,7 +63,7 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --network=${prefix}-vpc \
         --region=${region} \
         --stack-type=IPV4_ONLY \
-        --range=10.0.2.0/29 \
+        --range=10.0.0.128/29 \
         --purpose=PRIVATE_SERVICE_CONNECT
     ```
     In this example, we are using subnet ranges of `10.0.0.0/23` for the control plane subnet, `10.0.1.0/23` for the worker subnets, and `10.0.2.0/29` for the PSC subnet. Modify the parameters to meet your needs. Ensure these values are contained within the machine CIDR you set above.
