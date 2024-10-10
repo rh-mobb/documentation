@@ -66,7 +66,7 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --range=10.0.0.128/29 \
         --purpose=PRIVATE_SERVICE_CONNECT
     ```
-    In this example, we are using subnet ranges of `10.0.0.0/23` for the control plane subnet, `10.0.1.0/23` for the worker subnets, and `10.0.2.0/29` for the PSC subnet. Modify the parameters to meet your needs. Ensure these values are contained within the machine CIDR you set above.
+    In this example, we are using subnet ranges of `10.0.0.0/25` for the control plane subnet, `10.0.2.0/23` for the worker subnets, and `10.0.0.128/29` for the PSC subnet. Modify the parameters to meet your needs. Ensure these values are contained within the machine CIDR you set above.
 
 ### Deploy a global network firewall policy
 
