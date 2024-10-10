@@ -19,7 +19,7 @@ The ability to restrict egress traffic using a firewall or other network device 
 * Confirm that you have the minimum necessary permissions in Google Cloud, including:
     * Compute Network Admin
     * DNS Administrator
-* Confirm you have the networksecurity.googleapis.com, networkservices.googleapis.com, and servicenetworking.googleapis.com services enabled. To enable them, run the following command:
+* Confirm you have the `networksecurity.googleapis.com`, `networkservices.googleapis.com`, and `servicenetworking.googleapis.com` services enabled. To enable them, run the following command:
     ```bash
     gcloud services enable networksecurity.googleapis.com
     gcloud services enable networkservices.googleapis.com
