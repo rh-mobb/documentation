@@ -96,10 +96,11 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy Ansible Automation Platform (AAP) on ARO](/experts/aro/aap)
 * [Deploy Maximo Application Suite (MAS) on ARO](/experts/aro/mas)
 
-## GCP
+## OpenShift Dedicated on GCP
 
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/gcp/osd_preexisting_vpc)
 * [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore)
+* [Limit Egress with Google Cloud NGFW Standard](/experts/gcp/cloud-ngfw)
 
 ## Layered Products
 
