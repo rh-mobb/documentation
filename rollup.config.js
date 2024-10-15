@@ -1,6 +1,6 @@
 // Import rollup plugins
 import resolve from '@rollup/plugin-node-resolve';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import css from 'rollup-plugin-import-css';
 import del from 'rollup-plugin-delete';
 import copy from 'rollup-plugin-copy';
