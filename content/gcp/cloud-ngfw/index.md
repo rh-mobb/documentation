@@ -167,13 +167,13 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
 1. Create a blanket allow rule for east/west and intra-cluster traffic by running the following command:
     ```bash
     gcloud compute network-firewall-policies rules create 500 \
-        --description "Allow east/west and intra-cluster connectivity" \
+        --description "Allow egress to private IP ranges" \
         --action=allow \
         --firewall-policy=${prefix} \
         --global-firewall-policy \
         --direction=EGRESS \
         --layer4-configs all \
-        --dest-ip-ranges=${service_cidr},${machine_cidr},${pod_cidr}
+        --dest-ip-ranges=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     ```
 
 1. Create an allow rule for HTTPS (`tcp/443`) domains required for OpenShift Dedicated by running the following command:
