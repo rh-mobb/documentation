@@ -114,7 +114,7 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --nat-external-ip-pool=${prefix}-${region}-cloudnatip
     ```
 
-### Create private DNS records for Google Private Access
+### Create private DNS records for Private Google Access
 
 1. Create a private DNS zone for the `googleapis.com` domain by running the following command:
     ```bash
@@ -153,7 +153,7 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --ttl=300
     ```
     {{% alert state="info" %}}
-OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.com`) which is [not provided by the Google Private Access restricted VIP](https://cloud.google.com/vpc-service-controls/docs/restricted-vip-services). To circumvent this, we expose the Service Usage API using the [Google Private Access private VIP](https://cloud.google.com/vpc/docs/configure-private-google-access#domain-options). This is the only service exposed by the Google Private Access private VIP in this tutorial. 
+OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.com`) which is [not provided by the Private Google Access restricted VIP](https://cloud.google.com/vpc-service-controls/docs/restricted-vip-services). To circumvent this, we expose the Service Usage API using the [Private Google Access private VIP](https://cloud.google.com/vpc/docs/configure-private-google-access#domain-options). This is the only service exposed by the Private Google Access private VIP in this tutorial. 
 {{% /alert %}}
 
 1. Apply the staged record set transaction you started above by running the following command:
@@ -167,13 +167,13 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
 1. Create a blanket allow rule for east/west and intra-cluster traffic by running the following command:
     ```bash
     gcloud compute network-firewall-policies rules create 500 \
-        --description "Allow east/west and intra-cluster connectivity" \
+        --description "Allow egress to private IP ranges" \
         --action=allow \
         --firewall-policy=${prefix} \
         --global-firewall-policy \
         --direction=EGRESS \
         --layer4-configs all \
-        --dest-ip-ranges=${service_cidr},${machine_cidr},${pod_cidr}
+        --dest-ip-ranges=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     ```
 
 1. Create an allow rule for HTTPS (`tcp/443`) domains required for OpenShift Dedicated by running the following command:
@@ -202,7 +202,7 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
     ```
     > These domains are sourced from internal documentation. These domains will be published in general documentation when the Private Service Connect feature is released. 
 
-1. Create an allow rule for Google Private Access endpoints by running the following command:
+1. Create an allow rule for Private Google Access endpoints by running the following command:
     ```bash
     gcloud compute network-firewall-policies rules create 602 \
         --description "Allow egress to Google APIs via Private Google Access" \
