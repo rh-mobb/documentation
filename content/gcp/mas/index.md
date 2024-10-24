@@ -52,12 +52,13 @@ mkdir -p $MAS_CONFIG_DIR
 <br>
 
 <b>GCP / OpenShift Environment Variables </b>
+
 Use the following defaults or adjust accordingly
 
 
 ```bash
 export CLUSTER_NAME=<name of OSD GCP cluster>
-export ZONE_FS=$(ocm describe $CLUSTER_NAME --json | jq -r '.nodes.availability_zones[0]')
+export ZONE_FS=$(ocm describe cluster $CLUSTER_NAME --json | jq -r '.nodes.availability_zones[0]')
 export NAME_FS="nfs-server"
 export TIER_FS="BASIC_HDD"
 export VOL_NAME_FS="osd4"
