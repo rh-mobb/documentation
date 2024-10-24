@@ -108,7 +108,7 @@ The first step is to add Filestore Storage to the cluster to provide ReadWriteMa
    provisioner: filestore.csi.storage.gke.io
    parameters:
      connect-mode: DIRECT_PEERING 
-     network: mas-gcp-b9r92-network
+     network: $VPC_NETWORK
    allowVolumeExpansion: true
    volumeBindingMode: WaitForFirstConsumer
    EOF
