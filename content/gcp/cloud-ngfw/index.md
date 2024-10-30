@@ -164,7 +164,7 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
 
 ### Create the Firewall Rules
 
-1. Create a blanket allow rule for east/west and intra-cluster traffic by running the following command:
+1. Create a blanket allow rule for private IP (RFC 1918) address space by running the following command:
     ```bash
     gcloud compute network-firewall-policies rules create 500 \
         --description "Allow egress to private IP ranges" \
@@ -198,7 +198,7 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
         --global-firewall-policy \
         --direction=EGRESS \
         --layer4-configs tcp:9997 \
-        --dest-fqdns inputs1.osdsecuritylogs.splunkcloud.com,inputs2.osdsecuritylogs.splunkcloud.com,inputs4.osdsecuritylogs.splunkcloud.com,inputs5.osdsecuritylogs.splunkcloud.com,inputs6.osdsecuritylogs.splunkcloud.com,inputs7.osdsecuritylogs.splunkcloud.com,inputs8.osdsecuritylogs.splunkcloud.com,inputs9.osdsecuritylogs.splunkcloud.com,inputs10.osdsecuritylogs.splunkcloud.com,inputs11.osdsecuritylogs.splunkcloud.com,inputs12.osdsecuritylogs.splunkcloud.com,inputs13.osdsecuritylogs.splunkcloud.com,inputs14.osdsecuritylogs.splunkcloud.com,inputs15.osdsecuritylogs.splunkcloud.com
+        --dest-fqdns inputs1.osdsecuritylogs.splunkcloud.com,inputs2.osdsecuritylogs.splunkcloud.com,inputs3.osdsecuritylogs.splunkcloud.com,inputs4.osdsecuritylogs.splunkcloud.com,inputs5.osdsecuritylogs.splunkcloud.com,inputs6.osdsecuritylogs.splunkcloud.com,inputs7.osdsecuritylogs.splunkcloud.com,inputs8.osdsecuritylogs.splunkcloud.com,inputs9.osdsecuritylogs.splunkcloud.com,inputs10.osdsecuritylogs.splunkcloud.com,inputs11.osdsecuritylogs.splunkcloud.com,inputs12.osdsecuritylogs.splunkcloud.com,inputs13.osdsecuritylogs.splunkcloud.com,inputs14.osdsecuritylogs.splunkcloud.com,inputs15.osdsecuritylogs.splunkcloud.com
     ```
     > These domains are sourced from internal documentation. These domains will be published in general documentation when the Private Service Connect feature is released. 
 
