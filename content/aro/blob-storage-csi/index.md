@@ -147,7 +147,8 @@ Now, we need to install the driver, which could be done using a helm chart. This
 
 1. Use helm to install the driver once we have the permissions set. 
 
-    > Note Blob Fuse Proxy is not supported for ARO yet, so we disable it.
+    > Note: Blobfuse Proxy is supported on CoreOS (OpenShift) starting from v1.23.2  [Blobfuse Proxy Guide](https://github.com/kubernetes-sigs/blob-csi-driver/tree/master/deploy/blobfuse-proxy#enable-blobfuse-proxy-on-existing-blob-csi-driver).
+
 
     ```bash
     helm repo add blob-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/charts
@@ -157,7 +158,7 @@ Now, we need to install the driver, which could be done using a helm chart. This
     helm install blob-csi-driver blob-csi-driver/blob-csi-driver \
       --namespace ${CSI_BLOB_PROJECT} \
       --set linux.distro=fedora \
-      --set node.enableBlobfuseProxy=false \
+      --set node.enableBlobfuseProxy=true \
       --set node.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} \
       --set node.cloudConfigSecretName=${CSI_BLOB_SECRET} \
       --set controller.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} \
