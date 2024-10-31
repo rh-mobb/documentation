@@ -300,7 +300,7 @@ echo $PUBLIC_NLB_ARN
 Authorize TCP 443 access to the load balancer
 
 ```bash
-aws ec2 authorize-security-group-ingress --group-id "${PublicSecurityGroupId}" --protocol tcp --port 443 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id "${NLB_SG_ID}" --protocol tcp --port 443 --cidr 0.0.0.0/0
 ```
 
 Create a listener for the load balancer using the target group we just created
