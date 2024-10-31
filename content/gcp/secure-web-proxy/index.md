@@ -106,7 +106,7 @@ Before we can deploy a Secure Web Proxy, we must first create a VPC and subnets 
     cat > ${scratch}/url-list.yaml << EOF
     name: projects/${project_id}/locations/${region}/urlLists/${prefix}-allowed-list
     values:
-      - *.googleapis.com
+      - "*.googleapis.com"
       - accounts.google.com
       - http-inputs-osdsecuritylogs.splunkcloud.com
       - nosnch.in
