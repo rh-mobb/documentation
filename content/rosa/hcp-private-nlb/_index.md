@@ -72,7 +72,7 @@ If you'd like a guided walkthrough to create the secondary public VPC, follow [t
 ## (Optional) Launch an Jump Host EC2 instance in Public NLB VPC
 This guide requires connectivity to the cluster, because we are using a private cluster you will need to ensure your workstation is connected to the AWS VPC which hosts the ROSA cluster.   If you already have this connectivity through a VPN, Direct Link or other method you can skip this part.  
 
-If you do need to establish connectivity to the cluster [these instructions](rosa-private-nlb-jumphost.md) will guide you through creating a jump host on the public subnet of the ROSA cluster.
+If you do need to establish connectivity to the cluster [these instructions](./rosa-private-nlb-jumphost) will guide you through creating a jump host on the public subnet of the ROSA cluster.
 
 
 
