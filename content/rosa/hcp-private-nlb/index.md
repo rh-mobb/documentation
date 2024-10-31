@@ -1,6 +1,7 @@
 ---
 date: '2024-10-29'
 title: Securely exposing an application on a private ROSA cluser with an AWS Network Load Balancer
+aliases: ['/experts/rosa/rosa-private-nlb/']
 tags: ["AWS", "ROSA"]
 authors:
   - Kevin Collins
