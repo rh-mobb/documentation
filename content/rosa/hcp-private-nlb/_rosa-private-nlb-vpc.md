@@ -24,6 +24,8 @@ export NLB_VPC_PUBLIC_SUBNET_CIDR=10.5.128.0/17
 export NLB_VPC_PRIVATE_SUBNET_CIDR=10.5.0.0/17
 ```
 
+This section also expects the *ROSA_VPC_ID*, *ROSA_VPC_CIDR*, *ROSA_PRIVATE_R_TABLE_IDS*, and *ROSA_PRIVATE_SUBNET_IDS* environment variables to be set which is done in the parent blog.
+
 ### Create a VPC
 
 ```bash
@@ -108,14 +110,17 @@ aws ec2 create-tags --resources $R_TABLE_NAT $EIP \
 
 > note: this tutotial will use a classic peering connection, a transit gateway can also be used.
 
-
+```bash
 PEER_VPC_ID=$(aws ec2 create-vpc-peering-connection --vpc-id $VPC_ID --peer-vpc-id $ROSA_VPC_ID --query VpcPeeringConnection.VpcPeeringConnectionId --output text)
 
 aws ec2 accept-vpc-peering-connection --vpc-peering-connection-id $PEER_VPC_ID
 
 aws ec2 create-tags --resources $PEER_VPC_ID --tags 'Key=Name,Value=peer-VPC'
+```
 
 #### Adding the private VPC CIDR block to our public VPC route table as destination
+
+```bash
 aws ec2 create-route --route-table-id $R_TABLE --destination-cidr-block ${ROSA_VPC_CIDR} --vpc-peering-connection-id $PEER_VPC_ID
 aws ec2 associate-route-table --route-table-id ${R_TABLE} --subnet-id ${PRIVATE_SUBNET};
 
@@ -127,4 +132,4 @@ aws ec2 create-route --route-table-id ${ROUTE_TABLE} --destination-cidr-block ${
 aws ec2 associate-route-table --route-table-id ${ROUTE_TABLE} --subnet-id ${SUBNET};
 done
 
-
+```
