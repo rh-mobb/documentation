@@ -205,9 +205,11 @@ echo $NLB_IP_2
 
 As described, this tutorial uses AWS Route53 to handle DNS records.  If you use a different DNS system use the following as a reference.
 
-Get the NLB Hosted Zone
+Get the NLB environment variables
 
 ```bash
+NLB_NAME=$(echo $NLB_HOSTNAME | sed 's/-.*//')
+NLB_REGION=$(echo $NLB_HOSTNAME | cut -d "." -f 3)
 export NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --name $NLB_NAME --region $NLB_REGION | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
 ```
 
@@ -265,6 +267,22 @@ Register the targets for the AWS Network Load Balancer that was created when we 
 ```bash
 aws elbv2 register-targets --target-group-arn $TARGET_GROUP_ARN --targets Id=$NLB_IP_1,Port=443,AvailabilityZone=all Id=$NLB_IP_2,Port=443,AvailabilityZone=all
 ```
+
+Create a security group for the public load balancer
+Create an additional Security Group for the jumphost
+
+```bash
+TAG_SG="nlb-${NLB_NAME}-sg"
+
+aws ec2 create-security-group --group-name $TAG_SG --description $TAG_SG --vpc-id ${VPC_ID} --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$TAG_SG}]"
+```
+
+Grab the Security Group Id generated in the previous step
+
+```bash
+NLB_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=$TAG_SG" | jq -r '.SecurityGroups[0].GroupId')
+
+echo $NLB_SG_ID
 
 Create the public load balancer
 
