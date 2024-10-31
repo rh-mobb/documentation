@@ -51,7 +51,7 @@ This guide describes how to setup the following:
     export INGRESS_NAME=public-ingress #name of the new ingress controller
     export CERT_NAME="lab-domain-com-tls-cert" 
     export SCOPE="Internal" 
-    export NLB_HOSTED_ZONE=ABCDEFGHEXAMPLE #(Optional - Route 53 Hosted Zone ID )
+    export HOSTED_ZONE=ABCDEFGHEXAMPLE #(Optional - Route 53 Hosted Zone ID )
     export HOSTED_ZONE_REGION=us-east-2 #(Optional - Route 53 Hosted Zone Region )
     export DOMAIN=lab.domain.com   #Custom Domain for public apps 
     ```
@@ -205,6 +205,12 @@ echo $NLB_IP_2
 
 As described, this tutorial uses AWS Route53 to handle DNS records.  If you use a different DNS system use the following as a reference.
 
+Get the NLB Hosted Zone
+
+```bash
+export NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --name $NLB_NAME --region $NLB_REGION | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
+```
+
 Create an alias record json statement.
 
 ```bash
@@ -231,7 +237,7 @@ EOF
 Update Route53 with the new record
 
 ```bash
-aws route53 change-resource-record-sets --hosted-zone-id $NLB_HOSTED_ZONE --change-batch file://add_alias_record.json
+aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE --region $HOSTED_ZONE_REGION --change-batch file://add_alias_record.json
 ```
 
 ## Create and configure the public NLB
