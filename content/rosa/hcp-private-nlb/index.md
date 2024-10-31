@@ -33,7 +33,8 @@ This guide describes how to setup the following:
     For reference only, this is the expected [output](/experts/rosa/hcp-private-nlb/rosa-private-nlb-terraform-output.md) from the Terraform guide.
 
     ```bash
-    export ROSA_VPC_ID=$(terraform output -raw vpc_id) in the example we re-use the variable from the Terraform guide).
+    export ROSA_CLUSTER_NAME=$TF_VAR_cluster_name
+    export ROSA_VPC_ID=$(terraform output -raw vpc_id) 
     export ROSA_PRIVATE_R_TABLE_IDS=$(terraform output private_route_table_ids | sed -e '1d' -e '$d' | cut -d'"' -f2)
     export ROSA_PRIVATE_SUBNET_IDS=$(terraform output private_subnet_ids | sed -e '1d' -e '$d' | cut -d'"' -f2)
     export ROSA_PUBLIC_SUBNET_IDS=$(terraform output public_subnet_ids | sed -e '1d' -e '$d' | cut -d'"' -f2)
