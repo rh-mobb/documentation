@@ -31,7 +31,7 @@ This guide describes how to setup the following:
 
 1. Set environment variables.  In the example we re-use the variables from the Terraform guide
 
-    For reference only, this is the expected [output](./rosa-private-nlb-terraform-output.md) from the Terraform guide.
+    For reference only, this is the expected [output](rosa-private-nlb-terraform-output.md) from the Terraform guide.
 
     ```bash
     export ROSA_CLUSTER_NAME=$TF_VAR_cluster_name
@@ -66,13 +66,13 @@ If you already have a secondary public VPC you'd like to use, please set the fol
 export VPC_ID= #VPC ID
 export PUBLIC_SUBNET= #Public Subnet ID
 ```
-If you'd like a guided walkthrough to create the secondary public VPC, follow [these instructions](./rosa-private-nlb-vpc.md). This guide will also set all the required environment variables needed.
+If you'd like a guided walkthrough to create the secondary public VPC, follow [these instructions](rosa-private-nlb-vpc.md). This guide will also set all the required environment variables needed.
 
 
 ## (Optional) Launch an Jump Host EC2 instance in Public NLB VPC
 This guide requires connectivity to the cluster, because we are using a private cluster you will need to ensure your workstation is connected to the AWS VPC which hosts the ROSA cluster.   If you already have this connectivity through a VPN, Direct Link or other method you can skip this part.  
 
-If you do need to establish connectivity to the cluster [these instructions](./rosa-private-nlb-jumphost.md) will guide you through creating a jump host on the public subnet of the ROSA cluster.
+If you do need to establish connectivity to the cluster [these instructions](rosa-private-nlb-jumphost.md) will guide you through creating a jump host on the public subnet of the ROSA cluster.
 
 
 
