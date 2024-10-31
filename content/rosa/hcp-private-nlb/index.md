@@ -97,7 +97,7 @@ To limit the blast radius, a second private ingress controller will be set up wi
     --config-dir "./config" \
     --work-dir "./work" \
     --logs-dir "./logs" \
-    -d $DOMAIN
+    -d *.$DOMAIN
 ``` 
 
 ### Add Domain certificates to OpenShift
@@ -281,8 +281,8 @@ echo $LISTENER_ARN
 #Add certificates we imported into ACM to the listener
 
 #```bash
-#aws elbv2 add-listener-certificates --listener-arn $LISTENER_ARN \
-#--certificates CertificateArn=$CERT_ARN
+aws elbv2 add-listener-certificates --listener-arn $LISTENER_ARN \
+--certificates CertificateArn=$CERT_ARN
 #```
 
 Get the DNS Hostname of the public load balancer
@@ -295,9 +295,9 @@ echo $PUBLIC_NLB_HOSTNAME
 Get the NLB environment variables
 
 ```bash
-PUBLIC_NLB_NAME=$(echo $PUBLIC_NLB_HOSTNAME | sed 's/-.*//')
-PUBLIC_NLB_REGION=$(echo $PUBLIC_NLB_HOSTNAME | cut -d "." -f 3)
-export PUBLIC_NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --name $PUBLIC_NLB_NAME --region $PUBLIC_NLB_REGION | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
+export PUBLIC_NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --load-balancer-arns $PUBLIC_NLB_ARN | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
+
+echo $PUBLIC_NLB_HOSTED_ZONE
 ```
 
 Create an alias record json statement.
