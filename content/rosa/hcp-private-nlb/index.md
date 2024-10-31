@@ -290,7 +290,7 @@ Create the public load balancer
 ```bash
 export PUBLIC_NLB_ARN=$(aws elbv2 create-load-balancer --name ${INGRESS_NAME}-nlb \
 --subnets $PUBLIC_SUBNET \
---security-groups ${PublicSecurityGroupId} \
+--security-groups ${NLB_SG_ID} \
 --scheme internet-facing \
 --type network \
 --ip-address-type ipv4 | jq -r '.LoadBalancers[0].LoadBalancerArn')
