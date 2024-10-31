@@ -91,3 +91,12 @@ if ! which oc > /dev/null; then
     install kubectl ~/bin
 fi
 ```
+
+## Envrionment Variables
+
+Copy the following enviroinment variables and values from your workstation to the jump box
+
+CERT_NAME
+INGRESS_NAME
+DOMAIN
+SCOPE

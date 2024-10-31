@@ -103,21 +103,33 @@ To limit the blast radius, a second private ingress controller will be set up wi
 ### Add Domain certificates to OpenShift
 > Note: the following uses the certificate generation output from certbot.  If you already have certificates, substitute the key and certificate location.
 
+> if using the jump host, you will need to copy the key and certificate to the jump host and run the oc command there
+
+log into the Openshift cluster, if you need the ROSA API url you can find it with this command
+
 ```bash
-oc create secret tls $CERT_NAME --key=config/live/privkey.pem --cert=config/live/fullchain.pem -n openshift-ingress
+rosa describe cluster -c kmc-private -o json | jq -r '.api.url'
+```
+
+
+
+```bash
+oc create secret tls $CERT_NAME --key=config/live/${DOMAIN}/privkey.pem --cert=config/live/${DOMAIN}/fullchain.pem -n openshift-ingress
 ```
 ### Add Domain certificates to AWS ACM
 
 When we create a listener for the public load balancer, we will add a certificate to the listener.  Adding a certificate to an AWS Network Load Balancer listener enables encrypted, authenticated connections, enhancing security and compliance by protecting data in transit.
 
 ```bash
-    export CERT_ARN=$(aws acm import-certificate --certificate fileb://config/live/cert.pem --private-key fileb://config/live/privkey.pem --certificate-chain fileb://config/live/fullchain.pem --region us-east-1 | jq -r '.CertificateArn' )
+    export CERT_ARN=$(aws acm import-certificate --certificate fileb://config/live/${DOMAIN}/cert.pem --private-key fileb://config/live/${DOMAIN}/privkey.pem --certificate-chain fileb://config/live/${DOMAIN}/fullchain.pem --region us-east-1 | jq -r '.CertificateArn' )
     echo $CERT_ARN 
 ```
 
 ### Create an additional IngressController
 
 A fundamental aspect of this architecture is the creation of a second Ingress Controller to manage routing for applications exposed to the Internet. This Ingress Controller is configured as a private AWS Network Load Balancer. The decision to keep it private serves two primary purposes: first, it prevents direct access to the cluster and applications from the Internet; second, by directing traffic through a public ingress VPC initially, you can centralize Internet access control for your environment and implement your organizational security standards, including inspection, WAF, firewalls, and other security technologies.
+
+> if using a jump box run this command there
 
 ```bash
 envsubst  <<EOF | oc apply -f -
@@ -164,11 +176,29 @@ EOF
 
 Get the newly created Network Load Balancer hostname and IP addresses
 
+> if using a jump host of 'oc' command run this command there.  
 ```bash
 NLB_HOSTNAME=$(oc get service -n openshift-ingress router-${INGRESS_NAME} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+echo $NLB_HOSTNAME
+```
 
+Copy the output of the above command to a new environment variable on your workstation
+
+Example:
+```bash
+export NLB_HOST_NAME=a0df2223a72244f78806ff46230e2dd6-516fc9d40188cfa3.elb.us-east-1.amazonaws.com
+```
+
+Wait a few minutes for the load balancer to be provisioned and run these commands.  If they don't return with IP addresses, just wait a while and run then again.
+
+```bash
 export NLB_IP_1=$(nslookup $NLB_HOSTNAME | grep Address | sed -n 2p | cut -d ' ' -f 2)
+
+echo $NLB_IP_1
+
 export NLB_IP_2=$(nslookup $NLB_HOSTNAME | grep Address | sed -n 3p | cut -d ' ' -f 2)
+
+echo $NLB_2
 ```
 
 ## Update DNS records
