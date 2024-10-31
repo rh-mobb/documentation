@@ -283,6 +283,7 @@ Grab the Security Group Id generated in the previous step
 NLB_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=$TAG_SG" | jq -r '.SecurityGroups[0].GroupId')
 
 echo $NLB_SG_ID
+```
 
 Create the public load balancer
 
