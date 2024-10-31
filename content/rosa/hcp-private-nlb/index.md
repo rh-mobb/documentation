@@ -205,42 +205,6 @@ echo $NLB_IP_2
 
 As described, this tutorial uses AWS Route53 to handle DNS records.  If you use a different DNS system use the following as a reference.
 
-Get the NLB environment variables
-
-```bash
-NLB_NAME=$(echo $NLB_HOSTNAME | sed 's/-.*//')
-NLB_REGION=$(echo $NLB_HOSTNAME | cut -d "." -f 3)
-export NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --name $NLB_NAME --region $NLB_REGION | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
-```
-
-Create an alias record json statement.
-
-```bash
-cat <<EOF > add_alias_record.json
-{
-    "Comment":"Adding an alias record for the NLB in Route 53",
-    "Changes":[{
-     "Action": "CREATE",
-     "ResourceRecordSet":{
- 	      "Name": "*.$DOMAIN",
- 		    "Type":"A",
-       "AliasTarget": {
-         "HostedZoneId": "$NLB_HOSTED_ZONE",
-         "DNSName": "$NLB_HOSTNAME",
-        "EvaluateTargetHealth": false
- 		    }
-     }
-  }
- ]
-}
-EOF
-```
-
-Update Route53 with the new record
-
-```bash
-aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE --region $HOSTED_ZONE_REGION --change-batch file://add_alias_record.json
-```
 
 ## Create and configure the public NLB
 
@@ -314,11 +278,55 @@ export LISTENER_ARN=$(aws elbv2 create-listener \
 echo $LISTENER_ARN
 ```
 
-Add certificates we imported into ACM to the listener
+#Add certificates we imported into ACM to the listener
+
+#```bash
+#aws elbv2 add-listener-certificates --listener-arn $LISTENER_ARN \
+#--certificates CertificateArn=$CERT_ARN
+#```
+
+Get the DNS Hostname of the public load balancer
 
 ```bash
-aws elbv2 add-listener-certificates --listener-arn $LISTENER_ARN \
---certificates CertificateArn=$CERT_ARN
+PUBLIC_NLB_HOSTNAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $PUBLIC_NLB_ARN | jq -r '.LoadBalancers[0].DNSName')
+echo $PUBLIC_NLB_HOSTNAME
+```
+
+Get the NLB environment variables
+
+```bash
+PUBLIC_NLB_NAME=$(echo $PUBLIC_NLB_HOSTNAME | sed 's/-.*//')
+PUBLIC_NLB_REGION=$(echo $PUBLIC_NLB_HOSTNAME | cut -d "." -f 3)
+export PUBLIC_NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --name $PUBLIC_NLB_NAME --region $PUBLIC_NLB_REGION | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
+```
+
+Create an alias record json statement.
+
+```bash
+cat <<EOF > add_alias_record.json
+{
+    "Comment":"Adding an alias record for the NLB in Route 53",
+    "Changes":[{
+     "Action": "CREATE",
+     "ResourceRecordSet":{
+ 	      "Name": "*.$DOMAIN",
+ 		    "Type":"A",
+       "AliasTarget": {
+         "HostedZoneId": "$PUBLIC_NLB_HOSTED_ZONE",
+         "DNSName": "$PUBLIC_NLB_HOSTNAME",
+        "EvaluateTargetHealth": false
+ 		    }
+     }
+  }
+ ]
+}
+EOF
+```
+
+Update Route53 with the new record
+
+```bash
+aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE --region $HOSTED_ZONE_REGION --change-batch file://add_alias_record.json
 ```
 
 ## Test an application.
@@ -337,8 +345,6 @@ aws elbv2 add-listener-certificates --listener-arn $LISTENER_ARN \
    ```bash
    oc create route edge --service=hello-openshift testroute --hostname hello.$DOMAIN -n testapp
    ```
-
-
 
 3. Access the application Route.
 
