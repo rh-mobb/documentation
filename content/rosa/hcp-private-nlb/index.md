@@ -64,7 +64,6 @@ If you already have a secondary public VPC you'd like to use, please set the fol
 ```bash
 export VPC_ID= #VPC ID
 export PUBLIC_SUBNET= #Public Subnet ID
-export PublicSecurityGroupId= #Security Group ID for the public subnet
 ```
 If you'd like a guided walkthrough to create the secondary public VPC, follow [these instructions](/experts/rosa/hcp-private-nlb/rosa-private-nlb-vpc.md). This guide will also set all the required environment variables needed.
 

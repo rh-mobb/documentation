@@ -24,6 +24,8 @@ export NLB_VPC_PUBLIC_SUBNET_CIDR=10.5.128.0/17
 export NLB_VPC_PRIVATE_SUBNET_CIDR=10.5.0.0/17
 ```
 
+This section also expects the *ROSA_VPC_ID*, *ROSA_VPC_CIDR*, *ROSA_PRIVATE_R_TABLE_IDS*, and *ROSA_PRIVATE_SUBNET_IDS* environment variables to be set which is done in the parent blog.
+
 ### Create a VPC
 
 ```bash
