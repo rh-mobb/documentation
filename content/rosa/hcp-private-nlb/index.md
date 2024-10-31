@@ -231,7 +231,7 @@ EOF
 Update Route53 with the new record
 
 ```bash
-aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --change-batch file://add_alias_record.json
+aws route53 change-resource-record-sets --hosted-zone-id $NLB_HOSTED_ZONE --change-batch file://add_alias_record.json
 ```
 
 ## Create and configure the public NLB
