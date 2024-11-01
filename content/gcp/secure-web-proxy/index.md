@@ -204,14 +204,10 @@ Because we are unable to predict the unique ID of the cluster before it is creat
 
 1. Immediately after you create the cluster, run the following command to capture the network tags used on the cluster nodes:
     ```bash
-    while ocm get cluster $(ocm list cluster -p cluster_name=${cluster_name} --columns ID --no-headers) | jq -re '.infra_id'; do
-        export cluster_tag_prefix=$(ocm get cluster $(ocm list cluster -p cluster_name=${cluster_name} --columns ID --no-headers) | jq -r '.infra_id')
-        break
-    done
+    while true; do ocm get clusters -p search="name = '${cluster_name}'" | jq -re '.items[0].infra_id' > ${scratch}/cluster_tag_prefix && break || sleep 5; done
     ```
 
-    This command may take a minute or two to complete, as the cluster's infrastructure ID needs to be provisioned for the next steps.
-
+    This command may take a minute or two to complete, as the cluster's infrastructure ID needs to be set before we move to the next steps.
 
 ### Create Static Routes for Worker and Control Plane Subnets
 
@@ -223,12 +219,12 @@ Because we are unable to predict the unique ID of the cluster before it is creat
         --destination-range=0.0.0.0/0 \
         --priority=900 \
         --project=$project_id \
-        --tags ${cluster_tag_prefix}-control-plane
+        --tags $(cat ${scratch}/cluster_tag_prefix)-control-plane
     gcloud compute routes create ${prefix}-worker-route \
         --network="projects/${project_id}/global/networks/${prefix}-vpc" \
         --next-hop-ilb=$(gcloud network-services gateways describe ${prefix}-swp --location=${region} --format json | jq -r '.addresses[0]') \
         --destination-range=0.0.0.0/0 \
         --priority=900 \
         --project=$project_id \
-        --tags ${cluster_tag_prefix}-worker
+        --tags $(cat ${scratch}/cluster_tag_prefix)-worker
     ```
