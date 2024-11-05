@@ -1,7 +1,6 @@
 ---
 date: '2024-10-29'
 title: Securely exposing an application on a private ROSA cluser with an AWS Network Load Balancer
-aliases: ['/experts/rosa/rosa-private-nlb/']
 tags: ["AWS", "ROSA"]
 authors:
   - Kevin Collins
@@ -278,13 +277,6 @@ export LISTENER_ARN=$(aws elbv2 create-listener \
     --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN | jq -r '.Listeners[0].ListenerArn')
 echo $LISTENER_ARN
 ```
-
-#Add certificates we imported into ACM to the listener
-
-#```bash
-aws elbv2 add-listener-certificates --listener-arn $LISTENER_ARN \
---certificates CertificateArn=$CERT_ARN
-#```
 
 Get the DNS Hostname of the public load balancer
 
