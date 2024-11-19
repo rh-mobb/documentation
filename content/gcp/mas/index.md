@@ -3,7 +3,7 @@ date: '2024-10-23'
 title: Maximo Application Suite on OpenShift Dedicated Google Cloud Platform ( OSD GCP )
 tags: ["OSD", "GCP", "MAS"]
 authors:
-  - Kevin Collins
+  - Kevin Collins, Nerav Doshi
 ---
 
 IBM Maximo Application Suite (MAS) is a set of applications for asset monitoring, management, predictive maintenance and reliability planning.  When combined with Red Hat OpenShift Dedicated on Google Cloud ( OSD GCP ), this frees up your Maximo and operations team to focus on what is important to them ( Maximo ) rather than having to worry about managing and building clusters.
