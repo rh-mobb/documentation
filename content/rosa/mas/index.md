@@ -57,6 +57,7 @@ mkdir -p $MAS_CONFIG_DIR
 <b>OpenShift Environment Variables </b>
 
 ```bash
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export CLUSTER=${TF_VAR_CLUSTER}
 export REGION=$(rosa describe cluster -c ${CLUSTER} -o json | jq -r '.region.id')
 export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json \
