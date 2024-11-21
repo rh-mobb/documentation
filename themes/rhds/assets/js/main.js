@@ -23,9 +23,9 @@ codeBlocks.forEach(function (block) {
   const pre = block.parentNode;
   if (pre.parentNode.classList.contains('highlight')) {
     const highlight = pre.parentNode;
-    highlight.insertBefore(pfTooltip, pre);
+    highlight.append(pfTooltip);
   } else {
-    pre.parentNode.insertBefore(pfTooltip, pre);
+    pre.append(pfTooltip);
   }
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
