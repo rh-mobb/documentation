@@ -470,7 +470,8 @@ rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="
   
   & > pf-tooltip {
     position: absolute;
-    right: 0;
+    inset-block: 0;
+    inset-inline-end: 0;
   }
 
   & code {
