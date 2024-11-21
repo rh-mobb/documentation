@@ -1,8 +1,10 @@
 {{ partial "head/meta.html" .}}
 {{ partial "head/favicon.html" .}}
+{{ partial "head/importmap.html" .}}
 {{ partial "head/tracking.html" .}}
 {{ partial "eddl/page-load-started.html" .}}
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
 {{ partial "head/fonts.html" .}}
-{{ partialCached "head/css.html" . }}
-{{ partialCached "head/js.html" . }}
+{{ partial "head/js.html" . }}
+{{ partial "head/css.html" . }}
+

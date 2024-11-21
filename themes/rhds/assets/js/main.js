@@ -11,7 +11,6 @@ codeBlocks.forEach(function (block) {
   pfButton.tabIndex = '0';
 
   pfIcon.icon = 'copy';
-  pfIcon.setAttribute('style', '--pf-icon--size: 16px;');
 
   const toolTipSpan = document.createElement('span');
   toolTipSpan.setAttribute('slot', 'content');
