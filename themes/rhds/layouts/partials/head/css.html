@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="/experts/css/rhds/rh-footer-lightdom.css">
 
 {{- with resources.Get "css/main.css" }}
-  {{- if not hugo.IsProduction "development" }}
+  {{- if not hugo.IsProduction }}
 <link rel="stylesheet" href="{{ .RelPermalink }}">
   {{- else }}
     {{- with . | minify | fingerprint }}
