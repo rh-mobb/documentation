@@ -16,8 +16,10 @@
     HUGO_ENV = "production"
 
 [context.deploy-preview]
-  HUGO_ENV           = "staging"
   command = "hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  
+  [context.deploy-preview.environment]
+    HUGO_ENV           = "staging"
 
 [context.branch-deploy]
   command = "hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
