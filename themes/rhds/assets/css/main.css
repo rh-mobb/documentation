@@ -327,7 +327,7 @@ main {
   font-size: var(--rh-font-size-body-text-sm, 0.875rem);
   padding: var(--rh-space-lg, 16px) 0;
 
-  &:not(:last-of-type):after {
+  .breadcrumb:not(:last-of-type):after {
     content: url(/experts/images/breadcrumb-spacer.svg);
     width: 11px;
     height: 11px;
