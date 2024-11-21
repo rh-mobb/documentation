@@ -1,5 +1,5 @@
 
-{{- if eq hugo.Environment "development" }}
+{{- if not hugo.IsProduction  }}
 <!--
   Dev environment does not work with redhatstatic due to CORS, switch to JSPM 
 -->
@@ -62,7 +62,7 @@
 </script>
 
 {{- with resources.Get "js/main.js" }}
-  {{- if eq hugo.Environment "development" }}
+  {{- if not hugo.IsProduction }}
     {{- with . | js.Build }}
 <script defer src="{{ .RelPermalink }}"></script>
     {{- end }}
