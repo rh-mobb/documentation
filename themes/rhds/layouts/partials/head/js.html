@@ -1,7 +1,16 @@
- <script type="module" src="/experts/js/rhds/bundle.js"></script>
+<script type="module">
+  import '@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js';
+  import '@rhds/elements/rh-footer/rh-footer.js';
+  import '@rhds/elements/rh-cta/rh-cta.js';
+  import '@rhds/elements/rh-alert/rh-alert.js';
+  import '@rhds/elements/rh-tag/rh-tag.js';
+
+  import '@patternfly/elements/pf-tooltip/pf-tooltip.js';
+  import '@patternfly/elements/pf-button/pf-button.js';
+</script>
 
 {{- with resources.Get "js/main.js" }}
-  {{- if eq hugo.Environment "development" }}
+  {{- if not hugo.IsProduction }}
     {{- with . | js.Build }}
 <script defer src="{{ .RelPermalink }}"></script>
     {{- end }}

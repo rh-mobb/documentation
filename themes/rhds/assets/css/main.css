@@ -1,73 +1,122 @@
 @font-face {
   font-family: RedHatDisplay;
-  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.eot");
-
-  /* IE9 Compat Modes */
-  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.woff") format("woff");
-
-  /* Modern Browsers */
+  src: url('/experts/fonts/RedHatDisplay/RedHatDisplay-Regular.woff');
   font-style: normal;
+  font-weight: 400;
+  text-rendering: optimizelegibility;
+}
+
+@font-face {
+  font-family: RedHatDisplay;
+  src: url('/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.woff');
+  font-style: normal;
+  font-weight: 500;
+  text-rendering: optimizelegibility;
+}
+
+@font-face {
+  font-family: RedHatDisplay;
+  src: url('/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.woff');
+  font-style: normal;
+  font-weight: 700;
+  text-rendering: optimizelegibility;
+}
+
+@font-face {
+  font-family: RedHatText;
+  src: url('/experts/fonts/RedHatText/RedHatText-Regular.woff');
+  font-style: normal;
+  font-weight: 400;
+  text-rendering: optimizelegibility;
+}
+
+@font-face {
+  font-family: RedHatText;
+  src: url('/experts/fonts/RedHatText/RedHatText-Medium.woff');
+  font-style: normal;
+  font-weight: 500;
+  text-rendering: optimizelegibility;
+}
+
+@font-face {
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-BoldItalic.woff2') format('woff2');
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-Italic.woff2') format('woff2');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-Light.woff2') format('woff2');
   font-weight: 300;
-  text-rendering: optimizelegibility;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: RedHatDisplay;
-  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.eot");
-
-  /* IE9 Compat Modes */
-  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Medium.woff") format("woff");
-
-  /* Modern Browsers */
-  font-style: normal;
-  font-weight: 400;
-  text-rendering: optimizelegibility;
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-LightItalic.woff2') format('woff2');
+  font-weight: 300;
+  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: RedHatDisplay;
-  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.eot");
-
-  /* IE9 Compat Modes */
-  src: url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatDisplay/RedHatDisplay-Bold.woff") format("woff");
-
-  /* Modern Browsers */
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-Medium.woff2') format('woff2');
+  font-weight: 500;
   font-style: normal;
-  font-weight: 700;
-  text-rendering: optimizelegibility;
   font-display: swap;
 }
 
 @font-face {
-  font-family: RedHatText;
-  src: url("/experts/fonts/RedHatText/RedHatText-Regular.eot");
-
-  /* IE9 Compat Modes */
-  src: url("/experts/fonts/RedHatText/RedHatText-Regular.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatText/RedHatText-Regular.woff") format("woff");
-
-  /* Modern Browsers */
-  font-style: normal;
-  font-weight: 400;
-  text-rendering: optimizelegibility;
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-MediumItalic.woff2') format('woff2');
+  font-weight: 500;
+  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: RedHatText;
-  src: url("/experts/fonts/RedHatText/RedHatText-Medium.eot");
-
-  /* IE9 Compat Modes */
-  src: url("/experts/fonts/RedHatText/RedHatText-Medium.eot?#iefix") format("embedded-opentype"), url("/experts/fonts/RedHatText/RedHatText-Medium.woff") format("woff");
-
-  /* Modern Browsers */
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-Regular.woff2') format('woff2');
+  font-weight: normal;
   font-style: normal;
-  font-weight: 700;
-  text-rendering: optimizelegibility;
   font-display: swap;
 }
 
+@font-face {
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: RedHatMono;
+  src: url('/experts/fonts/RedHatMono/RedHatMono-SemiBoldItalic.woff2') format('woff2');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
 
 html, body {
   margin: 0;
@@ -165,45 +214,42 @@ header {
   color: var(--rh-color-text-primary-on-dark, #ffffff);
   padding: var(--rh-space-md, 8px);
   height: 72px;
-}
 
-header .logo {
-  margin-inline-start: var(--rh-space-md, 8px);
-  height: 100%;
-}
-
-header a {
-  display: inline-flex;
-  align-items: center;
-  height: 100%;
-}
-
-header :is(img, svg) {
-  max-width: 169px;
-}
-
-
-@media screen and (min-width: 768px) {
-  header {
-    padding: var(--rh-space-md, 8px) var(--rh-space-xl, 24px);
+  & .logo {
+    margin-inline-start: var(--rh-space-md, 8px);
+    height: 100%;
   }
 
-  header .logo {
-    margin-inline-start: var(--rh-space-2xl, 32px);
-  } 
+  a {
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  :is(img, svg) {
+    max-width: 169px;
+  }
+
+  @media screen and (min-width: 768px) {
+    padding: var(--rh-space-md, 8px) var(--rh-space-xl, 24px);
+    
+    & .logo {
+      margin-inline-start: var(--rh-space-2xl, 32px);
+    } 
+  }
 }
 
 main {
   max-width: 1320px;
   padding: var(--rh-space-lg, 16px) var(--rh-space-lg, 16px) var(--rh-length-5xl, 80px);
-}
 
-@media screen and (min-width: 768px) {
-  main {
+  @media screen and (min-width: 768px) {
     margin: 0 auto;
     padding: var(--rh-space-2xl, 32px) var(--rh-space-2xl, 32px) var(--rh-length-5xl, 80px);
   }
 }
+
+
 
 #hero {
   padding-block: var(--rh-space-xl, 32px);
@@ -280,53 +326,66 @@ main {
   list-style: none;
   font-size: var(--rh-font-size-body-text-sm, 0.875rem);
   padding: var(--rh-space-lg, 16px) 0;
-}
 
-.breadcrumb:not(:last-of-type):after {
-  content: url(/experts/images/breadcrumb-spacer.svg);
-  width: 11px;
-  height: 11px;
-  padding: var(--rh-space-md, 8px);
+  &:not(:last-of-type):after {
+    content: url(/experts/images/breadcrumb-spacer.svg);
+    width: 11px;
+    height: 11px;
+    padding: var(--rh-space-md, 8px);
+  }
 }
 
 .article-meta {
+  display: flex;
+  flex-direction: column;
   padding-block-end: var(--rh-space-2xl, 32px);
+
+  @media screen and (min-width: 768px) {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  & dl {
+    flex: 1;
+  }
+
+  & dt {
+    float: left;
+    clear: left;
+    font-weight: bold;
+
+    &:after {
+      content: ":";
+      margin-right: 0.25rem;
+    }
+  }
+
+  & dd {
+    margin: 0;
+    float: left;
+  }
+
+  & dd + dd {
+    float: left;
+  }
+
+  & dd + dt {
+    clear: left;
+  }
 }
 
 .article-tags {
   padding-block-start: var(--rh-space-lg, 16px);
-}
 
-.article-tags span {
-  font-weight: var(--rh-font-weight-body-text-medium, 500);
-}
+  @media screen and (min-width: 768px) {
+    padding-block-start: 0;
+  }
 
-.article-meta dl {
-  flex: 1;
-}
-
-.article-meta dt {
-  float: left;
-  clear: left;
-  font-weight: bold;
-}
-
-.article-meta dt::after {
-  content: ":";
-  margin-right: 0.25rem;
-}
-
-.article-meta dd {
-  margin: 0;
-  float: left;
-}
-
-.article-meta dd + dd {
-  float: left;
-}
-
-.article-meta dd + dt {
-  clear: left;
+  & span {
+    font-weight: var(--rh-font-weight-body-text-medium, 500);
+  }
 }
 
 .article-date,
@@ -334,23 +393,6 @@ main {
   font-weight: var(--rh-font-weight-body-text-medium, 500);
 }
 
-.article-meta {
-  display: flex;
-  flex-direction: column;
-}
-
-@media screen and (min-width: 768px) {
-  .article-meta {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .article-tags {
-    padding-block-start: 0;
-  }
-}
 
 .surface-light {
   background-color: var(--rh-color-surface-light, #e0e0e0);
@@ -388,32 +430,33 @@ main {
   color: var(--rh-color-text-primary-on-dark, #ffffff);
 }
 
-rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a {
-  color: var(--rh-color-interactive-blue-lighter, #73bcf7);
-}
+rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) { 
+  & a {
+    color: var(--rh-color-interactive-blue-lighter, #73bcf7);
 
-rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a:hover {
-  color: var(--rh-color-interactive-blue-lightest, #bee1f4);
+    &:hover {
+      color: var(--rh-color-interactive-blue-lightest, #bee1f4);
+    }
+  }
 }
-
 
 .collaborate {
   position: relative;
   padding: var(--rh-length-4xl, 64px);
-}
 
-.collaborate .container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
+  & .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
 
-.collaborate .cta-group {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--rh-space-lg, 16px);
+  & .cta-group {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--rh-space-lg, 16px);
+  }
 }
 
 @media (min-width: 567px) {
@@ -424,20 +467,28 @@ rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="
 
 .highlight {
   position: relative;
-}
+  
+  & > pf-tooltip {
+    position: absolute;
+    right: 0;
+  }
 
-.highlight > pf-tooltip {
-  position: absolute;
-  right: 0;
-}
+  & code {
+    font-family: var(--rh-font-family-code, RedHatMono, 'Red Hat Mono', 'Courier New', Courier, monospace);
+    text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -webkit-text-size-adjust: 100% !important;
+  }
 
-.highlight pf-button::part(button) {
-  --pf-icon--size: 14px;
-  color: var(--rh-color-icon-subtle, #707070);
-}
+  & pf-button::part(button) {
+    --pf-icon--size: 14px;
+    color: var(--rh-color-icon-subtle, #707070);
+  }
 
-.highlight pf-button:hover::part(button) {
-  color: var(--rh-color-icon-subtle-hover, #a3a3a3);
+  & pf-button:hover::part(button) {
+    color: var(--rh-color-icon-subtle-hover, #a3a3a3);
+  }
 }
 
 rh-alert {
