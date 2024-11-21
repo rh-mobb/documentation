@@ -1,6 +1,6 @@
 [build]
   publish = "public"
-  command = "npm run bundle && hugo --gc --minify && cp public/experts/_redirects public/_redirects"
+  command = "hugo --gc --minify && cp public/experts/_redirects public/_redirects"
 
   [build.environment]
     HUGO_VERSION = "0.118.2"
@@ -10,16 +10,16 @@
   HUGO_ENABLEGITINFO = "true"
 
 [context.split1]
-  command = "npm run bundle && hugo --gc --minify --enableGitInfo && cp public/experts/_redirects public/_redirects"
+  command = "hugo --gc --minify --enableGitInfo && cp public/experts/_redirects public/_redirects"
 
   [context.split1.environment]
     HUGO_ENV = "production"
 
 [context.deploy-preview]
-  command = "npm run bundle && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  command = "hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
 
 [context.branch-deploy]
-  command = "npm run bundle && hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
 
 [context.next.environment]
   HUGO_ENABLEGITINFO = "true"
