@@ -8,9 +8,10 @@ codeBlocks.forEach(function (block) {
   pfButton.className = 'copy-code-button';
   pfButton.plain = true;
   pfButton.label = 'Copy';
+  pfButton.tabIndex = '0';
 
   pfIcon.icon = 'copy';
-  // pfIcon.setAttribute('style', '--pf-icon--size: 14px;');
+  pfIcon.setAttribute('style', '--pf-icon--size: 16px;');
 
   const toolTipSpan = document.createElement('span');
   toolTipSpan.setAttribute('slot', 'content');
