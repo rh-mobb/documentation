@@ -327,7 +327,7 @@ main {
   font-size: var(--rh-font-size-body-text-sm, 0.875rem);
   padding: var(--rh-space-lg, 16px) 0;
 
-  &:not(:last-of-type):after {
+  .breadcrumb:not(:last-of-type):after {
     content: url(/experts/images/breadcrumb-spacer.svg);
     width: 11px;
     height: 11px;
@@ -470,7 +470,8 @@ rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="
   
   & > pf-tooltip {
     position: absolute;
-    right: 0;
+    inset-block: 0;
+    inset-inline-end: 0;
   }
 
   & code {
