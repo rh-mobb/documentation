@@ -4,6 +4,7 @@ title: Securely exposing an application on a private ROSA cluser with an AWS Net
 tags: ["AWS", "ROSA"]
 authors:
   - Kevin Collins
+  - Daniel Axelrod
 ---
 ## Overview
 
@@ -174,31 +175,23 @@ spec:
 EOF
 ```
 
-Get the newly created Network Load Balancer hostname and IP addresses
+### Find the hostname and IP addresses of the newly created NLB
 
-> if using a jump host of 'oc' command run this command there.  
-```bash
-NLB_HOSTNAME=$(oc get service -n openshift-ingress router-${INGRESS_NAME} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-echo $NLB_HOSTNAME
-```
+Wait a few minutes for the new IngressController to finish provisioning its Network Load Balancer.
 
-Copy the output of the above command to a new environment variable on your workstation
+AWS guarantees that the listner IP addresses of Network Load Balancers will not change for the lifetime of the Load Balancer.
 
-Example:
-```bash
-export NLB_HOST_NAME=a0df2223a72244f78806ff46230e2dd6-516fc9d40188cfa3.elb.us-east-1.amazonaws.com
-```
+To find the IP addresses of those listeners, we need to [search for network interfaces whose description field has a suffix of the NLB's ARN](https://repost.aws/knowledge-center/elb-find-load-balancer-ip).
 
-Wait a few minutes for the load balancer to be provisioned and run these commands.  If they don't return with IP addresses, just wait a while and run then again.
+> if using a jump host of 'oc' command run this command there.
 
 ```bash
-export NLB_IP_1=$(nslookup $NLB_HOSTNAME | grep Address | sed -n 2p | cut -d ' ' -f 2)
-
-echo $NLB_IP_1
-
-export NLB_IP_2=$(nslookup $NLB_HOSTNAME | grep Address | sed -n 3p | cut -d ' ' -f 2)
-
-echo $NLB_IP_2
+NLB_HOSTNAME=$(oc get svc -n openshift-ingress  router-$INGRESS_NAME -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+aws ec2 describe-network-interfaces --filters Name=description,Values="ELB elb-name" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].PrivateIpAddress' --output text
+NLB_ARN=$(aws us-east-1 elbv2 describe-load-balancers --query "LoadBalancers[?DNSName == '$NLB_HOSTNAME'].LoadBalancerArn" --output text)
+NLB_ARN_SUFFIX=$(echo $NLB_ARN | sed 's/.*loadbalancer\///')
+NLB_LISTENER_IPS=$(aws ec2 describe-network-interfaces --filters Name=description,Values="ELB $NLB_ARN_SUFFIX" --query 'NetworkInterfaces[*].PrivateIpAddresses[*].PrivateIpAddress' --output text)
+echo $NLB_LISTENER_IPS
 ```
 
 ## Update DNS records
@@ -229,7 +222,9 @@ echo $TARGET_GROUP_ARN
 Register the targets for the AWS Network Load Balancer that was created when we added the second IngressController
 
 ```bash
-aws elbv2 register-targets --target-group-arn $TARGET_GROUP_ARN --targets Id=$NLB_IP_1,Port=443,AvailabilityZone=all Id=$NLB_IP_2,Port=443,AvailabilityZone=all
+while IFS= read -r ip || [[ -n $ip ]]; do
+    aws elbv2 register-targets --target-group-arn $TARGET_GROUP_ARN --targets ID=$ip,Port=443,AvailabilityZone=all
+done < <(printf '%s' "$NLB_LISTENER_IPS")
 ```
 
 Create a security group for the public load balancer
