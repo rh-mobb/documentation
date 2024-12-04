@@ -19,21 +19,56 @@ Starting with OpenShift 4.14, ROSA supports adding additional Ingress Controller
 
 ## Set up environment
 
+
 1. Export few environment variables
 > **Important**: The variables below can be customized to fit your needs for your ingress controller.
 
+```bash
+export DOMAIN=lab.domain.com   #Custom Hosted Zone Domain for apps 
+export DOMAIN_DASH=$(echo $DOMAIN | tr . -)
+export EMAIL=you@domain.com   #Optional - your email address if you are generating your own certificate
+```
+
 > **CERT_NAME** - this is the name of the tls secret for the domain of your ingress controller.  This tls secret must be stored in the `openshift-ingress` namespace. If you are adding an additional Ingress Controller to the openshiftapps.com domain that comes with ROSA, use the name of the secret in the openshift-ingress namespace that has the naming format of `(ID)-primary-cert-bundle-secret`.
+
+>Optional: To create your own certificate, you can use certbot to create one.
+
+```bash
+certbot certonly --manual \
+  --preferred-challenges=dns \
+  --email $EMAIL \
+  --server https://acme-v02.api.letsencrypt.org/directory \
+  --agree-tos \
+  --config-dir "./config" \
+  --work-dir "./work" \
+  --logs-dir "./logs" \
+  -d "*.$DOMAIN"
+  ```
+
+The output of this command will show where your certificates are located.
+
+```bash
+Successfully received certificate.
+Certificate is saved at: /Users/kevincollins/tmp/masconfig/config/live/kevin.mobb.cloud/fullchain.pem
+Key is saved at:         /Users/kevincollins/tmp/masconfig/config/live/kevin.mobb.cloud/privkey.pem
+```
+
+Taking the values from the above command, create a certificate.
+```bash
+oc create secret tls ${DOMAIN_DASH}-tls-cert --key=/Users/kevincollins/tmp/masconfig/config/live/kevin.mobb.cloud/privkey.pem --cert=/Users/kevincollins/tmp/masconfig/config/live/kevin.mobb.cloud/fullchain.pem -n openshift-ingress
+``` 
 
 > **SCOPE** - this will be the scope of the Network Load Balancer that will be provisioned.  The scope can be either **Internal** for a private network load balancer or **External** for an Internet facing network load balancer.
 
+
+
    ```bash
    export INGRESS_NAME=public-ingress #name of the new ingress controller
-   export CERT_NAME="lab-domain-com-tls-cert" 
+   export CERT_NAME=${DOMAIN_DASH}-tls-cert
    export SCOPE="External" 
    export AWS_PAGER=""
    export HOSTED_ZONE_ID=ABCDEFGHEXAMPLE
    export HOSTED_ZONE_REGION=us-east-2
-   export DOMAIN=lab.domain.com   #Custom Hosted Zone Domain for apps 
    export SCRATCH_DIR=/tmp/scratch
    mkdir -p $SCRATCH_DIR
    ```
@@ -111,10 +146,15 @@ router-public-7dd48fdcbb-cn7hb    1/1     Running   0          4m20s
 
 Get the NLB environment variables:
    ```bash
-   NLB_HOSTNAME=$(oc get service router-public -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+   NLB_HOSTNAME=$(oc get service -n openshift-ingress router-${INGRESS_NAME} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
    NLB_NAME=$(echo $NLB_HOSTNAME | sed 's/-.*//')
    NLB_REGION=$(echo $NLB_HOSTNAME | cut -d "." -f 3)
    NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --name $NLB_NAME --region $NLB_REGION | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
+
+   echo "NLB_HOSTNAME="${NLB_HOSTNAME}
+   echo "NLB_NAME="${NLB_NAME}
+   echo "NLB_REGION="${NLB_REGION}
+   echo "NLB_HOSTED_ZONE="${NLB_HOSTED_ZONE}
    ```
  
   Create an alias record json statement.
@@ -141,7 +181,7 @@ Get the NLB environment variables:
 
   Create a new route 53 record to point to the domain / network load balancer
    ```bash
-   aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --change-batch file://$SCRATCH_DIR/add_cname_record.json
+   aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --change-batch file://$SCRATCH_DIR/add_alias_record.json
    ```
   
 
