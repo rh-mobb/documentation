@@ -7,11 +7,11 @@ authors:
 ---
 
 ## 1. Introduction
-[Retrieval-Augmented Generation](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) (RAG) is a technique to enhance Large Language Models (LLMs) to retrieve relevant information from a knowledge base before generating responses, rather than relying solely on their training. [LangChain](https://github.com/langchain-ai/langchain) is a framework for developing applications powered by language models. It provides [tools and APIs](https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed) that make it easier to create complex applications using LLMs, such as using RAG technique to enable the chatbot to answer questions based on the provided document.
+[Retrieval-Augmented Generation](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) (RAG) is a technique to enhance Large Language Models (LLMs) to retrieve relevant information from a knowledge base before generating responses, rather than relying solely on their training. [LangChain](https://github.com/langchain-ai/langchain) is a framework for developing applications powered by language models. It provides tools and APIs that make it easier to create complex applications using LLMs, such as using RAG technique to enable the chatbot to answer questions based on the provided document.
 
-This tutorial is a simple guide on how to create RAG chatbot that can provide sufficient response when asked about ARO based on [official ARO documentation](https://learn.microsoft.com/pdf?url=https%3A%2F%2Flearn.microsoft.com%2Fen-us%2Fazure%2Fopenshift%2Ftoc.json), which consists of 421 PDF pages at the time of writing. Here we will be using [Red Hat OpenShift AI](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai) (RHOAI), formerly called Red Hat OpenShift Data Science (RHODS), which is an OpenShift platform for AI/ML projects management, and we will be running this on an [Azure Red Hat OpenShift](https://azure.microsoft.com/en-us/products/openshift) (ARO) cluster, which is our managed service OpenShift platform on Azure. 
+This tutorial is a simple guide on how to create RAG chatbot that can provide sufficient response when asked about ARO based on [official ARO documentation](https://learn.microsoft.com/pdf?url=https%3A%2F%2Flearn.microsoft.com%2Fen-us%2Fazure%2Fopenshift%2Ftoc.json), which consists of 421 PDF pages at the time of writing. We will be using [Red Hat OpenShift AI](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai) (RHOAI), formerly called Red Hat OpenShift Data Science (RHODS), which is an OpenShift platform for AI/ML projects management, and we will be running this on an [Azure Red Hat OpenShift](https://azure.microsoft.com/en-us/products/openshift) (ARO) cluster, which is our managed service OpenShift platform on Azure. 
 
-In the first half of the tutorial, we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385) model, and here we will use several key components from LangChain such as for document loading (`PyPDFLoader`), text splitting (`RecursiveCharacterTextSpliter`), vector store (`FAISS`), retrieval chain (`RetrievalQA`), and prompt templates (`PromptTemplate`), to help build our chatbot. And in the latter half of the tutorial, we will create another system using [GPT-4](https://en.wikipedia.org/wiki/GPT-4) model via [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/ai-services/openai-service), and here we will compare the responses from both deployments.
+Here we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385) model, and here we will use several key components from LangChain such as for document loading (`PyPDFLoader`), text splitting (`RecursiveCharacterTextSpliter`), vector store (`FAISS`), retrieval chain (`RetrievalQA`), and prompt templates (`PromptTemplate`), to help build our chatbot. And at the end of this tutorial, there will be an optional section to create another RAG system using [GPT-4](https://en.wikipedia.org/wiki/GPT-4) model via [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/ai-services/openai-service), and from there we will compare the responses from both systems.
 
 
 ## 2. Prerequisites
@@ -19,6 +19,7 @@ In the first half of the tutorial, we will create a chatbot using [TinyLlama](ht
 1. An ARO cluster (>= version 4.15)
     - You can deploy it [manually](https://cloud.redhat.com/experts/quickstart-aro/) or using [Terraform](https://cloud.redhat.com/experts/aro/terraform-install/).
     - I tested this using ARO version 4.15.27 with Standard_D16s_v3 instance size for both the control plane and the worker nodes.
+<br />
 
 1. RHOAI operator 
     - You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/).
@@ -32,25 +33,27 @@ Once we have the RHOAI operator installed and the DataScienceCluster instance cr
 Here are the quick summary of steps we are going to do once we install the required packages and import the necessary libraries for the RAG system: 
 
 1. Step 1 -- PDF Processing and Chunking
-  Here we will download the ARO documentation and break it into smaller "chunks" of text. [Chunking](https://en.wikipedia.org/wiki/Retrieval-augmented_generation#Chunking) is a technique where large documents are split into smaller, manageable pieces, and it is a crucial process since language models have token limits and they work better with smaller, focused pieces of text.
+    - Here we will download the ARO documentation and break it into smaller "chunks" of text. [Chunking](https://en.wikipedia.org/wiki/Retrieval-augmented_generation#Chunking) is a technique where large documents are split into smaller, manageable pieces, and it is a crucial process since language models have token limits and they work better with smaller, focused pieces of text.
+    <br />
 
 1. Step 2 -- Vector Store Creation 
-  [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) is a library that efficiently stores and searches for text embeddings, which are numerical representations of text that capture semantic meaning. Here we convert each text chunk into embeddings using [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model and these embeddings are later stored in FAISS, which allows for quick similarity searches when answering questions.
+    - [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) is a library that efficiently stores and searches for text embeddings, which are numerical representations of text that capture semantic meaning. Here we convert each text chunk into embeddings using [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model and these embeddings are later stored in FAISS, which allows for quick similarity searches when answering questions.
+<br />
   
 1. Step 3 -- Language Model Setup
-  Here we set up TinyLlama as primary language model and GPT-2 as fallback. [TinyLlama](https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0) is an open-source small language model that is specifically trained for chat/instruction-following and can handle context and generate coherent responses while being lightweight. It is smaller but efficient language model. [GPT-2](https://huggingface.co/openai-community/gpt2) serving as the fallback model is an older but reliable model by OpenAI that runs on CPU. 
+    - Here we set up TinyLlama as primary language model and GPT-2 as fallback. [TinyLlama](https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0) is an open-source small language model that is specifically trained for chat/instruction-following and can handle context and generate coherent responses while being lightweight. It is smaller but efficient language model. [GPT-2](https://huggingface.co/openai-community/gpt2) serving as the fallback model is an older but reliable model by OpenAI that runs on CPU. 
 
 1. Step 4 -- Question Classification 
-  Next, we implement prompt chaining starting from categorizing the questions into certain types, i.e. benefits, technical, etc. using regex patterns. And based on the type, a specific template is then chosen. The relevant documents are then retrieved, and both the context and the question are combined into a prompt which was then processed by the LLM. 
+    - Next, we implement prompt chaining starting from categorizing the questions into certain types, i.e. benefits, technical, etc. using regex patterns. And based on the type, a specific template is then chosen. The relevant documents are then retrieved, and both the context and the question are combined into a prompt which was then processed by the LLM. 
 
 1. Step 5 -- Response Formatting 
-  Here we are going to format the response with proper HTML styling and error handling. 
+    - Here we are going to format the response with proper HTML styling and error handling. 
 
 1. Step 6 -- User Interface (UI) Creation 
-  In this step, we will create an interactive UI interface using IPython widgets for question input and response display.
+    - In this step, we will create an interactive UI interface using IPython widgets for question input and response display.
 
 1. Step 7 -- Sytem Initialization
-  Lastly, we will initialize the complete RAG system by combining all components (vector store, language model, and question-answering chain) and launch the interface. 
+    - Lastly, we will initialize the complete RAG system by combining all components (vector store, language model, and question-answering chain) and launch the interface. 
 
 
 On Jupyter notebook, copy this code below into one cell:
@@ -525,7 +528,7 @@ On your first run, you might be getting CUDA/TensorFlow warnings as the system d
 
 ## 4. Future research
 
-Note that this is a simple tutorial on creating RAG chatbot that is based on generic model yet able to provide answers based on particular documentation, which in this case is ARO product documentation. We are using LangChain APIs in the code and if you're interested in reading more about them, kindly take a look at this fantastic blog here.
+Note that this is a simple tutorial on creating RAG chatbot that is based on generic model yet able to provide answers based on particular documentation, which in this case is ARO product documentation. We are using LangChain APIs in the code and if you're interested in reading more about them, kindly take a look at this fantastic blog [here](https://medium.com/@onkarmishra/using-langchain-for-question-answering-on-own-data-3af0a82789ed).
 
 Lastly, there are many ways to go about improving this RAG system. You could for example use a more robust or advanced model to improve accuracy, such as GPT-4, GPT-3.5, etc. Similarly, you could also integrate the Q&A chat with Slack or other chat platforms to make it easier to access/use. 
 
@@ -535,28 +538,28 @@ Lastly, there are many ways to go about improving this RAG system. You could for
 
 As mentioned previously, one way to improve the accuracy of the response is to use a more advanced model. For instance, we can leverage Azure OpenAI services that allows us to utilize OpenAI's more advanced models. That said, in this section, we will try to create a system comparison that allows you to compare the responses from the TinyLlama-based model with that of Azure OpenAI's GPT-4 model.
 
-To enable this system comparison, we first need to create Azure OpenAI Service and enable the GPT-4 model deployment. You can do so by going to the Azure portal and search for "Azure OpenAI", then click the `Create Azure OpenAI` button, which will lead you to a page where you can create and customize your Azure OpenAI instance.  
+To enable this system comparison, we first need to create Azure OpenAI Service and enable the GPT-4 model deployment. You can do so by going to the Azure portal and search for "Azure OpenAI", then click the **Create Azure OpenAI** button, which will lead you to a page where you can create and customize your Azure OpenAI instance.  
 
 ![Azure-OpenAI](images/azure-openai.png)
 <br />
 
-On `Create Azure OpenAI` page, please select the same resource group where your ARO cluster resides, the same region as the resource group, name your instance, and select the pricing tier suits your need. In my case, I named it `openai-rag-aro-v0` and I chose `Standard S0` for the pricing tier. On the next page, I leave the network selection to default which allows internet access to the resource. Click the `Submit` button once you reviewed the configuration. Once your deployment is complete, click `Go to resource` button, and on the next page, click `Explore Azure AI Studio` button (or you can also click the `Go to Azure AI Studio` links tab on the upper left).
+On **Create Azure OpenAI** page, please select the same resource group where your ARO cluster resides, the same region as the resource group, name your instance, and select the pricing tier suits your need. In my case, I named it `openai-rag-aro-v0` and I chose `Standard S0` for the pricing tier. On the next page, I leave the network selection to default which allows internet access to the resource. Click the **Submit** button once you reviewed the configuration. Once your deployment is complete, click **Go to resource** button, and on the next page, click **Explore Azure AI Studio** button (or you can also click the **Go to Azure AI Studio** links tab on the upper left).
 
 ![Azure-OpenAI-Studio](images/azure-openai-studio.png)
 <br />
 
 
-And once you're on Azure OpenAI Studio page, click `Model catalog` tab from the left banner.
+And once you're on Azure OpenAI Studio page, click **Model catalog** tab from the left banner.
 
 ![Create-Deployment](images/create-deployment.png)
 <br />
 
-And once you get into the model catalog page, click on `gpt-4`. 
+And once you get into the model catalog page, click on **gpt-4**. 
 
 ![Model-Catalog](images/model-catalog.png)
 <br />
 
-You will then be redirected to `gpt-4` model deployment page where you can name your deployment and select the deployment type that meets your need. In my case, I leave the name to the default which is `gpt-4` and `Global Standard` as the deployment type. And lastly, select `Deploy` button to start the deployment.
+You will then be redirected to **gpt-4** model deployment page where you can name your deployment and select the deployment type that meets your need. In my case, I leave the name to the default which is `gpt-4` and `Global Standard` as the deployment type. And lastly, select **Deploy** button to start the deployment.
 
 ![Model-Catalog-GPT4](images/model-catalog-gpt4.png)
 <br />
@@ -567,20 +570,19 @@ Once the model is deployed, you will have details on your deployment's info and 
 Next, we will create an enhanced RAG system with the following steps:
 
 1. Step 1 -- Azure OpenAI Integration
-  Here we are creating a chatbot system using Azure OpenAI service and in this case we are using `gpt-4` deployment that we created just now.  
+    - Here we are creating a chatbot system using Azure OpenAI service and in this case we are using `gpt-4` deployment that we created just now.  
 
 1. Step 2 -- Comparison System Creation
-  Next, we will create a comparison system that allows us to get get responses from both chatbot systems. 
+    - Next, we will create a comparison system that allows us to get get responses from both chatbot systems. 
 
 1. Step 3 -- Response Formatting 
-  Here we will format responses from both systems for display using HTML styles.
-
+    - Here we will format responses from both systems for display using HTML styles.
 
 1. Step 4 -- UI Creation
-  And then, we will create the side-by-side comparison UI using `ipywidgets`.
+    - And then, we will create the side-by-side comparison UI using `ipywidgets`.
 
 1. Step 5 -- System Initialization
-  And lastly, we will initialize and launch the complete comparison system.
+    - And lastly, we will initialize and launch the complete comparison system.
   
 Now, let's copy this code into the next cell on your Jupyter notebook, and please replace the `azure_openai_config` with the credentials from your Azure OpenAI deployment:
 
