@@ -1,7 +1,7 @@
 ---
 date: '2024-12-10'
-title: RAG Chatbot Tutorial using Red Hat OpenShift AI on ARO cluster with TinyLlama Model and LangChain APIs
-tags: ["ARO", "RHOAI", "Jupyter", "RAG", "Chatbot", "TinyLlama"]
+title: Creating RAG Chatbot using TinyLlama and LangChain APIs on Red Hat OpenShift AI on ARO cluster
+tags: ["ARO", "RHOAI", "Jupyter", "RAG", "Chatbot", "TinyLlama", "LangChain"]
 authors:
   - Diana Sari
 ---
@@ -12,7 +12,6 @@ authors:
 This tutorial is a simple guide on how to create RAG chatbot that can provide sufficient response when asked about ARO based on [official ARO documentation](https://learn.microsoft.com/pdf?url=https%3A%2F%2Flearn.microsoft.com%2Fen-us%2Fazure%2Fopenshift%2Ftoc.json), which consists of 421 PDF pages at the time of writing. Here we will be using [Red Hat OpenShift AI](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai) (RHOAI), formerly called Red Hat OpenShift Data Science (RHODS), which is an OpenShift platform for AI/ML projects management, and we will be running this on an [Azure Red Hat OpenShift](https://azure.microsoft.com/en-us/products/openshift) (ARO) cluster, which is our managed service OpenShift platform on Azure. 
 
 In the first half of the tutorial, we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385) model, and here we will use several key components from LangChain such as for document loading (`PyPDFLoader`), text splitting (`RecursiveCharacterTextSpliter`), vector store (`FAISS`), retrieval chain (`RetrievalQA`), and prompt templates (`PromptTemplate`), to help build our chatbot. And in the latter half of the tutorial, we will create another system using [GPT-4](https://en.wikipedia.org/wiki/GPT-4) model via [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/ai-services/openai-service), and here we will compare the responses from both deployments.
-
 
 
 ## 2. Prerequisites
@@ -529,6 +528,7 @@ On your first run, you might be getting CUDA/TensorFlow warnings as the system d
 Note that this is a simple tutorial on creating RAG chatbot that is based on generic model yet able to provide answers based on particular documentation, which in this case is ARO product documentation. We are using LangChain APIs in the code and if you're interested in reading more about them, kindly take a look at this fantastic blog here.
 
 Lastly, there are many ways to go about improving this RAG system. You could for example use a more robust or advanced model to improve accuracy, such as GPT-4, GPT-3.5, etc. Similarly, you could also integrate the Q&A chat with Slack or other chat platforms to make it easier to access/use. 
+
 
 #### Bonus section: Comparing responses with Azure OpenAI's GPT-4 model
 **This is an optional section so feel free to skip it.**
