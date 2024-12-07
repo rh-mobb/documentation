@@ -16,14 +16,14 @@ Here we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385
 
 ## 2. Prerequisites
 
-1. An ARO cluster (>= version 4.15)
-    - You can deploy it [manually](https://cloud.redhat.com/experts/quickstart-aro/) or using [Terraform](https://cloud.redhat.com/experts/aro/terraform-install/).
-    - I tested this using ARO version 4.15.27 with Standard_D16s_v3 instance size for both the control plane and the worker nodes.
-<br />
+* An ARO cluster (>= version 4.15) . 
+You can deploy it [manually](https://cloud.redhat.com/experts/quickstart-aro/) or using [Terraform](https://cloud.redhat.com/experts/aro/terraform-install/).
+I tested this using ARO version 4.15.27 with Standard_D16s_v3 instance size for both the control plane and the worker nodes.
 
-1. RHOAI operator 
-    - You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/).
-    - I tested this tutorial using RHOAI version 2.13.1.
+
+* RHOAI operator\ 
+You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/).
+I tested this tutorial using RHOAI version 2.13.1.
 
 
 ## 3. Creating the RAG Chatbot
@@ -32,18 +32,18 @@ Once we have the RHOAI operator installed and the DataScienceCluster instance cr
 
 Here are the quick summary of steps we are going to do once we install the required packages and import the necessary libraries for the RAG system: 
 
-1. Step 1 -- PDF Processing and Chunking
-    - Here we will download the ARO documentation and break it into smaller "chunks" of text. [Chunking](https://en.wikipedia.org/wiki/Retrieval-augmented_generation#Chunking) is a technique where large documents are split into smaller, manageable pieces, and it is a crucial process since language models have token limits and they work better with smaller, focused pieces of text.
+* Step 1 -- PDF Processing and Chunking  
+Here we will download the ARO documentation and break it into smaller "chunks" of text. [Chunking](https://en.wikipedia.org/wiki/Retrieval-augmented_generation#Chunking) is a technique where large documents are split into smaller, manageable pieces, and it is a crucial process since language models have token limits and they work better with smaller, focused pieces of text.
     <br />
 
-1. Step 2 -- Vector Store Creation 
-    - [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) is a library that efficiently stores and searches for text embeddings, which are numerical representations of text that capture semantic meaning. Here we convert each text chunk into embeddings using [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model and these embeddings are later stored in FAISS, which allows for quick similarity searches when answering questions.
+* Step 2 -- Vector Store Creation\ 
+[FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) is a library that efficiently stores and searches for text embeddings, which are numerical representations of text that capture semantic meaning. Here we convert each text chunk into embeddings using [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model and these embeddings are later stored in FAISS, which allows for quick similarity searches when answering questions.
 <br />
-  
-1. Step 3 -- Language Model Setup
-    - Here we set up TinyLlama as primary language model and GPT-2 as fallback. [TinyLlama](https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0) is an open-source small language model that is specifically trained for chat/instruction-following and can handle context and generate coherent responses while being lightweight. It is smaller but efficient language model. [GPT-2](https://huggingface.co/openai-community/gpt2) serving as the fallback model is an older but reliable model by OpenAI that runs on CPU. 
 
-1. Step 4 -- Question Classification 
+* Step 3 -- Language Model Setup\
+Here we set up TinyLlama as primary language model and GPT-2 as fallback. [TinyLlama](https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0) is an open-source small language model that is specifically trained for chat/instruction-following and can handle context and generate coherent responses while being lightweight. It is smaller but efficient language model. [GPT-2](https://huggingface.co/openai-community/gpt2) serving as the fallback model is an older but reliable model by OpenAI that runs on CPU. 
+
+* Step 4 -- Question Classification\ 
     - Next, we implement prompt chaining starting from categorizing the questions into certain types, i.e. benefits, technical, etc. using regex patterns. And based on the type, a specific template is then chosen. The relevant documents are then retrieved, and both the context and the question are combined into a prompt which was then processed by the LLM. 
 
 1. Step 5 -- Response Formatting 
