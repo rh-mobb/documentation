@@ -16,13 +16,13 @@ Here we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385
 
 ## 2. Prerequisites
 
-* An ARO cluster (>= version 4.15) . 
-You can deploy it [manually](https://cloud.redhat.com/experts/quickstart-aro/) or using [Terraform](https://cloud.redhat.com/experts/aro/terraform-install/).
+* An ARO cluster (>= version 4.15)   
+You can deploy it [manually](https://cloud.redhat.com/experts/quickstart-aro/) or using [Terraform](https://cloud.redhat.com/experts/aro/terraform-install/).   
 I tested this using ARO version 4.15.27 with Standard_D16s_v3 instance size for both the control plane and the worker nodes.
 
 
-* RHOAI operator\ 
-You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/).
+* RHOAI operator  
+You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/).   
 I tested this tutorial using RHOAI version 2.13.1.
 
 
@@ -36,24 +36,24 @@ Here are the quick summary of steps we are going to do once we install the requi
 Here we will download the ARO documentation and break it into smaller "chunks" of text. [Chunking](https://en.wikipedia.org/wiki/Retrieval-augmented_generation#Chunking) is a technique where large documents are split into smaller, manageable pieces, and it is a crucial process since language models have token limits and they work better with smaller, focused pieces of text.
     <br />
 
-* Step 2 -- Vector Store Creation\ 
+* Step 2 -- Vector Store Creation   
 [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) is a library that efficiently stores and searches for text embeddings, which are numerical representations of text that capture semantic meaning. Here we convert each text chunk into embeddings using [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model and these embeddings are later stored in FAISS, which allows for quick similarity searches when answering questions.
 <br />
 
 * Step 3 -- Language Model Setup\
 Here we set up TinyLlama as primary language model and GPT-2 as fallback. [TinyLlama](https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0) is an open-source small language model that is specifically trained for chat/instruction-following and can handle context and generate coherent responses while being lightweight. It is smaller but efficient language model. [GPT-2](https://huggingface.co/openai-community/gpt2) serving as the fallback model is an older but reliable model by OpenAI that runs on CPU. 
 
-* Step 4 -- Question Classification\ 
-    - Next, we implement prompt chaining starting from categorizing the questions into certain types, i.e. benefits, technical, etc. using regex patterns. And based on the type, a specific template is then chosen. The relevant documents are then retrieved, and both the context and the question are combined into a prompt which was then processed by the LLM. 
+* Step 4 -- Question Classification  
+Next, we implement prompt chaining starting from categorizing the questions into certain types, i.e. benefits, technical, etc. using regex patterns. And based on the type, a specific template is then chosen. The relevant documents are then retrieved, and both the context and the question are combined into a prompt which was then processed by the LLM. 
 
-1. Step 5 -- Response Formatting 
-    - Here we are going to format the response with proper HTML styling and error handling. 
+* Step 5 -- Response Formatting   
+Here we are going to format the response with proper HTML styling and error handling. 
 
-1. Step 6 -- User Interface (UI) Creation 
-    - In this step, we will create an interactive UI interface using IPython widgets for question input and response display.
+* Step 6 -- User Interface (UI) Creation   
+In this step, we will create an interactive UI interface using IPython widgets for question input and response display.
 
-1. Step 7 -- Sytem Initialization
-    - Lastly, we will initialize the complete RAG system by combining all components (vector store, language model, and question-answering chain) and launch the interface. 
+* Step 7 -- Sytem Initialization   
+Lastly, we will initialize the complete RAG system by combining all components (vector store, language model, and question-answering chain) and launch the interface. 
 
 
 On Jupyter notebook, copy this code below into one cell:
@@ -543,7 +543,7 @@ To enable this system comparison, we first need to create Azure OpenAI Service a
 ![Azure-OpenAI](images/azure-openai.png)
 <br />
 
-On **Create Azure OpenAI** page, please select the same resource group where your ARO cluster resides, the same region as the resource group, name your instance, and select the pricing tier suits your need. In my case, I named it `openai-rag-aro-v0` and I chose `Standard S0` for the pricing tier. On the next page, I leave the network selection to default which allows internet access to the resource. Click the **Submit** button once you reviewed the configuration. Once your deployment is complete, click **Go to resource** button, and on the next page, click **Explore Azure AI Studio** button (or you can also click the **Go to Azure AI Studio** links tab on the upper left).
+On the **Create Azure OpenAI** page, please select the same resource group where your ARO cluster resides, the same region as the resource group, name your instance, and select the pricing tier suits your need. In my case, I named it `openai-rag-aro-v0` and I chose `Standard S0` for the pricing tier. On the next page, I leave the network selection to default which allows internet access to the resource. Click the **Submit** button once you reviewed the configuration. Once your deployment is complete, click **Go to resource** button, and on the next page, click **Explore Azure AI Studio** button (or you can also click the **Go to Azure AI Studio** links tab on the upper left).
 
 ![Azure-OpenAI-Studio](images/azure-openai-studio.png)
 <br />
@@ -569,20 +569,20 @@ Once the model is deployed, you will have details on your deployment's info and 
 
 Next, we will create an enhanced RAG system with the following steps:
 
-1. Step 1 -- Azure OpenAI Integration
-    - Here we are creating a chatbot system using Azure OpenAI service and in this case we are using `gpt-4` deployment that we created just now.  
+* Step 1 -- Azure OpenAI Integration   
+Here we are creating a chatbot system using Azure OpenAI service and in this case we are using `gpt-4` deployment that we created just now.  
 
-1. Step 2 -- Comparison System Creation
-    - Next, we will create a comparison system that allows us to get get responses from both chatbot systems. 
+* Step 2 -- Comparison System Creation   
+Next, we will create a comparison system that allows us to get get responses from both chatbot systems. 
 
-1. Step 3 -- Response Formatting 
-    - Here we will format responses from both systems for display using HTML styles.
+* Step 3 -- Response Formatting   
+Here we will format responses from both systems for display using HTML styles.
 
-1. Step 4 -- UI Creation
-    - And then, we will create the side-by-side comparison UI using `ipywidgets`.
+* Step 4 -- UI Creation   
+And then, we will create the side-by-side comparison UI using `ipywidgets`.
 
-1. Step 5 -- System Initialization
-    - And lastly, we will initialize and launch the complete comparison system.
+* Step 5 -- System Initialization   
+And lastly, we will initialize and launch the complete comparison system.
   
 Now, let's copy this code into the next cell on your Jupyter notebook, and please replace the `azure_openai_config` with the credentials from your Azure OpenAI deployment:
 
