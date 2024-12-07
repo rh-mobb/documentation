@@ -118,6 +118,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 * [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/rhoai/rosa-s3)
 * [Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled](/experts/rhoai/rosa-gpu)
+* [Creating RAG Chatbot using TinyLlama and LangChain APIs on Red Hat OpenShift AI on ARO cluster](/experts/rhoai/aro-rag)
 
 ### Data Science on Jupyter Notebook on OpenShift
 
