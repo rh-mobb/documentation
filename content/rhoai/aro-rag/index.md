@@ -13,6 +13,8 @@ This tutorial is a simple guide on how to create RAG chatbot that can provide su
 
 Here we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385) model and we will use several key components from LangChain for document loading (`PyPDFLoader`), text splitting (`RecursiveCharacterTextSpliter`), vector store (`FAISS`), retrieval chain (`RetrievalQA`), and prompt templates (`PromptTemplate`), to help build our chatbot. And at the end of this tutorial, there will be an optional section to create another RAG system using [GPT-4](https://en.wikipedia.org/wiki/GPT-4) model via [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/ai-services/openai-service), and from there we will compare the responses from both systems.
 
+*Disclaimer: When interacting with chatbots and AI language models, please be aware that while these systems include content filters and safety features, they are not infallible. It is your responsibility to use these tools appropriately and ensure your interactions are suitable. Neither the author of this tutorial nor the service providers can be held responsible for any unexpected or inappropriate responses. By proceeding, you acknowledge that AI responses can be unpredictable and may occasionally contain inaccuracies or deviate from the expected behavior. It is important to review and verify any critical information or advice received from these systems before acting upon it. In addition, please note that user interfaces may change over time as the products evolve. Some screenshots and instructions may not exactly match what you see.*
+
 
 ## 2. Prerequisites
 
@@ -547,13 +549,13 @@ To enable this system comparison, we need to first create Azure OpenAI service. 
 
 On the **Create Azure OpenAI** page (not displayed here), please select the same resource group where your ARO cluster resides and the same region as the resource group. Then name your instance and select the pricing tier that suits your need. In my case, I named it `openai-rag-aro-v0` and I chose `Standard S0` for the pricing tier. On the next page, I leave the network selection to default which allows internet access to the resource. Then, click the **Submit** button once you reviewed the configuration. Once your deployment is complete, click **Go to resource** button.
 
-And then on the next page as shown below, click **Explore Azure AI Studio** button (or you can also click the **Go to Azure AI Studio** links tab on the upper left).
+And then on the next page as shown below, click **Explore Azure AI Foundry portal** button (or you can also click the **Go to Azure AI Foundry portal** links tab on the upper left).
 
-![Azure-OpenAI-Studio](images/azure-openai-studio.png)
+![Azure-OpenAI-Portal](images/azure-openai-portal.png)
 <br />
 
 
-And once you're redirected to the **Azure OpenAI Studio** page as shown below, click **Model catalog** tab from the sidebar navigation on the left side.
+And once you're redirected to the **Azure OpenAI Foundry portal** page as shown below, click **Model catalog** tab from the sidebar navigation on the left side.
 
 ![Create-Deployment](images/create-deployment.png)
 <br />
