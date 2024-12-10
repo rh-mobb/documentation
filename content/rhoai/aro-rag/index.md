@@ -16,12 +16,12 @@ Here we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385
 
 ## 2. Prerequisites
 
-* An ARO cluster (>= version 4.15)   
+1. An ARO cluster (>= version 4.15)   
 - You can deploy it [manually](https://cloud.redhat.com/experts/quickstart-aro/) or using [Terraform](https://cloud.redhat.com/experts/aro/terraform-install/).   
 - I tested this using ARO version 4.15.27 with `Standard_D16s_v3` instance size for both the control plane and the worker nodes.
 
 
-* RHOAI operator  
+1. RHOAI operator  
 - You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/).   
 - I tested this tutorial using RHOAI version 2.13.1.
 
@@ -63,10 +63,12 @@ Step 0: Installing required packages and importing necessary libraries
 """
 !pip install --upgrade pip
 
-!pip uninstall -y torch torchvision torchaudio
-# You can skip this if this is your first torch installation
+!pip uninstall -y torch torchvision torchaudio keras tensorflow tensorflow-cpu tensorflow-io tensorflow-estimator sentence-transformers transformers tokenizers langchain langchain-community langchain-huggingface ipywidgets pydantic codeflare-sdk accelerate
+# You can skip this if this is your first run
 
 !pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+!pip install tf-keras tensorflow
 
 !pip install -q wget \
     accelerate \
