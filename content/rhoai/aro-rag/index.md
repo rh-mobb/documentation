@@ -21,7 +21,7 @@ Here we will create a chatbot using [TinyLlama](https://arxiv.org/abs/2401.02385
 - I tested this using ARO version 4.15.27 with `Standard_D16s_v3` instance size for both the control plane and the worker nodes.
 
 
-1. RHOAI operator  
+2. RHOAI operator  
 - You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/).   
 - I tested this tutorial using RHOAI version 2.13.1.
 
