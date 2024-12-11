@@ -1,6 +1,6 @@
 ---
 date: '2024-12-10'
-title: Creating RAG Chatbot using TinyLlama and LangChain APIs on Red Hat OpenShift AI on ARO cluster
+title: Creating RAG Chatbot using TinyLlama and LangChain with Red Hat OpenShift AI on ARO
 tags: ["ARO", "RHOAI", "Jupyter", "RAG", "Chatbot", "TinyLlama", "LangChain"]
 authors:
   - Diana Sari
