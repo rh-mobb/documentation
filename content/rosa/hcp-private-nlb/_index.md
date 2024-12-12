@@ -117,14 +117,6 @@ rosa describe cluster -c kmc-private -o json | jq -r '.api.url'
 ```bash
 oc create secret tls $CERT_NAME --key=config/live/${DOMAIN}/privkey.pem --cert=config/live/${DOMAIN}/fullchain.pem -n openshift-ingress
 ```
-### Add Domain certificates to AWS ACM
-
-When we create a listener for the public load balancer, we will add a certificate to the listener.  Adding a certificate to an AWS Network Load Balancer listener enables encrypted, authenticated connections, enhancing security and compliance by protecting data in transit.
-
-```bash
-    export CERT_ARN=$(aws acm import-certificate --certificate fileb://config/live/${DOMAIN}/cert.pem --private-key fileb://config/live/${DOMAIN}/privkey.pem --certificate-chain fileb://config/live/${DOMAIN}/fullchain.pem --region us-east-1 | jq -r '.CertificateArn' )
-    echo $CERT_ARN 
-```
 
 ### Create an additional IngressController
 
