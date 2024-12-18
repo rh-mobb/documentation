@@ -26,7 +26,7 @@ In this guide, we’ll use Terraform to create a VPC to house our cluster, and w
 
 Clone the terraform git repository and `cd` into it:
 ```bash
-git clone https://github.com/andykrohg/rosa-govcloud-quickstart
+git clone https://github.com/openshift/rosa-govcloud-quickstart
 cd rosa-govcloud-quickstart
 ```
 
