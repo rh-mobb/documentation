@@ -1,7 +1,7 @@
 ---
 date: '2025-01-20'
 title: Add an Ingress Controller to an OSD GCP Cluster and optionally with a custom domain. 
-tags: ["AWS", "OSD", "GCP"]
+tags: ["OSD", "GCP"]
 authors:
   - Kevin Collins
 ---
@@ -59,9 +59,6 @@ oc create secret tls ${DOMAIN_DASH}-tls-cert --key=/Users/kevincollins/tmp/masco
    export INGRESS_NAME=public-ingress #name of the new ingress controller
    export CERT_NAME=${DOMAIN_DASH}-tls-cert
    export SCOPE="External" 
-   export AWS_PAGER=""
-   # export HOSTED_ZONE_ID=ABCDEFGHEXAMPLE
-   # export HOSTED_ZONE_REGION=us-east-2
    export SCRATCH_DIR=/tmp/scratch
    mkdir -p $SCRATCH_DIR
    ```
