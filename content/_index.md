@@ -105,6 +105,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore)
 * [Limit Egress with Google Cloud NGFW Standard](/experts/gcp/cloud-ngfw)
 * [Install Maximo Application Suite on Red Hat OpenShift Dedicated on GCP with automation](/experts/gcp/mas/)
+* [Add an Ingress Controller to OpenShift Dedicated on GCP with a custom domain](/experts/gcp/ingress-controller)
 
 ## Layered Products
 
