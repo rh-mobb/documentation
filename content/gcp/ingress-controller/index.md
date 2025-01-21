@@ -10,7 +10,7 @@ Starting with OpenShift 4.14, OSD GCP supports adding additional Ingress Control
 
 ## Prerequisites
 
-* A Red Hat OpenShift Dedicated on GCP (OSD GCP) cluster
+* A Red Hat OpenShift Dedicated on GCP (OSD GCP) cluster, version 4.14 or above
 * The oc CLI      #logged in.
 
 ## Set up environment
@@ -19,7 +19,7 @@ Starting with OpenShift 4.14, OSD GCP supports adding additional Ingress Control
 > **Important**: The variables below can be customized to fit your needs for your ingress controller.
 
 ```bash
-export DOMAIN=lab.domain.com   #Custom Hosted Zone Domain for apps 
+export DOMAIN=example.com   #Custom Hosted Zone Domain for apps 
 export DOMAIN_DASH=$(echo $DOMAIN | tr . -)
 export EMAIL=you@domain.com   #Optional - your email address if you are generating your own certificate
 ```
@@ -127,7 +127,7 @@ oc create secret tls ${DOMAIN_DASH}-tls-cert --key=/Users/kevincollins/tmp/masco
   router-public-7dd48fdcbb-cn7hb    1/1     Running   0          4m20s
   ```
 
-### Create a Route 53 entry for the new domain / network load balancer
+### Create a DNS entry for the new domain / network load balancer
 
 Get the NLB environment variables:
    ```bash
