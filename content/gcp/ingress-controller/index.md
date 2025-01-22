@@ -139,7 +139,7 @@ Get the NLB environment variables:
   Create an A name record in your DNS settings, pointing the domain to the IP address of the newly created public load balancer.
   
   Example:
-  ![DNS Settings](hello-openshift.png)
+  ![DNS Settings](dns-setings.png)
   
 
 ## Test an application.
