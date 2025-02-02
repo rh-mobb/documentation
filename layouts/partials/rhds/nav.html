@@ -1,0 +1,27 @@
+<rh-navigation-secondary role="navigation">
+  <a href="/experts/" slot="logo" id="logo-id">
+    Cloud Experts Documentation
+  </a>
+  <ul slot="nav" aria-labelledby="logo-id">
+    <li>
+      <a href="/experts/rosa/" slot="link">Red Hat OpenShift Service on AWS</a>
+    </li>
+    <li>
+      <a href="/experts/aro/" slot="link">Azure Red Hat OpenShift</a>
+    </li>
+    <li>
+      <rh-navigation-secondary-dropdown>
+        <a href="#dropdown-fallback-url" slot="link">OpenShift Dedicated</a>
+        <rh-navigation-secondary-menu slot="menu">
+          <ul>
+            <li><a href="/experts/gcp/">OpenShift Dedicated on GCP</a></li>
+            <li><a href="#">OpenShift Dedicated on AWS</a></li>
+          </ul>
+        </rh-navigation-secondary-menu>
+      </rh-navigation-secondary-dropdown>
+    </li>
+    <li>
+      <a href="/experts/redhat/" slot="link">Other Products</a>
+    </li>
+  </ul>
+</rh-navigation-secondary>

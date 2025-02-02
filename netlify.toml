@@ -1,0 +1,148 @@
+[build]
+  publish = "public"
+  command = "hugo --gc --minify && cp public/experts/_redirects public/_redirects"
+
+  [build.environment]
+    HUGO_VERSION = "0.118.2"
+
+[context.production.environment]
+  HUGO_ENV           = "production"
+  HUGO_ENABLEGITINFO = "true"
+
+[context.split1]
+  command = "hugo --gc --minify --enableGitInfo && cp public/experts/_redirects public/_redirects"
+
+  [context.split1.environment]
+    HUGO_ENV = "production"
+
+[context.deploy-preview]
+  command = "hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  
+  [context.deploy-preview.environment]
+    HUGO_ENV           = "staging"
+
+[context.branch-deploy]
+  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+
+[context.next.environment]
+  HUGO_ENABLEGITINFO = "true"
+
+# Ensure redirect from mobb.ninja to cloud.redhat.com/experts (/docs first to prevent unnecessary double redirects)
+[[redirects]]
+from = "https://mobb.ninja/docs/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "http://mobb.ninja/docs/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "https://mobb.ninja/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+[[redirects]]
+from = "http://mobb.ninja/*"
+to = "https://cloud.redhat.com/experts/:splat"
+status = 301
+
+# Ensure redirect from / to /experts/ if user doesn't land on redhat.com domain
+[[redirects]]
+from = "/"
+to = "/experts/"
+status = 301
+
+# Ensure redirect from /docs/ to /experts/ to preserve previous links continue to function
+[[redirects]]
+from = "/docs/*"
+to = "/experts/:splat"
+status = 301
+
+# Redirect old Private Link tag to new PrivateLink tag
+[[redirects]]
+from = "/experts/tags/private-link/"
+to = "/experts/tags/privatelink/"
+status = 301
+force = true
+
+# The below are redirects to official product docs
+[[redirects]]
+from = "/experts/rosa/prereq-list/"
+to = "https://docs.openshift.com/rosa/rosa_planning/rosa-cloud-expert-prereq-checklist.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/clf-cloudwatch-sts/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-rosa-cloudwatch-sts.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/verify-permissions/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-verify-permissions-sts-deployment.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/misc/oadp/rosa-sts/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-deploy-api-data-protection.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/waf/cloud-front/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-cloudfront-and-waf.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/aws-secrets-manager-csi/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-aws-secret-manager.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/idp/group-claims/rosa/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-entra-id-idp.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/idp/azuread/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-entra-id-idp.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/waf/alb/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-alb-and-waf.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/ack/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-aws-ack.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/aro/managed-upgrade-operator/"
+to = "https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade"
+status = 301
+force = true
+
+
+[[redirects]]
+from = "/experts/rosa/customizing-console-route/"
+to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-update-component-routes.html"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/misc/tls-cipher-customization/"
+to = "https://docs.openshift.com/rosa/networking/ingress-operator.html#configuring-ingress-controller-tls"
+status = 301
+force = true

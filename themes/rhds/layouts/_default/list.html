@@ -1,0 +1,11 @@
+{{ define "main" }}
+  <section class="list">
+    {{- partial "breadcrumbs.html" . }}
+    <h1 class="h2">{{ .Title }}</h1>
+    {{ .Content }}
+    {{ range .Pages }}
+      <h2 class="h4"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+      {{ .Summary }}
+    {{ end }}
+  </section>
+{{ end }}

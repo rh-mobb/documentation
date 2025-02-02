@@ -1,0 +1,23 @@
+<script type="module">
+  import '@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js';
+  import '@rhds/elements/rh-footer/rh-footer.js';
+  import '@rhds/elements/rh-cta/rh-cta.js';
+  import '@rhds/elements/rh-alert/rh-alert.js';
+  import '@rhds/elements/rh-tag/rh-tag.js';
+
+  import '@patternfly/elements/pf-tooltip/pf-tooltip.js';
+  import '@patternfly/elements/pf-button/pf-button.js';
+</script>
+
+{{- with resources.Get "js/main.js" }}
+  {{- if not hugo.IsProduction }}
+    {{- with . | js.Build }}
+<script defer src="{{ .RelPermalink }}"></script>
+    {{- end }}
+  {{- else }}
+    {{- $opts := dict "minify" true }}
+    {{- with . | js.Build $opts | fingerprint }}
+<script defer src="{{ .RelPermalink }}" integrity="{{- .Data.Integrity }}" crossorigin="anonymous"></script>
+    {{- end }}
+  {{- end }}
+{{- end }}

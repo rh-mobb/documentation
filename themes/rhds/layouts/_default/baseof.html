@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="{{ or site.Language.LanguageCode site.Language.Lang }}" dir="{{ or site.Language.LanguageDirection `ltr` }}">
+<head>
+  {{ partial "head.html" . }}
+</head>
+<body>
+  {{ partial "rhds/header.html" . }}
+  {{ partial "rhds/nav.html" .}}
+  {{ block "hero" . }}{{ end }}
+  <main>
+    {{ block "main" . }}{{ end }}
+  </main>
+  {{ partial "collaborate.html" . }}
+  {{ partial "rhds/footer.html" .}}
+  {{ partial "eddl/page-load-completed.html" . }}
+</body>
+</html>
