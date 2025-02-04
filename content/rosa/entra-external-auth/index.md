@@ -452,4 +452,4 @@ Groups      [0000000000000000 system:authenticated]
 ```
 
 ### Revoke break glass credential
-Revoking break-glass credentials in OpenShift is crucial for security and compliance. These credentials are typically highly privileged, providing full administrative access to the cluster. Upon setting up external authentication with cluster administrator credentials, the break-glass credential should be revoked. Refer to [documentation](https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-sts-creating-a-cluster-ext-auth.html?utm_source=chatgpt.com#rosa-hcp-sts-revoking-a-break-glass-cred-cli_rosa-hcp-sts-creating-a-cluster-ext-auth) on revoking break-glass credential 
+Break glass credentials are highly privileged, providing full administrative access to the cluster. Once you've completed the setup of your external authentication provider, you should revoke the break glass credential. Refer to [the ROSA documentation](https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-sts-creating-a-cluster-ext-auth.html?utm_source=chatgpt.com#rosa-hcp-sts-revoking-a-break-glass-cred-cli_rosa-hcp-sts-creating-a-cluster-ext-auth) on how to revoke a break glass credential.
