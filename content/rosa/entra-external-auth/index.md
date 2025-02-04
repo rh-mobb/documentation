@@ -122,7 +122,7 @@ From the above example, these are variables we will use next.
 | :--------- | :---------------------------|
 | `--cluster` | cluster-name | 
 | `--name` | Application name from Step 1 in "Register a new application in Microsoft Entra ID"
-| `--issuer-url` | https://login.microsoftonline.com/<tenant-id>/v2.0 |  
+| `--issuer-url` | https://login.microsoftonline.com/${TENANT_ID}/v2.0 |  
 | `--issuer-audiences` | Application ID from Step 1 in "Register a new application in Microsoft Entra ID" | 
 | `--claim-mapping-username-claim` | email | 
 | `--claim-mapping-groups-claim` | groups | 
@@ -171,12 +171,12 @@ I: Successfully created a break glass credential for cluster 'cluster-name'.
 I: To retrieve only the kubeconfig for this credential use: 'rosa describe break-glass-credential abcdefg123456789 -c cluster-name --kubeconfig'
 ```
 
-Save the kubeconfig file that will allow you to log into the cluster with the breakglass credentials just created.
+Save the kubeconfig file that will allow you to log into the cluster with the break glass credential created.
 
 ```bash
 rosa describe break-glass-credential <BREAK_GLASS_CREDENTIAL_ID> -c ${ROSA_CLUSTER_NAME} --kubeconfig > rosa-cluster.kubeconfig
 ```
-Validate that rosa-cluster.kubeconfig is populated. Your file should look like this:
+Validate that the `rosa-cluster.kubeconfig` is populated. Your file should look like this:
 
 ```
 apiVersion: v1
@@ -340,15 +340,14 @@ users:
       env: null
       interactiveMode: Never
 ```
-Set the KUBECONFIG environment variable to the location of the rosa-cluster.kubeconfig file which will enable the OpenShift CLI to authenticate against the ROSA cluster with the contents of the file.
+Set the `KUBECONFIG` environment variable to the location of the `rosa-cluster.kubeconfig` file. This will configure the OpenShift CLI to authenticate against the ROSA cluster with the OIDC client.
 
-To confirm that the identity details from the OIDC token is being used by the OpenShift CLI:
 
 ```bash
 export KUBECONFIG=$(pwd)/rosa-auth.kubeconfig
 ```
 
-Confirm access to cluster with elevated priviledges
+Confirm your access to the cluster by running the following command:
 
 ```bash
 oc get nodes
@@ -361,20 +360,20 @@ ip-10-0-0-170.ec2.internal   Ready    worker   3h29m   v1.30.7
 ip-10-0-1-171.ec2.internal   Ready    worker   3h30m   v1.30.7
 ip-10-0-2-161.ec2.internal   Ready    worker   3h29m   v1.30.7
 ```
-To verify logged in as user of group run
+To verify you are logged in as user of the group, run the following command:
 
 ```bash
 oc auth whoami
 ```
 ### Validate access to the cluster's API using device-code authentication 
 
-Note: Using device-code authentication is when you are authenticating from somewhere that doesn't have a web browser. The --token-cache-storage=disk parameter is used when a client machine lacks keyring. 
+Note: Using device-code authentication is when you are authenticating from somewhere that doesn't have a web browser. The `--token-cache-storage=disk` parameter is necessary when the command is run from a machine that does not have a keyring.
 
-Click on the "Authentication" on your Entra ID and Enable Public flows in Advanced section of the page
+Click on the "Authentication" blade in the Microsoft Entra ID app registration and Enable Public flows in the Advanced section of the page.
 
 ![Azure Portal - Enable Public flows Authentication Page](./images/azure-portal-allow-public-flows.png)
 
-Create a **rosa-auth-headless.kubeconfig** file containing Entra ID authentication details and cluster API.
+Create a `rosa-auth-headless.kubeconfig` file containing your Microsoft Entra ID authentication details and the cluster's API server.
 
 ```bash
 apiVersion: v1
@@ -411,9 +410,7 @@ users:
       env: null
       interactiveMode: Never
 ```
-Set the `KUBECONFIG` environment variable to the location of the `rosa-cluster.kubeconfig` file which will enable the OpenShift CLI to authenticate against the ROSA cluster with the contents of the file.
-
-To confirm that the identity details from the OIDC token is being used by the OpenShift CLI:
+Set the `KUBECONFIG` environment variable to the location of the `rosa-cluster.kubeconfig` file. This will configure the OpenShift CLI to authenticate against the ROSA cluster with the OIDC client.
 
 ```bash
 export KUBECONFIG=$(pwd)/rosa-auth-headless.kubeconfig
@@ -438,7 +435,7 @@ ip-10-0-0-170.ec2.internal   Ready    worker   3h29m   v1.30.7
 ip-10-0-1-171.ec2.internal   Ready    worker   3h30m   v1.30.7
 ip-10-0-2-161.ec2.internal   Ready    worker   3h29m   v1.30.7
 ```
-To verify logged in as user of group run
+To verify you are logged in as user of the group, run the following command:
 
 ```bash
 oc auth whoami
