@@ -1,4 +1,5 @@
 ---
+## Content migrated to product documentation: https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-aws-private-creating-cluster.html#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster
 date: "2024-09-10"
 title: "Configuring ROSA with HCP Private Cluster API Access"
 tags: ["AWS", "ROSA", "ROSA with HCP"]
