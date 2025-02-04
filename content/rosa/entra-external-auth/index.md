@@ -419,7 +419,7 @@ To confirm that the identity details from the OIDC token is being used by the Op
 export KUBECONFIG=$(pwd)/rosa-auth-headless.kubeconfig
 ```
 
-Confirm access to cluster
+Confirm your access to the cluster by running the following command:
 
 ```bash
 oc get nodes
