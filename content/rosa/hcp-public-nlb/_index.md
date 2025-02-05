@@ -12,23 +12,31 @@ This document provides guidance on using a public AWS Network Load Balancer (NLB
 
 ## Pre-requisites
 
-1. You will need a A Private ROSA HCP Cluster (see [Deploying ROSA HCP with Terraform or ROSA CLI](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-hcp.html) if you need help creating one).  
+1. You will need a A Private ROSA HCP Cluster (see [Deploying ROSA HCP documentation](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-hcp.html)).  
 
 2. In this example we will use Entra ID as external authentication for ROSA HCP cluster (see [Configuring Microsoft Entra ID as an external authentication provider](https://cloud.redhat.com/experts/rosa/entra-external-auth))
 
 
 3. (Optional) Launch an Jump Host EC2 instance in Public NLB VPC
-This guide requires connectivity to the cluster, because we are using a private cluster you will need to ensure your workstation is connected to the AWS VPC which hosts the ROSA cluster.   If you already have this connectivity through a VPN, Direct Link or other method you can skip this part.  
-
-If you do need to establish connectivity to the cluster [these instructions](./rosa-private-nlb-jumphost) will guide you through creating a jump host on the public subnet of the ROSA cluster.
+This guide requires connectivity to the cluster, because we are using a private cluster you will need to ensure your workstation is connected to the AWS VPC which hosts the ROSA cluster.   If you already have this connectivity through a VPN, Direct Link or other method you can skip this part. If you do need to establish connectivity to the cluster [these instructions](./rosa/hcp-private-nlb/rosa-private-nlb-jumphost) will guide you through creating a jump host on the public subnet of the ROSA cluster.
 
 ## Create security group, target group and network load balancer in AWS subscription
 
 Once ROSA HCP cluster is installed with external authentication as Entra ID we need to set additional security group to grant access outside the VPC, create target group and NLB.
 
-#### AWS security groups to the AWS PrivateLink endpoint
+#### AWS security groups for NLB
 
-When using ROSA with HCP clusters, the AWS PrivateLink endpoint in your VPC is secured by a security group that only allows access from within the cluster's Machine CIDR range. To allow access from outside the VPC you need to create and attach an additional security group to the PrivateLink endpoint to grant the necessary external access. Refer to [ROSA documentation](https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-aws-private-creating-cluster.html#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster)
+##### Create a Security Group:
+ - Navigate to the **Security Groups** section in the AWS console  click **Create security group**.
+ - **Name tag**: Give your security group a name. Select the VPC that your Network Load Balancer is in.**Click Create**.
+ - **Modify Inbound Rules** Select the newly created security group from the list. Go to the **Inbound rules** tab and click **Edit inbound rules**. Add a new inbound rule with the following settings:
+
+- **Type**: Choose the appropriate protocol for your NLB (e.g., HTTP, HTTPS, or TCP, depending on the service you're exposing).
+- **Protocol**: Choose the protocol for your NLB (TCP is commonly used for NLBs).
+- **Port Range**: Specify the port your NLB is listening on (e.g., 80 for HTTP, 443 for HTTPS).
+- **Source**: 
+  - Choose **My IP** to allow access from your current IP address.
+  - Alternatively, specify a custom IP range in CIDR format (e.g., `192.x.x.x/24` for a specific subnet).
 
 example output of AWS console :
 
@@ -92,7 +100,7 @@ Here’s a step-by-step guide for creating a Network Load Balancer (NLB) and con
 
 ##### 5. **Update Route 53**:
    - **Create a Record**: In **Amazon Route 53**, create a new DNS **record** pointing to the NLB's **DNS name**.
-     - The record should match the **domain name** for which the ACM certificate was issued (e.g., `api.example.com`).
+     - The record should match the  **domain name** for which the ACM certificate was issued (e.g., `api.example.com`).
      - Use the **Alias** record type to point to the NLB. AWS provides the DNS name of your NLB, which you can directly map to the record.
 
 This setup will ensure that traffic is routed securely from the internet to your API, leveraging the NLB to distribute traffic to your backend resources.
@@ -103,7 +111,8 @@ example output of AWS console :
 
 #### Validate connection to NLB
 
-Validate that you can access the NLB from your machine using **domain name**. For example 
+Validate that you can access the NLB from your machine using **nlb domain name**. For example `nlb-domain-name=https://api.example.com`
+
 
 ```bash
 curl https://api.example.com/version
@@ -113,57 +122,6 @@ example output:
 
 ```bash
 [ec2-user@ipaddress ~]$ curl -v https://api.example.com/version
-*   Trying 44.241.175.135:443...
-* Connected to api.example.com (44.241.175.135) port 443 (#0)
-* ALPN, offering h2
-* ALPN, offering http/1.1
-*  CAfile: /etc/pki/tls/certs/ca-bundle.crt
-* TLSv1.0 (OUT), TLS header, Certificate Status (22):
-* TLSv1.3 (OUT), TLS handshake, Client hello (1):
-* TLSv1.2 (IN), TLS header, Certificate Status (22):
-* TLSv1.3 (IN), TLS handshake, Server hello (2):
-* TLSv1.2 (IN), TLS header, Finished (20):
-* TLSv1.2 (IN), TLS header, Unknown (23):
-* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
-* TLSv1.2 (IN), TLS header, Unknown (23):
-* TLSv1.3 (IN), TLS handshake, Certificate (11):
-* TLSv1.2 (IN), TLS header, Unknown (23):
-* TLSv1.3 (IN), TLS handshake, CERT verify (15):
-* TLSv1.2 (IN), TLS header, Unknown (23):
-* TLSv1.3 (IN), TLS handshake, Finished (20):
-* TLSv1.2 (OUT), TLS header, Finished (20):
-* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
-* TLSv1.2 (OUT), TLS header, Unknown (23):
-* TLSv1.3 (OUT), TLS handshake, Finished (20):
-* SSL connection using TLSv1.3 / TLS_AES_128_GCM_SHA256
-* ALPN, server did not agree to a protocol
-* Server certificate:
-*  subject: CN=api.example.com
-*  start date: Jan 27 00:00:00 2025 GMT
-*  expire date: Feb 25 23:59:59 2026 GMT
-*  subjectAltName: host "api.example.com" matched cert's "api.example.com"
-*  issuer: C=US; O=Amazon; CN=Amazon RSA 2048 M03
-*  SSL certificate verify ok.
-* TLSv1.2 (OUT), TLS header, Unknown (23):
-> GET /version HTTP/1.1
-> Host: api.example.com
-> User-Agent: curl/7.76.1
-> Accept: */*
-> 
-* TLSv1.2 (IN), TLS header, Unknown (23):
-* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
-* TLSv1.2 (IN), TLS header, Unknown (23):
-* Mark bundle as not supporting multiuse
-< HTTP/1.1 200 OK
-< Audit-Id: 403d5313-4774-43a1-bdf6-d54ef2b4d48f
-< Cache-Control: no-cache, private
-< Content-Type: application/json
-< Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-< X-Kubernetes-Pf-Flowschema-Uid: 22baa61b-d99d-42cc-9f6e-31fafb5fca8c
-< X-Kubernetes-Pf-Prioritylevel-Uid: abc60498-d4a2-4242-b207-bd6f381c055c
-< Date: Tue, 28 Jan 2025 21:40:58 GMT
-< Content-Length: 293
-< 
 {
   "major": "1",
   "minor": "28",
@@ -174,10 +132,14 @@ example output:
   "goVersion": "go1.20.12 X:strictfipsruntime",
   "compiler": "gc",
   "platform": "linux/amd64"
-* Connection #0 to host api.example.com left intact
+}
 ```
 
 #### Validate connection to ROSA HCP cluster's API
+
+```bash
+export nlb-domain-name=https://api.example.com
+```
 
 create a KUBECONFIG file here with EntraID details for example create **rosa-auth.kubeconfig** file with following information
 
@@ -185,7 +147,7 @@ create a KUBECONFIG file here with EntraID details for example create **rosa-aut
 apiVersion: v1
 clusters:
 - cluster:
-    server: ${domain.name}
+    server: ${nlb-domain-name}:443
   name: cluster
 contexts:
 - context:
