@@ -18,7 +18,7 @@ This document provides guidance on using a public AWS Network Load Balancer (NLB
 
 
 3. (Optional) Launch an Jump Host EC2 instance in Public NLB VPC
-This guide requires connectivity to the cluster, because we are using a private cluster you will need to ensure your workstation is connected to the AWS VPC which hosts the ROSA cluster.   If you already have this connectivity through a VPN, Direct Link or other method you can skip this part. If you do need to establish connectivity to the cluster [these instructions](./rosa/hcp-private-nlb/rosa-private-nlb-jumphost) will guide you through creating a jump host on the public subnet of the ROSA cluster.
+This guide requires connectivity to the cluster, because we are using a private cluster you will need to ensure your workstation is connected to the AWS VPC which hosts the ROSA cluster.   If you already have this connectivity through a VPN, Direct Link or other method you can skip this part. If you do need to establish connectivity to the cluster [these instructions](https://cloud.redhat.com/experts/rosa/hcp-private-nlb/rosa-private-nlb-jumphost/) will guide you through creating a jump host and connectto the ROSA HCP cluster.
 
 ## Create security group, target group and network load balancer in AWS subscription
 
@@ -30,7 +30,6 @@ Once ROSA HCP cluster is installed with external authentication as Entra ID we n
  - Navigate to the **Security Groups** section in the AWS console  click **Create security group**.
  - **Name tag**: Give your security group a name. Select the VPC that your Network Load Balancer is in.**Click Create**.
  - **Modify Inbound Rules** Select the newly created security group from the list. Go to the **Inbound rules** tab and click **Edit inbound rules**. Add a new inbound rule with the following settings:
-
 - **Type**: Choose the appropriate protocol for your NLB (e.g., HTTP, HTTPS, or TCP, depending on the service you're exposing).
 - **Protocol**: Choose the protocol for your NLB (TCP is commonly used for NLBs).
 - **Port Range**: Specify the port your NLB is listening on (e.g., 80 for HTTP, 443 for HTTPS).
@@ -141,7 +140,9 @@ example output:
 export nlb-domain-name=https://api.example.com
 ```
 
-create a KUBECONFIG file here with EntraID details for example create **rosa-auth.kubeconfig** file with following information
+create a KUBECONFIG file here with EntraID details for [ROSA HCP cluster with external auth enabled](https://cloud.redhat.com/experts/rosa/entra-external-auth).
+
+example create **rosa-auth.kubeconfig** file with following information
 
 ```bash
 apiVersion: v1
