@@ -1,7 +1,7 @@
 ---
 date: '2025-02-07'
-title: Deploying ROSA in STS mode
-tags: ["AWS", "ROSA", "STS"]
+title: Deploying ROSA Hosted Control Plane
+tags: ["AWS", "ROSA","ROSA HCP" "STS"]
 weight: 1
 aliases: ["/experts/quickstart-rosa-hcp.md"]
 
