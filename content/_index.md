@@ -7,7 +7,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 ## Quickstarts / Getting Started
 * [Red Hat OpenShift on AWS (ROSA)](/experts/rosa/sts/)
-* [ROSA with Hosted Control Plane (HCP)](/experts/rosa/hcp-sts/)
+* [ROSA with Hosted Control Plane (HCP)](/experts/rosa/hcp-rosa/)
 * [Azure Red Hat OpenShift (ARO)](/experts/quickstart-aro/)
 
 ## ROSA
