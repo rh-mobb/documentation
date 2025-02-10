@@ -29,7 +29,7 @@ Once the ROSA HCP cluster is installed with external authentication using Entra 
 Navigate to the **Security Groups** section in the AWS console  click on **Create security group**.
 
   - **Name tag**: Give your security group a name. Select the VPC in which your Network Load Balancer is in.**Click Create**.
-  - **Modify Inbound Rules** Select the newly created security group from the list. Navigate to the **Inbound rules** tab and click **Edit inbound rules**. Add a new inbound rule with the following settings:
+  - **Modify Inbound rules** Select the newly created security group from the list. Navigate to the **Inbound rules** tab and click **Edit Inbound rules**. Add a new inbound rule with the following settings:
   - **Type**: Choose the appropriate protocol for your NLB (e.g., HTTP, HTTPS, or TCP, depending on the service you're exposing).
   - **Protocol**: Choose the protocol for your NLB (TCP is commonly used for NLBs).
   - **Port Range**: Specify the port on which your NLB is listening on (e.g., 80 for HTTP, 443 for HTTPS).
