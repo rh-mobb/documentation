@@ -1,10 +1,7 @@
 ---
 date: '2025-02-07'
 title: Deploying ROSA Hosted Control Plane
-tags: ["AWS", "ROSA","ROSA HCP" "STS"]
-weight: 1
-aliases: ["/experts/quickstart-rosa-hcp.md"]
-
+tags: ["AWS", "ROSA","ROSA HCP","STS"]
 authors:
   - Nerav Doshi
 ---
@@ -22,7 +19,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
 In this section we will deploy a ROSA cluster using Hosted Control Planes (HCP).
 
-ROSA HCP introduces the ability to separate the control plane from the data plane (worker nodes). This new deployment model for ROSA involves hosting the control plane within a Red Hat-managed AWS account, rather than within your own AWS account. As a result, you no longer need to manage and pay for the infrastructure associated with the control plane in your AWS environment, leading to reduced costs for your AWS resources. Additionally, the control plane is dedicated to a single OpenShift cluster, ensuring high availability and resilience for your workloads.. See the documentation for more about [Hosted Control Planes.](https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-sts-creating-a-cluster-quickly.html)
+ROSA HCP introduces the ability to separate the control plane from the data plane (worker nodes). This new deployment model for ROSA involves hosting the control plane within a Red Hat-managed AWS account, rather than within your own AWS account. As a result, you no longer need to manage and pay for the infrastructure associated with the control plane in your AWS environment, leading to reduced costs for your AWS resources. Additionally, the control plane is dedicated to a single OpenShift cluster, ensuring high availability and resilience for your workloads. See the documentation for more about [Hosted Control Planes.](https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-sts-creating-a-cluster-quickly.html)
 
 ## Prerequisites
 
