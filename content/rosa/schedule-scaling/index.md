@@ -6,6 +6,7 @@ authors:
   - Kevin Collins
 ---
 
+
 One of the key benefits of Red Hat OpenShift Service on AWS (ROSA) is its ability to scale efficiently, ensuring you only pay for the resources you actually need. While ROSA includes autoscaling features that adjust cluster size based on demand, you can further optimize costs by scheduling scaling during off-peak hours when the cluster isn’t heavily used. This helps reduce expenses without impacting performance.
 
 In this guide, we’ll show you how to schedule scaling in ROSA, allowing your cluster to automatically adjust its size based on a predefined schedule. You'll learn how to schedule scale-downs during periods of low activity and scale-ups when additional resources are required, ensuring both cost efficiency and optimal performance.
@@ -21,6 +22,7 @@ The following three CLIs need to be installed and logged into.
 * rosa cli 
 * aws cli
 * podman cli
+* jq
 <br>
 
 > Note: You must log into your ROSA cluster via your oc cli before going through the following steps.
@@ -58,7 +60,7 @@ workers-1  No           7/7       m5.xlarge                          us-east-1c 
 workers-2  No           2/2       m5.xlarge                          us-east-1b         subnet-0dfb05d8b5e946048  300 GiB    4.16.6   Yes
 ```
 
-For this guide, we will use the first machine pool *workers-01*
+For this guide, we will use the first machine pool *workers-0*
 
 Set the machine pool you want to scale and the minimum and maximum number of replicas as an environment variables.
 
@@ -104,7 +106,7 @@ Finally, on the last step, click on Submit and this will create the service acco
 Next, log into rosa using the client-id and client-secret you generated in the previous step.
 
 ```bash
-rosa login --client-id f9f0ed00-7f67-45dd-a240-03ed9f8d44ab --client-secret Fwkq4wWoJPLvE0Yef7IIABMZFHnChfrE
+rosa login --client-id f9f0ed0...ab --client-secret Fwkq4wWo...rE
 ```
 
 example output
@@ -125,7 +127,7 @@ example output
 rosa token
 W: The current version (1.2.47) is not up to date with latest rosa cli released version (1.2.50).
 W: It is recommended that you update to the latest version.
-eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJPVGlSTVlBNXp5VHItUjVGcmlGU2dTUFNibDUzeXBUYmdGdnpCSU4waV9NIn0.eyJleHAiOjE3NDA1ODAyMTUsImlhdCI6MTc0MDU3OTMxNSwianRpIjoiZThhYjQ3YTgtMWNkNS00ZmM2LWJkODUtZjk1YzAwNDIyOTdmIiwiaXNzIjoiaHR0cHM6Ly9zc28ucmVkaGF0LmNvbS9hdXRoL3JlYWxtcy9yZWRoYXQtZXh0ZXJuYWwiLCJzdWIiOiI1M2MxYWJhMy00OTYxLTRiYTgtOTVkNi05NzcwNmEwMjZiYzYiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJmOWYwZWQwMC03ZjY3LTQ1ZGQtYTI0MC0wM2VkOWY4ZDQ0YWIiLCJzY29wZSI6Im9wZW5pZCIsImNsaWVudEhvc3QiOiIyMy40NC4xNzAuMTMiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInJoLXVzZXItaWQiOiI1NTAzNTM3OCIsInJoLW9yZy1pZCI6IjE0NTQwNDkzIiwicHJlZmVycmVkX3VzZXJuYW1lIjoic2VydmljZS1hY2NvdW50LWY5ZjBlZDAwLTdmNjctNDVkZC1hMjQwLTAzZWQ5ZjhkNDRhYiIsImNsaWVudEFkZHJlc3MiOiIyMy40NC4xNzAuMTMiLCJjbGllbnRfaWQiOiJmOWYwZWQwMC03ZjY3LTQ1ZGQtYTI0MC0wM2VkOWY4ZDQ0YWIifQ.r0Rj09WPOCxVRs8-EDCUH5X8jmhD6lIPUq4yk-qJtxptdrl9vBRuTBnk95wasblENPyZSRqJS1B0RIT2wpI6SVaejLhODJfEmCnmM9oTwjHkRBJKeR2yElkyaLIL3gslRlMr9Z9qkjRjOQyqxUOs_bxDwM6ZseQ-_9JHn5QuaLAhdxynVNwYY-Wn4JaiRueo5ThEhnXJ8jIGfUIOKXvzyZKtbcLmLOfmx1q6y_tXKgxkRpfdcGG4mm3a6kNkFydKuaC-_r1MQCbbr_MdMk-1-wgin-YhV4OIPTb2DzlI1O_qIhUQQtqpGf15Ie1V-iE42Tiyusuxh1QovIZBrfqOim3Gms1Zvu2DpEsBvws2_Mgf1FHH83TLzZS44LQ_4IeQj_omcpNs03Gr4VIQ8bGWfOWQvF8ldRW3Ii14ZqnWR_YMncyiocrFwq72KBU1hjtFMuGuDLsb0G44u_g
+eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSl...
 ```
 
 Set the output to an environment variable
@@ -183,7 +185,7 @@ One of the standout features of ROSA is its integration with AWS STS, enabling f
 
 ## Create OpenShift cronjob to schedule scaling
 
-To schedule scaling of the worker nodes, we will create 2 cronjobs which will control when the cluster will be schedule to be scaled up and scaled down.  The cronjob will leverage an image that contains the ROSA cli to adjust the machine pool sizes.
+To schedule scaling of the worker nodes, we will create 2 cronjobs which will control when the cluster will be scheduled to be scaled up and scaled down.  The cronjob will leverage an image that contains the ROSA cli to adjust the machine pool sizes.
 
 1. Create a new openshift project
 
@@ -382,7 +384,7 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
    EOF
    ```
 
-   Finally sit back and watch the machine pools scale on the schedule you configured.  To watch machine pools scaling up and down run this command:
+  1. Finally sit back and watch the machine pools scale on the schedule you configured.  To watch machine pools scaling up and down run this command:
 
     ```bash
     watch rosa list machinepools -c $CLUSTER_NAME
