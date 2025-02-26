@@ -23,6 +23,7 @@ The following three CLIs need to be installed and logged into.
 * aws cli
 * podman cli
 * jq
+
 <br>
 
 > Note: You must log into your ROSA cluster via your oc cli before going through the following steps.
@@ -103,40 +104,12 @@ On the Add service accounts dialog, select the service account you created in th
 Finally, on the last step, click on Submit and this will create the service account for you.
 ![Create Group Review](images/create-group-review.png)
 
-Next, log into rosa using the client-id and client-secret you generated in the previous step.
+Export the client-id and client-secret variables
 
 ```bash
-rosa login --client-id f9f0ed0...ab --client-secret Fwkq4wWo...rE
+export ROSA_CLIENT_ID="f9f0ed00-7f67-45dd..."
+export ROSA_CLIENT_SECRET="Fwkq4wWoJPLv..."
 ```
-
-example output
-
-```
-Logged in as 'service-account-xxxxxxxxxxxxxxxxxxxxxx-03ed9f8d44ab' on 'https://api.openshift.com'
-```
-
-Next, generate a token for ROSA and set it as an environment variable.
-
-```bash
-rosa token
-```
-
-example output
-
-```
-rosa token
-W: The current version (1.2.47) is not up to date with latest rosa cli released version (1.2.50).
-W: It is recommended that you update to the latest version.
-eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSl...
-```
-
-Set the output to an environment variable
-
-```bash
-export ROSA_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldU .... "
-```
-
-After retrieving the token, log back in with your normal ROSA credentails / token.
 
 ## Create AWS Policy
 One of the standout features of ROSA is its integration with AWS STS, enabling fine-grained access control to AWS resources. By leveraging IAM Roles for Service Accounts (IRSA), we can extend this access control to applications running within the cluster, allowing them to securely interact with AWS resources while following least-privilege principles.
@@ -210,7 +183,7 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
 1. Create a secret that contains the ROSA Token for the service account you create previously
 
     ```bash
-    oc create secret generic rosa-token --from-literal=ROSA_TOKEN=${ROSA_TOKEN}
+    oc create secret generic rosa-credentials --from-literal=ROSA_CLIENT_ID=${ROSA_CLIENT_ID} --from-literal=ROSA_CLIENT_SECRET=${ROSA_CLIENT_SECRET}
     ```
 
 1. Create a config map for the scaling up settings
@@ -229,6 +202,7 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
     ```
 
 1. Create a config map for the scaling down settings
+
     ```bash
     cat << EOF | oc apply -f -
     apiVersion: v1
@@ -288,43 +262,49 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
          template:
             spec:
               restartPolicy: Never
-              serviceAccountName: $OCP_SA
+              serviceAccountName: ${OCP_SA}
               containers:
                 - name: rosa-cli-cj
                   image: 'image-registry.openshift-image-registry.svc:5000/${OCP_PROJECT}/rosa-cli:latest'
+                  env:
+                    - name: ROSA_CLIENT_ID
+                      valueFrom:
+                        secretKeyRef:
+                          name: rosa-credentials
+                          key: ROSA_CLIENT_ID
+                    - name: ROSA_CLIENT_SECRET
+                      valueFrom:
+                        secretKeyRef:
+                          name: rosa-credentials
+                          key: ROSA_CLIENT_SECRET
+                    - name: CLUSTER_NAME
+                      valueFrom:
+                        configMapKeyRef:
+                          name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaleup
+                          key: CLUSTER_NAME
+                    - name: REPLICAS
+                      valueFrom:
+                        configMapKeyRef:
+                          name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaleup
+                          key: REPLICAS
+                    - name: MACHINEPOOL
+                      valueFrom:
+                        configMapKeyRef:
+                          name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaleup
+                          key: MACHINEPOOL
                   command:
                     - /bin/sh
                     - '-c'
                     - |
-                      export ROSA_TOKEN=\$(cat /rosa-secret/ROSA_TOKEN)
-                      export CLUSTER_NAME=\$(cat /rosa-config/CLUSTER_NAME)
-                      export MACHINEPOOL=\$(cat /rosa-config/MACHINEPOOL)
-                      export REPLICAS=\$(cat /rosa-config/REPLICAS)
                       # Login to ROSA
-                      rosa login --token=$ROSA_TOKEN
+                      rosa login --client-id \${ROSA_CLIENT_ID} --client-secret \${ROSA_CLIENT_SECRET}
                       # Scale the machine pool
-                      rosa edit machinepool $MACHINEPOOL --cluster $CLUSTER_NAME --replicas $MAX_REPLICAS
-                  volumeMounts:
-                    - name: rosa-secret
-                      readOnly: true
-                      mountPath: /rosa-secret
-                    - name: rosa-config
-                      readOnly: true
-                      mountPath: /rosa-config
+                      echo "rosa edit machinepool \${MACHINEPOOL} --cluster \${CLUSTER_NAME} --replicas \${REPLICAS}"
+                      rosa edit machinepool \${MACHINEPOOL} --cluster \${CLUSTER_NAME} --replicas \${REPLICAS}
                   terminationMessagePath: /dev/termination-log
                   terminationMessagePolicy: File
                   imagePullPolicy: Always
               serviceAccount: ${OCP_SA}
-              volumes:
-                - name: rosa-secret
-                  secret:
-                    secretName: rosa-token
-                    defaultMode: 420
-                - name: rosa-config
-                  configMap:
-                    name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaleup
-                    defaultMode: 420
-              dnsPolicy: ClusterFirst
    EOF
    ```
 
@@ -344,47 +324,53 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
          template:
             spec:
               restartPolicy: Never
-              serviceAccountName: $OCP_SA
+              serviceAccountName: ${OCP_SA}
               containers:
                 - name: rosa-cli-cj
                   image: 'image-registry.openshift-image-registry.svc:5000/${OCP_PROJECT}/rosa-cli:latest'
+                  env:
+                    - name: ROSA_CLIENT_ID
+                      valueFrom:
+                        secretKeyRef:
+                          name: rosa-credentials
+                          key: ROSA_CLIENT_ID
+                    - name: ROSA_CLIENT_SECRET
+                      valueFrom:
+                        secretKeyRef:
+                          name: rosa-credentials
+                          key: ROSA_CLIENT_SECRET
+                    - name: CLUSTER_NAME
+                      valueFrom:
+                        configMapKeyRef:
+                          name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaledown
+                          key: CLUSTER_NAME
+                    - name: REPLICAS
+                      valueFrom:
+                        configMapKeyRef:
+                          name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaledown
+                          key: REPLICAS
+                    - name: MACHINEPOOL
+                      valueFrom:
+                        configMapKeyRef:
+                          name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaledown
+                          key: MACHINEPOOL
                   command:
                     - /bin/sh
                     - '-c'
                     - |
-                      export ROSA_TOKEN=\$(cat /rosa-secret/ROSA_TOKEN)
-                      export CLUSTER_NAME=\$(cat /rosa-config/CLUSTER_NAME)
-                      export MACHINEPOOL=\$(cat /rosa-config/MACHINEPOOL)
-                      export REPLICAS=\$(cat /rosa-config/REPLICAS)
                       # Login to ROSA
-                      rosa login --token=$ROSA_TOKEN
+                      rosa login --client-id \${ROSA_CLIENT_ID} --client-secret \${ROSA_CLIENT_SECRET}
                       # Scale the machine pool
-                      rosa edit machinepool $MACHINEPOOL --cluster $CLUSTER_NAME --replicas $MIN_REPLICAS
-                  volumeMounts:
-                    - name: rosa-secret
-                      readOnly: true
-                      mountPath: /rosa-secret
-                    - name: rosa-config
-                      readOnly: true
-                      mountPath: /rosa-config
+                      echo "rosa edit machinepool \${MACHINEPOOL} --cluster \${CLUSTER_NAME} --replicas \${REPLICAS}"
+                      rosa edit machinepool \${MACHINEPOOL} --cluster \${CLUSTER_NAME} --replicas \${REPLICAS}
                   terminationMessagePath: /dev/termination-log
                   terminationMessagePolicy: File
                   imagePullPolicy: Always
               serviceAccount: ${OCP_SA}
-              volumes:
-                - name: rosa-secret
-                  secret:
-                    secretName: rosa-token
-                    defaultMode: 420
-                - name: rosa-config
-                  configMap:
-                    name: ${CLUSTER_NAME}-${MACHINEPOOL}-scaleup
-                    defaultMode: 420
-              dnsPolicy: ClusterFirst
    EOF
    ```
-
-  1. Finally sit back and watch the machine pools scale on the schedule you configured.  To watch machine pools scaling up and down run this command:
+   
+1. Finally sit back and watch the machine pools scale on the schedule you configured.  To watch machine pools scaling up and down run this command:
 
     ```bash
     watch rosa list machinepools -c $CLUSTER_NAME
