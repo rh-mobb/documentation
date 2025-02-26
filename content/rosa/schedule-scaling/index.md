@@ -248,6 +248,8 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
 
 1. Create a cronjob to scale up the cluster on a schedule
   
+   >note: for testing purposes the cronjob is schedule to run every 5 minutes, adjust accordingly.
+
    ```bash
    cat << EOF | oc apply -f -
    kind: CronJob
@@ -310,6 +312,9 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
 
 1. Create cronjob to scale down the cluster on a schedule
   
+
+   >note: for testing purposes the cronjob is schedule to run every 5 minutes, adjust accordingly.
+
    ```bash
    cat << EOF | oc apply -f -
    kind: CronJob
@@ -369,7 +374,7 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
               serviceAccount: ${OCP_SA}
    EOF
    ```
-   
+
 1. Finally sit back and watch the machine pools scale on the schedule you configured.  To watch machine pools scaling up and down run this command:
 
     ```bash
