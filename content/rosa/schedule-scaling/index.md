@@ -1,6 +1,6 @@
 ---
 date: '2025-02-26'
-title: Optimizing Costs with ROSA: Scheduled Cluster Scaling
+title: Optimizing Costs with ROSA -  Scheduled Cluster Scaling
 tags: ["ROSA"]
 authors:
   - Kevin Collins
