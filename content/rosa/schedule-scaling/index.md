@@ -71,7 +71,7 @@ export MIN_REPLICAS=2
 export MAX_REPLICAS=4
 ```
 
-### ROSA Token
+### ROSA Service Account
 Using Red Hat's Hybrid Cloud Console, you can create service accounts for automation tasks such as DevOps processes or, in this case, scheduling cluster scaling. One of the key benefits of service accounts in ROSA is the ability to restrict access to only what's necessary.
 
 For scaling machine pools up and down, the service account we create will be granted access solely to machine pools, ensuring a least-privilege approach while keeping the cluster secure.
@@ -138,7 +138,7 @@ One of the standout features of ROSA is its integration with AWS STS, enabling f
    EOF
    ```
 
-1. Create Role for the EFS CSI Driver Operator
+1. Create a Role for Scheduler
 
    ```bash
    ROLE=$(aws iam create-role \
@@ -180,7 +180,7 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
     EOF
     ```
 
-1. Create a secret that contains the ROSA Token for the service account you create previously
+1. Create a secret that contains ROSA credentials for the service account you create previously
 
     ```bash
     oc create secret generic rosa-credentials --from-literal=ROSA_CLIENT_ID=${ROSA_CLIENT_ID} --from-literal=ROSA_CLIENT_SECRET=${ROSA_CLIENT_SECRET}
