@@ -63,11 +63,13 @@ First, let's set up and organize our cluster contexts for easier management:
 # Login to ROSA cluster
 oc login --token=<rosa_token> --server=<rosa_url>
 oc new-project primary-db
+oc config set-context --current --namespace=primary-db
 oc config rename-context $(oc config current-context) rosa
 
 # Login to ARO cluster
 oc login --token=<aro_token> --server=<aro_url>
 oc new-project replica-db
+oc config set-context --current --namespace=replica-db
 oc config rename-context $(oc config current-context) aro
 ```
 
@@ -129,7 +131,7 @@ oc set volume deployment/postgres-primary --add \
   --name=postgres-data \
   --type=pvc \
   --claim-size=10Gi \
-  --mount-path=/var/lib/pgsql/data -n primary --context rosa
+  --mount-path=/var/lib/pgsql/data --context rosa
 
 # Expose PostgreSQL via Skupper
 skupper expose deployment/postgres-primary --port 5432 --context rosa
@@ -180,7 +182,7 @@ Let's perform a more comprehensive test of our replication setup by creating a t
 
 ```bash
 # Create test table and function on primary
-oc rsh deployment/postgres-primary psql -d mydatabase -c "
+oc rsh --context rosa deployment/postgres-primary psql -d mydatabase -c "
 -- Create table if not exists
 CREATE TABLE IF NOT EXISTS sample_table (
     id SERIAL PRIMARY KEY,
@@ -196,25 +198,25 @@ BEGIN
         md5(random()::text)
     FROM generate_series(1, num_rows);
 END;
-\$\$ LANGUAGE plpgsql;" --context rosa
+\$\$ LANGUAGE plpgsql;"
 
 # Generate initial test data (1000 rows)
-oc rsh deployment/postgres-primary psql -d mydatabase -c "SELECT add_sample_data();" --context rosa
+oc rsh --context rosa deployment/postgres-primary psql -d mydatabase -c "SELECT add_sample_data();"
 
 # Verify data on primary
-oc rsh deployment/postgres-primary psql -d mydatabase -c "SELECT count(*) FROM sample_table;" --context rosa
+oc rsh --context rosa deployment/postgres-primary psql -d mydatabase -c "SELECT count(*) FROM sample_table;"
 
 # Verify data on replica
-oc rsh deployment/postgres-replica psql -d mydatabase -c "SELECT count(*) FROM sample_table;" --context aro
+oc rsh --context aro deployment/postgres-replica psql -d mydatabase -c "SELECT count(*) FROM sample_table;"
 
 # Add more data on primary (500 additional rows)
-oc rsh deployment/postgres-primary psql -d mydatabase -c "SELECT add_sample_data(500);" --context rosa
+oc rsh --context rosa deployment/postgres-primary psql -d mydatabase -c "SELECT add_sample_data(500);"
 
 # Check counts on both servers
 echo "Primary count:"
-oc rsh deployment/postgres-primary psql -d mydatabase -c "SELECT count(*) FROM sample_table;" --context rosa
+oc rsh --context rosa deployment/postgres-primary psql -d mydatabase -c "SELECT count(*) FROM sample_table;"
 echo "Replica count:"
-oc rsh deployment/postgres-replica psql -d mydatabase -c "SELECT count(*) FROM sample_table;" --context aro
+oc rsh --context aro deployment/postgres-replica psql -d mydatabase -c "SELECT count(*) FROM sample_table;"
 ```
 
 This comprehensive testing approach:
