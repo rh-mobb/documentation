@@ -249,8 +249,8 @@ When you're done with your deployment, follow these steps to clean up all resour
 
 ```bash
 # Delete PostgreSQL deployments
-oc delete all app=postgres-primary --context rosa
-oc delete all app=postgres-replica --context aro
+oc delete all -l app=postgres-primary --context rosa
+oc delete all -l app=postgres-replica --context aro
 
 # Remove Skupper interconnect
 skupper delete --context rosa
