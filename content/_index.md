@@ -193,6 +193,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
 * [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
 * [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
+* [Setting up Cross-Cluster PostgreSQL Replication with Skupper on ROSA and ARO](/experts/misc/rosa-aro-service-interconnect)
 
 ### Applications
 
