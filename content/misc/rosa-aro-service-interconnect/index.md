@@ -204,9 +204,6 @@ oc rsh deployment/postgres-primary psql -d mydatabase -c "SELECT add_sample_data
 # Verify data on primary
 oc rsh deployment/postgres-primary psql -d mydatabase -c "SELECT count(*) FROM sample_table;" --context rosa
 
-# Wait a moment for replication to complete
-sleep 5
-
 # Verify data on replica
 oc rsh deployment/postgres-replica psql -d mydatabase -c "SELECT count(*) FROM sample_table;" --context aro
 
