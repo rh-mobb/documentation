@@ -122,7 +122,6 @@ oc new-app registry.redhat.io/rhel9/postgresql-16~https://github.com/fjcloud/psq
   -e POSTGRESQL_DATABASE=mydatabase \
   -e POSTGRESQL_REPLICATION_USER=replicator \
   -e POSTGRESQL_REPLICATION_PASSWORD=replpassword \
-  -e POSTGRESQL_REPLICA_HOST=postgres-replica \
   -e POSTGRESQL_ADMIN_PASSWORD=adminpassword \
   -e IS_PRIMARY=true --context rosa
 
