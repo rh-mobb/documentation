@@ -104,7 +104,7 @@ skupper init --context aro
 # Create a token on ROSA to authorize the connection
 skupper token create primary.token --context rosa
 
-# Use the token to link ARO to ROSA
+# Use the token to link ARO namespace replica-db to ROSA namespace primary-db
 skupper link create primary.token --context aro
 ```
 
