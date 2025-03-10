@@ -18,7 +18,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Securely exposing an application on a private ROSA cluster with a Network Load Balancer](/experts/rosa/hcp-private-nlb/)
 * [Add an Ingress Controller to ROSA with a custom domain](/experts/rosa/ingress-controller)
 * [Configuring Microsoft Entra ID as an external authentication provider](/experts/rosa/entra-external-auth)
-* [Accessing a Private ROSA Hosted Control Plane (HCP) Cluster with an AWS Network Load Balancer](/experts/rosa/hcp-public-nlb)
 
 #### Classic
 
