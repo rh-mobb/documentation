@@ -18,11 +18,11 @@ This guide will walk you through scaling a single machine pool, a process that c
 ## Prerequisites
 
 The following three CLIs need to be installed and logged into.
-* oc cli 
-* rosa cli 
-* aws cli
-* podman cli
-* jq
+* `oc` cli 
+* `rosa` cli 
+* `aws` cli
+* `podman` cli
+* `jq`
 
 <br>
 
