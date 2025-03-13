@@ -17,7 +17,7 @@ This guide demonstrates how to set up a highly available PostgreSQL database wit
 
 * Access to both ROSA and ARO clusters
 * OC CLI installed
-* Admin access to both clusters
+* Cluster-Admin access to both clusters
 
 ## Architecture Overview
 
