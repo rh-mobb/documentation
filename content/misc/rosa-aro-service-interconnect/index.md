@@ -115,7 +115,7 @@ This creates a secure Virtual Application Network (VAN) between the two clusters
 Now we'll deploy the primary PostgreSQL instance on the ROSA cluster:
 
 ```bash
-oc new-app registry.redhat.io/rhel9/postgresql-16~https://github.com/fjcloud/psql-repl.git \
+oc new-app registry.redhat.io/rhel9/postgresql-16~https://github.com/rh-mobb/psql-repl.git \
   --name=postgres-primary \
   -e POSTGRESQL_USER=myuser \
   -e POSTGRESQL_PASSWORD=mypassword \
@@ -148,7 +148,7 @@ oc wait --for=condition=available deployment/postgres-primary --timeout=120s --c
 Next, deploy the replica PostgreSQL instance on ARO:
 
 ```bash
-oc new-app registry.redhat.io/rhel9/postgresql-16~https://github.com/fjcloud/psql-repl.git \
+oc new-app registry.redhat.io/rhel9/postgresql-16~https://github.com/rh-mobb/psql-repl.git \
   --name=postgres-replica \
   -e POSTGRESQL_REPLICATION_USER=replicator \
   -e POSTGRESQL_REPLICATION_PASSWORD=replpassword \
