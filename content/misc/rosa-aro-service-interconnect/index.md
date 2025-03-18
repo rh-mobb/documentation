@@ -81,10 +81,10 @@ The Service Interconnect Operator (based on Skupper) enables secure communicatio
 
 ```bash
 # Install on ROSA
-oc apply -k https://github.com/fjcloud/gitops-catalog/service-interconnect-operator/operator/overlays/stable --context rosa
+oc apply -k https://github.com/redhat-cop/gitops-catalog/service-interconnect-operator/operator/overlays/stable --context rosa
 
 # Install on ARO
-oc apply -k https://github.com/fjcloud/gitops-catalog/service-interconnect-operator/operator/overlays/stable --context aro
+oc apply -k https://github.com/redhat-cop/gitops-catalog/service-interconnect-operator/operator/overlays/stable --context aro
 ```
 
 ## Install and Configure Skupper
