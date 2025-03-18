@@ -7,8 +7,6 @@ authors:
   - Florian Jacquin
 ---
 
-# Setting up Cross-Cluster PostgreSQL Replication with Skupper on ROSA and ARO
-
 This guide demonstrates how to set up a highly available PostgreSQL database with cross-cluster replication between Red Hat OpenShift Service on AWS (ROSA) and Azure Red Hat OpenShift (ARO) using Skupper. This architecture enables disaster recovery capabilities and geographical distribution of your database workloads.
 
 > **Note**: You can create a ROSA cluster using the [ROSA with STS deployment guide](https://cloud.redhat.com/experts/rosa/sts/) or an ARO cluster with the [ARO quickstart guide](https://cloud.redhat.com/experts/quickstart-aro/). While this tutorial focuses on ROSA and ARO, the same principles can be applied to any two OpenShift clusters, regardless of their hosting environment.
