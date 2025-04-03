@@ -1,12 +1,13 @@
 ---
-date: '2021-12-16'
+date: '2025-04-03'
 title: ROSA - Federating Metrics to AWS Prometheus
 tags: ["AWS", "ROSA"]
 authors:
   - Kevin Collins
+  - Paul Czarkowski
 ---
 
-Federating Metrics from ROSA/OSD is a bit tricky as the cluster metrics require pulling from its `/federated` endpoint while the user workload metrics require using the prometheus `remoteWrite` configuration.
+Federating Metrics from ROSA is a bit tricky as the cluster metrics require pulling from its `/federated` endpoint while the user workload metrics require using the prometheus `remoteWrite` configuration.
 
 This guide will walk you through using the MOBB Helm Chart to deploy the necessary agents to federate the metrics into AWS Prometheus and then use Grafana to visualize those metrics.
 
@@ -16,7 +17,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
 ## Prerequisites
 
-* [A ROSA cluster deployed with STS](/experts/rosa/sts/)
+* [A ROSA HCP cluster](/experts/rosa/terraform/hcp/)
 * aws CLI
 * jq
 
@@ -60,41 +61,23 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
     ```bash
     helm upgrade -n $PROM_NAMESPACE custom-metrics-operators \
-      mobb/operatorhub --version 0.1.1 --install \
+      mobb/operatorhub --install \
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/rosa-aws-prometheus/files/operatorhub.yaml
     ```
 
-### Deploy and Configure the AWS Sigv4 Proxy and the Grafana Agent
-
-1. Create a Policy for access to AWS Prometheus
-
-   ```json
-   cat <<EOF > $SCRATCH_DIR/PermissionPolicyIngest.json
-   {
-     "Version": "2012-10-17",
-      "Statement": [
-          {"Effect": "Allow",
-           "Action": [
-              "aps:RemoteWrite",
-              "aps:GetSeries",
-              "aps:GetLabels",
-              "aps:GetMetricMetadata"
-           ],
-           "Resource": "*"
-         }
-      ]
-   }
-   EOF
-   ```
-
-1. Apply the Policy
+1. Wait for the Operator to install
 
     ```bash
-    PROM_POLICY=$(aws iam create-policy --policy-name $PROM_SA-prom \
-      --policy-document file://$SCRATCH_DIR/PermissionPolicyIngest.json \
-      --query 'Policy.Arn' --output text)
-    echo $PROM_POLICY
+    oc rollout status deployment grafana-operator-controller-manager-v5
     ```
+
+    You should see the following after a few minutes
+
+    ```bash
+    deployment "grafana-operator-controller-manager-v5" successfully rolled out
+    ```
+
+### Deploy and Configure the AWS Sigv4 Proxy and the Grafana Agent
 
 1. Create a Policy for access to AWS CloudWatch
 
@@ -177,7 +160,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
            "StringEquals": {
              "${OIDC_PROVIDER}:sub": [
                "system:serviceaccount:${PROM_NAMESPACE}:${PROM_SA}",
-               "system:serviceaccount:${PROM_NAMESPACE}:grafana-serviceaccount"
+               "system:serviceaccount:${PROM_NAMESPACE}:grafana-sa"
              ]
            }
          }
@@ -199,10 +182,13 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
 1. Attach the Policies to the Role
 
+    > Note: this policy is very permissive, you may want to restrict access for production use cases.
+
     ```bash
     aws iam attach-role-policy \
       --role-name "prometheus-$CLUSTER" \
-      --policy-arn arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess
+       --policy-arn arn:aws:iam::aws:policy/AmazonPrometheusFullAccess
+
 
     aws iam attach-role-policy \
       --role-name "prometheus-$CLUSTER" \
@@ -223,26 +209,28 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
     helm upgrade --install -n $PROM_NAMESPACE --set "aws.region=$REGION" \
     --set "aws.roleArn=$PROM_ROLE" --set "fullnameOverride=$PROM_SA" \
     --set "aws.workspaceId=$PROM_WS" \
+    --set "rosa.clusterName=$CLUSTER" \
     --set "grafana-cr.serviceAccountAnnotations.eks\.amazonaws\.com/role-arn=$PROM_ROLE" \
+    --set "grafana-cr.sigv4Proxy.region=$REGION" \
      aws-prometheus-proxy mobb/rosa-aws-prometheus
     ```
 
 1. Configure remoteWrite for user workloads
 
-  ```bash
-   cat << EOF | kubectl apply -f -
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: user-workload-monitoring-config
-     namespace: openshift-user-workload-monitoring
-   data:
-     config.yaml: |
-       prometheus:
-         remoteWrite:
-           - url: "http://aws-prometheus-proxy.$PROM_NAMESPACE.svc.cluster.local:8005/workspaces/$PROM_WS/api/v1/remote_write"
-   EOF
-  ```
+    ```bash
+    cat << EOF | kubectl apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: user-workload-monitoring-config
+      namespace: openshift-user-workload-monitoring
+    data:
+      config.yaml: |
+        prometheus:
+          remoteWrite:
+            - url: "http://aws-prometheus-proxy-alloy.$PROM_NAMESPACE.svc.cluster.local:9999/api/v1/metrics/write"
+    EOF
+    ```
 
 ## Verify Metrics are being collected
 
@@ -299,7 +287,9 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
     ```bash
     aws iam detach-role-policy \
       --role-name "prometheus-$CLUSTER" \
-      --policy-arn arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess
+      --policy-arn arn:aws:iam::aws:policy/AmazonPrometheusFullAccess
+
+
 
     aws iam detach-role-policy \
       --role-name "prometheus-$CLUSTER" \
