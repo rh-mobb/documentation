@@ -257,7 +257,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
       aws-prometheus-proxy mobb/rosa-aws-prometheus
     ```
 
-1. Browse to `/dashboards` and select the **custom-metrics**->**NodeExporter / Use Method / Cluster** dashboard
+1. Browse to `/dashboards` and select the **aws-prometheus-proxy** -> **NodeExporter / Use Method / Cluster** dashboard
 
     ![example cluster metrics dashboard](./dashboard.png)
 
