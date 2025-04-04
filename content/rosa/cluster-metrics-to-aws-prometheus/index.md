@@ -237,7 +237,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 1. Access Grafana and check for metrics
 
     ```bash
-    oc get route -n custom-metrics grafana-route -o jsonpath='{.status.ingress[0].host}'
+    echo "https://$(oc get route -n custom-metrics grafana-route -o jsonpath='{.status.ingress[0].host}')"
     ```
 
 1. Browse to the URL provided in the above command and log in with your OpenShift Credentials
