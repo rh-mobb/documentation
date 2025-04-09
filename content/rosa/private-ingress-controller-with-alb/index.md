@@ -53,8 +53,6 @@ Starting with OpenShift 4.14, ROSA supports adding additional Ingress Controller
      finalizers:
      - ingresscontroller.operator.openshift.io/finalizer-ingresscontroller
      generation: 2
-     labels:
-       hypershift.openshift.io/managed: "true"
      name: $INGRESS_NAME
      namespace: openshift-ingress-operator
    spec:
@@ -62,8 +60,6 @@ Starting with OpenShift 4.14, ROSA supports adding additional Ingress Controller
        clientCA:
          name: ""
        clientCertificatePolicy: ""
-    #  defaultCertificate:
-    #    name: $CERT_NAME
      domain: $DOMAIN
      endpointPublishingStrategy:
        loadBalancer:
@@ -124,71 +120,41 @@ router-public-7dd48fdcbb-cn7hb    1/1     Running   0          4m20s
 
 ## Create an ALB
 
-1. Get the NLB environment variables:
-
-    ```bash
-    NLB_HOSTNAME=$(oc get service -n openshift-ingress router-${INGRESS_NAME} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-    NLB_NAME=$(echo $NLB_HOSTNAME | sed 's/-.*//')
-    NLB_REGION=$(echo $NLB_HOSTNAME | cut -d "." -f 3)
-    NLB_HOSTED_ZONE=$(aws elbv2 describe-load-balancers --name $NLB_NAME --region $NLB_REGION | jq -r ".LoadBalancers[0].CanonicalHostedZoneId")
-    NLB_VPC=$(aws elbv2 describe-load-balancers --name $NLB_NAME --region $NLB_REGION | jq -r ".LoadBalancers[0].VpcId")
-    echo "NLB_HOSTNAME="${NLB_HOSTNAME}
-    echo "NLB_NAME="${NLB_NAME}
-    echo "NLB_REGION="${NLB_REGION}
-    echo "NLB_HOSTED_ZONE="${NLB_HOSTED_ZONE}
-    echo "NLB_VPC="${NLB_VPC}
-    ```
-
-1. Create a target group for the NLB IP addresses
-
-    ```bash
-    aws elbv2 create-target-group --name router-${INGRESS_NAME} \
-      --protocol TCP --port 1936 --vpc-id ${NLB_VPC} \
-      --health-check-protocol HTTP --health-check-port 1936 \
-      --health-check-path /httphealth --health-check-enabled \
-      --target-type ip
-    TG_ARN=$(aws elbv2 describe-target-groups --name router-${INGRESS_NAME} | jq -r '.TargetGroups[0].TargetGroupArn')
-    ```
-
-1. Get IP addresses of the NLB
-
-    ```bash
-    host ${NLB_HOSTNAME}
-    ```
-
-1. Create targets for each of the IP addresses
-
-    ```bash
-    aws elbv2 register-targets --target-group-arn ${TG_ARN}  \
-     --targets '[{"Id":"<IP_ADDRESS>","Port":443}]'
-
-    ```
-
-1. Create a AWS Certificate Manager (ACM) certificate for the new domain
-
-    ```bash
-    aws acm request-certificate --domain-name "*.${DOMAIN}" \
-      --validation-method DNS \
-      --idempotency-token $(uuidgen | sed 's/-//g')
-    ```
-
-1. Get the ARN of the ACM certificate
-
-    ```bash
-    ACM_ARN=$(aws acm list-certificates --query="CertificateSummaryList[?DomainName=='*.${DOMAIN}'].CertificateArn" --output text)
-    ```
-
-1. Create an ALB for the new domain
-
-    # todo
-
-### Create a Route 53 entry for the new domain / network load balancer
-
-# todo
-
+via aws console
 
 ## Test an application.
 
-1. Create a test applciation in a new namespace.
+### Deploy a public application
 
-    # todo
+1. Create a new project
+
+   ```bash
+   oc new-project my-public-app
+   ```
+
+1. Create a new application
+
+   ```bash
+   oc new-app --docker-image=docker.io/openshift/hello-openshift
+   ```
+
+1. Create a route for the application
+
+   ```bash
+   oc create route edge --service=hello-openshift hello-openshift-tls \
+     --hostname hello.$DOMAIN
+   ```
+
+1. Check that you can access the application:
+
+   ```bash
+   curl https://hello.$DOMAIN
+   ```
+
+1. You should see the output
+
+   ```
+   Hello OpenShift!
+   ```
+
+
