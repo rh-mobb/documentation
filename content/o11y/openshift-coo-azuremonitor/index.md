@@ -1,7 +1,7 @@
 ---
 date: '2025-04-17'
 title: Configuring Cluster Observability Operator (COO) in ARO and Enabling remote writing of metrics to Azure Monitor Workspace
-tags: ["aro","observability", "azuremonitor"]
+tags: ["aro","observability", "coo", "azuremonitor"]
 authors:
    - Charlotte Fung 
 ---
