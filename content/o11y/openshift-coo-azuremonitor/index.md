@@ -253,7 +253,7 @@ SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list --display-name cfung-azure-monitor-
 
 ### Create a Cluster Observability Operator MonitoringStack 
 
-1. Use the CRD below to create the COO MonitoringStack(the equivalent of a Prometheus stack) in the centralized-monitoring project. The MonitoringStack will be used to monitor the applications created above. The configuration creates a single Prometheus replica, retains metrics for 5 days, adds persistent storage to the Prometheus instance, and enables the remote writing of metrics to your Azure Monitor workspace. 
+1. Use the CRD below to create the COO MonitoringStack(the equivalent of a Prometheus stack) in the `centralized-monitoring project`. The MonitoringStack will be used to monitor the applications created above. The configuration creates a single Prometheus replica, retains metrics for 5 days, adds persistent storage to the Prometheus instance, and enables the remote writing of metrics to your Azure Monitor workspace. 
 
     Replace **{{INGESTION-URL}}** value below with the **Metrics ingestion endpoint** from the Overview page for the Azure Monitor workspace. 
 
