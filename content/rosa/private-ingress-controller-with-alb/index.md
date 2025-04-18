@@ -15,10 +15,8 @@ In essence, the routing flow will look like this: Internet -> ALB -> NLB -> Appl
 
 ## Prerequisites
 
-* A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) ROSA cluster v4.14 and above
-** Note that this guide is tested on a classic multi-az Privatelink cluster, but it should work for other configurations also. 
+* A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) ROSA cluster v4.14 and above (this guide is tested on a classic multi-az Privatelink cluster, but it should work for other configurations also.)
 * The oc CLI      # logged in.
-* The aws CLI     # logged in.
 * (optional) A Public Route 53 Hosted Zone, and the related Domain to use.
 
 
@@ -80,7 +78,7 @@ Describe the Ingress Controller to confirm it's ready.
 oc describe IngressController $INGRESS_NAME -n openshift-ingress-operator
 ```
 
-You should see an output that mentions that the ingress controller is `Admitted`.
+You should see an output that mentions that the ingress controller is **Admitted**.
 
 ![ic_admitted](images/ic_admitted.png)
 <br />
@@ -92,7 +90,7 @@ Also verify the router pods of the new ingress controller are running
 oc get pods -n openshift-ingress | grep $INGRESS_NAME
 ```
 
-Expected output is two pods in a `Running` state.
+Expected output is two pods in a **Running** state.
 
 ![ic_running](images/ic_running.png)
 <br />
@@ -103,7 +101,6 @@ Verify the service of the new ingress controller is running.
 oc get svc -n openshift-ingress router-${INGRESS_NAME}
 ```
 
-Output example:
 ![svc_running](images/svc_running.png)
 <br />
 
@@ -119,14 +116,14 @@ You should see a confirmation that the service is patched. Next, let's grab your
 NLB_NAME=$(oc -n openshift-ingress get svc router-private-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 echo $NLB_NAME
 ```
-Output example:
+
 ![nlb_name](images/nlb_name.png)
 <br />
 
 
 ## Create custom domain on Route 53 (optional)
 
-Skip this step if you have already created the custom domain. To create one, go to your AWS Console. Select `Route 53`and choose a hosted zone, and from there, click `Create record` button. 
+Skip this step if you have already created the custom domain. To create one, go to your AWS Console. Select **Route 53** and choose a hosted zone, and from there, click **Create record** button. 
 
 Here you will be creating a wildcard CNAME record (e.g. `*.test.mobb.cloud`) and point it to the NLB created before:
 
@@ -136,25 +133,25 @@ Here you will be creating a wildcard CNAME record (e.g. `*.test.mobb.cloud`) and
 
 ## Create the ALB
 
-Before we create the ALB, let's grab the IP addresses related to your NLB. Go to your AWS Console and head to the dashboard. Be sure you're in the current region where your cluster resides. From your `Console Home`, search or select `EC2` and from there, on the navigation tab, select `Network Interfaces`. Copy and paste the NLB name from the previous output on the search bar, and then scroll to the right to until you see the list of the `Primary private IPv4 IP address` related to this NLB. 
+Before we create the ALB, let's grab the IP addresses related to your NLB. Go to your AWS Console and head to the dashboard. Be sure you're in the current region where your cluster resides. From your **Console Home**, search or select **EC2** and from there, on the navigation tab, select **Network Interfaces**. Copy and paste the NLB name from the previous output on the search bar, and then scroll to the right to until you see the list of the **Primary private IPv4 IP address** related to this NLB. 
 
 ![ip_addresses](images/ip_addresses.png)
 <br />
 
-Next, go to the `EC2` dashboard again and select `Load balancers`. Then click the `Create load balancer` button. Select ALB and click `Create`. Give it a proper name, e.g. `test-alb`, select `Internet-facing` as scheme, and `IPv4` as load balancer IP address type.
+Next, go to the **EC2** dashboard again and select **Load balancers**. Then click the **Create load balancer** button. Select ALB and click **Create**. Give it a proper name, e.g. `test-alb`, select **Internet-facing** as scheme, and **IPv4** as load balancer IP address type.
 
-Under `Network mapping`, select the VPC where your cluster resides and select your AZs and the public subnets tied to them. And for `Security groups`, click `create a new security group` links which will lead you to a new tab. Give it a name, e.g. `test-sg`, provide description such as `to allow https`, and select the VPC where your cluster resides. Under `Inbound rules`, select `HTTPS` as type and `0.0.0.0/0` as source. Leave the `Outbound rules` as is, and click `Create security group`. Go back to the ALB creation tab, hit the refresh button, and add the new security group you just created.
+Under **Network mapping**, select the VPC where your cluster resides and select your AZs and the public subnets tied to them. And for **Security groups**, click **create a new security group** links which will lead you to a new tab. Give it a name, e.g. `test-sg`, provide description such as `to allow https`, and select the VPC where your cluster resides. Under **Inbound rules**, select `HTTPS` as type and `0.0.0.0/0` as source. Leave the **Outbound rules** as is, and click **Create security group**. Go back to the ALB creation tab, hit the refresh button, and add the new security group you just created.
 
 ![sg](images/sg.png)
 <br />
 
-Next, under `Listeners and routing`, select `HTTPS` as protocol, and click `Create target group` links that will lead you to a new tab. Choose `IP addresses` as target type and give it a name, e.g. `test-tg`. Leave the protocol, IP address, and protocol version to default, i.e. HTTPS, IPv4, and HTTP1 respectively. Under `Health checks`, leave the protocol to `HTTPS`, and point the health check path to `/healthz/ready`. Click the `Advanced health check settings`, and under `Health check port`, select `Override` and type `1936` to the port number, and you can leave the rest of the advanced health check settings to default. 
+Next, under **Listeners and routing**, select `HTTPS` as protocol, and click **Create target group** links that will lead you to a new tab. Choose `IP addresses` as target type and give it a name, e.g. `test-tg`, and leave the rest settings to default. Under **Health checks**, leave the protocol to `HTTPS`, and point the health check path to `/healthz/ready`. Click the **Advanced health check settings**, and under **Health check port**, select **Override** and type `1936` to the port number, and you can leave the rest of the advanced health check settings to default. 
 
 ![tg_hc](images/tg_hc.png)
 <br />
 
 
-Click `Next` at the end of the page and this will lead you to the `Register targets` group. Now, enter the IP addresses of your ALB that you've retrieved previously. Once you added them, click `Include as pending below`. And at the `Review targets` section, you should see the health checks are in `Pending` state. Click `Create target group` to proceed.
+Click **Next** at the end of the page and this will lead you to the **Register targets** group. Now, enter the IP addresses of your ALB that you've retrieved previously. Once you added them, click **Include as pending below**. And at the **Review targets** section, you should see the health checks are in **Pending** state. Click **Create target group** to proceed.
 
 ![tg_review](images/tg_review.png)
 <br />
@@ -165,23 +162,23 @@ Next, go back to the ALB creation page, refresh the target group option, and sel
 ![tg](images/tg.png)
 <br />
 
-Under `Secure listener settings`, on the `Default SSL/TLS server certificate` section, you can choose `Import certificate` if you already have existing certificates. Alternatively, using `From ACM` as source, you can click `Request new ACM certificate` to create a new one, and this will lead you to a new tab. On the ACM page, click `Request a certificate`, choose `Request a public certificate`, and click `Next`. Insert the domain name, e.g. `*.test.mobb.cloud`, and leave the rest to default, then click `Request`. 
+Under **Secure listener settings**, on the **Default SSL/TLS server certificate** section, you can choose **Import certificate** if you already have existing certificates. Alternatively, using `From ACM` as source, you can click **Request new ACM certificate** to create a new one, and this will lead you to a new tab. On the ACM page, click **Request a certificate**, choose **Request a public certificate**, and click **Next**. Insert the domain name, e.g. `*.test.mobb.cloud`, and leave the rest to default, then click **Request**. 
 
 ![acm_pending](images/acm_pending.png)
 <br />
 
-When it's on `Pending validation` status, click the `Create records in Route 53` button to proceed, click `Create records` on the next page.
+To validate this certificate, click the **Create records in Route 53** button to proceed, click **Create records** on the next page.
 
 ![acm_record](images/acm_record.png)
 <br />
 
 
-Wait for a few minutes until the ACM certificate shows `Issued` status. Next, let's go back to the ALB creation tab, and under `Certificate (from ACM)` section, hit the refresh icon, and add the certificate you just created. 
+Wait for a few minutes until the ACM certificate shows **Issued** status. Next, let's go back to the ALB creation tab, and under **Certificate (from ACM)** section, hit the refresh icon, and add the certificate you just created. 
 
 ![acm](images/acm.png)
 <br />
 
-Lastly, be sure everything looks good at the `Summary` section and then click `Create load balancer`. Wait for a few minutes until the ALB is fully provisioned, i.e. status is `Active`. Then grab the `DNS name` of the ALB and go to your `Route 53` record and edit the value to point it to this ALB, and click `Save`.
+Lastly, be sure everything looks good at the **Summary** section and then click **Create load balancer**. Wait for a few minutes until the ALB is fully provisioned. Then grab the **DNS name** of the ALB and go to your Route 53 record and edit the value to point it to this ALB, and click **Save**.
 
 ![rec_alb](images/rec_alb.png)
 <br />
