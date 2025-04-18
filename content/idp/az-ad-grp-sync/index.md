@@ -91,11 +91,11 @@ The GroupSync job requires permissions on the Azure AD tenant beyond those of th
                 credentialsSecret:
                   name: azure-group-sync
                   namespace: group-sync-operator
-              groups:
-                - rosa_admin
-                - rosa_project_owner
-                - rosa_viewer
-              prune: false
+                  groups:
+                    - rosa_admin
+                    - rosa_project_owner
+                    - rosa_viewer
+                  prune: false
         schedule: '* * * * *'
     ```
 
