@@ -9,13 +9,32 @@ authors:
   - Daniel Axelrod
 ---
 
-Starting with OpenShift 4.14, ROSA supports adding additional Ingress Controllers which can use used to configure a custom domain on a ROSA cluster without having to use the now deprecated Custom Domain Operator. This guide shows how to add an additional Ingress Controller (public or private) to a ROSA cluster and optionally also configuring a custom domain.
+Starting with OpenShift 4.14, Red Hat OpenShift Service on AWS (ROSA) supports adding additional Ingress Controllers which can be used to configure a custom domain on a ROSA cluster. This guide shows how to leverage this feature to create a complete routing solution with both a private Ingress Controller (which creates an Network Load Balancer (NLB)) and a public Application Load Balancer (ALB) in front of it, providing a path from the internet to your applications.
 
 In essence, the routing flow will look like this: Internet -> ALB -> NLB -> Application. 
 
+![routing_flow](images/routing_flow.png)
+<br />
+
+## Why this Approach
+
+The most straightforward way to use an ALB in front of your ROSA cluster is via the [AWS Load Balancer Operator (ALBO)](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-aws-load-balancer-operator). However, using ALBO requires you to either create NodePort Services or use Kubernetes Ingress resources with appropriate annotations.
+
+This guide presents an alternative architecture that leverages OpenShift Routes and the built-in routing capabilities of the OpenShift platform. By creating a secondary IngressController (which manages an NLB) and placing an ALB in front of it, you can:
+
+- Use standard OpenShift Route objects instead of managing NodePort Services or Ingress resources
+- Avoid manually managing port allocations for multiple applications
+- Attach AWS services like Web Application Firewall (WAF) or Shield to protect your applications
+- Maintain compatibility with existing OpenShift deployment patterns
+
+This approach differs from [adding an Ingress Controller to a ROSA cluster](https://cloud.redhat.com/experts/rosa/ingress-controller/) because here it adds the additional ALB component, providing a solution to have a public-facing ALB while keeping the NLB private. 
+
+> **Note**: While this architecture configures HTTPS between the ALB and NLB as shown in the guide, there are important limitations to consider. The ALB terminates the original client TLS session and creates a new one to the NLB. However, ALBs do not send Server Name Identification (SNI) to their targets during the TLS handshake, which can cause issues with OpenShift's IngressController if you need SNI-based routing. The setup in this guide works because we're using a wildcard certificate approach that doesn't rely on SNI.
+
+
 ## Prerequisites
 
-* A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) ROSA cluster v4.14 and above (this guide is tested on a classic multi-az Privatelink cluster, but it should work for other configurations also.)
+* A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) multi-az ROSA cluster v4.14 and above (this guide is tested on a classic multi-az Privatelink cluster, but it should work for other multi-az configurations also.)
 * The oc CLI      # logged in.
 * (optional) A Public Route 53 Hosted Zone, and the related Domain to use.
 
@@ -109,8 +128,9 @@ Patch the service to add a healthcheck port:
 ```bash
 oc -n openshift-ingress patch svc router-${INGRESS_NAME} -p '{"spec":{"ports":[{"port":1936,"targetPort":1936,"protocol":"TCP","name":"httphealth"}]}}'
 ```
+Here the cluster IngressController haproxy pods expose a health check on `http://:1936/healthz/ready` that is the documented mechanism for health checks when adding a user-managed load balancer to a self-managed OpenShift. This service exposes this health check on port 1936 of the NLB per this [KCS](https://access.redhat.com/solutions/7080426).
 
-You should see a confirmation that the service is patched. Next, let's grab your NLB name which will be useful for further steps.
+Once you have a confirmation that the service is patched, let's grab your NLB name which will be useful for further steps.
 
 ```bash
 NLB_NAME=$(oc -n openshift-ingress get svc router-private-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
