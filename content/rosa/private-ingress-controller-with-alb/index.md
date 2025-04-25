@@ -29,14 +29,14 @@ This guide presents an alternative architecture that leverages OpenShift Routes 
 
 This approach differs from [adding an Ingress Controller to a ROSA cluster](https://cloud.redhat.com/experts/rosa/ingress-controller/) because here it adds the additional ALB component, providing a solution to have a public-facing ALB while keeping the NLB private. 
 
-> **Note**: While this architecture configures HTTPS between the ALB and NLB as shown in the guide, there are important limitations to consider. The ALB terminates the original client TLS session and creates a new one to the NLB. However, ALBs do not send Server Name Identification (SNI) to their targets during the TLS handshake, which can cause issues with OpenShift's IngressController if you need SNI-based routing. The setup in this guide works because we're using a wildcard certificate approach that doesn't rely on SNI.
+> **Note**: This architecture has important TLS considerations to be aware of. AWS Application Load Balancers do not forward Server Name Indication (SNI) to their target groups as explicitly confirmed by AWS. Normally this would be problematic because OpenShift's IngressController relies primarily on SNI for routing HTTPS connections. However, this architecture works because the ALB terminates the original TLS connection and creates a new one to the NLB while preserving the HTTP Host header. When the IngressController receives a connection without SNI information, it falls back to using the Host header for routing. This makes the wildcard certificate approach essential for this architecture to function properly.
 
 
 ## Prerequisites
 
 * A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) multi-az ROSA cluster v4.14 and above (this guide is tested on a classic multi-az Privatelink cluster, but it should work for other multi-az configurations also.)
 * The oc CLI      # logged in.
-* (optional) A Public Route 53 Hosted Zone, and the related Domain to use.
+* A Domain Name in a public zone. These instructions assume Route 53, but can be adapted for any other DNS.
 
 
 ## Set up environment
@@ -53,7 +53,7 @@ SCOPE="Internal"
 ## Create the Ingress Controller
 
 ```yaml
-envsubst  <<EOF | oc apply -f -
+cat  <<EOF | oc apply -f -
 apiVersion: operator.openshift.io/v1
 kind: IngressController
 metadata:
@@ -128,27 +128,15 @@ Patch the service to add a healthcheck port:
 ```bash
 oc -n openshift-ingress patch svc router-${INGRESS_NAME} -p '{"spec":{"ports":[{"port":1936,"targetPort":1936,"protocol":"TCP","name":"httphealth"}]}}'
 ```
+
 Here the cluster IngressController haproxy pods expose a health check on `http://:1936/healthz/ready` that is the documented mechanism for health checks when adding a user-managed load balancer to a self-managed OpenShift. This service exposes this health check on port 1936 of the NLB per this [KCS](https://access.redhat.com/solutions/7080426).
 
 Once you have a confirmation that the service is patched, let's grab your NLB name which will be useful for further steps.
 
 ```bash
-NLB_NAME=$(oc -n openshift-ingress get svc router-private-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+NLB_NAME=$(oc -n openshift-ingress get svc router-private-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' | cut -d'-' -f1)
 echo $NLB_NAME
 ```
-
-![nlb_name](images/nlb_name.png)
-<br />
-
-
-## Create custom domain on Route 53 (optional)
-
-Skip this step if you have already created the custom domain. To create one, go to your AWS Console. Select **Route 53** and choose a hosted zone, and from there, click **Create record** button. 
-
-Here you will be creating a wildcard CNAME record (e.g. `*.test.mobb.cloud`) and point it to the NLB created before:
-
-![cname_rec](images/cname_rec.png)
-<br />
 
 
 ## Create the ALB
@@ -198,12 +186,21 @@ Wait for a few minutes until the ACM certificate shows **Issued** status. Next, 
 ![acm](images/acm.png)
 <br />
 
-Lastly, be sure everything looks good at the **Summary** section and then click **Create load balancer**. Wait for a few minutes until the ALB is fully provisioned. Then grab the **DNS name** of the ALB and go to your Route 53 record and edit the value to point it to this ALB, and click **Save**.
+Lastly, be sure everything looks good at the **Summary** section and then click **Create load balancer**. Wait for a few minutes until the ALB is fully provisioned. Grab the **DNS name** of the ALB for the next step.
+
+
+## Create (or update) custom domain on Route 53 
+
+Skip this creation step if you have already created the custom domain. To create one, go to your AWS Console. Select **Route 53** and choose a hosted zone, and from there, click **Create record** button. 
+
+Here you will be creating a wildcard CNAME record (e.g. `*.test.mobb.cloud`) and point it to the **DNS name** of the ALB you just created, and click **Save**. 
 
 ![rec_alb](images/rec_alb.png)
 <br />
 
-Now if you look at the target group you created earlier, you should see the NLB health checks are healthy.
+If you have already the record previously, then simply update the value to the ALB.
+
+FYI, now if you look at the target group you created earlier, you should see the NLB health checks are healthy.
 
 ![tg_healthy](images/tg_healthy.png)
 <br />
