@@ -80,7 +80,7 @@ Create a Microsoft Entra ID app registration. To do so, login to the Azure porta
 
 Provide a name for the application, for example `<cluster-name>-auth`. Select "Web" from the Redirect URI dropdown and fill in the Redirect URI using the value of the OAuth callback URL you retrieved in the previous step. 
 
-####(Optional) create a second redirect URI for the API Server
+#### (Optional) create a second redirect URI for the API Server
 If you would like to access the api server via the oc or kubectl clis a second redirect URI needs to be added.
 
 Following the same steps as above, Select "Web" from the Redirect URI dropdown and fill in the http://localhost:8000 as the value. 
@@ -181,7 +181,7 @@ I: To retrieve only the kubeconfig for this credential use: 'rosa describe break
 Retrieve the break glass credential id
 
 ```bash
-  BREAK_GLASS_CREDENTIAL_ID=$(rosa list break-glass-credentials -c kmc-extauth -o json | jq -r '.[].id')
+  BREAK_GLASS_CREDENTIAL_ID=$(rosa list break-glass-credentials -c ${ROSA_CLUSTER_NAME} -o json | jq -r '.[].id')
   echo $BREAK_GLASS_CREDENTIAL_ID
 ```
 
@@ -321,9 +321,9 @@ Here we will be leveraging a client-go Credential Plugin to automate the interac
 More information related to Kubernetes plugins can be found [here](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
 
 
-This guide will install the [Krew](https://krew.sigs.k8s.io/) plugin.  A full installation guide can be found [here](https://krew.sigs.k8s.io/docs/user-guide/setup/install/).  The following instructions are an abbreviated example for installing Krew and installing the oidc-login plugin.
+This guide will install the [Krew](https://krew.sigs.k8s.io/) plugin.  A full installation guide can be found [here](https://krew.sigs.k8s.io/docs/user-guide/setup/install/).  The following instructions are an abbreviated example for installing Krew and installing the oidc-login plugin.  For other platforms please refer to the Krew installation [instructions](https://krew.sigs.k8s.io/docs/user-guide/setup/install/)
 
-Install Krew on MacOS
+#### Install Krew on MacOS
 
 ```bash
 curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-darwin_amd64.tar.gz" 
@@ -336,7 +336,20 @@ Add the $HOME/.krew/bin directory to your PATH environment variable. To do this,
 
 ```bash
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-and restart your shell.
+```
+
+Restart your shell.
+
+### Reset Environment Variables
+After restarting your shell, reset environment variables
+
+```bash
+IDP_NAME=<entra-application-name>
+CLIENT_ID=<entra-application-id>
+CLIENT_SECRET=<entra-client_secret_value>
+TENANT_ID=<entra-tenant_id>
+ROSA_CLUSTER_NAME=<cluster-name>
+API_URL=$(rosa describe cluster --cluster ${ROSA_CLUSTER_NAME} -o json | jq -r '.api.url')
 ```
 
 Run kubectl krew to check the installation.
@@ -388,7 +401,7 @@ Set the `KUBECONFIG` environment variable to the location of the `rosa-cluster.k
 
 
 ```bash
-export KUBECONFIG=$(pwd)/rosa-auth.kubeconfig
+export KUBECONFIG=$(pwd)/${ROSA_CLUSTER_NAME}.kubeconfig
 ```
 
 Confirm your access to the cluster by running the following command:
