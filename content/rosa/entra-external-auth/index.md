@@ -78,7 +78,14 @@ Create a Microsoft Entra ID app registration. To do so, login to the Azure porta
 
 ![Azure Portal - App registrations blade](./images/azure-portal_app-registrations-blade.png)
 
-Provide a name for the application, for example `<cluster-name>-auth`. Select "Web" from the Redirect URI dropdown and fill in the Redirect URI using the value of the OAuth callback URL you retrieved in the previous step. Once you fill in the necessary information, click "Register" to create the application.
+Provide a name for the application, for example `<cluster-name>-auth`. Select "Web" from the Redirect URI dropdown and fill in the Redirect URI using the value of the OAuth callback URL you retrieved in the previous step. 
+
+####(Optional) create a second redirect URI for the API Server
+If you would like to access the api server via the oc or kubectl clis a second redirect URI needs to be added.
+
+Following the same steps as above, Select "Web" from the Redirect URI dropdown and fill in the http://localhost:8000 as the value. 
+
+Once you fill in the necessary information, click "Register" to create the application.
 
 ![Azure Portal - Register an application page](./images/azure-portal_register-an-application-page.png)
 
@@ -171,10 +178,17 @@ I: Successfully created a break glass credential for cluster 'cluster-name'.
 I: To retrieve only the kubeconfig for this credential use: 'rosa describe break-glass-credential abcdefg123456789 -c cluster-name --kubeconfig'
 ```
 
+Retrieve the break glass credential id
+
+```bash
+  BREAK_GLASS_CREDENTIAL_ID=$(rosa list break-glass-credentials -c kmc-extauth -o json | jq -r '.[].id')
+  echo $BREAK_GLASS_CREDENTIAL_ID
+```
+
 Save the kubeconfig file that will allow you to log into the cluster with the break glass credential created.
 
 ```bash
-rosa describe break-glass-credential <BREAK_GLASS_CREDENTIAL_ID> -c ${ROSA_CLUSTER_NAME} --kubeconfig > rosa-cluster.kubeconfig
+rosa describe break-glass-credential ${BREAK_GLASS_CREDENTIAL_ID} -c ${ROSA_CLUSTER_NAME} --kubeconfig > rosa-cluster.kubeconfig
 ```
 Validate that the `rosa-cluster.kubeconfig` is populated. Your file should look like this:
 
@@ -306,9 +320,37 @@ Here we will be leveraging a client-go Credential Plugin to automate the interac
 
 More information related to Kubernetes plugins can be found [here](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/).
 
+
+This guide will install the [Krew](https://krew.sigs.k8s.io/) plugin.  A full installation guide can be found [here](https://krew.sigs.k8s.io/docs/user-guide/setup/install/).  The following instructions are an abbreviated example for installing Krew and installing the oidc-login plugin.
+
+Install Krew on MacOS
+
+```bash
+curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-darwin_amd64.tar.gz" 
+
+ tar zxvf krew-darwin_amd64.tar.gz
+./krew-darwin_amd64 install krew
+```
+
+Add the $HOME/.krew/bin directory to your PATH environment variable. To do this, update your .bashrc or .zshrc file and append the following line:
+
+```bash
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+and restart your shell.
+```
+
+Run kubectl krew to check the installation.
+
+Finally, using krew, install the oidc-login plugin.
+
+```bash
+kubectl krew install oidc-login
+```
+
 Once the plugin has been configured and is available, create a KUBECONFIG file here with EntraID details for example create **rosa-auth.kubeconfig** file with following information
 
 ```bash
+kube_config="
 apiVersion: v1
 clusters:
 - cluster:
@@ -339,6 +381,8 @@ users:
       command: kubectl
       env: null
       interactiveMode: Never
+"
+echo "${kube_config}" > ${ROSA_CLUSTER_NAME}.kubeconfig
 ```
 Set the `KUBECONFIG` environment variable to the location of the `rosa-cluster.kubeconfig` file. This will configure the OpenShift CLI to authenticate against the ROSA cluster with the OIDC client.
 
@@ -360,11 +404,13 @@ ip-10-0-0-170.ec2.internal   Ready    worker   3h29m   v1.30.7
 ip-10-0-1-171.ec2.internal   Ready    worker   3h30m   v1.30.7
 ip-10-0-2-161.ec2.internal   Ready    worker   3h29m   v1.30.7
 ```
+
 To verify you are logged in as user of the group, run the following command:
 
 ```bash
 oc auth whoami
 ```
+
 ### Validate access to the cluster's API using device-code authentication 
 
 Note: Using device-code authentication is when you are authenticating from somewhere that doesn't have a web browser. The `--token-cache-storage=disk` parameter is necessary when the command is run from a machine that does not have a keyring.
@@ -376,6 +422,7 @@ Click on the "Authentication" blade in the Microsoft Entra ID app registration a
 Create a `rosa-auth-headless.kubeconfig` file containing your Microsoft Entra ID authentication details and the cluster's API server.
 
 ```bash
+headless_kube_config="
 apiVersion: v1
 clusters:
 - cluster:
@@ -409,11 +456,13 @@ users:
       command: kubectl
       env: null
       interactiveMode: Never
+"
+echo "${headless_kube_config}" > ${ROSA_CLUSTER_NAME}_headless.kubeconfig
 ```
 Set the `KUBECONFIG` environment variable to the location of the `rosa-cluster.kubeconfig` file. This will configure the OpenShift CLI to authenticate against the ROSA cluster with the OIDC client.
 
 ```bash
-export KUBECONFIG=$(pwd)/rosa-auth-headless.kubeconfig
+export KUBECONFIG=${ROSA_CLUSTER_NAME}_headless.kubeconfig
 ```
 
 Confirm your access to the cluster by running the following command:
