@@ -11,9 +11,10 @@ This guide walks through setting up a local-zone in an existing ROSA Classic clu
 
 ## Prerequisites
 
-* A ROSA classic cluster deployed with STS (BYO VPC)
+* A ROSA classic cluster deployed with STS in a region that has local zones(BYO VPC)
 * [Install and execute the installation guide for AWS LoadBalancer Operator](https://cloud.redhat.com/experts/rosa/aws-load-balancer-operator/)
-* aws CLI
+* AWS CLI
+* watch
 * [Identify the local zone to be used](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/)
 * [Enable the local zone in the account](https://docs.redhat.com/en/documentation/openshift_container_platform/4.12/html/installing_on_aws/installing-aws-localzone#installation-aws-add-local-zone-locations_installing-aws-localzone)
 * The VPC must have enough space to create the Local Zone Subnet. In this example, we create two subnets, one public and one private.  
@@ -112,6 +113,8 @@ Create the machinepool in the localzone and wait until the nodes are available i
 rosa create machinepool --cluster $ROSA_CLUSTER_NAME --name $LZ_MACHINEPOOL_NAME --subnet $PRIVATE_SUBNET_LZ --replicas 2 --instance-type $INSTANCE_TYPE
 watch oc get machines -n openshift-machine-api 
 ```
+
+{{% alert state="warning" %}}  **Note:** Wait for the machines to be up and running before continuing with the next steps. It could take several minutes. (7-15 min. depending on the localzone). {{% /alert %}} 
 
 Label the machinepool so the applications will be installed on the local zone nodes only.
 
