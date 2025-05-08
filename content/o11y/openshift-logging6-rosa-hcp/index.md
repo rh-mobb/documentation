@@ -7,7 +7,7 @@ authors:
   - Kevin Collins 
 ---
 
-ROSA HCP clusters are now only support openshift Logging 6.x and above. This guide aims to provide a step-by-step guide for implementing logging 6.x on ROSA HCP, setup log store with Loki /w S3 and/or log forwarding to AWS CloudWatch.
+ROSA HCP clusters now only support openshift Logging 6.x and above. This guide aims to provide a step-by-step guide for implementing logging 6.x on ROSA HCP,setting up a log store with Loki /w S3 and/or log forwarding to AWS CloudWatch.
 
 For ROSA Classic refer to the [LokiStack on ROSA](/experts/o11y/openshift-logging-lokistack/) article.
 
@@ -27,7 +27,7 @@ For ROSA HCP with logging 6 now required following operators
 
 1. ROSA HCP Cluster with cluster-admin permissions
 1. OpenShift CLI (oc)
-1. Access AWS resources i.e IAM, S3 and Cloudwatch
+1. Access AWS resources i.e. IAM, S3 and Cloudwatch
 
 ## Create environment variables 
 
@@ -136,7 +136,7 @@ EOF
 ```
 
 1. Openshift project for Loki operator 
-> Note: ROSA HCP cluster has built in openshift-operators-redhat project. Make sure it has  "openshift.io/cluster-monitoring: "true"" label. If not add label using following command 
+> Note: ROSA HCP cluster has built in openshift-operators-redhat project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. If not add label using following command 
   ```bash
   oc label namespace openshift-operators-redhat openshift.io/cluster-monitoring="true"
   ```
@@ -183,7 +183,7 @@ spec:
   sourceNamespace: openshift-marketplace
 EOF
 ```
->Note: Make sure to validate current stable channel version. e.g: 6.2
+>Note: Make sure to validate the current stable channel version. e.g: 6.2
 
 1. Verify Operator Installation
 
@@ -200,7 +200,7 @@ EOF
 
 1. Create a namespace object for deploy the LokiStack:
 
-> Note: ROSA HCP cluster has built in openshift-logging project. Make sure it has  "openshift.io/cluster-monitoring: "true"" label. If not add label using following command 
+> Note: ROSA HCP cluster has a built in openshift-logging project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. If not add label using following command 
 
   ```bash
   oc label namespace openshift-logging openshift.io/cluster-monitoring="true"
@@ -263,7 +263,7 @@ EOF
   oc get pods -n openshift-logging
   ```
 
-  Note: If you see pods in Pending state, confirm that you have sufficient resources in the cluster to run a LokiStack. You could set your ROSa machime pool to auto scale or create new machine pool with following command
+  Note: If you see pods in Pending state, confirm that you have sufficient resources in the cluster to run a LokiStack. You could set your ROSA machine pool to auto scale or create new machine pool with following command
   ```bash
   rosa create machinepool -c ${CLUSTER_NAME} --name=lokistack-mp --replicas=2 --instance-type=m5.4xlarge 
   ```
@@ -516,7 +516,7 @@ EOF
 ```
 >Note: Make sure to format group name and set correct AWS region
 
-This example selects all application, infrastructure and audit logs and forwards them cloudwatch. Refer to [openshift logging documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#log6x-clf-6-2) for more configuration options like log formating,filtering..etc.
+This example selects all application, infrastructure and audit logs and forwards them to cloudwatch. Refer to [openshift logging documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#log6x-clf-6-2) for more configuration options like log formating,filtering..etc.
 
 1. Verify CW log groups
 ![cloudwatch log groups](./cw_log_groups.png)
@@ -582,7 +582,7 @@ EOF
 >Note: Make sure to provide correct lokiStack name configured above (i.e:logging-loki )
 
 1. Verify Logging UI plugin
-Wait until you see openshift web console refresh request. Once console is refesh, expand Observe in the left hand side of the openshift console and go to log tab. 
+Wait until you see the openshift web console refresh request. Once the console is refreshed, expand Observe in the left hand side of the openshift console and go to the log tab. 
 
 ![logs in Openshift Web console](./coo_logs.png)
 
