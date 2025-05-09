@@ -7,7 +7,7 @@ authors:
   - Kevin Collins 
 ---
 
-ROSA HCP clusters now only support openshift Logging 6.x and above. This guide aims to provide a step-by-step guide for implementing logging 6.x on ROSA HCP,setting up a log store with Loki /w S3 and/or log forwarding to AWS CloudWatch.
+ROSA HCP clusters now only support openshift Logging 6.x and above. This guide aims to provide a step-by-step guide for implementing logging 6.x on ROSA HCP,setting up a log store with Loki with S3 and/or log forwarding to AWS CloudWatch.
 
 For ROSA Classic refer to the [LokiStack on ROSA](/experts/o11y/openshift-logging-lokistack/) article.
 
@@ -20,39 +20,42 @@ Refer to [openshift logging official documentation](https://docs.redhat.com/en/d
 
 For ROSA HCP with logging 6 now required following operators 
 1. Loki Operator (log store)
-1. Red Hat OpenShift Logging Operator 
-2. Cluster Observability Operator (log visualizing)
+2. Red Hat OpenShift Logging Operator 
+3. Cluster Observability Operator (log visualizing)
 
 ## Prerequisites
 
-1. ROSA HCP Cluster with cluster-admin permissions
-1. OpenShift CLI (oc)
-1. Access AWS resources i.e. IAM, S3 and Cloudwatch
+1. ROSA HCP Cluster logged in with cluster-admin permissions
+2. OpenShift CLI (oc)
+3. Access AWS resources i.e. IAM, S3 and Cloudwatch
+
+> Note: The OpenShift Logging stack requires quite a bit of resources, you will need at least 32 vCPUs in your cluster.
 
 ## Create environment variables 
 
 1. Create environment variables :
 
-  ```bash
-  export REGION=$(oc get infrastructure cluster -o=jsonpath="{.status.platformStatus.aws.region}")
-  export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster \
-      -o jsonpath='{.spec.serviceAccountIssuer}' | sed  's|^https://||')
-  export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-  export AWS_PAGER=""
-  export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.apiServerURL}" | awk -F '.' '{print $2}')
-  export LOKISTACK_BUCKET_NAME=${CLUSTER_NAME}-lokistack-storage
-  export LOGGROUP_PREFIX=logging-${CLUSTER_NAME}
-  echo REGION:$REGION OIDC_ENDPOINT:$OIDC_ENDPOINT AWS_ACCOUNT_ID:$AWS_ACCOUNT_ID CLUSTER_NAME:$CLUSTER_NAME LOKISTACK_BUCKET_NAME:$LOKISTACK_BUCKET_NAME LOGGROUP_PREFIX: $LOGGROUP_PREFIX
-  ```
+```bash
+export REGION=$(oc get infrastructure cluster -o=jsonpath="{.status.platformStatus.aws.region}")
+export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster \
+-o jsonpath='{.spec.serviceAccountIssuer}' | sed  's|^https://||')
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export AWS_PAGER=""
+export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.apiServerURL}" | awk -F '.' '{print $2}')
+export LOKISTACK_BUCKET_NAME=${CLUSTER_NAME}-lokistack-storage
+export LOGGROUP_PREFIX=logging-${CLUSTER_NAME}
+echo REGION:$REGION OIDC_ENDPOINT:$OIDC_ENDPOINT AWS_ACCOUNT_ID:$AWS_ACCOUNT_ID CLUSTER_NAME:$CLUSTER_NAME LOKISTACK_BUCKET_NAME:$LOKISTACK_BUCKET_NAME LOGGROUP_PREFIX: $LOGGROUP_PREFIX
+```
+
 ## Install the Loki Operator
 
 1. Create a S3 bucket for the LokiStack Operator
 
-    ```bash
-    aws s3 mb --region ${REGION} s3://${LOKISTACK_BUCKET_NAME}
-    ```
+```bash
+aws s3 mb --region ${REGION} s3://${LOKISTACK_BUCKET_NAME}
+```
 
-1. Create a S3 IAM policy document for Loki operator
+2. Create a S3 IAM policy document for the Loki operator
 
 ```bash   
 cat << EOF > s3_policy.json
@@ -78,7 +81,7 @@ cat << EOF > s3_policy.json
 EOF
 ```
 
-1. Create the S3 IAM Policy for Loki stack access
+3. Create a S3 IAM Policy for Loki stack access
 
 ```bash
 POLICY_ARN_S3=$(aws --region "$REGION" --query Policy.Arn \
@@ -89,7 +92,7 @@ POLICY_ARN_S3=$(aws --region "$REGION" --query Policy.Arn \
 echo $POLICY_ARN_S3
 ```
 
-1. Create an IAM Role trust policy document
+4. Create an IAM Role trust policy
 
 ```bash
 cat <<EOF > s3-trust-policy.json
@@ -115,44 +118,50 @@ cat <<EOF > s3-trust-policy.json
 }
 EOF
 ```
-> Note: logging-collector -  Name of the openshift service account used by log collector
+
+> Note: logging-collector =  The name of the OpenShift service account used by log collector
 
 
-1. Create an IAM Role and link the trust policy
+5. Create an IAM Role and link the trust policy
 
-    ```bash
-    ROLE_ARN_S3=$(aws iam create-role --role-name "${CLUSTER_NAME}-lokistack-access-role" \
-    --assume-role-policy-document file://s3-trust-policy.json \
-    --query Role.Arn --output text)
-    echo $ROLE_ARN_S3
-    ```
-> Note: Save this role_arn for installation of the lokistack operator later.
-
-1. Attach S3 IAM Policy for Loki stack access to the above role 
 ```bash
-  aws iam attach-role-policy \
-  --role-name "${CLUSTER_NAME}-lokistack-access-role" \
-  --policy-arn $POLICY_ARN_S3
+ROLE_ARN_S3=$(aws iam create-role --role-name "${CLUSTER_NAME}-lokistack-access-role" \
+--assume-role-policy-document file://s3-trust-policy.json \
+--query Role.Arn --output text)
+echo $ROLE_ARN_S3
 ```
 
-1. Openshift project for Loki operator 
-> Note: ROSA HCP cluster has built in openshift-operators-redhat project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. If not add label using following command 
-  ```bash
-  oc label namespace openshift-operators-redhat openshift.io/cluster-monitoring="true"
-  ```
-  If openshift-operators-redhat project does not exists create it. 
+> Note: Save this role_arn for installation of the lokistack operator later.
 
-  ```bash
-  oc create -f - <<EOF
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: openshift-operators-redhat
-    labels:
-      openshift.io/cluster-monitoring: "true"
-  EOF
-  ```
-1. Create an OperatorGroup object
+6. Attach S3 IAM Policy for Loki stack access to the above role 
+
+```bash
+aws iam attach-role-policy \
+--role-name "${CLUSTER_NAME}-lokistack-access-role" \
+--policy-arn $POLICY_ARN_S3
+```
+
+7. OpenShift project for Loki operator 
+> Note: ROSA HCP cluster has a built in openshift-operators-redhat project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. 
+
+```bash
+oc label namespace openshift-operators-redhat openshift.io/cluster-monitoring="true"
+```
+
+If the openshift-operators-redhat project does not exist create it. 
+
+```bash
+oc create -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-operators-redhat
+  labels:
+    openshift.io/cluster-monitoring: "true"
+EOF
+```
+
+8. Create an OperatorGroup
 
 ```bash
 oc create -f - <<EOF
@@ -166,7 +175,7 @@ spec:
 EOF
 ```
 
-1. Create a Subscription object for Loki Operator
+9. Create a Subscription for Loki Operator
 
 ```bash
 oc create -f - <<EOF
@@ -183,14 +192,17 @@ spec:
   sourceNamespace: openshift-marketplace
 EOF
 ```
+
 >Note: Make sure to validate the current stable channel version. e.g: 6.2
 
-1. Verify Operator Installation
+10. Verify Operator Installation
 
   ```bash
   oc get csv -n openshift-operators-redhat
   ``` 
-  
+
+  >Note: This can take up to a minute
+
   Example Output 
 
   ```
@@ -198,39 +210,28 @@ EOF
   loki-operator.v6.2.2     Loki Operator               6.2.2     loki-operator.v6.2.1     Succeeded
   ```
 
-1. Create a namespace object for deploy the LokiStack:
+11. Label the openshift-logging namespace to deploy the LokiStack:
 
 > Note: ROSA HCP cluster has a built in openshift-logging project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. If not add label using following command 
 
-  ```bash
-  oc label namespace openshift-logging openshift.io/cluster-monitoring="true"
-  ```
-  If openshift-operators-redhat project does not exists create it. 
+```bash
+oc label namespace openshift-logging openshift.io/cluster-monitoring="true"
+```
 
-  ```bash
-  oc create -f - <<EOF
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: openshift-logging
-    labels:
-      openshift.io/cluster-monitoring: "true"
-  EOF
-  ```
+12. Create a secret with the above Role for Loki stack to access S3 bucket. 
 
-1. Create a secret with the above Role for Loki stack to access S3 bucket. 
+```bash
+oc -n openshift-logging create secret generic "logging-loki-aws" \
+--from-literal=bucketnames="${LOKISTACK_BUCKET_NAME}" \
+--from-literal=region="${REGION}" \
+--from-literal=audience="openshift" \
+--from-literal=role_arn="${ROLE_ARN_S3}" \
+--from-literal=endpoint="https://s3.${REGION}.amazonaws.com"
+```
 
-  ```bash
-  oc -n openshift-logging create secret generic "logging-loki-aws" \
-  --from-literal=bucketnames="${LOKISTACK_BUCKET_NAME}" \
-  --from-literal=region="${REGION}" \
-  --from-literal=audience="openshift" \
-  --from-literal=role_arn="${ROLE_ARN_S3}" \
-  --from-literal=endpoint="https://s3.${REGION}.amazonaws.com"
-  ```
 > Note: Make sure endpoint has correct S3 region for your environment
 
-1. Create a LokiStack CR
+13. Create a LokiStack Customer Resource
 
 ```bash
 oc create -f - <<EOF
@@ -257,16 +258,19 @@ EOF
 
 > Note: Specify the deployment size. Supported size options for production instances of Loki are 1x.extra-small, 1x.small, or 1x.medium. Additionally, 1x.pico is supported starting with logging 6.1. [Loki deployment sizing](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#log6x-loki-sizing_log6x-loki-6.2)
 
-1. Verify LokiStack Installation
+14. Verify LokiStack Installation
 
-  ```bash
-  oc get pods -n openshift-logging
-  ```
+```bash
+oc get pods -n openshift-logging
+```
 
-  Note: If you see pods in Pending state, confirm that you have sufficient resources in the cluster to run a LokiStack. You could set your ROSA machine pool to auto scale or create new machine pool with following command
-  ```bash
-  rosa create machinepool -c ${CLUSTER_NAME} --name=lokistack-mp --replicas=2 --instance-type=m5.4xlarge 
-  ```
+> Note: If you see pods in Pending state, confirm that you have sufficient resources in the cluster to run a LokiStack. You could set your ROSA machine pool to auto scale or create new machine pool with following command
+
+```bash
+for i in $(rosa describe cluster -c {CLUSTER_NAME} -o json | jq -r '.nodes.availability_zones[]'); do
+rosa create machinepool -c ${CLUSTER_NAME} --name=loki-$i --replicas=2 --instance-type=m5.16xlarge --availability-zone $i 
+done
+```
 
 ## Install the OpenShift Cluster Logging Operator
 
@@ -282,7 +286,7 @@ spec:
   upgradeStrategy: Default
 EOF
 ```
-1. Create a Subscription object for Red Hat OpenShift Logging Operator
+2. Create a Subscription object for Red Hat OpenShift Logging Operator
 ```bash
 oc create -f - <<EOF
 apiVersion: operators.coreos.com/v1alpha1
@@ -300,34 +304,37 @@ EOF
 ```
 >Note: Make sure to select latest stable channel e.g: 6.2
 
-1. Verify the Operator installation, the `PHASE` should be `Succeeded`
-    ```bash
-    oc get csv -n openshift-logging
-    ```
-    Example Output
-    ```
-    NAME                     DISPLAY                     VERSION   REPLACES                 PHASE
-    cluster-logging.v6.2.2   Red Hat OpenShift Logging   6.2.2     cluster-logging.v6.2.1   Succeeded
-    loki-operator.v6.2.2     Loki Operator               6.2.2     loki-operator.v6.2.1     Succeeded
-    ```
+3. Verify the Operator installation, the `PHASE` should be `Succeeded`
 
-1. Create a service account to be used by the log collector:
+```bash
+oc get csv -n openshift-logging
+```
 
-  ```bash
-  oc create sa logging-collector -n openshift-logging
-  ```
+Example Output
+```
+NAME                     DISPLAY                     VERSION   REPLACES                 PHASE
+cluster-logging.v6.2.2   Red Hat OpenShift Logging   6.2.2     cluster-logging.v6.2.1   Succeeded
+loki-operator.v6.2.2     Loki Operator               6.2.2     loki-operator.v6.2.1     Succeeded
+```
+
+3. Create a service account to be used by the log collector:
+
+```bash
+oc create sa logging-collector -n openshift-logging
+```
+
 > Note: SA name should match service account name used in above s3 access trust policy. i.e: logging-collector
 
-1. Grant necessary permissions to the service account so it's able to collect and forward logs. In this example, the collector is provided permissions to collect logs from infrastructure, audit and application logs.
+4. Grant necessary permissions to the service account so it's able to collect and forward logs. In this example, the collector is provided permissions to collect logs from infrastructure, audit and application logs.
 
-  ```bash
-  oc adm policy add-cluster-role-to-user logging-collector-logs-writer -z logging-collector -n openshift-logging
-  oc adm policy add-cluster-role-to-user collect-application-logs -z logging-collector -n openshift-logging
-  oc adm policy add-cluster-role-to-user collect-infrastructure-logs -z logging-collector -n openshift-logging
-  oc adm policy add-cluster-role-to-user collect-audit-logs -z logging-collector -n openshift-logging
-  ```
+```bash
+oc adm policy add-cluster-role-to-user logging-collector-logs-writer -z logging-collector -n openshift-logging
+oc adm policy add-cluster-role-to-user collect-application-logs -z logging-collector -n openshift-logging
+oc adm policy add-cluster-role-to-user collect-infrastructure-logs -z logging-collector -n openshift-logging
+oc adm policy add-cluster-role-to-user collect-audit-logs -z logging-collector -n openshift-logging
+```
 
-1. Create a ClusterLogForwarder CR to store logs in S3
+5. Create a ClusterLogForwarder CR to store logs in S3
 
 ```bash
 oc create -f - <<EOF
@@ -363,19 +370,24 @@ spec:
     - lokistack-out
 EOF 
 ```
-1. Confirm you can see collector pods called "instance" starting up using the following command. There should be one per node.
-    ```bash
-    oc get pods -n openshift-logging | grep instance
-    ```
-    Example output:
 
-    ```
-    instance-6tk4f                                1/1     Running             0          8s
-    instance-dl2wt                                1/1     Running             0          9s
-    instance-ggfb9                                1/1     Running             0          8s
-    instance-qhtnj                                1/1     Running             0          8s
-    instance-zpnr5                                1/1     Running             0          9s
-    ```
+1. Confirm you can see collector pods called "instance" starting up using the following command. There should be one per node.
+
+```bash
+oc get pods -n openshift-logging | grep instance
+```
+
+Example output:
+
+```
+instance-6tk4f                                1/1     Running             0          8s
+instance-dl2wt                                1/1     Running             0          9s
+instance-ggfb9                                1/1     Running             0          8s
+instance-qhtnj                                1/1     Running             0          8s
+instance-zpnr5                                1/1     Running             0          9s
+```
+
+Wait until all instances show running
 
 1. Verify your S3 bucket
 ![S3 bucket](./s3_folders.png)
@@ -387,9 +399,10 @@ The ClusterLogForwarder (CLF) allows users to configure forwarding of logs to va
 
 ### Prerequisites
 1.  Created a serviceAccount in the same namespace as the ClusterLogForwarder CR (we'll use same SA as Loki stack i.e logging-collector)
-1.  Assigned the collect-audit-logs, collect-application-logs and collect-infrastructure-logs cluster roles to the serviceAccount.
 
-1. Create a CW IAM policy document for CLF
+2.  Assigned the collect-audit-logs, collect-application-logs and collect-infrastructure-logs cluster roles to the serviceAccount.
+
+3. Create a CW IAM policy document for CLF
 
 ```bash
 cat << EOF > cw-policy.json
@@ -413,18 +426,19 @@ cat << EOF > cw-policy.json
 EOF
 ```
 
-1. Create the CW IAM Policy for CLF's access
-  ```bash
-    POLICY_ARN_CW=$(aws --region "$REGION" --query Policy.Arn \
-    --output text iam create-policy \
-    --policy-name "${CLUSTER_NAME}-CLF-CW-policy" \
-    --policy-document file://cw-policy.json)
+4. Create the CW IAM Policy for CLF's access
 
-    echo $POLICY_ARN_CW
-  ```
-  
+```bash
+POLICY_ARN_CW=$(aws --region "$REGION" --query Policy.Arn \
+--output text iam create-policy \
+--policy-name "${CLUSTER_NAME}-CLF-CW-policy" \
+--policy-document file://cw-policy.json)
 
-1.  Create an IAM Role trust policy document
+echo $POLICY_ARN_CW
+``` 
+
+5.  Create an IAM Role trust policy document
+
 ```bash
 cat <<EOF > ./trust-cw-policy.json
 {
@@ -445,33 +459,35 @@ cat <<EOF > ./trust-cw-policy.json
 EOF
 ```
 
->Note: logging-collector -  Name of the openshift service account used by log collector
+>Note: logging-collector -  The name of the openshift service account used by log collector
 
-1. Create an IAM Role and link the trust policy
+6. Create an IAM Role and link the trust policy
 
-  ```bash
-  ROLE_ARN_CW=$(aws iam create-role --role-name "${CLUSTER_NAME}-ROSACloudWatch" \
-     --assume-role-policy-document file://trust-cw-policy.json \
-     --query Role.Arn --output text)
-  echo ${ROLE_ARN_CW}
-  ```
+```bash
+ROLE_ARN_CW=$(aws iam create-role --role-name "${CLUSTER_NAME}-ROSACloudWatch" \
+--assume-role-policy-document file://trust-cw-policy.json \
+--query Role.Arn --output text)
+  
+echo ${ROLE_ARN_CW}
+```
 > Note: Save this role_arn for installation of the cluster log forwarder (CLF) later.
 
-1. Attach CW IAM Policy to the above role 
-  ```bash
-  aws iam attach-role-policy \
-  --role-name "${CLUSTER_NAME}-ROSACloudWatch" \
-  --policy-arn $POLICY_ARN_CW
-  ```
+7. Attach CW IAM Policy to the above role 
+  
+```bash
+aws iam attach-role-policy \
+--role-name "${CLUSTER_NAME}-ROSACloudWatch" \
+--policy-arn $POLICY_ARN_CW
+```
 
-1. Create a secret with above Role for CLF to access CW
+8. Create a secret with above Role for CLF to access CW
 
-  ```bash
-  oc -n openshift-logging create secret generic "cw-secret" \
-  --from-literal=role_arn="${ROLE_ARN_CW}" 
-  ```
+```bash
+oc -n openshift-logging create secret generic "cw-secret" \
+--from-literal=role_arn="${ROLE_ARN_CW}" 
+```
 
-1. Create a ClusterLogForwarder CR to forward logs to AWS cloudwatch
+9. Create a ClusterLogForwarder CR to forward logs to AWS cloudwatch
 
 ```bash
 oc create -f - <<EOF
@@ -495,7 +511,7 @@ spec:
             from: serviceAccount
         type: iamRole
       groupName: logging-${CLUSTER_NAME}.{.log_type||"none-typed-logs"}
-      region: us-west-2
+      region: ${REGION}
       tuning:
         compression: zstd
         delivery: atMostOnce
@@ -514,22 +530,25 @@ spec:
     name: logging-collector
 EOF
 ```
+
 >Note: Make sure to format group name and set correct AWS region
 
 This example selects all application, infrastructure and audit logs and forwards them to cloudwatch. Refer to [openshift logging documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#log6x-clf-6-2) for more configuration options like log formating,filtering..etc.
 
-1. Verify CW log groups
+10. Verify CW log groups
 ![cloudwatch log groups](./cw_log_groups.png)
 
 ## Log visualization in openshift console
 Visualization for logging is provided by deploying the Logging UI Plugin of the Cluster Observability Operator(COO). Follow detail instructions for [Installing the Cluster Observability operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html-single/cluster_observability_operator/index#installing-the-cluster-observability-operator-in-the-web-console-_installing_the_cluster_observability_operator)
 
 1. Openshift project for COO
+
 ```bash
 oc create ns  openshift-cluster-observability-operator
 ```
 
-1.  Create an OperatorGroup object for COO
+2.  Create an OperatorGroup object for COO
+
 ```bash
 oc create -f - <<EOF
 apiVersion: operators.coreos.com/v1
@@ -541,7 +560,9 @@ spec:
   upgradeStrategy: Default
 EOF
 ```
-1.  Create a Subscription object for COO
+
+3.  Create a Subscription object for the Cluster Oberservability Operator
+
 ```bash
 oc create -f - <<EOF
 apiVersion: operators.coreos.com/v1alpha1
@@ -558,12 +579,16 @@ spec:
 EOF
 ```
 
-1.  Verify COO Installation
+4. Verify the Cluster Oberservability Operator Installation
+
 ```bash
 oc get csv -n openshift-cluster-observability-operator
 ```
 
-1.  Create a COO Logging UI plugin CR
+Wait until the Cluster Observability Operator shows Succeeded
+
+5.  Create a Cluster Observability Operator Logging UI plugin CR
+
 ```bash
 oc create -f - <<EOF
 apiVersion: observability.openshift.io/v1alpha1
@@ -579,9 +604,10 @@ spec:
     timeout: 30s
 EOF
 ```
+
 >Note: Make sure to provide correct lokiStack name configured above (i.e:logging-loki )
 
-1. Verify Logging UI plugin
+6. Verify Logging UI plugin
 Wait until you see the openshift web console refresh request. Once the console is refreshed, expand Observe in the left hand side of the openshift console and go to the log tab. 
 
 ![logs in Openshift Web console](./coo_logs.png)
@@ -591,55 +617,59 @@ Wait until you see the openshift web console refresh request. Once the console i
 ## Cleanup
 
 1. Remove COOC UIPlugin
-    ```bash
-    oc delete UIPlugin logging -n openshift-cluster-observability-operator
-    ```
-1. Remove Cluster Observability Operator
-    ```bash
-    oc delete subscription cluster-observability-operator -n openshift-cluster-observability-operator
-    oc delete csv cluster-observability-operator.v1.1.1 -n openshift-cluster-observability-operator 
-    ```
-1. Remove the ClusterLogForwarder Instance:
 
-    ```bash
-    oc -n openshift-logging delete clusterlogforwarder --all
-    ```
+```bash
+oc delete UIPlugin logging -n openshift-cluster-observability-operator
+```
 
-1. Remove the LokiStack Instance:
+2. Remove Cluster Observability Operator
+    
+```bash
+oc delete subscription cluster-observability-operator -n openshift-cluster-observability-operator
+oc delete csv cluster-observability-operator.v1.1.1 -n openshift-cluster-observability-operator 
+```
 
-    ```bash
-    oc -n openshift-logging delete lokistack --all
-    ```
+3. Remove the ClusterLogForwarder Instance:
 
-1. Remove the Cluster Logging Operator:
+```bash
+oc -n openshift-logging delete clusterlogforwarder --all
+```
 
-    ```bash
-    oc -n openshift-logging delete subscription cluster-logging
-    oc -n openshift-logging delete csv cluster-logging.v6.2.2
-    ```
+4. Remove the LokiStack Instance:
 
-1. Remove the LokiStack Operator:
+```bash
+oc -n openshift-logging delete lokistack --all
+```
 
-    ```bash
-    oc -n openshift-operators-redhat delete subscription loki-operator
-    oc -n openshift-operators-redhat delete csv loki-operator.v6.2.2
-    ```
+5. Remove the Cluster Logging Operator:
+
+```bash
+oc -n openshift-logging delete subscription cluster-logging
+oc -n openshift-logging delete csv cluster-logging.v6.2.2
+```
+
+6. Remove the LokiStack Operator:
+
+```bash
+oc -n openshift-operators-redhat delete subscription loki-operator
+oc -n openshift-operators-redhat delete csv loki-operator.v6.2.2
+```
 
 
-1. Cleanup your AWS Bucket
+7. Cleanup your AWS Bucket
 
-    ```bash
-    aws s3 rm s3://$LOKISTACK_BUCKET_NAME --recursive
-    ```
+```bash
+aws s3 rm s3://$LOKISTACK_BUCKET_NAME --recursive
+```
 
-1. Cleanup your AWS Policies and roles
+8. Cleanup your AWS Policies and roles
 
-    ```bash
-    aws iam detach-role-policy --role-name "${CLUSTER_NAME}-lokistack-access-role" --policy-arn ${POLICY_ARN_S3}
-    aws iam delete-role --role-name "${CLUSTER_NAME}-lokistack-access-role"
-    aws iam delete-policy --policy-arn ${POLICY_ARN_S3}
+```bash
+aws iam detach-role-policy --role-name "${CLUSTER_NAME}-lokistack-access-role" --policy-arn ${POLICY_ARN_S3}
+aws iam delete-role --role-name "${CLUSTER_NAME}-lokistack-access-role"
+aws iam delete-policy --policy-arn ${POLICY_ARN_S3}
 
-    aws iam detach-role-policy --role-name "${CLUSTER_NAME}-ROSACloudWatch" --policy-arn ${POLICY_ARN_CW}
-    aws iam delete-role --role-name "${CLUSTER_NAME}-ROSACloudWatch"
-    aws iam delete-policy --policy-arn ${POLICY_ARN_CW}
-    ```
+aws iam detach-role-policy --role-name "${CLUSTER_NAME}-ROSACloudWatch" --policy-arn ${POLICY_ARN_CW}
+aws iam delete-role --role-name "${CLUSTER_NAME}-ROSACloudWatch"
+aws iam delete-policy --policy-arn ${POLICY_ARN_CW}
+```
