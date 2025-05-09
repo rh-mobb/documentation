@@ -267,7 +267,7 @@ oc get pods -n openshift-logging
 > Note: If you see pods in Pending state, confirm that you have sufficient resources in the cluster to run a LokiStack. You could set your ROSA machine pool to auto scale or create new machine pool with following command
 
 ```bash
-for i in $(rosa describe cluster -c {CLUSTER_NAME} -o json | jq -r '.nodes.availability_zones[]'); do
+for i in $(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.nodes.availability_zones[]'); do
 rosa create machinepool -c ${CLUSTER_NAME} --name=loki-$i --replicas=2 --instance-type=m5.16xlarge --availability-zone $i 
 done
 ```
