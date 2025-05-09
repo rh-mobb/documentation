@@ -275,6 +275,7 @@ done
 ## Install the OpenShift Cluster Logging Operator
 
 1. Create an OperatorGroup object
+
 ```bash
 oc create -f - <<EOF
 apiVersion: operators.coreos.com/v1
@@ -286,7 +287,9 @@ spec:
   upgradeStrategy: Default
 EOF
 ```
+
 2. Create a Subscription object for Red Hat OpenShift Logging Operator
+
 ```bash
 oc create -f - <<EOF
 apiVersion: operators.coreos.com/v1alpha1
@@ -368,7 +371,7 @@ spec:
     - audit
     outputRefs:
     - lokistack-out
-EOF 
+EOF
 ```
 
 7. Confirm you can see collector pods called "instance" starting up using the following command. There should be one per node.
