@@ -317,7 +317,7 @@ cluster-logging.v6.2.2   Red Hat OpenShift Logging   6.2.2     cluster-logging.v
 loki-operator.v6.2.2     Loki Operator               6.2.2     loki-operator.v6.2.1     Succeeded
 ```
 
-3. Create a service account to be used by the log collector:
+4. Create a service account to be used by the log collector:
 
 ```bash
 oc create sa logging-collector -n openshift-logging
@@ -325,7 +325,7 @@ oc create sa logging-collector -n openshift-logging
 
 > Note: SA name should match service account name used in above s3 access trust policy. i.e: logging-collector
 
-4. Grant necessary permissions to the service account so it's able to collect and forward logs. In this example, the collector is provided permissions to collect logs from infrastructure, audit and application logs.
+5. Grant necessary permissions to the service account so it's able to collect and forward logs. In this example, the collector is provided permissions to collect logs from infrastructure, audit and application logs.
 
 ```bash
 oc adm policy add-cluster-role-to-user logging-collector-logs-writer -z logging-collector -n openshift-logging
@@ -334,7 +334,7 @@ oc adm policy add-cluster-role-to-user collect-infrastructure-logs -z logging-co
 oc adm policy add-cluster-role-to-user collect-audit-logs -z logging-collector -n openshift-logging
 ```
 
-5. Create a ClusterLogForwarder CR to store logs in S3
+6. Create a ClusterLogForwarder CR to store logs in S3
 
 ```bash
 oc create -f - <<EOF
@@ -371,7 +371,7 @@ spec:
 EOF 
 ```
 
-1. Confirm you can see collector pods called "instance" starting up using the following command. There should be one per node.
+7. Confirm you can see collector pods called "instance" starting up using the following command. There should be one per node.
 
 ```bash
 oc get pods -n openshift-logging | grep instance
@@ -389,7 +389,7 @@ instance-zpnr5                                1/1     Running             0     
 
 Wait until all instances show running
 
-1. Verify your S3 bucket
+8. Verify your S3 bucket
 ![S3 bucket](./s3_folders.png)
 
 
