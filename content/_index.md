@@ -20,6 +20,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configuring Microsoft Entra ID as an external authentication provider](/experts/rosa/entra-external-auth)
 * [Optimizing Costs with ROSA: Scheduled Cluster Scaling](/experts/rosa/schedule-scaling)
 * [Integrating Service Mesh into a ROSA Cluster](/experts/rosa/service-mesh)
+* [Configuring OpenShift Logging 6 on ROSA HCP](/experts/o11y/openshift-logging6-rosa-hcp)
 
 #### Classic
 
@@ -77,7 +78,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy and use the Azure Service Operator V2(ASO)](/experts/aro/azure-service-operator/v2)
 * [Create an additional Ingress Controller for ARO](/experts/aro/additional-ingress-controller)
 * [Configure ARO with Azure NetApp Trident Operator](/experts/aro/trident)
-* [IBM Cloud Paks for Data Operator Setup](/experts/aro/ibm-cloud-paks-for-data)
 * [Install ARO with Custom Domain using LetsEncrypt with cert manager](/experts/aro/cert-manager)
 * [Configure ARO for Nvidia GPU Workloads](/experts/aro/gpu)
 * [Configure ARO with Azure Front Door](/experts/aro/frontdoor)
@@ -153,6 +153,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Shipping logs and metrics to Azure Blob storage](/experts/aro/shipping-logs-and-metrics-to-azure-blob)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
 * [Installing and configuring LokiStack on ROSA](/experts/o11y/openshift-logging-lokistack)
+* [Configuring Cluster Observability Operator (COO) in ARO and Enabling remote writing of metrics to Azure Monitor Workspace](/experts/o11y/openshift-coo-azuremonitor)
 
 ## Security
 
