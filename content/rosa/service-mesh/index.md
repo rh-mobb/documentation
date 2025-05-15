@@ -109,7 +109,7 @@ Skip this step if you have already created an app.
 
 ```bash
 oc new-project $APP_NAMESPACE
-oc new-app --docker-image=docker.io/openshift/hello-openshift
+oc new-app --docker-image=docker.io/openshift/hello-openshift -n $APP_NAMESPACE
 ```
 
 ### Step 5 - Add sidecar injection to deployment
