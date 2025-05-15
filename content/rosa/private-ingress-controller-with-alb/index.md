@@ -24,7 +24,7 @@ This guide presents an alternative architecture that leverages OpenShift Routes 
 
 - Use standard OpenShift Route objects instead of managing NodePort Services or Ingress resources
 - Avoid manually managing port allocations for multiple applications
-- Attach AWS services like Web Application Firewall (WAF) or Shield to protect your applications
+- Attach AWS services like [Web Application Firewall (WAF)](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-alb-and-waf#deploy-aws-load-balancer-operator_cloud-experts-using-alb-and-waf) or Shield to protect your applications
 - Maintain compatibility with existing OpenShift deployment patterns
 
 This approach differs from [adding an Ingress Controller to a ROSA cluster](https://cloud.redhat.com/experts/rosa/ingress-controller/) because here it adds the additional ALB component, providing a solution to have a public-facing ALB while keeping the NLB private. 
@@ -34,7 +34,7 @@ This approach differs from [adding an Ingress Controller to a ROSA cluster](http
 
 ## Prerequisites
 
-* A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) multi-az ROSA cluster v4.14 and above (this guide is tested on a classic multi-az Privatelink cluster, but it should work for other multi-az configurations also.)
+* A private (or Privatelink) [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) multi-az ROSA cluster v4.14 and above.
 * The oc CLI      # logged in.
 * A Domain Name in a public zone. These instructions assume Route 53, but can be adapted for any other DNS.
 
@@ -141,7 +141,7 @@ echo $NLB_NAME
 
 ## Create the ALB
 
-Before we create the ALB, let's grab the IP addresses related to your NLB. Go to your AWS Console and head to the dashboard. Be sure you're in the current region where your cluster resides. From your **Console Home**, search or select **EC2** and from there, on the navigation tab, select **Network Interfaces**. Copy and paste the NLB name from the previous output on the search bar, and then scroll to the right to until you see the list of the **Primary private IPv4 IP address** related to this NLB. 
+Before we create the ALB, let's grab the IP addresses related to your NLB. Go to your AWS Console and head to the dashboard. Be sure you're in the current region where your cluster resides. From your **Console Home**, search or select **EC2** and from there, on the navigation tab, select **Network Interfaces**. Copy and paste the NLB name from the previous output on the search bar, and then scroll to the right to until you see the list of the **Primary private IPv4 IP address** related to this NLB. Note that we will need these IP addresses to register targets in the next step so keep them handy for now.
 
 ![ip_addresses](images/ip_addresses.png)
 <br />
@@ -159,7 +159,7 @@ Next, under **Listeners and routing**, select `HTTPS` as protocol, and click **C
 <br />
 
 
-Click **Next** at the end of the page and this will lead you to the **Register targets** group. Now, enter the IP addresses of your ALB that you've retrieved previously. Once you added them, click **Include as pending below**. And at the **Review targets** section, you should see the health checks are in **Pending** state. Click **Create target group** to proceed.
+Click **Next** at the end of the page and this will lead you to the **Register targets** group. Now, enter the IP addresses of your NLB that you've retrieved previously. Once you added them, click **Include as pending below**. And at the **Review targets** section, you should see the health checks are in **Pending** state. Click **Create target group** to proceed.
 
 ![tg_review](images/tg_review.png)
 <br />
