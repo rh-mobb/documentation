@@ -19,6 +19,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Add an Ingress Controller to ROSA with a custom domain](/experts/rosa/ingress-controller)
 * [Configuring Microsoft Entra ID as an external authentication provider](/experts/rosa/entra-external-auth)
 * [Optimizing Costs with ROSA: Scheduled Cluster Scaling](/experts/rosa/schedule-scaling)
+* [Adding a Private Ingress Controller and a Public ALB to a ROSA Cluster](/experts/rosa/private-ingress-controller-with-alb)
 * [Configuring OpenShift Logging 6 on ROSA HCP](/experts/o11y/openshift-logging6-rosa-hcp)
 * [Integrating Service Mesh into a ROSA Cluster](/experts/rosa/service-mesh)
 
