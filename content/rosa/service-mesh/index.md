@@ -5,6 +5,7 @@ tags: ["AWS", "ROSA"]
 authors:
   - Diana Sari
   - Daniel Axelrod
+  - Kumudu Herath
 ---
 
 This is a simple guide to integrate [Red Hat OpenShift Service Mesh](https://www.redhat.com/en/technologies/cloud-computing/openshift/what-is-openshift-service-mesh) into your ROSA cluster. In this scenario, we will install Service Mesh using a custom domain (optional) and expose an app to test it. The first half of the guide will be integrating [Service Mesh 2.x](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/service_mesh/service-mesh-2-x) and second half will be integrating [Service Mesh 3.x](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/service_mesh/service-mesh-3-x). 
@@ -307,7 +308,7 @@ Skip this step if you have already created an app.
 
 ```bash
 oc new-project $APP_NAMESPACE
-oc new-app --docker-image=docker.io/openshift/hello-openshift
+oc new-app --docker-image=docker.io/openshift/hello-openshift -n $APP_NAMESPACE
 ```
 
 Note that unlike Service Mesh 2, we don't need to add this namespace to a `ServiceMeshMemberRoll` since Service Mesh 3 uses a different approach for namespace membership.
