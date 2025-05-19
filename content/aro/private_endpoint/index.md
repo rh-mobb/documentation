@@ -11,15 +11,9 @@ authors:
 
 Effectively securing your Azure Storage Account requires more than just basic access controls. Azure Private Endpoints provide a powerful layer of protection by establishing a direct, private connection between your virtual network and storage resources—completely bypassing the public internet. This approach not only minimizes your attack surface and the risk of data exfiltration, but also enhances performance through reduced latency, simplifies network architecture, supports compliance efforts, and enables secure hybrid connectivity. It's a comprehensive solution for protecting your critical cloud data.
 
-There are two way to configure this set up
-1. Self provision the storage account and file share (static method)
-  - Requires pre-existing storage account and file share
-2. Auto provision the storage account and file share (dynamic method)
-  - CSI will create the storage account and file share
-
 Configuring private endpoint access to an Azure Storage Account involves three key steps:
 
-1) (Static method only) Create the storage account
+1) Create the storage account
 
 2) Create the private endpoint
 
@@ -61,7 +55,7 @@ Dynamically get the region the ARO cluster is in
  export AZR_REGION=$(az aro show  -n ${AZR_CLUSTER_NAME} -g ${AZR_RESOURCE_GROUP} | jq -r '.location')
 ```
 
-The Azure Private endpoint needs to be placed in a subnet.  General best practices are to place private endpoints in their own subnet.  Often times however, this might not be possible due to the vnet design and the privae endpoint will need to placed in the worker node subnet.
+The Azure Private endpoint needs to be placed in a subnet.  General best practices are to place private endpoints in their own subnet.  Often times however, this might not be possible due to the vnet design and the private endpoint will need to placed in the worker node subnet.
 
 Option 1: Retrieve the worker node subnet that the private endpoint will be create it.
 
@@ -78,9 +72,7 @@ SUBNET_ID=<SUBNET_ID> # The SubnetId you want to use for private endpoints
 AZR_VNET=<Azure VNet> # The name of the VNet the subnet you want to use for private endpoints
 ```
 
-## Self-Provision Storage Account and File Share (Static Method) 
-
->Note if you would like to dynamically provision the storage account using the CSI provisioner skip the first step
+## Self-Provision a Storage Account 
 
 1. Create the storage account and attach the private endpoint to it  
 
@@ -200,19 +192,7 @@ oc create clusterrole azure-secret-reader \
 oc adm policy add-cluster-role-to-user azure-secret-reader system:serviceaccount:kube-system:persistent-volume-binder
 ```
 
-2. Create a secret object containing azure file creds
-
-```bash
-AZR_STORAGE_KEY=$(az storage account keys list --account-name ${AZR_STORAGE_ACCOUNT_NAME} --query "[0].value" -o tsv)
-
-oc create secret generic ${SECRET_NAME}--from-literal=azurestorageaccountname=${AZR_STORAGE_ACCOUNT_NAME} --from-literal=azurestorageaccountkey=${AZR_STORAGE_KEY}
-```
-
-3. Create a static storage class (see below for dynamic method)
-
-> **NOTE** only needed if using the static provisioning method
-
-- The CSI can either create volumes in pre created storage accounts or dynamically create the storage account with a volume inside the dynamic storage account
+2. Create a storage class
 
 - Using an existing storage account
 ```bash
@@ -228,29 +208,6 @@ cat  <<EOF | oc apply -f -
       secretNamespace: kube-system
       skuName: Premium_LRS
       storageAccount: ${AZR_STORAGE_ACCOUNT_NAME}
-    provisioner: file.csi.azure.com
-    reclaimPolicy: Delete
-    volumeBindingMode: Immediate
-EOF
-```
-
-- Create a dynamic storage class
-
-> **NOTE** only needed if using the dynamic provisioning method (see above for static method)
-
-```bash
-cat  <<EOF | oc apply -f -
-    allowVolumeExpansion: true
-    apiVersion: storage.k8s.io/v1
-    kind: StorageClass
-    metadata:
-      name: ${STORAGECLASS_NAME}
-    parameters:
-      resourceGroup: ${AZR_RESOURCE_GROUP}
-      skuName: Premium_LRS
-      secretName: ${SECRET_NAME}
-      secretNamespace: ${SECRET_NAMESPACE}
-      networkEndpointType: privateEndpoint
     provisioner: file.csi.azure.com
     reclaimPolicy: Delete
     volumeBindingMode: Immediate
