@@ -84,8 +84,7 @@ az storage account create \
     --sku Premium_LRS \
     --public-network-access Disabled \
     --kind FileStorage \
-    --enable-large-file-share \
-    --file-share-access-tier Premium
+    --enable-large-file-share 
 ```
 
 ## Create/Configure the Private Endpoint
