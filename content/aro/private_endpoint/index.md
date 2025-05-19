@@ -51,15 +51,14 @@ AZR_RESOURCE_GROUP=<my-rg>
 AZR_STORAGE_ACCOUNT_NAME=<my-storage-account> # Name of the storage account
 SECRET_NAME=azure-files-secret # Name of the secret used to access Azure Files
 SECRET_NAMESPACE=default # OpenShift Project where the secret will be create in
-STORAGE_CLASS_NAME=azure-files # Name of the OpenShift Storage Class that will be created
+STORAGECLASS_NAME=azure-files # Name of the OpenShift Storage Class that will be created
 
 ```
 
 Dynamically get the region the ARO cluster is in
 
 ```bash
- export AZR_REGION=$(az aro show  -n ${AZR_CLUSTER_NAME} -g ${AZR_RESOURCE_GROUP}
-| jq -r '.location') \
+ export AZR_REGION=$(az aro show  -n ${AZR_CLUSTER_NAME} -g ${AZR_RESOURCE_GROUP} | jq -r '.location')
 ```
 
 The Azure Private endpoint needs to be placed in a subnet.  General best practices are to place private endpoints in their own subnet.  Often times however, this might not be possible due to the vnet design and the privae endpoint will need to placed in the worker node subnet.
@@ -67,10 +66,9 @@ The Azure Private endpoint needs to be placed in a subnet.  General best practic
 Option 1: Retrieve the worker node subnet that the private endpoint will be create it.
 
 ```bash
-SUBNET_ID=$(az aro show  -n ${AZR_CLUSTER_NAME} -g ${AZR_RESOURCE_GROUP}
-| jq -r '.workerProfiles[0].subnetId' 
+SUBNET_ID=$(az aro show  -n ${AZR_CLUSTER_NAME} -g ${AZR_RESOURCE_GROUP} | jq -r '.workerProfiles[0].subnetId') 
 
-AZR_VNET=$(echo ${SUBNET_ID} | awk -F'/' '{for(i=1;i<=NF;i++) if($i=="virtualNetworks") print $(i+1)}') \
+AZR_VNET=$(echo ${SUBNET_ID} | awk -F'/' '{for(i=1;i<=NF;i++) if($i=="virtualNetworks") print $(i+1)}')
 ```
 
 Option 2: Manually specify the private service endpoint subnet and vnet you would like to use.
@@ -92,8 +90,20 @@ az storage account create \
     --resource-group ${AZR_RESOURCE_GROUP} \
     --location ${AZR_REGION} \
     --sku Premium_LRS \
-    --public-network-access Disabled
+    --public-network-access Disabled \
     --kind StorageV2
+```
+
+```bash
+az storage account create \
+    --name ${AZR_STORAGE_ACCOUNT_NAME} \
+    --resource-group ${AZR_RESOURCE_GROUP} \
+    --location ${AZR_REGION} \
+    --sku Premium_LRS \
+    --public-network-access Disabled \
+    --kind FileStorage \
+    --enable-large-file-share \
+    --file-share-access-tier Premium
 ```
 
 ## Create/Configure the Private Endpoint
@@ -215,7 +225,6 @@ oc create secret generic ${SECRET_NAME}--from-literal=azurestorageaccountname=${
 - The CSI can either create volumes in pre created storage accounts or dynamically create the storage account with a volume inside the dynamic storage account
 
 - Using an existing storage account
-
 ```bash
 cat  <<EOF | oc apply -f -
     allowVolumeExpansion: true
@@ -226,10 +235,9 @@ cat  <<EOF | oc apply -f -
     parameters:
       resourceGroup: ${AZR_RESOURCE_GROUP}
       server: ${AZR_STORAGE_ACCOUNT_NAME}.file.core.windows.net
+      secretNamespace: kube-system
       skuName: Premium_LRS
       storageAccount: ${AZR_STORAGE_ACCOUNT_NAME}
-      secretName: ${SECRET_NAME}
-      secretNamespace: ${SECRET_NAMESPACE}
     provisioner: file.csi.azure.com
     reclaimPolicy: Delete
     volumeBindingMode: Immediate
@@ -269,7 +277,7 @@ EOF
    metadata:
      name: pvc-azure-files-volume
    spec:
-     storageClassName: efs-sc
+     storageClassName: azure-files
      accessModes:
        - ReadWriteMany
      resources:
@@ -295,7 +303,7 @@ EOF
       - name: test-files
         image: centos:latest
         command: [ "/bin/bash", "-c", "--" ]
-        args: [ "while true; do echo 'hello efs' | tee -a /mnt/files-data/verify-files && sleep 5; done;" ]
+        args: [ "while true; do echo 'hello azure files' | tee -a /mnt/files-data/verify-files && sleep 5; done;" ]
         volumeMounts:
           - mountPath: "/mnt/files-data"
             name: files-storage-vol
@@ -334,23 +342,23 @@ EOF
    EOF
    ```
 
-1. Verify the second POD can read the EFS Volume
+1. Verify the second POD can read the Azure Files Volume
 
    ```bash
    oc logs test-files-read
    ```
 
-    You should see a stream of "hello efs"
+    You should see a stream of "hello azure files"
 
    ```
-   hello efs
-   hello efs
-   hello efs
-   hello efs
-   hello efs
-   hello efs
-   hello efs
-   hello efs
-   hello efs
-   hello efs
+   hello azure files
+   hello azure files
+   hello azure files
+   hello azure files
+   hello azure files
+   hello azure files
+   hello azure files
+   hello azure files
+   hello azure files
+   hello azure files
    ```
