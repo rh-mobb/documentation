@@ -93,7 +93,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configure a load balancer service to use a static public IP](/experts/aro/static-ip-load-balancer)
 * [Upgrade a disconnected ARO cluster](/experts/aro/upgrade-disconnected-aro)
 * [Using Azure Container Registry in Private ARO clusters](/experts/aro/aro-acr)
-* [Configure a Private ARO cluster with Azure File via a Private Endpoint](/experts/aro/private_endpoint)
+* [Configure an ARO cluster with Azure Files using a private endpoint](/experts/aro/private_endpoint)
 * [Use Azure Blob storage Container Storage Interface (CSI) driver on an ARO cluster](/experts/aro/blob-storage-csi)
 * [Configure ARO with Cross-Tenant Encryption Keys](/experts/aro/cross-tenant-encryption-keys)
 * [Deploying Private ARO clusters with Custom Domains](/experts/aro/custom-domain-private-cluster)
