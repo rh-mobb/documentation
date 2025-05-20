@@ -155,7 +155,7 @@ az network private-dns record-set a add-record \
 ```
 
 5. test private endpoint connectivity
-  - on a Vm in the vnet run 
+  - on a VM or Openshift worker node
 
 ```bash 
 nslookup ${AZR_STORAGE_ACCOUNT_NAME}.file.core.windows.net
