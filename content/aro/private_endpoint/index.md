@@ -43,8 +43,6 @@ Set the following variables to match your ARO cluster and Azure storage account 
 AZR_CLUSTER_NAME=<my-cluster-name>
 AZR_RESOURCE_GROUP=<my-rg>
 AZR_STORAGE_ACCOUNT_NAME=<my-storage-account> # Name of the storage account
-SECRET_NAME=azure-files-secret # Name of the secret used to access Azure Files
-SECRET_NAMESPACE=default # OpenShift Project where the secret will be create in
 STORAGECLASS_NAME=azure-files # Name of the OpenShift Storage Class that will be created
 
 ```
@@ -128,10 +126,8 @@ az network private-dns link vnet create \
   When using a custom or on-premises DNS server, you should configure your DNS server to resolve the storage account name in the privatelink subdomain to the private endpoint IP address. You can do this by delegating the privatelink subdomain to the private DNS zone of the VNet or by configuring the DNS zone on your DNS server and adding the DNS A records.
 
 
-*For MAG customers:*
-
+> Note: *For MAG customers:*
   [GOV Private Endpoint DNS](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#government)
-
   [Custom DNS Config](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns#virtual-network-workloads-without-custom-dns-server)
 
 
