@@ -43,6 +43,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
 * [Configuring Alerts for User Workloads in ROSA](/experts/rosa/custom-alertmanager)
 * [AWS EFS on ROSA](/experts/rosa/aws-efs)
+* [Cross Account EFS Mounting on ROSA](/experts/rosa/cross-account-efs)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/experts/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
 * [Access AWS Cross Account resources using OIDC](/experts/rosa/cross-account-access-openid-connect)
