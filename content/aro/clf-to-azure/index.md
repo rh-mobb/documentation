@@ -78,7 +78,7 @@ If you're running Azure Red Hat OpenShift (ARO), you may want to be able to view
 
 1. Create a `ClusterLogForwarder` resource. This will contain the configuration to forward to Azure Monitor:
 
-   ```bash
+```bash
 cat <<EOF | oc apply -f -
 apiVersion: observability.openshift.io/v1
 kind: ClusterLogForwarder
@@ -119,7 +119,7 @@ spec:
    serviceAccount:
       name: default
 EOF
-   ```
+```
 
    See the [logging pipeline documentation](https://docs.openshift.com/container-platform/4.16/observability/logging/log_collection_forwarding/configuring-log-forwarding.html) for the specifics of how to add `audit` logs to this configuration.
 
