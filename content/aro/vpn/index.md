@@ -38,7 +38,14 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
 1. Edit certificate parameters
 
+   Copy the sample values file
+
+   ```bash
+   cp pki/vars.example pki/vars
+   ```
+   
    Uncomment and edit the copied template with your values
+
    ```bash
    vim pki/vars
    ```
@@ -53,6 +60,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
    ```
 
    Uncomment (remove the #) the folowing field
+   
    ```
    #set_var EASYRSA_KEY_SIZE        2048
    ```
@@ -89,6 +97,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
 
 ## Set Envrionment Variables
+
 ```
 AROCLUSTER=<cluster name>
 

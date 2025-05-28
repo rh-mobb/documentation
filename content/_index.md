@@ -101,6 +101,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ACM and ODF for ARO Disaster Recovery](/experts/aro/acm-odf-aro)
 * [Deploy Ansible Automation Platform (AAP) on ARO](/experts/aro/aap)
 * [Deploy Maximo Application Suite (MAS) on ARO](/experts/aro/mas)
+* [Remove the default azure-files storage class](/experts/aro/remove-azure-files)
 
 ## OpenShift Dedicated on GCP
 
