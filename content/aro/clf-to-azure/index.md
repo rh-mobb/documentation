@@ -79,46 +79,46 @@ If you're running Azure Red Hat OpenShift (ARO), you may want to be able to view
 1. Create a `ClusterLogForwarder` resource. This will contain the configuration to forward to Azure Monitor:
 
    ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: observability.openshift.io/v1
-   kind: ClusterLogForwarder
-   metadata:
-      name: instance
-      namespace: openshift-logging
-   spec:
-      outputs:
-      - name: azure-monitor-app
-         type: azureMonitor
-         azureMonitor:
-            authentication:
-            sharedKey:
-               key: shared_key
-               secretName: azure-monitor-shared-key
-            customerId: $WORKSPACE_ID
-            logType: aro_application_logs
-      - name: azure-monitor-infra
-         type: azureMonitor
-         azureMonitor:
-            authentication:
-            sharedKey:
-               key: shared_key
-               secretName: azure-monitor-shared-key
-            customerId: $WORKSPACE_ID
-            logType: aro_infrastructure_logs
-      pipelines:
-      - name: app-pipeline
-         inputRefs:
-         - application
-         outputRefs:
-         - azure-monitor-app
-      - name: infra-pipeline
-         inputRefs:
-         - infrastructure
-         outputRefs:
-         - azure-monitor-infra
-      serviceAccount:
-         name: default
-   EOF
+cat <<EOF | oc apply -f -
+apiVersion: observability.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+   name: instance
+   namespace: openshift-logging
+spec:
+   outputs:
+   - name: azure-monitor-app
+     type: azureMonitor
+     azureMonitor:
+       authentication:
+         sharedKey:
+           key: shared_key
+           secretName: azure-monitor-shared-key
+       customerId: $WORKSPACE_ID
+       logType: aro_application_logs
+   - name: azure-monitor-infra
+     type: azureMonitor
+     azureMonitor:
+       authentication:
+         sharedKey:
+           key: shared_key
+           secretName: azure-monitor-shared-key
+       customerId: $WORKSPACE_ID
+       logType: aro_infrastructure_logs
+   pipelines:
+   - name: app-pipeline
+     inputRefs:
+     - application
+     outputRefs:
+     - azure-monitor-app
+   - name: infra-pipeline
+     inputRefs:
+     - infrastructure
+     outputRefs:
+     - azure-monitor-infra
+   serviceAccount:
+      name: default
+EOF
    ```
 
    See the [logging pipeline documentation](https://docs.openshift.com/container-platform/4.16/observability/logging/log_collection_forwarding/configuring-log-forwarding.html) for the specifics of how to add `audit` logs to this configuration.
