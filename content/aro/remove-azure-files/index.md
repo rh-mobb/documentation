@@ -1,29 +1,29 @@
 ---
 date: '2025-06-28T22:07:09.774151'
-title: Remove the default azure-files storage class
+title: Remove the default azurefile-csi storage class
 tags: ["ARO", "Azure"]
 authors:
   - Kevin Collins
   - Kumudu Herath
 ---
 
-Azure Red Hat OpenShift (ARO) clusters, while offering a robust application platform for containerized applications, come with a default storage class named azure-files. This default storage class is provided for user convenience, allowing for immediate persistent storage provisioning using Azure Files without additional configuration. However, it's crucial to understand that this azure-files storage class, by default, does not leverage a private endpoint. This can introduce a significant security vulnerability, as data traffic to and from Azure Files shares a public endpoint, potentially exposing sensitive information. Therefore, for environments with stringent security requirements, removing or replacing this default azure-files storage class and implementing a solution that utilizes private endpoints is a critical step in securing your ARO deployment.
+Azure Red Hat OpenShift (ARO) clusters, while offering a robust application platform for containerized applications, come with a default storage class named azurefile-csi. This default storage class is provided for user convenience, allowing for immediate persistent storage provisioning using Azure Files without additional configuration. However, it's crucial to understand that this azurefile-csi storage class, by default, does not leverage a private endpoint. This can introduce a significant security vulnerability, as data traffic to and from Azure Files shares a public endpoint, potentially exposing sensitive information. Therefore, for environments with stringent security requirements, removing or replacing this default azurefile-csi storage class and implementing a solution that utilizes private endpoints is a critical step in securing your ARO deployment.
 
 ## Pre Requisites
 
 - ARO cluster logged into
 - oc cli
 
-## Remove the default azure-files storage class
+## Remove the default azurefile-csi storage class
 
-To remove the default azure-files storage class that comes with ARO, we first need to change the file.csi.azure.com cluster csi driver to not be managed.
+To remove the default azurefile-csi storage class that comes with ARO, we first need to change the file.csi.azure.com cluster csi driver to not be managed.
 
-After that, we can now delete the azure-files storage class.
+After that, we can now delete the azurefile-csi storage class.
 
 ```bash
 oc patch clustercsidriver  file.csi.azure.com --type=merge -p '{"spec":{"storageClassState":"Removed"}}'
 
-oc delete sc azure-files
+oc delete sc azurefile-csi
 ```
 
 ## (Optional) Re-create the Azure Files Storage class with a private endpoint
