@@ -1,5 +1,5 @@
 ---
-date: '2025-06-28'
+date: '2025-06-01'
 title: Remove the default azurefile-csi storage class
 tags: ["ARO", "Azure"]
 authors:
