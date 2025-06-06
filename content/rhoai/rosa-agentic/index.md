@@ -18,22 +18,17 @@ Note that since real deployment could be costly, I set up simulator test with `m
 
 As usual, before we move forward, kindly note on the disclaimers below.
 
-*Disclaimers: 
-1. Note that this guide references Terraform repositories that are actively maintained by MOBB team and may change over time. Always check the repository documentation for the latest syntax, variables, and best practices before deployment. 
-
-2. When using this agentic AI, please be aware that while the system is designed to interpret natural language instructions and autonomously execute infrastructure configurations, it is not infallible. The agentic AI may occasionally misinterpret requirements or generate suboptimal configurations. It is your responsibility to review all generated Terraform configurations before applying them to your cloud environment. Neither the author of this implementation nor the service providers can be held responsible for any unexpected infrastructure deployments, service disruptions, or cloud usage charges resulting from configurations executed by the agentic AI. 
-
-3. Lastly, please note that user interfaces may change over time as the products evolve. Some screenshots and instructions may not exactly match what you see.*
+*Disclaimers: Note that this guide references Terraform repositories that are actively maintained by MOBB team and may change over time. Always check the repository documentation for the latest syntax, variables, and best practices before deployment. In addition, when using this agentic AI, please be aware that while the system is designed to interpret natural language instructions and autonomously execute infrastructure configurations, it is not infallible. The agentic AI may occasionally misinterpret requirements or generate suboptimal configurations. It is your responsibility to review all generated Terraform configurations before applying them to your cloud environment. Neither the author of this implementation nor the service providers can be held responsible for any unexpected infrastructure deployments, service disruptions, or cloud usage charges resulting from configurations executed by the agentic AI. Lastly, please note that user interfaces may change over time as the products evolve. Some screenshots and instructions may not exactly match what you see.*
 
 ## 2. Prerequisites
 
-1. A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) ROSA cluster   
+1. **A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) ROSA cluster**   
 - I tested this on an HCP ROSA 4.18.14 with `m5.8xlarge` instance size for the worker nodes. 
 
-2. Amazon Bedrock
+2. **Amazon Bedrock**
  - You could use any model of your choice via Amazon Bedrock, but in this guide, we'll use Anthropic Claude 3 Sonnet, so if you have not already, please proceed to your AWS Console and be sure that you enable the model (or the model of your choice) and that your account has the right permissions for Amazon Bedrock. 
 
-3. RHOAI operator  
+3. **RHOAI operator**  
 - You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/). 
 - Once you have the operator installed, be sure to install `DataScienceCluster` instance, wait for a few minute for the changes to take effect, and then launch the RHOAI dashboard for next step.  
 - I tested this tutorial using RHOAI version 2.19.0. 
@@ -44,9 +39,9 @@ First, we will create the setup file and to do so, you would need your Azure cre
 
 The setup here essentially is an environment bootstrapping module that handles dependency installation (Terraform, Azure CLI, boto3), configures Azure service principal credentials, validates AWS IAM permissions for Bedrock access, and ensures the execution environment is properly initialized.
 
-On the RHOAI dashboard, launch a Jupyter notebook instance. In this example, we will be using **TensorFlow 2024.2** [FIX THIS VERSION] image with **Medium** container size for the notebook. This might take a few minutes to provision. 
+On the RHOAI dashboard, launch a Jupyter notebook instance. In this example, we will be using **TensorFlow 2025.1** image with **Medium** container size for the notebook. This might take a few minutes to provision. 
 
-And once the notebook is ready, go to the `File` tab on the upper left and choose `New`, and select `Python File`. Copy the lines below, save and rename the file as **setup_aro_bedrock.py**. Replace the env vars with your Azure credentials.
+And once the notebook is ready, go to the `File` tab on the upper left and choose **New**, and select **Python File**. Copy the lines below, save and rename the file as **setup_aro_bedrock.py**. Replace the env vars with your Azure credentials.
  
 
 ```bash
@@ -140,9 +135,9 @@ if __name__ == "__main__":
 
 ## 4. Bedrock parser 
 
-Next, let's create the parser, which acts as the Natural Language Processing interface using AWS Bedrock's foundation models (Claude/Llama) to extract structured parameters from unstructured text. That way, the agent will understand our prompts intelligently and converts it into technical parameters the system can use.
+Next, let's create the parser which acts as the Natural Language Processing interface using AWS Bedrock's foundation model, in this case Claude 3 Sonnet model, to extract structured parameters from unstructured text. That way, the agent will understand our prompts intelligently and converts it into technical parameters the system can use.
 
-Here we also set up the default parameters if not specified in the user prompts such as cluster name, region, worker node size, worker node count, version, and private/public. Note that some of these default parameters are slightly different from the Terraform repository. For example, the default region here is `westus` and the default cluster name is `agentic-aro`. So kindly adjust these parameters accordingly.
+Here we also set up the default parameters if not specified in the user prompts such as cluster name, region, worker node size, worker node count, version, and private/public. Note that some of these default parameters are slightly different from the Terraform repository. For example, the default region here is `westus` and the default cluster name is `agentic-aro`, so feel free to adjust these parameters accordingly.
 
 Create new Python file called **parser_bedrock.py** and copy the below code and save it. 
 
@@ -783,7 +778,7 @@ class AROBedrockSimulator:
 
 Finally, let's create the notebook where we will run our prompts. Note that here you would need your AWS credentials such as AWS Access Key ID and AWS Secret Access Key to enable Amazon Bedrock.
 
-On your notebook console, go to the `File` tab on the upper left and choose `New`, and select `Notebook`. Copy the lines below into one cell and save it as **aro_notebook.ipynb**.  
+On your notebook console, go to the **File** tab on the upper left and choose **New**, and select **Notebook**. Copy the lines below into one cell and save it as **aro_notebook.ipynb**.  
 
 ```bash
 import os
@@ -832,17 +827,20 @@ Here the mock toggle above is currently set to `True` so if you run this noteboo
 ![mock](images/mock.png)
 <br />
 
-And if you set it to `False`, it will look like the following. Note that these are just some screenshots of the output as the original output is pretty long.
+And if you set it to `False` for real deployment, it will look like the following. Note that these are just some screenshots of the output as the original output is pretty long.
 
 The initial setup:
+<br />
 ![real0](images/real0.png)
 <br />
 
 The Terraform setup:
+<br />
 ![real1](images/real1.png)
 <br />
 
 The deployment and destruction:
+<br />
 ![real2](images/real2.png)
 <br />
 
