@@ -849,15 +849,6 @@ The deployment and destruction:
 Note that every notebook runs will keep track Terraform state in its own folder/directory, so if you want to create another cluster at the same time, simply duplicate the notebook and run the new one.
 
 
+## 8. Future research
 
-Note that for your first run, you may encounter such warning message:
-"ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
-jupyter-server 2.14.2 requires websocket-client>=1.7, but you have websocket-client 1.3.3 which is incompatible."
-Despite these warnings, the Azure CLI should function correctly. These dependency conflicts are between the Azure CLI and Jupyter's internal dependencies and don't affect the operation of this system.
-
-
-
-
-## 4. Future research
-
-There are many things that we can improve for this guide and/or for future guide. For starter, it would be great if we can spin up (and destroy) not only ARO cluster, but also ROSA cluster. In addition, it would also be interesting to create this agent in an ARO cluster using Azure OpenAI's model. Lastly, for production use case, ideally you would want to integrate this with Slack or Microsoft Teams or something similar to make it more user-friendly. 
+There are many things that we can improve for this guide and/or for future guide. For starter, it would be great if we can spin up (and destroy) not only ARO cluster, but also ROSA cluster. In addition, it would also be interesting to create similar agent in an ARO cluster using Azure OpenAI's model. Lastly, for production use case, ideally you would want to integrate this with Slack or Microsoft Teams or something similar to make it more user-friendly. 
