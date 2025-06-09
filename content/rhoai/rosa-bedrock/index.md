@@ -282,26 +282,26 @@ display(output_area)
 On the query section, either select one of the sample questions or write a new one. So say for example, this below is my question:
 
 <br />
-![str_question](/content/rhoai/rosa-bedrock/images/str_question.png)
+![str_question](./images/str_question.png)
 <br />
 
 And then hit the blue **Compare Models** button, and you'll get something like below (note that results may vary):
 
 <br />
 
-![str_answer](/content/rhoai/rosa-bedrock/images/str_answer.png)
+![str_answer](/./images/str_answer.png)
 <br />
 
 Next, click the turqoise **Show Metrics** button, and you'll get the metrics like below (note that results may vary):
 
 <br />
-![metrics](/content/rhoai/rosa-bedrock/images/metrics.png)
+![metrics](./images/metrics.png)
 <br />
 
 And finally, hit the green **Export Data** button to export this into csv file like the one below (note that results may vary):
 
 <br />
-![export](/content/rhoai/rosa-bedrock/images/export.png)
+![export](./images/export.png)
 <br />
 
 
