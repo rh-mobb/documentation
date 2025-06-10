@@ -17,16 +17,19 @@ Here we will evaluate Claude 3.5 Sonnet v2 and Llama 3.3 70B, and we are focusin
 
 ## 2. Prerequisites
 
-1. **A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) ROSA cluster**   
-- I tested this on an HCP ROSA 4.18.14 with `m5.8xlarge` instance size for the worker nodes. 
+1. **A [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) ROSA cluster**
+
+    We tested this on a ROSA HCP cluster with version 4.18.14 and `m5.8xlarge` instance size for the worker nodes. 
 
 2. **Amazon Bedrock**
- - You could use any model of your choice via Amazon Bedrock, but in this guide, we'll use Anthropic Claude 3 Sonnet and Meta Llama 3 70B, so if you have not already, please proceed to your AWS Console and be sure that you enable the models (or the models of your choice) in your region and that your account has the right permissions for Amazon Bedrock. 
+ 
+   You could use any model of your choice via Amazon Bedrock. In this guide, we'll use Anthropic Claude 3 Sonnet and Meta Llama 3 70B. Ensure that you [enable](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) the model (or the models of your choice) in your region and have right permissions for Amazon Bedrock.
+
 
 3. **RHOAI operator**  
 - You can install it using console per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-s3) or using CLI per [Section 3 in this tutorial](https://cloud.redhat.com/experts/rhoai/rosa-gpu/). 
 - Once you have the operator installed, be sure to install `DataScienceCluster` instance, wait for a few minute for the changes to take effect, and then launch the RHOAI dashboard for next step.  
-- I tested this tutorial using RHOAI version 2.19.0. 
+- We tested this tutorial using RHOAI version 2.19.0. 
 
 ## 3. Assumption and calculation 
 
@@ -49,11 +52,11 @@ The metrics tracking system tracks the history of all model interactions during 
 
 ## 4. Dashboard code and output
 
-Now that we understand the assumption and the calculation done for this guide, let's proceed to create the dashboard in your Jupyter notebook. Before we proceed, please be sure that you have your AWS credentials handy such as AWS Access Key ID and AWS Secret Access Key to enable Amazon Bedrock.
+Now that we understand the assumption and the calculation done for this guide, let's proceed to create the dashboard in your Jupyter notebook. Before we proceed, please be sure that you have your AWS credentials handy such as AWS Access Key ID and AWS Secret Access Key to access Amazon Bedrock.
 
 Next, on the RHOAI dashboard, launch a Jupyter notebook instance. In this example, we will be using **TensorFlow 2025.1** image with **Medium** container size for the notebook. This might take a few minutes to provision. 
 
-Copy the code below in one cell and replace the placeholder env vars with your AWS credentials. Then run it.  
+Copy the code below in one cell. Replace the placeholder env vars with your AWS credentials and then run it.  
 
 
 ```bash
