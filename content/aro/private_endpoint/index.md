@@ -219,7 +219,7 @@ EOF
    metadata:
      name: pvc-azure-files-volume
    spec:
-     storageClassName: azure-files
+     storageClassName: ${STORAGECLASS_NAME}
      accessModes:
        - ReadWriteMany
      resources:
