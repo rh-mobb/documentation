@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
 Next, let's create the parser which acts as the Natural Language Processing interface using AWS Bedrock's foundation model, in this case Claude 3 Sonnet model, to extract structured parameters from unstructured text. That way, the agent will understand our prompts intelligently and converts it into technical parameters the system can use.
 
-Here we also set up the default parameters if not specified in the user prompts such as cluster name, region, worker node size, worker node count, version, and private/public. Note that some of these default parameters are slightly different from the Terraform repository. For example, the default region here is `westus` and the default cluster name is `agentic-aro`, so feel free to adjust these parameters accordingly.
+Here we also set up the default parameters if not specified in the user prompts such as cluster name, region, worker node size, worker node count, version, and private/public. Note that some of these default parameters are slightly different from the Terraform repository. For example, the default region here is `westus` and the default cluster name is `agentic-aro`, so feel free to adjust these parameters accordingly. Also note that it will spin up the latest version if users do not specify it in the prompt. 
 
 Create new Python file called **parser_bedrock.py** and copy the below code and save it. 
 
@@ -778,7 +778,7 @@ class AROBedrockSimulator:
 
 Finally, let's create the notebook where we will run our prompts. Note that here you would need your AWS credentials such as AWS Access Key ID and AWS Secret Access Key to enable Amazon Bedrock.
 
-On your notebook console, go to the **File** tab on the upper left and choose **New**, and select **Notebook**. Copy the lines below into one cell and save it as **aro_notebook.ipynb**.  
+On your notebook console, go to the **File** tab on the upper left and choose **New**, and select **Notebook**. Copy the lines below into one cell and save it as **aro_notebook.ipynb**. Replace the credentials placeholder with your AWS credentials. 
 
 ```bash
 import os
@@ -823,6 +823,7 @@ simulator.process_request("Delete the ARO cluster named agentic-aro")
 ```
 
 Here the mock toggle above is currently set to `True` so if you run this notebook, it will only show you how it looks like if it runs like below. 
+<br />
 
 ![mock](images/mock.png)
 <br />
@@ -831,16 +832,19 @@ And if you set it to `False` for real deployment, it will look like the followin
 
 The initial setup:
 <br />
+
 ![real0](images/real0.png)
 <br />
 
 The Terraform setup:
 <br />
+
 ![real1](images/real1.png)
 <br />
 
 The deployment and destruction:
 <br />
+
 ![real2](images/real2.png)
 <br />
 
@@ -849,4 +853,4 @@ Note that every notebook runs will keep track Terraform state in its own folder/
 
 ## 8. Future research
 
-There are many things that we can improve for this guide and/or for future guide. For starter, it would be great if we can spin up (and destroy) not only ARO cluster, but also ROSA cluster. In addition, it would also be interesting to create similar agent in an ARO cluster using Azure OpenAI's model. Lastly, for production use case, ideally you would want to integrate this with Slack or Microsoft Teams or something similar to make it more user-friendly. 
+There are many things that we can improve for this guide and/or for future guide. Since we're doing a simple demonstration here, we're hardcoding the credentials on the notebook, which does not actually follow security's best practice, so it would be great to use [IRSA](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/authentication_and_authorization/assuming-an-aws-iam-role-for-a-service-account#how-service-accounts-assume-aws-iam-roles-in-user-defined-projects_assuming-an-aws-iam-role-for-a-service-account) instead. It would also be nice if we can spin up (and destroy) not only ARO cluster, but also ROSA cluster. And on that note, it would also be interesting to create similar agent in an ARO cluster using Azure OpenAI's model. And then for production use case, ideally you would want to integrate this with Slack or Microsoft Teams or something similar to make it more user-friendly and more accessible to non-technical users. 
