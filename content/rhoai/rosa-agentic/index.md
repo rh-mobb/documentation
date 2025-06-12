@@ -35,7 +35,23 @@ As usual, before we move forward, kindly note on the disclaimers below.
 
 ## 3. Setup 
 
-First, we will create the setup file and to do so, you would need your Azure credentials such as your Azure Client ID, Azure Client Secret, Azure Tenant ID, and Azure Subscription ID. You can retrieve these credentials via Azure Portal or via `az cli`, the latter being the easier one. Run `az account show` and from the output, use the **id** value as your **Azure Subscription ID**, and **tenantId** as your **Azure Tenant ID**. As for the other credentials, you can either use the existing Service Principal or create a new one. For the latter, run `az ad sp create-for-rbac --name "YOUR-NEW-SP-NAME" --role contributor --scopes /subscriptions/YOUR-SUBSCRIPTION-ID`, and from the output, take the **appId** as your **Azure Client ID** and the **password** as your **Azure Secret ID**. Keep these credentials handy for the this step. 
+First, we will create the setup file and to do so, you would need your Azure credentials such as your Azure Client ID, Azure Client Secret, Azure Tenant ID, and Azure Subscription ID. 
+
+You can retrieve these credentials via Azure Portal or via `az cli`, the latter being the easier one. To do so via cli, first run:
+
+```bash
+az account show
+```
+
+From the output, use the **id** value as your **Azure Subscription ID**, and **tenantId** as your **Azure Tenant ID**. 
+
+As for the other credentials, you can either use the existing Service Principal or create a new one. For the latter, run the following (give it a proper name and replace the subscription ID):
+
+```bash
+az ad sp create-for-rbac --name "YOUR-NEW-SP-NAME" --role contributor --scopes /subscriptions/YOUR-SUBSCRIPTION-ID
+```
+
+From the output, take the **appId** as your **Azure Client ID** and the **password** as your **Azure Secret ID**. Keep all these credentials handy for the this step. 
 
 The setup here essentially is an environment bootstrapping module that handles dependency installation (Terraform, Azure CLI, boto3), configures Azure service principal credentials, validates AWS IAM permissions for Bedrock access, and ensures the execution environment is properly initialized.
 
