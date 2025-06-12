@@ -134,7 +134,7 @@ Here the cluster IngressController haproxy pods expose a health check on `http:/
 Once you have a confirmation that the service is patched, let's grab your NLB name which will be useful for further steps.
 
 ```bash
-NLB_NAME=$(oc -n openshift-ingress get svc router-private-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' | cut -d'-' -f1)
+NLB_NAME=$(oc -n openshift-ingress get svc router-${INGRESS_NAME} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' | cut -d'-' -f1)
 echo $NLB_NAME
 ```
 

@@ -43,6 +43,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
 * [Configuring Alerts for User Workloads in ROSA](/experts/rosa/custom-alertmanager)
 * [AWS EFS on ROSA](/experts/rosa/aws-efs)
+* [Cross Account EFS Mounting on ROSA](/experts/rosa/cross-account-efs)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/experts/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
 * [Access AWS Cross Account resources using OIDC](/experts/rosa/cross-account-access-openid-connect)
@@ -93,7 +94,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configure a load balancer service to use a static public IP](/experts/aro/static-ip-load-balancer)
 * [Upgrade a disconnected ARO cluster](/experts/aro/upgrade-disconnected-aro)
 * [Using Azure Container Registry in Private ARO clusters](/experts/aro/aro-acr)
-* [Configure a Private ARO cluster with Azure File via a Private Endpoint](/experts/aro/private_endpoint)
+* [Configure an ARO cluster with Azure Files using a private endpoint](/experts/aro/private_endpoint)
 * [Use Azure Blob storage Container Storage Interface (CSI) driver on an ARO cluster](/experts/aro/blob-storage-csi)
 * [Configure ARO with Cross-Tenant Encryption Keys](/experts/aro/cross-tenant-encryption-keys)
 * [Deploying Private ARO clusters with Custom Domains](/experts/aro/custom-domain-private-cluster)
@@ -101,6 +102,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ACM and ODF for ARO Disaster Recovery](/experts/aro/acm-odf-aro)
 * [Deploy Ansible Automation Platform (AAP) on ARO](/experts/aro/aap)
 * [Deploy Maximo Application Suite (MAS) on ARO](/experts/aro/mas)
+* [Remove the default azure-files storage class](/experts/aro/remove-azure-files)
 
 ## OpenShift Dedicated on GCP
 
