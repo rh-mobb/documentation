@@ -35,7 +35,7 @@ As usual, before we move forward, kindly note on the disclaimers below.
 
 ## 3. Setup 
 
-First, we will create the setup file and to do so, you would need your Azure credentials such as your Azure Client ID, Azure Client Secret, Azure Tenant ID, and Azure Subscription ID. Keep these credentials handy for the this step. 
+First, we will create the setup file and to do so, you would need your Azure credentials such as your Azure Client ID, Azure Client Secret, Azure Tenant ID, and Azure Subscription ID. You can retrieve these credentials via Azure Portal or via `az cli`, the latter being the easier one. Run `az account show` and from the output, use the **id** value as your **Azure Subscription ID**, and **tenantId** as your **Azure Tenant ID**. As for the other credentials, you can either use the existing Service Principal or create a new one. For the latter, run `az ad sp create-for-rbac --name "YOUR-NEW-SP-NAME" --role contributor --scopes /subscriptions/YOUR-SUBSCRIPTION-ID`, and from the output, take the **appId** as your **Azure Client ID** and the **password** as your **Azure Secret ID**. Keep these credentials handy for the this step. 
 
 The setup here essentially is an environment bootstrapping module that handles dependency installation (Terraform, Azure CLI, boto3), configures Azure service principal credentials, validates AWS IAM permissions for Bedrock access, and ensures the execution environment is properly initialized.
 
@@ -570,16 +570,36 @@ ingress_profile = "{'Private' if is_private else 'Public'}"'''
                     return stable_versions[0]
         
         return "4.16.30"
-    
+
     def deploy_cluster(self, params):
+        print(f"Processing deployment request for cluster: {params.get('name', 'agentic-aro')}")
+        
         rg_name = f"{params.get('name', 'agentic-aro')}-rg"
         cmd = f"az group exists --name {rg_name} --output tsv"
-        success, output = self._run_command(cmd)        
+        success, output = self._run_command(cmd)
+        
         if success and output.strip().lower() == 'true':
             return {"status": "error", "message": f"Resource group {rg_name} already exists"}
         
         try:
             work_dir = self.create_terraform_vars(params)
+
+            print("Running terraform init...")
+            success, output = self._run_command("terraform init", cwd=work_dir)
+            if not success:
+                return {"status": "error", "message": f"Terraform init failed: {output}"}
+
+            print("Running terraform plan...")
+            success, output = self._run_command("terraform plan -out=aro.plan", cwd=work_dir)
+            if not success:
+                return {"status": "error", "message": f"Terraform plan failed: {output}"}
+
+            print("Running terraform apply (this takes 30-45 minutes)...")
+            success, output = self._run_command("terraform apply -auto-approve aro.plan", cwd=work_dir)
+            if not success:
+                return {"status": "error", "message": f"Terraform apply failed: {output}"}
+            
+            print("Deployment completed!")
             
             for command in [
                 ("terraform init", "init"),
@@ -631,21 +651,26 @@ ingress_profile = "{'Private' if is_private else 'Public'}"'''
         except Exception as e:
             return {"status": "error", "message": f"Deployment failed: {str(e)}"}
             
+
     def destroy_cluster(self, resource_group):
+        print(f"Starting destruction of resource group: {resource_group}")
+        
         try:
             cmd = f"az group exists --name {resource_group} --output tsv"
-            success, output = self._run_command(cmd)            
+            success, output = self._run_command(cmd)
+            
             if not success or output.strip().lower() != 'true':
                 return {"status": "error", "message": f"Resource group {resource_group} not found"}
             
+            print("Deleting resource group (this may take several minutes)...")
             cmd = f"az group delete --name {resource_group} --yes"
             success, output = self._run_command(cmd)
             
             if success:
+                print("Destruction completed!")
                 return {"status": "success", "message": f"ARO cluster in {resource_group} destroyed"}
             else:
                 return {"status": "error", "message": f"Failed to destroy: {output}"}
-                
         except Exception as e:
             return {"status": "error", "message": f"Error: {str(e)}"}
 ```
@@ -692,9 +717,13 @@ class AROBedrockSimulator:
             return self._handle_deployment(request)
     
     def _handle_deployment(self, request):
+        print(f"Parsing request: '{request}'")
         params = self.bedrock_parser.extract_aro_parameters(request)
+        
         if not params:
             return {"status": "error", "message": "Failed to extract parameters"}
+        
+        print(f"Extracted parameters: {params}")
         return self._deploy_aro_cluster(params)
     
     def _handle_deletion(self, request):
@@ -781,6 +810,9 @@ Finally, let's create the notebook where we will run our prompts. Note that here
 On your notebook console, go to the **File** tab on the upper left and choose **New**, and select **Notebook**. Copy the lines below into one cell and save it as **aro_notebook.ipynb**. Replace the credentials placeholder with your AWS credentials. 
 
 ```bash
+!pip install --upgrade pip
+!pip install --upgrade jupyter-server websocket-client
+
 import os
 import boto3
 from aro_bedrock_simulator import AROBedrockSimulator
@@ -788,19 +820,6 @@ from aro_bedrock_simulator import AROBedrockSimulator
 os.environ['AWS_ACCESS_KEY_ID'] = 'YOUR-AWS-ACCESS-KEY-ID'
 os.environ['AWS_SECRET_ACCESS_KEY'] = 'YOUR-AWS-SECRET-ACCESS-KEY'
 os.environ['AWS_DEFAULT_REGION'] = 'us-west-2'
-
-def check_bedrock():
-    try:
-        bedrock = boto3.client('bedrock', region_name='us-west-2')
-        response = bedrock.list_foundation_models()
-        claude_models = [m for m in response.get('modelSummaries', []) if 'claude' in m.get('modelId', '').lower()]
-        print(f"✅ Bedrock OK - {len(claude_models)} Claude models available")
-        return True
-    except Exception as e:
-        print(f"❌ Bedrock error: {e}")
-        return False
-
-check_bedrock()
 
 simulator = AROBedrockSimulator(
     mock=True,  # set to False for real deployment
@@ -811,42 +830,32 @@ simulator = AROBedrockSimulator(
 
 simulator.setup()
 
-result = simulator.process_request("Deploy ARO cluster in eastus")
+# adjust your query/prompt here
+result = simulator.process_request("Deploy ARO cluster named agentic-is-lyfe")
 
 if result.get('status') == 'success':
-    print("🎉 Deployment successful!")
+    print("Deployment successful!")
     if result.get('console_url'): print(f"Console: {result['console_url']}")
     if result.get('api_url'): print(f"API: {result['api_url']}")
 
 # comment the line below if you want to keep the cluster running
-simulator.process_request("Delete the ARO cluster named agentic-aro")
+simulator.process_request("Delete the ARO cluster named agentic-is-lyfe")
 ```
 
 Here the mock toggle above is currently set to `True` so if you run this notebook, it will only show you how it looks like if it runs like below. 
+
 <br />
 
-![mock](images/mock.png)
+![mock0](images/mock0.png)
 <br />
 
-And if you set it to `False` for real deployment, it will look like the following. Note that these are just some screenshots of the output as the original output is pretty long.
+And if you set it to `False` for real deployment, it will look like the following.
 
-The initial setup:
 <br />
 
-![real0](images/real0.png)
+![real](images/real.png)
 <br />
 
-The Terraform setup:
-<br />
-
-![real1](images/real1.png)
-<br />
-
-The deployment and destruction:
-<br />
-
-![real2](images/real2.png)
-<br />
 
 Note that every notebook runs will keep track Terraform state in its own folder/directory, so if you want to create another cluster at the same time, simply duplicate the notebook and run the new one.
 
