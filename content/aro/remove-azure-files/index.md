@@ -21,7 +21,7 @@ To remove the default azurefile-csi storage class that comes with ARO, we first 
 After that, we can now delete the azurefile-csi storage class.
 
 ```bash
-oc patch clustercsidriver  file.csi.azure.com --type=merge -p '{"spec":{"storageClassState":"Removed"}}'
+oc patch clustercsidriver  file.csi.azure.com --type=merge -p '{"spec":{"managementState":"Unmanaged"}}'
 
 oc delete sc azurefile-csi
 ```
