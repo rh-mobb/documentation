@@ -54,7 +54,7 @@ DOMAIN=lab.domain.com # change this to your domain (for example, our MOBB regist
 SCOPE="Internal"
 ```
 
-## 3. Create the first ingress controller (inner NLB)
+## 3. Create a private IngressController (inner NLB)
 
 For this step, please take a look at this [guide](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/). From there, follow the step of **Create the Ingress Controller** to create the first NLB (let's call this **inner NLB**) and retrieve the IP addresses of your NLB. You can do so by following the first section of **Create the ALB** on that guide but please be sure not to continue creating the ALB since we are not going to do that here. Please keep these IP addresses handy as we are going to use it in the later steps.
 
@@ -83,7 +83,7 @@ Replicate this step to the other two private subnets, but differentiate the last
 <br />
 
 
-## 5. Create the second ingress controller (outer NLB)
+## 5. Create a Network Load Balancer (outer NLB)
 
 ### 5.1. Create security group for outer NLB
 
