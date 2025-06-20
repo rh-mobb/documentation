@@ -1,6 +1,6 @@
 ---
 date: '2025-06-27'
-title: Adding Private Ingress Controller, NLB, and CloudFront Distribution (using VPC Origin) to a Private ROSA Cluster 
+title: Adding a Private Ingress Controller, an NLB, and a CloudFront Distribution (via VPC Origin) to a ROSA Cluster 
 tags: ["AWS", "ROSA"]
 authors:
   - Diana Sari
@@ -20,7 +20,7 @@ In essence, the routing flow will look like this: Internet -> CloudFront Distrib
 
 This guide leverages CloudFront as a global content delivery network (CDN) and the architecture uses two NLBs - an outer NLB that receives traffic from CloudFront and an inner NLB that routes traffic to your ROSA applications. We also leverage OpenShift Routes and the built-in routing capabilities of the OpenShift platform. 
 
-The primary reason for using two NLBs is mainly because when ROSA creates an NLB through an IngressController, it creates it without a security group, and security group cannot be attached after NLB creation. On the other hand, CloudFront VPC Origin requires a security group to restrict traffic to only CloudFront's managed prefix list, which means the NLB must have a security group, and hence the need for the second NLB.
+The primary reason for using two NLBs is mainly because when ROSA creates an NLB through an IngressController, it creates it without a security group, and security group cannot be attached after NLB creation. On the other hand, CloudFront VPC Origin uses a security group to restrict traffic to only CloudFront's managed prefix list, which means the NLB must have a security group, and hence the need for the second NLB.
 
 By creating a secondary IngressController (type NLB), an NLB and placing a CloudFront in front of it, you can:
 
@@ -252,7 +252,7 @@ chmod 644 ~/openshift-certs/fullchain.pem
 chmod 600 ~/openshift-certs/privkey.pem
 ```
 
-## 9. Configure certificate on the inner NLB
+## 9. Configure certificate for inner NLB
 
 Next, we are going to configure the certificate we created just now to the private ingress controller (inner NLB). To do that, let's first create a TLS secret:
 
@@ -278,7 +278,7 @@ Wait for a few minutes until the router pods restart:
 oc get pods -n openshift-ingress -w | grep $INGRESS_NAME
 ```
 
-## Test an application
+## 10. Test an application
 
 Finally, let's test this setup by creating a public application. Log in to the cluster to proceed with next steps.
 
