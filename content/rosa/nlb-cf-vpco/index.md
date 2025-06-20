@@ -12,7 +12,7 @@ Starting with OpenShift 4.14, Red Hat OpenShift Service on AWS (ROSA) supports a
 
 In essence, the routing flow will look like this: Internet -> CloudFront Distribution -> CloudFront VPC Origin -> NLB (Outer NLB) -> Private IngressController (Inner NLB) -> Application. 
 
-![routing_flow](images/routing_flow.png)
+![routing-flow](images/routing-flow.png)
 <br />
 
 
