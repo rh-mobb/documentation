@@ -406,3 +406,27 @@ spec:
 EOF
 ```
 
+### Configure RHACM to Auto-Import ROSA HCP Clusters
+
+While still being logged into the ACM cluster, run the following commands.
+
+1. Create a KlusterletConfig
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: config.open-cluster-management.io/v1alpha1
+kind: KlusterletConfig
+metadata:
+  name: global
+spec:
+  hubKubeAPIServerConfig:
+    serverVerificationStrategy: UseSystemTruststore
+EOF
+```
+
+2. Decode and import the new cluster secret 
+
+```bash 
+cat << EOF | oc apply -f -
+$(oc get secret ${NEW_ROSA_CLUSTER_NAME}-import -n ${NEW_ROSA_CLUSTER_NAME} -o json | jq -r '.data."import.yaml"' | base64 --decode)
+EOF
