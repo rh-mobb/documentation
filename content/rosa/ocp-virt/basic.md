@@ -21,11 +21,11 @@ If you don't want to deploy the resources yourself, you can watch the video belo
 1. You will need a A ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).
 
 1. Set the cluster name as an environment variable (in the example we re-use the variable from the Terraform guide).
-
+ort METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
+    ```
     ```bash
     export CLUSTER="${TF_VAR_cluster_name}"
-    export METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
-    ```
+    exp
 
 1. Create a bare metal machine pool
 	> Note bare metal machines are not cheap, so be warned!
