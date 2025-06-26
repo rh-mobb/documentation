@@ -36,7 +36,7 @@ and then to link the role run with the ocm role arn:
 rosa link user-role arn:aws:iam::...
 ```
 
-6. Set environment variables
+7. Set environment variables
 
 ```bash
 export ACM_CLUSTER_NAME=rosa-hcp-1
