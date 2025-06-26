@@ -23,6 +23,19 @@ In the dynamic world of cloud-native development, efficiently managing Kubernete
 
 6. An OCM Service Account ClientID and Client Secret - if you don't have one, you can create a service account by visiting [here](https://console.redhat.com/iam/service-accounts)
 
+After logging in with the OCM Service Account, make sure to link the ROSA OCM role.
+To list your OCM roles
+
+```bash
+rosa list ocm-role
+```
+
+and then to link the role run with the ocm role arn:
+
+```bash
+rosa link user-role arn:aws:iam::...
+```
+
 6. Set environment variables
 
 ```bash
