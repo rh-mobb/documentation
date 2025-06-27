@@ -41,7 +41,7 @@ rosa link user-role arn:aws:iam::...
 ```bash
 export ACM_CLUSTER_NAME=rosa-hcp-1
 export NEW_ROSA_CLUSTER_NAME=new-hcp
-export ROSA_VERSION=4.19
+export ROSA_VERSION=4.19.0
 export ROSA_REGION=us-east-1
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer | sed 's/https:\/\///')
@@ -266,13 +266,13 @@ EOF
 ```bash
 export OIDC_ID=$(rosa create oidc-config --mode=auto --yes --region ${ROSA_REGION} -o json | jq -r '.id')
 
-rosa create oidc-provider --oidc-config-id ${OIDC_ID}
+rosa create oidc-provider --oidc-config-id ${OIDC_ID} --mode=auto --yes
 ```
 
 3. Create ROSA Operator Roles for new cluster
 
 ```bash
-rosa create operator-roles --hosted-cp --prefix "${NEW_ROSA_CLUSTER_NAME}" --oidc-config-id "${OIDC_ID}"  --installer-role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-HCP-ROSA-Installer-Role
+rosa create operator-roles --hosted-cp --prefix "${NEW_ROSA_CLUSTER_NAME}" --oidc-config-id "${OIDC_ID}"  --installer-role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/ManagedOpenShift-HCP-ROSA-Installer-Role --mode=auto --yes
 ```
 
 4. Deploy AWS VPC and Subnets for the cluster
