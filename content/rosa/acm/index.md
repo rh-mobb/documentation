@@ -5,6 +5,7 @@ tags: ["AWS", "ROSA"]
 authors:
   - Kevin Collins
   - Michael McNeill
+  - Kumudu Herath
 ---
 
 In the dynamic world of cloud-native development, efficiently managing Kubernetes clusters across diverse environments is paramount. This blog post dives into a powerful combination: deploying Red Hat OpenShift Service on AWS (ROSA) Hosted Control Planes (HCP) clusters, orchestrated and governed by Red Hat Advanced Cluster Management for Kubernetes (RHACM). This approach offers a compelling suite of benefits, including significant cost reductions by offloading control plane management to Red Hat, accelerated cluster provisioning times, and enhanced operational efficiency through a centralized management plane. By leveraging ROSA HCP with RHACM, organizations can achieve a more streamlined, secure, and scalable Kubernetes footprint on AWS, allowing teams to focus more on innovation and less on infrastructure overhead.
@@ -290,6 +291,11 @@ terraform apply rosa.tfplan
 export SUBNET_IDS=$(terraform output -raw cluster-subnets-string)
 PRIVATE_SUBNET=$(terraform output | grep -A 1 "cluster-private-subnets" | tail -n 1 | cut -d'"' -f2)
 PUBLIC_SUBNET=$(terraform output | grep -A 1 "cluster-public-subnets" | tail -n 1 | cut -d'"' -f2)
+AZ=$(aws ec2 describe-subnets \
+  --subnet-ids "${PRIVATE_SUBNET}" \
+  --query 'Subnets[0].AvailabilityZone' \
+  --region "${ROSA_REGION}"
+  --output text)
 ```
 
 5. Shorten Role names to meet AWS limit of 64 characters
