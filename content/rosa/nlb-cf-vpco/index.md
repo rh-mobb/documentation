@@ -8,7 +8,10 @@ authors:
   - Kevin Collins
 ---
 
-Starting with OpenShift 4.14, Red Hat OpenShift Service on AWS (ROSA) supports adding additional Ingress Controllers which can be used to configure a custom domain on a ROSA cluster. This guide shows how to leverage this feature to create a global routing solution with a CloudFront distribution, a VPC origin, an Network Load Balancer (NLB), and a private IngressController type NLB, providing a path from the internet to your applications.
+
+AWS CloudFront is a great choice for a Content Delivery Network in front of your ROSA cluster. In many situations, it may be useful to ensure that traffic to Routes within your cluster _must_ come from your CloudFront Distribution rather than being able to bypass it (for example, if a WAF is attached to the CloudFront Distribution).
+
+This guide shows how to use the CloudFront VPC Origin feature in combination with a Network Load Balancer (NLB), and a private secondary IngressController type NLB, providing a path from the Internet to your applications that only goes through CloudFront.
 
 In essence, the routing flow will look like this: Internet -> CloudFront Distribution -> CloudFront VPC Origin -> NLB (Outer NLB) -> Private IngressController (Inner NLB) -> Application. 
 
