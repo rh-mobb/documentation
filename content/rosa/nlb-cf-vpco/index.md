@@ -80,7 +80,7 @@ Replicate this step to the other two private subnets, but differentiate the last
 
 Let's first create the security group for the second private ingress controller. On the AWS Console, go to **EC2**, select **Security Groups**, and then click **Create security group** button on the upper right side. 
 
-Then on the new page, name the new security group `outer-nlb-sg` and provide description such as **allow cf to outer sg**, and select the VPC of your cluster.
+Then on the new page, name the new security group `outer-nlb-sg` and provide a description such as **allow cf to outer sg**, and select the VPC of your cluster.
 
 Add inbound rule **HTTPS** with port **443**, **Custom** for source and search for **com.amazonaws.global.cloudfront.origin-facing**, which is the CloudFront managed prefix list. In my case per snippet below it returns **pl-38a64351**.
 
