@@ -1,6 +1,6 @@
 ---
-date: '2025-06-27'
-title: Adding a Private Ingress Controller, an NLB, and a CloudFront Distribution (via VPC Origin) to a ROSA Cluster 
+date: '2025-07-03'
+title: Using a Private IngressController with CloudFront to a ROSA Cluster 
 tags: ["AWS", "ROSA"]
 authors:
   - Diana Sari
@@ -26,14 +26,10 @@ By creating a secondary IngressController (type NLB), an NLB and placing a Cloud
 
 - Use standard OpenShift Route objects instead of managing NodePort Services or Ingress resources
 - Avoid manually managing port allocations for multiple applications
-- Attach AWS services like [Web Application Firewall (WAF)](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-alb-and-waf#deploy-aws-load-balancer-operator_cloud-experts-using-alb-and-waf) or Shield to protect your applications
+- Attach AWS services like [Web Application Firewall (WAF)](https://aws.amazon.com/waf/). You could then use use [AWS Load Balancer Operator and Ingress and Routes](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-alb-and-waf) rather than IngressController, or you can also use a [public IngressController](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-cloudfront-and-waf) 
 - Maintain compatibility with existing OpenShift deployment patterns
 
-This approach differs from [adding an Ingress Controller to ROSA guide](https://cloud.redhat.com/experts/rosa/ingress-controller/) because here it adds an additional NLB component and a CloudFront facing the internet. It is also different from [adding Ingress Controller and ALB to ROSA guide](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/) because instead of ALB, here we are adding NLB and fronting it with CloudFront acting as global CDN layer. 
-
-In addition, the TLS handling in this guide is also different. Here, CloudFront terminates TLS from clients and re-encrypts traffic to the VPC Origin, the outer NLB then passes through TLS traffic without termination (Layer 4 load balancing), the inner NLB also passes through TLS traffic without termination, and finally, the router pods terminate TLS using the Let's Encrypt certificate configured on the IngressController. 
-
-That said, unlike with the ALB architecture, there are no SNI (Server Name Indication) concerns because the NLBs operate at Layer 4 and simply forward the encrypted traffic. The OpenShift IngressController receives the full TLS handshake including SNI information, allowing it to route requests normally based on the hostname. This makes the architecture compatible with multi-domain routing while maintaining end-to-end encryption.
+This approach is different from [adding Ingress Controller and ALB to ROSA guide](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/) because instead of ALB, here we are adding NLB and fronting it with CloudFront acting as global CDN layer. In addition, the TLS handling in this guide is also different. Here, CloudFront terminates TLS from clients and re-encrypts traffic to the VPC Origin, the outer NLB then passes through TLS traffic without termination (Layer 4 load balancing), the inner NLB also passes through TLS traffic without termination, and finally, the router pods terminate TLS using the Let's Encrypt certificate configured on the IngressController. That said, there are no SNI (Server Name Indication) concerns because the NLBs operate at Layer 4 and simply forward the encrypted traffic. The OpenShift IngressController receives the full TLS handshake including SNI information, allowing it to route requests normally based on the hostname. This makes the architecture compatible with multi-domain routing while maintaining end-to-end encryption.
 
 
 ## 1. Prerequisites
@@ -43,22 +39,11 @@ That said, unlike with the ALB architecture, there are no SNI (Server Name Indic
 * A Domain Name in a public zone. These instructions assume Route 53, but can be adapted for any other DNS.
 
 
-## 2. Set up environment
+## 2. Create a private IngressController (inner NLB)
 
-Once you're logged into your cluster, set up the following environment variables.
-> **Important**: The variables below can be customized to fit your needs for your ingress controller.
+Once you're logged into your cluster, please take a look at this [guide](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/). From there, follow the step of **Create the Ingress Controller** to create the first NLB (let's call this **inner NLB**) and retrieve the IP addresses of your NLB. You can do so by following the first section of **Create the ALB** on that guide but please be sure not to continue creating the ALB since we are not going to do that here. Please keep these IP addresses handy as we are going to use it in the later steps.
 
-```bash
-INGRESS_NAME=private-ingress # just a name example
-DOMAIN=lab.domain.com # change this to your domain (for example, our MOBB registered domain is `mobb.cloud`, so here I replaced it with `test.mobb.cloud`) 
-SCOPE="Internal"
-```
-
-## 3. Create a private IngressController (inner NLB)
-
-For this step, please take a look at this [guide](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/). From there, follow the step of **Create the Ingress Controller** to create the first NLB (let's call this **inner NLB**) and retrieve the IP addresses of your NLB. You can do so by following the first section of **Create the ALB** on that guide but please be sure not to continue creating the ALB since we are not going to do that here. Please keep these IP addresses handy as we are going to use it in the later steps.
-
-## 4. Configure VPC for IPv6
+## 3. Configure VPC for IPv6
 
 Feel free to skip this step if you have already enabled IPv6 in your ROSA VPC. On the AWS console, go to VPC and select your ROSA VPC. Then on the upper right **Actions** button, click and select **Edit CIDRs** per snippet below. 
 
@@ -83,9 +68,9 @@ Replicate this step to the other two private subnets, but differentiate the last
 <br />
 
 
-## 5. Create a Network Load Balancer (outer NLB)
+## 4. Create a Network Load Balancer (outer NLB)
 
-### 5.1. Create security group for outer NLB
+### 4.1. Create security group for outer NLB
 
 Let's first create the security group for the second private ingress controller. On the AWS Console, go to **EC2**, select **Security Groups**, and then click **Create security group** button on the upper right side. 
 
@@ -101,7 +86,7 @@ Then for outbound rule, also add **HTTPS** with port **443**, **Custom** for des
 And finally, click **Create security group** button on the lower right.
 
 
-### 5.2. Create target group for outer NLB
+### 4.2. Create target group for outer NLB
 
 Next, on the **EC2** sidebar, look for **Target Groups** and click it. Click **Create target group** button on the upper right side. On the new page, select **IP addresses** as target type, give it a name `outer-nlb-tg`, and choose protocol **TCP** with port **443**. Leave **IPv4** as IP address type, and select your cluster VPC as the VPC.
 
@@ -118,7 +103,7 @@ Leave the rest advance settings as default. Then click the **Next** button at th
 On the **Review targets** section, be sure to check that all three IP addresses are in **Pending** health status. Click **Create target group** button.
 
 
-### 5.3. Create outer NLB
+### 4.3. Create outer NLB
 
 Still on the **EC2** sidebar, click **Load Balancers**, and click **Create load balancer** button on the upper right corner. Select NLB as the type and hit the **Create** button.
 
@@ -135,9 +120,9 @@ Under **Listeners and routing**, select protocol **TCP** on port **443**, and fo
 Next, click **Create load balancer** button at the bottom of the page. It will take a couple of minutes for the status to turn from **Provisioning** to **Active**. Then, copy the **Load balancer ARN** as you would need it for the next step. 
 
 
-## 6. Create CloudFront VPC Origin and Distribution
+## 5. Create CloudFront VPC Origin and Distribution
 
-### 6.1. Create CloudFront VPC Origin
+### 5.1. Create CloudFront VPC Origin
 
 On the AWS console, look for **CloudFront**, and on the CloudFront sidebar select **VPC origins**, and then hit the **Create VPC origin** button on the upper right corner. Give it a name like `rosa-vpc-og` and paste the outer NLB ARN that you copied before for the **Origin ARN**. Choose **HTTPS only** for the protocol, leave the port ot **443** and the minimum origin SSL protocol to **TLSv1.2**. 
 
@@ -147,7 +132,7 @@ On the AWS console, look for **CloudFront**, and on the CloudFront sidebar selec
 Hit **Create VPC origin** button at the end of the page, and wait for a few minutes until the status changed from **Deploying** to **Deployed**.
 
 
-### 6.2. Create CloudFront Distribution
+### 5.2. Create CloudFront Distribution
 
 On the CloudFront sidebar, click **Distributions**, and hit **Create distribution** button on the upper right corner. Note that at the time of the writing, AWS actually just released a new UI for creating CloudFront distribution, however, this guide will show you how to create one using the previous/old one.
 
@@ -176,7 +161,7 @@ On the **Settings** section, under the alternate domain name (CNAME) part, click
 And finally, click the **Create distribution** button. And once it finished deploying, copy the **Distribution domain name** as you would need it for next step.
 
 
-## 7. Create (or update) custom domain on Route 53 
+## 6. Create (or update) custom domain on Route 53 
 
 Skip this creation step if you have already created the custom domain. To create one, go to your AWS Console. Select **Route 53** and choose a hosted zone, and from there, click **Create record** button. 
 
@@ -192,7 +177,7 @@ FYI, now if you look at the target group you created earlier, you should see the
 ![tg-healthy](images/tg-healthy.png)
 <br />
 
-## 8. Create Let's Encrypt certificate
+## 7. Create Let's Encrypt certificate
 
 Next, let's go back to CLI. Skip this step if you already have [Let's Encrypt Certificate](https://letsencrypt.org/). To create one, you would need to run certbot so please install it if you have not already (if you're a Mac user, you can run `brew install certbot`).
 
@@ -252,7 +237,7 @@ chmod 644 ~/openshift-certs/fullchain.pem
 chmod 600 ~/openshift-certs/privkey.pem
 ```
 
-## 9. Configure certificate for inner NLB
+## 8. Configure certificate for inner NLB
 
 Next, we are going to configure the certificate we created just now to the private ingress controller (inner NLB). To do that, let's first create a TLS secret:
 
@@ -278,7 +263,7 @@ Wait for a few minutes until the router pods restart:
 oc get pods -n openshift-ingress -w | grep $INGRESS_NAME
 ```
 
-## 10. Test an application
+## 9. Test an application
 
 Finally, let's test this setup by creating a public application. Log in to the cluster to proceed with next steps.
 
