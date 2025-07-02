@@ -20,7 +20,7 @@ In essence, the routing flow will look like this: Internet -> CloudFront Distrib
 
 This guide leverages CloudFront as a global content delivery network (CDN) and the architecture uses two NLBs - an outer NLB that receives traffic from CloudFront and an inner NLB that routes traffic to your ROSA applications. We also leverage OpenShift Routes and the built-in routing capabilities of the OpenShift platform. 
 
-The primary reason for using two NLBs is mainly because when ROSA creates an NLB through an IngressController, it creates it without a security group, and security group cannot be attached after NLB creation. On the other hand, CloudFront VPC Origin uses a security group to restrict traffic to only CloudFront's managed prefix list, which means the NLB must have a security group, and hence the need for the second NLB.
+CloudFront VPC Origin only works with NLBs that have security groups, but OpenShift IngressControllers are only capable of creating NLBs without security groups attached, and it is not possible to attach security groups to this NLB later. Therefore, we attach the CloudFront VPC Origin to the Outer NLB (with a security group), and this in turn talks to the Inner NLB managed by the IngressController.
 
 By creating a secondary IngressController (type NLB), an NLB and placing a CloudFront in front of it, you can:
 
