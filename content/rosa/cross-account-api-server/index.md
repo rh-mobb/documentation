@@ -21,13 +21,13 @@ Assume ROSA is already deployed in AWS Account-A, and the following AWS resource
 
 ## Setup on AWS Account‑B
 
-This section covers steps in AWS Account-B: 
+This section covers steps in AWS Account-B 
 ![pic3](./images/pic3.png)
 
 
 #### Prepare necessary tools on  Bastion-B 
 
-1. On the EC2 bastion instance (bastion-B), install the required tools:
+1. On the EC2 bastion instance (bastion-B), install the required tools
 
 ```bash
 curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
@@ -40,7 +40,8 @@ sudo mv ./kubectl /usr/local/bin
 ```
 
 
-Verify installation
+1. Verify installation
+
 ```bash
 oc version
 ```
@@ -48,9 +49,10 @@ oc version
 
 1. Create IAM Policy
 
-Create vpce-policy.json:
+Create vpce-policy.json
 
 ```bash
+cat > vpce-policy.json <<EOF
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -66,9 +68,11 @@ Create vpce-policy.json:
     }
   ]
 }
+EOF
 ```
 
-Apply it:
+1. Apply it
+
 ```bash
 IAM_POLICY_ARN=$(aws iam create-policy \
   --policy-name ROSAHcpVPCEndpointPolicy \
@@ -79,14 +83,16 @@ IAM_POLICY_ARN=$(aws iam create-policy \
 
 #### Create IAM Role
 
-1. Get your current IAM user ARN:
+1. Get your current IAM user ARN
+
 ```bash
 IAMUSER_ARN=$(aws sts get-caller-identity \
   --query "Arn" \
   --output text)
 ```
 
-1. Create trust relationship file (trust-policy.json):
+1. Create trust relationship file (trust-policy.json)
+
 ```bash
 cat > trust-policy.json <<EOF
 {
@@ -104,7 +110,7 @@ cat > trust-policy.json <<EOF
 EOF
 ```
 
-1. Create the role:
+1. Create the role
 
 ```bash
 IAM_ROLE_ARN=$(aws iam create-role \
@@ -115,7 +121,7 @@ IAM_ROLE_ARN=$(aws iam create-role \
 echo $IAM_ROLE_ARN  # e.g. arn:aws:iam::822827512345:role/ROSAHcpVPCEndpointRole
 ```
 
-1. Attach the policy:
+1. Attach the policy
 
 ```
 aws iam attach-role-policy \
@@ -125,7 +131,7 @@ aws iam attach-role-policy \
 
 #### Configure AWS CLI to Assume the IAM Role
 
-1. Add a new profile in `~/.aws/config` to assume the role:
+1. Add a new profile in `~/.aws/config` to assume the role
 
 ```
 [default]
@@ -148,7 +154,8 @@ Switch to Account-A, where the ROSA cluster resides
 
 #### Register the IAM Role with ROSA
 
-1. Run On Bastion-A (or any rosa-enabled host):
+1. Run On Bastion-A (or any rosa-enabled host)
+
 ```bash
 CLUSTER_NAME=$(rosa list clusters -o json | jq -r '.[0].name')
 IAM_ROLE_ARN=<role ARN from Account-B>
@@ -176,13 +183,13 @@ Expect something like:` https://api.rosahcp.<id>.openshiftapps.com:443`
 
 
 ## Back to AWS Account‑B
-Continue in Account-B: 
+Continue in Account-B 
 ![aws account B](./images/pic3.png)
    
 
 #### Create VPC Endpoint
 
-1. Set variables:
+1. Set variables
 
 ```bash
 SERVICE_NAME=<from Account-A>
@@ -192,13 +199,13 @@ SUBNET_CIDR=$(aws ec2 describe-subnets …)
 VPC_ID=$(…)
 ```
 
-1. Verify:
+1. Verify
 
 ```bash
 echo "VPC_ID=$VPC_ID, SERVICE_NAME=$SERVICE_NAME, SUBNET_ID=$SUBNET_ID, SUBNET_CIDR=$SUBNET_CIDR"
 ```
 
-1. Create security group:
+1. Create security group
 
 ```bash
 SEC_GROUP_ID=$(aws ec2 create-security-group \
@@ -210,7 +217,7 @@ SEC_GROUP_ID=$(aws ec2 create-security-group \
   --output text)
 ```
 
-1. Allow inbound from subnet:
+1. Allow inbound from subnet
 
 ```bash
 aws ec2 authorize-security-group-ingress \
@@ -240,7 +247,7 @@ If no error, the endpoint is created.
 
 #### Configure Private DNS Zone in Route 53
 
-1. Fetch the endpoint DNS name:
+1. Fetch the endpoint DNS name
 
 ```bash
 ENDPOINT_DNS=$(aws ec2 describe-vpc-endpoints \
@@ -249,26 +256,26 @@ ENDPOINT_DNS=$(aws ec2 describe-vpc-endpoints \
   --output text)
 ```
 
-1. Extract domain from API URL:
+1. Extract domain from API URL
 
 ```bash
 API_URL=<ROSA API URL>
 DOMAIN=$(echo $API_URL | cut -d '/' -f3 | sed 's/^api\.//;s/:.*//')
 ```
 
-1. Set the region:
+1. Set the region
 
 ```bash
 REGION=<AWS Region>
 ```
 
-1. Check:
+1. Check
 
 ```bash
 echo "DOMAIN=$DOMAIN, REGION=$REGION, VPC_ID=$VPC_ID"
 ```
 
-1. Create Route 53 private hosted zone:
+1. Create Route 53 private hosted zone
 
 ```bash
 HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
@@ -280,7 +287,7 @@ HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
   --output text | cut -d'/' -f3)
 ```
 
-1. Create DNS records:
+1. Create DNS records
 
 ```bash
 cat > record.json <<EOF
@@ -316,14 +323,14 @@ This ensures DNS resolution of `api.<DOMAIN>` and `oauth.<DOMAIN>` points to the
 
 
 ## Verify Connection
-Test access from bastion-B:
+Test access from bastion-B
 ![aws account B](./images/pic6.png)
 ```
 oc login $API_URL --username cluster-admin --password <password>
 ```
 
 ## Summary
-You have now:
+You have now
 
 * Set up tools on bastion-B in Account-B.
 * Created IAM role/policy allowing Account-B to call AWS on ROSA’s behalf.
