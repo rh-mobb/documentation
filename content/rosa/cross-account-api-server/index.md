@@ -3,44 +3,31 @@ date: '2025-07-02'
 title: Accessing the ROSA HCP API Server from a Different AWS Account
 tags: ["AWS", "ROSA", "HCP"]
 authors:
-  - Andy Repton
+  - Yuhki Hanada 
 ---
 
-The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
-
-This is a guide to enable cross-account EFS mounting on ROSA.
-
-> Important: Cross Account EFS is considered an advanced topic, and this article makes various assumptions as to knowledge of AWS terms and techniques across VPCs, Networking, IAM permissions and more.
-
-## Prerequisites
-
-* One AWS Account containing a Red Hat OpenShift on AWS (ROSA) 4.16 or later cluster, in a VPC
-* One AWS Account containing (or which will contain) the EFS filesystem, containing a VPC
-* The OC CLI
-* The AWS CLI
-* `jq` command
-* `watch` command
-
-
-1. Introduction                         
+## Introduction                         
 
 You can create a ROSA HCP cluster in one AWS account and configure it so that you can run oc commands from a different AWS account. Although this setup is documented, detailed steps for AWS-side configuration are not provided. Here, I walk through the actual AWS setup.
 
+![pic1](./images/pic1.png)
 Note: AWS environments vary, so consider this as one possible setup.
 
 
-1. Prerequisites
+## Prerequisites
 
-Assume ROSA is already deployed in Account-A, and the following AWS resources are available: (diagram omitted)
-   
+Assume ROSA is already deployed in AWS Account-A, and the following AWS resources are available.
+![pic2](./images/pic2.png)
 
-1. Setup on AWS Account‑B
+## Setup on AWS Account‑B
 
-This section covers steps in AWS Account-B: (diagram omitted)
+This section covers steps in AWS Account-B: 
+![pic3](./images/pic3.png)
 
 
-1.1 Prepare Bastion-B Tools
-On the EC2 bastion instance (bastion-B), install the required tools:
+#### Prepare necessary tools on  Bastion-B 
+
+1. On the EC2 bastion instance (bastion-B), install the required tools:
 
 ```bash
 curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
@@ -53,15 +40,14 @@ sudo mv ./kubectl /usr/local/bin
 ```
 
 
-Verify installation:
+Verify installation
 ```bash
 oc version
 ```
 (Note: cluster connection is not yet possible.)
 
+1. Create IAM Policy
 
-3.2 Prepare IAM Role and Policy
-3.2.1 Create IAM Policy
 Create vpce-policy.json:
 
 ```bash
@@ -91,15 +77,16 @@ IAM_POLICY_ARN=$(aws iam create-policy \
   --output text)
 ```
 
-3.2.2 Create IAM Role
-Get your current IAM user ARN:
+#### Create IAM Role
+
+1. Get your current IAM user ARN:
 ```bash
 IAMUSER_ARN=$(aws sts get-caller-identity \
   --query "Arn" \
   --output text)
 ```
 
-Create trust relationship file (trust-policy.json):
+1. Create trust relationship file (trust-policy.json):
 ```bash
 cat > trust-policy.json <<EOF
 {
@@ -117,7 +104,8 @@ cat > trust-policy.json <<EOF
 EOF
 ```
 
-Create the role:
+1. Create the role:
+
 ```bash
 IAM_ROLE_ARN=$(aws iam create-role \
   --role-name ROSAHcpVPCEndpointRole \
@@ -127,15 +115,18 @@ IAM_ROLE_ARN=$(aws iam create-role \
 echo $IAM_ROLE_ARN  # e.g. arn:aws:iam::822827512345:role/ROSAHcpVPCEndpointRole
 ```
 
-Attach the policy:
+1. Attach the policy:
+
 ```
 aws iam attach-role-policy \
   --role-name ROSAHcpVPCEndpointRole \
   --policy-arn $IAM_POLICY_ARN
 ```
 
-3.3 Configure AWS CLI to Assume the IAM Role
-Add a new profile in `~/.aws/config` to assume the role:
+#### Configure AWS CLI to Assume the IAM Role
+
+1. Add a new profile in `~/.aws/config` to assume the role:
+
 ```
 [default]
 region = <AWS Region>
@@ -148,11 +139,16 @@ region = <AWS Region>
 ```
 
 
-4. Setup on AWS Account‑A
-Switch to Account-A, where the ROSA cluster resides: (diagram omitted)
+## Setup on AWS Account‑A
 
-4.1 Register IAM Role with ROSA
-On Bastion-A (or any rosa-enabled host):
+Switch to Account-A, where the ROSA cluster resides
+![AWS Account A](./images/pic4.png)
+
+   
+
+#### Register the IAM Role with ROSA
+
+1. Run On Bastion-A (or any rosa-enabled host):
 ```bash
 CLUSTER_NAME=$(rosa list clusters -o json | jq -r '.[0].name')
 IAM_ROLE_ARN=<role ARN from Account-B>
@@ -160,7 +156,8 @@ rosa edit cluster -c $CLUSTER_NAME --additional-allowed-principals $IAM_ROLE_ARN
 rosa describe cluster -c $CLUSTER_NAME | grep "Additional Principals:"
 ```
 
-4.2 Get VPC Endpoint Service Name
+1. Get VPC Endpoint Service Name
+
 ```bash
 aws ec2 describe-vpc-endpoints \
   --query "VpcEndpoints[*].[VpcEndpointId, ServiceName]" \
@@ -170,19 +167,23 @@ Note the service name for the Hosted Control Plane endpoint, e.g., com.amazonaws
 
 
 
+1. Fetch API URL for ROSA Cluster
 
-4.3 Fetch API URL for ROSA Cluster
 ```bash
 rosa describe cluster -c $CLUSTER_NAME -o json | jq -r '.api.url'
 ```
 Expect something like:` https://api.rosahcp.<id>.openshiftapps.com:443`
 
 
-5. Back to AWS Account‑B
-Continue in Account-B: (diagram omitted)
+## Back to AWS Account‑B
+Continue in Account-B: 
+![aws account B](./images/pic3.png)
+   
 
-5.1 Create VPC Endpoint
-Set variables:
+#### Create VPC Endpoint
+
+1. Set variables:
+
 ```bash
 SERVICE_NAME=<from Account-A>
 INSTANCE_ID=<bastion-B EC2 ID>
@@ -191,12 +192,14 @@ SUBNET_CIDR=$(aws ec2 describe-subnets …)
 VPC_ID=$(…)
 ```
 
-Verify:
+1. Verify:
+
 ```bash
 echo "VPC_ID=$VPC_ID, SERVICE_NAME=$SERVICE_NAME, SUBNET_ID=$SUBNET_ID, SUBNET_CIDR=$SUBNET_CIDR"
 ```
 
-Create security group:
+1. Create security group:
+
 ```bash
 SEC_GROUP_ID=$(aws ec2 create-security-group \
   --group-name MyVPCEndpointSG \
@@ -207,7 +210,8 @@ SEC_GROUP_ID=$(aws ec2 create-security-group \
   --output text)
 ```
 
-Allow inbound from subnet:
+1. Allow inbound from subnet:
+
 ```bash
 aws ec2 authorize-security-group-ingress \
   --group-id $SEC_GROUP_ID \
@@ -216,7 +220,8 @@ aws ec2 authorize-security-group-ingress \
   --cidr $SUBNET_CIDR
 ```
 
-Create the interface endpoint, using the `myprofile` role:
+1. Create the interface endpoint, using the `myprofile` role:
+
 ```bash
 ENDPOINT_ID=$(aws ec2 create-vpc-endpoint \
   --vpc-id $VPC_ID \
@@ -231,9 +236,11 @@ ENDPOINT_ID=$(aws ec2 create-vpc-endpoint \
 
 
 If no error, the endpoint is created.
+![aws account B](./images/pic5.png)
 
-5.2 Configure Private DNS Zone in Route 53
-Fetch the endpoint DNS name:
+#### Configure Private DNS Zone in Route 53
+
+1. Fetch the endpoint DNS name:
 
 ```bash
 ENDPOINT_DNS=$(aws ec2 describe-vpc-endpoints \
@@ -242,24 +249,27 @@ ENDPOINT_DNS=$(aws ec2 describe-vpc-endpoints \
   --output text)
 ```
 
-Extract domain from API URL:
+1. Extract domain from API URL:
+
 ```bash
 API_URL=<ROSA API URL>
 DOMAIN=$(echo $API_URL | cut -d '/' -f3 | sed 's/^api\.//;s/:.*//')
 ```
 
-Set the region:
+1. Set the region:
 
 ```bash
 REGION=<AWS Region>
 ```
 
-Check:
+1. Check:
+
 ```bash
 echo "DOMAIN=$DOMAIN, REGION=$REGION, VPC_ID=$VPC_ID"
 ```
 
-Create Route 53 private hosted zone:
+1. Create Route 53 private hosted zone:
+
 ```bash
 HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
   --name $DOMAIN \
@@ -269,7 +279,9 @@ HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
   --query 'HostedZone.Id' \
   --output text | cut -d'/' -f3)
 ```
-Create DNS records:
+
+1. Create DNS records:
+
 ```bash
 cat > record.json <<EOF
 {
@@ -302,30 +314,21 @@ aws route53 change-resource-record-sets \
 ```
 This ensures DNS resolution of `api.<DOMAIN>` and `oauth.<DOMAIN>` points to the VPC endpoint and routes traffic to the Hosted Control Plane.
 
-6. Verify Connection
+
+## Verify Connection
 Test access from bastion-B:
+![aws account B](./images/pic6.png)
 ```
 oc login $API_URL --username cluster-admin --password <password>
 ```
 
-1. Summary
+## Summary
 You have now:
 
-Set up tools on bastion-B in Account-B.
-Created IAM role/policy allowing Account-B to call AWS on ROSA’s behalf.
-Registered that role with the ROSA cluster in Account-A.
-Created an interface VPC endpoint and private DNS in Account-B.
-Verified oc access from Account-B into ROSA.
-
-
-
-
-
-
-
-
-
-
-
+* Set up tools on bastion-B in Account-B.
+* Created IAM role/policy allowing Account-B to call AWS on ROSA’s behalf.
+* Registered that role with the ROSA cluster in Account-A.
+* Created an interface VPC endpoint and private DNS in Account-B.
+* Verified oc access from Account-B into ROSA.
 
 
