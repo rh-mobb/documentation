@@ -49,6 +49,8 @@ Once you're logged into your cluster, please take a look at this [guide](https:/
 
 ## 3. Configure VPC for IPv6
 
+CloudFront VPC Origin must point at subnets that contain an IPv6 CIDR block, even if that CIDR block is unused.
+
 Feel free to skip this step if you have already enabled IPv6 in your ROSA VPC. On the AWS console, go to VPC and select your ROSA VPC. Then on the upper right **Actions** button, click and select **Edit CIDRs** per snippet below. 
 
 ![editipv6](images/editipv6.png)
