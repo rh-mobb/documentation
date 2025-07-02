@@ -35,6 +35,7 @@ This approach is different from [adding Ingress Controller and ALB to ROSA guide
 ## 1. Prerequisites
 
 * A private (or Privatelink) [classic](https://cloud.redhat.com/experts/rosa/terraform/classic/) or [HCP](https://cloud.redhat.com/experts/rosa/terraform/hcp/) multi-az ROSA cluster v4.14 and above.
+* The VPC the cluster is installed in should have public and private subnets in each AZ.
 * The oc CLI      # logged in.
 * A Domain Name in a public zone. These instructions assume Route 53, but can be adapted for any other DNS.
 
