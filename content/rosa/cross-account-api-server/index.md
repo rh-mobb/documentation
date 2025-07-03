@@ -188,7 +188,7 @@ Continue in Account-B
 ![aws account B](./images/pic3.png)
       
 
-#### Create VPC Endpoint
+#### Create a VPC Endpoint
 
 1. Set some environment variables
 
