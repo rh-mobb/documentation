@@ -8,7 +8,8 @@ authors:
 
 ## Introduction                         
 
-You can create a ROSA HCP cluster in one AWS account and configure it so that you can run oc commands from a different AWS account. Although this setup is documented, detailed steps for AWS-side configuration are not provided. Here, I walk through the actual AWS setup.
+You can create a ROSA HCP cluster in one AWS account and configure it so that you can run oc commands from a different AWS account. 
+Here, I walk through the actual AWS setup.
 
 ![pic1](./images/pic1.png)
 Note: AWS environments vary, so consider this as one possible setup.
@@ -16,7 +17,7 @@ Note: AWS environments vary, so consider this as one possible setup.
 
 ## Prerequisites
 
-Assume ROSA is already deployed in AWS Account-A, and the following AWS resources are available.
+Assume a ROSA HCP cluster is already deployed in AWS Account-A, and the following AWS resources are available.
 ![pic2](./images/pic2.png)
 
 ## Setup on AWS Account‑B
@@ -27,7 +28,7 @@ This section covers steps in AWS Account-B
 
 #### Prepare necessary tools on  Bastion-B 
 
-1. On the EC2 bastion instance (bastion-B), install the required tools
+1. On the EC2 bastion instance (bastion-B), install required tools
 
     ```bash
     curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
@@ -39,7 +40,7 @@ This section covers steps in AWS Account-B
     sudo mv ./kubectl /usr/local/bin
     ```
 
-1. Verify installation
+1. Verify the installation
 
     ```bash
     oc version
@@ -48,7 +49,7 @@ This section covers steps in AWS Account-B
 
 1. Create an IAM Policy
 
-    Create a vpce-policy.json
+    Create a policy file in json ( vpce-policy.json)
 
     ```bash
     cat > vpce-policy.json <<EOF
@@ -71,7 +72,7 @@ This section covers steps in AWS Account-B
     EOF
     ```
 
-1. Create an IAM Policy
+1. Create an IAM Policy from the json file
 
     ```bash
     IAM_POLICY_ARN=$(aws iam create-policy \
@@ -110,7 +111,7 @@ This section covers steps in AWS Account-B
     EOF
     ```
 
-1. Create an IAMRole
+1. Create an IAM Role
 
     ```bash
     IAM_ROLE_ARN=$(aws iam create-role \
@@ -121,7 +122,7 @@ This section covers steps in AWS Account-B
     echo $IAM_ROLE_ARN  # e.g. arn:aws:iam::822827512345:role/ROSAHcpVPCEndpointRole
     ```
 
-1. Attach the IAMPolicy to the IAMRole
+1. Attach the IAM Policy to the IAM Role
 
     ```
     aws iam attach-role-policy \
@@ -131,7 +132,7 @@ This section covers steps in AWS Account-B
 
 #### Configure AWS CLI to Assume the IAM Role
 
-1. Add a new profile in `~/.aws/config` to assume the role
+1. Add a new profile in `~/.aws/config` to assume the IAM Role created in the previous step.
 
     ```
     [default]
@@ -154,7 +155,7 @@ Switch to AWS Account-A, where the ROSA cluster resides
 
 #### Register the IAM Role with ROSA
 
-1. Run On Bastion-A (or any rosa-enabled host)
+1. Run On Bastion-A (or any rosa-enabled host) to set some environmental variables.
 
     ```bash
     CLUSTER_NAME=$(rosa list clusters -o json | jq -r '.[0].name')
@@ -163,18 +164,17 @@ Switch to AWS Account-A, where the ROSA cluster resides
     rosa describe cluster -c $CLUSTER_NAME | grep "Additional Principals:"
     ```
 
-1. Get VPC Endpoint Service Name
+1. Get the VPC Endpoint Service Name for the ROSA hosted controlplane.
 
     ```bash
     aws ec2 describe-vpc-endpoints \
       --query "VpcEndpoints[*].[VpcEndpointId, ServiceName]" \
       --output table
     ```
-    Note the service name for the Hosted Control Plane endpoint is like `com.amazonaws.vpce.ap-northeast-1.vpce-svc-....`
+   ( Note: The service name is like `com.amazonaws.vpce.<Your AWS region>.vpce-svc-....`)
 
 
-
-1. Fetch API URL for ROSA Cluster
+1. Fetch the API URL for ROSA Cluster
 
     ```bash
     rosa describe cluster -c $CLUSTER_NAME -o json | jq -r '.api.url'
@@ -189,7 +189,7 @@ Continue in Account-B
 
 #### Create VPC Endpoint
 
-1. Set variables
+1. Set some environment variables
 
     ```bash
     SERVICE_NAME=<from Account-A>
@@ -199,13 +199,13 @@ Continue in Account-B
     VPC_ID=$(…)
     ```
 
-1. Verify the variables
+1. Make sure the variables are set
 
     ```bash
     echo "VPC_ID=$VPC_ID, SERVICE_NAME=$SERVICE_NAME, SUBNET_ID=$SUBNET_ID, SUBNET_CIDR=$SUBNET_CIDR"
     ```
 
-1. Create security group for VPC Endpoint
+1. Create a security group for the VPC Endpoint
 
     ```bash
     SEC_GROUP_ID=$(aws ec2 create-security-group \
@@ -217,7 +217,7 @@ Continue in Account-B
       --output text)
     ```
 
-1. Allow inbound from subnet
+1. Allow inbound from the subnet
 
     ```bash
     aws ec2 authorize-security-group-ingress \
@@ -226,6 +226,7 @@ Continue in Account-B
       --port 443 \
       --cidr $SUBNET_CIDR
     ```
+    (Note: You can customize the rule depending your need. This is just an example.) 
 
 1. Create an interface endpoint, using the `myprofile` role
 
@@ -240,14 +241,14 @@ Continue in Account-B
       --output text \
       --profile myprofile)
     ```
+    (Note: You run the command with `--profile myprofile` to assume the IAM Role you created in the previous step)
 
-    If no error, the endpoint is created.
-
-    ![aws account B](./images/pic5.png)
+    If there are no errors, the VPC endpoint will be created. The request to connect the hosted control plane VPC service endpoint will be automatically accepted if the IAM role is configured correctly.
+![aws account B](./images/pic5.png)
 
 #### Configure Private DNS Zone in Route 53
 
-1. Fetch the endpoint DNS name
+1. Fetch the VPC endpoint DNS name
 
     ```bash
     ENDPOINT_DNS=$(aws ec2 describe-vpc-endpoints \
@@ -256,20 +257,20 @@ Continue in Account-B
       --output text)
     ```
 
-1. Extract domain from the API URL
+1. Extract the domain from the API URL
 
     ```bash
     API_URL=<ROSA API URL>
     DOMAIN=$(echo $API_URL | cut -d '/' -f3 | sed 's/^api\.//;s/:.*//')
     ```
 
-1. Set the AWS region
+1. Set the AWS region of the AWS account-B
 
     ```bash
-    REGION=<AWS Region>
+    REGION=<AWS Region of AWS account-B>
     ```
 
-1. Check the variables before proceeding
+1. Make sure the variables are set before proceeding
 
     ```bash
     echo "DOMAIN=$DOMAIN, REGION=$REGION, VPC_ID=$VPC_ID"
@@ -319,11 +320,11 @@ Continue in Account-B
       --hosted-zone-id $HOSTED_ZONE_ID \
       --change-batch file://record.json
     ```
-    This ensures DNS resolution of `api.<DOMAIN>` and `oauth.<DOMAIN>` points to the VPC endpoint and routes traffic to the Hosted Control Plane.
+    The DNS record of `api.<DOMAIN>` and `oauth.<DOMAIN>` are resovled to the VPC endpoint, and the traffic is routed to the Hosted Ccontrolplane managed by Red Hat SRE.
 
 
 ## Verify Connection
-1. Test access from bastion-B
+1. Test access from bastion-B to the hosted controlplane
 
     ```
     oc login $API_URL --username cluster-admin --password <password>
