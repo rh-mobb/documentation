@@ -247,7 +247,7 @@ Continue in Account-B
     If there are no errors, the VPC endpoint will be created. The request to connect the hosted control plane VPC service endpoint will be automatically accepted if the IAM role is configured correctly.
 ![aws account B](./images/pic5.png)
 
-#### Configure Private DNS Zone in Route 53
+#### Create a Private DNS Zone in Route 53
 
 1. Fetch the VPC endpoint DNS name
 
