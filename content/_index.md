@@ -23,6 +23,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configuring OpenShift Logging 6 on ROSA HCP](/experts/o11y/openshift-logging6-rosa-hcp)
 * [Integrating Service Mesh into a ROSA Cluster](/experts/rosa/service-mesh)
 * [Deploy ROSA HCP Clusters via Red Hat Advanced Cluster Manager](/experts/rosa/acm)
+* [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
 
 #### Classic
 
