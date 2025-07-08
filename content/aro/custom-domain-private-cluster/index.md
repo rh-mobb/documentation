@@ -396,7 +396,7 @@ You can [replace the default ingress certificate](https://docs.openshift.com/con
 
     ```bash
     oc create configmap custom-ca \
-        --from-file=$SCRATCH_DIR/config/live/apps.$DOMAIN/fullchain.pem \
+        --from-file=ca-bundle.crt=$SCRATCH_DIR/config/live/apps.$DOMAIN/fullchain.pem \
         -n openshift-config
     ```
 
