@@ -58,7 +58,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Security Reference Architecture for ROSA](/experts/rosa/security-ra)
 * Configure ROSA for Nvidia GPU Workloads
   * [Helm chart](/experts/rosa/gpu)
-  * [Manual](/experts/rosa/gpu/manual)
+  * [Manual](/experts/rosa/gpu-manual)
 * [Connect to RDS from ROSA with STS](/experts/rosa/sts-rds)
 * [Create an AWS Client VPN connection for a private ROSA Cluster](/experts/rosa/vpn)
 * [ROSA Break Glass Troubleshooting](/experts/rosa/break-glass)
