@@ -24,6 +24,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Integrating Service Mesh into a ROSA Cluster](/experts/rosa/service-mesh)
 * [Deploy ROSA HCP Clusters via Red Hat Advanced Cluster Manager](/experts/rosa/acm)
 * [Using a Private IngressController with CloudFront on a ROSA Cluster](/experts/rosa/nlb-cf-vpco)
+* [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
 
 #### Classic
 
