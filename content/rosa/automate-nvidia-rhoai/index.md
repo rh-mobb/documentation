@@ -36,6 +36,10 @@ export TF_VAR_private=false
 export TF_VAR_compute_machine_type=m5.8xlarge
 export TF_VAR_gpu_machine_type=g5.4xlarge
 export TF_VAR_admin_password=<admin password>
+export TF_VAR_developer_password=<developer password>
+export TF_VAR_hosted_control_plane=true
+export TF_VAR_multi_az=true
+export TF_VAR_region=<AWS Region>
 ```
 
 ## Create the ROSA cluster
