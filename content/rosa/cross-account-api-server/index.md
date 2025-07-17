@@ -29,7 +29,7 @@ This section covers the steps in AWS Account-B
 
 #### Prepare necessary tools on  Bastion-B 
 
-1. On the EC2 bastion instance (bastion-B), install required tools
+1. On the EC2 bastion instance (bastion-B), install the required tools
 
     ```bash
     curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
