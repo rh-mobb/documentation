@@ -8,7 +8,7 @@ authors:
 
 ## Introduction                         
 
-You can create a ROSA HCP cluster in one AWS account and configure it so that you can run oc commands from a different AWS account. 
+You can create a ROSA HCP cluster in one AWS account and configure it to allow accesss from a different AWS account using `oc` command.
 Here, I walk through the actual AWS setup.
 
 ![pic1](./images/pic1.png)
@@ -17,8 +17,8 @@ Note: AWS environments vary, so consider this as one possible setup.
 
 ## Prerequisites
 
-Assume a ROSA HCP cluster is already deployed in AWS Account-A, and the following AWS resources are available.
-I used ROSA HCP 4.19.0 for writing this article. 
+Assume a ROSA HCP cluster has been already deployed in AWS Account-A, and the following AWS resources are available.
+I used ROSA HCP 4.19.0 when writing this article. 
 ![pic2](./images/pic2.png)
 
 ## Setup on AWS Account‑B
@@ -218,7 +218,7 @@ Continue in Account-B
       --output text)
     ```
 
-1. Allow inbound from the subnet
+1. Allow inbound traffic from the subnet
 
     ```bash
     aws ec2 authorize-security-group-ingress \
@@ -321,7 +321,7 @@ Continue in Account-B
       --hosted-zone-id $HOSTED_ZONE_ID \
       --change-batch file://record.json
     ```
-    The DNS record of `api.<DOMAIN>` and `oauth.<DOMAIN>` are resovled to the VPC endpoint, and the traffic is routed to the Hosted Ccontrolplane managed by Red Hat SRE.
+    The DNS records for `api.<DOMAIN>` and `oauth.<DOMAIN>` are resovled to the VPC endpoint, and the traffic is routed to the Hosted Ccontrolplane managed by Red Hat SRE.
 
 
 ## Verify Connection
