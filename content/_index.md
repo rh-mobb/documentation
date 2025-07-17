@@ -24,6 +24,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Integrating Service Mesh into a ROSA Cluster](/experts/rosa/service-mesh)
 * [Deploy ROSA HCP Clusters via Red Hat Advanced Cluster Manager](/experts/rosa/acm)
 * [Using a Private IngressController with CloudFront on a ROSA Cluster](/experts/rosa/nlb-cf-vpco)
+* [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
 * [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
 
 #### Classic
@@ -59,7 +60,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Security Reference Architecture for ROSA](/experts/rosa/security-ra)
 * Configure ROSA for Nvidia GPU Workloads
   * [Helm chart](/experts/rosa/gpu)
-  * [Manual](/experts/rosa/gpu/manual)
+  * [Manual](/experts/rosa/gpu-manual)
 * [Connect to RDS from ROSA with STS](/experts/rosa/sts-rds)
 * [Create an AWS Client VPN connection for a private ROSA Cluster](/experts/rosa/vpn)
 * [ROSA Break Glass Troubleshooting](/experts/rosa/break-glass)
@@ -68,6 +69,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
 * [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
 * [Install Maximo Application Suite on Red Hat OpenShift Service on AWS with automation](/experts/rosa/mas/)
+* [Using local-zones in ROSA](/experts/rosa/local-zones/)
 
 ##### AWS GovCloud
 * [Creating a ROSA Cluster in AWS GovCloud](/experts/rosa/rosa-govcloud/)

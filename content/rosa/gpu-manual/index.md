@@ -96,7 +96,6 @@ metadata:
   namespace: openshift-nfd
 spec:
   operand:
-    image: registry.redhat.io/openshift4/ose-node-feature-discovery@sha256:07658ef3df4b264b02396e67af813a52ba416b47ab6e1d2d08025a350ccd2b7b
     servicePort: 12000
 EOF
 
