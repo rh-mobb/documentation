@@ -23,7 +23,7 @@ ROSA HCP 4.19.0 was used for this guide.
 
 ## Setup on AWS Account‑B
 
-This section covers steps in AWS Account-B 
+This section covers the steps in AWS Account-B 
 ![pic3](./images/pic3.png)
 
 
