@@ -180,7 +180,7 @@ Switch to AWS Account-A, where the ROSA cluster resides
     ```bash
     rosa describe cluster -c $CLUSTER_NAME -o json | jq -r '.api.url'
     ```
-    Expect something like:` https://api.rosahcp.<id>.openshiftapps.com:443`
+    Expect something like: `https://api.rosahcp.<id>.openshiftapps.com:443`
 
 
 ## Back to AWS Account‑B
