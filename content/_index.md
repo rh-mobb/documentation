@@ -25,6 +25,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy ROSA HCP Clusters via Red Hat Advanced Cluster Manager](/experts/rosa/acm)
 * [Using a Private IngressController with CloudFront on a ROSA Cluster](/experts/rosa/nlb-cf-vpco)
 * [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
+* [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
 
 #### Classic
 
