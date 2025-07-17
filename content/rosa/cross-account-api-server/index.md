@@ -17,7 +17,7 @@ Note: AWS environments vary, so consider this as one possible setup.
 
 ## Prerequisites
 
-Assume a ROSA HCP cluster has been already deployed in AWS Account-A, and the following AWS resources are available.
+A ROSA HCP cluster has been already deployed in AWS Account-A, and the following AWS resources are available.
 I used ROSA HCP 4.19.0 when writing this article. 
 ![pic2](./images/pic2.png)
 
