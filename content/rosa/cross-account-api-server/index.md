@@ -9,7 +9,7 @@ authors:
 ## Introduction                         
 
 You can create a ROSA HCP cluster in one AWS account and configure it to allow access from a different AWS account using the `oc` command.
-Here, I walk through the actual AWS setup.
+This guide walks you through the actual AWS setup.
 
 ![pic1](./images/pic1.png)
 Note: AWS environments vary, so consider this as one possible setup.
