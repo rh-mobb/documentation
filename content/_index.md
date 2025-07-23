@@ -162,7 +162,8 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Sending ARO cluster logs to Azure Log Analytics](/experts/aro/clf-to-azure)
 * [Shipping logs and metrics to Azure Blob storage](/experts/aro/shipping-logs-and-metrics-to-azure-blob)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
-* [Installing and configuring LokiStack on ROSA](/experts/o11y/openshift-logging-lokistack)
+* [Installing and configuring OpenShift Logging 6 on ROSA HCP](/experts/o11y/openshift-logging6-rosa-hcp)
+* [Installing and configuring OpenShift Logging 5 on ROSA Classic](/experts/o11y/openshift-logging-lokistack)
 * [Configuring Cluster Observability Operator (COO) in ARO and Enabling remote writing of metrics to Azure Monitor Workspace](/experts/o11y/openshift-coo-azuremonitor)
 
 ## Security
