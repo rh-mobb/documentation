@@ -439,7 +439,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    If you're running these steps manually and you wait until the certificate is issued, you can tell the API server to use it with this command:
 
    ```bash
-   oc patch apiserver cluster --type=merge -p $(jq -n --arg dn "api.$DOMAIN" '{"spec":{"servingCerts": {"namedCertificates": [{"names": [$dn], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}')
+   oc patch apiserver cluster --type=merge -p $(jq -nc --arg dn "api.$DOMAIN" '{"spec":{"servingCerts": {"namedCertificates": [{"names": [$dn], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}')
    ```
 
    Alternatively, if you're wanting this to run as a part of automation, you can use the OCP `Job` resource:
