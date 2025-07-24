@@ -322,7 +322,7 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
    EOF
    ```
 
-   > *It will take a few minutes for this operator to install and complete it's set up. May be a good time to take a coffee break :)*
+   > *It will take a few minutes for this operator to install and complete its set up. May be a good time to take a coffee break :)*
 
 1. Wait for cert-manager operator to finish installing.
 
