@@ -126,6 +126,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
   * [via GUI](/experts/rosa/ocp-virt/basic-gui)
 * [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 * [Deploying and Managing Virtual Machines on ROSA with OpenShift GitOps](/experts/rosa/virt-gitops)
+* [Migrating EC2 Instances to OpenShift Virtualization](/experts/rosa/ec2-migration-to-rosa)
 
 ### Red Hat OpenShift AI (RHOAI)
 
