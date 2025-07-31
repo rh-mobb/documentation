@@ -128,7 +128,7 @@ $(terraform output -raw datasync_execution_command)
 
 In the OpenShift Console:
 
-1. Navigate to **Migration → Providers for virtualization**
+1. Navigate to **Migration → Providers for virtualization** in namespace openshift-mtv
 2. Click **Create Provider**
 3. Select **Open Virtual Appliance (OVA)**
 4. Enter provider name: `ec2-provider`
@@ -146,7 +146,7 @@ In the OpenShift Console:
    ```
 
 2. In OpenShift Console:
-   - Navigate to **Migration → Plans for virtualization**
+   - Navigate to **Migration → Plans for virtualization** in namespace openshift-mtv
    - Click **Create Plan**
    - Select your OVA provider as source
    - Select VMs to migrate
