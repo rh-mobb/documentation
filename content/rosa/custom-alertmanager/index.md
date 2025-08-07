@@ -4,11 +4,13 @@ title: Custom Alerts in ROSA 4.11.x
 tags: ["AWS", "ROSA"]
 authors:
   - Paul Czarkowski
+  - Michael McNeill
+  - Kumudu Herath
 ---
 
 Starting with OpenShift 4.11 it is possible to [manage alerting rules for user-defined projects](https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html#managing-alerting-rules-for-user-defined-projects_managing-alerts). Similarly, in ROSA clusters the OpenShift Administrator can enable a second AlertManager instance in the user workload monitoring namespace which can be used to create such alerts.
 
-> Note: Currently this is **not a managed** feature of ROSA. Such an implementation may get overwritten if the User Workload Monitoring functionality is toggled off and on using the OpenShift Cluster Manager (OCM). We
+> Note: Currently this is **not a managed** feature of ROSA. Such an implementation may get overwritten if the User Workload Monitoring functionality is toggled off and on using the OpenShift Cluster Manager (OCM).
 
 ## Prerequisites
 
@@ -126,15 +128,38 @@ Starting with OpenShift 4.11 it is possible to [manage alerting rules for user-d
 
 By default, cluster alerts are only sent to Red Hat SRE and you cannot modify the cluster alert receivers. However you can make a copy of any of the alerts that you wish to see in your own alerting namespace which will then get picked up by the user workload alert-manager.
 
-1. Duplicate a subset of the Cluster Monitoring Prometheus Rules
-
+1. Allow [cross-project alerting](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/monitoring/managing-alerts#creating-cross-project-alerting-rules-for-user-defined-projects_managing-alerts-as-an-administrator) for your project (i.e custom-alert) by adding namespacesWithoutLabelEnforcement to the user-workload-monitoring-config ConfigMap above.
     ```bash
-    oc -n openshift-monitoring get prometheusrule \
-      cluster-monitoring-operator-prometheus-rules -o json | \
-      jq '.metadata.namespace = "custom-alert"' | \
-      kubectl create -f -
+    cat << EOF | oc apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: user-workload-monitoring-config
+      namespace: openshift-user-workload-monitoring
+    data:
+      config.yaml: |
+        namespacesWithoutLabelEnforcement: [ custom-alert ]
+        alertmanager:
+          enabled: true
+          enableAlertmanagerConfig: true
+    EOF
     ```
 
+1. Download prometheus rules from the openshift-monitoring namespace into a file
+
+    ```bash
+    oc -n openshift-monitoring get prometheusrules -o json > prom.json
+    ```
+1. Search and replaced "namespace": "openshift-monitoring", with your namespace i.e "namespace": "custom-alert"
+
+    ```bash
+    sed -i '' 's/"namespace": "openshift-monitoring"/"namespace": "custom-alert"/g' prom.json
+    ```
+1. Add prometheus rules to your project
+
+    ```bash
+    oc apply -f prom.json
+    ```    
 1. Check the Alerts in the **custom-alert** Project in the OpenShift Console, and you'll now see the **Watchdog** and other cluster alerts.
 
     ![Screenshot of cluster alerts in custom project](./ocp-cluster-alerts.png)
