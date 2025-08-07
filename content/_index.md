@@ -166,6 +166,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Installing and configuring OpenShift Logging 6 on ROSA HCP](/experts/o11y/openshift-logging6-rosa-hcp)
 * [Installing and configuring OpenShift Logging 5 on ROSA Classic](/experts/o11y/openshift-logging-lokistack)
 * [Configuring Cluster Observability Operator (COO) in ARO and Enabling remote writing of metrics to Azure Monitor Workspace](/experts/o11y/openshift-coo-azuremonitor)
+* [ Configuring oTEL to collect OpenShift Logs instead of the Cluster Log Forwarder](/experts/o11y/otel-instead-of-clf)
 
 ## Security
 
