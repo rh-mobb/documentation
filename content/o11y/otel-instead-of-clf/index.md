@@ -163,11 +163,12 @@ certain levels of privilege via SecurityContextConstraints (SCC).  You should re
     kind: OpenTelemetryCollector
     metadata:
       name: opentelemetry-logging
-      namespace: opentelemetry-logging  #?
+      namespace: opentelemetry-logging
     spec:
       managementState: managed
       mode: daemonset
       config:
+        # exporters define where logs are shipped to
         exporters:
           debug:
             verbosity: basic
@@ -179,12 +180,14 @@ certain levels of privilege via SecurityContextConstraints (SCC).  You should re
             send_batch_max_size: 1500
             send_batch_size: 1000
             timeout: 1s
+          # enrich logs with cluster details
           resourcedetection/openshift:
-            detectors: [env,openshift]
+            detectors: [env,openshift,kubernetes]
             timeout: 2s
             override: false
           k8sattributes:
             auth_type: "serviceAccount"
+        # where to collect logs from
         receivers:
           filelog/infrastructure:
             include:
@@ -399,7 +402,10 @@ certain levels of privilege via SecurityContextConstraints (SCC).  You should re
 1. Check the collector is collecting logs
 
     ```bash
-    oc logs ds/opentelemetry-logging-collector
+    oc logs -n opentelemetry-logging ds/opentelemetry-logging-collector
+    ```
+
+    ```
     Found 3 pods, using pod/opentelemetry-logging-collector-6pw44
     2025-08-06T16:28:18.230Z        info    service@v0.127.0/service.go:199 Setting up own telemetry...{"resource": {}}
     2025-08-06T16:28:18.231Z        info    builders/builders.go:26 Development component. May change in the future.   {"resource": {}, "otelcol.component.id": "debug", "otelcol.component.kind": "exporter", "otelcol.signal": "logs"}
