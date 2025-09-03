@@ -1,6 +1,6 @@
 ---
 date: '2025-09-03'
-title: Back and Restore For Azure Rede Hat OpenShift using OpenShift API for Data Protection
+title: Backup and Restore for Azure Red Hat OpenShift using OpenShift API for Data Protection
 tags: ["ARO", "Azure", "OADP"]
 authors:
   - Nerav Doshi
