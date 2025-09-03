@@ -109,6 +109,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy Maximo Application Suite (MAS) on ARO](/experts/aro/mas)
 * [Remove the default azure-files storage class](/experts/aro/remove-azure-files)
 * [Scalability and Cost Management for ARO](/experts/aro/aro-schedule-scaling)
+* [Back and Restore For Azure Rede Hat OpenShift using OpenShift API for Data Protection](/experts/aro/backup-restore)
 
 ## OpenShift Dedicated on GCP
 
