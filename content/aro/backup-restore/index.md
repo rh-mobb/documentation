@@ -126,8 +126,9 @@ The OADP Operator automates the management of Velero, plugins, and custom resour
 - Install the operator in the openshift-adp namespace.
 - Verify the installation by checking the operator pods and the ClusterServiceVersion (CSV) status. It may take a few minutes for the operator to be ready.
 
-##### 2.1 Connect to your ARO cluster first
-oc login --user <kubeadmin> --password <aro-password> --server=<your-aro-api-server> 
+##### 2.1 Connect to your ARO cluster. Reference [link](https://learn.microsoft.com/en-us/azure/openshift/connect-cluster#connect-using-the-openshift-cli)
+
+oc login $apiServer --username kubeadmin --password $kubevar
 
 ##### 2.2 Install OADP Operator 1.4 via OperatorHub
 
