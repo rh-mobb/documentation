@@ -14,7 +14,9 @@ OADP provides robust  disaster recovery solution, covering OpenShift application
 
 OADP includes a built-in Data Mover feature that allows you to move Container Storage Interface (CSI) volume snapshots to a remote object store, such as Azure Blob Storage. This enables you to restore stateful applications from the remote store in the event of a cluster failure, accidental deletion, or data corruption. The Data Mover uses Kopia as the uploader mechanism to read snapshot data and write it to the repository
 
-### Prerequisites Checklist
+For additional information about OADP refer to [documentation](https://github.com/openshift/oadp-operator/blob/oadp-dev/docs/TROUBLESHOOTING.md)
+
+### Prerequisites checklist
 
 Before starting, ensure you have:
 * An [ARO 4.14 cluster](/experts/aro/terraform-install) with cluster-admin access
@@ -24,11 +26,11 @@ Before starting, ensure you have:
 * Azure subscription with permissions to create storage accounts and resource groups
 
 
-#### Step 1: Prepare Azure Resources
+#### Step 1: Preparing Azure Resources
 
 You must create the necessary Azure infrastructure to store the backup data. This involves setting up a dedicated resource group, a storage account, and a service principal with the correct permissions
 
-##### 1.1 Create Resource Group for Storage Account
+##### 1.1 Create environment variables
 A resource group will contain the storage account, and the storage account will house a container for your backup files
 
 ```bash
@@ -44,7 +46,7 @@ export OADP_NAMESPACE="openshift-adp"
 export TEST_PROJECT_NAME="database-test"
 ```
 
-##### Create resource group for storage account
+##### 1.2 Create resource group for storage account
 
 ```bash
 az group create \
@@ -52,9 +54,8 @@ az group create \
   --location $LOCATION
 ```
 
-##### 1.2 Create Azure Storage Account
+##### 1.3 Create Azure storage account
 
-A service principal is required for OADP to securely access Azure resources without using personal credentials. It needs permissions to access both the storage account and the resources required for volume snapshots
 
 ```bash
 az storage account create \
@@ -68,7 +69,7 @@ az storage account create \
   --allow-shared-key-access false
 ```
 
-##### Create container (using Azure EntraID auth)
+##### 1.4 Create container (using Azure EntraID auth)
 
 ```bash
 az storage container create \
@@ -78,7 +79,9 @@ az storage container create \
   --auth-mode login
 ```
 
-#### 1.3 Create Service Principal
+##### 1.5 Create service principal
+A service principal is required for OADP to securely access Azure resources without using personal credentials. It needs permissions to access both the storage account and the resources required for volume snapshots.
+
 Create service principal with appropriate permissions to access both storage and snapshot resources
 
 ```bash
@@ -90,21 +93,21 @@ SP_INFO=$(az ad sp create-for-rbac \
   --scopes "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$BACKUP_RG")
 ```
 
-##### Get service principal values
+##### 1.6 Get service principal values
 ```bash
 SP_CLIENT_ID=$(echo "${SP_INFO}" | jq -r .appId)
 SP_CLIENT_SECRET=$(echo "${SP_INFO}" | jq -r .password)
 SP_TENANT_ID=$(echo "${SP_INFO}" | jq -r .tenant)
 ```
 
-##### Validate Client ID and Tenant ID values
+##### 1.7 Validating client ID and tenant ID values
 
 ```bash
 echo "Service Principal Client ID: $SP_CLIENT_ID"
 echo "Tenant ID: $SP_TENANT_ID"
 ```
 
-##### Assign additional permissions for Storage account and ARO resource group for snapshot location
+##### 1.8 Assign additional permissions for Storage account and ARO resource group for snapshot location
 
 ```bash
 az role assignment create \
@@ -118,7 +121,7 @@ az role assignment create \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$ARO_RG"
 ```
 
-#### Step 2: Install OADP Operator
+#### Step 2: Install the OADP Operator
 
 The OADP Operator automates the management of Velero, plugins, and custom resources required for backup and restore operations. You can install it from OperatorHub in the OpenShift web console.
 - Log in to your ARO cluster as a user with cluster-admin privileges.
@@ -126,24 +129,27 @@ The OADP Operator automates the management of Velero, plugins, and custom resour
 - Install the operator in the openshift-adp namespace.
 - Verify the installation by checking the operator pods and the ClusterServiceVersion (CSV) status. It may take a few minutes for the operator to be ready.
 
-##### 2.1 Connect to your ARO cluster. Reference [link](https://learn.microsoft.com/en-us/azure/openshift/connect-cluster#connect-using-the-openshift-cli)
+##### 2.1 Connect to your ARO cluster. 
+
+Reference [link](https://learn.microsoft.com/en-us/azure/openshift/connect-cluster#connect-using-the-openshift-cli)
 
 oc login $apiServer --username kubeadmin --password $kubevar
 
-##### 2.2 Install OADP Operator 1.4 via OperatorHub
+##### 2.2 Install OADP operator 1.4 via OperatorHub
 
 You must be logged in as a user with `cluster-admin` privileges. You can install operator via [webconsole](https://docs.redhat.com/en/documentation/openshift_container_platform/4.10/html/backup_and_restore/application-backup-and-restore#oadp-installing-operator_installing-oadp-azure) 
 
 Install operator in openshift-adp namespace
 
-##### 2.3 Verify Operator Installation
+##### 2.3 Verify operator installation
 
-##### Wait for operator to be ready (may take 2-3 minutes)
+Wait for operator to be ready (may take 2-3 minutes)
+
 ```bash
 oc get csv -n openshift-adp
 ```
 
-##### Check operator pods
+Check operator pods
 ```bash
 oc get pods -n openshift-adp
 ```
@@ -177,7 +183,7 @@ stringData:
 EOF
 ```
 
-#### 3.2 Create DataProtectionApplication
+##### 3.2 Create DataProtectionApplication (DPA)
 This resource configures Velero and its plugins.
 - **backupLocations:** Defines the Azure blob container as the destination for backups.
 - **snapshotLocations:** Configures the provider for creating volume snapshots. For Azure, the CSI snapshot is stored within Azure's disk infrastructure, not the blob container.
@@ -235,14 +241,14 @@ EOF
 ```
 After applying the DPA, wait for it to reconcile and for all OADP-related pods (Velero, node-agent) to be running
 
-#### 3.3 Wait for DPA to be Ready
+#### 3.3 Wait for DPA to be ready
 
-##### Check DPA status (wait for Reconcile Succeeded)
+Check DPA status (wait for Reconcile Succeeded)
 ```bash
 oc get dpa -n openshift-adp -o jsonpath='{.items[0].status.conditions[0].type}'
 ```
 
-##### Check all OADP pods are running
+Check all OADP pods are running
 ```bash
 oc get pods -n openshift-adp
 ```
@@ -266,7 +272,7 @@ To verify a successful installation of the OADP operator, you must check the sta
 
 Confirm that OADP is correctly configured by checking the status of the BackupStorageLocation and VolumeSnapshotLocation resources
 
-##### 4.1 Check Backup Storage Location
+##### 4.1 Check Backup storage location
 Verify the backup storage location is available
 
 ```bash
@@ -291,7 +297,6 @@ oc describe backupstoragelocations azure-backup -n openshift-adp |grep Phase
 ##### 4.2 Check Volume snapshot location
 An Azure Disk CSI snapshot is stored within Azure's disk infrastructure, not in blob storage bucket.The snapshotLocation is used to tell Velero where to interact with the underlying storage system's snapshot APIs.
 
-##### Verify volume snapshot location
 Verify the volume snapshot location is created
 
 ```bash
@@ -304,7 +309,7 @@ NAME             AGE
 azure-snapshot   15m
 ```
 
-##### Check details for volume snapshot
+##### 4.3 Check details for volume snapshot
 
 ```bash
 oc describe volumesnapshotlocations azure-snapshot -n openshift-adp
@@ -313,7 +318,7 @@ oc describe volumesnapshotlocations azure-snapshot -n openshift-adp
 #### Step 5: Create test database for validation of backup and restore
 To validate the backup and restore functionality, deploy a stateful application with persistent storage. The following example uses a PostgreSQL database with a PersistentVolumeClaim 
 
-##### 5.1 Create Test Namespace
+##### 5.1 Create test namespace
 
 ```bash
 oc new-project $TEST_PROJECT_NAME
@@ -411,10 +416,10 @@ INSERT INTO test_table (name) VALUES ('Test Data 1'), ('Test Data 2'), ('Test Da
 SELECT * FROM test_table;"
 ```
 
-#### Step 6: Create and Validate Backup
+#### Step 6: Create and validate backup
 Now, create a Backup custom resource to back up the test application's namespace
 
-##### 6.1 Create Backup resource
+##### 6.1 Create backup resource
 
 ```bash
 cat << EOF | oc apply -f -
@@ -431,14 +436,14 @@ spec:
 EOF
 ```
 
-##### 6.2 Monitor Backup Progress
+##### 6.2 Monitor backup progress
 
 Get the name of the latest backup
 
 ```bash
 BACKUP_NAME=$(oc get backups -n openshift-adp --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}')
 ```
-##### Check backup status of the Backup object
+Check backup status of the backup object
 
 For backups using the Data Mover, a DataUpload CR is created. You can monitor its status.phase field, which will transition from InProgress to Completed upon successful transfer of snapshot data to the remote object store
 
@@ -449,24 +454,24 @@ oc describe backup $BACKUP_NAME -n openshift-adp
 
 ![Image3](images/backup.png)
 
-##### (Advanced) Check the DataUpload status for Data Mover backups
+##### (Advanced) Check the data upload status for Data Mover backups
 ```bash
 oc get datauploads -n openshift-adp
 ```
 
-### 6.3 Verify Backup in Azure
+##### 6.3 Verify backup in Azure
 You can also verify that backup files have been created in your Azure Storage container
 
-##### Note you need to have Storage Blob Reader Role assigned to container within storage account
+Note you need to have **Storage Blob Reader Role** assigned to container within storage account
 
 ![Image](images/storage_container.png)
 
 ![Image2](images/storageaccount-backuprestore.png)
 
-#### Step 7: Test Restore (Optional Validation)
+#### Step 7: Test restore (Optional Validation)
 To simulate a disaster recovery scenario, delete the test project and then restore it from the backup
 
-##### 7.1 Delete Test project
+##### 7.1 Delete the test project
 ```bash
 # Delete the test namespace to simulate disaster
 oc delete project $TEST_PROJECT_NAME
@@ -475,7 +480,7 @@ oc delete project $TEST_PROJECT_NAME
 oc get projects | grep $TEST_PROJECT_NAME
 ```
 
-##### 7.2 Restore from Backup
+##### 7.2 Restore from backup
 Create a Restore resource, referencing the backup name
 
 ```bash
@@ -493,13 +498,13 @@ spec:
 EOF
 ```
 
-#### 7.3 Verify Restore
+#### 7.3 Verify restore
+
 Monitor the restore progress:
 - Check the status of the Restore object.
 - When restoring CSI volumes, a DataDownload CR is created. You can monitor its status.phase to track the data transfer from the object store back to the new volume.
 
 Get name of latest restore
-
 ```bash
 RESTORE_NAME=$(oc get restores -n openshift-adp --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}')
 ```
@@ -507,7 +512,7 @@ Check the restore status
 ```bash
 oc get restore $RESTORE_NAME -n openshift-adp
 ```
-##### (Advanced) Check the DataDownload status
+##### (Advanced) Check the data download status
 ```bash
 oc get datadownloads -n openshift-adp
 ```
@@ -524,7 +529,7 @@ oc exec -it deployment/postgresql-test -n $TEST_PROJECT_NAME -- psql -U testuser
 OADP allows you to create scheduled backups using a Schedule custom resource, which uses standard cron syntax.
 This example creates a daily backup at 1:00 AM with a 7-day retention period (ttl)
 
-##### 8.1 Create Daily Backup Schedule
+##### 8.1 Create daily backup schedule
 ```bash
 cat << EOF | oc apply -f -
 apiVersion: velero.io/v1
@@ -542,4 +547,4 @@ spec:
 EOF
 ```
 
-For additional information about OADP refer to [documentation](https://github.com/openshift/oadp-operator/blob/oadp-dev/docs/TROUBLESHOOTING.md)
+
