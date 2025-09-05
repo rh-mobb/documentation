@@ -19,19 +19,6 @@ In this guide we'll explore configuring the **oTEL Operator** to collect these t
 ## Prerequisites
 
 * A [ROSA HCP cluster](https://cloud.redhat.com/experts/rosa/terraform/hcp/) with Cluster Admin access (ROSA Classic or OCP on AWS should also work, but this is only tested on HCP).
-* Helm CLI
-
-1. Add the MOBB chart repository to your Helm
-
-    ```
-    helm repo add mobb https://rh-mobb.github.io/helm-charts/
-    ```
-
-1. Update your repositories
-
-    ```
-    helm repo update
-    ```
 
 ## Deploy Operators
 
@@ -39,9 +26,36 @@ In this guide we'll explore configuring the **oTEL Operator** to collect these t
 
     ```bash
     oc create namespace openshift-telemetry-operator
-    helm upgrade -n openshift-telemetry-operator otel-operator \
-    mobb/operatorhub --install \
-    --values https://raw.githubusercontent.com/rh-mobb/helm-charts/refs/heads/main/charts/ocp-otel/files/otel-operator.yaml
+    ```
+
+    ```bash
+    cat << EOF > /tmp/otel-operator.yaml
+    ---
+    apiVersion: operators.coreos.com/v1
+    kind: OperatorGroup
+    metadata:
+      name: openshift-opentelemetry-og
+      namespace: openshift-telemetry-operator
+    spec:
+    ---
+    apiVersion: operators.coreos.com/v1alpha1
+    kind: Subscription
+    metadata:
+      name: opentelemetry-product
+      namespace: openshift-telemetry-operator
+    spec:
+      channel: stable
+      name: opentelemetry-product
+      installPlanApproval: Automatic
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+    EOF
+    ```
+
+1. Deploy the operator
+
+    ```bash
+    oc apply -f /tmp/otel-operator.yaml
     ```
 
 1. Wait a few moments and then validate the operator is installed
@@ -57,6 +71,22 @@ In this guide we'll explore configuring the **oTEL Operator** to collect these t
     ```
 
 ## Create and Configure the oTEL Collector
+
+If you are familiar with Helm, we recommend you go with Option 1 below, if you are not familiar with helm, or you are unable to use it due to company policy, you can use Option 2 below to get just the manifests to apply.
+
+### Option 1 using Helm Locally
+
+1. Add the MOBB chart repository to your Helm
+
+    ```
+    helm repo add mobb https://rh-mobb.github.io/helm-charts/
+    ```
+
+1. Update your local Helm repositories
+
+    ```
+    helm repo update
+    ```
 
 1. Create a values file
 
@@ -101,6 +131,36 @@ In this guide we'll explore configuring the **oTEL Operator** to collect these t
     mobb/ocp-otel --create-namespace --install \
     --values /tmp/otel-values.yaml
     ```
+
+1. Skip to **Validate oTEL**
+
+### Option 2: Using Kubernetes manifests
+
+1. Create a manifest locally that we can apply by using the MOBB's Helm-it service.
+
+    ```bash
+    curl -X POST "https://helmit.mobb.ninja/template?raw=true" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "chartUrl": "https://github.com/rh-mobb/helm-charts/releases/download/ocp-otel-0.1.1/ocp-otel-0.1.1.tgz",
+      "values":
+        {"uiPlugin":{"enabled":false},"collector":{"inputs":{"application":{"enabled":true},"infrastructure":{"enabled":true},"audit":{"enabled":false},"otlp":{"enabled":false},"fluentforward":{"enabled":false}},"outputs":{"debug":{"enabled":true,"verbosity":"basic"},"s3":{"enabled":false},"lokistack":{"enabled":false}},"pipelines":[{"name":"Application","inputRef":"application","outputRefs":["debug"]},{"name":"Infrastructure","inputRef":"infrastructure","outputRefs":["debug"]}]}}
+    }' > /tmp/otel.yaml
+    ```
+
+1. Inspect the resultant OpenShift manifests at `/tmp/otel.yaml`
+
+    ```bash
+    less /tmp/otel.yaml
+    ```
+
+1. Apply the manifests
+
+    ```bash
+    oc apply -f /tmp/otel.yaml
+    ```
+
+### Validate oTEL
 
 1. Verify the Pods are running
 

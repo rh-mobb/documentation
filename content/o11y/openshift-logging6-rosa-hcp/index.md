@@ -4,7 +4,7 @@ title: Configuring OpenShift Logging 6 on ROSA HCP
 tags: ["Observability", "OCP"]
 authors:
   - Kumudu Herath
-  - Kevin Collins 
+  - Kevin Collins
 ---
 
 ROSA HCP clusters now only support openshift Logging 6.x and above. This guide aims to provide a step-by-step guide for implementing logging 6.x on ROSA HCP,setting up a log store with Loki with S3 and/or log forwarding to AWS CloudWatch.
@@ -13,14 +13,14 @@ For ROSA Classic refer to the [LokiStack on ROSA](/experts/o11y/openshift-loggin
 
 ## Components of the Logging Subsystem
 
-The OpenShift logging subsystem is designed to collect, store, and visualize logs from various sources within the cluster, including node system logs, application container logs, and infrastructure logs. 
+The OpenShift logging subsystem is designed to collect, store, and visualize logs from various sources within the cluster, including node system logs, application container logs, and infrastructure logs.
 The OpenShift logging subsystem comprises several key components that work together to achieve log aggregation and management. The collector, residing on each node in the OpenShift cluster, is responsible for gathering logs. The primary implementation for the collector has historically been FluentD. However, a newer alternative, Vector, is increasingly being adopted for its performance and features. The collector gathers system logs from journald and container logs from /var/log/containers/*.log. Additionally, it can be configured to collect audit logs from /var/log/audit/audit.log. The collector is deployed and managed as a DaemonSet, ensuring that a collector pod runs on every node within the OpenShift cluster. The aggregated logs are then stored in a log store. The default log store for OpenShift Logging has traditionally been Elasticsearch. However, Loki is now offered as a performant alternative, particularly in ROSA HCP environments now defaults to Loki Operator. The ROSA HCP cluster log visualization component is provided using Cluster Observability Operator's (COO) Logging UI Plugin.
 
 Refer to [openshift logging official documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/index) and [6.x quick guide](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#quick-start_6-2_logging-6x-6.2) for more details.
 
-For ROSA HCP with logging 6 now required following operators 
+For ROSA HCP with logging 6 now required following operators
 1. Loki Operator (log store)
-2. Red Hat OpenShift Logging Operator 
+2. Red Hat OpenShift Logging Operator
 3. Cluster Observability Operator (log visualizing)
 
 ## Prerequisites
@@ -31,7 +31,7 @@ For ROSA HCP with logging 6 now required following operators
 
 > Note: The OpenShift Logging stack requires quite a bit of resources, you will need at least 32 vCPUs in your cluster.
 
-## Create environment variables 
+## Create environment variables
 
 1. Create environment variables :
 
@@ -57,7 +57,7 @@ aws s3 mb --region ${REGION} s3://${LOKISTACK_BUCKET_NAME}
 
 2. Create a S3 IAM policy document for the Loki operator
 
-```bash   
+```bash
 cat << EOF > s3_policy.json
 {
     "Version": "2012-10-17",
@@ -133,7 +133,7 @@ echo $ROLE_ARN_S3
 
 > Note: Save this role_arn for installation of the lokistack operator later.
 
-6. Attach S3 IAM Policy for Loki stack access to the above role 
+6. Attach S3 IAM Policy for Loki stack access to the above role
 
 ```bash
 aws iam attach-role-policy \
@@ -141,14 +141,14 @@ aws iam attach-role-policy \
 --policy-arn $POLICY_ARN_S3
 ```
 
-7. OpenShift project for Loki operator 
-> Note: ROSA HCP cluster has a built in openshift-operators-redhat project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. 
+7. OpenShift project for Loki operator
+> Note: ROSA HCP cluster has a built in openshift-operators-redhat project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label.
 
 ```bash
 oc label namespace openshift-operators-redhat openshift.io/cluster-monitoring="true"
 ```
 
-If the openshift-operators-redhat project does not exist create it. 
+If the openshift-operators-redhat project does not exist create it.
 
 ```bash
 oc create -f - <<EOF
@@ -169,7 +169,7 @@ apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   name: loki-operator
-  namespace: openshift-operators-redhat 
+  namespace: openshift-operators-redhat
 spec:
   upgradeStrategy: Default
 EOF
@@ -183,42 +183,42 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: loki-operator
-  namespace: openshift-operators-redhat 
+  namespace: openshift-operators-redhat
 spec:
-  channel: stable-6.2 
-  installPlanApproval: Automatic 
+  channel: stable-6.3
+  installPlanApproval: Automatic
   name: loki-operator
-  source: redhat-operators 
+  source: redhat-operators
   sourceNamespace: openshift-marketplace
 EOF
 ```
 
->Note: Make sure to validate the current stable channel version. e.g: 6.2
+>Note: Make sure to validate the current stable channel version. e.g: 6.3
 
 10. Verify Operator Installation
 
   ```bash
   oc get csv -n openshift-operators-redhat
-  ``` 
+  ```
 
   >Note: This can take up to a minute
 
-  Example Output 
+  Example Output
 
   ```
   NAME                     DISPLAY                     VERSION   REPLACES                 PHASE
-  loki-operator.v6.2.2     Loki Operator               6.2.2     loki-operator.v6.2.1     Succeeded
+  loki-operator.v6.2     Loki Operator               6.2.2     loki-operator.v6.2.1     Succeeded
   ```
 
 11. Label the openshift-logging namespace to deploy the LokiStack:
 
-> Note: ROSA HCP cluster has a built in openshift-logging project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. If not add label using following command 
+> Note: ROSA HCP cluster has a built in openshift-logging project. Make sure it has the "openshift.io/cluster-monitoring: "true"" label. If not add label using following command
 
 ```bash
 oc label namespace openshift-logging openshift.io/cluster-monitoring="true"
 ```
 
-12. Create a secret with the above Role for Loki stack to access S3 bucket. 
+12. Create a secret with the above Role for Loki stack to access S3 bucket.
 
 ```bash
 oc -n openshift-logging create secret generic "logging-loki-aws" \
@@ -238,17 +238,17 @@ oc create -f - <<EOF
 apiVersion: loki.grafana.com/v1
 kind: LokiStack
 metadata:
-  name: logging-loki 
+  name: logging-loki
   namespace: openshift-logging
 spec:
-  size: 1x.extra-small 
+  size: 1x.pico
   storage:
     schemas:
       - effectiveDate: '2023-10-15'
         version: v13
     secret:
-      name: logging-loki-aws 
-      type: s3 
+      name: logging-loki-aws
+      type: s3
       credentialMode: token
   storageClassName: gp3-csi
   tenants:
@@ -268,7 +268,7 @@ oc get pods -n openshift-logging
 
 ```bash
 for i in $(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.nodes.availability_zones[]'); do
-rosa create machinepool -c ${CLUSTER_NAME} --name=loki-$i --replicas=2 --instance-type=m5.16xlarge --availability-zone $i 
+rosa create machinepool -c ${CLUSTER_NAME} --name=loki-$i --replicas=2 --instance-type=m5.16xlarge --availability-zone $i
 done
 ```
 
@@ -282,7 +282,7 @@ apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   name: cluster-logging
-  namespace: openshift-logging 
+  namespace: openshift-logging
 spec:
   upgradeStrategy: Default
 EOF
@@ -296,12 +296,12 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: cluster-logging
-  namespace: openshift-logging 
+  namespace: openshift-logging
 spec:
   channel: stable-6.2
-  installPlanApproval: Automatic 
+  installPlanApproval: Automatic
   name: cluster-logging
-  source: redhat-operators 
+  source: redhat-operators
   sourceNamespace: openshift-marketplace
 EOF
 ```
@@ -345,15 +345,15 @@ apiVersion: observability.openshift.io/v1
 kind: ClusterLogForwarder
 metadata:
   name: instance
-  namespace: openshift-logging 
+  namespace: openshift-logging
 spec:
   serviceAccount:
-    name: logging-collector 
+    name: logging-collector
   outputs:
   - name: lokistack-out
-    type: lokiStack 
+    type: lokiStack
     lokiStack:
-      target: 
+      target:
         name: logging-loki
         namespace: openshift-logging
       authentication:
@@ -365,7 +365,7 @@ spec:
         configMapName: openshift-service-ca.crt
   pipelines:
   - name: infra-app-logs
-    inputRefs: 
+    inputRefs:
     - application
     - infrastructure
     - audit
@@ -398,7 +398,7 @@ Wait until all instances show running
 
 ## Configuring log forwarding to cloudwatch
 
-The ClusterLogForwarder (CLF) allows users to configure forwarding of logs to various destinations (i.e AWS cloudwatch) apart from ClusterLogging storage system (i.e: Loki stack) 
+The ClusterLogForwarder (CLF) allows users to configure forwarding of logs to various destinations (i.e AWS cloudwatch) apart from ClusterLogging storage system (i.e: Loki stack)
 
 ### Prerequisites
 1.  Created a serviceAccount in the same namespace as the ClusterLogForwarder CR (we'll use same SA as Loki stack i.e logging-collector)
@@ -438,7 +438,7 @@ POLICY_ARN_CW=$(aws --region "$REGION" --query Policy.Arn \
 --policy-document file://cw-policy.json)
 
 echo $POLICY_ARN_CW
-``` 
+```
 
 5.  Create an IAM Role trust policy document
 
@@ -470,13 +470,13 @@ EOF
 ROLE_ARN_CW=$(aws iam create-role --role-name "${CLUSTER_NAME}-ROSACloudWatch" \
 --assume-role-policy-document file://trust-cw-policy.json \
 --query Role.Arn --output text)
-  
+
 echo ${ROLE_ARN_CW}
 ```
 > Note: Save this role_arn for installation of the cluster log forwarder (CLF) later.
 
-7. Attach CW IAM Policy to the above role 
-  
+7. Attach CW IAM Policy to the above role
+
 ```bash
 aws iam attach-role-policy \
 --role-name "${CLUSTER_NAME}-ROSACloudWatch" \
@@ -487,7 +487,7 @@ aws iam attach-role-policy \
 
 ```bash
 oc -n openshift-logging create secret generic "cw-secret" \
---from-literal=role_arn="${ROLE_ARN_CW}" 
+--from-literal=role_arn="${ROLE_ARN_CW}"
 ```
 
 9. Create a ClusterLogForwarder CR to forward logs to AWS cloudwatch
@@ -558,7 +558,7 @@ apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   name: openshift-cluster-observability-operator
-  namespace: openshift-cluster-observability-operator 
+  namespace: openshift-cluster-observability-operator
 spec:
   upgradeStrategy: Default
 EOF
@@ -572,12 +572,12 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: cluster-observability-operator
-  namespace: openshift-cluster-observability-operator 
+  namespace: openshift-cluster-observability-operator
 spec:
-  channel: stable 
-  installPlanApproval: Automatic 
+  channel: stable
+  installPlanApproval: Automatic
   name: cluster-observability-operator
-  source: redhat-operators 
+  source: redhat-operators
   sourceNamespace: openshift-marketplace
 EOF
 ```
@@ -611,7 +611,7 @@ EOF
 >Note: Make sure to provide correct lokiStack name configured above (i.e:logging-loki )
 
 6. Verify Logging UI plugin
-Wait until you see the openshift web console refresh request. Once the console is refreshed, expand Observe in the left hand side of the openshift console and go to the log tab. 
+Wait until you see the openshift web console refresh request. Once the console is refreshed, expand Observe in the left hand side of the openshift console and go to the log tab.
 
 ![logs in Openshift Web console](./coo_logs.png)
 
@@ -626,10 +626,10 @@ oc delete UIPlugin logging -n openshift-cluster-observability-operator
 ```
 
 2. Remove Cluster Observability Operator
-    
+
 ```bash
 oc delete subscription cluster-observability-operator -n openshift-cluster-observability-operator
-oc delete csv cluster-observability-operator.v1.1.1 -n openshift-cluster-observability-operator 
+oc delete csv cluster-observability-operator.v1.1.1 -n openshift-cluster-observability-operator
 ```
 
 3. Remove the ClusterLogForwarder Instance:
