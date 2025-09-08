@@ -20,7 +20,7 @@ For additional information about OADP refer to [documentation](https://github.co
 
 Before starting, ensure you have:
 * An [ARO 4.14 cluster](/experts/aro/terraform-install) with cluster-admin access
-* Configure [EntraID for authentication](experts/idp/group-claims/aro/)
+* Configure [EntraID for authentication](https://cloud.redhat.com/experts/idp/group-claims/aro/)
 * [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 * [OpenShift CLI](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/cli_tools/openshift-cli-oc#installing-openshift-cli)
 * Azure subscription with permissions to create storage accounts and resource groups
@@ -240,6 +240,8 @@ spec:
 EOF
 ```
 After applying the DPA, wait for it to reconcile and for all OADP-related pods (Velero, node-agent) to be running
+
+
 
 #### 3.3 Wait for DPA to be ready
 
@@ -464,9 +466,41 @@ You can also verify that backup files have been created in your Azure Storage co
 
 Note you need to have **Storage Blob Reader Role** assigned to container within storage account
 
+Navigation Steps for setting IAM role for storage account
+
+1. **Go to Azure Portal** - [portal.azure.com](https://portal.azure.com)
+2. In the top search bar, type: `aroprojectbackups` (your storage account name)
+3. Click on your storage account when it appears
+4. In the left sidebar, navigate to **Data storage** → **Containers**
+5. Click on **project-backups** container
+6. Once inside the container, in the left sidebar click **Access Control (IAM)**
+7. Click on the **Role assignments** tab
+8. Look for "Storage Blob Data Reader" or "Storage Blob Data Contributor" roles
+
 ![Image](images/storage_container.png)
+##### Verification of backup 
+
+1. From the same container (`aro-project`)
+2. Click **Overview** in the left sidebar (or click "aro-project" in the breadcrumb)
+3. You should see folders like:
+   - **backups** (since you used `prefix: backups` in your DPA)
+   - Inside might be: backup files, kopia data, etc.
+
+##### What to Verify
+
+- **In the IAM view**: Verify your user or service principal has "Storage Blob Data Reader" role
+- **In the container view**: Look for a **backups** folder (this is your prefix from the DPA configuration)
+
+The backup should show **Phase: Completed** before files appear in Azure.(refer 6.2)
 
 ![Image2](images/storageaccount-backuprestore.png)
+
+##### Troubleshooting
+If you don't see the backup files yet, check if your backup completed successfully:
+
+```bash
+oc describe backup database-test-backup -n openshift-adp | grep Phase
+```
 
 #### Step 7: Test restore (Optional Validation)
 To simulate a disaster recovery scenario, delete the test project and then restore it from the backup
@@ -546,5 +580,84 @@ spec:
     ttl: 168h0m0s  # 7 days retention
 EOF
 ```
+#### Step 9: Cleanup Steps
 
+##### 9.1 Delete OpenShift Resources
 
+```bash
+# delete test project 
+oc delete project $TEST_PROJECT_NAME --ignore-not-found=true
+
+# delete backups and restores
+oc delete backup --all -n $OADP_NAMESPACE
+oc delete restore --all -n $OADP_NAMESPACE
+oc delete schedule --all -n $OADP_NAMESPACE
+
+# delete DataProtectionApplication
+oc delete dpa azure-dpa -n $OADP_NAMESPACE
+
+# delete the secret
+oc delete secret cloud-credentials -n $OADP_NAMESPACE
+
+# uninstall OADP Operator (via OpenShift Console or CLI)
+# if using CLI:
+oc delete subscription redhat-oadp-operator -n $OADP_NAMESPACE
+oc delete csv -n $OADP_NAMESPACE -l operators.coreos.com/redhat-oadp-operator.$OADP_NAMESPACE
+oc delete operatorgroup oadp -n $OADP_NAMESPACE
+
+# delete the namespace
+oc delete namespace $OADP_NAMESPACE
+```
+##### 9.2 Delete Azure Service Principal and Role Assignments
+
+```bash
+# get the service principal ID
+SP_ID=$(az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query "[0].id" -o tsv)
+
+# delete role assignments for the service principal
+echo "Deleting role assignments for service principal..."
+az role assignment list --assignee $SP_ID --query "[].id" -o tsv | while read assignment; do
+    az role assignment delete --ids $assignment
+done
+
+# delete the service principal
+echo "Deleting service principal..."
+az ad sp delete --id $SP_ID
+```
+##### 9.3. Delete Storage Container and Storage Account
+
+```bash
+# delete the container first
+echo "Deleting storage container..."
+az storage container delete \
+  --name $CONTAINER_NAME \
+  --account-name $STORAGE_ACCOUNT \
+  --auth-mode login
+
+# delete the storage account
+echo "Deleting storage account..."
+az storage account delete \
+  --name $STORAGE_ACCOUNT \
+  --resource-group $BACKUP_RG \
+  --yes
+```
+
+##### 9.4. Verify Cleanup
+
+```bash
+# check if storage account is gone
+az storage account show \
+  --name $STORAGE_ACCOUNT \
+  --resource-group $BACKUP_RG 2>/dev/null || echo "Storage account deleted successfully"
+
+# check if service principal is gone
+az ad sp show --id $SP_ID 2>/dev/null || echo "Service principal deleted successfully"
+
+# delete the backup resource group
+az group delete --name $BACKUP_RG --yes
+
+# check if the backup resource group is gone
+az group show --name aro-backup-rg 2>/dev/null && echo " Resource group still exists" || echo "Resource group deleted successfully"
+```
+#### Additional Note
+Please note that this cleanup process **DOES NOT** delete your cluster nor the resource group of your cluster.
