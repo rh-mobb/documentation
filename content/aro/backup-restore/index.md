@@ -262,7 +262,7 @@ spec:
         config:
           resourceGroup: ${BACKUP_RG}
           storageAccount: ${STORAGE_ACCOUNT}
-          storageAccountURI: '[https://aroprojectbackups.blob.core.usgovcloudapi.net](https://aroprojectbackups.blob.core.usgovcloudapi.net)'
+          storageAccountURI: 'https://aroprojectbackups.blob.core.usgovcloudapi.net'
           subscriptionId: ${SUBSCRIPTION_ID}
           useAAD: 'true'
 ```          
