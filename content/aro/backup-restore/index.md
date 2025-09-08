@@ -241,7 +241,31 @@ EOF
 ```
 After applying the DPA, wait for it to reconcile and for all OADP-related pods (Velero, node-agent) to be running
 
+Note: Important Considerations for **Azure GovCloud and Private Endpoints**
+While this procedure works with standard Azure, there are specific configurations required for other environments, such as Azure GovCloud or when using a private endpoint.
 
+ By default, OADP and Velero assume the standard public cloud endpoint. However, in specialized environments, this endpoint is different. OADP is flexible enough to handle this, but you must explicitly define the correct URI in manifest
+
+**What to Do:**
+
+You need to specify the correct URI for your storage account in the `storageAccountURI` field within the `backupLocations` section of your DPA manifest.
+
+**Example for Azure GovCloud:**
+
+For users operating in Azure GovCloud, the `storageAccountURI` will be different. Your `spec` block should be configured as shown below, using the `.usgovcloudapi.net` domain:
+
+```bash
+spec:
+  backupLocations:
+    - name: azure-backup
+      velero:
+        config:
+          resourceGroup: ${BACKUP_RG}
+          storageAccount: ${STORAGE_ACCOUNT}
+          storageAccountURI: '[https://aroprojectbackups.blob.core.usgovcloudapi.net](https://aroprojectbackups.blob.core.usgovcloudapi.net)'
+          subscriptionId: ${SUBSCRIPTION_ID}
+          useAAD: 'true'
+```          
 
 #### 3.3 Wait for DPA to be ready
 
