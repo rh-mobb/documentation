@@ -17,7 +17,7 @@ ARO guide to deploying an ARO cluster with custom domain and automating certific
 * OpenShift 4.10+
 * domain name to use (we will create zones for this domain name during this guide)
 
-I'm going to be running this setup through Bash on the Azure Cloud Shell. Be sure to always use the same terminal/session for all commands since we'll reference environment variables set or created through the steps.
+We'll go through this setup using the `bash` terminal on the Azure Cloud Shell. Be sure to always use the same terminal/session for all commands since we'll reference environment variables set or created through the steps.
 
 **Azure Cloud Shell - Bash**
 
@@ -138,7 +138,7 @@ Create a virtual network with two empty subnets
    --vnet aro-vnet \
    --master-subnet master-subnet \
    --worker-subnet worker-subnet \
-   --pull-secret @$PULL_SECRET \
+   --pull-secret $(cat $PULL_SECRET) \
    --domain $DOMAIN
    ```
 
@@ -282,14 +282,14 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
        openshift.io/display-name:  Red Hat Certificate Manager Operator
      labels:
        openshift.io/cluster-monitoring: 'true'
-     name: openshift-cert-manager-operator
+     name: cert-manager-operator
    EOF
    ```
 
 1. Switch openshift-cert-manager-operator project (namespace)
 
    ```bash
-   oc project openshift-cert-manager-operator
+   oc project cert-manager-operator
    ```
 
 1. Create OperatorGroup
@@ -299,7 +299,7 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
    apiVersion: operators.coreos.com/v1
    kind: OperatorGroup
    metadata:
-     name: openshift-cert-manager-operator
+     name: cert-manager-operator
    spec: {}
    EOF
    ```
@@ -312,9 +312,9 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
    kind: Subscription
    metadata:
      name: openshift-cert-manager-operator
-     namespace: openshift-cert-manager-operator
+     namespace: cert-manager-operator
    spec:
-     channel: tech-preview
+     channel: stable-v1
      installPlanApproval: Automatic
      name: openshift-cert-manager-operator
      source: redhat-operators
@@ -322,11 +322,11 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
    EOF
    ```
 
-   > *It will take a few minutes for this operator to install and complete it's set up. May be a good time to take a coffee break :)*
+   > *It will take a few minutes for this operator to install and complete its set up. May be a good time to take a coffee break :)*
 
 1. Wait for cert-manager operator to finish installing.
 
-   Our next steps can't complete until the operator has finished installing. I recommend that you log in to your cluster console with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.
+   Our next steps can't complete until the operator has finished installing. We recommend that you log in to your cluster console with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.
 
    ![View cert-manager Operator for Red Hat OpenShift](cert-manager-operator.png)
 
@@ -339,13 +339,13 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
 1. Switch openshift-cert-manager project (namespace)
 
    ```bash
-   oc project openshift-cert-manager
+   oc project cert-manager
    ```
 
 1. Create azuredns-config secret for storing service principal credentials to manage zone.
 
    ```bash
-   oc create secret generic azuredns-config --from-literal=client-secret=$AZURE_CERT_MANAGER_SP_PASSWORD -n openshift-cert-manager
+   oc create secret generic azuredns-config --from-literal=client-secret=$AZURE_CERT_MANAGER_SP_PASSWORD -n cert-manager
    ```
 
 1. Create Cluster Issuer
@@ -434,9 +434,15 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    oc describe certificate openshift-api -n openshift-config
    ```
 
-1. Create cluster api cert job
+1. Apply the API Certificate
 
-   This job will install the certificate
+   If you're running these steps manually and you wait until the certificate is issued, you can tell the API server to use it with this command:
+
+   ```bash
+   oc patch apiserver cluster --type=merge -p $(jq -nc --arg dn "api.$DOMAIN" '{"spec":{"servingCerts": {"namedCertificates": [{"names": [$dn], "servingCertificate": {"name": "openshift-api-certificate"}}]}}}')
+   ```
+
+   Alternatively, if you're wanting this to run as a part of automation, you can use the OCP `Job` resource:
 
    ```yaml
    cat <<EOF | oc apply -f -
@@ -515,7 +521,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    EOF
    ```
 
-### Create & Install APPS Wildcard Certificate
+### Create & Install the `*.apps` Wildcard Certificate
 
 1. Switch openshift-ingress project (namespace)
 
@@ -552,7 +558,15 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    ```
 
 
-1. Install Wildcard Certificate Job
+1. Install Wildcard Certificate
+
+   As with the API server certificate, an `oc patch ...` command can be used directly:
+
+   ```bash
+   oc patch ingresscontroller default -n openshift-ingress-operator --type=merge --patch='{"spec": { "defaultCertificate": { "name": "openshift-wildcard-certificate" }}}'
+   ```
+
+   And again, if it's intended to be run as part of automation, use a `Job`:
 
    ```yaml
    cat <<EOF | oc apply -f -
@@ -630,11 +644,13 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
 
 ## Debugging
 
-One of the most helpful commands i've seen for debugging is in regards to challenges failing. The order says pending in perpetuity and you can run this to see why.
+The cert-manager operator keeps track of requested but not yet issued `Certificate` resources using another resource called a `Challenge` which can be seen via the `oc` command:
 
 ```bash
 oc describe challenges
 ```
+
+DNS-based challenges will typically resolve (and the certificate will be issued) in less than two minutes. If they don't, looking at the messages from the specific challenge associated with the certificate will typically provide a detailed explanation of what's causing the issue.
 
 This is a very [helpful guide in debugging certificates](https://cert-manager.io/docs/faq/acme/) as well.
 
