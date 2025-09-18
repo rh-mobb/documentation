@@ -221,7 +221,7 @@ spec:
       velero:
         provider: azure
         config:
-          resourceGroup: ${SNAPSHOT_RG}
+          resourceGroup: ${ARO_RG}
           subscriptionId: ${SUBSCRIPTION_ID}
           apiTimeout: 2m0s
         credential:
