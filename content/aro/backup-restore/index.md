@@ -15,6 +15,7 @@ OADP provides robust  disaster recovery solution, covering OpenShift application
 OADP includes a built-in Data Mover feature that allows you to move Container Storage Interface (CSI) volume snapshots to a remote object store, such as Azure Blob Storage. This enables you to restore stateful applications from the remote store in the event of a cluster failure, accidental deletion, or data corruption. The Data Mover uses Kopia as the uploader mechanism to read snapshot data and write it to the repository
 
 For additional information about OADP refer to [documentation](https://github.com/openshift/oadp-operator/blob/oadp-dev/docs/TROUBLESHOOTING.md)
+For the most recent OADP Azure configuration details refer to [documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/backup_and_restore/oadp-application-backup-and-restore#configuring-oadp-with-azure)
 
 ### Prerequisites checklist
 
