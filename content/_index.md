@@ -17,7 +17,15 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configuring ROSA with HCP Private Cluster API Access](/experts/rosa/hcp-private-api-access/)
 * [Securely exposing an application on a private ROSA cluster with a Network Load Balancer](/experts/rosa/hcp-private-nlb/)
 * [Add an Ingress Controller to ROSA with a custom domain](/experts/rosa/ingress-controller)
-
+* [Configuring Microsoft Entra ID as an external authentication provider](/experts/rosa/entra-external-auth)
+* [Optimizing Costs with ROSA: Scheduled Cluster Scaling](/experts/rosa/schedule-scaling)
+* [Adding a Private Ingress Controller and a Public ALB to a ROSA Cluster](/experts/rosa/private-ingress-controller-with-alb)
+* [Configuring OpenShift Logging 6 on ROSA HCP](/experts/o11y/openshift-logging6-rosa-hcp)
+* [Integrating Service Mesh into a ROSA Cluster](/experts/rosa/service-mesh)
+* [Deploy ROSA HCP Clusters via Red Hat Advanced Cluster Manager](/experts/rosa/acm)
+* [Using a Private IngressController with CloudFront on a ROSA Cluster](/experts/rosa/nlb-cf-vpco)
+* [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
+* [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
 
 #### Classic
 
@@ -39,6 +47,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
 * [Configuring Alerts for User Workloads in ROSA](/experts/rosa/custom-alertmanager)
 * [AWS EFS on ROSA](/experts/rosa/aws-efs)
+* [Cross Account EFS Mounting on ROSA](/experts/rosa/cross-account-efs)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/experts/rosa/ecr)
 * [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
 * [Access AWS Cross Account resources using OIDC](/experts/rosa/cross-account-access-openid-connect)
@@ -51,7 +60,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Security Reference Architecture for ROSA](/experts/rosa/security-ra)
 * Configure ROSA for Nvidia GPU Workloads
   * [Helm chart](/experts/rosa/gpu)
-  * [Manual](/experts/rosa/gpu/manual)
+  * [Manual](/experts/rosa/gpu-manual)
 * [Connect to RDS from ROSA with STS](/experts/rosa/sts-rds)
 * [Create an AWS Client VPN connection for a private ROSA Cluster](/experts/rosa/vpn)
 * [ROSA Break Glass Troubleshooting](/experts/rosa/break-glass)
@@ -60,6 +69,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
 * [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
 * [Install Maximo Application Suite on Red Hat OpenShift Service on AWS with automation](/experts/rosa/mas/)
+* [Using local-zones in ROSA](/experts/rosa/local-zones/)
 
 ##### AWS GovCloud
 * [Creating a ROSA Cluster in AWS GovCloud](/experts/rosa/rosa-govcloud/)
@@ -75,7 +85,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy and use the Azure Service Operator V2(ASO)](/experts/aro/azure-service-operator/v2)
 * [Create an additional Ingress Controller for ARO](/experts/aro/additional-ingress-controller)
 * [Configure ARO with Azure NetApp Trident Operator](/experts/aro/trident)
-* [IBM Cloud Paks for Data Operator Setup](/experts/aro/ibm-cloud-paks-for-data)
 * [Install ARO with Custom Domain using LetsEncrypt with cert manager](/experts/aro/cert-manager)
 * [Configure ARO for Nvidia GPU Workloads](/experts/aro/gpu)
 * [Configure ARO with Azure Front Door](/experts/aro/frontdoor)
@@ -90,7 +99,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configure a load balancer service to use a static public IP](/experts/aro/static-ip-load-balancer)
 * [Upgrade a disconnected ARO cluster](/experts/aro/upgrade-disconnected-aro)
 * [Using Azure Container Registry in Private ARO clusters](/experts/aro/aro-acr)
-* [Configure a Private ARO cluster with Azure File via a Private Endpoint](/experts/aro/private_endpoint)
+* [Configure an ARO cluster with Azure Files using a private endpoint](/experts/aro/private_endpoint)
 * [Use Azure Blob storage Container Storage Interface (CSI) driver on an ARO cluster](/experts/aro/blob-storage-csi)
 * [Configure ARO with Cross-Tenant Encryption Keys](/experts/aro/cross-tenant-encryption-keys)
 * [Deploying Private ARO clusters with Custom Domains](/experts/aro/custom-domain-private-cluster)
@@ -98,6 +107,9 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ACM and ODF for ARO Disaster Recovery](/experts/aro/acm-odf-aro)
 * [Deploy Ansible Automation Platform (AAP) on ARO](/experts/aro/aap)
 * [Deploy Maximo Application Suite (MAS) on ARO](/experts/aro/mas)
+* [Remove the default azure-files storage class](/experts/aro/remove-azure-files)
+* [Scalability and Cost Management for ARO](/experts/aro/aro-schedule-scaling)
+* [Backup and Restore for ARO using OpenShift API for Data Protection](/experts/aro/backup-restore)
 
 ## OpenShift Dedicated on GCP
 
@@ -116,12 +128,15 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
   * [via GUI](/experts/rosa/ocp-virt/basic-gui)
 * [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 * [Deploying and Managing Virtual Machines on ROSA with OpenShift GitOps](/experts/rosa/virt-gitops)
+* [Migrating EC2 Instances to OpenShift Virtualization](/experts/rosa/ec2-migration-to-rosa)
 
 ### Red Hat OpenShift AI (RHOAI)
 
 * [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/rhoai/rosa-s3)
 * [Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled](/experts/rhoai/rosa-gpu)
 * [Creating RAG Chatbot using TinyLlama and LangChain APIs on Red Hat OpenShift AI on ARO cluster](/experts/rhoai/aro-rag)
+* [Building LLM Cost and Performance Dashboard with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-bedrock)
+* [Creating Agentic AI to deploy ARO cluster using Terraform with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-agentic)
 
 ### Data Science on Jupyter Notebook on OpenShift
 
@@ -150,7 +165,10 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Sending ARO cluster logs to Azure Log Analytics](/experts/aro/clf-to-azure)
 * [Shipping logs and metrics to Azure Blob storage](/experts/aro/shipping-logs-and-metrics-to-azure-blob)
 * [Use AWS CloudWatch Agent to push prometheus metrics to AWS CloudWatch](/experts/rosa/metrics-to-cloudwatch-agent)
-* [Installing and configuring LokiStack on ROSA](/experts/o11y/openshift-logging-lokistack)
+* [Installing and configuring OpenShift Logging 6 on ROSA HCP](/experts/o11y/openshift-logging6-rosa-hcp)
+* [Installing and configuring OpenShift Logging 5 on ROSA Classic](/experts/o11y/openshift-logging-lokistack)
+* [Configuring Cluster Observability Operator (COO) in ARO and Enabling remote writing of metrics to Azure Monitor Workspace](/experts/o11y/openshift-coo-azuremonitor)
+* [ Configuring oTEL to collect OpenShift Logs instead of the Cluster Log Forwarder](/experts/o11y/otel-instead-of-clf)
 
 ## Security
 
@@ -193,6 +211,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
 * [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
 * [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
+* [Setting up Cross-Cluster PostgreSQL Replication with Skupper on ROSA and ARO](/experts/misc/rosa-aro-service-interconnect)
 
 ### Applications
 

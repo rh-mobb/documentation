@@ -146,3 +146,9 @@ from = "/experts/misc/tls-cipher-customization/"
 to = "https://docs.openshift.com/rosa/networking/ingress-operator.html#configuring-ingress-controller-tls"
 status = 301
 force = true
+
+[[redirects]]
+from = "/experts/rosa/hcp-private-api-access/"
+to = "https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-aws-private-creating-cluster.html#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster"
+status = 301
+force = true

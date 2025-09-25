@@ -34,11 +34,15 @@
 
 1. Download your pull secret from **https://console.redhat.com/openshift/downloads -> Tokens -> Pull secret** and save it to values.yaml
 
+    ```bash
+    echo "pullSecret: '`cat ~/Downloads/pull-secret.txt`' > /tmp/values.yaml
+    ```
+
 1. Update the pull secret
 
    ```
    helm upgrade --install pull-secret mobb/aro-pull-secret \
-     -n openshift-config
+     -n openshift-config --values /tmp/values.yaml
    ```
 
 1. Optionally enable Operator Hub

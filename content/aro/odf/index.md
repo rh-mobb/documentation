@@ -126,7 +126,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
      name: ocs-operator
      namespace: openshift-storage
    spec:
-     channel: stable-4.11  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
+     channel: stable-4.16  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
      installPlanApproval: Automatic
      name: ocs-operator
      source: redhat-operators  # <-- Modify the name of the redhat-operators catalogsource if not default
@@ -142,7 +142,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
      name: odf-operator
      namespace: openshift-storage
    spec:
-     channel: stable-4.11  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
+     channel: stable-4.16  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
      installPlanApproval: Automatic
      name: odf-operator
      source: redhat-operators  # <-- Modify the name of the redhat-operators catalogsource if not default
@@ -153,19 +153,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
 to manage your ODF Storage Cluster.  By running this command, you will see the OpenShift console
 refresh itself, as the console pods must restart to inherit this new configuration.  
    ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: console.openshift.io/v1alpha1
-   kind: ConsolePlugin
-   metadata:
-     name: odf-console
-   spec:
-     displayName: ODF Plugin
-     service:
-       basePath: /
-       name: odf-console-service
-       namespace: openshift-storage
-       port: 9001
-   EOF
+   oc patch console.operator cluster -n openshift-storage --type json -p '[{"op": "add", "path": "/spec/plugins", "value": ["odf-console"]}]'
    ```
   After install the plugin, you should enable through Console > Installed Operators > OpenShift Data Foundation > Details. Change the option **Console plugin** from Disabled to Enabled then Save. After a few minutes you will be able to see new itens under the menu Storage, including the option Data Foundation.
    
@@ -196,7 +184,7 @@ refresh itself, as the console pods must restart to inherit this new configurati
        name: ocs-deviceset-managed-premium
        portable: true
        replica: 3
-     version: 4.11.0
+     version: 4.16.0
    EOF
    ```
 
@@ -210,10 +198,10 @@ refresh itself, as the console pods must restart to inherit this new configurati
    verify that the operators below have succeeded.
    ```
    NAME                              DISPLAY                       VERSION   PHASE
-   mcg-operator.v4.11.9              NooBaa Operator               4.11.9    Succeeded
-   ocs-operator.v4.11.9              OpenShift Container Storage   4.11.9    Succeeded
-   odf-csi-addons-operator.v4.11.9   CSI Addons                    4.11.9    Succeeded
-   odf-operator.v4.11.9              OpenShift Data Foundation     4.11.9    Succeeded
+   mcg-operator.v4.16.9              NooBaa Operator               4.16.9    Succeeded
+   ocs-operator.v4.16.9              OpenShift Container Storage   4.16.9    Succeeded
+   odf-csi-addons-operator.v4.16.9   CSI Addons                    4.16.9    Succeeded
+   odf-operator.v4.16.9              OpenShift Data Foundation     4.16.9    Succeeded
    ```
 
 1. Check that Storage cluster is ready
