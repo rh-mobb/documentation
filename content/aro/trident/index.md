@@ -5,6 +5,7 @@ tags: ["ARO", "Azure"]
 authors:
   - Byron Miller
   - Connor Wooley
+  - Kevin Collins
 ---
 
 Note:
@@ -116,13 +117,13 @@ oc login --token=sha256~abcdefghijklmnopqrstuvwxyz --server=https://api.randomse
 Download latest Trident package
 
 ```bash
-wget https://github.com/NetApp/trident/releases/download/v22.04.0/trident-installer-22.04.0.tar.gz
+wget https://github.com/NetApp/trident/releases/download/v25.06.2/trident-installer-25.06.2.tar.gz
 ```
 
 Extract tar.gz into working directory
 
 ```bash
-tar -xzvf trident-installer-22.04.0.tar.gz
+tar -xzvf trident-installer-25.06.2.tar.gz
 ```
 
 cd into installer
@@ -136,7 +137,7 @@ Helm install
 ```bash
 oc new-project test-netapp
 
-helm install trident-operator trident-operator-22.04.0.tgz
+helm install trident-operator trident-operator-100.2506.2.tgz
 ```
 
 Example output from installation:
@@ -171,7 +172,7 @@ Validate
 
 ```bash
 cd ..
-./tridentctl -n openshift version
+./tridentctl version
 +----------------+----------------+
 | SERVER VERSION | CLIENT VERSION |
 +----------------+----------------+
@@ -211,7 +212,7 @@ FYI - Sample files for review are in sample-input/backends-samples/azure-netapp-
 >![Storage Class](netapp-role-example.png)
 
 ```bash
-vi backend.json
+vi backend-anf.json
 ```
 
 Add the following snippet:
@@ -243,7 +244,7 @@ Add the following snippet:
 
 run
 ```bash
-tridentctl -n openshift create backend -f backend.json
+tridentctl -n openshift create backend -f backend-anf.json
 ```
 
 example output:
