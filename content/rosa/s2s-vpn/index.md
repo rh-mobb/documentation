@@ -36,324 +36,114 @@ In short: this is a practical and maintainable way to reach ROSA-hosted VMs **wi
 ## 0. Prerequisites
 
 * A classic or HCP ROSA cluster v4.14 and above.
+* Bare metal instance machine pool (we are using `m5.metal`, feel free to change as needed), and OpenShift Virtualization operator installed. You can follow Step 2-5 from [this guide](https://cloud.redhat.com/experts/rosa/ocp-virt/basic-gui/) to do so.
 * The oc CLI # logged in.
 
 
-## 1. Install bare metal instance
-
-You can install the bare metal instance via Red Hat Hybrid Cloud Console. Alternatively, you can follow this step to install via CLI.  
-
-First, export the variables. Replace the region and cluster name values with your own.
-
-```bash
-export REGION=YOUR-CLUSTER-REGION
-export CLUSTER=YOUR-CLUSTER-NAME
-INFRA_ID=$(oc get infrastructure cluster -o jsonpath='{.status.infrastructureName}')
-SUBNETS=$(aws ec2 describe-subnets --region $REGION \
-  --filters "Name=tag:kubernetes.io/cluster/${INFRA_ID},Values=owned,shared" \
-  --query 'join(`,`, Subnets[?MapPublicIpOnLaunch==`false`].SubnetId)' \
-  --output text)
-echo "INFRA_ID=$INFRA_ID"
-echo "SUBNETS=$SUBNETS"
-```
-
-Then create the machinepool. You can also use another supported metal instance if you like.
-
-```bash
-rosa create machinepool \
-  --cluster $CLUSTER \
-  --name cnv-bm \
-  --replicas 2 \
-  --instance-type m5.metal \
-  --subnet-ids "$SUBNETS" \
-  --labels kubevirt.io/schedulable=true,workload=cnv \
-  --taints dedicated=cnv:NoSchedule
-```
-
-Wait for nodes, then verify KVM on one of the new nodes:
-
-```bash
-oc get nodes -l workload=cnv -o wide
-oc debug node/$(oc get nodes -l workload=cnv -o name | head -1 | cut -d/ -f2) -- chroot /host bash -c 'ls -l /dev/kvm && lsmod | egrep "^kvm"'
-```
-
-
-## 2. Install OpenShift Virtualization (CNV)
-
-You can install the operator via OperatorHub. Alternatively, you can follow this step to install via CLI.
-
-```bash
-cat << 'EOF' | oc apply -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: openshift-cnv
----
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: kubevirt-hyperconverged-group
-  namespace: openshift-cnv
-spec:
-  targetNamespaces: [openshift-cnv]
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: hco-operatorhub
-  namespace: openshift-cnv
-spec:
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-  name: kubevirt-hyperconverged
-  channel: stable
-EOF
-```
-
-Once the operator is installed, create the HyperConverged object.
-
-
-```bash
-cat << 'EOF' | oc apply -f -
-apiVersion: hco.kubevirt.io/v1beta1
-kind: HyperConverged
-metadata:
-  name: kubevirt-hyperconverged
-  namespace: openshift-cnv
-  annotations:
-    deployOVS: "false"
-  labels:
-    app: kubevirt-hyperconverged
-spec:
-  enableApplicationAwareQuota: false
-  enableCommonBootImageImport: true
-  deployVmConsoleProxy: false
-  applicationAwareConfig:
-    allowApplicationAwareClusterResourceQuota: false
-    vmiCalcConfigName: DedicatedVirtualResources
-  certConfig:
-    ca: {duration: 48h0m0s, renewBefore: 24h0m0s}
-    server: {duration: 24h0m0s, renewBefore: 12h0m0s}
-  evictionStrategy: LiveMigrate
-  infra: {}
-  liveMigrationConfig:
-    allowAutoConverge: false
-    allowPostCopy: false
-    completionTimeoutPerGiB: 800
-    parallelMigrationsPerCluster: 5
-    parallelOutboundMigrationsPerNode: 2
-    progressTimeout: 150
-  resourceRequirements:
-    vmiCPUAllocationRatio: 10
-  uninstallStrategy: BlockUninstallIfWorkloadsExist
-  virtualMachineOptions:
-    disableFreePageReporting: false
-    disableSerialConsoleLog: true
-  workloadUpdateStrategy:
-    batchEvictionInterval: 1m0s
-    batchEvictionSize: 10
-    workloadUpdateMethods: [LiveMigrate]
-  workloads: {}
-EOF
-```
-
-
-## 3. Create the project and secondary network (CUDN)
+## 1. Create the project and secondary network (CUDN)
 
 Create `vpn-infra` project and the ClusterUserDefinedNetwork (CUDN) object.
 
 ```bash
-oc new-project vpn-infra
-cat << 'EOF' | oc apply -f -
+oc new-project vpn-infra || true
+cat <<'EOF' | oc apply -f -
 apiVersion: k8s.ovn.org/v1
 kind: ClusterUserDefinedNetwork
-metadata:
-  name: vm-network
+metadata: { name: vm-network }
 spec:
   namespaceSelector:
     matchExpressions:
     - key: kubernetes.io/metadata.name
       operator: In
-      values: [vpn-infra, vm-workloads]
+      values: [vpn-infra]
   network:
-    layer2:
-      role: Secondary
-      ipam:
-        mode: Disabled
+    layer2: { role: Secondary, ipam: { mode: Disabled } }
     topology: Layer2
 EOF
 ```
 
-(Optional but handy on some versions): create a **reference NAD** so Multus can resolve `vm-network` by name in the namespace:
+
+## 2. Create the ipsec VM (cert-based IPsec, NAT-initiated)
+
+Go to Red Hat Hybrid Cloud Console. On the navigation bar, select **Virtualization → Catalog**, and from the top, change the **Project** to `vpn-infra`. Then under **Create new VirtualMachine → Instance types → Select volume to boot from**, choose **CentOS Stream 10** (or 9 is fine). 
+
+![virt-catalog](images/virt-catalog.png)
+<br />
+
+Scroll down and name it `ipsec`, and select **Customize VirtualMachine**. 
+
+![virt-catalog-1](images/virt-catalog-1.png)
+<br />
+
+Select **Network** on navigation bar. Under **Network interfaces**, click **Add network interface**. Name it `cudn`.
+
+![virt-cudn-0](images/virt-cudn-0.png)
+<br />
+
+Then click **Save**. Click **Create VirtualMachine**.
+
+![virt-cudn](images/virt-cudn.png)
+<br />
+
+Wait for a couple of minutes until the VM is running. 
+
+Then click the **Open web console** and log into the VM using the credentials on top of the page. 
+
+Alternatively, you can run this on your CLI terminal: `virtctl console -n vpn-infra ipsec`, and use the same credentials to log into the VM. 
+
+Then as root (run `sudo -i`), run the following inside the VM to give the second NIC (`cudn`) an IP:
 
 ```bash
-cat <<'EOF' | oc -n vpn-infra apply -f -
-apiVersion: k8s.cni.cncf.io/v1
-kind: NetworkAttachmentDefinition
-metadata:
-  name: vm-network
-spec:
-  reference: k8s.ovn.org/v1/ClusterUserDefinedNetwork/vm-network
+ip -4 a
+nmcli con add type ethernet ifname enp2s0 con-name cudn \
+  ipv4.addresses 192.168.1.10/24 ipv4.method manual autoconnect yes
+nmcli con mod cudn 802-3-ethernet.mtu 1400
+nmcli con up cudn
+```
+
+Install Libreswan and tools:
+
+```bash
+dnf -y install libreswan nss-tools NetworkManager iproute
+```
+
+Kernel networking (forwarding & rp_filter):
+
+```bash
+cat >/etc/sysctl.d/99-ipsec.conf <<'EOF'
+net.ipv4.ip_forward=1
+net.ipv4.conf.all.rp_filter=2
+net.ipv4.conf.default.rp_filter=2
+net.ipv4.conf.all.accept_redirects=0
+net.ipv4.conf.default.accept_redirects=0
+net.ipv4.conf.all.send_redirects=0
+net.ipv4.conf.default.send_redirects=0
 EOF
+sysctl --system
 ```
 
 
-## 4. Create ipsec VM (cert-based IPsec, NAT-initiated)
-
-First, create the cloud-init Secret object that will be referenced by the VM.
-
-```bash
-cat > /tmp/ipsec-cloudinit-userdata <<'EOD'
-#cloud-config
-ssh_pwauth: false
-write_files:
-  - path: /etc/sysctl.d/99-ipsec-forwarding.conf
-    permissions: '0644'
-    content: |
-      net.ipv4.ip_forward=1
-      net.ipv4.conf.all.rp_filter=2
-      net.ipv4.conf.default.rp_filter=2
-      net.ipv4.conf.all.accept_redirects=0
-      net.ipv4.conf.default.accept_redirects=0
-      net.ipv4.conf.all.send_redirects=0
-      net.ipv4.conf.default.send_redirects=0
-  - path: /root/left-cert.p12.b64
-    permissions: '0600'
-    content: |
-      <BASE64_PKCS12_DEVICE_CERT_AND_KEY>
-  - path: /etc/ipsec.d/aws-ca.pem
-    permissions: '0644'
-    content: |
-      <AWS_VPN_CA_PEM>
-  - path: /etc/ipsec.conf
-    permissions: '0644'
-    content: |
-      config setup
-        uniqueids=no
-      conn aws-tun-1
-        ikev2=insist
-        authby=rsa
-        leftrsasigkey=%cert
-        rightrsasigkey=%cert
-        left=%defaultroute
-        leftid=@<LEFT_ID_FQDN_OR_DN>
-        leftcert=<LEFT_CERT_NICKNAME>
-        leftsubnet=<CUDN_SUBNET>
-        right=<AWS_TUNNEL_1_PUBLIC_IP>
-        rightid=%fromcert
-        rightsubnet=<AWS_VPC_CIDR>
-        ike=aes256-sha2_256-modp2048
-        phase2alg=aes256-sha2_256
-        dpdaction=restart
-        dpddelay=15s
-        dpdtimeout=120s
-        auto=add
-      conn aws-tun-2
-        also=aws-tun-1
-        right=<AWS_TUNNEL_2_PUBLIC_IP>
-runcmd:
-  - [ bash, -lc, "dnf -y install libreswan nss-tools NetworkManager iproute" ]
-  - [ bash, -lc, "sysctl --system" ]
-  - [ bash, -lc, "pif=$(ip r s default|awk '{print $5}'|head -1||true); for d in $(ls /sys/class/net|grep -v lo); do [ $d = $pif ] && continue; ip -4 a s $d|grep -q 'inet ' && continue; nmcli con add type ethernet ifname $d con-name cudn; nmcli con mod cudn ipv4.addresses <CUDN_VM_IP/24> ipv4.method manual autoconnect yes 802-3-ethernet.mtu 1400; nmcli con up cudn || true; done" ]
-  - [ bash, -lc, "certutil -A -d sql:/etc/ipsec.d -n aws-ca -t 'C,,' -a -i /etc/ipsec.d/aws-ca.pem" ]
-  - [ bash, -lc, "base64 -d /root/left-cert.p12.b64 > /root/left-cert.p12" ]
-  - [ bash, -lc, "pk12util -i /root/left-cert.p12 -d sql:/etc/ipsec.d -W '<P12_PASSWORD_OR_EMPTY>' -n '<LEFT_CERT_NICKNAME>' || true" ]
-  - [ bash, -lc, "rm -f /root/left-cert.p12 /root/left-cert.p12.b64" ]
-  - [ bash, -lc, "systemctl enable --now ipsec" ]
-EOD
-
-oc -n vpn-infra create secret generic ipsec-cloudinit --from-file=userData=/tmp/ipsec-cloudinit-userdata
-```
-
-Next, create the `ipsec` VM referencing the above Secret.
-
-```bash
-cat << 'EOF' | oc apply -f -
-apiVersion: kubevirt.io/v1
-kind: VirtualMachine
-metadata:
-  name: ipsec
-  namespace: vpn-infra
-  labels:
-    app: ipsec
-spec:
-  runStrategy: Always
-  template:
-    metadata:
-      labels:
-        app: ipsec
-        kubevirt.io/domain: ipsec
-    spec:
-      nodeSelector:
-        workload: "cnv"
-      tolerations:
-      - key: "dedicated"
-        operator: "Equal"
-        value: "cnv"
-        effect: "NoSchedule"
-      domain:
-        cpu:
-          cores: 2
-        resources:
-          requests:
-            memory: 2Gi
-        devices:
-          interfaces:
-          - name: default
-            masquerade: {}
-          - name: cudn
-            bridge: {}
-          disks:
-          - name: root
-            disk:
-              bus: virtio
-          - name: cloudinit
-            disk:
-              bus: virtio
-      networks:
-      - name: default
-        pod: {}
-      - name: cudn
-        multus:
-          networkName: vm-network
-      volumes:
-      - name: root
-        containerDisk:
-          image: quay.io/containerdisks/centos-stream:9
-      - name: cloudinit
-        cloudInitNoCloud:
-          secretRef:
-            name: ipsec-cloudinit
-EOF
-```
-
-Run the following quick checks before we move on to AWS Console for next steps.
-
-```bash
-oc -n vpn-infra get vmi,pod -l app=ipsec -o wide
-oc -n vpn-infra virt console vm/ipsec
-# inside VM:
-ip a
-ip r
-ss -uap | egrep ':(500|4500)\s' || true
-```
+## 3. Create Private CA (ACM PCA)
 
 
-## 5. Create a Private CA (ACM PCA)
+Go to AWS Console and select **Certificate Manager**. Then on the left navigation tab, click **AWS Private CAs**, and then click **Create a private CA**.
 
-This step involved a console path and quick CLI blocks so your CGW can use a cert and your VM gets a PKCS#12.
+On the **Create private certificate authority (CA)** page, keep **CA type options** as **Root**. You could leave the rest of the options by default (as-is) for simplicity sake. We would recommend, however, give it a name; so for example, here we give the **Common name (CN)** `ca test v0`. Acknowledge the pricing section, and click **Create CA**.
 
-* Console (one-time):
+And then on the root CA page, go to the **Action** tab on upper right side, and select **Install CA certificate**. On the **Install root CA certificate** page, you can leave the default configurations as-is and click **Confirm and Install**. The CA should now be **Active**. 
 
-  * Certificate Manager → **Private CAs** → **Create** → **Root** → RSA-2048 / SHA256 → fill subject → **Create & activate**.
-  * Copy the **CA ARN** (you’ll use it below).
-* Device cert & PKCS#12 for the VM (paste as a code block under this section):
+Next, create a subordinate CA by repeating the same thing but on the **CA type options**, choose **Subordinate**, and give it a **Common name (CN)** such as `ca sub test v0`. Confirm pricing and create it.
 
-  * “Block A — Issue device cert & make PKCS#12 (for VM)”
-  * “Block B — Import same cert into ACM (for CGW selection)”
+And similarly, on the subordinate CA page, go to the **Action** tab on top right side, and select **Install CA certificate**. On the **Install subordinate CA certificate** page, under **Select parent CA**, choose the root CA you just created as the **Parent private CA**. And under **Specify the subordinate CA certificate parameters**, for the validity section, pick a date at least 13 months from now. You can leave the rest per default and click **Confirm and Install**. 
+
+Next, go the **AWS Certificate Manager (ACM)** page, and click **Request a certificate** button. On the **Certificate type** page, select **Request a private certificate**, and click **Next**. 
+
+Under **Certificate authority details**, pick the subordinate CA as **Certificate authority**. Then under **Domain names**, pick a **Fully qualified domain name** (FQDN) of your choice. Note that this does not have to be resolvable, we just use it as an identity string for IKE. For example here, we use something like `s2s.vpn.test.mobb.cloud`. You can leave the rest per default, acknowledge **Certificate renewal permissions** and click **Request**. 
+
+Wait for until the status is changed to **Issued**. Then, click **Export** button on top right side. Under **Encryption details**, enter a passphrase of your choice. Acknowledge the billing and click **Generate PEM encoding**. And on the next page, click **Download all**, and finally click **Done**.
 
 
-asdf (WIP)
+
 
 [SCREENSHOT HERE]
 
