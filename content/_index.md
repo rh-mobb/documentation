@@ -123,7 +123,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 ### OpenShift Virtualization
 
-* [Deploy OpenShift Virtualization on Azure Red Hat OpenShift (ARO)](/experts/rosa/ocp-virt/)
+* [Deploy OpenShift Virtualization on Azure Red Hat OpenShift (ARO)](/experts/aro/aro-virt/)
 * Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA)
   * [via CLI](/experts/rosa/ocp-virt/basic)
   * [via GUI](/experts/rosa/ocp-virt/basic-gui)
