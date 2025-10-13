@@ -149,12 +149,12 @@ It's important to keep in mind that this tutorial is designed to show you the qu
 
 1. Close the popup window and click the "Download virtctl" button to download the `virtctl` binary.
 
-## Create NetApp Trident Storage Class
+## Add OpenShift Data Foundation 
 >Optional but highly recommended
 
-To enable advanced OpenShift Virtualization features like Live Migration, you need a high-performing StorageClass. While numerous options exist, this tutorial will use NetApp Azure Files storage. It offers excellent performance and has a strong record of success with OpenShift Virtualization.
+To enable advanced OpenShift Virtualization features like Live Migration, you need a high-performing StorageClass. While numerous options exist, this tutorial will use OpenShift Data Foundation for storage. It offers excellent performance and has a strong record of success with OpenShift Virtualization.
 
-Follow this [guide](/experts/aro/trident/) to add Azure NetApp Files storage class to your cluster. 
+Follow this [guide](/experts/aro/odf/) to add OpenShift Data Foundation to your cluster. 
 
 ## Create a Virtual Machine
 
