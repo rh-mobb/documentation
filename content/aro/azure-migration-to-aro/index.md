@@ -37,7 +37,7 @@ The core benefit of this migration is transforming your VM infrastructure into a
   mkdir -p ${SCRATCH_DIR}
 ```
 
-1. Create the project for the VMs if not already created.
+3. Create the project for the VMs if not already created.
 
 ```bash
 oc new-project ${TARGET_VM_PROJECT}
@@ -74,7 +74,7 @@ sasUri=$(az disk grant-access --resource-group ${AZURE_VM_RESOURCE_GROUP} --name
 Use the generated SAS URI with a tool like AzCopy.  AzCopy is generally recommended for large files as it is optimized for high-performance data transfer.
 
 ```bash
-azcopy copy "$sasUri" "${SCRATCH_DIR}/azure-migrate-mv.vhd"
+azcopy copy "$sasUri" "${SCRATCH_DIR}/azure-migrate-vm.vhd"
 ```
 
 5. Get the disk size and set an environment variable
@@ -99,7 +99,7 @@ Use the virt-v2v command-line interface to convert the Azure VM's VHD disk image
 ```bash
 mkdir ${SCRATCH_DIR}/output
 
-virt-v2v -i disk ${SCRATCH_DIR}/azure-migrate-mv.vhd -o local -os ${SCRATCH_DIR}/output -of qcow2
+virt-v2v -i disk ${SCRATCH_DIR}/azure-migrate-vm.vhd -o local -os ${SCRATCH_DIR}/output -of qcow2
 ```
 
 ## Migrate the VM into OpenShift Virtualization
