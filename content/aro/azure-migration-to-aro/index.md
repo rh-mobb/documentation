@@ -15,7 +15,7 @@ The core benefit of this migration is transforming your VM infrastructure into a
 
 1. You will need an 4.18+ ARO Cluster with OpenShift Virtualization installed and configured.   Follow this [guide](/experts/aro/aro-virt/) to get started
 
-1. CLIs and Command Line Tools Needed
+2. CLIs and Command Line Tools Needed
   >Important: The virt-v2v tool currently operates exclusively on Linux. If you do not have a Linux environment available, please deploy a Linux VM in Azure for this process.
 
   * oc (logged into the ARO cluster)
@@ -23,9 +23,10 @@ The core benefit of this migration is transforming your VM infrastructure into a
   * virtctl
   * virt-v2v 
 
-1. An Azure VM you want to migrate
+3. An Azure VM you want to migrate
 
-1. Environment Variables
+4. Environment Variables
+
 ```bash
   export SCRATCH_DIR="/Users/kevincollins/scratch/aro-virt"
   export AZURE_VM_RESOURCE_GROUP="AZURE_VM_RG"
@@ -37,7 +38,7 @@ The core benefit of this migration is transforming your VM infrastructure into a
   mkdir -p ${SCRATCH_DIR}
 ```
 
-3. Create the project for the VMs if not already created.
+5. Create the project for the VMs if not already created.
 
 ```bash
 oc new-project ${TARGET_VM_PROJECT}
