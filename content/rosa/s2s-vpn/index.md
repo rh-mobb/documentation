@@ -1,5 +1,5 @@
 ---
-date: '2025-10-20'
+date: '2025-10-21'
 title: Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan
 tags: ["AWS", "ROSA"]
 authors:
@@ -18,7 +18,7 @@ On AWS, the **TGW** terminates **two redundant tunnels** (two “outside” IPs)
 
 NAT specifics: when the VM egresses, it traverses the [NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html). If that NAT uses multiple EIPs, AWS may select different EIPs per connection; this is fine because the VPN authenticates via certificates, not source IP.
 
-![s2svpn-v0](images/s2svpn-v0.png)
+![s2svpn-v2](images/s2svpn-v2.png)
 <br />
 
 
@@ -90,7 +90,15 @@ Then click the **Open web console** and log into the VM using the credentials on
 
 Alternatively, you can run this on your CLI terminal: `virtctl console -n vpn-infra ipsec`, and use the same credentials to log into the VM. 
 
-Then as root (run `sudo -i`), run the following inside the VM to give the second NIC (`cudn`) an IP:
+Then as root (run `sudo -i`), let's first identify the non-primary NIC (adjust the selector if needed):
+
+```bash
+ip -4 addr show
+# or:
+NIC=$(nmcli -t -f DEVICE,STATE,TYPE device | awk -F: '$2=="connected" && $3=="ethernet"{print $1}' | tail -n1)
+```
+
+Run the following inside the VM to give the second NIC (`cudn`) an IP (note that we are using Centos 10 on this guide, so please adjust the NIC name accordingly if you are using different OS):
 
 ```bash
 ip -4 a
@@ -104,6 +112,8 @@ Install Libreswan and tools:
 
 ```bash
 dnf -y install libreswan nss-tools NetworkManager iproute
+# optional, if you’ll use the `pki` CLI:
+# dnf -y install idm-pki-tools
 ```
 
 Kernel networking (forwarding & rp_filter):
@@ -294,7 +304,7 @@ config setup
     nssdir=/etc/ipsec.d
 
 conn %default
-    keyexchange=ikev2
+    keyexchange=ikev2                 # change to ikev2=insist if you're running Centos/RHEL 9
     authby=rsasig
     fragmentation=yes
     mobike=no
@@ -459,8 +469,8 @@ conn tgw-tun-1
     vti-interface=ipsec10
     vti-routing=yes
     vti-shared=no
-    leftvti=169.254.218.106/30
-    rightvti=169.254.218.105/30
+    leftvti=169.254.218.106/30          # change this to your <CGW inside IP>/30
+    rightvti=169.254.218.105/30         # change this to your <AWS inside IP>/30
 
     auto=start
 
