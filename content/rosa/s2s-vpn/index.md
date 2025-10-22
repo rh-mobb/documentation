@@ -1,5 +1,5 @@
 ---
-date: '2025-10-10'
+date: '2025-10-20'
 title: Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan
 tags: ["AWS", "ROSA"]
 authors:
@@ -111,8 +111,8 @@ Kernel networking (forwarding & rp_filter):
 ```bash
 cat >/etc/sysctl.d/99-ipsec.conf <<'EOF'
 net.ipv4.ip_forward=1
-net.ipv4.conf.all.rp_filter=2
-net.ipv4.conf.default.rp_filter=2
+net.ipv4.conf.all.rp_filter=0
+net.ipv4.conf.default.rp_filter=0
 net.ipv4.conf.all.accept_redirects=0
 net.ipv4.conf.default.accept_redirects=0
 net.ipv4.conf.all.send_redirects=0
@@ -121,8 +121,10 @@ EOF
 sysctl --system
 ```
 
+**Firewalld note:** CentOS often has firewalld on. You don’t need inbound allows (the VM initiates), but outbound UDP/500, UDP/4500 must be allowed. 
 
-## 3. Create Private CA (ACM PCA)
+
+## 3. Create and import Private CA (ACM PCA) 
 
 Go to AWS Console and select **Certificate Manager**. Then on the left navigation tab, click **AWS Private CAs**, and then click **Create a private CA**.
 
@@ -159,82 +161,82 @@ openssl pkcs12 -export \
   -inkey private_key.pem \
   -in certificate.pem \
   -certfile certificate_chain.pem \
-  -name test-cert-cgw \ 
+  -name test-cert-cgw \
   -out left-cert.p12
 ```
 
-This will prompt you with passphrase you created before. And then copy both `left-cert.p12` and `certificate_chain.pem` into the VM. 
+This will prompt you with passphrase you created before. 
 
-You can use `virtctl scp` command, or alternatively `base64` like the following:
+Next, we need **two** files on the VM:
+
+* `left-cert.p12` — the PKCS#12 you just created (leaf + key + chain)
+* `certificate_chain.pem` — the full CA chain (subordinate **then** root)
+
+**Option A — using virtctl (easiest):**
 
 ```bash
-openssl base64 -A -in left-cert.p12 -out left-cert.p12.b64
-openssl base64 -A -in certificate_chain.pem -out certificate_chain.pem.b64
+# from your local machine
+virtctl scp ./left-cert.p12  vpn-infra/ipsec:/root/left-cert.p12
+virtctl scp ./certificate_chain.pem vpn-infra/ipsec:/root/certificate_chain.pem
 ```
- 
-And then on the VM:
+
+**Option B — using openssl base64:**
 
 ```bash
-# left-cert.p12
+# on local machine
+openssl base64 -A -in left-cert.p12          > left-cert.p12.b64
+openssl base64 -A -in certificate_chain.pem  > certificate_chain.pem.b64
+
+# in the VM console (paste the contents when prompted)
 cat > /root/left-cert.p12.b64 <<'EOF'
-<paste the contents of left-cert.p12.b64 here>
+<paste left-cert.p12.b64 contents here>
 EOF
-
-# certificate_chain.pem
 cat > /root/certificate_chain.pem.b64 <<'EOF'
-<paste the contents of certificate_chain.pem.b64 here>
+<paste certificate_chain.pem.b64 contents here>
 EOF
-```
 
-Then, decode it:
-
-```bash
-base64 -d /root/left-cert.p12.b64 > /root/left-cert.p12
+# decode in the VM
+base64 -d /root/left-cert.p12.b64         > /root/left-cert.p12
 base64 -d /root/certificate_chain.pem.b64 > /root/certificate_chain.pem
 rm -f /root/*.b64
 ```
 
-Next, initialize a fresh NSS DB. We'll use empty password for the sake of simplicity:
+Now run the import:
 
 ```bash
 sudo -i
-systemctl stop ipsec 2>/dev/null || true
-rm -f /etc/ipsec.d/{cert9.db,key4.db,pkcs11.txt}
+set -euxo pipefail
 
-printf '\n' > /etc/ipsec.d/nsspassword
-chmod 600 /etc/ipsec.d/nsspassword
+LEAF_P12="/root/left-cert.p12"            # already on the VM
+CHAIN="/root/certificate_chain.pem"       # already on the VM
+NICK='test-cert-cgw'                      # must match leftcert= in ipsec.conf
+P12PASS='change-me'                        # temporary; any value works
 
-certutil -N -d sql:/etc/ipsec.d -f /etc/ipsec.d/nsspassword
+# fresh NSS DB
+systemctl stop ipsec || true
+rm -f /etc/ipsec.d/{cert9.db,key4.db,pkcs11.txt} /etc/ipsec.d/*.db.lock
+certutil -N -d sql:/etc/ipsec.d --empty-password
+command -v restorecon >/dev/null && restorecon -Rv /etc/ipsec.d || true
+
+# import CA chain with CA trust (split CHAIN into individual certs)
+awk 'BEGIN{c=0} /BEGIN CERT/{c++} {print > ("/tmp/ca-" c ".pem")}' "$CHAIN"
+for f in /tmp/ca-*.pem; do
+  certutil -A -d sql:/etc/ipsec.d \
+           -n "$(openssl x509 -noout -subject -in "$f" | sed "s#.*/CN=##")" \
+           -t "C,," -a -i "$f"
+done
+
+# import device cert + key from PKCS#12 with the nickname the config expects
+pk12util -i "$LEAF_P12" -d sql:/etc/ipsec.d -W "$P12PASS" -n "$NICK"
+
+# sanity check
+echo "=== NSS certificates ==="; certutil -L -d sql:/etc/ipsec.d
+echo "=== NSS keys         ==="; certutil -K -d sql:/etc/ipsec.d
+
+systemctl start ipsec
 ```
 
-Next, import the PKCS#12 (your keypair). Use the **P12 export password** you set when creating `left-cert.p12`.
-
-```bash
-pk12util -i /root/left-cert.p12 -d sql:/etc/ipsec.d
-# verify key + cert now exist
-certutil -K -d sql:/etc/ipsec.d -f /etc/ipsec.d/nsspassword
-certutil -L -d sql:/etc/ipsec.d -f /etc/ipsec.d/nsspassword
-# expect to see your key nickname, e.g. "test-cert-cgw"
-```
-
-Trust the CA chain for both subordinate and root:
-
-```bash
-# use the exact nicknames shown by `certutil -L` in your output:
-certutil -M -d sql:/etc/ipsec.d -f /etc/ipsec.d/nsspassword \
-  -n "ca sub test v0" -t "CT,C,C"
-
-certutil -M -d sql:/etc/ipsec.d -f /etc/ipsec.d/nsspassword \
-  -n "ca test v0" -t "CT,C,C"
-
-# re-check
-certutil -L -d sql:/etc/ipsec.d -f /etc/ipsec.d/nsspassword
-```
-
-You should now see something like this (just an example):
-
-![cert](images/cert.png)
-<br />
+> Tip: ACM’s `certificate_chain.pem` already contains **subordinate + root** in that order. If yours doesn’t, `cat subCA.pem rootCA.pem > certificate_chain.pem` before copying.
 
 
 ## 4. Create a Customer Gateway (CGW) 
@@ -337,7 +339,7 @@ sudo ipsec auto --up aws-tun-1
 sudo ipsec auto --up aws-tun-2
 ```
 
-Next, run `ipsec status` and now you should see something like **Total IPsec connections: loaded 2, routed 1, active 1** which means that your tunnel is up. 
+Next, run `ipsec status` and now you should see something like **Total IPsec connections: loaded 4, routed 1, active 1** which means that your tunnel is up. 
 
 And so now if you go back to the VPN console you will see one of the tunnel is up as follows:
 
@@ -365,107 +367,211 @@ Wait for a minute and it should now look like this:
 <br />
 
 
-[HAVEN'T SORTED THE ONES BELOW, BUT BASICALLY ENSURE ALL SUBNETS ALLOW CUDN AND ADD SG INBOUND RULES]
+## 9. Modify VPC route tables
 
-## 11. Modify VPC route tables
+Next, we will add route to the CUDN targeting our CGW for each VPC that should reach the cluster overlay. On the navigation tab, find **Route tables**. Filter it based on your VPC ID.
 
-In each VPC that should reach the cluster overlay (your CUDN), add a route:
+Select one of the private subnets. Under **Routes** tab, go to **Edit routes**. Click **Add route**. For **Destination**, put in CUDN subnet (e.g., `192.168.1.0/24`), and as **Target** pick **Transit Gateway** and select the TGW you created, and click **Save changes**.
 
-* **Destination**: your CUDN subnet (e.g., `192.168.1.0/24`)
-* **Target**: the **TGW attachment**
-  (BGP can also advertise it if you prefer dynamic routing.) 
-
-  [SCREENSHOT HERE]
+Repeat this with other private/public subnets you want to route CUDN to as needed.
 
 
-## 12. Network policy & test access
+## 10. Security groups and NACLs
 
-* **Security groups**
+On the navigation tab, find **Security groups**. Filter it based on your VPC ID.
 
-  * **Test EC2 SG (in the VPC you attached):**
+Select one of the worker nodes' security groups. Under **Inbound rules**, go to **Edit inbound rules**. Click **Add rule**. For **Type**, pick **All ICMP - IPv4**, and as **Source**, put in the CUDN subnet (e.g., `192.168.1.0/24`), and click **Save rules**. 
 
-    * Inbound: ICMP from your **CUDN** (e.g., `192.168.1.0/24`)
-    * (Optional) TCP 22/80 from `192.168.1.0/24` for SSH/curl tests
+Optionally, you can also add rule for TCP 22/80 from the CUDN for SSH/curl tests.
 
-[SCREENSHOT HERE]
-
-  
-* **Optional “return route” for other CUDN workloads**
-
-  * Only if **other** VMs/pods on the CUDN must reach the VPC **via the ipsec VM**:
-
-    ```bash
-    sudo ip route add <VPC_CIDR> via 192.168.1.10
-    nmcli connection modify cudn +ipv4.routes "<VPC_CIDR> 192.168.1.10"
-    nmcli connection up cudn
-    ```
+Be sure to also check **NACLs** on the VPC subnets to allow ICMP/TCP from `192.168.1.0/24` both ways.
 
 
-## 13. Download the VPN device config (for reference)
+## 11. Ping test
 
-VPN connection → **Download configuration** → **Libreswan / Generic**.
-You’ll copy the **tunnel outside IPs** into `right=` and confirm IKE params.
+Now that everything is set, let's try to ping from VM to an EC2 instance in the VPC. Pick an EC2 instance, e.g. bastion host, or bare metal instance, etc. to do so. 
 
-[SCREENSHOT HERE]
+Note that if you launch a throwaway EC2 for testing, **private subnet** is safer (no public IP). Attach the **same TGW RTB**, and use **Session Manager** instead of a keypair if you want to skip inbound SSH. Security group needs **ICMP** (and optionally TCP/22) **from 192.168.1.0/24**.
 
-
-## 14. Egress sanity
-
-Ensure cluster egress allows UDP **500/4500** to the **two tunnel outside IPs**.
-
-[SCREENSHOT HERE]
-
-
-## 15. Bring up tunnels & verify
-
-* On the ipsec VM:
-
-  ```bash
-  sudo ipsec up aws-tun-1
-  sudo ipsec status
-  ```
-* Quick tests:
-
-  ```bash
-  # from AWS EC2 (e.g., 10.10.0.10) to CUDN:
-  ping -c3 192.168.1.10
-  # from ipsec VM to EC2:
-  ping -I 192.168.1.10 -c3 10.10.0.10
-  ```
-* Deep-dive:
-
-  ```bash
-  sudo ip xfrm policy
-  sudo ip xfrm state
-  sudo ipsec whack --trafficstatus
-  sudo timeout 6 sh -c "tcpdump -ni any 'udp port 4500 or esp' & ping -c3 -W2 -I 192.168.1.10 10.10.0.10 >/dev/null"
-  ```
-* Failover:
-
-  ```bash
-  sudo ipsec down aws-tun-1
-  sudo ipsec up aws-tun-2
-  sudo ipsec status
-  ```
-
-[SCREENSHOT HERE]
-
-
-## 16. Troubleshooting quick hits (optional)
-
-These are some troubleshooting steps if needed.
+Take a note on the private IPv4 address. Then on the VM console run:
 
 ```bash
-# remove accidental static next-hop on the ipsec VM (traffic should match xfrm SAs)
-sudo ip route del <VPC_CIDR> || true
-
-# normalize perms/labels
-sudo sed -i -e 's/\r$//' /etc/ipsec.conf /etc/ipsec.d/*.conf /etc/ipsec.d/*.secrets 2>/dev/null
-sudo chmod 644 /etc/ipsec.d/*.conf 2>/dev/null || true
-sudo chmod 600 /etc/ipsec.secrets /etc/ipsec.d/*.secrets 2>/dev/null || true
-sudo restorecon -Rv /etc/ipsec.conf /etc/ipsec.secrets /etc/ipsec.d >/dev/null
-
-# temporarily relax RPF during asymmetry debug
-echo -e "net.ipv4.conf.all.rp_filter=0\nnet.ipv4.conf.default.rp_filter=0" | sudo tee /etc/sysctl.d/99-ipsec-debug.conf
-sudo sysctl -p /etc/sysctl.d/99-ipsec-debug.conf
+ping -I <CUDN-IP> -c3 <EC2-private-IP>
 ```
+
+And then from the EC2 instance:
+
+```bash
+ping -c3 <CUDN-IP>
+```
+
+
+## 12. Optional: Route-based (VTI) IPsec
+
+**Why do this?**
+
+* **Scale & simplicity:** with VTIs you route like normal Linux—no per-subnet policy rules. Adding more VPC CIDRs later is just adding routes.
+* **Better availability:** you can ECMP two tunnels (one per TGW endpoint). That gives fast failover on the *tunnel* path. (Note: this is **not** AZ-resilient if you still have only one VM.)
+
+
+### 12.1. Replace policy-based with route-based config
+
+```bash
+sudo tee /etc/ipsec.conf >/dev/null <<'EOF'
+config setup
+    uniqueids=yes
+    plutodebug=none
+    nssdir=/etc/ipsec.d
+
+conn %default
+    keyexchange=ikev2
+    authby=rsasig
+    fragmentation=yes
+    mobike=no
+    narrowing=yes
+
+    left=%defaultroute
+    leftsendcert=always
+    leftcert=test-cert-cgw
+    leftid=%fromcert
+    rightid=%fromcert
+    rightca=%same
+
+    # route-based: allow any, routing decides what actually traverses the tunnel
+    leftsubnet=0.0.0.0/0
+    rightsubnet=0.0.0.0/0
+
+    ikelifetime=28800s
+    ike=aes256-sha2_256;modp2048,aes128-sha2_256;modp2048
+    salifetime=3600s
+    esp=aes256-sha2_256;modp2048,aes128-sha2_256;modp2048
+    pfs=yes
+
+    dpddelay=10
+    retransmit-timeout=60
+
+conn tgw-tun-1
+    also=%default
+    right=44.228.33.1
+    mark=0x1/0xffffffff
+    reqid=1
+
+    vti-interface=ipsec10
+    vti-routing=yes
+    vti-shared=no
+    leftvti=169.254.218.106/30
+    rightvti=169.254.218.105/30
+
+    auto=start
+
+conn tgw-tun-2
+    also=%default
+    right=50.112.212.105
+    mark=0x2/0xffffffff
+    reqid=2
+
+    vti-interface=ipsec1
+    vti-routing=yes
+    vti-shared=no
+    leftvti=169.254.86.186/30
+    rightvti=169.254.86.185/30
+
+    auto=start
+EOF
+```
+
+If you haven’t already, import your certs to the VM per Step 3 above.
+
+
+### 12.2. System tunables for route-based IPsec
+
+> Two key rules:
+>
+> 1. **VTIs:** `disable_policy=1`, `disable_xfrm=0` (encrypt on the VTI, but don’t do policy lookups).
+> 2. **Physical NICs:** `disable_policy=1`, `disable_xfrm=1` (never apply XFRM on the underlay).
+
+```bash
+# apply & (re)start
+systemctl restart ipsec
+
+# VTIs: encryption happens here; no policy lookup
+sysctl -w net.ipv4.conf.ipsec10.disable_policy=1
+sysctl -w net.ipv4.conf.ipsec10.disable_xfrm=0
+sysctl -w net.ipv4.conf.ipsec1.disable_policy=1
+sysctl -w net.ipv4.conf.ipsec1.disable_xfrm=0
+
+# underlay NICs: never transform/encap here
+sysctl -w net.ipv4.conf.enp1s0.disable_policy=1
+sysctl -w net.ipv4.conf.enp1s0.disable_xfrm=1
+sysctl -w net.ipv4.conf.enp2s0.disable_policy=1
+sysctl -w net.ipv4.conf.enp2s0.disable_xfrm=1
+
+# forwarding + relaxed reverse-path checks (asymmetric return possible with ECMP)
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv4.conf.all.rp_filter=0
+sysctl -w net.ipv4.conf.enp1s0.rp_filter=0
+sysctl -w net.ipv4.conf.enp2s0.rp_filter=0
+sysctl -w net.ipv4.conf.ipsec10.rp_filter=0
+sysctl -w net.ipv4.conf.ipsec1.rp_filter=0
+
+# make sure VTIs are up (they should come up automatically, but just in case)
+ip link set ipsec10 up
+ip link set ipsec1 up
+
+# (optional, NAT-T + ESP overhead can require lower MTU, hence this tweak)
+ip link set ipsec10 mtu 1436 || true
+ip link set ipsec1  mtu 1436 || true
+```
+
+Optionally, you can also persist VTI sysctls to survive reboots:
+
+```bash
+cat >/etc/sysctl.d/99-ipsec-vti.conf <<'EOF'
+net.ipv4.ip_forward=1
+net.ipv4.conf.all.rp_filter=0
+net.ipv4.conf.enp1s0.rp_filter=0
+net.ipv4.conf.enp2s0.rp_filter=0
+net.ipv4.conf.ipsec10.rp_filter=0
+net.ipv4.conf.ipsec1.rp_filter=0
+net.ipv4.conf.enp1s0.disable_policy=1
+net.ipv4.conf.enp1s0.disable_xfrm=1
+net.ipv4.conf.enp2s0.disable_policy=1
+net.ipv4.conf.enp2s0.disable_xfrm=1
+net.ipv4.conf.ipsec10.disable_policy=1
+net.ipv4.conf.ipsec10.disable_xfrm=0
+net.ipv4.conf.ipsec1.disable_policy=1
+net.ipv4.conf.ipsec1.disable_xfrm=0
+EOF
+sysctl --system
+```
+
+
+### 12.3. Route VPC CIDRs over the VTIs (ECMP)
+
+```bash
+# replace 10.10.0.0/16 with your VPC CIDR(s)
+ip route replace 10.10.0.0/16 \
+  nexthop dev ipsec10 weight 1 \
+  nexthop dev ipsec1  weight 1
+```
+
+
+### 12.4. Quick verification
+
+```bash
+# path should be via a VTI
+ip route get 10.10.11.36 from 192.168.1.10
+
+# ICMP test (use one of your EC2 private IPs)
+ping -I 192.168.1.10 -c 3 10.10.11.36
+
+# SAs should show increasing packets/bytes when you ping/ssh
+ip -s xfrm state | sed -n '1,160p'
+
+# optional: confirm tunnel IKE/Child SAs are up
+ipsec status | grep -E "established|routing|vti-interface"
+```
+
+#### Availability footnote
+
+ECMP across **two tunnels on one VM** protects against a single TGW endpoint flap and gives smooth failover, but it’s not AZ-resilient. For true HA, run **two IPsec VMs** in different AZs (each with both tunnels) behind a health-checked on-prem router, or a pair of routers that can prefer the healthy VM.

@@ -26,6 +26,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Using a Private IngressController with CloudFront on a ROSA Cluster](/experts/rosa/nlb-cf-vpco)
 * [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
 * [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
+* [Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan](/experts/rosa/s2s-vpn)
 
 #### Classic
 
