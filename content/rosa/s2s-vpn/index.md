@@ -18,7 +18,7 @@ On AWS, the **TGW** terminates **two redundant tunnels** (two “outside” IPs)
 
 NAT specifics: when the VM egresses, it traverses the [NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html). If that NAT uses multiple EIPs, AWS may select different EIPs per connection; this is fine because the VPN authenticates via certificates, not source IP.
 
-![s2svpn-v2](images/s2svpn-v2.png)
+![s2svpn-v3](images/s2svpn-v3.png)
 <br />
 
 
