@@ -560,10 +560,10 @@ ip route replace 10.10.0.0/16 \
 
 ```bash
 # path should be via a VTI
-ip route get 10.10.11.36 from 192.168.1.10
+ip route get <EC2-private-IP> from <CUDN-IP>
 
 # ICMP test (use one of your EC2 private IPs)
-ping -I 192.168.1.10 -c 3 10.10.11.36
+ping -I <CUDN-IP> -c3 <EC2-private-IP>
 
 # SAs should show increasing packets/bytes when you ping/ssh
 ip -s xfrm state | sed -n '1,160p'
@@ -571,6 +571,12 @@ ip -s xfrm state | sed -n '1,160p'
 # optional: confirm tunnel IKE/Child SAs are up
 ipsec status | grep -E "established|routing|vti-interface"
 ```
+
+And if you go to VPN console:
+
+![both-tunnels-up](images/both-tunnels-up.png)
+<br />
+
 
 #### Availability footnote
 
