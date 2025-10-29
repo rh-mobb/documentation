@@ -34,7 +34,7 @@ In short: this is a practical and maintainable way to reach ROSA-hosted VMs **wi
 
 ## 0. Prerequisites
 
-* A classic or HCP ROSA cluster v4.14 and above.
+* A classic or HCP ROSA cluster v4.18 and above.
 * Bare metal instance machine pool (we are using `m5.metal`, feel free to change as needed), and OpenShift Virtualization operator installed. You can follow Step 2-5 from [this guide](https://cloud.redhat.com/experts/rosa/ocp-virt/basic-gui/) to do so.
 * The oc CLI # logged in.
 
@@ -60,11 +60,11 @@ spec:
     topology: Layer2
 EOF
 ```
-
+Disabling IPAM also disables the network enforcing source/destination IP security. This is needed to allow the ipsec VM below to act as a gateway to pass traffic for other IP addresses. 
 
 ## 2. Create the ipsec VM (cert-based IPsec, NAT-initiated)
 
-Go to Red Hat Hybrid Cloud Console. On the navigation bar, select **Virtualization → Catalog**, and from the top, change the **Project** to `vpn-infra`. Then under **Create new VirtualMachine → Instance types → Select volume to boot from**, choose **CentOS Stream 10** (or 9 is fine). 
+Go to your cluster's web console. On the navigation bar, select **Virtualization → Catalog**, and from the top, change the **Project** to `vpn-infra`. Then under **Create new VirtualMachine → Instance types → Select volume to boot from**, choose **CentOS Stream 10** (or 9 is fine). 
 
 ![virt-catalog](images/virt-catalog.png)
 <br />
@@ -74,7 +74,7 @@ Scroll down and name it `ipsec`, and select **Customize VirtualMachine**.
 ![virt-catalog-1](images/virt-catalog-1.png)
 <br />
 
-Select **Network** on navigation bar. Under **Network interfaces**, click **Add network interface**. Name it `cudn`.
+Select **Network** on navigation bar. Under **Network interfaces**, click **Add network interface**. Name it `cudn`. Select the vm-network you created earlier.
 
 ![virt-cudn-0](images/virt-cudn-0.png)
 <br />
