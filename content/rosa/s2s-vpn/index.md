@@ -190,25 +190,24 @@ virtctl scp ./left-cert.p12  vpn-infra/ipsec:/root/left-cert.p12
 virtctl scp ./certificate_chain.pem vpn-infra/ipsec:/root/certificate_chain.pem
 ```
 
-**Option B — using openssl base64:**
+**Option B — if you only have PEMs on the VM (build P12 on the VM):**
 
 ```bash
-# on local machine
-openssl base64 -A -in left-cert.p12          > left-cert.p12.b64
-openssl base64 -A -in certificate_chain.pem  > certificate_chain.pem.b64
+# copy PEMs instead, then build the PKCS#12 on the VM
+virtctl scp ./private_key.pem vpn-infra/ipsec:/root/private_key.pem
+virtctl scp ./certificate.pem  vpn-infra/ipsec:/root/certificate.pem
+virtctl scp ./certificate_chain.pem vpn-infra/ipsec:/root/certificate_chain.pem
 
-# in the VM console (paste the contents when prompted)
-cat > /root/left-cert.p12.b64 <<'EOF'
-<paste left-cert.p12.b64 contents here>
-EOF
-cat > /root/certificate_chain.pem.b64 <<'EOF'
-<paste certificate_chain.pem.b64 contents here>
-EOF
-
-# decode in the VM
-base64 -d /root/left-cert.p12.b64         > /root/left-cert.p12
-base64 -d /root/certificate_chain.pem.b64 > /root/certificate_chain.pem
-rm -f /root/*.b64
+# on the VM:
+sudo -i
+set -euxo pipefail
+openssl pkcs12 -export \
+  -inkey /root/private_key.pem \
+  -in /root/certificate.pem \
+  -certfile /root/certificate_chain.pem \
+  -name test-cert-cgw \
+  -out /root/left-cert.p12 \
+  -passout pass:changeit
 ```
 
 Now run the import:
@@ -219,14 +218,11 @@ set -euxo pipefail
 
 LEAF_P12="/root/left-cert.p12"            # already on the VM
 CHAIN="/root/certificate_chain.pem"       # already on the VM
-NICK='test-cert-cgw'                      # must match leftcert= in ipsec.conf
-P12PASS='change-me'                        # temporary; any value works
+NICK='test-cert-cgw'                      # use this in ipsec.conf: leftcert
+P12PASS='changeit'                        # the PKCS#12 password you used
 
-# fresh NSS DB
-systemctl stop ipsec || true
-rm -f /etc/ipsec.d/{cert9.db,key4.db,pkcs11.txt} /etc/ipsec.d/*.db.lock
-certutil -N -d sql:/etc/ipsec.d --empty-password
-command -v restorecon >/dev/null && restorecon -Rv /etc/ipsec.d || true
+# initialize (idempotent)
+ipsec initnss || true
 
 # import CA chain with CA trust (split CHAIN into individual certs)
 awk 'BEGIN{c=0} /BEGIN CERT/{c++} {print > ("/tmp/ca-" c ".pem")}' "$CHAIN"
@@ -259,6 +255,14 @@ With certificate-auth, AWS doesn’t require a fixed public IP on the CGW; that�
 
 
 ## 5. Create (or use) a Transit Gateway (TGW)
+
+Note that this setup also works (and tested) with Virtual Gateway (VGW). So when to choose VGW or TGW:
+
+- Use VGW when you only need VPN to one VPC, don’t require IPv6 over the VPN, and want the lowest ongoing cost (no TGW hourly/attachment fees; you will just pay standard Site-to-Site VPN hourly + data transfer). 
+
+- Use TGW when you need a hub-and-spoke to many VPCs/accounts, inter-VPC routing, or IPv6 VPN. Expect extra charges such as TGW hourly, per-attachment hourly, and per-GB data processing, on top of VPN. Also add a one-line cost link.
+
+Continue with this step if you choose TGW.
 
 On the left navigation tab, find **Transit Gateways → Create transit gateway**. Give it a name like `tgw test v0`, leave the default options, and click **Create transit gateway**. 
 
