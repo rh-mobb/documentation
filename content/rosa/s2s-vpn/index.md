@@ -276,7 +276,7 @@ Give it a name like `tgw attach v0`, pick the transit gateway you just created a
 
 ## 6. Create the Site-to-Site VPN (Target = TGW)
 
-Still on VPC console, find → **Site-to-Site VPN connections → Create VPN connection**. 
+Still on VPC console, find → **Site-to-Site VPN connections → Create VPN connection**.
 
 Give it a name like `vpn test v0`. Choose **Transit gateway** as **Target gateway type** and choose your TGW from the **Transit gateway** dropdown. Then choose **Existing** for **Customer gateway**, and select the certificate-based CGW from previous step from the **Customer gateway ID** options.
 
@@ -400,8 +400,57 @@ Optionally, you can also add rule for TCP 22/80 from the CUDN for SSH/curl tests
 
 Be sure to also check **NACLs** on the VPC subnets to allow ICMP/TCP from `192.168.1.0/24` both ways.
 
+## 11. Configure networking on other VMs
 
-## 11. Ping test
+Other OpenShift Virtualization VMs will each need some configuration to make networking work for them.
+
+### 11.1 Add a secondary network interface for the CUDN
+
+Like the ipsec VM, other VMs will also need a secondary network interface connected to the `vm-network` ClusterUserDefinedNetwork.
+
+When creating a new VM, select **Customize VirtualMachine**, then select **Network** on navigation bar. For existing VMs, go to the VM's **Configuration** tab and then select **Network** from the side navigation. Under **Network interfaces**, click **Add network interface**. Name it `cudn`. Select the vm-network you created earlier.
+
+![virt-cudn-0](images/virt-cudn-0.png)
+<br />
+
+Depending on the specifics of the VM, you may need to reboot the VM before it can see the new network interface, or it may be available immediately.
+
+### 11.2 Set an address for the network interface
+
+Since IPAM is turned off on the cudn, each VM has to be given an IP address manually.
+
+Log into the VM using **Open web console**, `virtctl console`, or `virtctl ssh`, if configured.
+
+Then as root (run `sudo -i`), let's first identify the non-primary NIC (adjust the selector if needed):
+
+```bash
+ip -4 addr show
+# or:
+NIC=$(nmcli -t -f DEVICE,STATE,TYPE device | awk -F: '$2=="connected" && $3=="ethernet"{print $1}' | tail -n1)
+```
+
+Run the following inside the VM to give the second NIC (`cudn`) an IP (note that we are using Centos 10 on this guide, so please adjust the NIC name accordingly if you are using different OS). 
+Replace the `192.168.1.20/24` with a unique address per VM within the CUDN CIDR (which in our examples has been `192.168.1.0/24`) and ensure the number after the slash matches the subnet mask of the CIDR.
+
+```bash
+ip -4 a
+nmcli con add type ethernet ifname enp2s0 con-name cudn \
+  ipv4.addresses 192.168.1.20/24 ipv4.method manual autoconnect yes
+nmcli con mod cudn 802-3-ethernet.mtu 1400
+nmcli con up cudn
+```
+
+### 11.2 Set the ipsec VM as the next hop for VPC traffic
+
+Each VM needs to know that it should send traffic destined for the VPC through the ipsec VM.
+
+As root, run the following. Replace 10.10.0.0/16 with your VPC's CIDR. Replace 192.168.1.10 with the IP address of the ipsec VM.
+
+```bash
+ip route add 10.10.0.0/16 via 192.168.1.10
+```
+
+## 12. Ping test
 
 Now that everything is set, let's try to ping from VM to an EC2 instance in the VPC. Pick an EC2 instance, e.g. bastion host, or bare metal instance, etc. to do so. 
 
@@ -420,7 +469,7 @@ ping -c3 <CUDN-IP>
 ```
 
 
-## 12. Optional: Route-based (VTI) IPsec
+## 13. Optional: Route-based (VTI) IPsec
 
 **Why do this?**
 
@@ -428,7 +477,7 @@ ping -c3 <CUDN-IP>
 * **Better availability:** you can ECMP two tunnels (one per TGW endpoint). That gives fast failover on the *tunnel* path. (Note: this is **not** AZ-resilient if you still have only one VM.)
 
 
-### 12.1. Replace policy-based with route-based config
+### 13.1. Replace policy-based with route-based config
 
 ```bash
 sudo tee /etc/ipsec.conf >/dev/null <<'EOF'
@@ -497,7 +546,7 @@ EOF
 If you haven’t already, import your certs to the VM per Step 3 above.
 
 
-### 12.2. System tunables for route-based IPsec
+### 13.2. System tunables for route-based IPsec
 
 > Two key rules:
 >
@@ -560,7 +609,7 @@ sysctl --system
 ```
 
 
-### 12.3. Route VPC CIDRs over the VTIs (ECMP)
+### 13.3. Route VPC CIDRs over the VTIs (ECMP)
 
 ```bash
 # replace 10.10.0.0/16 with your VPC CIDR(s)
@@ -570,7 +619,7 @@ ip route replace 10.10.0.0/16 \
 ```
 
 
-### 12.4. Quick verification
+### 13.4. Quick verification
 
 ```bash
 # path should be via a VTI
