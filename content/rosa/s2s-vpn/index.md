@@ -103,6 +103,7 @@ ip -4 a
 nmcli con add type ethernet ifname enp2s0 con-name cudn \
   ipv4.addresses 192.168.1.10/24 ipv4.method manual autoconnect yes
 nmcli con mod cudn 802-3-ethernet.mtu 1400
+nmcli con mod cudn ipv4.routes "10.10.0.0/16 192.168.1.10"
 nmcli con up cudn
 ```
 
@@ -608,11 +609,13 @@ sysctl --system
 
 ```bash
 # replace 10.10.0.0/16 with your VPC CIDR(s)
-ip route replace 10.10.0.0/16 \
-  nexthop dev ipsec10 weight 1 \
-  nexthop dev ipsec1  weight 1
+nmcli con mod cudn -ipv4.routes "10.10.0.0/16 192.168.1.10"
+nmcli con mod ipsec10 ipv4.routes "10.10.0.0/16" ipv4.metric 1
+nmcli con mod ipsec1  ipv4.routes "10.10.0.0/16" ipv4.metric 1
+nmcli con up cudn
+nmcli con up ipsec10
+nmcli con up ipsec1
 ```
-
 
 ### 13.4. Quick verification
 
