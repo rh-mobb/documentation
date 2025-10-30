@@ -90,15 +90,13 @@ Then click the **Open web console** and log into the VM using the credentials on
 
 Alternatively, you can run this on your CLI terminal: `virtctl console -n vpn-infra ipsec`, and use the same credentials to log into the VM. 
 
-Then as root (run `sudo -i`), let's first identify the non-primary NIC (adjust the selector if needed):
+Then as root (run `sudo -i`), let's first identify the ifname of the non-primary NIC. Depending on OS, this may either be disabled, or enabled with no IP address assigned.
 
 ```bash
-ip -4 addr show
-# or:
-NIC=$(nmcli -t -f DEVICE,STATE,TYPE device | awk -F: '$2=="connected" && $3=="ethernet"{print $1}' | tail -n1)
+nic -t
 ```
 
-Run the following inside the VM to give the second NIC (`cudn`) an IP (note that we are using Centos 10 on this guide, so please adjust the NIC name accordingly if you are using different OS):
+Run the following inside the VM to give the second NIC (`cudn`) an IP. Replace `enp2s0` with the name of the interface from the previous command.
 
 ```bash
 ip -4 a
@@ -239,7 +237,7 @@ pk12util -i "$LEAF_P12" -d sql:/etc/ipsec.d -W "$P12PASS" -n "$NICK"
 echo "=== NSS certificates ==="; certutil -L -d sql:/etc/ipsec.d
 echo "=== NSS keys         ==="; certutil -K -d sql:/etc/ipsec.d
 
-systemctl start ipsec
+systemctl enable --now ipsec
 ```
 
 > Tip: ACM’s `certificate_chain.pem` already contains **subordinate + root** in that order. If yours doesn’t, `cat subCA.pem rootCA.pem > certificate_chain.pem` before copying.
@@ -421,22 +419,18 @@ Since IPAM is turned off on the cudn, each VM has to be given an IP address manu
 
 Log into the VM using **Open web console**, `virtctl console`, or `virtctl ssh`, if configured.
 
-Then as root (run `sudo -i`), let's first identify the non-primary NIC (adjust the selector if needed):
+Then as root (run `sudo -i`), let's first identify the ifname of the non-primary NIC. Depending on OS, this may either be disabled, or enabled with no IP address assigned.
 
 ```bash
-ip -4 addr show
-# or:
-NIC=$(nmcli -t -f DEVICE,STATE,TYPE device | awk -F: '$2=="connected" && $3=="ethernet"{print $1}' | tail -n1)
+nmcli -t
 ```
 
-Run the following inside the VM to give the second NIC (`cudn`) an IP (note that we are using Centos 10 on this guide, so please adjust the NIC name accordingly if you are using different OS). 
-Replace the `192.168.1.20/24` with a unique address per VM within the CUDN CIDR (which in our examples has been `192.168.1.0/24`) and ensure the number after the slash matches the subnet mask of the CIDR.
+Run the following inside the VM to give the second NIC (`cudn`) an IP. Replace `enp2s0` with the name of the interface from the previous command. Replace the `192.168.1.20/24` with a unique address per VM within the CUDN CIDR (which in our examples has been `192.168.1.0/24`) and ensure the number after the slash matches the subnet mask of the CIDR.
 
 ```bash
 ip -4 a
 nmcli con add type ethernet ifname enp2s0 con-name cudn \
   ipv4.addresses 192.168.1.20/24 ipv4.method manual autoconnect yes
-nmcli con mod cudn 802-3-ethernet.mtu 1400
 nmcli con up cudn
 ```
 
@@ -447,7 +441,8 @@ Each VM needs to know that it should send traffic destined for the VPC through t
 As root, run the following. Replace 10.10.0.0/16 with your VPC's CIDR. Replace 192.168.1.10 with the IP address of the ipsec VM.
 
 ```bash
-ip route add 10.10.0.0/16 via 192.168.1.10
+nmcli con mod cudn ipv4.routes "10.10.0.0/16 192.168.1.10"
+nmcli con up cudn
 ```
 
 ## 12. Ping test
