@@ -31,6 +31,14 @@ This approach differs from [adding an Ingress Controller to a ROSA cluster](http
 
 > **Note**: This architecture has important TLS considerations to be aware of. AWS Application Load Balancers do not forward Server Name Indication (SNI) to their target groups as explicitly confirmed by AWS. Normally this would be problematic because OpenShift's IngressController relies primarily on SNI for routing HTTPS connections. However, this architecture works because the ALB terminates the original TLS connection and creates a new one to the NLB while preserving the HTTP Host header. When the IngressController receives a connection without SNI information, it falls back to using the Host header for routing. This makes the wildcard certificate approach essential for this architecture to function properly.
 
+In addition, if you have multiple clusters in a single region, then this setup will only work if all of these conditions met:
+- Every cluster has its own unique subdomain (or sub-subdomain), e.g. `apps-a.example.com`, `apps-b.example.com`, etc.
+- Every cluster defines its own additional IngressController that serves that specific subdomain.
+- Every cluster is covered by an ACM TLS certificate that matches the hostnames it will serve (either its own wildcard, e.g. `*.apps-a.example.com`, or a broader wildcard that cleanly covers all clusters).
+- The NLB created for that IngressController is registered as a target in front of an ALB:
+  - either one ALB per cluster, or
+  - a shared ALB with separate target groups and host-based routing rules that send `apps-a.*` traffic to cluster A, `apps-b.*` traffic to cluster B, etc.
+
 
 ## Prerequisites
 
