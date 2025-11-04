@@ -475,6 +475,37 @@ ping -c3 <CUDN-IP>
 
 ### 13.1. Replace policy-based with route-based config
 
+First, we need to find the Inside IP Address for the Customer Gateway for each tunnel. We will use this in the `leftvti` parameter when configuring Libreswan.
+
+In the AWS VPC console, find → **Site-to-Site VPN connections** and click on the Site-to-Site VPN you made earlier. Click the **Download Configuration** button. Choose **Vendor** `Generic`, set **IKE version** to `Ikev2`, and click **Download**.
+
+The file has sections for each tunnel. Under **IPSec Tunnel #1** look for **#3 Tunnel Interface Configuration** and find the **Inside IP Addresses** line for **Customer Gateway**. Note the CIDR that appears there for tunnel 1. Repeat the process in the **IPSec Tunnel #2** section.
+
+Here's a sample of the configuration file with ... where lines were elided for clarity:
+
+```
+Amazon Web Services
+Virtual Private Cloud
+...
+IPSec Tunnel #1
+================================================================================
+...
+#3: Tunnel Interface Configuration
+...
+Inside IP Addresses
+  - Customer Gateway         		: 169.254.218.106/30
+...
+IPSec Tunnel #2
+================================================================================
+...
+#3: Tunnel Interface Configuration
+Inside IP Addresses
+  - Customer Gateway         		: 169.254.86.186/30
+...
+```
+
+In the AWS console, go to **VPC**,
+
 ```bash
 sudo tee /etc/ipsec.conf >/dev/null <<'EOF'
 config setup
@@ -483,7 +514,7 @@ config setup
     nssdir=/etc/ipsec.d
 
 conn %default
-    keyexchange=ikev2
+    keyexchange=ikev2                  # change to ikev2=insist if you're running Centos/RHEL 9
     authby=rsasig
     fragmentation=yes
     mobike=no
@@ -491,7 +522,7 @@ conn %default
 
     left=%defaultroute
     leftsendcert=always
-    leftcert=test-cert-cgw
+    leftcert=test-cert-cgw             # change this to your cert nickname
     leftid=%fromcert
     rightid=%fromcert
     rightca=%same
@@ -501,39 +532,35 @@ conn %default
     rightsubnet=0.0.0.0/0
 
     ikelifetime=28800s
-    ike=aes256-sha2_256;modp2048,aes128-sha2_256;modp2048
+    ike=aes128-sha1;modp2048
     salifetime=3600s
-    esp=aes256-sha2_256;modp2048,aes128-sha2_256;modp2048
+    esp=aes128-sha1
     pfs=yes
 
     dpddelay=10
     retransmit-timeout=60
 
 conn tgw-tun-1
-    also=%default
-    right=44.228.33.1
+    right=44.228.33.1                   # change this to your tunnel 1 outside IP
     mark=0x1/0xffffffff
     reqid=1
 
     vti-interface=ipsec10
     vti-routing=yes
     vti-shared=no
-    leftvti=169.254.218.106/30          # change this to your <CGW inside IP>/30
-    rightvti=169.254.218.105/30         # change this to your <AWS inside IP>/30
+    leftvti=169.254.218.106/30          # change this to your Customer Gateway Inside IP CDIR
 
     auto=start
 
 conn tgw-tun-2
-    also=%default
-    right=50.112.212.105
+    right=50.112.212.105                # change this to your tunnel 2 outside IP
     mark=0x2/0xffffffff
     reqid=2
 
     vti-interface=ipsec1
     vti-routing=yes
     vti-shared=no
-    leftvti=169.254.86.186/30
-    rightvti=169.254.86.185/30
+    leftvti=169.254.86.186/30           # change this to your Customer Gateway Inside IP CIDR
 
     auto=start
 EOF
