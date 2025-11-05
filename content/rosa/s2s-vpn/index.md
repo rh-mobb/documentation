@@ -37,11 +37,153 @@ In short: this is a practical and maintainable way to reach ROSA-hosted VMs **wi
 * A classic or HCP ROSA cluster v4.18 and above.
 * Bare metal instance machine pool (we are using `m5.metal`, feel free to change as needed), and OpenShift Virtualization operator installed. You can follow Step 2-5 from [this guide](https://cloud.redhat.com/experts/rosa/ocp-virt/basic-gui/) to do so.
 * The oc CLI # logged in.
+* A CIDR block that will be used for the VM network inside the cluster and should not overlap with CIDRs used in your VPC or networks connected to your VPC. We use `192.168.1.0/24` in this guide.
 
 
-## 1. Create the project and secondary network (CUDN)
+## 1. Create Private CA and Certificates (ACM PCA) 
 
-Create `vpn-infra` project and the ClusterUserDefinedNetwork (CUDN) object.
+Go to AWS Console and select **Certificate Manager**. Then on the left navigation tab, click **AWS Private CAs**, and then click **Create a private CA**.
+
+On the **Create private certificate authority (CA)** page, keep **CA type options** as **Root**. You could leave the default options for simplicity sake. We would recommend, however, give it a name; so for example, here we give the **Common name (CN)** `ca test v0`. Acknowledge the pricing section, and click **Create CA**.
+
+And then on the root CA page, go to the **Action** tab on upper right side, and select **Install CA certificate**. On the **Install root CA certificate** page, you can leave the default configurations as-is and click **Confirm and Install**. The CA should now be **Active**.
+
+Next, create a subordinate CA by repeating the same thing but on the **CA type options**, choose **Subordinate**, and give it a **Common name (CN)** such as `ca sub test v0`. Confirm pricing and create it.
+
+And similarly, on the subordinate CA page, go to the **Action** tab on top right side, and select **Install CA certificate**. On the **Install subordinate CA certificate** page, under **Select parent CA**, choose the root CA you just created as the **Parent private CA**. And under **Specify the subordinate CA certificate parameters**, for the validity section, pick a date at least 13 months from now. You can leave the rest per default and click **Confirm and Install**.
+
+Once done, you will have these private CAs like this snippet below:
+
+![private-ca](images/private-ca.png)
+<br />
+
+Next, go the **AWS Certificate Manager (ACM)** page, and click **Request a certificate** button. On the **Certificate type** page, select **Request a private certificate**, and click **Next**.
+
+Under **Certificate authority details**, pick the subordinate CA as **Certificate authority**. Then under **Domain names**, pick a **Fully qualified domain name** (FQDN) of your choice. Note that this does not have to be resolvable, we just use it as an identity string for IKE. For example here, we use something like `s2s.vpn.test.mobb.cloud`. You can leave the rest per default, acknowledge **Certificate renewal permissions** and click **Request**.
+
+Wait for until the status is changed to **Issued**. Then, click **Export** button on top right side. Under **Encryption details**, enter a passphrase of your choice. You will be prompted to input this passphrase in the next steps, so please keep it handy. Acknowledge the billing and click **Generate PEM encoding**. And on the next page, click **Download all**, and finally click **Done**.
+
+Once downloaded you will be seeing 3 files on your local machine:
+- certificate.pem
+- certificate_chain.pem
+- private_key.pem
+
+Note if the downloaded files are in .txt, rename them into .pem files (you can simply `mv certificate.txt certificate.pem` and so forth for the rest of the files).
+
+Next, create the PKCS#12 for Libreswan. Feel free to change the name of the cert, but be sure you're on the same directory where the downloaded certificate files are:
+
+```bash
+openssl pkcs12 -export \
+  -inkey private_key.pem \
+  -in certificate.pem \
+  -certfile certificate_chain.pem \
+  -name test-cert-cgw \
+  -out left-cert.p12
+```
+
+This will prompt you with passphrase you created before.
+
+You now have the following files, which you should save for a future step.
+
+* `left-cert.p12` — the PKCS#12 you just created (leaf + key + chain)
+* `certificate_chain.pem` — the full CA chain (subordinate **then** root)
+
+
+## 2. Create a Customer Gateway (CGW) 
+
+Go to AWS console, find **VPC**. Then on the left navigation tab, find **Customer gateways → Create customer gateway**.
+
+On the **Certificate ARN** section, choose your ACM-PCA–issued cert. You can give it a name like `cgw test v0`, leave the default options, and click **Create customer gateway**.
+
+With certificate-auth, AWS doesn’t require a fixed public IP on the CGW; that’s why this pattern works behind NAT.
+
+
+## 3. Create (or use) a Transit Gateway (TGW)
+
+Note that this setup also works (and tested) with Virtual Gateway (VGW). So when to choose VGW or TGW:
+
+- Use VGW when you only need VPN to one VPC, don’t require IPv6 over the VPN, and want the lowest ongoing cost (no TGW hourly/attachment fees; you will just pay standard Site-to-Site VPN hourly + data transfer).
+
+- Use TGW when you need a hub-and-spoke to many VPCs/accounts, inter-VPC routing, or IPv6 VPN. Expect extra charges such as TGW hourly, per-attachment hourly, and per-GB data processing, on top of VPN. Also add a one-line cost link.
+
+Continue with this step if you choose TGW.
+
+On the left navigation tab, find **Transit Gateways → Create transit gateway**. Give it a name like `tgw test v0`, leave the default options, and click **Create transit gateway**.
+
+Next, let's attach the VPC(s) to the TGW. On the navigation tab, find **Transit Gateway attachments → Create transit gateway attachment**
+
+Give it a name like `tgw attach v0`, pick the transit gateway you just created as **Transit gateway ID**, and select **VPC** as the **Attachment type**. And on the **VPC attachment** section, select your VPC ID, and select the private subnet of each subnets you want reachable from the cluster. Once done, click **Create transit gateway attachment**.
+
+![tgw-attach](images/tgw-attach.png)
+<br />
+
+
+## 4. Create the Site-to-Site VPN (Target = TGW)
+
+Still on VPC console, find → **Site-to-Site VPN connections → Create VPN connection**.
+
+Give it a name like `vpn test v0`. Choose **Transit gateway** as **Target gateway type** and choose your TGW from the **Transit gateway** dropdown. Then choose **Existing** for **Customer gateway**, and select the certificate-based CGW from previous step from the **Customer gateway ID** options.
+
+![vpn-0](images/vpn-0.png)
+<br />
+
+Choose **Static** for **Routing options**. For **Local IPv4 network CIDR**, put in the CUDN CIDR, e.g. `192.168.1.0/24`. And for **Remote IPv4 network CIDR**, put in the cluster's VPC CIDR, e.g. `10.10.0.0/16`.
+
+![vpn-1](images/vpn-1.png)
+<br />
+
+Leave default options as-is and click **Create VPN connection**.
+
+At the moment, the status of both tunnels are **Down** and that is completely fine. For now, take note on the tunnels' outside IPs as we will use them for the Libreswan config in a future step.
+
+![tunnel-outside-ip](images/tunnel-outside-ip.png)
+<br />
+
+
+## 5. Associate VPC to TGW route tables
+
+On VPC navigation tab, find **Transit gateway route tables**, and go to **Propagations** tab, and ensure that both VPC and VPN resources/attachments are **Enabled**.
+
+![tgw-rtb-0](images/tgw-rtb-0.png)
+<br />
+
+
+Then click **Routes** tab, look under **Routes → Create static route**. For **CIDR**, put in CUDN CIDR `192.168.1.0/24` and under **Choose attachment**, pick the **VPN attachment** and click **Create static route**.
+
+![tgw-rtb-1](images/tgw-rtb-1.png)
+<br />
+
+
+Wait for a minute and it should now look like this:
+
+![tgw-rtb-2](images/tgw-rtb-2.png)
+<br />
+
+
+## 6. Modify VPC route tables
+
+Next, we will add route to the CUDN targeting our CGW for each VPC that should reach the cluster overlay. On the navigation tab, find **Route tables**. Filter it based on your VPC ID.
+
+Select one of the private subnets. Under **Routes** tab, go to **Edit routes**. Click **Add route**. For **Destination**, put in CUDN subnet (e.g., `192.168.1.0/24`), and as **Target** pick **Transit Gateway** and select the TGW you created, and click **Save changes**.
+
+Repeat this with other private/public subnets you want to route CUDN to as needed.
+
+
+## 7. Security groups and NACLs
+
+On the navigation tab, find **Security groups**. Filter it based on your VPC ID.
+
+Select one of the worker nodes' security groups. Under **Inbound rules**, go to **Edit inbound rules**. Click **Add rule**. For **Type**, pick **All ICMP - IPv4**, and as **Source**, put in the CUDN subnet (e.g., `192.168.1.0/24`), and click **Save rules**.
+
+Optionally, you can also add rule for TCP 22/80 from the CUDN for SSH/curl tests.
+
+Be sure to also check **NACLs** on the VPC subnets to allow ICMP/TCP from `192.168.1.0/24` both ways.
+
+
+
+## 8. Create the project and secondary network (CUDN)
+
+On your ROSA cluster, create `vpn-infra` project and the ClusterUserDefinedNetwork (CUDN) object.
 
 ```bash
 oc new-project vpn-infra || true
@@ -62,14 +204,14 @@ EOF
 ```
 Disabling IPAM also disables the network enforcing source/destination IP security. This is needed to allow the ipsec VM below to act as a gateway to pass traffic for other IP addresses. 
 
-## 2. Create the ipsec VM (cert-based IPsec, NAT-initiated)
+## 9. Create the ipsec VM (cert-based IPsec, NAT-initiated)
 
-Go to your cluster's web console. On the navigation bar, select **Virtualization → Catalog**, and from the top, change the **Project** to `vpn-infra`. Then under **Create new VirtualMachine → Instance types → Select volume to boot from**, choose **CentOS Stream 10** (or 9 is fine). 
+Go to your cluster's web console. On the navigation bar, select **Virtualization → Catalog**, and from the top, change the **Project** to `vpn-infra`. Then under **Create new VirtualMachine → Instance types → Select volume to boot from**, choose **CentOS Stream 10** (or 9 is fine).
 
 ![virt-catalog](images/virt-catalog.png)
 <br />
 
-Scroll down and name it `ipsec`, and select **Customize VirtualMachine**. 
+Scroll down and name it `ipsec`, and select **Customize VirtualMachine**.
 
 ![virt-catalog-1](images/virt-catalog-1.png)
 <br />
@@ -84,11 +226,11 @@ Then click **Save**. Click **Create VirtualMachine**.
 ![virt-cudn](images/virt-cudn.png)
 <br />
 
-Wait for a couple of minutes until the VM is running. 
+Wait for a couple of minutes until the VM is running.
 
-Then click the **Open web console** and log into the VM using the credentials on top of the page. 
+Then click the **Open web console** and log into the VM using the credentials on top of the page.
 
-Alternatively, you can run this on your CLI terminal: `virtctl console -n vpn-infra ipsec`, and use the same credentials to log into the VM. 
+Alternatively, you can run this on your CLI terminal: `virtctl console -n vpn-infra ipsec`, and use the same credentials to log into the VM.
 
 Then as root (run `sudo -i`), let's first identify the ifname of the non-primary NIC. Depending on OS, this may either be disabled, or enabled with no IP address assigned.
 
@@ -130,58 +272,13 @@ EOF
 sysctl --system
 ```
 
-**Firewalld note:** CentOS often has firewalld on. You don’t need inbound allows (the VM initiates), but outbound UDP/500, UDP/4500 must be allowed. 
+**Firewalld note:** CentOS often has firewalld on. You don’t need inbound allows (the VM initiates), but outbound UDP/500, UDP/4500 must be allowed.
 
-
-## 3. Create and import Private CA (ACM PCA) 
-
-Go to AWS Console and select **Certificate Manager**. Then on the left navigation tab, click **AWS Private CAs**, and then click **Create a private CA**.
-
-On the **Create private certificate authority (CA)** page, keep **CA type options** as **Root**. You could leave the default options for simplicity sake. We would recommend, however, give it a name; so for example, here we give the **Common name (CN)** `ca test v0`. Acknowledge the pricing section, and click **Create CA**.
-
-And then on the root CA page, go to the **Action** tab on upper right side, and select **Install CA certificate**. On the **Install root CA certificate** page, you can leave the default configurations as-is and click **Confirm and Install**. The CA should now be **Active**. 
-
-Next, create a subordinate CA by repeating the same thing but on the **CA type options**, choose **Subordinate**, and give it a **Common name (CN)** such as `ca sub test v0`. Confirm pricing and create it.
-
-And similarly, on the subordinate CA page, go to the **Action** tab on top right side, and select **Install CA certificate**. On the **Install subordinate CA certificate** page, under **Select parent CA**, choose the root CA you just created as the **Parent private CA**. And under **Specify the subordinate CA certificate parameters**, for the validity section, pick a date at least 13 months from now. You can leave the rest per default and click **Confirm and Install**. 
-
-Once done, you will have these private CAs like this snippet below:
-
-![private-ca](images/private-ca.png)
-<br />
-
-Next, go the **AWS Certificate Manager (ACM)** page, and click **Request a certificate** button. On the **Certificate type** page, select **Request a private certificate**, and click **Next**. 
-
-Under **Certificate authority details**, pick the subordinate CA as **Certificate authority**. Then under **Domain names**, pick a **Fully qualified domain name** (FQDN) of your choice. Note that this does not have to be resolvable, we just use it as an identity string for IKE. For example here, we use something like `s2s.vpn.test.mobb.cloud`. You can leave the rest per default, acknowledge **Certificate renewal permissions** and click **Request**. 
-
-Wait for until the status is changed to **Issued**. Then, click **Export** button on top right side. Under **Encryption details**, enter a passphrase of your choice. You will be prompted to input this passphrase in the next steps, so please keep it handy. Acknowledge the billing and click **Generate PEM encoding**. And on the next page, click **Download all**, and finally click **Done**.
-
-Once downloaded you will be seeing 3 files on your local machine: 
-- certificate.pem
-- certificate_chain.pem
-- private_key.pem
-
-Note if the downloaded files are in .txt, rename them into .pem files (you can simply `mv certificate.txt certificate.pem` and so forth for the rest of the files). 
-
-Next, create the PKCS#12 for Libreswan. Feel free to change the name of the cert, but be sure you're on the same directory where the downloaded certificate files are:
-
-```bash
-openssl pkcs12 -export \
-  -inkey private_key.pem \
-  -in certificate.pem \
-  -certfile certificate_chain.pem \
-  -name test-cert-cgw \
-  -out left-cert.p12
-```
-
-This will prompt you with passphrase you created before. 
-
-Next, we need **two** files on the VM:
-
-* `left-cert.p12` — the PKCS#12 you just created (leaf + key + chain)
-* `certificate_chain.pem` — the full CA chain (subordinate **then** root)
+## 10. Importing certificates into the VM
 
 **Option A — using virtctl (easiest):**
+
+You will now use the certificate files you generated earlier.
 
 ```bash
 # from your local machine
@@ -244,58 +341,7 @@ systemctl enable --now ipsec
 > Tip: ACM’s `certificate_chain.pem` already contains **subordinate + root** in that order. If yours doesn’t, `cat subCA.pem rootCA.pem > certificate_chain.pem` before copying.
 
 
-## 4. Create a Customer Gateway (CGW) 
-
-Go to AWS console, find **VPC**. Then on the left navigation tab, find **Customer gateways → Create customer gateway**. 
-
-On the **Certificate ARN** section, choose your ACM-PCA–issued cert. You can give it a name like `cgw test v0`, leave the default options, and click **Create customer gateway**.
-
-With certificate-auth, AWS doesn’t require a fixed public IP on the CGW; that’s why this pattern works behind NAT. 
-
-
-## 5. Create (or use) a Transit Gateway (TGW)
-
-Note that this setup also works (and tested) with Virtual Gateway (VGW). So when to choose VGW or TGW:
-
-- Use VGW when you only need VPN to one VPC, don’t require IPv6 over the VPN, and want the lowest ongoing cost (no TGW hourly/attachment fees; you will just pay standard Site-to-Site VPN hourly + data transfer). 
-
-- Use TGW when you need a hub-and-spoke to many VPCs/accounts, inter-VPC routing, or IPv6 VPN. Expect extra charges such as TGW hourly, per-attachment hourly, and per-GB data processing, on top of VPN. Also add a one-line cost link.
-
-Continue with this step if you choose TGW.
-
-On the left navigation tab, find **Transit Gateways → Create transit gateway**. Give it a name like `tgw test v0`, leave the default options, and click **Create transit gateway**. 
-
-Next, let's attach the VPC(s) to the TGW. On the navigation tab, find **Transit Gateway attachments → Create transit gateway attachment**.
-
-Give it a name like `tgw attach v0`, pick the transit gateway you just created as **Transit gateway ID**, and select **VPC** as the **Attachment type**. And on the **VPC attachment** section, select your VPC ID, and select the private subnet of each subnets you want reachable from the cluster. Once done, click **Create transit gateway attachment**.
-
-![tgw-attach](images/tgw-attach.png)
-<br />
-
-
-## 6. Create the Site-to-Site VPN (Target = TGW)
-
-Still on VPC console, find → **Site-to-Site VPN connections → Create VPN connection**.
-
-Give it a name like `vpn test v0`. Choose **Transit gateway** as **Target gateway type** and choose your TGW from the **Transit gateway** dropdown. Then choose **Existing** for **Customer gateway**, and select the certificate-based CGW from previous step from the **Customer gateway ID** options.
-
-![vpn-0](images/vpn-0.png)
-<br />
-
-Choose **Static** for **Routing options**. For **Local IPv4 network CIDR**, put in the CUDN CIDR, e.g. `192.168.1.0/24`. And for **Remote IPv4 network CIDR**, put in the cluster's VPC CIDR, e.g. `10.10.0.0/16`.
-
-![vpn-1](images/vpn-1.png)
-<br />
-
-Leave default options as-is and click **Create VPN connection**.
-
-At the moment, the status of both tunnels are **Down** and that is completely fine. For now, take note on the tunnels' outside IPs as we will use them for the Libreswan config in the next step. 
-
-![tunnel-outside-ip](images/tunnel-outside-ip.png)
-<br />
-
-
-## 7. Creating Libreswan config
+## 11. Creating Libreswan config
 
 Let's go back to the VM now, and as root (and be sure to replace the placeholder values, e.g. cert nickname, tunnels outside IPs):
 
@@ -352,7 +398,7 @@ sudo ipsec auto --up aws-tun-1
 sudo ipsec auto --up aws-tun-2
 ```
 
-Next, run `ipsec status` and now you should see something like **Total IPsec connections: loaded 4, routed 1, active 1** which means that your tunnel is up. 
+Next, run `ipsec status` and now you should see something like **Total IPsec connections: loaded 4, routed 1, active 1** which means that your tunnel is up.
 
 And so now if you go back to the VPN console you will see one of the tunnel is up as follows:
 
@@ -360,50 +406,11 @@ And so now if you go back to the VPN console you will see one of the tunnel is u
 <br />
 
 
-## 8. Associate VPC to TGW route tables
-
-On VPC navigation tab, find **Transit gateway route tables**, and go to **Propagations** tab, and ensure that both VPC and VPN resources/attachments are **Enabled**.
-
-![tgw-rtb-0](images/tgw-rtb-0.png)
-<br />
-
-
-Then click **Routes** tab, look under **Routes → Create static route**. For **CIDR**, put in CUDN CIDR `192.168.1.0/24` and under **Choose attachment**, pick the **VPN attachment** and click **Create static route**.
-
-![tgw-rtb-1](images/tgw-rtb-1.png)
-<br />
-
-
-Wait for a minute and it should now look like this:
-
-![tgw-rtb-2](images/tgw-rtb-2.png)
-<br />
-
-
-## 9. Modify VPC route tables
-
-Next, we will add route to the CUDN targeting our CGW for each VPC that should reach the cluster overlay. On the navigation tab, find **Route tables**. Filter it based on your VPC ID.
-
-Select one of the private subnets. Under **Routes** tab, go to **Edit routes**. Click **Add route**. For **Destination**, put in CUDN subnet (e.g., `192.168.1.0/24`), and as **Target** pick **Transit Gateway** and select the TGW you created, and click **Save changes**.
-
-Repeat this with other private/public subnets you want to route CUDN to as needed.
-
-
-## 10. Security groups and NACLs
-
-On the navigation tab, find **Security groups**. Filter it based on your VPC ID.
-
-Select one of the worker nodes' security groups. Under **Inbound rules**, go to **Edit inbound rules**. Click **Add rule**. For **Type**, pick **All ICMP - IPv4**, and as **Source**, put in the CUDN subnet (e.g., `192.168.1.0/24`), and click **Save rules**. 
-
-Optionally, you can also add rule for TCP 22/80 from the CUDN for SSH/curl tests.
-
-Be sure to also check **NACLs** on the VPC subnets to allow ICMP/TCP from `192.168.1.0/24` both ways.
-
-## 11. Configure networking on other VMs
+## 12 Configure networking on other VMs
 
 Other OpenShift Virtualization VMs will each need some configuration to make networking work for them.
 
-### 11.1 Add a secondary network interface for the CUDN
+### 12.1 Add a secondary network interface for the CUDN
 
 Like the ipsec VM, other VMs will also need a secondary network interface connected to the `vm-network` ClusterUserDefinedNetwork.
 
@@ -414,7 +421,7 @@ When creating a new VM, select **Customize VirtualMachine**, then select **Netwo
 
 Depending on the specifics of the VM, you may need to reboot the VM before it can see the new network interface, or it may be available immediately.
 
-### 11.2 Set an address for the network interface
+### 12.2 Set an address for the network interface
 
 Since IPAM is turned off on the cudn, each VM has to be given an IP address manually.
 
@@ -435,7 +442,7 @@ nmcli con add type ethernet ifname enp2s0 con-name cudn \
 nmcli con up cudn
 ```
 
-### 11.2 Set the ipsec VM as the next hop for VPC traffic
+### 12.3 Set the ipsec VM as the next hop for VPC traffic
 
 Each VM needs to know that it should send traffic destined for the VPC through the ipsec VM.
 
@@ -446,9 +453,9 @@ nmcli con mod cudn ipv4.routes "10.10.0.0/16 192.168.1.10"
 nmcli con up cudn
 ```
 
-## 12. Ping test
+## 13. Ping test
 
-Now that everything is set, let's try to ping from VM to an EC2 instance in the VPC. Pick an EC2 instance, e.g. bastion host, or bare metal instance, etc. to do so. 
+Now that everything is set, let's try to ping from VM to an EC2 instance in the VPC. Pick an EC2 instance, e.g. bastion host, or bare metal instance, etc. to do so.
 
 Note that if you launch a throwaway EC2 for testing, **private subnet** is safer (no public IP). Attach the **same TGW RTB**, and use **Session Manager** instead of a keypair if you want to skip inbound SSH. Security group needs **ICMP** (and optionally TCP/22) **from 192.168.1.0/24**.
 
@@ -465,7 +472,7 @@ ping -c3 <CUDN-IP>
 ```
 
 
-## 13. Optional: Route-based (VTI) IPsec
+## 14. Optional: Route-based (VTI) IPsec
 
 **Why do this?**
 
@@ -473,7 +480,7 @@ ping -c3 <CUDN-IP>
 * **Better availability:** you can ECMP two tunnels (one per TGW endpoint). That gives fast failover on the *tunnel* path. (Note: this is **not** AZ-resilient if you still have only one VM.)
 
 
-### 13.1. Replace policy-based with route-based config
+### 14.1. Replace policy-based with route-based config
 
 First, we need to find the Inside IP Address for the Customer Gateway for each tunnel. We will use this in the `leftvti` parameter when configuring Libreswan.
 
@@ -567,7 +574,7 @@ EOF
 If you haven’t already, import your certs to the VM per Step 3 above.
 
 
-### 13.2. System tunables for route-based IPsec
+### 14.2. System tunables for route-based IPsec
 
 > Two key rules:
 >
@@ -630,7 +637,7 @@ sysctl --system
 ```
 
 
-### 13.3. Route VPC CIDRs over the VTIs (ECMP)
+### 14.3. Route VPC CIDRs over the VTIs (ECMP)
 
 ```bash
 # replace 10.10.0.0/16 with your VPC CIDR(s)
@@ -642,7 +649,7 @@ nmcli con up ipsec10
 nmcli con up ipsec1
 ```
 
-### 13.4. Quick verification
+### 14.4. Quick verification
 
 ```bash
 # path should be via a VTI
