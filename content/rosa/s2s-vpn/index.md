@@ -504,8 +504,6 @@ Inside IP Addresses
 ...
 ```
 
-In the AWS console, go to **VPC**,
-
 ```bash
 sudo tee /etc/ipsec.conf >/dev/null <<'EOF'
 config setup
