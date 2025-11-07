@@ -143,36 +143,7 @@ At the moment, the status of both tunnels are **Down** and that is completely fi
 <br />
 
 
-## 5. Associate VPC to TGW route tables
-
-On VPC navigation tab, find **Transit gateway route tables**, and go to **Propagations** tab, and ensure that both VPC and VPN resources/attachments are **Enabled**.
-
-![tgw-rtb-0](images/tgw-rtb-0.png)
-<br />
-
-
-Then click **Routes** tab, look under **Routes → Create static route**. For **CIDR**, put in CUDN CIDR `192.168.1.0/24` and under **Choose attachment**, pick the **VPN attachment** and click **Create static route**.
-
-![tgw-rtb-1](images/tgw-rtb-1.png)
-<br />
-
-
-Wait for a minute and it should now look like this:
-
-![tgw-rtb-2](images/tgw-rtb-2.png)
-<br />
-
-
-## 6. Modify VPC route tables
-
-Next, we will add route to the CUDN targeting our CGW for each VPC that should reach the cluster overlay. On the navigation tab, find **Route tables**. Filter it based on your VPC ID.
-
-Select one of the private subnets. Under **Routes** tab, go to **Edit routes**. Click **Add route**. For **Destination**, put in CUDN subnet (e.g., `192.168.1.0/24`), and as **Target** pick **Transit Gateway** and select the TGW you created, and click **Save changes**.
-
-Repeat this with other private/public subnets you want to route CUDN to as needed.
-
-
-## 7. Security groups and NACLs
+## 5. Security groups and NACLs
 
 On the navigation tab, find **Security groups**. Filter it based on your VPC ID.
 
@@ -183,8 +154,7 @@ Optionally, you can also add rule for TCP 22/80 from the CUDN for SSH/curl tests
 Be sure to also check **NACLs** on the VPC subnets to allow ICMP/TCP from `192.168.1.0/24` both ways.
 
 
-
-## 8. Create the project and secondary network (CUDN)
+## 6. Create the project and secondary network (CUDN)
 
 On your ROSA cluster, create `vpn-infra` project and the ClusterUserDefinedNetwork (CUDN) object.
 
@@ -208,7 +178,8 @@ EOF
 
 Disabling IPAM also disables the network enforcing source/destination IP security. This is needed to allow each ipsec VM below to act as a gateway to pass traffic for other IP addresses. (Note that this helps with the VM's being able to pass a virtual IP address back and forth, but would be needed even without the VIP for gateway routing to work.)
 
-## 9. Create a set of IPSec VMs
+
+## 7. Create a set of IPSec VMs
 
 We will use a pair of VMs within your ROSA cluster to establish the other side of the IPSec tunnel and act as gateways between the CUDN and the tunnel. One VM at a time will have the active IPSec connection and have the gateway IP address. The other, scheduled on a worker node in a different Availability Zone, will be able to take over if the primary VM fails (for example, if the AZ has an outage.)
 
@@ -370,17 +341,18 @@ EOF
 ```
 Wait for a couple of minutes until the VMs are running.
 
-## 10. Configure the ipsec VMs
+
+## 8. Configure the ipsec VMs
 
 Follow the instructions in this section for the `ipsec-a` VM, and then follow them again for the `ipsec-b` VM. We want both VMs to be nearly identical to allow for failover scenarios. The instructions will call out anything that needs to be different on the two VMs.
 
-### 10.1 Log into the VM
+### 8.1 Log into the VM
 
 Then click the **Open web console** and log into the VM using the credentials you specified when creating the VMs.
 
 Alternatively, you can run this on your CLI terminal: `virtctl console -n vpn-infra ipsec-a` (or `ipsec-b`), and use the same credentials to log into the VM.
 
-### 10.2 Install software
+### 8.2 Install software
 
 We will use libreswan as our IPSec client, and keepalived to manage failover between the two VMs.
 
@@ -394,7 +366,7 @@ Let's first identify the ifname of the non-primary NIC. Depending on OS, this ma
 nic -t || ip addr show
 ```
 
-### 10.3 Configure cudn network interface
+### 8.3 Configure cudn network interface
 
 We will next need to set up the network interface connected to the CUDN.
 
@@ -435,7 +407,7 @@ sysctl --system
 
 **Firewalld note:** CentOS often has firewalld on. You don’t need inbound allows (the VM initiates), but outbound UDP/500, UDP/4500 must be allowed.
 
-### 10.4 Importing certificates into the VM
+### 8.4 Importing certificates into the VM
 
 You will now use the certificate files you generated earlier. Both VMs will use the exact same certificates.
 
@@ -501,7 +473,7 @@ echo "=== NSS keys         ==="; certutil -K -d sql:/etc/ipsec.d
 
 > Tip: ACM’s `certificate_chain.pem` already contains **subordinate + root** in that order. If yours doesn’t, `cat subCA.pem rootCA.pem > certificate_chain.pem` before copying.
 
-### 10.5 Creating Libreswan config
+### 8.5 Creating Libreswan config
 
 Let's go back to the VM now, and as root (and be sure to replace the placeholder values, e.g. cert nickname, tunnels outside IPs):
 
@@ -573,7 +545,8 @@ sudo systemctl stop ipsec
 
 If you've only gone through these instructions on `ipsec-a`, go through this section again on `ipsec-b`.
 
-### 11. Configure failover
+
+### 9. Configure failover
 
 Keepaplived on both `ipsec` VMs will communicate using the Virtual Router Redundancy Protocol to elect a leader. The leader will run `ipsec` and will assign its CUDN interface the gateway virtual IP address. The secondary will ensure IPsec is not running.
 
@@ -646,6 +619,38 @@ sudo systemctl enable --now keepalived
 ```
 
 Note that we have not directly configured systemd to start `ipsec` at boot on either VM. This is deliberate. Instead, keepalived will run at startup on both VMs, and `ipsec` will only run on the leader.
+
+
+## 10. Associate VPC to TGW route tables
+
+Now that the VPN is up, let's configure routing within the VPC to send traffic destined for the CUDN CIDR to the VPN's Transit Gateway.
+
+Back in the AWS console, on VPC navigation tab, find **Transit gateway route tables**, and go to **Propagations** tab, and ensure that both VPC and VPN resources/attachments are **Enabled**.
+
+![tgw-rtb-0](images/tgw-rtb-0.png)
+<br />
+
+
+Then click **Routes** tab, look under **Routes → Create static route**. For **CIDR**, put in CUDN CIDR `192.168.1.0/24` and under **Choose attachment**, pick the **VPN attachment** and click **Create static route**.
+
+![tgw-rtb-1](images/tgw-rtb-1.png)
+<br />
+
+
+Wait for a minute and it should now look like this:
+
+![tgw-rtb-2](images/tgw-rtb-2.png)
+<br />
+
+
+## 11. Modify VPC route tables
+
+Next, we will add route to the CUDN targeting our CGW for each VPC that should reach the cluster overlay. On the navigation tab, find **Route tables**. Filter it based on your VPC ID.
+
+Select one of the private subnets. Under **Routes** tab, go to **Edit routes**. Click **Add route**. For **Destination**, put in CUDN subnet (e.g., `192.168.1.0/24`), and as **Target** pick **Transit Gateway** and select the TGW you created, and click **Save changes**.
+
+Repeat this with other private/public subnets you want to route CUDN to as needed.
+
 
 ## 12 Configure networking on other VMs
 
