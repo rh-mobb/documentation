@@ -205,6 +205,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 ## AI / ML
 
 * [Deploying and Running Ollama and Open WebUI in a ROSA Cluster with GPUs](/experts/ai-ml/ollama-openwebui)
+* [Deploying vLLM with Audio and LLM Inference on ROSA with GPUs](/experts/ai-ml/vllm-transcription-webapp)
 
 ## Miscellaneous
 
