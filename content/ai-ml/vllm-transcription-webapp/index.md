@@ -211,12 +211,12 @@ Now we'll deploy a second vLLM instance for language model inference.
 
 Finally, we'll deploy a web application that integrates both the audio transcription and LLM inference services.
 
-> **Note**: This transcription web application was entirely created using Cursor IDE with a single prompt. The complete prompt used to generate the application can be found in the [PROMPT.md](https://github.com/fjcloud/transcription-webapp/blob/main/PROMPT.md) file of the repository. This demonstrates how modern AI-assisted development tools can rapidly create functional applications from a well-structured prompt.
+> **Note**: This transcription web application was entirely created using Cursor IDE with a single prompt. The complete prompt used to generate the application can be found in the [PROMPT.md](https://github.com/rh-mobb/transcription-webapp/blob/main/PROMPT.md) file of the repository. This demonstrates how modern AI-assisted development tools can rapidly create functional applications from a well-structured prompt.
 
 1. Deploy the application from the Git repository:
 
    ```bash
-   oc new-app https://github.com/fjcloud/transcription-webapp.git --strategy=docker \
+   oc new-app https://github.com/rh-mobb/transcription-webapp.git --strategy=docker \
    -e AUDIO_INFERENCE_URL=http://rh-inf-whisper:8000 \
    -e AUDIO_MODEL_NAME=RedHatAI/whisper-large-v3-turbo-quantized.w4a16 \
    -e LLM_INFERENCE_URL=http://rh-inf-llm:8000 \
