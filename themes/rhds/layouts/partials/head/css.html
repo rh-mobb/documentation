@@ -2,13 +2,13 @@
 
 {{- with resources.Get "css/main.css" }}
   {{- if not hugo.IsProduction }}
-<link rel="stylesheet" href="https://ga.jspm.io/npm:@rhds/elements@1.3.0/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
-<link rel="stylesheet" href="https://ga.jspm.io/npm:@rhds/elements@1.3.0/elements/rh-footer/rh-footer-lightdom.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.0/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.0/elements/rh-footer/rh-footer-lightdom.css">
 <link rel="stylesheet" href="{{ .RelPermalink }}">
   {{- else }}
     {{- with . | minify | fingerprint }}
-<link rel="stylesheet" href="https://www.redhatstatic.com/dx/v1-alpha/@rhds/elements@1.3.0/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
-<link rel="stylesheet" href="https://www.redhatstatic.com/dx/v1-alpha/@rhds/elements@1.3.0/elements/rh-footer/rh-footer-lightdom.css">    
+<link rel="stylesheet" href="https://www.redhatstatic.com/dssf-001/v2/@rhds/elements@4.0.0/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
+<link rel="stylesheet" href="https://www.redhatstatic.com/dssf-001/v2/@rhds/elements@4.0.0/elements/rh-footer/rh-footer-lightdom.css">    
 <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous">
     {{- end }}
   {{- end }}
