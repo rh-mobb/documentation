@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "wireit",
-    "bundle": "wireit"
+    "start": "wireit"
   },
   "repository": {
     "type": "git",

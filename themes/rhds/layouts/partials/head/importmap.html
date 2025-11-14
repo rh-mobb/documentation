@@ -5,33 +5,29 @@
 <script type="importmap">
   {
     "imports": {
-      "@rhds/elements/": "https://ga.jspm.io/npm:@rhds/elements@1.3.0/elements/",
-      "@rhds/elements/lib/": "https://ga.jspm.io/npm:@rhds/elements@1.3.0/lib/",
-      "@patternfly/elements/": "https://ga.jspm.io/npm:@patternfly/elements@2.2.2/",
-      "@patternfly/icons/": "https://ga.jspm.io/npm:@patternfly/icons@1.0.2/"
+      "@rhds/elements/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.0/elements/"
     },
     "scopes": {
-      "https://ga.jspm.io/": {
-        "@floating-ui/core": "https://ga.jspm.io/npm:@floating-ui/core@1.6.8/dist/floating-ui.core.mjs",
-        "@floating-ui/dom": "https://ga.jspm.io/npm:@floating-ui/dom@1.6.12/dist/floating-ui.dom.mjs",
-        "@floating-ui/utils": "https://ga.jspm.io/npm:@floating-ui/utils@0.2.8/dist/floating-ui.utils.mjs",
-        "@floating-ui/utils/dom": "https://ga.jspm.io/npm:@floating-ui/utils@0.2.8/dist/floating-ui.utils.dom.mjs",
-        "@lit/reactive-element": "https://ga.jspm.io/npm:@lit/reactive-element@1.6.3/development/reactive-element.js",
-        "@lit/reactive-element/decorators/": "https://ga.jspm.io/npm:@lit/reactive-element@1.6.3/development/decorators/",
-        "lit": "https://ga.jspm.io/npm:lit@2.6.1/index.js",
-        "lit-element/lit-element.js": "https://ga.jspm.io/npm:lit-element@3.3.3/development/lit-element.js",
-        "lit-html": "https://ga.jspm.io/npm:lit-html@2.8.0/development/lit-html.js",
-        "lit-html/": "https://ga.jspm.io/npm:lit-html@2.8.0/development/",
-        "lit/": "https://ga.jspm.io/npm:lit@2.6.1/",
-        "tslib": "https://ga.jspm.io/npm:tslib@2.8.1/tslib.es6.mjs", 
-        "@patternfly/elements/": "https://ga.jspm.io/npm:@patternfly/elements@2.2.0/",
-        "@patternfly/pfe-core": "https://ga.jspm.io/npm:@patternfly/pfe-core@2.4.1/core.js",
-        "@patternfly/pfe-core/": "https://ga.jspm.io/npm:@patternfly/pfe-core@2.4.1/",
-        "@patternfly/icons/": "https://ga.jspm.io/npm:@patternfly/icons@1.0.2/",
-        "@rhds/elements/": "https://ga.jspm.io/npm:@rhds/elements@1.3.0/elements/", 
-        "@rhds/elements/lib/": "https://ga.jspm.io/npm:@rhds/elements@1.4.1/lib/",
-        "@rhds/tokens/media.js": "https://ga.jspm.io/npm:@rhds/tokens@2.1.1/js/media.js",
-        "@lit/context": "https://ga.jspm.io/npm:@lit/context@1.1.3/development/index.js"
+      "https://cdn.jsdelivr.net/": {
+        "@lit/context": "https://cdn.jsdelivr.net/npm/@lit/context@1.1.6/development/index.js",
+        "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.1/development/reactive-element.js",
+        "@lit/reactive-element/decorators/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.1/development/decorators/",
+        "@patternfly/pfe-core": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.4/core.js",
+        "@patternfly/pfe-core/": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.4/",
+        "@patternfly/pfe-core/ssr-shims.js": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.4/core.js",
+        "@rhds/elements/lib/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.0/lib/",
+        "@rhds/icons": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js",
+        "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/",
+        "@rhds/tokens/css/": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/css/",
+        "@rhds/tokens/media.js": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/js/media.js",
+        "lit": "https://cdn.jsdelivr.net/npm/lit@3.3.1/index.js",
+        "lit-element/lit-element.js": "https://cdn.jsdelivr.net/npm/lit-element@4.2.1/development/lit-element.js",
+        "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/development/lit-html.js",
+        "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/development/",
+        "lit/": "https://cdn.jsdelivr.net/npm/lit@3.3.1/",
+        "prism-esm": "https://cdn.jsdelivr.net/npm/prism-esm@1.29.0-fix.6/prism.js",
+        "prism-esm/components/": "https://cdn.jsdelivr.net/npm/prism-esm@1.29.0-fix.6/components/",
+        "tslib": "https://cdn.jsdelivr.net/npm/tslib@2.8.1/tslib.es6.mjs"
       }
     }
   }
@@ -39,14 +35,37 @@
 <script async src="https://ga.jspm.io/npm:es-module-shims@1.7.3/dist/es-module-shims.js" crossorigin="anonymous"></script>
 {{- else }}
   <script type="importmap">
+<script type="importmap">
   {
     "imports": {
-      "@rhds/elements/":"https://www.redhatstatic.com/dx/v1-alpha/@rhds/elements@1.3.0/elements/",
-      "@rhds/elements/lib/":"https://www.redhatstatic.com/dx/v1-alpha/@rhds/elements@1.3.0/lib/",
-      "@patternfly/elements/" : "https://www.redhatstatic.com/dx/v1-alpha/@patternfly/elements@2.2.2/",
-      "@patternfly/icons/": "https://www.redhatstatic.com/dx/v1-alpha/@patternfly/icons@1.0.2/"
+      "@rhds/elements/": "https://www.redhatstatic.com/dssf-001/v2/@rhds/elements@4.0.0/elements/"
+    },
+    "scopes": {
+      "https://www.redhatstatic.com/dssf-001/v2/": {
+          "@floating-ui/core": "https://www.redhatstatic.com/dssf-001/v2/@floating-ui/core@1.7.1/dist/floating-ui.core.mjs",
+          "@floating-ui/dom": "https://www.redhatstatic.com/dssf-001/v2/@floating-ui/dom@1.7.1/dist/floating-ui.dom.mjs",
+          "@floating-ui/utils": "https://www.redhatstatic.com/dssf-001/v2/@floating-ui/utils@0.2.9/dist/floating-ui.utils.mjs",
+          "@floating-ui/utils/dom": "https://www.redhatstatic.com/dssf-001/v2/@floating-ui/utils@0.2.9/dist/floating-ui.utils.dom.mjs",
+          "@lit/context": "https://www.redhatstatic.com/dssf-001/v2/@lit/context@1.1.5/development/index.js",
+          "@lit/reactive-element": "https://www.redhatstatic.com/dssf-001/v2/@lit/reactive-element@2.1.0/reactive-element.js",
+          "@lit/reactive-element/decorators/": "https://www.redhatstatic.com/dssf-001/v2/@lit/reactive-element@2.1.0/decorators/",
+          "@patternfly/pfe-core": "https://www.redhatstatic.com/dssf-001/v2/@patternfly/pfe-core@5.0.3/core.js",
+          "@patternfly/pfe-core/": "https://www.redhatstatic.com/dssf-001/v2/@patternfly/pfe-core@5.0.3/",
+          "@rhds/elements/lib/": "https://www.redhatstatic.com/dssf-001/v2/@rhds/elements@4.0.0/lib/",
+          "@rhds/icons": "https://www.redhatstatic.com/dssf-001/v2/@rhds/icons@2.0.0/icons.js",
+          "@rhds/icons/": "https://www.redhatstatic.com/dssf-001/v2/@rhds/icons@2.0.0/",
+          "@rhds/tokens/media.js": "https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/js/media.js",
+          "@rhds/tokens/": "https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/",
+          "lit": "https://www.redhatstatic.com/dssf-001/v2/lit@3.3.0/index.js",
+          "lit/": "https://www.redhatstatic.com/dssf-001/v2/lit@3.3.0/",
+          "lit-element/lit-element.js": "https://www.redhatstatic.com/dssf-001/v2/lit-element@4.2.0/lit-element.js",
+          "lit-html": "https://www.redhatstatic.com/dssf-001/v2/lit-html@3.3.0/lit-html.js",
+          "lit-html/": "https://www.redhatstatic.com/dssf-001/v2/lit-html@3.3.0/",
+          "tslib": "https://www.redhatstatic.com/dssf-001/v2/tslib@2.8.1/tslib.es6.mjs"
+      }
     }
   }
+</script>
   </script>
   <script async src="https://www.redhatstatic.com/dx/v1-alpha/es-module-shims@1.7.3.js" crossorigin="anonymous"></script>
 {{- end }}

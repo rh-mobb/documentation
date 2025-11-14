@@ -44,7 +44,7 @@ enableGitInfo = true
   lineNoStart = 1
   lineNos = false
   lineNumbersInTable = true
-  noClasses = true
+  noClasses = false
   style = "emacs"
   tabWidth = 2
 
@@ -54,3 +54,14 @@ enableGitInfo = true
       wrapStandAloneImageWithinParagraph = false
     [markup.goldmark.renderer]
       unsafe = true
+
+# json and js disabled to allow for code blocks containing these languages
+# otherwise hugo --gc --minify will fail
+[minify]
+  disableHTML = false
+  disableCSS = false
+  disableJS = true
+  disableJSON = true
+  disableSVG = false
+  disableXML = false
+  minifyOutput = false

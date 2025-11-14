@@ -465,32 +465,6 @@ rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="
   }
 }
 
-.highlight {
-  position: relative;
-  
-  & > pf-tooltip {
-    position: absolute;
-    inset-block: 0;
-    inset-inline-end: 0;
-  }
-
-  & code {
-    font-family: var(--rh-font-family-code, RedHatMono, 'Red Hat Mono', 'Courier New', Courier, monospace);
-    text-size-adjust: 100% !important;
-    -ms-text-size-adjust: 100% !important;
-    -moz-text-size-adjust: 100% !important;
-    -webkit-text-size-adjust: 100% !important;
-  }
-
-  & pf-button::part(button) {
-    --pf-icon--size: 14px;
-    color: var(--rh-color-icon-subtle, #707070);
-  }
-
-  & pf-button:hover::part(button) {
-    color: var(--rh-color-icon-subtle-hover, #a3a3a3);
-  }
-}
 
 rh-alert {
   margin-bottom: var(--rh-space-xl, 24px);
@@ -499,4 +473,9 @@ rh-alert {
 /* Bug Fixes */
 rh-navigation-secondary a[slot="logo"]:visited {
   color: var(--rh-color-text-primary-on-light, #151515);
+}
+
+
+rh-code-block {
+  margin-block-end: var(--rh-space-2xl, 32px);
 }
