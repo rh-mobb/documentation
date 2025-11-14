@@ -1,0 +1,70 @@
+{{- $lang := .Type | default "plain" -}}
+{{- $mimeType := "text/plain" -}}
+
+{{- if eq $lang "javascript" -}}
+  {{- $mimeType = "application/javascript" -}}
+{{- else if eq $lang "js" -}}
+  {{- $mimeType = "application/javascript" -}}
+{{- else if eq $lang "json" -}}
+  {{- $mimeType = "application/json" -}}
+{{- else if eq $lang "xml" -}}
+  {{- $mimeType = "application/xml" -}}
+{{- else if eq $lang "css" -}}
+  {{- $mimeType = "text/css" -}}
+{{- else if eq $lang "html" -}}
+  {{- $mimeType = "text/html" -}}
+{{- else if eq $lang "markdown" -}}
+  {{- $mimeType = "text/markdown" -}}
+{{- else if eq $lang "md" -}}
+  {{- $mimeType = "text/markdown" -}}
+{{- else if eq $lang "yaml" -}}
+  {{- $mimeType = "text/yaml" -}}
+{{- else if eq $lang "yml" -}}
+  {{- $mimeType = "text/yaml" -}}
+{{- else if eq $lang "bash" -}}
+  {{- $mimeType = "text/bash" -}}
+{{- else if eq $lang "sh" -}}
+  {{- $mimeType = "text/bash" -}}
+{{- else if eq $lang "shell" -}}
+  {{- $mimeType = "text/bash" -}}
+{{- else if eq $lang "python" -}}
+  {{- $mimeType = "text/python" -}}
+{{- else if eq $lang "py" -}}
+  {{- $mimeType = "text/python" -}}
+{{- else if eq $lang "go" -}}
+  {{- $mimeType = "text/go" -}}
+{{- else if eq $lang "java" -}}
+  {{- $mimeType = "text/java" -}}
+{{- else if eq $lang "typescript" -}}
+  {{- $mimeType = "text/typescript" -}}
+{{- else if eq $lang "ts" -}}
+  {{- $mimeType = "text/typescript" -}}
+{{- else if eq $lang "tsx" -}}
+  {{- $mimeType = "text/tsx" -}}
+{{- else if eq $lang "jsx" -}}
+  {{- $mimeType = "text/jsx" -}}
+{{- else if eq $lang "ruby" -}}
+  {{- $mimeType = "text/ruby" -}}
+{{- else if eq $lang "rb" -}}
+  {{- $mimeType = "text/ruby" -}}
+{{- else if eq $lang "php" -}}
+  {{- $mimeType = "text/php" -}}
+{{- else if eq $lang "sql" -}}
+  {{- $mimeType = "text/sql" -}}
+{{- else if eq $lang "plaintext" -}}
+  {{- $mimeType = "text/plain" -}}
+{{- else if eq $lang "text" -}}
+  {{- $mimeType = "text/plain" -}}
+{{- else if eq $lang "txt" -}}
+  {{- $mimeType = "text/plain" -}}
+{{- else if eq $lang "output" -}}
+  {{- $mimeType = "text/plain" -}}
+{{- else if eq $lang "plain" -}}
+  {{- $mimeType = "text/plain" -}}
+{{- else -}}
+  {{- $mimeType = printf "text/%s" $lang -}}
+{{- end -}}
+
+<rh-code-block actions="copy wrap" highlighting="client" language="{{ $lang }}">
+  <script type="{{ $mimeType }}">{{ .Inner | safeHTML }}</script>
+</rh-code-block>
