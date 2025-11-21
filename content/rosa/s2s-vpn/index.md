@@ -10,7 +10,57 @@ authors:
 
 ## Introduction
 
-In this guide, we build a [Site-to-Site (S2S) VPN](https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html) so an Amazon [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) can reach VM IPs on a ROSA OpenShift Virtualization [User-Defined Network (UDN/CUDN)](https://www.redhat.com/en/blog/user-defined-networks-red-hat-openshift-virtualization)—with **no per-VM NAT or load balancers**. We deploy a small CentOS VM inside the cluster running [Libreswan](https://github.com/libreswan/libreswan) that establishes [IPsec/IKEv2 tunnel](https://aws.amazon.com/what-is/ipsec/) to an AWS [Transit Gateway (TGW)](https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/aws-transit-gateway.html).
+This solution uses a [Site-to-Site (S2S) VPN](https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html) as a mechanism in OpenShift Virtualization on ROSA to establish an IP route between the [virtual overlay network](https://www.redhat.com/en/blog/user-defined-networks-red-hat-openshift-virtualization) that VMs are attached to, and the [VPC outside your cluster](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) without the need for NAT or load balancers. OpenShift Virtualization provides several [built-in features to plug VMs directly into outside networks when deployed on-premises](https://www.redhat.com/en/blog/access-external-networks-with-openshift-virtualization), but these depend upon mechanisms that are not exposed in cloud provider networks. This solution should be considered a stop-gap until there is a native OpenShift Virtualization feature to plug VMs into cloud provider networks.
+
+### When to use this
+
+Customers migrating from other virtualization solutions often have architected their networking such that they expect direct communication between outside corporate networks and the networks their VMs are attached to, without Network Address Translation. This solution makes that possible in OpenShift Virtualization on ROSA.
+
+OpenShift also provides built-in mechanisms for traffic to and from VMs, and you can choose on a case-by-case basis what works best.
+
+#### Advantages
+
+* **Direct, routable access to VMs**: UDN/CUDN addresses are reachable from the VPC without per-VM LBs or port maps, so existing tools (SSH/RDP/agents) work unmodified.
+* **Cert-based, NAT-friendly**: The cluster peer authenticates with a **device certificate**, so it can sit **behind NAT**; no brittle dependence on a static egress IP, and **no PSKs** to manage.
+* **AWS-native and minimally invasive**: Uses TGW, CGW (certificate), and standard route tables—no changes to managed ROSA networking, and no inbound exposure (no NLB/NodePorts) because the **VM initiates**.
+* **High availability**: In the event that the node or availability zone hosting the IPSec VM goes down, a second node can take over both the VPN tunnel and the next-hop IP address that other VMs in the cluster use. Experiments have found a failover recovery time of about 5 seconds.
+* **Scales and hardens cleanly**: Advertise additional prefixes, or introduce dynamic routing later. As BGP-based UDN routing matures, you can evolve without re-architecting.
+
+In short: this is a practical and maintainable way to reach ROSA-hosted VMs **without PSKs**, **without a static public IP**, and **without a fleet of load balancers**.
+
+#### Limitations
+
+You should consider these limitations of this VPN solution when deciding whether to apply it.
+
+* **Complexity**: This solution requires manual configuration of many different components that work together.
+* **Throughput**: Bandwidth is limited to [1.25 Gbps by the AWS VPN Tunnel](https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-limits.html#vpn-quotas-bandwidth) for the entire cluster, and further limited by the performance of the VM acting as an IPsec gateway.
+* **Availability**:
+    * **VM Outage**: In the event that the worker node hosting the active IPsec gateway VM fails (for example, if an Availability Zone has an outage), the VPN will not pass traffic for about 5 seconds unti the secondary VM takes over.
+    * **Tunnel Outage**: Each AWS Site-to-Site VPN has two available tunnels, and by default, may take down either one for maintenance. Follow the steps for VTI configuration of Libreswan if you wish to have both tunnels active simultaneously to handle this case without interruption. Or, consider [tunnel endpoint lifecycle control](https://docs.aws.amazon.com/vpn/latest/s2svpn/tunnel-endpoint-lifecycle.html) to control when this maintenance occurs.
+* **IPAM disabled on VM Network**: In order to allow VMs to act as gateways, this solution requires disabling IPAM on the VM network, which has the following effects:
+    * **Port security disabled**: Any VM on the VM network can listen or send from any IP address for traffic within that network. Consider the security implications of whether this is acceptable for your workloads.
+    * **Manual configuration of each VM**: You will need to individually set an IP address and route tables on each VM in the VM network. You could theoretically run a DHCP server on the network or use other automation to streamline this.
+
+
+#### Example VPN use-cases
+
+* You have outside services, such as security scanners or backup tools, that expect to be able to ingress non-HTTP/HTTPS connections to each VM on particular ports or a large number of ports per VM across a large number of VMs
+* Your VMs host clustered software that expects the IP address on the VM's network interface to match the IP address that external services use to ingress traffic
+* Your VMs egress to outside services that rely on the source IP of the connection (for example, databases that use the source IP for access control)
+
+#### Use-cases that have better alternatives than VPN
+
+* **HTTP/HTTPS traffic**: Use [OpenShift Routes](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/ingress_and_load_balancing/configuring-routes), which provide much more flexibility.
+* **High bandwidth or many connections**: The VPN connection does not provide the full bandwidth that is available when traffic is NATted through worker nodes' ENIs. Use [NodePort](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/ingress_and_load_balancing/configuring-ingress-cluster-traffic#configuring-ingress-cluster-traffic-nodeport) or [LoadBalancer](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/ingress_and_load_balancing/configuring-ingress-cluster-traffic#configuring-ingress-cluster-traffic-load-balancer) Services instead.
+* **Greenfield architectures**: If you are architecting from scratch, treat your VMs like containers, and expose them using Services and Routes.
+* **Interactive management traffic**: OpenShift has built in features for this using the `virtctl` CLI that use the cluster's existing RBAC features.
+    * SSH: use [`virtctl ssh`](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/virtualization/managing-vms#virt-using-virtctl-ssh-command_virt-accessing-vm-ssh) instead.
+    * VNC: use [`virtctl vnc`](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/virtualization/managing-vms#virt-connecting-vm-virtctl_vnc-console) instead.
+    * Other protocols: use [`virtctl port-forward`](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/virtualization/managing-vms#virt-using-virtctl-port-forward-command_virt-accessing-vm-ssh) instead.
+
+### Architecture
+
+We build a [Site-to-Site (S2S) VPN](https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html) between an AWS [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) and a [User-Defined Network (UDN/CUDN)](https://www.redhat.com/en/blog/user-defined-networks-red-hat-openshift-virtualization) that OpenShift Virtualization VMs are attached to. We deploy set of small CentOS VM inside the cluster running [Libreswan](https://github.com/libreswan/libreswan) that establish an [IPsec/IKEv2 tunnel](https://aws.amazon.com/what-is/ipsec/) through an AWS [Transit Gateway (TGW)](https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/aws-transit-gateway.html).
 
 We use [certificate-based authentication](https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-tunnel-authentication-options.html#certificate): the AWS [Customer Gateway (CGW)](https://docs.aws.amazon.com/vpn/latest/s2svpn/your-cgw.html) references a certificate issued by [ACM Private CA](https://docs.aws.amazon.com/privateca/latest/userguide/PcaWelcome.html), and the cluster VM uses the matching device certificate. Because identities are verified by certificates—not a fixed public IP—the VM can **initiate** the VPN **from behind NAT** (worker → NAT Gateway) and still form stable tunnels.
 
@@ -23,16 +73,6 @@ NAT specifics: when the VM egresses, it traverses the [NAT Gateway](https://docs
 
 We ensure this approach is highly available by provisioning a second VM that can take over the IPSec connection from the first one in the event of failure. We use [Keepalived](https://www.redhat.com/en/blog/keepalived-basics) to handle leader election and to ensure that the active VM is also assigned a virtual IP address, which other VMs in the cluster use as a next-hop for routes to the VPC.
 
-
-## Why this approach
-
-* **Direct, routable access to VMs**: UDN/CUDN addresses are reachable from the VPC without per-VM LBs or port maps, so existing tools (SSH/RDP/agents) work unmodified.
-* **Cert-based, NAT-friendly**: The cluster peer authenticates with a **device certificate**, so it can sit **behind NAT**; no brittle dependence on a static egress IP, and **no PSKs** to manage.
-* **AWS-native and minimally invasive**: Uses TGW, CGW (certificate), and standard route tables—no changes to managed ROSA networking, and no inbound exposure (no NLB/NodePorts) because the **VM initiates**.
-* **High availability**: In the event that the node or availability zone hosting the IPSec VM goes down, a second node can take over both the VPN tunnel and the next-hop IP address that other VMs in the cluster use. Experiments have found a failover recovery time of about 5 seconds. 
-* **Scales and hardens cleanly**: Advertise additional prefixes, or introduce dynamic routing later. As BGP-based UDN routing matures, you can evolve without re-architecting.
-
-In short: this is a practical and maintainable way to reach ROSA-hosted VMs **without PSKs**, **without a static public IP**, and **without a fleet of load balancers**.
 
 
 ## 0. Prerequisites
