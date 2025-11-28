@@ -70,85 +70,86 @@ force = true
 # The below are redirects to official product docs
 [[redirects]]
 from = "/experts/rosa/prereq-list/"
-to = "https://docs.openshift.com/rosa/rosa_planning/rosa-cloud-expert-prereq-checklist.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/prepare_your_environment/rosa-cloud-expert-prereq-checklist"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/rosa/clf-cloudwatch-sts/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-rosa-cloudwatch-sts.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/deploying-an-application#forwarding-logs-to-cloudwatch"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/rosa/verify-permissions/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/rosa-mobb-verify-permissions-sts-deployment.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/rosa-mobb-verify-permissions-sts-deployment"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/misc/oadp/rosa-sts/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-deploy-api-data-protection.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/cloud-experts-deploy-api-data-protection"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/rosa/waf/cloud-front/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-cloudfront-and-waf.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-cloudfront-and-waf"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/rosa/aws-secrets-manager-csi/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-aws-secret-manager.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-aws-secret-manager"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/idp/group-claims/rosa/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-entra-id-idp.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-entra-id-idp"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/idp/azuread/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-entra-id-idp.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-entra-id-idp"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/rosa/waf/alb/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-alb-and-waf.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-alb-and-waf"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/rosa/ack/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-using-aws-ack.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/using-aws-controllers-for-kubernetes-on-rosa"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/aro/managed-upgrade-operator/"
-to = "https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade"
+to = "https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade#schedule-individual-updates-using-the-managed-upgrade-operator"
 status = 301
 force = true
 
 
 [[redirects]]
 from = "/experts/rosa/customizing-console-route/"
-to = "https://docs.openshift.com/rosa/cloud_experts_tutorials/cloud-experts-update-component-routes.html"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/cloud-experts-update-component-routes"
 status = 301
 force = true
 
+# Was temporarily removed from the ROSA docs, so pointing to OCP docs for the time being
 [[redirects]]
 from = "/experts/misc/tls-cipher-customization/"
-to = "https://docs.openshift.com/rosa/networking/ingress-operator.html#configuring-ingress-controller-tls"
+to = "https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/networking_operators/configuring-ingress#configuring-ingress-controller-tls"
 status = 301
 force = true
 
 [[redirects]]
 from = "/experts/rosa/hcp-private-api-access/"
-to = "https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-aws-private-creating-cluster.html#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster"
+to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/rosa-hcp-aws-private-creating-cluster#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster"
 status = 301
 force = true
