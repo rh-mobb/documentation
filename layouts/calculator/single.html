@@ -1,0 +1,25 @@
+<!-- Simple Hugo Page Template for Standalone Calculator -->
+<!-- Copy this to: layouts/_default/single.html or layouts/calculator/single.html -->
+<!-- This version integrates with your existing Hugo theme -->
+
+{{ define "main" }}
+<div class="calculator-page">
+    {{ if .Title }}
+    <header class="page-header">
+        <h1>{{ .Title }}</h1>
+        {{ if .Description }}
+        <p class="page-description">{{ .Description }}</p>
+        {{ end }}
+    </header>
+    {{ end }}
+
+    <div class="page-content">
+        {{ .Content }}
+    </div>
+
+    <!-- Include calculator -->
+    <link rel="stylesheet" href="{{ "/experts/calculator/css/network-calculator.css" | relURL }}">
+    <script src="{{ "/experts/calculator/javascript/network-calculator.js" | relURL }}"></script>
+    {{ readFile "/experts/calculator/network-calculator-embed.html" | safeHTML }}
+</div>
+{{ end }}
