@@ -1,0 +1,195 @@
+<!-- OpenShift Network Calculator - Embeddable version for Hugo -->
+<!-- Include this file in your Hugo template or shortcode -->
+<!-- Make sure to also include network-calculator.css and network-calculator.js -->
+
+<div class="network-calculator" id="networkCalculator">
+    <h2>OpenShift Network Calculator</h2>
+    <h3>OVN-Kubernetes</h3>
+
+    <form class="calculator-form" id="calculatorForm">
+        <div class="form-group">
+            <label for="hostPrefix">Host Prefix</label>
+            <input type="number" id="hostPrefix" name="hostPrefix" min="1" max="32" value="23" required>
+            <span class="error-message" id="hostPrefixError"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="clusterNetwork">Cluster Network (CIDR)</label>
+            <input type="text" id="clusterNetwork" name="clusterNetwork" placeholder="10.128.0.0/14" value="10.128.0.0/14" required>
+            <span class="error-message" id="clusterNetworkError"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="serviceNetwork">Service Network (CIDR)</label>
+            <input type="text" id="serviceNetwork" name="serviceNetwork" placeholder="172.30.0.0/16" value="172.30.0.0/16" required>
+            <span class="error-message" id="serviceNetworkError"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="machineNetwork">Machine Network (CIDR)</label>
+            <input type="text" id="machineNetwork" name="machineNetwork" placeholder="10.0.0.0/16" value="10.0.0.0/16" required>
+            <span class="error-message" id="machineNetworkError"></span>
+        </div>
+
+        <button type="submit" class="calculate-button" id="calculateButton">Calculate</button>
+    </form>
+
+    <div class="ovn-info">
+        <h4>OVN-Kubernetes Reserved Networks</h4>
+        <p>The calculator checks for conflicts with these OVN-Kubernetes reserved networks:</p>
+        <ul>
+            <li><strong>Join Switch:</strong> <code>100.64.0.0/16</code></li>
+            <li><strong>Transit Switch:</strong> <code>100.88.0.0/16</code></li>
+        </ul>
+        <p style="margin-top: 8px; margin-bottom: 0;">
+            <em>These ranges must not overlap with your cluster, service, or machine networks.</em>
+        </p>
+    </div>
+
+    <div class="results-container" id="resultsContainer" style="display: none;">
+        <h3>Results</h3>
+        <div class="results-grid" id="resultsGrid"></div>
+        <div class="result-json">
+            <pre id="resultJSON"></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize calculator (only if not already initialized)
+    if (typeof networkCalculatorInitialized === 'undefined') {
+        window.networkCalculatorInitialized = true;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('calculatorForm');
+            if (!form) return;
+
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultsGrid = document.getElementById('resultsGrid');
+            const resultJSON = document.getElementById('resultJSON');
+            const calculateButton = document.getElementById('calculateButton');
+
+            // Clear all error messages
+            function clearErrors() {
+                const calculator = document.getElementById('networkCalculator');
+                if (!calculator) return;
+
+                calculator.querySelectorAll('.error-message').forEach(el => {
+                    el.classList.remove('show');
+                    el.textContent = '';
+                });
+                calculator.querySelectorAll('input').forEach(el => {
+                    el.classList.remove('error');
+                });
+            }
+
+            // Show error for a specific field
+            function showError(fieldId, message) {
+                const input = document.getElementById(fieldId);
+                const errorEl = document.getElementById(fieldId + 'Error');
+                if (input && errorEl) {
+                    input.classList.add('error');
+                    errorEl.textContent = message;
+                    errorEl.classList.add('show');
+                }
+            }
+
+            // Format number with commas
+            function formatNumber(num) {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            }
+
+            // Display results
+            function displayResults(result) {
+                resultsGrid.innerHTML = '';
+
+                const resultItems = [
+                    { label: 'Pod Network', value: result['pod-network'] },
+                    { label: 'Service Network', value: result['service-network'] },
+                    { label: 'Machine Network', value: result['machine-network'] },
+                    { label: 'Number of Pods', value: formatNumber(result['number-of-pods']) },
+                    { label: 'Number of Services', value: formatNumber(result['number-of-services']) },
+                    { label: 'Pods per Node', value: formatNumber(result['pods-per-node']) },
+                    { label: 'Nodes (Want)', value: formatNumber(result['number-of-nodes'].want) },
+                    { label: 'Nodes (Have)', value: formatNumber(result['number-of-nodes'].have) },
+                    {
+                        label: 'Network Conflict',
+                        value: result['network-conflict'] ? 'Yes' : 'No',
+                        className: result['network-conflict'] ? 'conflict' : 'no-conflict'
+                    }
+                ];
+
+                resultItems.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    div.innerHTML = `
+                        <label>${item.label}</label>
+                        <div class="value ${item.className || ''}">${item.value}</div>
+                    `;
+                    resultsGrid.appendChild(div);
+                });
+
+                resultJSON.textContent = JSON.stringify(result, null, 2);
+                resultsContainer.style.display = 'block';
+            }
+
+            // Handle form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                clearErrors();
+
+                const hostPrefix = document.getElementById('hostPrefix').value;
+                const clusterNetwork = document.getElementById('clusterNetwork').value.trim();
+                const serviceNetwork = document.getElementById('serviceNetwork').value.trim();
+                const machineNetwork = document.getElementById('machineNetwork').value.trim();
+
+                // Validate inputs
+                let hasErrors = false;
+
+                if (!isValidHostPrefix(hostPrefix)) {
+                    showError('hostPrefix', 'Host prefix must be between 1 and 32');
+                    hasErrors = true;
+                }
+
+                if (!isValidCIDR(clusterNetwork)) {
+                    showError('clusterNetwork', 'Invalid CIDR format');
+                    hasErrors = true;
+                }
+
+                if (!isValidCIDR(serviceNetwork)) {
+                    showError('serviceNetwork', 'Invalid CIDR format');
+                    hasErrors = true;
+                }
+
+                if (!isValidCIDR(machineNetwork)) {
+                    showError('machineNetwork', 'Invalid CIDR format');
+                    hasErrors = true;
+                }
+
+                if (hasErrors) {
+                    return;
+                }
+
+                // Calculate
+                try {
+                    calculateButton.disabled = true;
+                    calculateButton.textContent = 'Calculating...';
+
+                    const result = calculateNetwork(
+                        parseInt(hostPrefix, 10),
+                        clusterNetwork,
+                        serviceNetwork,
+                        machineNetwork
+                    );
+
+                    displayResults(result);
+                } catch (error) {
+                    alert('Error calculating network: ' + error.message);
+                } finally {
+                    calculateButton.disabled = false;
+                    calculateButton.textContent = 'Calculate';
+                }
+            });
+        });
+    }
+</script>

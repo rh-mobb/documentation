@@ -1,0 +1,226 @@
+/* OpenShift Network Calculator Styles */
+
+.network-calculator {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 14px;
+}
+
+.ovn-info {
+    margin-top: 16px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #0066cc;
+}
+
+.ovn-info h4 {
+    margin-top: 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.ovn-info p {
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 14px;
+}
+
+.ovn-info ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #555;
+    font-size: 14px;
+}
+
+.ovn-info code {
+    background-color: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.ovn-info em {
+    color: #666;
+    font-size: 13px;
+}
+
+.network-calculator h2 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #0066cc;
+    padding-bottom: 8px;
+    font-size: 20px;
+}
+
+.network-calculator h3 {
+    margin-top: 8px;
+    margin-bottom: 16px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.calculator-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #555;
+    font-size: 14px;
+}
+
+.form-group input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.form-group input.error {
+    border-color: #dc3545;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+.calculate-button {
+    grid-column: 1 / -1;
+    padding: 10px 20px;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.calculate-button:hover {
+    background-color: #0052a3;
+}
+
+.calculate-button:active {
+    background-color: #003d7a;
+}
+
+.calculate-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.results-container {
+    margin-top: 20px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.results-container h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.result-item {
+    padding: 12px;
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.result-item label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.result-item .value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.result-item .value.conflict {
+    color: #dc3545;
+}
+
+.result-item .value.no-conflict {
+    color: #28a745;
+}
+
+.result-json {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #282c34;
+    color: #abb2bf;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.result-json pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+    .calculator-form {
+        grid-template-columns: 1fr;
+    }
+
+    .calculate-button {
+        grid-column: 1;
+    }
+
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+}
