@@ -9,7 +9,7 @@ authors:
 In this guide, we will implement egress restrictions for OpenShift Dedicated by using Google's [Cloud Next Generation Firewall (NGFW) Standard](https://cloud.google.com/firewall/docs/about-firewalls). Cloud NGFW is a fully distributed firewall service that allows fully qualified domain name (FQDN) objects in firewall policy rules. This is necessary for many of the external endpoints that OpenShift Dedicated relies on. 
 
 {{% alert state="warning" %}}
-The ability to restrict egress traffic using a firewall or other network device is only supported with OpenShift Dedicated clusters deployed using Google Private Service Connect (not yet generally available). Clusters that do not use Google Private Service Connect require a support exception to use this functionality. For additional assistance, please [open a support case](https://access.redhat.com/support/cases/#/case/new).
+The ability to restrict egress traffic using a firewall or other network device is only supported with OpenShift Dedicated clusters deployed using Google Private Service Connect. Clusters that do not use Google Private Service Connect require a support exception to use this functionality. For additional assistance, please [open a support case](https://access.redhat.com/support/cases/#/case/new).
 {{% /alert %}}
 
 ### Prerequisites
@@ -133,15 +133,6 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
 
 1. Stage the DNS records for Google APIs under the googleapis.com domain by running the following command:
     ```bash
-    gcloud dns record-sets transaction add --name="serviceusage.googleapis.com." \
-        --type=CNAME private.googleapis.com. \
-        --zone=${prefix}-googleapis \
-        --ttl=300
-    gcloud dns record-sets transaction add 199.36.153.8 199.36.153.9 199.36.153.10 199.36.153.11 \
-        --name=private.googleapis.com. \
-        --type=A \
-        --zone=${prefix}-googleapis \
-        --ttl=300
     gcloud dns record-sets transaction add --name="*.googleapis.com." \
         --type=CNAME restricted.googleapis.com. \
         --zone=${prefix}-googleapis \
@@ -152,9 +143,6 @@ Before we can deploy a Cloud NGFW, we must first create a VPC and subnets that w
         --zone=${prefix}-googleapis \
         --ttl=300
     ```
-    {{% alert state="info" %}}
-OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.com`) which is [not provided by the Private Google Access restricted VIP](https://cloud.google.com/vpc-service-controls/docs/restricted-vip-services). To circumvent this, we expose the Service Usage API using the [Private Google Access private VIP](https://cloud.google.com/vpc/docs/configure-private-google-access#domain-options). This is the only service exposed by the Private Google Access private VIP in this tutorial. 
-{{% /alert %}}
 
 1. Apply the staged record set transaction you started above by running the following command:
     ```bash
@@ -176,7 +164,7 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
         --dest-ip-ranges=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     ```
 
-1. Create an allow rule for HTTPS (`tcp/443`) domains required for OpenShift Dedicated by running the following command:
+1. Create an allow rule for HTTPS (`tcp/443`) [domains required for OpenShift Dedicated](https://docs.redhat.com/en/documentation/openshift_dedicated/4/html-single/planning_your_environment/index#osd-gcp-psc-firewall-prerequisites_gcp-ccs) by running the following command:
     ```bash
     gcloud compute network-firewall-policies rules create 600 \
         --description "Allow egress to OpenShift Dedicated required domains (tcp/443)" \
@@ -185,22 +173,20 @@ OpenShift Dedicated relies on the Service Usage API (`serviceusage.googleapis.co
         --global-firewall-policy \
         --direction=EGRESS \
         --layer4-configs tcp:443 \
-        --dest-fqdns accounts.google.com,pull.q1w2.quay.rhcloud.com,http-inputs-osdsecuritylogs.splunkcloud.com,nosnch.in,api.deadmanssnitch.com,events.pagerduty.com,api.pagerduty.com,api.openshift.com,mirror.openshift.com,observatorium.api.openshift.com,observatorium-mst.api.openshift.com,console.redhat.com,infogw.api.openshift.com,api.access.redhat.com,cert-api.access.redhat.com,catalog.redhat.com,sso.redhat.com,registry.connect.redhat.com,registry.access.redhat.com,cdn01.quay.io,cdn02.quay.io,cdn03.quay.io,cdn04.quay.io,cdn05.quay.io,cdn06.quay.io,cdn.quay.io,quay.io,registry.redhat.io,quayio-production-s3.s3.amazonaws.com
+        --dest-fqdns accounts.google.com,pull.q1w2.quay.rhcloud.com,http-inputs-osdsecuritylogs.splunkcloud.com,nosnch.in,api.deadmanssnitch.com,events.pagerduty.com,api.pagerduty.com,api.openshift.com,mirror.openshift.com,observatorium.api.openshift.com,observatorium-mst.api.openshift.com,console.redhat.com,infogw.api.openshift.com,api.access.redhat.com,cert-api.access.redhat.com,catalog.redhat.com,sso.redhat.com,registry.connect.redhat.com,registry.access.redhat.com,cdn01.quay.io,cdn02.quay.io,cdn03.quay.io,cdn04.quay.io,cdn05.quay.io,cdn06.quay.io,quay.io,registry.redhat.io,quayio-production-s3.s3.amazonaws.com
     ```
-    > These domains are sourced from internal documentation. These domains will be published in general documentation when the Private Service Connect feature is released. 
 
-1. Create an allow rule for TCP (`tcp/9997`) domains required for OpenShift Dedicated by running the following command:
+1. Create an allow rule for SSH (`tcp/22`) [domains recommended for OpenShift Dedicated](https://docs.redhat.com/en/documentation/openshift_dedicated/4/html/planning_your_environment/gcp-ccs#osd-gcp-psc-firewall-prerequisites_gcp-ccs) by running the following command:
     ```bash
-    gcloud compute network-firewall-policies rules create 601 \
-        --description "Allow egress to OpenShift Dedicated required domains (tcp/9997)" \
+    gcloud compute network-firewall-policies rules create 700 \
+        --description "Allow egress to OpenShift Dedicated recommended domains (tcp/22)" \
         --action=allow \
         --firewall-policy=${prefix} \
         --global-firewall-policy \
         --direction=EGRESS \
-        --layer4-configs tcp:9997 \
-        --dest-fqdns inputs1.osdsecuritylogs.splunkcloud.com,inputs2.osdsecuritylogs.splunkcloud.com,inputs3.osdsecuritylogs.splunkcloud.com,inputs4.osdsecuritylogs.splunkcloud.com,inputs5.osdsecuritylogs.splunkcloud.com,inputs6.osdsecuritylogs.splunkcloud.com,inputs7.osdsecuritylogs.splunkcloud.com,inputs8.osdsecuritylogs.splunkcloud.com,inputs9.osdsecuritylogs.splunkcloud.com,inputs10.osdsecuritylogs.splunkcloud.com,inputs11.osdsecuritylogs.splunkcloud.com,inputs12.osdsecuritylogs.splunkcloud.com,inputs13.osdsecuritylogs.splunkcloud.com,inputs14.osdsecuritylogs.splunkcloud.com,inputs15.osdsecuritylogs.splunkcloud.com
+        --layer4-configs tcp:22 \
+        --dest-fqdns sftp.access.redhat.com
     ```
-    > These domains are sourced from internal documentation. These domains will be published in general documentation when the Private Service Connect feature is released. 
 
 1. Create an allow rule for Private Google Access endpoints by running the following command:
     ```bash

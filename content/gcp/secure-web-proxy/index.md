@@ -9,7 +9,7 @@ authors:
 In this guide, we will implement egress restrictions for OpenShift Dedicated by using Google's [Secure Web Proxy](https://cloud.google.com/security/products/secure-web-proxy). Secure Web Proxy is a cloud first service that helps you secure egress web traffic (HTTP/S). OpenShift Dedicated relies on egress being allowed to specific fully qualified domain names (FQDNs), not just IP addresses. Secure Web Proxy provides support for limiting egress web traffic to the FQDNs necessary for the external endpoints that OpenShift Dedicated relies on. 
 
 {{% alert state="warning" %}}
-The ability to restrict egress traffic using Google Secure Web Proxy requires a support exception to use this functionality. For additional assistance, please [open a support case](https://access.redhat.com/support/cases/#/case/new).
+The ability to restrict egress traffic using a firewall or other network device is only supported with OpenShift Dedicated clusters deployed using Google Private Service Connect. Clusters that do not use Google Private Service Connect require a support exception to use this functionality. For additional assistance, please [open a support case](https://access.redhat.com/support/cases/#/case/new).
 {{% /alert %}}
 
 You can deploy Secure Web Proxy in multiple different modes, including explicit proxy routing, Private Service Connect service attachment mode, and Secure Web Proxy as next hop. In this guide, we will configure Secure Web Proxy as the next hop for routing in our network. This reduces the administrative overhead of configuring an explicit proxy variable for each source workload, and ensures that egress traffic to the internet can only flow via the Secure Web Proxy.
@@ -131,7 +131,6 @@ Before we can deploy a Secure Web Proxy, we must first create a VPC and subnets 
       - cdn04.quay.io
       - cdn05.quay.io
       - cdn06.quay.io
-      - cdn.quay.io
       - quay.io
       - registry.redhat.io
       - quayio-production-s3.s3.amazonaws.com

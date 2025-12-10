@@ -117,6 +117,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/gcp/osd_preexisting_vpc)
 * [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore)
 * [Limit Egress with Google Cloud NGFW Standard](/experts/gcp/cloud-ngfw)
+* [Limit Egress with Google Cloud Secure Web Proxy](/experts/gcp/secure-web-proxy)
 * [Install Maximo Application Suite on Red Hat OpenShift Dedicated on GCP with automation](/experts/gcp/mas/)
 * [Add an Ingress Controller to OpenShift Dedicated on GCP with a custom domain](/experts/gcp/ingress-controller)
 
