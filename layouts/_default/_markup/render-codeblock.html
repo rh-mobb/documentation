@@ -1,10 +1,12 @@
 {{- $lang := .Type | default "plain" -}}
 {{- $mimeType := "text/plain" -}}
+{{- $normalizedLang := $lang -}}
 
 {{- if eq $lang "javascript" -}}
   {{- $mimeType = "application/javascript" -}}
 {{- else if eq $lang "js" -}}
   {{- $mimeType = "application/javascript" -}}
+  {{- $normalizedLang = "javascript" -}}
 {{- else if eq $lang "json" -}}
   {{- $mimeType = "application/json" -}}
 {{- else if eq $lang "xml" -}}
@@ -21,16 +23,20 @@
   {{- $mimeType = "text/yaml" -}}
 {{- else if eq $lang "yml" -}}
   {{- $mimeType = "text/yaml" -}}
+  {{- $normalizedLang = "yaml" -}}
 {{- else if eq $lang "bash" -}}
   {{- $mimeType = "text/bash" -}}
 {{- else if eq $lang "sh" -}}
   {{- $mimeType = "text/bash" -}}
+  {{- $normalizedLang = "bash" -}}
 {{- else if eq $lang "shell" -}}
   {{- $mimeType = "text/bash" -}}
+  {{- $normalizedLang = "bash" -}}
 {{- else if eq $lang "python" -}}
   {{- $mimeType = "text/python" -}}
 {{- else if eq $lang "py" -}}
   {{- $mimeType = "text/python" -}}
+  {{- $normalizedLang = "python" -}}
 {{- else if eq $lang "go" -}}
   {{- $mimeType = "text/go" -}}
 {{- else if eq $lang "java" -}}
@@ -39,6 +45,7 @@
   {{- $mimeType = "text/typescript" -}}
 {{- else if eq $lang "ts" -}}
   {{- $mimeType = "text/typescript" -}}
+  {{- $normalizedLang = "typescript" -}}
 {{- else if eq $lang "tsx" -}}
   {{- $mimeType = "text/tsx" -}}
 {{- else if eq $lang "jsx" -}}
@@ -47,6 +54,7 @@
   {{- $mimeType = "text/ruby" -}}
 {{- else if eq $lang "rb" -}}
   {{- $mimeType = "text/ruby" -}}
+  {{- $normalizedLang = "ruby" -}}
 {{- else if eq $lang "php" -}}
   {{- $mimeType = "text/php" -}}
 {{- else if eq $lang "sql" -}}
@@ -65,6 +73,15 @@
   {{- $mimeType = printf "text/%s" $lang -}}
 {{- end -}}
 
-<rh-code-block actions="copy wrap" highlighting="client" language="{{ $lang }}">
+{{- /* Disable highlighting for languages rh-code-block doesn't support */ -}}
+{{- /* Only these languages are supported by rh-code-block autoloader: */ -}}
+{{- /* html, css, javascript, typescript, bash, ruby, yaml, json */ -}}
+{{- $highlighting := "client" -}}
+{{- $supportedLangs := slice "html" "css" "javascript" "typescript" "bash" "ruby" "yaml" "json" -}}
+{{- if not (in $supportedLangs $normalizedLang) -}}
+  {{- $highlighting = "none" -}}
+{{- end -}}
+
+<rh-code-block actions="copy wrap" highlighting="{{ $highlighting }}" language="{{ $normalizedLang }}">
   <script type="{{ $mimeType }}">{{ .Inner | safeHTML }}</script>
 </rh-code-block>
