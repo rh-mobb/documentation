@@ -80,7 +80,6 @@ export OCM_CLIENT_SECRET= # SERVICE ACCOUNT CLIENT SECRET
       source: redhat-operators
       sourceNamespace: openshift-marketplace
       name: advanced-cluster-management
-      channel: "release-2.13"
       installPlanApproval: Automatic
     EOF
     ```
@@ -106,9 +105,7 @@ export OCM_CLIENT_SECRET= # SERVICE ACCOUNT CLIENT SECRET
 3. Patch the multiclusterengine to support preview APIs
 
 ```bash
-oc patch multiclusterengine multiclusterengine --type=merge -p '{"spec":{"overrides":{"components":[{"name":"cluster-api-provider-aws-preview","enabled":true},{"name":"cluster-api-preview","enabled":true}]}}}'
-
-oc patch multiclusterengine multiclusterengine --type=merge -p '{"spec":{"overrides":{"components":[{"name":"cluster-api-preview","enabled":true}]}}}'
+oc patch multiclusterengine multiclusterengine --type=merge -p '{"spec":{"overrides":{"components":[{"name":"cluster-api-provider-aws-preview","enabled":true},{"name":"cluster-api","enabled":true},{"name":"hypershift-local-hosting","enabled":false},{"name":"hypershift","enabled":false}]}}}'
 ```
 
 4. Annotate the multiclusterengine to respect IRSA credentails
