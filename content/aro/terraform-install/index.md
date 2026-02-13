@@ -1,5 +1,5 @@
 ---
-date: '2023-2-10'
+date: '2023-02-10'
 title: Deploying ARO using azurerm Terraform Provider
 tags: ["azure", "ARO", "Terraform"]
 authors:
