@@ -50,7 +50,11 @@ Static provisioning mounts the entire volume to a pod.
    export SCRATCH_DIR=/tmp/scratch
    export AWS_PAGER=""
    mkdir -p $SCRATCH_DIR
+
+   export PRIVATE_SUBNETS=$(comm -23 <(rosa describe cluster -c $CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[]' | tr '\t' '\n' | sort) \
+         <(aws ec2 describe-route-tables --query 'RouteTables[?Routes[?GatewayId != `null` && starts_with(GatewayId, `igw-`)]].Associations[*].SubnetId' --output text | tr '\t' '\n' | sort))
    ```
+
 
 ## Prepare AWS Account
 
@@ -255,6 +259,22 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
      | jq -r '.[0][0].SecurityGroups[0].GroupId')
    echo "CIDR - $CIDR,  SG - $SG"
    ```
+1. NOTE: There is a difference in identifying the private subnets from classic to hcp.
+
+   {{% alert state="info" %}}ROSA CLASSIC: We can identify the subnets by their tags.{{% /alert %}}
+   ```bash
+    PRIVATE_SUBNETS=$(aws ec2 describe-subnets \
+     --filters Name=vpc-id,Values=$VPC Name='tag:kubernetes.io/role/internal-elb',Values='*' \
+     --query 'Subnets[*].{SubnetId:SubnetId}' \
+     --region $AWS_REGION \
+     | jq -r '.[].SubnetId')
+   ```
+
+   {{% alert state="info" %}}ROSA HCP: We must identify the private subnets filtering the cluster subnets from the public ones.{{% /alert %}}
+   ```bash
+    PRIVATE_SUBNETS=$(comm -23 <(rosa describe cluster -c $CLUSTER_NAME -o json | jq -r '.aws.subnet_ids[]' | tr '\t' '\n' | sort) \
+         <(aws ec2 describe-route-tables --query 'RouteTables[?Routes[?GatewayId != `null` && starts_with(GatewayId, `igw-`)]].Associations[*].SubnetId' --output text | tr '\t' '\n' | sort))
+   ```
 
 1. Assuming the CIDR and SG are correct, update the security group
 
@@ -282,11 +302,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Configure a region-wide Mount Target for EFS (this will create a mount point in each subnet of your VPC by default)
 
    ```bash
-   for SUBNET in $(aws ec2 describe-subnets \
-     --filters Name=vpc-id,Values=$VPC Name='tag:kubernetes.io/role/internal-elb',Values='*' \
-     --query 'Subnets[*].{SubnetId:SubnetId}' \
-     --region $AWS_REGION \
-     | jq -r '.[].SubnetId'); do \
+   for SUBNET in $PRIVATE_SUBNETS do \
        MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
           --subnet-id $SUBNET --security-groups $SG \
           --region $AWS_REGION \
@@ -302,11 +318,7 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Select the first subnet that you will make your EFS mount in (this will by default select the same Subnet your first node is in)
 
    ```bash
-   SUBNET=$(aws ec2 describe-subnets \
-     --filters Name=vpc-id,Values=$VPC Name='tag:kubernetes.io/role/internal-elb',Values='*' \
-     --query 'Subnets[*].{SubnetId:SubnetId}' \
-     --region $AWS_REGION \
-     | jq -r '.[0].SubnetId')
+   SUBNET=$(echo $PRIVATE_SUBNETS | head -n 1)
    AWS_ZONE=$(aws ec2 describe-subnets --filters Name=subnet-id,Values=$SUBNET \
      --region $AWS_REGION | jq -r '.Subnets[0].AvailabilityZone')
    ```
