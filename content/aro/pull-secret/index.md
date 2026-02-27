@@ -1,4 +1,10 @@
-# Helm Chart to set up a Red Hat pull secret for your ARO cluster
+---
+date: '2026-02-26'
+title: Helm Chart to set up a Red Hat pull secret for your ARO cluster
+tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
+---
 
 ## Prerequisites
 
