@@ -1,8 +1,25 @@
-# Helm Chart to set up a Red Hat pull secret for your ARO cluster
+---
+date: '2026-02-26'
+title: Add or Update a Red Hat Pull Secret on ARO
+tags: ["ARO", "Azure"]
+authors:
+  - Paul Czarkowski
+---
+
+
+## Why add a Red Hat pull secret?
+
+If you create an Azure Red Hat OpenShift (ARO) cluster **without** providing a Red Hat pull secret, ARO still creates a pull secret automatically, however, it is **not fully populated**. Adding your Red Hat pull secret enables your cluster to:
+
+- Access Red Hat container registries and related content
+- Install operators from **OperatorHub** (for example, OpenShift Virtualization and other Red Hat operators)
+- Use additional Red Hat and partner operator-backed capabilities (for example, OpenShift Data Foundation)
+
+For Microsoft's official documentation on managing pull secrets for ARO, see [Add or update your Red Hat pull secret on an Azure Red Hat OpenShift 4 cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret).
+
 
 ## Prerequisites
 
-* An ARO 4.10 cluster
 * Helm CLI
 
 ## Prepare Environment

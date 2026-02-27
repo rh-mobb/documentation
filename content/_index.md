@@ -80,6 +80,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Prerequisites Checklist to Deploy ARO Cluster](/experts/aro/prereq-list)
 * [Deploying private ARO Cluster with Jump Host access](/experts/aro/private-cluster)
   * [Using the Egressip Ipam Operator with a Private ARO Cluster](/experts/aro/egress-ipam-operator)
+* [Add or Update a Red Hat Pull Secret on ARO](/experts/aro/pull-secret)
 * [Considerations for Disaster Recovery with ARO](/experts/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
 * [Deploy and use the Azure Service Operator V1(ASO)](/experts/aro/azure-service-operator/v1)
