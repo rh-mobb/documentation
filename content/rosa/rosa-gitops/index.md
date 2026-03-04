@@ -1,10 +1,16 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2023-06-26'
 title: Creating ROSA Components with GitOps
 tags: ["AWS", "ROSA", "GitOps", "OCM"]
 authors:
   - Dustin Scott
 ---
+
+# This operator has been deprecated, the article remains available historically on GitHub. 
 
 Many organizations want to use GitOps methodologies as a main part of their operational practices.  Often times, this 
 includes infrastructure as well.  The advantage to this practice is that anything controlled 
