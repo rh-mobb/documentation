@@ -125,6 +125,13 @@ Under **Listeners and routing**, select protocol **TCP** on port **443**, and fo
 
 Next, click **Create load balancer** button at the bottom of the page. It will take a couple of minutes for the status to turn from **Provisioning** to **Active**. Then, copy the **Load balancer ARN** as you would need it for the next step. 
 
+### 4.4 Expose Healthceck Port
+
+The custom port and path for the healthcheck override isn't reachable from outside the cluster by default, which means none of the backends in the target group will show up as 'Healthy' until it's resolved, which can be done with a simple `oc patch` command. Note that the name of the service referred to as a variable should match the service name for the `IngressController` created earlier:
+
+```bash
+oc -n openshift-ingress patch svc ${INGRESS_SERVICE_NAME} -p '{"spec":{"ports":[{"port":1936,"targetPort":1936,"protocol":"TCP","name":"httphealth"}]}}'
+```
 
 ## 5. Create CloudFront VPC Origin and Distribution
 
