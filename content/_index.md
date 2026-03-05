@@ -38,7 +38,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ROSA in STS mode](/experts/rosa/sts)
 * [Deploying ROSA in STS mode with PrivateLink](/experts/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](/experts/rosa/kms)
-* [Deploying ROSA via CRD and GitOps](/experts/rosa/rosa-gitops)
 * [ROSA IP addressing best practices](/experts/rosa/ip-addressing-and-subnets)
 * [Installing the AWS Load Balancer Operator on ROSA](/experts/rosa/aws-load-balancer-operator)
 * [Assign Egress IP for External Traffic](/experts/rosa/egress-ip)
