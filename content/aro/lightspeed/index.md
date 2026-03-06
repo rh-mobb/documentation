@@ -24,8 +24,8 @@ Create environment variables.
 
 ```bash
 export AZ_SUB_ID=$(az account show --query 'id' -o tsv)
-export AZR_RESOURCE_GROUP=dpenagos-demo
-export AI_ACCOUNT_NAME=test-ai-dpenagos
+export AZR_RESOURCE_GROUP=my-resource-group
+export AI_ACCOUNT_NAME=my-ai-account-name
 export DEPLOYMENT_MODEL_NAME=gpt-4o-mini
 export API_VERSION="2025-01-01-preview"
 export REGION=eastus
