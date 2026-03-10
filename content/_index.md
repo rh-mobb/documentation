@@ -110,6 +110,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Remove the default azure-files storage class](/experts/aro/remove-azure-files)
 * [Scalability and Cost Management for ARO](/experts/aro/aro-schedule-scaling)
 * [Backup and Restore for ARO using OpenShift API for Data Protection](/experts/aro/backup-restore)
+* [Configure OpenShift Lightspeed backed by Azure AI Foundry for the LLM](/experts/aro/lightspeed)
 
 ## OpenShift Dedicated on GCP
 
