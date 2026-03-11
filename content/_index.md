@@ -27,6 +27,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
 * [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
 * [Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan](/experts/rosa/s2s-vpn)
+* [Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS](/experts/rosa/ecr-external-secrets-irsa)
 
 #### Classic
 
