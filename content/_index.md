@@ -27,6 +27,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
 * [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
 * [Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan](/experts/rosa/s2s-vpn)
+* [Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS](/experts/rosa/ecr-external-secrets-irsa)
 
 #### Classic
 
@@ -216,7 +217,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
 * [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
 * [Setting up Cross-Cluster PostgreSQL Replication with Skupper on ROSA and ARO](/experts/misc/rosa-aro-service-interconnect)
-* [Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS](/experts/misc/rosa-ecr-external-secrets-irsa)
 
 ### Applications
 
