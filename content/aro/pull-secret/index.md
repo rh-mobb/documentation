@@ -4,19 +4,14 @@ title: Add or Update a Red Hat Pull Secret on ARO
 tags: ["ARO", "Azure"]
 authors:
   - Paul Czarkowski
+  - Diana Sari
 ---
 
+When deploying an Azure Red Hat OpenShift (ARO) cluster, omitting a Red Hat pull secret results in a "limited" configuration. While this allows the cluster to function using core service images, it restricts access to the broader Red Hat ecosystem, including Red Hat container registries, along with other content like operators from OperatorHub.
 
-## Why add a Red Hat pull secret?
+Microsoft’s official guidance involves a manual process for updating these credentials. You can find those steps [here](https://learn.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret).
 
-If you create an Azure Red Hat OpenShift (ARO) cluster **without** providing a Red Hat pull secret, ARO still creates a pull secret automatically, however, it is **not fully populated**. Adding your Red Hat pull secret enables your cluster to:
-
-- Access Red Hat container registries and related content
-- Install operators from **OperatorHub** (for example, OpenShift Virtualization and other Red Hat operators)
-- Use additional Red Hat and partner operator-backed capabilities (for example, OpenShift Data Foundation)
-
-For Microsoft's official documentation on managing pull secrets for ARO, see [Add or update your Red Hat pull secret on an Azure Red Hat OpenShift 4 cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret).
-
+To eliminate the manual overhead of merging and updating secrets, we have developed a Helm Chart that automates the entire workflow. This tool intelligently concatenates your Red Hat pull secret with the existing cluster secret, ensuring seamless access to Red Hat resources without the risk of manual configuration errors.
 
 ## Prerequisites
 
@@ -24,13 +19,13 @@ For Microsoft's official documentation on managing pull secrets for ARO, see [Ad
 
 ## Prepare Environment
 
-1. Add the MOBB chart repository to your Helm
+1. Add the Cloud Experts Helm Chart repository to your Helm environment:
 
     ```bash
     helm repo add mobb https://rh-mobb.github.io/helm-charts/
     ```
 
-1. Update your repositories
+1. Update your Helm repositories to pull the latest content:
 
     ```bash
     helm repo update
@@ -49,20 +44,20 @@ For Microsoft's official documentation on managing pull secrets for ARO, see [Ad
      pull-secret app.kubernetes.io/managed-by=Helm
    ```
 
-1. Download your pull secret from **https://console.redhat.com/openshift/downloads -> Tokens -> Pull secret** and save it to values.yaml
+1. Download your pull secret from the [Red Hat OpenShift Cluster Manager](https://console.redhat.com/openshift/install/azure/aro-provisioned). 
 
     ```bash
     echo "pullSecret: '`cat ~/Downloads/pull-secret.txt`' > /tmp/values.yaml
     ```
 
-1. Update the pull secret
+1. Update the pull secret using the Helm Chart:
 
    ```
    helm upgrade --install pull-secret mobb/aro-pull-secret \
      -n openshift-config --values /tmp/values.yaml
    ```
 
-1. Optionally enable Operator Hub
+1. Once the pull secret is updated, enable the OperatorHub sources:
 
    ```bash
    oc patch configs.samples.operator.openshift.io cluster --type=merge \
