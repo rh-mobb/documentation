@@ -7,6 +7,8 @@ authors:
   - Kevin Collins
   - Diana Sari
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
+
 # Bridging the Security Gap with External Secrets Operator
 In the modern cloud-native landscape, managing sensitive credentials across distributed environments is a critical challenge for platform engineers. The External Secrets Operator (ESO) for Red Hat OpenShift provides a robust, cluster-wide service designed to bridge the gap between enterprise security standards and Kubernetes agility. By acting as a secure conduit, ESO automates the fetching, refreshing, and provisioning of secrets from external management systems directly into your OpenShift clusters, ensuring that your applications remain secure without manual overhead.
 
