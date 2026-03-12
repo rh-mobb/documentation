@@ -122,7 +122,7 @@ EOF
 
 >Note: Refer to [External Secrets Operator for Red Hat OpenShift](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/security_and_compliance/external-secrets-operator-for-red-hat-openshift) and [external-secrets](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/security_and_compliance/external-secrets-operator-for-red-hat-openshift) for advance configurations.
 
-4. Create external secrets operand 
+5. Create external secrets operand 
 ```bash
 oc create -f - <<EOF
 apiVersion: operator.openshift.io/v1alpha1
