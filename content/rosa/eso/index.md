@@ -1,7 +1,7 @@
 ---
 date: '2026-03-11'
 title: Using AWS Secrets Manager with External Secrets Operator on ROSA HCP 
-tags: ["AWS", "ROSA", "ESO"]
+tags: ["AWS", "ROSA", "STS"]
 authors:
   - Kumudu Herath
   - Kevin Collins
@@ -397,7 +397,7 @@ Example Output
 {"username":"shadowman", "password":"hunter2"}
   ```
 
-10. Deploy pod and validate 
+10. Deploy a pod and validate 
 
 ```bash
 cat << EOF | oc apply -f -
