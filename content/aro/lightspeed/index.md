@@ -27,6 +27,7 @@ export AZ_SUB_ID=$(az account show --query 'id' -o tsv)
 export AZR_RESOURCE_GROUP=my-resource-group
 export AI_ACCOUNT_NAME=my-ai-account-name
 export DEPLOYMENT_MODEL_NAME=gpt-4o-mini
+export ENTRAID_SP_ARO_AI=sp-aro-ai
 export API_VERSION="2025-01-01-preview"
 export REGION=eastus
 ```
@@ -76,7 +77,7 @@ Install the necessary operator, OpenShift Lightspeed Operator from OpenShift con
 1. We must use an app registration to get access to the AI service.
 
     ```bash
-    AZ_SP=$(az ad sp create-for-rbac -n "dpenagos-aro-ia" --role contributor --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}")
+    AZ_SP=$(az ad sp create-for-rbac -n ${ENTRAID_SP_ARO_AI} --role contributor --scopes "/subscriptions/${AZ_SUB_ID}/resourceGroups/${AZR_RESOURCE_GROUP}")
     APP_ID=$(echo ${AZ_SP} | jq -r '.appId')
     PASS=$(echo ${AZ_SP} | jq -r '.password')
     TENANT=$(echo ${AZ_SP} | jq -r '.tenant')
