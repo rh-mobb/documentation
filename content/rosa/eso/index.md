@@ -9,10 +9,10 @@ authors:
 ---
 {{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
-# Bridging the Security Gap with External Secrets Operator
+### Bridging the Security Gap with External Secrets Operator
 In the modern cloud-native landscape, managing sensitive credentials across distributed environments is a critical challenge for platform engineers. The External Secrets Operator (ESO) for Red Hat OpenShift provides a robust, cluster-wide service designed to bridge the gap between enterprise security standards and Kubernetes agility. By acting as a secure conduit, ESO automates the fetching, refreshing, and provisioning of secrets from external management systems directly into your OpenShift clusters, ensuring that your applications remain secure without manual overhead.
 
-## The Security Limitations of Native Kubernetes Secrets
+### The Security Limitations of Native Kubernetes Secrets
 
 While Kubernetes provides a native Secret resource, relying on it alone presents significant security hurdles for production-grade environments:
 * Encoding vs. Encryption: By default, native secrets are stored as Base64-encoded strings—an obfuscation method that offers no true cryptographic protection and is easily reversible.
@@ -20,7 +20,7 @@ While Kubernetes provides a native Secret resource, relying on it alone presents
 * Rotation Inconsistency: Manual rotation processes are prone to human error, often leading to stale credentials or security gaps across global clusters.
 * Access Control Fragility: A single misconfiguration in Role-Based Access Control (RBAC) can inadvertently expose sensitive data to unauthorized entities within a namespace.
 
-## The Strategic Advantage of Externalized Secret Management
+### The Strategic Advantage of Externalized Secret Management
 Moving sensitive data out of the cluster and into a dedicated management system shifts the security paradigm from reactive to proactive. By utilizing an external-first approach, organizations gain:
 * Centralized Governance: A single source of truth for sensitive data that exists independently of the Kubernetes lifecycle.
 * Enhanced Privilege Separation: By decoupling storage from the cluster, you can protect secrets from cluster admins and enforce strict "least-privilege" access.
@@ -31,14 +31,14 @@ Refer to [External Secrets Operator for Red Hat OpenShift](https://docs.redhat.c
 
 Refer to [Limitations of External Secrets Operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/security_and_compliance/external-secrets-operator-for-red-hat-openshift#external-secrets-operator-limitations_external-secrets-operator-install)
 
-## Prerequisites
+### Prerequisites
 
 1. ROSA HCP Cluster access with cluster-admin privileges.
 2. OpenShift CLI (oc)
 3. Access AWS Secrets Manager and aws cli
 
 
-## Create environment variables
+### Create environment variables
 
 1. Create environment variables :
 
@@ -55,7 +55,11 @@ echo REGION:$REGION OIDC_ENDPOINT:$OIDC_ENDPOINT AWS_ACCOUNT_ID:$AWS_ACCOUNT_ID 
 
 ```
 
-## Install the ESO Operator
+### Install the ESO Operator
+
+You can install the operator via console by searching for `External Secrets Operator for Red Hat OpenShift` in the OperatorHub or Software Catalog search query. 
+
+Alternatively, follow this step to install via CLI.
 
 1. OpenShift project for ESO operator
 
@@ -107,7 +111,7 @@ EOF
   oc get pods -n external-secrets-operator
   ```
 
-  >Note: This can take up to a minute - #TODO update output
+  >Note: This can take up to a minute.  
 
   Example Output
 
@@ -119,6 +123,8 @@ EOF
   NAME                                                            READY   STATUS    RESTARTS   AGE
   external-secrets-operator-controller-manager-549d5bc5fd-kwtt7   1/1     Running   0          2m7s
   ```
+
+Make sure that the pod's status is `Running` before moving on to the next step.
 
 >Note: Refer to [External Secrets Operator for Red Hat OpenShift](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/security_and_compliance/external-secrets-operator-for-red-hat-openshift) and [external-secrets](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/security_and_compliance/external-secrets-operator-for-red-hat-openshift) for advance configurations.
 
@@ -141,15 +147,28 @@ spec:
       name: allow-external-secrets-egress
 EOF
 ```
-## Use external secret in ROSA HCP project
+### Use external secret in ROSA HCP project
 
 1. Create a secret in AWS Secrets Manager
 
+Make sure to replace the username and password placeholder values.
+
 ```bash
+cat > mycreds.json <<'EOF'
+{
+  "username": "<YOUR-USERNAME>",
+  "password": "<YOUR-PASSWORD>"
+}
+EOF
+chmod 600 mycreds.json
+
 SECRET_ARN=$(aws --region "$REGION" secretsmanager create-secret \
-    --name MYDBCreds --secret-string \
-    '{"username":"shadowman", "password":"hunter2"}' \
-    --query ARN --output text); echo $SECRET_ARN
+  --name MYDBCreds \
+  --secret-string file://mycreds.json \
+  --query ARN --output text)
+
+rm -f mycreds.json
+echo "$SECRET_ARN"
 ```
 
 
@@ -277,6 +296,8 @@ EOF
 
 9. Validate access to external secret
 
+First, check that SecretStore is `Ready` and validated.
+
 ```bash
 oc describe SecretStore aws-secret-store
 ```
@@ -318,6 +339,8 @@ Events:
   Normal  Valid   60s (x3 over 6m)  secret-store  store validated
   ```
 
+And then check that the ExternalSecret object exists and points at the right remote secret.
+
 ```bash
 oc describe externalsecret my-app-secrets
 ```
@@ -355,6 +378,8 @@ Spec:
 Events:               <none>
   ```
 
+Confirm that Kubernetes created a local secret named `my-app-secrets`.
+
 ```bash
 oc get secrets
 ```
@@ -368,6 +393,8 @@ default-dockercfg-xfl49    kubernetes.io/dockercfg   1      13m
 deployer-dockercfg-bs6s4   kubernetes.io/dockercfg   1      13m
 my-app-secrets             Opaque                    1      13s
   ```
+
+Confirm that secret has data, i.e. metadata/size
 
 ```bash
 oc describe secret my-app-secrets
@@ -388,13 +415,15 @@ Data
 DB_CREDS:  46 bytes
   ```
 
+Decode and verify the secret value
+
 ```bash
 oc get secret my-app-secrets -n $Project_Name -o go-template --template='{{.data.DB_CREDS|base64decode}}'
 ```
 Example Output
 
   ```
-{"username":"shadowman", "password":"hunter2"}
+{"username":"<YOUR-USERNAME>", "password":"YOUR-PASSWORD"}
   ```
 
 10. Deploy a pod and validate 
@@ -431,7 +460,7 @@ oc exec -it my-application -- cat /mnt/secrets-store/DB_CREDS
 ```
 
 
-## Cleanup
+### Cleanup
 
 1. Delete test Project
 
