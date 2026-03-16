@@ -14,10 +14,11 @@ With Managed Identity-enabled ARO clusters now generally available, we will leve
 
 ## Guide Overview
 1. Install OpenShift GitOps Operator in ARO
-2. Establish Federated Trust with ADO Tenant
-3. Add Tenant B Managed Identity as an entity in ADO
-4. Configure ArgoCD to authenticate with ADO
-5. Validate our setup by deploying a sample application
+2. Update the Repo-Server ServiceAccount
+3. Establish Federated Trust with ADO Tenant
+4. Add Tenant B Managed Identity as an entity in ADO
+5. Configure ArgoCD to authenticate with ADO
+6. Validate our setup by deploying a sample application
 
 ### Prerequisites
 * **Tenant A:** An ARO cluster with Managed Identity/Workload Identity enabled.
@@ -41,9 +42,36 @@ With Managed Identity-enabled ARO clusters now generally available, we will leve
 1. Once installed, click **View Operator**. Look for the **Red Hat OpenShift GitOps** operator you just installed and click on it. The operator details page will be displayed. Click on **Argo CD** in the top panel. You will see a default ArgoCD instance deployed in the `openshift-gitops` namespace. 
 
    ![ArgoCD_instance_view](./images/ArgoCD_instance_view.png)
+   
+
+## 2. Update the Repo-Server ServiceAccount
+
+This default ArgoCD instance uses the ServiceAccount (SA) named **default** for the repo-server pod. We are going to switch the default SA with a custom one for improved security.
+
+First, log in to Openshift using the oc client. You can retrieve the login command from the OpenShift console. Click on **Copy login command**, then click on `Display Token`. Copy the `Log in with this token` command, and paste in your terminal. 
+
+ ![oc_login_command.png](./images/oc_login_command.png)
+
+Next, create the custom service account 
+
+  ```bash
+  cat <<EOF | oc apply -f -
+  apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: repo-server-custom  # Relace with your custom SA name
+    namespace: openshift-gitops
+  EOF
+  ```
+
+Patch the ArgoCD CRD to swap the repo server's ServiceAccount
+
+   ```bash
+   oc patch argocd openshift-gitops -n openshift-gitops --type='merge' -p '{"spec":{"repo":{"serviceaccount":"repo-server-custom"}}}'
+   ```
 
 
-## 2. Establish Federated Trust
+## 3. Establish Federated Trust
 
 ### Set Environment Variables
 
@@ -56,6 +84,7 @@ RESOURCE_GROUP_B=uami-rg     # Replace with Tenant B Resource Group
 ```
 
 ### Get OIDC Issuer URL (Tenant A)
+
 Login to Tenant A and retrieve the identity provider URL:
 
 ```bash
@@ -87,6 +116,7 @@ MI_CLIENT_ID=$(az identity show --name argocd-cross-tenant-id --resource-group $
 ```
 
 ### Establish Federated Credential
+
 This links the ARO ServiceAccount to the Identity in Tenant B.
 
 ```bash
@@ -95,12 +125,12 @@ az identity federated-credential create \
   --identity-name "argocd-cross-tenant-id" \
   --resource-group $RESOURCE_GROUP_B \
   --issuer "$OIDC_URL" \
-  --subject "system:serviceaccount:openshift-gitops:default" \
+  --subject "system:serviceaccount:openshift-gitops:repo-server-custom" \
   --audiences "api://AzureADTokenExchange"
 ```
 
 
-## 3. Add your User-Assigned Managed Identity (UAMI) as an entity in ADO
+## 4. Add your User-Assigned Managed Identity (UAMI) as an entity in ADO
 
 Managed Identities are treated as Users in ADO. You must add the identity to the ADO organization in Tenant B.
 
@@ -127,35 +157,21 @@ Managed Identities are treated as Users in ADO. You must add the identity to the
    Click **Add** at the bottom of the page to add the user to your organisation. 
 
 
-## 4. Configure ArgoCD in ARO to authenticate with ADO
+## 5. Configure ArgoCD in ARO to authenticate with ADO
 
 Switch back to Tenant A
 
 ```bash
 az login --tenant $TENANT_A_ID
 ```
-Log in to Openshift using the oc client. You can retrieve the login command from the OpenShift console. Click on **Copy login command**, then click on `Display Token`. Copy the `Log in with this token` command, and paste in your terminal. 
-
- ![oc_login_command.png](./images/oc_login_command.png)
-
 
 We need to tell the repo-server pod which identity to assume by annotating its Service Account.
 
 ```bash
-oc annotate sa default -n openshift-gitops \
+oc annotate sa repo-server-custom -n openshift-gitops \
   azure.workload.identity/client-id="$MI_CLIENT_ID" \
   azure.workload.identity/tenant-id="$TENANT_B_ID" --overwrite
 ```
-
-Assign necessary rights to the following ArgoCD service accounts:
-
-```bash
-oc adm policy add-cluster-role-to-user cluster-admin -z default -n openshift-gitops
-```
-```bash
-oc adm policy add-cluster-role-to-user cluster-admin -z openshift-gitops-argocd-application-controller -n openshift-gitops
-```
-
 
 Patch the ArgoCD Deployment by adding the Workload Identity label to trigger the injection of the Azure token:
 
@@ -177,11 +193,19 @@ oc patch argocd openshift-gitops -n openshift-gitops --type=merge -p '
 }'
 ```
 
-## 5. Deploy a Sample Application using ArgoCD
+## 6. Deploy a Sample Application using ArgoCD
+
+### Assign necessary rights to the ArgoCD-Application-Controller ServiceAccount. 
+
+The Application Controller manages the live state of your cluster; therefore, it requires specific RBAC permissions to synchronize resources. In this guide, we will assign **cluster-admin** privileges for simplicity, though these permissions can be scoped down to individual projects for stricter security. 
+
+```bash
+oc adm policy add-cluster-role-to-user cluster-admin -z openshift-gitops-argocd-application-controller -n openshift-gitops
+```
 ### Retrieve ArgoCD credentials for UI login
 
 ```bash
-CONSOLE_URL= $(oc get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}{"\n"}')
+CONSOLE_URL=$(oc get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}{"\n"}')
 echo $CONSOLE_URL
 ```
 ```bash
