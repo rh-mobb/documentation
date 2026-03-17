@@ -38,7 +38,7 @@ As mentioned before, for deploy OSD in GCP using existing GCP VPC, you need to p
 
 1. Login and configure the proper GCP project where the OSD will be deployed:
 
-   ```sh
+   ```bash
    export PROJECT_NAME=<google project name>
    gcloud auth list
    gcloud config set project $PROJECT_NAME
@@ -47,7 +47,7 @@ As mentioned before, for deploy OSD in GCP using existing GCP VPC, you need to p
 
 2. Export the names of the vpc and subnets:
 
-   ```sh
+   ```bash
    export REGION=<region name>
    export OSD_VPC=<vpc name>
    export MASTER_SUBNET=<master subnet name>
@@ -56,7 +56,7 @@ As mentioned before, for deploy OSD in GCP using existing GCP VPC, you need to p
 
 3. Create a custom mode VPC network:
 
-   ```sh
+   ```bash
    gcloud compute networks create $OSD_VPC --subnet-mode=custom
    gcloud compute networks describe $OSD_VPC
    ```
@@ -72,7 +72,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
 5. Create the GCP Subnets for the masters and workers within the previous GCP VPC network:
 
-   ```sh
+   ```bash
    gcloud compute networks subnets create $MASTER_SUBNET \
    --network=$OSD_VPC --range=10.0.0.0/17 --region=$REGION
 
@@ -84,7 +84,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
 6. Once the VPC and the two subnets are provided it is needed to create one [GCP Cloud Router](https://cloud.google.com/network-connectivity/docs/router/how-to/create-router-vpc-on-premises-network):
 
-   ```sh
+   ```bash
    export OSD_ROUTER=<router name>
 
    gcloud compute routers create $OSD_ROUTER \
@@ -97,7 +97,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
     * Generate the GCP Cloud Nat for the Master Subnets:
 
-    ```sh
+    ```bash
     export NAT_MASTER=<master subnet name>
 
    gcloud compute routers nats create $NAT_MASTER \
@@ -111,7 +111,7 @@ NOTE: we need to create the mode custom for the VPC network, because the auto mo
 
     * Generate the GCP Cloud NAT for the Worker Subnets:
 
-    ```sh
+    ```bash
     export NAT_WORKER=<worker subnet name>
 
    gcloud compute routers nats create $NAT_WORKER \
@@ -204,7 +204,7 @@ Depending of which option you selected you must perform:
 
 3. **Option 1**: Delete GCP resources using GCloud CLI:
 
-   ```sh
+   ```bash
    gcloud compute routers nats delete $NAT_WORKER \
    --region=$REGION --router=$OSD_ROUTER --quiet
 
@@ -221,6 +221,6 @@ Depending of which option you selected you must perform:
 
 4. **Option 2**: Delete GCP resources using Terraform:
 
-   ```sh
+   ```bash
    make destroy
    ```

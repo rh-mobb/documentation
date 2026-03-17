@@ -153,3 +153,9 @@ from = "/experts/rosa/hcp-private-api-access/"
 to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/rosa-hcp-aws-private-creating-cluster#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster"
 status = 301
 force = true
+
+[[redirects]]
+from = "/experts/rosa/rosa-gitops/"
+to = "/"
+status = 404
+force = true
