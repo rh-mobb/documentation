@@ -1,6 +1,6 @@
 ---
 title: "Creating a ROSA HCP cluster with custom KMS key"
-date: 2026-02-06
+date: 2026-03-16
 tags: ["AWS", "ROSA", "HCP", "KMS", "Encryption"]
 authors:
   - Nerav Doshi
