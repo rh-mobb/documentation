@@ -14,7 +14,7 @@ This guide walks you through deploying a Red Hat OpenShift Service on AWS (ROSA)
 
 > **Tip:** For official documentation, see [Creating ROSA HCP clusters using a custom AWS KMS encryption key](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/rosa-hcp-creating-cluster-with-aws-kms-key).
 
-> **Note:** This guide is specifically for **ROSA with Hosted Control Planes (HCP)**. For ROSA Classic, see [Creating a ROSA cluster in STS mode with custom KMS key](/rosa/kms/).
+> **Note:** This guide is specifically for **ROSA with Hosted Control Planes (HCP)**.
 
 ### Prerequisites
 
@@ -203,89 +203,95 @@ Create a comprehensive KMS key policy that includes all required ROSA HCP roles:
 cat <<EOF > rosa-hcp-kms-policy.json
 {
   "Version": "2012-10-17",
-  "Id": "rosa-hcp-key-policy",
   "Statement": [
     {
-      "Sid": "Enable IAM User Permissions",
+      "Sid": "EnableIAMUserPermissions",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::${AWS_ACCOUNT_ID}:root"
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:root"
       },
       "Action": "kms:*",
       "Resource": "*"
     },
     {
-      "Sid": "Allow ROSA HCP Installer Role",
+      "Sid": "AllowROSAInstallerRole",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Installer-Role"
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Installer-Role"
       },
       "Action": [
-        "kms:CreateGrant",
-        "kms:DescribeKey",
-        "kms:GenerateDataKeyWithoutPlaintext"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "Allow ROSA HCP Support Role",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Support-Role"
-      },
-      "Action": [
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "Allow KubeControllerManager",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${OPERATOR_ROLES_PREFIX}-kube-system-kube-controller-manager"
-      },
-      "Action": "kms:DescribeKey",
-      "Resource": "*"
-    },
-    {
-      "Sid": "Allow KMS Provider for etcd encryption",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${OPERATOR_ROLES_PREFIX}-kube-system-kms-provider"
-      },
-      "Action": [
-        "kms:Encrypt",
-        "kms:Decrypt",
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "Allow CAPA Controller for node provisioning",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${OPERATOR_ROLES_PREFIX}-kube-system-capa-controller-manager"
-      },
-      "Action": [
-        "kms:DescribeKey",
         "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:DescribeKey",
         "kms:CreateGrant"
       ],
       "Resource": "*"
     },
     {
-      "Sid": "Allow EBS CSI Driver for PersistentVolume encryption",
+      "Sid": "AllowROSASupportRole",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${OPERATOR_ROLES_PREFIX}-openshift-cluster-csi-drivers-ebs-cloud-credentials"
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Support-Role"
+      },
+      "Action": "kms:DescribeKey",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowKubeControllerManager",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${OPERATOR_ROLES_PREFIX}-kube-system-kube-controller-manager"
+      },
+      "Action": "kms:DescribeKey",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowKMSProviderForEtcd",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${OPERATOR_ROLES_PREFIX}-kube-system-kms-provider"
+      },
+      "Action": [
+        "kms:Encrypt",
+        "kms:DescribeKey",
+        "kms:Decrypt"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowCAPAControllerForNodes",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${OPERATOR_ROLES_PREFIX}-kube-system-capa-controller-manager"
+      },
+      "Action": [
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:DescribeKey",
+        "kms:CreateGrant"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowEBSCSIDriverKMSOperations",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${OPERATOR_ROLES_PREFIX}-openshift-cluster-csi-drivers-ebs-cloud-credentials"
       },
       "Action": [
         "kms:Encrypt",
         "kms:Decrypt",
         "kms:ReEncrypt*",
         "kms:GenerateDataKey*",
-        "kms:CreateGrant"
+        "kms:DescribeKey"
       ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowEBSCSIDriverCreateGrant",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${OPERATOR_ROLES_PREFIX}-openshift-cluster-csi-drivers-ebs-cloud-credentials"
+      },
+      "Action": "kms:CreateGrant",
       "Resource": "*",
       "Condition": {
         "Bool": {
