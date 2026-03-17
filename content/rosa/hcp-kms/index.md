@@ -286,7 +286,6 @@ cat <<EOF > rosa-hcp-kms-policy.json
         "kms:Decrypt",
         "kms:ReEncrypt*",
         "kms:GenerateDataKey*",
-        "kms:DescribeKey",
         "kms:CreateGrant"
       ],
       "Resource": "*",
@@ -517,40 +516,6 @@ oc logs -n openshift-cluster-csi-drivers \
   -c csi-provisioner --tail=50
 ```
 
-**Common causes:**
-- Missing KMS permissions on the EBS CSI driver role
-- KMS key policy not applied correctly
-
-**Fix:** Verify the KMS key policy includes the `openshift-cluster-csi-drivers-ebs-cloud-credentials` role with `kms:CreateGrant` permission.
-
-### Finding Truncated Role Names
-
-If operator role names were truncated:
-
-```bash
-# List all operator roles for your prefix
-rosa list operator-roles --prefix ${OPERATOR_ROLES_PREFIX}
-
-# Or via AWS CLI
-aws iam list-roles \
-  --query "Roles[?contains(RoleName, '${OPERATOR_ROLES_PREFIX}')].RoleName" \
-  --output table
-```
-
-### Monitoring Operator Degraded
-
-If the monitoring operator shows degraded:
-
-```bash
-oc get co monitoring
-oc describe co monitoring
-
-# Check Prometheus PVC status
-oc get pvc -n openshift-monitoring
-```
-
-This is typically caused by PVCs unable to bind due to KMS permission issues.
-
 ## Cleanup
 
 ### Delete Cluster
@@ -615,24 +580,9 @@ terraform destroy
 - [ROSA CLI Reference](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/rosa_cli/rosa-get-started-cli)
 - [KBA 6992348: PV provisioning failed for AWS storageclass lacking KMS privileges](https://access.redhat.com/solutions/6992348)
 
-## Summary
-
-This guide covered:
-
-1. ✅ Creating prerequisite resources (VPC, account roles, OIDC config, operator roles)
-2. ✅ Creating and configuring a customer-managed KMS key with proper IAM permissions
-3. ✅ Deploying a ROSA HCP cluster with KMS encryption for node volumes and etcd
-4. ✅ Configuring a custom StorageClass for KMS-encrypted PersistentVolumes
-5. ✅ Validating encryption is working correctly
-6. ✅ Troubleshooting common issues
 
 **Key takeaways:**
 - The KMS key policy must include **all** ROSA operator roles that need encryption access
 - The EBS CSI driver role is often overlooked but required for PV encryption
 - ROSA does **not** auto-configure the default StorageClass for KMS encryption
 - Always verify role names as they may be truncated based on prefix length
-
-
-
-
-echo "Cluster Name: ${CLUSTER_NAME}"
