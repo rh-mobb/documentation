@@ -6,8 +6,6 @@ authors:
   - Nerav Doshi
 ---
 
-# Creating a ROSA HCP cluster with custom KMS key
-
 This guide walks you through deploying a Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes (HCP) using a customer-managed AWS KMS key. The KMS key can be used to encrypt:
 
 - Worker node root volumes
@@ -18,7 +16,7 @@ This guide walks you through deploying a Red Hat OpenShift Service on AWS (ROSA)
 
 > **Note:** This guide is specifically for **ROSA with Hosted Control Planes (HCP)**. For ROSA Classic, see [Creating a ROSA cluster in STS mode with custom KMS key](/rosa/kms/).
 
-## Prerequisites
+### Prerequisites
 
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) installed and configured
 - [ROSA CLI](https://console.redhat.com/openshift/downloads) v1.2.0 or higher
@@ -26,29 +24,29 @@ This guide walks you through deploying a Red Hat OpenShift Service on AWS (ROSA)
 - AWS account with ROSA enabled
 - Red Hat account linked to AWS via the ROSA console
 
-### Verify Prerequisites
+#### Verify Prerequisites
 
-#### Verify ROSA CLI version (must be 1.2.0+)
+##### Verify ROSA CLI version (must be 1.2.0+)
 ```bash
 rosa version
 ```
 
-#### Verify AWS CLI is configured
+##### Verify AWS CLI is configured
 ```bash
 aws sts get-caller-identity
 ```
 
-#### Verify ROSA login
+##### Verify ROSA login
 ```bash
 rosa whoami
 ```
 
-#### Verify ROSA is enabled in your AWS account
+##### Verify ROSA is enabled in your AWS account
 ```bash
 rosa verify quota
 rosa verify permissions
 ```
-## Set Environment Variables
+#### Set Environment Variables
 
 Set the following environment variables to use throughout this guide:
 
@@ -71,11 +69,11 @@ echo "Region: ${AWS_REGION}"
 echo "Cluster Name: ${CLUSTER_NAME}"
 ```
 
-## Step 1: Create a VPC
+### Step 1: Create a VPC
 
 You need a VPC with at least one private subnet (and optionally public subnets for public clusters).
 
-### Option A: Using ROSA CLI (Recommended)
+#### Option A: Using ROSA CLI (Recommended)
 
 ```bash
 rosa create network --param Region=${AWS_REGION} \
@@ -91,7 +89,7 @@ export PRIVATE_SUBNET_IDS=<comma-separated-private-subnet-ids>
 export PUBLIC_SUBNET_IDS=<comma-separated-public-subnet-ids>
 ```
 
-### Option B: Using Terraform
+#### Option B: Using Terraform
 
 ```bash
 git clone https://github.com/openshift-cs/terraform-vpc-example
@@ -103,7 +101,7 @@ terraform apply rosa.tfplan
 export SUBNET_IDS=$(terraform output -raw cluster-subnets-string)
 ```
 
-### Tag Your Subnets
+#### Tag Your Subnets
 
 Ensure subnets are properly tagged:
 
@@ -119,7 +117,7 @@ aws ec2 create-tags --resources <private-subnet-id> \
   --tags Key=kubernetes.io/role/internal-elb,Value=1
 ```
 
-## Step 2: Create Account-Wide Roles
+### Step 2: Create Account-Wide Roles
 
 Create the account-wide IAM roles required for ROSA HCP:
 
@@ -130,7 +128,7 @@ rosa create account-roles --hosted-cp \
   --yes
 ```
 
-## Step 3: Create OIDC Configuration
+### Step 3: Create OIDC Configuration
 
 Create the OpenID Connect configuration:
 
@@ -142,7 +140,7 @@ export OIDC_ID=$(rosa list oidc-config -o json | jq -r '.[0].id')
 echo "OIDC Config ID: ${OIDC_ID}"
 ```
 
-## Step 4: Create Operator Roles
+### Step 4: Create Operator Roles
 
 Create the operator IAM roles for ROSA HCP:
 
@@ -155,7 +153,7 @@ rosa create operator-roles --hosted-cp \
   --yes
 ```
 
-### Verify Operator Roles
+#### Verify Operator Roles
 
 List the created operator roles to note their exact names (important for KMS policy):
 
@@ -171,7 +169,7 @@ You should see roles including:
 
 > **Tip:** Role names may be truncated if the prefix is long. Use the above command to get exact names.
 
-## Step 5: Create KMS Key
+### Step 5: Create KMS Key
 
 Create a customer-managed KMS key:
 
@@ -188,7 +186,7 @@ echo "KMS Key ARN: ${KMS_ARN}"
 
 > **Important:** The tag `red-hat=true` is required for ROSA to use the KMS key.
 
-### Create KMS Alias (Optional)
+#### Create KMS Alias (Optional)
 
 ```bash
 aws kms create-alias \
@@ -197,7 +195,7 @@ aws kms create-alias \
   --region ${AWS_REGION}
 ```
 
-## Step 6: Configure KMS Key Policy
+### Step 6: Configure KMS Key Policy
 
 Create a comprehensive KMS key policy that includes all required ROSA HCP roles:
 
@@ -310,7 +308,7 @@ aws kms put-key-policy \
   --region ${AWS_REGION}
 ```
 
-### Verify Key Policy
+#### Verify Key Policy
 
 ```bash
 aws kms get-key-policy \
@@ -320,7 +318,7 @@ aws kms get-key-policy \
   --output text | jq .
 ```
 
-## Step 7: Create the ROSA HCP Cluster
+### Step 7: Create the ROSA HCP Cluster
 
 Create the cluster with KMS encryption enabled:
 
@@ -348,7 +346,7 @@ rosa create cluster \
 
 > **Note:** If your cluster name is longer than 15 characters, use `--domain-prefix` to customize the subdomain.
 
-### Monitor Cluster Installation
+#### Monitor Cluster Installation
 
 ```bash
 # Watch cluster status
@@ -360,11 +358,11 @@ rosa logs install --cluster ${CLUSTER_NAME} --watch
 
 Installation typically takes 10-15 minutes for ROSA HCP.
 
-## Step 8: Configure Encrypted StorageClass for PersistentVolumes
+### Step 8: Configure Encrypted StorageClass for PersistentVolumes
 
 > **Important:** ROSA does **not** automatically configure the default StorageClass to encrypt PersistentVolumes with your KMS key. You must create a custom StorageClass.
 
-### Create Encrypted StorageClass
+#### Create Encrypted StorageClass
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -385,14 +383,14 @@ allowVolumeExpansion: true
 EOF
 ```
 
-### Remove Default from Existing StorageClass
+#### Remove Default from Existing StorageClass
 
 ```bash
 oc patch storageclass gp3-csi \
   -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "false"}}}'
 ```
 
-### Verify StorageClasses
+#### Verify StorageClasses
 
 ```bash
 oc get storageclass
@@ -405,9 +403,9 @@ gp3-csi                 ebs.csi.aws.com         Delete          WaitForFirstCons
 gp3-csi-kms (default)   ebs.csi.aws.com         Delete          WaitForFirstConsumer   true                   1m
 ```
 
-## Step 9: Validate the Cluster
+### Step 9: Validate the Cluster
 
-### Create Admin User
+#### Create Admin User
 
 ```bash
 rosa create admin --cluster ${CLUSTER_NAME}
@@ -421,7 +419,7 @@ oc login https://api.${CLUSTER_NAME}.<domain>:6443 \
   --password <password>
 ```
 
-### Verify Node Root Volume Encryption
+#### Verify Node Root Volume Encryption
 
 ```bash
 # Get worker node instance IDs
@@ -438,7 +436,7 @@ for INSTANCE_ID in ${INSTANCE_IDS}; do
 done
 ```
 
-### Test PersistentVolume Encryption
+#### Test PersistentVolume Encryption
 
 ```bash
 # Create a test PVC
@@ -493,16 +491,16 @@ aws ec2 describe-volumes \
 
 Expected output should show `Encrypted: true` and your KMS key ARN.
 
-### Cleanup Test Resources
+#### Cleanup Test Resources
 
 ```bash
 oc delete pod test-kms-pod
 oc delete pvc test-kms-pvc
 ```
 
-## Troubleshooting
+### Troubleshooting
 
-### PVC Stuck in Pending
+#### PVC Stuck in Pending
 
 If PVCs are stuck in `Pending` state:
 
@@ -516,33 +514,33 @@ oc logs -n openshift-cluster-csi-drivers \
   -c csi-provisioner --tail=50
 ```
 
-## Cleanup
+### Cleanup
 
-### Delete Cluster
+#### Delete Cluster
 
 ```bash
 rosa delete cluster --cluster ${CLUSTER_NAME} --yes --watch
 ```
 
-### Delete Operator Roles
+#### Delete Operator Roles
 
 ```bash
 rosa delete operator-roles --prefix ${OPERATOR_ROLES_PREFIX} --mode auto --yes
 ```
 
-### Delete OIDC Provider
+#### Delete OIDC Provider
 
 ```bash
 rosa delete oidc-provider --oidc-config-id ${OIDC_ID} --mode auto --yes
 ```
 
-### Delete OIDC Config
+#### Delete OIDC Config
 
 ```bash
 rosa delete oidc-config --oidc-config-id ${OIDC_ID} --mode auto --yes
 ```
 
-### Delete Account Roles (Optional)
+#### Delete Account Roles (Optional)
 
 Only delete if not shared with other clusters:
 
@@ -550,7 +548,7 @@ Only delete if not shared with other clusters:
 rosa delete account-roles --prefix ${ACCOUNT_ROLES_PREFIX} --hosted-cp --mode auto --yes
 ```
 
-### Delete KMS Key (Optional)
+#### Delete KMS Key (Optional)
 
 ```bash
 # Schedule key deletion (minimum 7 days)
@@ -560,7 +558,7 @@ aws kms schedule-key-deletion \
   --region ${AWS_REGION}
 ```
 
-### Delete VPC
+#### Delete VPC
 
 If created with ROSA CLI:
 ```bash
@@ -573,7 +571,7 @@ cd terraform-vpc-example
 terraform destroy
 ```
 
-## Additional Resources
+### Additional Resources
 
 - [Official ROSA HCP KMS Documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/rosa-hcp-creating-cluster-with-aws-kms-key)
 - [AWS KMS Documentation](https://docs.aws.amazon.com/kms/latest/developerguide/overview.html)
