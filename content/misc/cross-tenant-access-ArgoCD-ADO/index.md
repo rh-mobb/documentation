@@ -4,6 +4,7 @@ title: Configuring Cross-Tenant Azure DevOps Access from ArgoCD on ARO
 tags: ["ARO", "Azure", "Azure DevOps", "Managed Identities", "Workload Identity Federation", "GitOps", "ArgoCD"]
 authors:
   - Charlotte Fung
+  - Deepika Ranganathan
 ---
 
 In some large enterprises, it might be a requirement to have your **Azure DevOps (ADO)** tools in a centralized Azure Tenant different from the tenant where your cluster resides. It then becomes imperative to configure secure cross-tenant access between your **Azure Red Hat OpenShift (ARO)** cluster and your ADO. 
@@ -195,6 +196,8 @@ oc patch argocd openshift-gitops -n openshift-gitops --type=merge -p '
 
 ## 6. Deploy a Sample Application using ArgoCD
 
+The sample application I used in this demo can be found here [BGD-App](https://github.com/rh-mobb/gitops-bgd-app). You'll have to import the repository to your ADO project in order to use it for this demo. Follow the Microsoft documentation to [Import a Git repository to a project](https://learn.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops)
+
 ### Assign necessary rights to the ArgoCD-Application-Controller ServiceAccount. 
 
 The Application Controller manages the live state of your cluster; therefore, it requires specific RBAC permissions to synchronize resources. In this guide, we will assign **cluster-admin** privileges for simplicity, though these permissions can be scoped down to individual projects for stricter security. 
@@ -241,7 +244,6 @@ Use the console URL to access your ArgoCD instance on a web browser. Use **admin
     ![ado_repo_connection.png](./images/ado_repo_connection.png)
 
 ### Deploy your Application
-The sample application I used in this demo can be found here [BGD-App](https://github.com/rh-mobb/gitops-bgd-app). You'll have to import the repository to your ADO project in order to use it for this demo. Follow the Microsoft documentation to [Import a Git repository to a project](https://learn.microsoft.com/en-us/azure/devops/repos/git/import-git-repository?view=azure-devops)
 
 1. Click the **Applications** tab in the left menu panel, and then click om  **+ New App** button in the top left corner
 
@@ -257,7 +259,7 @@ The sample application I used in this demo can be found here [BGD-App](https://g
 
    ***Revision***: Set to `HEAD`, `main`, or a specific brnach
 
-   ***Path***: Enter the folder path inside the repo where the manifests are located
+   ***Path***: apps/bgd/overlays/bgd (replace with your folder path inside the repo where the manifests are located)
 
    ***Destination Cluster***: https://kubernetes.default.svc.
 
