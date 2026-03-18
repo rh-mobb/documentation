@@ -1264,7 +1264,7 @@ rm -f /tmp/shared-vpc-trust-policy.json /tmp/route53-trust-policy.json \
 ## Additional Resources
 
 - [Configuring a shared VPC for ROSA HCP clusters](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/rosa-hcp-shared-vpc-config) — Official Red Hat documentation
-- [ROSA HCP documentation](https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-sts-creating-a-cluster-quickly.html)
+- [ROSA HCP documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4)
 - [Terraform RHCS provider](https://registry.terraform.io/providers/terraform-redhat/rhcs/latest/docs)
 - [AWS managed policies for ROSA](https://docs.aws.amazon.com/rosa/latest/userguide/security-iam-awsmanpol.html)
 - [ROSA CLI reference](https://docs.openshift.com/rosa/cli_reference/rosa_cli/rosa-manage-objects-cli.html)
