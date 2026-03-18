@@ -3,7 +3,7 @@ date: '2026-03-18'
 title: Deploying ROSA HCP in a Shared VPC Pattern
 tags: ["AWS", "ROSA", "HCP", "Shared VPC", "PrivateLink"]
 authors:
-  - Nenad Doshi
+  - Nerav Doshi
 ---
 
 Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes (HCP) supports a **shared VPC** deployment pattern where the cluster's networking infrastructure (VPC, subnets, Route 53 hosted zones) lives in a centralized networking account while the ROSA cluster is owned by a separate workload account. This pattern is common in enterprises that use a hub-and-spoke networking model with AWS Organizations.
@@ -15,37 +15,13 @@ This tutorial walks through deploying a private ROSA HCP cluster in a shared VPC
 ## Architecture
 
 The shared VPC pattern separates infrastructure ownership across two AWS accounts:
+ - Shared VPC Account (VPC Owner / Networking)
+     - VPC, Subnet, NAT Gateway, Internet Gateway
+ - Cluster Account (Cluster Creator / Workload)
+ - Red Hat SRE (Managed)
+     - HCP Control Plane: runs in Red Hat AWS account
+     - PrivateLink VPC Endpoint: connects to worker VPC 
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│  Shared VPC Account (VPC Owner / Networking)                         │
-│                                                                      │
-│  VPC ─── Public Subnet ─── NAT Gateway ─── Internet Gateway         │
-│   │                                                                  │
-│   ├── Private Subnet (AZ-a) ──┐                                     │
-│   ├── Private Subnet (AZ-b) ──┼── ROSA Worker Nodes                 │
-│   └── Private Subnet (AZ-c) ──┘                                     │
-│                                                                      │
-│  Route 53 Private Hosted Zones:                                      │
-│   ├── <cluster>.hypershift.local              (HCP internal)         │
-│   └── rosa.<cluster>.<base_dns_domain>        (ingress)              │
-│                                                                      │
-│  IAM Roles:                                                          │
-│   ├── <cluster>-route53-role       → ROSASharedVPCRoute53Policy      │
-│   └── <cluster>-vpc-endpoint-role  → ROSASharedVPCEndpointPolicy     │
-├──────────────────────────────────────────────────────────────────────┤
-│  Cluster Account (Cluster Creator / Workload)                        │
-│                                                                      │
-│  IAM Roles (rosa CLI):  account-roles, operator-roles, OIDC         │
-│  KMS Key:               etcd + node volume encryption                │
-│  ROSA HCP Cluster:      private, PrivateLink, 3 workers (m5.xlarge) │
-├──────────────────────────────────────────────────────────────────────┤
-│  Red Hat SRE (Managed)                                               │
-│                                                                      │
-│  HCP Control Plane: runs in Red Hat AWS account                      │
-│  PrivateLink VPC Endpoint: connects to worker VPC                    │
-└──────────────────────────────────────────────────────────────────────┘
-```
 
 **Key design points:**
 
