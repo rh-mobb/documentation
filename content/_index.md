@@ -29,6 +29,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan](/experts/rosa/s2s-vpn)
 * [Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS](/experts/rosa/ecr-external-secrets-irsa)
 * [AWS Secrets Manager Secrets on ROSA HCP with External Secrets Operator and STS](/experts/rosa/eso)
+* [Deploying ROSA HCP in STS mode with custom KMS Key](/experts/rosa/hcp-kms)
 
 #### Classic
 
