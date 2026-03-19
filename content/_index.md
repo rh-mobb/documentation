@@ -27,6 +27,8 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploy ROSA + Nvidia GPUs + RHOAI with Automation](/experts/rosa/automate-nvidia-rhoai)
 * [Accessing ROSA HCP API Server from a Different AWS Account](/experts/rosa/cross-account-api-server)
 * [Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan](/experts/rosa/s2s-vpn)
+* [Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS](/experts/rosa/ecr-external-secrets-irsa)
+* [AWS Secrets Manager Secrets on ROSA HCP with External Secrets Operator and STS](/experts/rosa/eso)
 
 #### Classic
 
@@ -38,7 +40,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ROSA in STS mode](/experts/rosa/sts)
 * [Deploying ROSA in STS mode with PrivateLink](/experts/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](/experts/rosa/kms)
-* [Deploying ROSA via CRD and GitOps](/experts/rosa/rosa-gitops)
 * [ROSA IP addressing best practices](/experts/rosa/ip-addressing-and-subnets)
 * [Installing the AWS Load Balancer Operator on ROSA](/experts/rosa/aws-load-balancer-operator)
 * [Assign Egress IP for External Traffic](/experts/rosa/egress-ip)
@@ -80,6 +81,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Prerequisites Checklist to Deploy ARO Cluster](/experts/aro/prereq-list)
 * [Deploying private ARO Cluster with Jump Host access](/experts/aro/private-cluster)
   * [Using the Egressip Ipam Operator with a Private ARO Cluster](/experts/aro/egress-ipam-operator)
+* [Add or Update a Red Hat Pull Secret on ARO](/experts/aro/pull-secret)
 * [Considerations for Disaster Recovery with ARO](/experts/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
 * [Deploy and use the Azure Service Operator V1(ASO)](/experts/aro/azure-service-operator/v1)
@@ -111,6 +113,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Remove the default azure-files storage class](/experts/aro/remove-azure-files)
 * [Scalability and Cost Management for ARO](/experts/aro/aro-schedule-scaling)
 * [Backup and Restore for ARO using OpenShift API for Data Protection](/experts/aro/backup-restore)
+* [Configure OpenShift Lightspeed backed by Azure AI Foundry for the LLM](/experts/aro/lightspeed)
 
 ## OpenShift Dedicated on GCP
 
