@@ -6,6 +6,7 @@ authors:
   - Charlotte Fung
   - Deepika Ranganathan
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 In some large enterprises, it might be a requirement to have your **Azure DevOps (ADO)** tools in a centralized Azure Tenant different from the tenant where your cluster resides. It then becomes imperative to configure secure cross-tenant access between your **Azure Red Hat OpenShift (ARO)** cluster and your ADO. 
 
