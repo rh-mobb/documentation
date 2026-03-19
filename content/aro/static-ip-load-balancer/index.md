@@ -8,6 +8,7 @@ authors:
 aliases:
   - "/experts/rosa/static-ip-load-balancer/"
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 This guide demonstrates how to create and assign a static public IP address to an OpenShift service in Azure Red Hat OpenShift (ARO). By default, the public IP address assigned to an OpenShift service with a type of LoadBalancer created by an ARO cluster is only valid for the lifespan of that resource. If you delete the OpenShift service, the associated load balancer and IP address are also deleted. If you want to assign a specific IP address or retain an IP address for redeployed OpenShift services, you can create and use a static public IP address.
 
