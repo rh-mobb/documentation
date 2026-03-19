@@ -7,6 +7,7 @@ authors:
   - Fola Oso
   - Paul Czarkowski
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 ## Overview
 
