@@ -291,7 +291,11 @@ cat <<EOF > rosa-hcp-kms-policy.json
       "Principal": {
         "AWS": "arn:aws:iam::\${AWS_ACCOUNT_ID}:role/\${OPERATOR_ROLES_PREFIX}-openshift-cluster-csi-drivers-ebs-cloud-credentials"
       },
-      "Action": "kms:CreateGrant",
+      "Action": [
+        "kms:CreateGrant",
+        "kms:RevokeGrant",
+        "kms:ListGrants"
+      ],
       "Resource": "*",
       "Condition": {
         "Bool": {
