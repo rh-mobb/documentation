@@ -38,7 +38,6 @@ The shared VPC pattern separates infrastructure ownership across two AWS account
 | `rosa` CLI | >= 1.2.49 | ROSA role, OIDC, and cluster creation |
 | `oc` CLI | latest | Cluster access (post-install) |
 | `jq` | latest | JSON parsing |
-| RHCS token | — | [Get token here](https://console.redhat.com/openshift/token) |
 
 **AWS requirements:**
 
