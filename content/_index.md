@@ -146,12 +146,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Building LLM Cost and Performance Dashboard with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-bedrock)
 * [Creating Agentic AI to deploy ARO cluster using Terraform with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-agentic)
 
-### Data Science on Jupyter Notebook on OpenShift
-
-* [Prerequistes and Concepts](/experts/misc/jup/)
-  * [Build minimal notebook](/experts/misc/jup/buildnotebook)
-  * [JupyterHub notebook with GPU](/experts/misc/jup/opendatahub-gpu)
-
 ### Advanced Cluster Manager (ACM)
 
 * [Deploy ACM Observability to a ROSA cluster](/experts/redhat/acm/observability/rosa)
