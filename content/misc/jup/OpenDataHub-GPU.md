@@ -1,4 +1,8 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-07-01'
 title: Installing the Open Data Hub Operator
 aliases: ['/experts/misc/jup/OpenDataHub-GPU.md']
@@ -6,6 +10,8 @@ tags: ["GPU", "OCP"]
 authors:
   - Connor Wooley
 ---
+
+# This content has been deprecated, the article remains available historically on GitHub.
 
 The Open Data Hub operator is available for deployment in the OpenShift OperatorHub as a Community Operators. You can install it from the OpenShift web console:
 

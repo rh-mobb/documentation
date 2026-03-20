@@ -29,6 +29,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan](/experts/rosa/s2s-vpn)
 * [Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS](/experts/rosa/ecr-external-secrets-irsa)
 * [AWS Secrets Manager Secrets on ROSA HCP with External Secrets Operator and STS](/experts/rosa/eso)
+* [Deploying ROSA HCP in STS mode with custom KMS Key](/experts/rosa/hcp-kms)
 
 #### Classic
 
@@ -137,12 +138,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Creating RAG Chatbot using TinyLlama and LangChain APIs on Red Hat OpenShift AI on ARO cluster](/experts/rhoai/aro-rag)
 * [Building LLM Cost and Performance Dashboard with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-bedrock)
 * [Creating Agentic AI to deploy ARO cluster using Terraform with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-agentic)
-
-### Data Science on Jupyter Notebook on OpenShift
-
-* [Prerequistes and Concepts](/experts/misc/jup/)
-  * [Build minimal notebook](/experts/misc/jup/buildnotebook)
-  * [JupyterHub notebook with GPU](/experts/misc/jup/opendatahub-gpu)
 
 ### Advanced Cluster Manager (ACM)
 
