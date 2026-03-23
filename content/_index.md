@@ -10,6 +10,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Azure Red Hat OpenShift (ARO)](/experts/quickstart-aro/)
 
 ## ROSA
+* [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
 
 #### Hosted Control Plane (HCP)
 
