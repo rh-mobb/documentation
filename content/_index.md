@@ -10,6 +10,8 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Azure Red Hat OpenShift (ARO)](/experts/quickstart-aro/)
 
 ## ROSA
+* [Deploying ROSA in STS mode](/experts/rosa/sts)
+* [STS OIDC flow in ROSA Operators](/experts/rosa/sts-oidc-flow)
 * [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
 
 #### Hosted Control Plane (HCP)
@@ -39,7 +41,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Deploying ROSA in PrivateLink mode](/experts/rosa/private-link)
   * [Add Public Ingress to PrivateLink Cluster](/experts/rosa/private-link/public-ingress)
 * [Deploying ROSA PrivateLink Cluster with Ansible](/experts/rosa/ansible-rosa)
-* [Deploying ROSA in STS mode](/experts/rosa/sts)
 * [Deploying ROSA in STS mode with PrivateLink](/experts/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](/experts/rosa/kms)
 * [ROSA IP addressing best practices](/experts/rosa/ip-addressing-and-subnets)
@@ -56,7 +57,6 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Access AWS Cross Account resources using OIDC](/experts/rosa/cross-account-access-openid-connect)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](/experts/rosa/ack)
 * [Verify Required Permissions for a ROSA STS deployment](/experts/rosa/verify-permissions)
-* [STS OIDC flow in ROSA Operators](/experts/rosa/sts-oidc-flow)
 * [Dynamic Certificates for ROSA Custom Domain](/experts/rosa/dynamic-certificates)
 * [Custom Domain for Component Routes](/experts/rosa/customizing-console-route)
 * [Security Reference Architecture for ROSA](/experts/rosa/security-ra)
