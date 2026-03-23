@@ -9,7 +9,7 @@ authors:
   - Paul Czarkowski
   - Michael Ducy
 ---
-
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 {{% alert state="info" %}}**Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).{{% /alert %}}
 
@@ -51,7 +51,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
     ```bash
     rosa create cluster --sts --cluster-name ${ROSA_CLUSTER_NAME} \
-      --region ${REGION} --mode auto --yes
+      --region ${REGION} --mode auto --yes --version 4.20.16
     ```
 
 1. Watch the install logs
