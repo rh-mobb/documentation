@@ -1,5 +1,5 @@
 ---
-date: '2026-03-24'
+date: '2022-04-26'
 title: 'Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)'
 tags: ["AWS", "ROSA"]
 authors:
@@ -7,14 +7,14 @@ authors:
   - Byron Miller
 ---
 
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
-
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 * [Openshift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.11+
 * [Podman Desktop](https://podman-desktop.io/)
-* ROSA Cluster [Classic](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-classic-cli.html) or [HCP](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-hcp.html)
+* [ROSA Cluster](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-sts-auto.html)
+
+> Note your ROSA cluster must be a classic STS cluster
 
 ### Background
 Quick Introduction by Ryan Niksch & Charlotte Fung on [YouTube](https://youtu.be/1PBFtpCIMBo).
@@ -36,9 +36,8 @@ oc create secret docker-registry ecr-pull-secret  \
 
 However Amazon ECR tokens expire every 12 hours which will mean you will need to re-authenticate every 12 hours either through scripting or do so manually.
 
-Alternatively, you can leverage IAM by attaching an ECR policy to the worker machine profiles and its the recommended method for secure access. 
+A second, and preferred method, is to attach an ECR Policy to your cluster's worker machine profiles which this guide will walk you through.
 
-Note that ROSA HCP includes this ECR policy in its [worker role](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/prepare_your_environment/rosa-hcp-prepare-iam-roles-resources) configuration by default.You can skip the manual IAM policy attachments and proceed directly to Step 2. ROSA Classic users must follow the IAM policy attachment process outlined below.
 
 ## Attach ECR Policy Role
 
