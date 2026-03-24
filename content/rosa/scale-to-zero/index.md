@@ -1,7 +1,7 @@
 ---
 date: '2026-03-21'
 title: Configure Node Pool Scale-to-Zero on ROSA HCP
-tags: ["ROSA", "AWS", "autoscaling"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Ye
 ---

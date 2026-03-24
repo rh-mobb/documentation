@@ -1,7 +1,7 @@
 ---
 date: '2021-11-08'
 title: Using Group Sync Operator with Azure Active Directory and ROSA
-tags: ["Azure", "ROSA"]
+tags: ["ARO", "ROSA"]
 authors:
   - Steve Mirman
   - Kumudu Herath

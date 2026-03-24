@@ -1,7 +1,7 @@
 ---
 date: '2025-08-04'
 title: Configuring oTEL to collect OpenShift Logs
-tags: ["Observability", "OCP", "oTEL"]
+tags: ["Observability"]
 authors:
   - Paul Czarkowski
 ---

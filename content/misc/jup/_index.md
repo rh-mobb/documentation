@@ -1,7 +1,7 @@
 ---
 date: '2022-07-01'
 title: Jupyter Notebooks
-tags: ["GPU", "OCP"]
+tags: []
 ---
 
 You will need the following prerequistes in order to run a basic Jupyter notebook with GPU on OpenShift

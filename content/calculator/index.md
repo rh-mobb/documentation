@@ -3,7 +3,7 @@ title: "OpenShift Network Calculator"
 description: "Calculate network sizing for your OpenShift cluster"
 
 date: '2025-12-05T0:00:00.0000'
-tags: ["OSD", "Google", "ROSA", "ARO"]
+tags: ["OSD", "ROSA", "ARO"]
 authors:
   - Paul Czarkowski
 ---

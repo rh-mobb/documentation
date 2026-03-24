@@ -1,7 +1,7 @@
 ---
 date: '2024-05-23'
 title: Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket
-tags: ["ROSA", "RHOAI", "Jupyter", "LLM", "S3"]
+tags: ["ROSA", "RHOAI"]
 authors:
   - Diana Sari
 ---

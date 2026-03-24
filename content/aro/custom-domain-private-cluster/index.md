@@ -3,7 +3,7 @@ date: '2023-09-04'
 title: "Deploying Private ARO clusters with Custom Domains"
 authors:
   - Roberto Carratalá
-tags: ["ARO", "DNS"]
+tags: ["ARO"]
 ---
 
 ## Overview

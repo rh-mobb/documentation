@@ -1,7 +1,7 @@
 ---
 date: '2023-05-24T18:50:00.0000'
 title: What to consider when using Azure AD as IDP?
-tags: ["Azure", "IDP", "ARO", "ROSA"]
+tags: ["ARO", "IDP", "ROSA"]
 authors:
   - Ricardo Martins
 ---

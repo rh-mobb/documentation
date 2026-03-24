@@ -1,7 +1,7 @@
 ---
 date: '2023-03-14'
 title: Azure DevOps with Managed OpenShift
-tags: ["DevOps", "ADO", "Azure", "ARO", "ROSA"]
+tags: ["ARO", "ROSA"]
 authors:
   - Kevin Collins
 ---

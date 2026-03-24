@@ -1,7 +1,7 @@
 ---
 date: '2023-02-21'
 title: ROSA with Nvidia GPU Workloads - Manual
-tags: ["AWS", "ROSA", "GPU"]
+tags: ["ROSA"]
 authors:
   - Chris Kang
   - Diana Sari

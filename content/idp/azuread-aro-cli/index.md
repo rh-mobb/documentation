@@ -1,7 +1,7 @@
 ---
 date: '2023-03-31'
 title: Configure Microsoft Entra ID as an OIDC identity provider for ARO with cli
-tags: ["Azure", "ARO"]
+tags: ["ARO"]
 authors:
   - Shaozhen Ding
 ---

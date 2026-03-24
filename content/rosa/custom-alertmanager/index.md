@@ -1,7 +1,7 @@
 ---
 date: '2021-10-20'
 title: Custom Alerts in ROSA 4.11.x
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Paul Czarkowski
   - Michael McNeill

@@ -1,7 +1,7 @@
 ---
 date: '2022-05-27'
 title: Deploying ROSA in STS mode
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA"]
 weight: 1
 aliases: ["/experts/quickstart-rosa.md"]
 

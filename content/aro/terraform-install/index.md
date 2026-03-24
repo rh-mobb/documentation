@@ -1,7 +1,7 @@
 ---
 date: '2023-02-10'
 title: Deploying ARO using azurerm Terraform Provider
-tags: ["azure", "ARO", "Terraform"]
+tags: ["ARO", "Terraform"]
 authors:
   - James Land
   - Fola Oso

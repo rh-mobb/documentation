@@ -1,7 +1,7 @@
 ---
 date: '2023-03-29'
 title: Setup a VPN Connection into an ARO Cluster with OpenVPN
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Kevin Collins
   - Ricardo Martins

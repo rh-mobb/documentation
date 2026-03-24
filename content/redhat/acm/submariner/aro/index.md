@@ -2,7 +2,7 @@
 date: '2023-04-25T22:07:09.774151'
 title: Deploy ACM Submariner for connect overlay networks ARO - ROSA clusters
 aliases: ['/experts/redhat/acm/observability/aro']
-tags: ["Submariner", "ROSA", "ARO", "ACM"]
+tags: ["ROSA", "ARO", "ACM"]
 authors:
   - Roberto Carratalá
 ---

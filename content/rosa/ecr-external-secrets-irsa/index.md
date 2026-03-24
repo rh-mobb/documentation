@@ -1,7 +1,7 @@
 ---
 date: '2026-03-04'
 title: Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Philipp Bergsmann
 ---

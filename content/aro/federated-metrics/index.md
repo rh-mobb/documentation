@@ -1,7 +1,7 @@
 ---
 date: '2021-06-04'
 title: 'Federating System and User metrics to Azure Blob storage in Azure Red Hat OpenShift'
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
   - Kumudu Herath
