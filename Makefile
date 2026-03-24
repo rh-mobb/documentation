@@ -7,10 +7,10 @@ preview:
 search-index:
 	hugo --gc --minify --theme rhds && npx pagefind --site public/experts
 
-# Local preview with working header search (requires disk output for /pagefind/ assets)
+# Local preview with working header search (serves from publishDir so public/experts/pagefind/ is available)
 .PHONY: preview-search
 preview-search: search-index
-	hugo server --minify --theme rhds -D -b http://localhost:1313/experts --renderToDisk
+	hugo server --minify --theme rhds -D -b http://localhost:1313/experts
 
 .PHONY: publish
 publish:

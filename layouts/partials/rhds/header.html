@@ -5,7 +5,12 @@
     </a>
   </div>
   <div class="site-header__search" role="search" aria-label="Documentation search">
-    <rh-icon class="site-header__search-icon" icon="search" size="md" aria-hidden="true"></rh-icon>
-    <div id="site-search" class="site-header__pagefind"></div>
+    {{/*
+      Pagefind mounts in #site-search; JS adds Search / Clear toggle button.
+      https://ux.redhat.com/patterns/search-bar/
+    */}}
+    <div class="site-header__search-stack">
+      <div id="site-search" class="site-header__pagefind"></div>
+    </div>
   </div>
 </header>

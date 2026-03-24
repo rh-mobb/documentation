@@ -7,7 +7,12 @@
   {{ partial "rhds/header.html" . }}
   {{ partial "rhds/nav.html" .}}
   {{ block "hero" . }}{{ end }}
-  <main>
+  {{/*
+    Pagefind: only pages with data-pagefind-body are indexed once any page uses it.
+    Omit: homepage, and all tag taxonomy/term pages (/tags/, /tags/foo/).
+  */}}
+  {{- $pagefindBody := and (not .IsHome) (not (and (or (eq .Kind "taxonomy") (eq .Kind "term")) (eq .Data.Plural "tags"))) -}}
+  <main{{ if $pagefindBody }} data-pagefind-body{{ end }}>
     {{ block "main" . }}{{ end }}
   </main>
   {{ partial "collaborate.html" . }}
