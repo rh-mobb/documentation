@@ -1,5 +1,5 @@
 ---
-date: '2022-04-26'
+date: '2026-03-24'
 title: 'Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)'
 tags: ["ROSA"]
 authors:
@@ -7,14 +7,14 @@ authors:
   - Byron Miller
 ---
 
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
+
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 * [Openshift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.11+
 * [Podman Desktop](https://podman-desktop.io/)
-* [ROSA Cluster](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-sts-auto.html)
-
-> Note your ROSA cluster must be a classic STS cluster
+* ROSA Cluster [Classic](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-classic-cli.html) or [HCP](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-hcp.html)
 
 ### Background
 Quick Introduction by Ryan Niksch & Charlotte Fung on [YouTube](https://youtu.be/1PBFtpCIMBo).
