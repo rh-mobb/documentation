@@ -214,6 +214,9 @@ header {
   color: var(--rh-color-text-primary-on-dark, #ffffff);
   padding: var(--rh-space-md, 8px);
   height: 72px;
+  overflow: visible;
+  position: relative;
+  z-index: 200;
 
   & .logo {
     margin-inline-start: var(--rh-space-md, 8px);
@@ -236,6 +239,47 @@ header {
     & .logo {
       margin-inline-start: var(--rh-space-2xl, 32px);
     } 
+  }
+
+  & .site-header__search {
+    margin-inline-start: auto;
+    margin-inline-end: var(--rh-space-md, 8px);
+    display: flex;
+    align-items: center;
+    gap: var(--rh-space-sm, 6px);
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    min-width: 0;
+    max-width: min(28rem, 100%);
+
+    @media screen and (min-width: 768px) {
+      margin-inline-end: var(--rh-space-2xl, 32px);
+    }
+  }
+
+  & .site-header__search-icon {
+    flex-shrink: 0;
+    color: var(--rh-color-text-primary-on-dark, #ffffff);
+  }
+
+  /* Pagefind UI: align with dark header bar (drawer uses light surface below) */
+  & .site-header__pagefind {
+    flex: 1 1 auto;
+    min-width: 0;
+    --pagefind-ui-scale: 0.9;
+    --pagefind-ui-primary: var(--rh-color-interactive-blue-lighter, #73bcf7);
+    --pagefind-ui-text: var(--rh-color-text-primary-on-dark, #ffffff);
+    --pagefind-ui-background: var(--rh-color-gray-80, #3c3f42);
+    --pagefind-ui-border: var(--rh-color-border-subtle-on-dark, #6a6e73);
+    --pagefind-ui-tag: var(--rh-color-gray-70, #4f5255);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: var(--rh-border-radius-default, 3px);
+    --pagefind-ui-font: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif);
+  }
+
+  & .site-header__pagefind .pagefind-ui__search-input:focus {
+    outline: 2px solid var(--rh-color-interactive-blue-lighter, #73bcf7);
+    outline-offset: 2px;
   }
 }
 

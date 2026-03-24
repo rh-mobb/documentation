@@ -5,6 +5,25 @@
   import '@rhds/elements/rh-alert/rh-alert.js';
   import '@rhds/elements/rh-tag/rh-tag.js';
   import '@rhds/elements/rh-code-block/rh-code-block.js';
+  import '@rhds/elements/rh-icon/rh-icon.js';
+</script>
+
+<script src="{{ "pagefind/pagefind-ui.js" | relURL }}" defer></script>
+<script defer>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.PagefindUI === 'undefined') {
+      return;
+    }
+    new window.PagefindUI({
+      element: '#site-search',
+      showSubResults: true,
+      showImages: false,
+      translations: {
+        placeholder: 'Search documentation',
+        search_label: 'Search Cloud Experts documentation'
+      }
+    });
+  });
 </script>
 
 {{- with resources.Get "js/main.js" }}
