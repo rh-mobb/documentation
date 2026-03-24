@@ -1,7 +1,7 @@
 ---
 date: '2026-03-23'
 title: ECR Secret Operator
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Shaozhen Ding 
   - Deepika Ranganathan

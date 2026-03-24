@@ -1,7 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-08-19'
 title: Configuring the Cluster Log Forwarder for CloudWatch Logs and STS
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 aliases: ['/experts/rosa/clf-cloudwatch-vector']
 authors:
   - Thatcher Hubbard

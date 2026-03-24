@@ -1,7 +1,7 @@
 ---
 date: '2025-05-16'
 title: Integrating Service Mesh into a ROSA Cluster 
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Diana Sari
   - Daniel Axelrod

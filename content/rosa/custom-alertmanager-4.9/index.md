@@ -1,7 +1,7 @@
 ---
 date: '2022-09-01'
 title: Custom AlertManager in ROSA 4.9.x
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Paul Czarkowski
 ---

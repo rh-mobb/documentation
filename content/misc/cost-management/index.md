@@ -1,7 +1,7 @@
 ---
 date: '2023-03-29T22:07:09.784151'
 title: Red Hat Cost Management for Cloud Services
-tags: ["Cost", "Azure", "ARO"]
+tags: ["ARO"]
 authors:
   - Charlotte Fung
   - Sohaib Azed

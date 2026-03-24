@@ -1,7 +1,7 @@
 ---
 date: '2022-08-17'
 title: Adding infrastructure nodes to an ARO cluster
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
 ---

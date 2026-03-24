@@ -1,7 +1,7 @@
 ---
 date: '2025-07-03'
 title: Using a Private IngressController with CloudFront on a ROSA Cluster 
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Diana Sari
   - Daniel Axelrod

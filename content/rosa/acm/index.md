@@ -1,7 +1,7 @@
 ---
 date: '2025-06-26'
 title: Deploy ROSA with Red Hat Advanced Cluster Management for Kubernetes 
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP", "ACM"]
 authors:
   - Kevin Collins
   - Michael McNeill

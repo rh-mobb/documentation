@@ -6,7 +6,7 @@ aliases: [/experts/quickstart-aro.md]
 authors: 
   - Paul Czarkowski
   - Steve Mirman
-tags: ["ARO", "Azure", "Quickstarts"]
+tags: ["ARO", "Quickstarts"]
 ---
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster.
 

@@ -49,7 +49,7 @@ top of each article that you publish.
 
 * Date - The original date of content creation, in YYYY-MM-DD format
 * Title - This will be displayed page title
-* Tags - The tags associated with your page, they will display alphabetically atop of the page regardless of the order definied in the front amtter
+* Tags - The tags associated with your page; they display alphabetically atop the page regardless of the order defined in the front matter
 * Authors - Anyone who has edited this page
 
 Example:
@@ -58,7 +58,7 @@ Example:
 ---
 date: '2022-08-17'
 title: Adding infrastructure nodes to an ARO cluster
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
 ---
@@ -78,7 +78,7 @@ authors:
 ---
 date: "2023-01-01"
 title: "Creating s3 buckets in ROSA using ACK"
-tags: ["rosa","s3", "ack"]
+tags: ["ROSA", "Terraform"]
 authors:
    - My Name
 ---
@@ -103,7 +103,7 @@ In order to create a landing page for your new section you will need to create a
 ---
 date: "2023-01-01"
 title: "DevSecFinOps"
-tags: ["devops", "finops", "devsecops"]
+tags: ["GitOps", "ROSA"]
 authors:
    - My Name
 ---
@@ -120,22 +120,35 @@ Note: you can add a `weight` field to override the default alphabetical sorting 
 
 ## Taxonomy
 
-The strategy here is to keep our taxonomy simple and helpful for traversing the site and finding docs relevant to a product or topic. Feel free as we expand our docs to create new tags by simply adding them to the front matter of your page. However please keep in mind simplicity.
+The strategy here is to keep our taxonomy simple and helpful for traversing the site and finding docs relevant to a product or topic. **Use tags from the list below** so pages appear on the right tag hubs and stay consistent. If you need a new tag, discuss with a maintainer before attempting to add it to a PR.
 
-### Current Tags
+Tag values are **case-sensitive** and must match exactly (including spaces in multi-word tags such as `ROSA HCP`).
+
+### Current tags
+
+These are the tag strings currently in use:
+
+* AAP
 * ACM
 * ACS
 * ARO
-* AWS
-* Azure
-* Cost
-* GCP
+* DevSpaces
 * GitOps
-* GPU
+* GovCloud
+* IDP
+* Keycloak
+* Lightspeed
+* Maximo
+* OADP
 * Observability
-* OCP
+* OCM
+* ODF
 * OSD
-* PrivateLink
 * Quickstarts
+* RHOAI
 * ROSA
-* STS
+* ROSA Classic
+* ROSA HCP
+* Service Interconnect
+* Terraform
+* Virtualization

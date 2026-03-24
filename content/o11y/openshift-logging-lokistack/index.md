@@ -1,7 +1,7 @@
 ---
 date: '2021-07-27'
 title: Configuring OpenShift Logging using LokiStack on ROSA and (soon) ARO
-tags: ["Observability", "OCP"]
+tags: ["Observability"]
 authors:
   - Andy Repton
 ---

@@ -1,7 +1,7 @@
 ---
 date: '2024-05-20'
 title: Deploying a ROSA HCP cluster with Terraform
-tags: ["ROSA", "terraform", "hcp"]
+tags: ["ROSA", "Terraform", "ROSA HCP"]
 authors:
   - Paul Czarkowski
 ---

@@ -67,6 +67,12 @@ to = "/experts/tags/privatelink/"
 status = 301
 force = true
 
+[[redirects]]
+from = "/experts/tags/openshift-virtualization/"
+to = "/experts/tags/virtualization/"
+status = 301
+force = true
+
 # The below are redirects to official product docs
 [[redirects]]
 from = "/experts/rosa/prereq-list/"
@@ -151,6 +157,118 @@ force = true
 [[redirects]]
 from = "/experts/rosa/hcp-private-api-access/"
 to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/rosa-hcp-aws-private-creating-cluster#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster"
+status = 301
+force = true
+
+# Content path migrations, ACS guide location, and section chapter roots → tag hubs
+[[redirects]]
+from = "/experts/redhat/rhacs"
+to = "/experts/redhat/acs/deployment/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/rhacs/"
+to = "/experts/redhat/acs/deployment/"
+status = 301
+force = true
+
+# Legacy /experts/rhoai URLs → content under redhat/rhoai
+[[redirects]]
+from = "/experts/rhoai"
+to = "/experts/redhat/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rhoai/"
+to = "/experts/redhat/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rhoai/*"
+to = "/experts/redhat/rhoai/:splat"
+status = 301
+force = true
+
+# Former content/gcp → content/osd
+[[redirects]]
+from = "/experts/gcp"
+to = "/experts/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/gcp/"
+to = "/experts/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/gcp/*"
+to = "/experts/osd/:splat"
+status = 301
+force = true
+
+# Section chapter roots (no rendered _index) → tag landing pages
+[[redirects]]
+from = "/experts/rosa"
+to = "/experts/tags/rosa/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/"
+to = "/experts/tags/rosa/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/aro"
+to = "/experts/tags/aro/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/aro/"
+to = "/experts/tags/aro/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/osd"
+to = "/experts/tags/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/osd/"
+to = "/experts/tags/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/rhoai"
+to = "/experts/tags/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/rhoai/"
+to = "/experts/tags/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/acm"
+to = "/experts/tags/acm/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/acm/"
+to = "/experts/tags/acm/"
 status = 301
 force = true
 

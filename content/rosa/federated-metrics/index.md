@@ -1,7 +1,7 @@
 ---
 date: '2021-06-07'
 title: Federating System and User metrics to S3 in Red Hat OpenShift for AWS
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Paul Czarkowski
 ---

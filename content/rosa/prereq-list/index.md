@@ -1,7 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2023-07-27'
 title: Prerequisites Checklist to Deploy ROSA Cluster with STS 
-tags: ["ROSA", "STS"]
+tags: ["ROSA", "ROSA Classic"]
 authors:
   - Byron Miller
   - Connor Wooley

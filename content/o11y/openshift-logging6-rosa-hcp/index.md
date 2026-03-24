@@ -1,7 +1,7 @@
 ---
 date: '2026-03-19'
 title: Configuring OpenShift Logging 6 on ROSA HCP
-tags: ["Observability", "OCP"]
+tags: ["Observability", "ROSA HCP"]
 authors:
   - Kumudu Herath
   - Kevin Collins

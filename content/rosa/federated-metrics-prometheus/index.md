@@ -1,7 +1,7 @@
 ---
 date: '2021-10-21'
 title: Federating Metrics to a centralized Prometheus Cluster
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Paul Czarkowski
 ---

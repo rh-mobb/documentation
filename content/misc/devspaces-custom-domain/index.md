@@ -1,7 +1,7 @@
 ---
 date: '2024-01-08T17:08:00'
 title: Setting custom domains for apps created via OpenShift Dev Spaces
-tags: ["devspaces", "ROSA", "ARO"]
+tags: ["DevSpaces", "ROSA", "ARO"]
 authors:
   - Andy Repton
 ---

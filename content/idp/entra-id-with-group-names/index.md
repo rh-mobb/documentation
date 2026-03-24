@@ -1,7 +1,7 @@
 ---
 date: '2024-10-03T0:00:00.0000'
 title: Configuring Microsoft Entra ID to emit group names
-tags: ["Azure", "IDP", "ARO", "ROSA", "Entra ID"]
+tags: ["ARO", "IDP", "ROSA"]
 authors:
   - Michael McNeill
 ---
