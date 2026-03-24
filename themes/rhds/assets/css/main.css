@@ -123,6 +123,13 @@ html, body {
   padding: 0;
 }
 
+/* Smooth scroll for in-page links (e.g. rh-back-to-top href="#top"); skip if user prefers reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 *, *:after, *:before {
   box-sizing: border-box;
 }
