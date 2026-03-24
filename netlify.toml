@@ -3,7 +3,7 @@
   command = "npm ci && hugo --gc --minify && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
 
   [build.environment]
-    HUGO_VERSION = "0.118.2"
+    HUGO_VERSION = "0.157.0"
 
 [context.production.environment]
   HUGO_ENV           = "production"
