@@ -3,7 +3,7 @@
 {{- if .Description -}}
 <p>{{ .Description }}</p>
 {{- else -}}
-{{- $plain := .Summary | plainify | strings.TrimSpace -}}
+{{- $plain := strings.TrimSpace (.Summary | plainify) -}}
 {{- if $plain -}}
 <p>{{ $plain | truncate 280 "…" }}</p>
 {{- end -}}
