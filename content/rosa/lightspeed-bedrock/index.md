@@ -1,7 +1,7 @@
 ---
 date: '2026-03-25'
 title: Using OpenShift Lightspeed with AWS Bedrock on ROSA
-tags: ["ROSA", "AWS", "HCP", "AI"]
+tags: ["ROSA", "ROSA HCP", "Lightspeed"]
 authors:
   - Kevin Collins
 ---
