@@ -27,7 +27,7 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
     **MacOS**
 
     ```bash
-    curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-darwin-amd64
+    curl -Lo ocm https://developers.redhat.com/content-gateway/rest/browse/pub/cgw/ocm/latest/ocm_darwin_amd64.zip
     chmod +x ocm
     sudo mv ocm /usr/local/bin/
     ```
@@ -35,7 +35,7 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
     **Linux**
 
     ```bash
-    curl -Lo ocm https://developers.redhat.com/content-gateway/rest/browse/pub/cgw/ocm/latest/ocm_darwin_amd64.zip
+    curl -Lo ocm https://developers.redhat.com/content-gateway/rest/browse/pub/cgw/ocm/latest/ocm_linux_amd64.zip
     chmod +x ocm
     sudo mv ocm /usr/local/bin/
     ```
