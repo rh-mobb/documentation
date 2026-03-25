@@ -1,7 +1,7 @@
 ---
 date: '2025-06-01'
 title: Remove the default azurefile-csi storage class
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Kevin Collins
   - Kumudu Herath

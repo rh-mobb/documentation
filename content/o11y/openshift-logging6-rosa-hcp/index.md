@@ -1,11 +1,14 @@
 ---
-date: '2025-05-07'
+date: '2026-03-19'
 title: Configuring OpenShift Logging 6 on ROSA HCP
-tags: ["Observability", "OCP"]
+tags: ["Observability", "ROSA HCP"]
 authors:
   - Kumudu Herath
   - Kevin Collins
+  - Deepika Ranganathan
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
+
 
 ROSA HCP clusters now only support openshift Logging 6.x and above. This guide aims to provide a step-by-step guide for implementing logging 6.x on ROSA HCP,setting up a log store with Loki with S3 and/or log forwarding to AWS CloudWatch.
 
@@ -16,7 +19,7 @@ For ROSA Classic refer to the [LokiStack on ROSA](/experts/o11y/openshift-loggin
 The OpenShift logging subsystem is designed to collect, store, and visualize logs from various sources within the cluster, including node system logs, application container logs, and infrastructure logs.
 The OpenShift logging subsystem comprises several key components that work together to achieve log aggregation and management. The collector, residing on each node in the OpenShift cluster, is responsible for gathering logs. The primary implementation for the collector has historically been FluentD. However, a newer alternative, Vector, is increasingly being adopted for its performance and features. The collector gathers system logs from journald and container logs from /var/log/containers/*.log. Additionally, it can be configured to collect audit logs from /var/log/audit/audit.log. The collector is deployed and managed as a DaemonSet, ensuring that a collector pod runs on every node within the OpenShift cluster. The aggregated logs are then stored in a log store. The default log store for OpenShift Logging has traditionally been Elasticsearch. However, Loki is now offered as a performant alternative, particularly in ROSA HCP environments now defaults to Loki Operator. The ROSA HCP cluster log visualization component is provided using Cluster Observability Operator's (COO) Logging UI Plugin.
 
-Refer to [openshift logging official documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/index) and [6.x quick guide](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#quick-start_6-2_logging-6x-6.2) for more details.
+Refer to [openshift logging official documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/logging/index) and [6.x quick guide](https://docs.redhat.com/en/documentation/red_hat_openshift_logging/6.0/html/about_openshift_logging/quick-start) for more details.
 
 For ROSA HCP with logging 6 now required following operators
 1. Loki Operator (log store)
@@ -256,7 +259,7 @@ spec:
 EOF
 ```
 
-> Note: Specify the deployment size. Supported size options for production instances of Loki are 1x.extra-small, 1x.small, or 1x.medium. Additionally, 1x.pico is supported starting with logging 6.1. [Loki deployment sizing](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#log6x-loki-sizing_log6x-loki-6.2)
+> Note: Specify the deployment size. Supported size options for production instances of Loki are 1x.extra-small, 1x.small, or 1x.medium. Additionally, 1x.pico is supported starting with logging 6.1.
 
 14. Verify LokiStack Installation
 
@@ -536,7 +539,7 @@ EOF
 
 >Note: Make sure to format group name and set correct AWS region
 
-This example selects all application, infrastructure and audit logs and forwards them to cloudwatch. Refer to [openshift logging documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/logging-6-2#log6x-clf-6-2) for more configuration options like log formating,filtering..etc.
+This example selects all application, infrastructure and audit logs and forwards them to cloudwatch. 
 
 10. Verify CW log groups
 ![cloudwatch log groups](./cw_log_groups.png)

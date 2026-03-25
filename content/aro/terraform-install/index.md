@@ -1,12 +1,13 @@
 ---
 date: '2023-02-10'
 title: Deploying ARO using azurerm Terraform Provider
-tags: ["azure", "ARO", "Terraform"]
+tags: ["ARO", "Terraform"]
 authors:
   - James Land
   - Fola Oso
   - Paul Czarkowski
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 ## Overview
 

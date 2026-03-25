@@ -5,6 +5,9 @@ description: MOBB Docs and Guides for rosa
 archetype: chapter
 weight: 2
 skipMetadata: true
+build:
+  render: never
+  list: always
 ---
 
 

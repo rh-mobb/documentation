@@ -1,7 +1,7 @@
 ---
 date: '2024-07-09'
 title: 'Ansible Automation Platform (AAP) on ARO'
-tags: ["ARO", "Azure", "Ansible", "AAP"]
+tags: ["ARO", "AAP"]
 authors:
   - Dustin Scott
 ---

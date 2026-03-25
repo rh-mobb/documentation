@@ -1,10 +1,11 @@
 ---
 date: '2022-08-17'
 title: Adding infrastructure nodes to an ARO cluster
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 This document shows how to set up infrastructure nodes in an ARO cluster and move infrastructure related workloads to them. This can help with larger clusters that have resource contention between user workloads and infrastructure workloads such as Prometheus.
 
@@ -49,6 +50,12 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
         effect: NoSchedule
 
     machineSetSpec:
+      location: example-cluster-region # Replace this with your region
+      networkResourceGroup: example-vnet-rg # Replace this with your VNet's resource group
+      publicLoadBalancer: example-cluster-name-xxxxx # Replace this with the public load balancer name. This usually corresponds to the cluster's Infra ID
+      resourceGroup: example-cluster-rg # Replace this with the name of the resourcegroup created by the ARO sevrice
+      subnet: example-worker-subnet # Replace this with the name of the specific subnet for these machines
+      vnet: example-vnet # Replace this with your ARO VNet name
       tags:
         node_role: infra
     ```
@@ -141,7 +148,14 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
               key: "node-role.kubernetes.io/infra"
               operator: "Exists"
         prometheusOperator: {}
-        grafana:
+        metricsServer:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        monitoringPlugin:
           nodeSelector:
             node-role.kubernetes.io/infra: ""
           tolerations:
@@ -193,13 +207,12 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
     ```bash
     oc -n openshift-monitoring get pods -o wide
     ```
-
+    > sample output 
       ```
       NAME                                           READY   STATUS    RESTARTS   AGE     IP            NODE                                                    NOMINATED NODE   READINESS GATES
       alertmanager-main-0                            6/6     Running   0          2m14s   10.128.6.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-2-kljml   <none>           <none>
       alertmanager-main-1                            6/6     Running   0          2m46s   10.131.4.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
       cluster-monitoring-operator-5bbfd998c6-m9w62   2/2     Running   0          28h     10.128.0.23   cz-cluster-hsmtw-master-1                               <none>           <none>
-      grafana-599d4b948c-btlp2                       3/3     Running   0          2m48s   10.131.4.10   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
       kube-state-metrics-574c5bfdd7-f7fjk            3/3     Running   0          2m49s   10.131.4.8    cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
       ...
       ...

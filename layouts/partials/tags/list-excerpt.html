@@ -1,0 +1,10 @@
+{{- /* Short teaser for tag taxonomy/term listings (not full .Summary HTML). */ -}}
+{{- /* Plain <p> inherits global body size, color, and spacing like former {{ .Summary }} output */ -}}
+{{- if .Description -}}
+<p>{{ .Description }}</p>
+{{- else -}}
+{{- $plain := strings.TrimSpace (.Summary | plainify) -}}
+{{- if $plain -}}
+<p>{{ $plain | truncate 280 "…" }}</p>
+{{- end -}}
+{{- end -}}

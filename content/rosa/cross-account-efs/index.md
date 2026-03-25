@@ -1,7 +1,7 @@
 ---
 date: '2023-04-04'
 title: Enabling cross account EFS mounting
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Andy Repton
 ---

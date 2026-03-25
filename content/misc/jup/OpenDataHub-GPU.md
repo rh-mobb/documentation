@@ -6,7 +6,7 @@ build:
 date: '2022-07-01'
 title: Installing the Open Data Hub Operator
 aliases: ['/experts/misc/jup/OpenDataHub-GPU.md']
-tags: ["GPU", "OCP"]
+tags: []
 authors:
   - Connor Wooley
 ---

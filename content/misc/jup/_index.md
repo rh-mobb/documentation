@@ -5,7 +5,7 @@ build:
   render: never
 date: '2022-07-01'
 title: Jupyter Notebooks
-tags: ["GPU", "OCP"]
+tags: []
 ---
 
 # This content has been deprecated, the article remains available historically on GitHub.

@@ -1,7 +1,7 @@
 ---
 date: '2026-03-03'
 title: Using OpenShift Lightspeed with ARO
-tags: ["Azure", "ARO", "OpenShift Lightspeed"]
+tags: ["ARO", "Lightspeed"]
 authors:
   - Daniel Penagos
 ---

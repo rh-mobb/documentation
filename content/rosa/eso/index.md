@@ -1,7 +1,7 @@
 ---
 date: '2026-03-11'
 title: Using AWS Secrets Manager with External Secrets Operator on ROSA HCP 
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kumudu Herath
   - Kevin Collins

@@ -1,7 +1,7 @@
 ---
 date: '2025-10-21'
 title: Ingress to ROSA Virt VMs with Certificate-Based Site-to-Site (S2S) IPsec VPN and Libreswan
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "Virtualization", "ROSA HCP"]
 authors:
   - Diana Sari
   - Daniel Axelrod

@@ -1,7 +1,7 @@
 ---
 date: '2023-08-23'
 title: Use Azure Blob storage Container Storage Interface (CSI) driver on an ARO cluster
-tags: ["ARO", "Azure", "Blob", "csi"]
+tags: ["ARO"]
 authors:
   - Daniel Penagos
   - Paul Czarkowski

@@ -2,6 +2,16 @@
 preview:
 	hugo server --minify --theme rhds -D -b http://localhost:1313/experts
 
+# Build static HTML and generate the Pagefind index under public/experts/pagefind/
+.PHONY: search-index
+search-index:
+	hugo --gc --minify --theme rhds && npx pagefind --site public/experts
+
+# Local preview with working header search (serves from publishDir so public/experts/pagefind/ is available)
+.PHONY: preview-search
+preview-search: search-index
+	hugo server --minify --theme rhds -D -b http://localhost:1313/experts
+
 .PHONY: publish
 publish:
 	hugo --minify --theme rhds
