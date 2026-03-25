@@ -1,28 +1,28 @@
 [build]
   publish = "public"
-  command = "hugo --gc --minify && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
 
   [build.environment]
-    HUGO_VERSION = "0.118.2"
+    HUGO_VERSION = "0.157.0"
 
 [context.production.environment]
   HUGO_ENV           = "production"
   HUGO_ENABLEGITINFO = "true"
 
 [context.split1]
-  command = "hugo --gc --minify --enableGitInfo && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify --enableGitInfo && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
 
   [context.split1.environment]
     HUGO_ENV = "production"
 
 [context.deploy-preview]
-  command = "hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
   
   [context.deploy-preview.environment]
     HUGO_ENV           = "staging"
 
 [context.branch-deploy]
-  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
 
 [context.next.environment]
   HUGO_ENABLEGITINFO = "true"

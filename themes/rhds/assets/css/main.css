@@ -123,6 +123,13 @@ html, body {
   padding: 0;
 }
 
+/* Smooth scroll for in-page links (e.g. rh-back-to-top href="#top"); skip if user prefers reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 *, *:after, *:before {
   box-sizing: border-box;
 }
@@ -209,41 +216,397 @@ pre {
 
 header {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--rh-space-md, 8px);
   background-color: var(--rh-color-gray-90, #151515);
   color: var(--rh-color-text-primary-on-dark, #ffffff);
   padding: var(--rh-space-md, 8px);
-  height: 72px;
+  height: auto;
+  overflow: visible;
+  position: relative;
+  z-index: 200;
+}
 
-  & .logo {
-    margin-inline-start: var(--rh-space-md, 8px);
-    height: 100%;
-  }
+header .logo {
+  margin-inline-start: var(--rh-space-md, 8px);
+  height: auto;
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
 
-  a {
-    display: inline-flex;
+/* Scope to logo only — avoid styling Pagefind result links in the search drawer */
+header .logo a {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+header :is(img, svg) {
+  max-width: 169px;
+}
+
+@media screen and (min-width: 768px) {
+  header {
+    flex-direction: row;
     align-items: center;
-    height: 100%;
-  }
-
-  :is(img, svg) {
-    max-width: 169px;
-  }
-
-  @media screen and (min-width: 768px) {
+    gap: 0;
+    height: 72px;
     padding: var(--rh-space-md, 8px) var(--rh-space-xl, 24px);
-    
-    & .logo {
-      margin-inline-start: var(--rh-space-2xl, 32px);
-    } 
   }
+
+  header .logo {
+    margin-inline-start: var(--rh-space-2xl, 32px);
+    height: 100%;
+    align-self: center;
+  }
+}
+
+/*
+ * Header search: RHDS search bar pattern — light field on dark chrome
+ * https://ux.redhat.com/patterns/search-bar/
+ * Rules are flattened (no nesting) so Hugo’s CSS minifier does not emit invalid nested CSS.
+ */
+header .site-header__search {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin-inline: 0;
+  flex: none;
+  justify-content: stretch;
+}
+
+header .site-header__search-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rh-space-sm, 6px);
+  width: 100%;
+  min-width: 0;
+}
+
+@media screen and (min-width: 768px) {
+  header .site-header__search {
+    margin-inline-start: auto;
+    margin-inline-end: var(--rh-space-2xl, 32px);
+    width: auto;
+    max-width: min(32rem, 100%);
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
+  header .site-header__pagefind {
+    align-self: center;
+  }
+}
+
+header .site-header__pagefind {
+  position: relative;
+  z-index: 250;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+  width: 100%;
+  /*
+   * Visual match: developers.redhat.com universal nav search (PFE .pfe-navigation__search--default-styles)
+   * — padding 10px, #f0f0f0 / #8b8e91 field, #717579 text, 8px gap, #e00 button, 2px radius (not the expand/collapse UX).
+   */
+  --pagefind-ui-scale: 0.82;
+  --rh-search-red: #e00;
+  --dev-rhd-search-field-border: #f0f0f0;
+  --dev-rhd-search-field-border-bottom: #8b8e91;
+  --dev-rhd-search-muted: #717579;
+  --dev-rhd-search-gap: 8px;
+  --pagefind-ui-font: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif);
+  --pagefind-ui-text: var(--rh-color-text-primary-on-light, #151515);
+  --pagefind-ui-background: var(--rh-color-white, #ffffff);
+  --pagefind-ui-border: var(--rh-color-border-subtle-on-light, #c7c7c7);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: 2px;
+  --pagefind-ui-primary: var(--rh-color-interactive-blue-darker, #0066cc);
+  --pagefind-ui-tag: var(--rh-color-surface-lighter, #f2f2f2);
+}
+
+header .site-header__pagefind .pagefind-ui__form {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--dev-rhd-search-gap, 8px);
+  width: 100%;
+}
+
+/* Pagefind draws a magnifying glass on .pagefind-ui__form::before; hide it (no icon in field). */
+header .site-header__pagefind .pagefind-ui__form::before {
+  content: none;
+  display: none;
+}
+
+header .site-header__pagefind .pagefind-ui__search-input {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 10px;
+  font-size: var(--rh-font-size-body-text-md, 1rem);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--dev-rhd-search-muted, #717579);
+  background-color: #ffffff;
+  border: 1px solid var(--dev-rhd-search-field-border, #f0f0f0);
+  border-bottom: 1px solid var(--dev-rhd-search-field-border-bottom, #8b8e91);
+  border-radius: 2px;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+header .site-header__pagefind .pagefind-ui__search-input:hover:not(:focus-visible) {
+  box-shadow: none;
+  border-bottom-color: #06c;
+}
+
+header .site-header__pagefind .pagefind-ui__search-input::placeholder {
+  color: var(--dev-rhd-search-muted, #717579);
+  opacity: 1;
+  font-weight: 400;
+}
+
+header .site-header__pagefind .pagefind-ui__search-input:focus {
+  outline: none;
+  border-color: var(--dev-rhd-search-field-border, #f0f0f0);
+  border-bottom: 2px solid var(--rh-color-interactive-blue-darker, #0066cc);
+  box-shadow: none;
+}
+
+header .site-header__pagefind .pagefind-ui__search-input:focus-visible {
+  outline: var(--rh-border-width-md, 2px) solid var(--rh-color-interactive-blue-darker, #0066cc);
+  outline-offset: 2px;
+}
+
+header .site-header__pagefind .site-header__search-submit {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 5.75rem;
+  min-width: 5.75rem;
+  max-width: 5.75rem;
+  height: auto;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif);
+  font-size: var(--rh-font-size-body-text-md, 1rem);
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 10px;
+  color: #ffffff;
+  background-color: #e00;
+  border: 1px solid #e00;
+  border-radius: 2px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+header .site-header__pagefind .site-header__search-submit:hover {
+  background-color: #c00;
+  border-color: #c00;
+  color: #ffffff;
+}
+
+header .site-header__pagefind .site-header__search-submit:focus-visible {
+  outline: var(--rh-border-width-md, 2px) solid var(--rh-color-interactive-blue-darker, #0066cc);
+  outline-offset: 2px;
+}
+
+/* Inline “Clear” is replaced by the blue Clear mode on .site-header__search-submit */
+header .site-header__pagefind .pagefind-ui__search-clear {
+  display: none !important;
+}
+
+header .site-header__pagefind .site-header__search-submit--clear {
+  color: #ffffff;
+  background-color: var(--rh-color-interactive-blue-darker, #0066cc);
+  border-color: var(--rh-color-interactive-blue-darker, #0066cc);
+}
+
+header .site-header__pagefind .site-header__search-submit--clear:hover {
+  background-color: var(--rh-color-interactive-blue-darkest, #004080);
+  border-color: var(--rh-color-interactive-blue-darkest, #004080);
+  color: #ffffff;
+}
+
+header .site-header__pagefind .pagefind-ui__drawer {
+  --pagefind-ui-text: var(--rh-color-text-primary-on-light, #151515);
+  --pagefind-ui-background: var(--rh-color-white, #ffffff);
+  --pagefind-ui-border: var(--rh-color-border-subtle-on-light, #c7c7c7);
+  --pagefind-ui-primary: var(--rh-color-interactive-blue-darker, #0066cc);
+  --pagefind-ui-tag: var(--rh-color-surface-lighter, #f2f2f2);
+  --pagefind-ui-border-width: 1px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  margin-top: var(--rh-space-sm, 6px);
+  padding: var(--rh-space-lg, 16px);
+  background: var(--rh-color-white, #ffffff);
+  color: var(--rh-color-text-primary-on-light, #151515);
+  border: 1px solid var(--rh-color-border-subtle-on-light, #c7c7c7);
+  border-radius: var(--rh-border-radius-default, 3px);
+  box-shadow: var(--rh-box-shadow-lg, 0 0.5rem 1.5rem rgba(3, 3, 3, 0.12));
+  /* Height = content, capped by JS --pagefind-drawer-max-height (viewport below header) */
+  max-height: var(--pagefind-drawer-max-height, calc(100dvh - 6.5rem));
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+/*
+ * Search results: RHDS accordion “expanded panel” + vertical nav stack (static, no toggle)
+ * https://ux.redhat.com/elements/accordion/
+ * https://ux.redhat.com/elements/navigation-vertical/
+ */
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__results-area {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-top: 0;
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--rh-color-border-subtle-on-light, #c7c7c7);
+  border-radius: var(--rh-border-radius-default, 3px);
+  background-color: var(--rh-color-surface-lightest, #ffffff);
+  overflow: hidden;
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-light, #c7c7c7);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result:last-of-type {
+  border-bottom: 0;
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-inner {
+  flex: 1 1 auto;
+  align-items: stretch;
+  margin-top: 0;
+  width: 100%;
+}
+
+/* Accordion-style header row (always “open”) — gray strip; excerpt below is white */
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-title {
+  display: block;
+  margin: 0;
+  padding: var(--rh-space-md, 8px) var(--rh-space-lg, 16px);
+  font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', Helvetica, Arial, sans-serif);
+  font-size: var(--rh-font-size-body-text-md, 1rem);
+  font-weight: var(--rh-font-weight-heading-medium, 500);
+  line-height: var(--rh-line-height-body-text, 1.5);
+  background-color: var(--rh-color-surface-lighter, #f2f2f2);
+  border-block-end: 1px solid var(--rh-color-border-subtle-on-light, #c7c7c7);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-title .pagefind-ui__result-link {
+  color: var(--rh-color-text-primary-on-light, #151515);
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-title .pagefind-ui__result-link:hover,
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-title .pagefind-ui__result-link:focus-visible {
+  color: var(--rh-color-interactive-blue-darker, #0066cc);
+  text-decoration: underline;
+}
+
+/* Expanded panel body — inverted: light block (was gray header styling) */
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-excerpt {
+  display: block;
+  margin: 0;
+  min-width: 0;
+  padding: var(--rh-space-md, 8px) var(--rh-space-lg, 16px) var(--rh-space-lg, 16px);
+  font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+  font-weight: 400;
+  line-height: var(--rh-line-height-body-text, 1.5);
+  color: var(--rh-color-text-secondary-on-light, #6a6e73);
+  background-color: var(--rh-color-surface-lightest, #ffffff);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-tags {
+  margin: 0;
+  padding: var(--rh-space-sm, 6px) var(--rh-space-lg, 16px) var(--rh-space-lg, 16px);
+  padding-inline-start: calc(var(--rh-space-lg, 16px) + 3px);
+  background-color: var(--rh-color-surface-lightest, #ffffff);
+  border-inline-start: 3px solid var(--rh-color-border-subtle-on-light, #c7c7c7);
+  gap: var(--rh-space-sm, 6px);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-tag {
+  font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+  border-radius: var(--rh-border-radius-default, 3px);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-nested .pagefind-ui__result-link {
+  color: var(--rh-color-interactive-blue-darker, #0066cc);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__result-nested .pagefind-ui__result-link:hover {
+  color: var(--rh-color-interactive-blue-darkest, #004080);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__message {
+  padding: var(--rh-space-md, 8px) var(--rh-space-sm, 6px);
+  font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+  font-weight: var(--rh-font-weight-body-text-medium, 500);
+  color: var(--rh-color-text-secondary-on-light, #6a6e73);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer mark {
+  background-color: #fff6cc;
+  color: var(--rh-color-text-primary-on-light, #151515);
+  padding: 0 0.15em;
+  border-radius: 2px;
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__button {
+  margin-top: var(--rh-space-lg, 16px);
+  background: var(--rh-search-red, #ee0000);
+  color: #ffffff;
+  border: 1px solid var(--rh-search-red, #ee0000);
+  border-radius: var(--rh-border-radius-default, 3px);
+  font-weight: var(--rh-font-weight-body-text-medium, 500);
+}
+
+header .site-header__pagefind .pagefind-ui__drawer .pagefind-ui__button:hover {
+  background: #a30000;
+  border-color: #a30000;
+  color: #ffffff;
 }
 
 main {
   max-width: 1320px;
   padding: var(--rh-space-lg, 16px) var(--rh-space-lg, 16px) var(--rh-length-5xl, 80px);
+}
 
-  @media screen and (min-width: 768px) {
+@media screen and (min-width: 768px) {
+  main {
     margin: 0 auto;
     padding: var(--rh-space-2xl, 32px) var(--rh-space-2xl, 32px) var(--rh-length-5xl, 80px);
   }
@@ -326,66 +689,70 @@ main {
   list-style: none;
   font-size: var(--rh-font-size-body-text-sm, 0.875rem);
   padding: var(--rh-space-lg, 16px) 0;
+}
 
-  .breadcrumb:not(:last-of-type):after {
-    content: url(/experts/images/breadcrumb-spacer.svg);
-    width: 11px;
-    height: 11px;
-    padding: var(--rh-space-md, 8px);
-  }
+.breadcrumbs .breadcrumb:not(:last-of-type):after {
+  content: url(/experts/images/breadcrumb-spacer.svg);
+  width: 11px;
+  height: 11px;
+  padding: var(--rh-space-md, 8px);
 }
 
 .article-meta {
   display: flex;
   flex-direction: column;
   padding-block-end: var(--rh-space-2xl, 32px);
+}
 
-  @media screen and (min-width: 768px) {
+@media screen and (min-width: 768px) {
+  .article-meta {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
+}
 
-  & dl {
-    flex: 1;
-  }
+.article-meta dl {
+  flex: 1;
+}
 
-  & dt {
-    float: left;
-    clear: left;
-    font-weight: bold;
+.article-meta dt {
+  float: left;
+  clear: left;
+  font-weight: bold;
+}
 
-    &:after {
-      content: ":";
-      margin-right: 0.25rem;
-    }
-  }
+.article-meta dt:after {
+  content: ":";
+  margin-right: 0.25rem;
+}
 
-  & dd {
-    margin: 0;
-    float: left;
-  }
+.article-meta dd {
+  margin: 0;
+  float: left;
+}
 
-  & dd + dd {
-    float: left;
-  }
+.article-meta dd + dd {
+  float: left;
+}
 
-  & dd + dt {
-    clear: left;
-  }
+.article-meta dd + dt {
+  clear: left;
 }
 
 .article-tags {
   padding-block-start: var(--rh-space-lg, 16px);
+}
 
-  @media screen and (min-width: 768px) {
+@media screen and (min-width: 768px) {
+  .article-tags {
     padding-block-start: 0;
   }
+}
 
-  & span {
-    font-weight: var(--rh-font-weight-body-text-medium, 500);
-  }
+.article-tags span {
+  font-weight: var(--rh-font-weight-body-text-medium, 500);
 }
 
 .article-date,
@@ -430,33 +797,31 @@ main {
   color: var(--rh-color-text-primary-on-dark, #ffffff);
 }
 
-rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) { 
-  & a {
-    color: var(--rh-color-interactive-blue-lighter, #73bcf7);
+rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a {
+  color: var(--rh-color-interactive-blue-lighter, #73bcf7);
+}
 
-    &:hover {
-      color: var(--rh-color-interactive-blue-lightest, #bee1f4);
-    }
-  }
+rh-surface:is([color-palette="dark"], [color-palette="darker"], [color-palette="darkest"]) a:hover {
+  color: var(--rh-color-interactive-blue-lightest, #bee1f4);
 }
 
 .collaborate {
   position: relative;
   padding: var(--rh-length-4xl, 64px);
+}
 
-  & .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
+.collaborate .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 
-  & .cta-group {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--rh-space-lg, 16px);
-  }
+.collaborate .cta-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--rh-space-lg, 16px);
 }
 
 @media (min-width: 567px) {

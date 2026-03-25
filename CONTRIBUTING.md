@@ -88,10 +88,15 @@ authors:
 
 1. Update `/content/docs/[Section]/_index.md` to include your new document.
 
-1. To verify your changes you can run `make preview` to preview the site locally at [http://localhost:1313/](http://localhost:1313/)
+1. To verify your changes you can run `make preview` to preview the site locally at [http://localhost:1313/experts/](http://localhost:1313/experts/)
 
 1. Submit PR
 
+## Site search (local development)
+
+The black header bar includes [Pagefind](https://pagefind.app/) client-side search. Netlify runs `npm ci`, builds the site with Hugo, then runs `npx pagefind --site public/experts` so the index is published under `/experts/pagefind/` (see [`netlify.toml`](netlify.toml)).
+
+For a local build where search works end-to-end, run `npm install` once, then `make preview-search`. That runs Hugo, indexes the output, and starts `hugo server`, which writes to `publishDir` (`public/experts` per [`config.toml`](config.toml)) so the Pagefind bundle under `public/experts/pagefind/` is served. Do not pass `--renderToMemory` (`-M`) to `hugo server` if you need search, or those assets will not be on disk. Using `make preview` alone does not create an index, so the search field appears but queries will not return results until you run `make search-index` (or the full `preview-search` flow).
 
 ### New Document and New Section
 
