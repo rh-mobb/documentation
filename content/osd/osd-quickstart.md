@@ -1,20 +1,21 @@
 ---
 date: '2026-03-25'
-title: OSD on GCP Quickstart
+title: OpenShift Dedicated Quickstart
 weight: 1
 authors:
   - Kevin Collins
   - Kumudu Herath
-tags: ["OSD", "GCP", "Google", "Quickstarts"]
+tags: ["OSD", "Quickstarts"]
 ---
 {{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
+
 A Quickstart guide to deploying an OpenShift Dedicated cluster on Google Cloud Platform.
 
 ## Prerequisites
 
 ### Google Cloud Account
 
-{{% alert state="info" %}}You should already have the Google Cloud CLI installed and be authenticated with `gcloud auth login` before proceeding. Review the [Google Cloud prerequisites and requirements for OSD](https://docs.openshift.com/dedicated/latest/osd_install_access_delete_cluster/gcp-ccs.html) for detailed information on permissions and quota requirements.{{% /alert %}}
+{{% alert state="info" %}}You should already have the Google Cloud CLI installed and be authenticated with `gcloud auth application-default login` before proceeding. Review the [Google Cloud prerequisites and requirements for OSD](https://docs.openshift.com/dedicated/latest/osd_install_access_delete_cluster/gcp-ccs.html) for detailed information on permissions and quota requirements.{{% /alert %}}
 
 
 ### Install OCM CLI
@@ -34,7 +35,7 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
     **Linux**
 
     ```bash
-    curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-linux-amd64
+    curl -Lo ocm https://developers.redhat.com/content-gateway/rest/browse/pub/cgw/ocm/latest/ocm_darwin_amd64.zip
     chmod +x ocm
     sudo mv ocm /usr/local/bin/
     ```
@@ -45,22 +46,12 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
     ocm version
     ```
 
-### Get Red Hat pull secret and API token
-
-1. Log into <https://console.redhat.com>
-
-1. Browse to <https://console.redhat.com/openshift/token>
-
-1. Copy your **OCM API Token** - you'll need this to authenticate the OCM CLI
-
-1. Download your **pull secret** from <https://console.redhat.com/openshift/install/pull-secret>
-
 ### Authenticate OCM CLI
 
 1. Log in to OCM using your API token
 
     ```bash
-    ocm login --token=YOUR_OCM_TOKEN
+    ocm login --use-auth-code
     ```
 
 ## Deploy OpenShift Dedicated on GCP
@@ -83,7 +74,8 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
     ```bash
     ocm gcp create wif-config \
       --name ${WIF_CONFIG_NAME} \
-      --project ${PROJECT_ID}
+      --project ${PROJECT_ID} \
+      --federated-project ${PROJECT_ID}
     ```
 
 ### Create the Cluster
@@ -109,7 +101,9 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
       --compute-nodes ${COMPUTE_NODES} \
       --compute-machine-type ${COMPUTE_MACHINE_TYPE} \
       --wif-config ${WIF_CONFIG_NAME} \
-      ${CLUSTER_NAME}
+      --subscription-type=marketplace-gcp \
+      --marketplace-gcp-terms=true \
+      ${CLUSTER_NAME} 
     ```
 
 1. Monitor cluster installation

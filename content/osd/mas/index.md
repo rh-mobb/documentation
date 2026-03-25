@@ -1,6 +1,6 @@
 ---
 date: '2024-10-23'
-title: Maximo Application Suite on OpenShift Dedicated Google Cloud Platform ( OSD GCP )
+title: Maximo Application Suite on OpenShift Dedicated
 tags: ["OSD", "Maximo"]
 authors:
   - Kevin Collins, Nerav Doshi
