@@ -1,7 +1,7 @@
 ---
 date: '2021-10-04'
 title: Using the AWS Cloud Watch agent to publish metrics to CloudWatch in ROSA
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Kevin Collins
   - Michael McNeill

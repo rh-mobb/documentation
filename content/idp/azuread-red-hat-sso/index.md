@@ -1,7 +1,7 @@
 ---
 date: '2023-06-20'
 title: Configure Red Hat SSO with Microsoft Entra ID as a Federated Identity Provider
-tags: ["Azure", "SSO", "Keycloak"]
+tags: ["ARO", "Keycloak"]
 authors:
   - Dustin Scott
 ---

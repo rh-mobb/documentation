@@ -1,7 +1,7 @@
 ---
 date: '2024-07-25'
 title: Migrating EC2 Instances to OpenShift Virtualization
-tags: ["AWS", "ROSA", "EC2", "OpenShift", "Virtualization", "Migration"]
+tags: ["ROSA", "Virtualization"]
 authors:
   - Florian Jacquin
 ---

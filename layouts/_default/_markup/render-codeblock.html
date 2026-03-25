@@ -82,6 +82,6 @@
   {{- $highlighting = "none" -}}
 {{- end -}}
 
-<rh-code-block actions="copy wrap" highlighting="{{ $highlighting }}" language="{{ $normalizedLang }}">
+<rh-code-block actions="copy wrap" highlighting="{{ $highlighting }}" language="{{ $normalizedLang }}" line-numbers="hidden">
   <script type="{{ $mimeType }}">{{ .Inner | safeHTML }}</script>
 </rh-code-block>

@@ -9,9 +9,9 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Red Hat OpenShift on AWS (ROSA)](/experts/rosa/sts/)
 * [Azure Red Hat OpenShift (ARO)](/experts/quickstart-aro/)
 
-## ROSA
+## Red Hat OpenShift Service on AWS (ROSA)
 
-#### Hosted Control Plane (HCP)
+#### Default architecture (Hosted Control Planes)
 
 * [Deploying a ROSA with HCP cluster with Terraform](/experts/rosa/terraform/hcp/)
 * [Configuring ROSA with HCP Private Cluster API Access](/experts/rosa/hcp-private-api-access/)
@@ -30,15 +30,19 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS](/experts/rosa/ecr-external-secrets-irsa)
 * [AWS Secrets Manager Secrets on ROSA HCP with External Secrets Operator and STS](/experts/rosa/eso)
 * [Deploying ROSA HCP in STS mode with custom KMS Key](/experts/rosa/hcp-kms)
+* [Configure Node Pool Scale-to-Zero on ROSA HCP](/experts/rosa/scale-to-zero)
+* [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
 
-#### Classic
+#### Classic architecture
 
 * [Prerequisites Checklist to Deploy ROSA Cluster with STS](/experts/rosa/prereq-list)
+* [Deploying ROSA in STS mode](/experts/rosa/sts)
+* [STS OIDC flow in ROSA Operators](/experts/rosa/sts-oidc-flow)
+* [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
 * [Deploying a ROSA cluster with Terraform](/experts/rosa/terraform/classic/)
 * [Deploying ROSA in PrivateLink mode](/experts/rosa/private-link)
   * [Add Public Ingress to PrivateLink Cluster](/experts/rosa/private-link/public-ingress)
 * [Deploying ROSA PrivateLink Cluster with Ansible](/experts/rosa/ansible-rosa)
-* [Deploying ROSA in STS mode](/experts/rosa/sts)
 * [Deploying ROSA in STS mode with PrivateLink](/experts/rosa/sts-with-private-link)
 * [Deploying ROSA in STS mode with custom KMS Key](/experts/rosa/kms)
 * [ROSA IP addressing best practices](/experts/rosa/ip-addressing-and-subnets)
@@ -52,14 +56,11 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [AWS EFS on ROSA](/experts/rosa/aws-efs)
 * [Cross Account EFS Mounting on ROSA](/experts/rosa/cross-account-efs)
 * [Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)](/experts/rosa/ecr)
-* [Configuring a ROSA cluster to use ECR secret operator](/experts/rosa/ecr-secret-operator)
 * [Access AWS Cross Account resources using OIDC](/experts/rosa/cross-account-access-openid-connect)
 * [Deploy and use the AWS Kubernetes Controller S3 controller](/experts/rosa/ack)
 * [Verify Required Permissions for a ROSA STS deployment](/experts/rosa/verify-permissions)
-* [STS OIDC flow in ROSA Operators](/experts/rosa/sts-oidc-flow)
 * [Dynamic Certificates for ROSA Custom Domain](/experts/rosa/dynamic-certificates)
 * [Custom Domain for Component Routes](/experts/rosa/customizing-console-route)
-* [External DNS for ROSA Custom Domain](/experts/rosa/external-dns)
 * [Security Reference Architecture for ROSA](/experts/rosa/security-ra)
 * Configure ROSA for Nvidia GPU Workloads
   * [Helm chart](/experts/rosa/gpu)
@@ -68,25 +69,19 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Create an AWS Client VPN connection for a private ROSA Cluster](/experts/rosa/vpn)
 * [ROSA Break Glass Troubleshooting](/experts/rosa/break-glass)
 * [Add an Ingress Controller to ROSA with a custom domain](/experts/rosa/ingress-controller)
-* [Configuring AWS CLB Access Logging](/experts/rosa/clb-access-logging/)
-* [Migrating ROSA Ingress Controllers from a CLB to NLB](/experts/rosa/clb-to-nlb-migration/)
-* [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
 * [Install Maximo Application Suite on Red Hat OpenShift Service on AWS with automation](/experts/rosa/mas/)
 * [Using local-zones in ROSA](/experts/rosa/local-zones/)
 
-##### AWS GovCloud
+#### ROSA in AWS GovCloud
 * [Creating a ROSA Cluster in AWS GovCloud](/experts/rosa/rosa-govcloud/)
 
-## ARO
+## Azure Red Hat OpenShift (ARO)
 
 * [Prerequisites Checklist to Deploy ARO Cluster](/experts/aro/prereq-list)
 * [Deploying private ARO Cluster with Jump Host access](/experts/aro/private-cluster)
-  * [Using the Egressip Ipam Operator with a Private ARO Cluster](/experts/aro/egress-ipam-operator)
 * [Add or Update a Red Hat Pull Secret on ARO](/experts/aro/pull-secret)
 * [Considerations for Disaster Recovery with ARO](/experts/aro/disaster-recovery)
 * [Getting Started with the Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
-* [Deploy and use the Azure Service Operator V1(ASO)](/experts/aro/azure-service-operator/v1)
-* [Deploy and use the Azure Service Operator V2(ASO)](/experts/aro/azure-service-operator/v2)
 * [Create an additional Ingress Controller for ARO](/experts/aro/additional-ingress-controller)
 * [Configure ARO with Azure NetApp Trident Operator](/experts/aro/trident)
 * [Install ARO with Custom Domain using LetsEncrypt with cert manager](/experts/aro/cert-manager)
@@ -116,14 +111,14 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Backup and Restore for ARO using OpenShift API for Data Protection](/experts/aro/backup-restore)
 * [Configure OpenShift Lightspeed backed by Azure AI Foundry for the LLM](/experts/aro/lightspeed)
 
-## OpenShift Dedicated on GCP
+## OpenShift Dedicated
 
-* [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/gcp/osd_preexisting_vpc)
-* [Using Filestore with OpenShift Dedicated in GCP](/experts/gcp/filestore)
-* [Limit Egress with Google Cloud NGFW Standard](/experts/gcp/cloud-ngfw)
-* [Limit Egress with Google Cloud Secure Web Proxy](/experts/gcp/secure-web-proxy)
-* [Install Maximo Application Suite on Red Hat OpenShift Dedicated on GCP with automation](/experts/gcp/mas/)
-* [Add an Ingress Controller to OpenShift Dedicated on GCP with a custom domain](/experts/gcp/ingress-controller)
+* [Deploy OSD in GCP using Pre-Existent VPC and Subnets](/experts/osd/osd_preexisting_vpc)
+* [Using Filestore with OpenShift Dedicated in GCP](/experts/osd/filestore)
+* [Limit Egress with Google Cloud NGFW Standard](/experts/osd/cloud-ngfw)
+* [Limit Egress with Google Cloud Secure Web Proxy](/experts/osd/secure-web-proxy)
+* [Install Maximo Application Suite on Red Hat OpenShift Dedicated on GCP with automation](/experts/osd/mas/)
+* [Add an Ingress Controller to OpenShift Dedicated on GCP with a custom domain](/experts/osd/ingress-controller)
 
 ## Layered Products
 
@@ -131,38 +126,70 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 
 * [Deploy OpenShift Virtualization on Azure Red Hat OpenShift (ARO)](/experts/aro/aro-virt/)
 * [Migrating Azure VM Instances to OpenShift Virtualization](/experts/aro/azure-migration-to-aro)
-* Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA)
+* Deploy OpenShift Virtualization on Red Hat OpenShift Service on AWS (ROSA)
   * [via CLI](/experts/rosa/ocp-virt/basic)
   * [via GUI](/experts/rosa/ocp-virt/basic-gui)
-* [Deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
+* [Deploy OpenShift Virtualization on Red Hat OpenShift Service on AWS (ROSA) with Netapp FSx CSI Driver](/experts/rosa/ocp-virt/with-fsx)
 * [Deploying and Managing Virtual Machines on ROSA with OpenShift GitOps](/experts/rosa/virt-gitops)
 * [Migrating EC2 Instances to OpenShift Virtualization](/experts/rosa/ec2-migration-to-rosa)
 
-### Red Hat OpenShift AI (RHOAI)
+### Red Hat OpenShift AI
 
-* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/rhoai/rosa-s3)
-* [Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled](/experts/rhoai/rosa-gpu)
-* [Creating RAG Chatbot using TinyLlama and LangChain APIs on Red Hat OpenShift AI on ARO cluster](/experts/rhoai/aro-rag)
-* [Building LLM Cost and Performance Dashboard with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-bedrock)
-* [Creating Agentic AI to deploy ARO cluster using Terraform with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/rhoai/rosa-agentic)
+* [Running and Deploying LLMs using Red Hat OpenShift AI on ROSA cluster and Storing the Model in Amazon S3 Bucket](/experts/redhat/rhoai/rosa-s3)
+* [Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled](/experts/redhat/rhoai/rosa-gpu)
+* [Creating RAG Chatbot using TinyLlama and LangChain APIs on Red Hat OpenShift AI on ARO cluster](/experts/redhat/rhoai/aro-rag)
+* [Building LLM Cost and Performance Dashboard with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/redhat/rhoai/rosa-bedrock)
+* [Creating Agentic AI to deploy ARO cluster using Terraform with Red Hat OpenShift AI on ROSA and Amazon Bedrock](/experts/redhat/rhoai/rosa-agentic)
 
-### Data Science on Jupyter Notebook on OpenShift
-
-* [Prerequistes and Concepts](/experts/misc/jup/)
-  * [Build minimal notebook](/experts/misc/jup/buildnotebook)
-  * [JupyterHub notebook with GPU](/experts/misc/jup/opendatahub-gpu)
-
-### Advanced Cluster Manager (ACM)
+### Red Hat Advanced Cluster Manager for Kubernetes
 
 * [Deploy ACM Observability to a ROSA cluster](/experts/redhat/acm/observability/rosa)
 * [Deploy ACM Submariner for connecting overlay networks of ROSA clusters](/experts/redhat/acm/submariner/rosa)
 * [Deploy ACM Submariner for connect overlay networks ARO - ROSA clusters](/experts/redhat/acm/submariner/aro)
 
-### Deploying Advanced Cluster Security for Kubernetes in ROSA/ARO
+### Red Hat Advanced Cluster Security for Kubernetes
 
-* [Deploying ACS in ROSA/ARO](/experts/redhat/rhacs)
+* [Deploying ACS in ROSA/ARO](/experts/redhat/acs/deployment)
 
-## Observability
+## Identity Providers (IdP)
+
+### Configuring Specific Identity Providers
+
+* [Configure GitLab as an identity provider for ROSA/OSD](/experts/idp/gitlab)
+* [Configure GitLab as an identity provider for ARO](/experts/idp/gitlab-aro)
+* [Configure Microsoft Entra ID as an identity provider for ARO](/experts/idp/azuread-aro)
+* [Configure Microsoft Entra ID as an identitiy provider for ARO with group claims](/experts/idp/group-claims/aro/)
+* [Configure Microsoft Entra ID as an identitiy provider for ROSA with group claims](/experts/idp/group-claims/rosa/)
+* [Configure Microsoft Entra ID as an identity provider for ROSA/OSD](/experts/idp/azuread)
+* [Configure Microsoft Entra ID as an identity provider for ARO via the CLI](/experts/idp/azuread-aro-cli)
+* [Configure Red Hat SSO with Microsoft Entra ID as a Federated Identity Provider for ARO](/experts/idp/azuread-red-hat-sso)
+* [Considerations when using AAD as IDP](/experts/idp/considerations-aad-ipd)
+* [Configuring Microsoft Entra ID to emit group names instead of group IDs](/experts/idp/entra-id-with-group-names)
+
+### Configuring Group Synchronization
+
+* [Using Group Sync Operator with Microsoft Entra ID and ROSA/OSD](/experts/idp/az-ad-grp-sync)
+* [Using Group Sync Operator with Okta and ROSA/OSD](/experts/idp/okta-grp-sync)
+
+## Miscellaneous 
+
+### General
+
+* [Demonstrating GitOps - ArgoCD](/experts/redhat/gitops/)
+* [Migrate Kubernetes Applications with Konveyor Crane](/experts/redhat/crane/)
+* [Red Hat Cost Management for Cloud Services](/experts/misc/cost-management/)
+* [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
+* [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
+* [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
+* [Setting up Cross-Cluster PostgreSQL Replication with Skupper on ROSA and ARO](/experts/misc/rosa-aro-service-interconnect)
+* [Configuring Cross-Tenant Azure DevOps Access from ArgoCD on ARO](/experts/misc/cross-tenant-access-ArgoCd-ADO)
+* [Secrets Store CSI](/experts/misc/secrets-store-csi)
+  * [+ HashiCorp CSI](/experts/misc/secrets-store-csi/hashicorp-vault)
+  * [+ AWS Secrets CSI with ROSA in STS mode](/experts/rosa/aws-secrets-manager-csi)
+  * [+ Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
+
+
+### Observability
 
 * [Deploy Grafana on OpenShift 4](/experts/o11y/ocp-grafana/)
 * [Configuring Alerts for User Workloads](/experts/rosa/custom-alertmanager)
@@ -178,48 +205,12 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Configuring Cluster Observability Operator (COO) in ARO and Enabling remote writing of metrics to Azure Monitor Workspace](/experts/o11y/openshift-coo-azuremonitor)
 * [ Configuring oTEL to collect OpenShift Logs instead of the Cluster Log Forwarder](/experts/o11y/otel-instead-of-clf)
 
-## Security
+### AI / ML Topics
 
-### Kubernetes Secret Store CSI Driver
-
-* [Just the CSI itself](/experts/misc/secrets-store-csi)
-  * [+ HashiCorp CSI](/experts/misc/secrets-store-csi/hashicorp-vault)
-  * [+ AWS Secrets CSI with ROSA in STS mode](/experts/rosa/aws-secrets-manager-csi)
-  * [+ Azure Key Vault CSI Driver](/experts/misc/secrets-store-csi/azure-key-vault)
-
-## Identity Providers (Idp)
-
-### Configuring Specific Identity Providers
-
-* [Configure GitLab as an identity provider for ROSA/OSD](/experts/idp/gitlab)
-* [Configure GitLab as an identity provider for ARO](/experts/idp/gitlab-aro)
-* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identity provider for ARO](/experts/idp/azuread-aro)
-* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identitiy provider for ARO with group claims](/experts/idp/group-claims/aro/)
-* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identitiy provider for ROSA with group claims](/experts/idp/group-claims/rosa/)
-* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identity provider for ROSA/OSD](/experts/idp/azuread)
-* [Configure Microsoft Entra ID (formerly Azure Active Directory) as an identity provider for ARO via the CLI](/experts/idp/azuread-aro-cli)
-* [Configure Red Hat SSO with Microsoft Entra ID (formerly Azure Active Directory) as a Federated Identity Provider for ARO](/experts/idp/azuread-red-hat-sso)
-* [Considerations when using AAD as IDP](/experts/idp/considerations-aad-ipd)
-* [Configuring Microsoft Entra ID (formerly Azure Active Directory) to emit group names instead of group IDs](/experts/idp/entra-id-with-group-names)
-
-### Configuring Group Synchronization
-
-* [Using Group Sync Operator with Azure Active Directory and ROSA/OSD](/experts/idp/az-ad-grp-sync)
-* [Using Group Sync Operator with Okta and ROSA/OSD](/experts/idp/okta-grp-sync)
-
-## AI / ML
-
+* [Prerequistes and Concepts](/experts/misc/jup/)
+  * [Build minimal notebook](/experts/misc/jup/buildnotebook)
+  * [JupyterHub notebook with GPU](/experts/misc/jup/opendatahub-gpu)
 * [Deploying and Running Ollama and Open WebUI in a ROSA Cluster with GPUs](/experts/ai-ml/ollama-openwebui)
-
-## Miscellaneous
-
-* [Demonstrating GitOps - ArgoCD](/experts/redhat/gitops/)
-* [Migrate Kubernetes Applications with Konveyor Crane](/experts/redhat/crane/)
-* [Red Hat Cost Management for Cloud Services](/experts/misc/cost-management/)
-* [Deploy OpenShift Advanced Data Protection on a ROSA STS cluster](/experts/misc/oadp/rosa-sts/)
-* [Azure DevOps with Managed OpenShift](/experts/misc/azure-dev-ops-with-managed-openshift/)
-* [Configuring OpenShift Dev Spaces to serve Custom Domains](/experts/misc/devspaces-custom-domain)
-* [Setting up Cross-Cluster PostgreSQL Replication with Skupper on ROSA and ARO](/experts/misc/rosa-aro-service-interconnect)
 
 ### Applications
 

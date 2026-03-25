@@ -1,7 +1,7 @@
 ---
 date: '2021-06-17'
 title: This is a POC of ROSA with a AWS WAF service
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 draft: true
 ---
 # This is a POC of ROSA with a AWS WAF service

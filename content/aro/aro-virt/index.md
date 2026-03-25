@@ -1,11 +1,13 @@
 ---
 date: '2025-10-13'
 title: Deploying OpenShift Virtualization on ARO
-tags: ["ARO", "VIRT"]
+tags: ["ARO", "Virtualization"]
 authors:
   - Kevin Collins
   - Kumudu Herath
 ---
+
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 OpenShift Virtualization is a feature of OpenShift that allows you to run virtual machines alongside your containers.  This is useful for running legacy applications that can't be containerized, or for running applications that require special hardware or software that isn't available in a container.
 
@@ -16,7 +18,7 @@ It's important to keep in mind that this tutorial is designed to show you the qu
 ## Pre-requisites
 
 1. You will need an 4.18+ ARO Cluster (see [Deploying ARO using azurerm Terraform Provider](/experts/aro/terraform-install/) if you need help creating one).
-   >Note: as of the writing of this guide 4.19 was used
+   >Note: as of the writing of this guide 4.20 was used
    
 1. CLIs and Command Line Tools Needed
   * oc (logged into the ARO cluster)
@@ -30,6 +32,7 @@ It's important to keep in mind that this tutorial is designed to show you the qu
   export VIRT_MACHINESET_NAME="virt-worker"
 
   mkdir -p ${SCRATCH_DIR}
+  cd ${SCRATCH_DIR}
 ```
 
 ## Create a machine pools for VMs
@@ -188,7 +191,7 @@ Follow this [guide](/experts/aro/odf/) to add OpenShift Data Foundation to your 
             resources:
               requests:
                 storage: 30Gi
-      running: false
+      runStrategy: Always
       template:
         metadata:
           labels:
@@ -255,8 +258,9 @@ Follow this [guide](/experts/aro/odf/) to add OpenShift Data Foundation to your 
 
     ```bash
     watch oc get vm example-vm
-
     ```
+
+    ```bash
     Every 2.0s: oc get vm
     NAME         AGE     STATUS         READY
     example-vm   3m16s   Running   False

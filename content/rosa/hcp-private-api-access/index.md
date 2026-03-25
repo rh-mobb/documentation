@@ -1,11 +1,16 @@
 ---
-## Content migrated to product documentation: https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-aws-private-creating-cluster.html#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster
+build:
+  list: never
+  publishResources: false
+  render: never
 date: "2024-09-10"
 title: "Configuring ROSA with HCP Private Cluster API Access"
-tags: ["AWS", "ROSA", "ROSA with HCP"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
    - Michael McNeill
 ---
+
+> Content migrated to product documentation: https://docs.openshift.com/rosa/rosa_hcp/rosa-hcp-aws-private-creating-cluster.html#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster
 
 With ROSA with HCP private clusters, the AWS PrivateLink endpoint exposed in the customer's VPC has a default security group. This security group has access to the PrivateLink endpoint that is limited to only those resources that exist within the VPC or resources that are present with an IP address associated with the VPC CIDR range. In order to grant access to any entities outside of the VPC, through VPC peering and transit gateway, you must create and attach another security group to the PrivateLink endpoint to grant the necessary access.
 

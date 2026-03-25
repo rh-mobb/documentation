@@ -2,7 +2,7 @@
 date: '2022-07-01'
 title: How to deploy Jupyter Notebook
 aliases: ['/experts/misc/jup/BuildNotebook.md']
-tags: ["GPU", "OCP"]
+tags: []
 authors:
   - Connor Wooley
 ---

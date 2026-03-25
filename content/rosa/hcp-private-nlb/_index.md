@@ -1,7 +1,7 @@
 ---
 date: '2024-10-29'
 title: Securely exposing an application on a private ROSA cluser with an AWS Network Load Balancer
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
 ---
