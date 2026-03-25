@@ -23,10 +23,18 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
 
 1. Download the OCM CLI
 
-    **MacOS/Linux**
+    **MacOS**
 
     ```bash
-    curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/')
+    curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-darwin-amd64
+    chmod +x ocm
+    sudo mv ocm /usr/local/bin/
+    ```
+
+    **Linux**
+
+    ```bash
+    curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-linux-amd64
     chmod +x ocm
     sudo mv ocm /usr/local/bin/
     ```
@@ -67,36 +75,15 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
 
     ```bash
     export PROJECT_ID=$(gcloud config get-value project)
-    export WIF_POOL=osd-wif-pool
-    export WIF_PROVIDER=osd-wif-provider
+    export WIF_CONFIG_NAME=osd-wif-config
     ```
 
-1. Create Workload Identity Pool
+1. Create Workload Identity Federation configuration
 
     ```bash
-    gcloud iam workload-identity-pools create ${WIF_POOL} \
-      --location=global \
-      --display-name="OSD Workload Identity Pool"
-    ```
-
-1. Create Workload Identity Provider
-
-    ```bash
-    gcloud iam workload-identity-pools providers create-oidc ${WIF_PROVIDER} \
-      --location=global \
-      --workload-identity-pool=${WIF_POOL} \
-      --issuer-uri="https://rh-oidc.s3.us-east-1.amazonaws.com/osd" \
-      --allowed-audiences="openshift" \
-      --attribute-mapping="google.subject=assertion.sub"
-    ```
-
-1. Get the Workload Identity Pool resource name
-
-    ```bash
-    export WIF_POOL_ID=$(gcloud iam workload-identity-pools describe ${WIF_POOL} \
-      --location=global \
-      --format="value(name)")
-    echo $WIF_POOL_ID
+    ocm gcp create wif-config \
+      --name ${WIF_CONFIG_NAME} \
+      --project ${PROJECT_ID}
     ```
 
 ### Create the Cluster
@@ -121,9 +108,7 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
       --region ${REGION} \
       --compute-nodes ${COMPUTE_NODES} \
       --compute-machine-type ${COMPUTE_MACHINE_TYPE} \
-      --gcp-project-id ${PROJECT_ID} \
-      --gcp-authentication-type wif \
-      --gcp-workload-identity-pool ${WIF_POOL_ID} \
+      --wif-config ${WIF_CONFIG_NAME} \
       ${CLUSTER_NAME}
     ```
 
@@ -182,21 +167,6 @@ Once you're done, delete the cluster to avoid ongoing charges.
 
     ```bash
     watch -n 30 "ocm list clusters | grep ${CLUSTER_NAME}"
-    ```
-
-1. Clean up Workload Identity Federation resources (optional)
-
-    ```bash
-    # Delete the Workload Identity Provider
-    gcloud iam workload-identity-pools providers delete ${WIF_PROVIDER} \
-      --location=global \
-      --workload-identity-pool=${WIF_POOL} \
-      --quiet
-
-    # Delete the Workload Identity Pool
-    gcloud iam workload-identity-pools delete ${WIF_POOL} \
-      --location=global \
-      --quiet
     ```
 
 ## Additional Resources
