@@ -31,6 +31,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [AWS Secrets Manager Secrets on ROSA HCP with External Secrets Operator and STS](/experts/rosa/eso)
 * [Configure Node Pool Scale-to-Zero on ROSA HCP](/experts/rosa/scale-to-zero)
 * [Install Portworx on Red Hat OpenShift Service on AWS with hosted control planes](/experts/rosa/rosa-hcp-portworx/)
+* [Using OpenShift Lightspeed with AWS Bedrock on ROSA](/experts/rosa/lightspeed-bedrock/)
 
 #### Classic architecture
 
