@@ -277,3 +277,21 @@ from = "/experts/rosa/rosa-gitops/"
 to = "/"
 status = 404
 force = true
+
+[[redirects]]
+from = "/experts/misc/jup/"
+to = "/"
+status = 404
+force = true
+
+[[redirects]]
+from = "/experts/misc/jup/buildnotebook/"
+to = "/"
+status = 404
+force = true
+
+[[redirects]]
+from = "/experts/misc/jup/opendatahub-gpu/"
+to = "/"
+status = 404
+force = true
