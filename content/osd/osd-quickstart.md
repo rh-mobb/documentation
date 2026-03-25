@@ -4,11 +4,10 @@ title: OSD on GCP Quickstart
 weight: 1
 authors:
   - Kevin Collins
-tags: ["OSD", "GCP", "Quickstarts"]
+tags: ["OSD", "GCP", "Google", "Quickstarts"]
 ---
-A Quickstart guide to deploying an OpenShift Dedicated cluster on Google Cloud Platform.
-
 {{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
+A Quickstart guide to deploying an OpenShift Dedicated cluster on Google Cloud Platform.
 
 ## Prerequisites
 
