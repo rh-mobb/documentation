@@ -1,0 +1,25 @@
+# Home page tag sections: order matches jump links + tutorial grid (layouts/partials/home-tag-tiles.html).
+# Optional: limit (int) caps tiles for that tag; omit to use site.Params.home_tag_section_limit.
+- slug: rosa-hcp
+  label: "Red Hat OpenShift Service on AWS (ROSA)"
+- slug: rosa-classic
+  label: "Red Hat OpenShift Service on AWS (ROSA) Classic architecture"
+- slug: aro
+  label: "Azure Red Hat OpenShift (ARO)"
+- slug: osd
+  label: "OpenShift Dedicated"
+- slug: virtualization
+  label: "Virtualization"
+- slug: rhoai
+  label: "Red Hat OpenShift AI"
+- slug: acm
+  label: "Red Hat Advanced Cluster Management for Kubernetes"
+- slug: acs
+  label: "Red Hat Advanced Cluster Security for Kubernetes"
+- slug: gitops
+  label: "OpenShift GitOps"
+- slug: idp
+  label: "Identity Providers (IdP)"
+  limit: 4
+- slug: miscellaneous
+  label: "Miscellaneous"
