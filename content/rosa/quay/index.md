@@ -75,9 +75,7 @@ echo "AWS_REGION=${AWS_REGION} AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}"
 echo "OIDC_PROVIDER=${OIDC_PROVIDER}"
 ```
 
-{{% alert state="info" %}}If you use **classic ROSA** with the `rosa` CLI, you can instead set `AWS_REGION` and `OIDC_PROVIDER` from `rosa describe cluster -c "${CLUSTER_NAME}" -o json` as in [Connect to RDS database with STS from ROSA](/experts/rosa/sts-rds/).{{% /alert %}}
-
-### 1.2 AWS resource tags — Step 6 (Option A: single JSON env var)
+### 1.2 AWS resource tags (JSON)
 
 Set **`QUAY_AWS_TAGS_JSON`** to a **JSON array** of `{"Key":"…","Value":"…"}` objects (same information you might keep in a Terraform `map`). Customize keys/values for your organization.
 
@@ -85,11 +83,8 @@ The guide **merges** **`ROSAClusterName`** to the current **`${CLUSTER_NAME}`** 
 
 ```bash
 export QUAY_AWS_TAGS_JSON='[
-  {"Key":"Terraform","Value":"true"},
   {"Key":"cost-center","Value":"CC468"},
-  {"Key":"owner","Value":"kherath@redhat.com"},
-  {"Key":"service-phase","Value":"lab"},
-  {"Key":"app-code","Value":"MOBB-001"}
+  {"Key":"owner","Value":"kherath@redhat.com"}
 ]'
 
 export QUAY_AWS_TAGS_MERGED=$(echo "${QUAY_AWS_TAGS_JSON}" | jq -c --arg c "${CLUSTER_NAME}" '
@@ -101,7 +96,7 @@ echo "QUAY_AWS_TAGS_MERGED=${QUAY_AWS_TAGS_MERGED}"
 
 {{% alert state="warning" %}}Avoid **commas** inside tag **values** when using the AWS CLI `Key=…,Value=…` shorthand below; commas break parsing. Prefer short codes or omit problematic characters.{{% /alert %}}
 
-### 1.3 AWS tag helpers — Step 7
+### 1.3 Tag helper functions
 
 Define helpers once (same shell session as **§2**–**§5**). They read **`QUAY_AWS_TAGS_MERGED`** from **§1.2**.
 

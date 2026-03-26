@@ -24,3 +24,7 @@ themes/rhds/static/js/rhds
 .wireit
 
 .history
+
+# ROSA Quay guide — keep these paths local-only (not committed)
+content/rosa/quay/.gitignore
+content/rosa/quay/PLAN.md
