@@ -4,6 +4,7 @@ title: Deploy Red Hat Quay on ROSA HCP with AWS S3, RDS, and ElastiCache (CLI)
 tags: ["AWS", "ROSA", "Quay", "HCP", "S3", "RDS", "ElastiCache", "IRSA", "STS"]
 authors:
   - Kumudu Herath
+  - Kevin Collins
 ---
 
 {{% alert state="info" %}}This guide has been validated on **OpenShift 4.20** (ROSA HCP) with the **Red Hat Quay Operator** channel **`stable-3.16`**. CSV versions and Quay `config.yaml` fields may differ on other versions; confirm the channel with `oc get packagemanifest quay-operator -n openshift-marketplace`.{{% /alert %}}
@@ -79,36 +80,33 @@ echo "OIDC_PROVIDER=${OIDC_PROVIDER}"
 
 Set **`QUAY_AWS_TAGS_JSON`** to a **JSON array** of `{"Key":"…","Value":"…"}` objects (same information you might keep in a Terraform `map`). Customize keys/values for your organization.
 
-The guide **merges** **`ROSAClusterName`** to the current **`${CLUSTER_NAME}`** (§1) so the tag stays aligned with the API-derived cluster name; any prior **`ROSAClusterName`** entry in the array is replaced.
-
 ```bash
 export QUAY_AWS_TAGS_JSON='[
   {"Key":"cost-center","Value":"CC468"},
   {"Key":"owner","Value":"kherath@redhat.com"}
 ]'
 
-export QUAY_AWS_TAGS_MERGED=$(echo "${QUAY_AWS_TAGS_JSON}" | jq -c --arg c "${CLUSTER_NAME}" '
-  (map(select(.Key != "ROSAClusterName")) + [{"Key":"ROSAClusterName","Value":$c}]) | unique_by(.Key)
-')
+# Optional: compact / validate JSON (helpers below read this variable)
+export QUAY_AWS_TAGS_JSON="$(echo "${QUAY_AWS_TAGS_JSON}" | jq -c .)"
 
-echo "QUAY_AWS_TAGS_MERGED=${QUAY_AWS_TAGS_MERGED}"
+echo "QUAY_AWS_TAGS_JSON=${QUAY_AWS_TAGS_JSON}"
 ```
 
 {{% alert state="warning" %}}Avoid **commas** inside tag **values** when using the AWS CLI `Key=…,Value=…` shorthand below; commas break parsing. Prefer short codes or omit problematic characters.{{% /alert %}}
 
 ### 1.3 Tag helper functions
 
-Define helpers once (same shell session as **§2**–**§5**). They read **`QUAY_AWS_TAGS_MERGED`** from **§1.2**.
+Define helpers once (same shell session as **§2**–**§5**). They read **`QUAY_AWS_TAGS_JSON`** from **§1.2**.
 
 ```bash
 # RDS, ElastiCache, IAM: repeated --tags Key=a,Value=b ...
 quay_aws_tags_to_cli_pairs() {
-  jq -r '.[] | "Key=\(.Key),Value=\(.Value)"' <<< "${QUAY_AWS_TAGS_MERGED}"
+  jq -r '.[] | "Key=\(.Key),Value=\(.Value)"' <<< "${QUAY_AWS_TAGS_JSON}"
 }
 
 # S3 PutBucketTagging body: {"TagSet":[...]}
 quay_aws_s3_tagging_body() {
-  echo "${QUAY_AWS_TAGS_MERGED}" | jq -c '{TagSet: .}'
+  echo "${QUAY_AWS_TAGS_JSON}" | jq -c '{TagSet: .}'
 }
 
 export QUAY_AWS_S3_TAGGING_JSON=$(quay_aws_s3_tagging_body)
@@ -416,7 +414,7 @@ echo "DB_ENDPOINT=${DB_ENDPOINT} REDIS_ENDPOINT=${REDIS_ENDPOINT}"
 
 ### 3.9 Tags applied (end of AWS provisioning)
 
-This guide tags the following resources with **`QUAY_AWS_TAGS_MERGED`** (**§1.2**) using **§1.3** helpers and the **`mapfile` / `--tags`** calls above:
+This guide tags the following resources with **`QUAY_AWS_TAGS_JSON`** (**§1.2**) using **§1.3** helpers and the **`mapfile` / `--tags`** calls above:
 
 | AWS resource | Mechanism |
 |--------------|-----------|
