@@ -514,8 +514,8 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
             credentialsSecretRef:
               name: bedrock-credentials
             models:
-              - name: ${BEDROCK_MODEL_ID}
-                url: http://bedrock-proxy.${LIGHTSPEED_NAMESPACE}.svc.cluster.local:8000/v1
+            - name: ${BEDROCK_MODEL_ID}
+              url: http://bedrock-proxy.${LIGHTSPEED_NAMESPACE}.svc.cluster.local:8000/v1
       ols:
         conversationCache:
           type: postgres
