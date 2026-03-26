@@ -5,7 +5,7 @@ weight: 1
 authors:
   - Kevin Collins
   - Deepika Ranganathan
-tags: ["ROSA", "HCP", "Quickstarts"]
+tags: ["ROSA HCP", "Quickstarts"]
 ---
 {{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 A Quickstart guide to deploying a RedHat Openshift Cluster on AWS. 
