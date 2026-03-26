@@ -6,7 +6,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 ---
 
 ## Quickstarts / Getting Started
-* [Red Hat OpenShift on AWS (ROSA)](/experts/rosa/sts/)
+* [Red Hat OpenShift on AWS (ROSA)](/experts/rosa/rosa-quickstart/)
 * [Azure Red Hat OpenShift (ARO)](/experts/quickstart-aro/)
 * [OpenShift Dedicated](/experts/osd/osd-quickstart/)
 
