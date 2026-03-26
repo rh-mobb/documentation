@@ -1,7 +1,7 @@
 ---
 date: '2026-03-17'
 title: Deploy Red Hat Quay on ROSA HCP with AWS S3, RDS, and ElastiCache (CLI)
-tags: ["AWS", "ROSA", "Quay", "HCP", "S3", "RDS", "ElastiCache", "IRSA", "STS"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kumudu Herath
   - Kevin Collins
