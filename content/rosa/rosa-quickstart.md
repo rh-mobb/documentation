@@ -48,7 +48,7 @@ Refer [ROSA prerequisite checklist](https://docs.redhat.com/en/documentation/red
 2. Authenticate the CLI with your Red Hat account so subsequent commands can reach OpenShift Cluster Manager and create AWS resources in your account on your behalf.
 
     ```bash
-    rosa login
+    rosa login --use-auth-code
     ```
     
 ### Create AWS VPC network
@@ -56,7 +56,7 @@ Refer [ROSA prerequisite checklist](https://docs.redhat.com/en/documentation/red
 1. Create a VPC for ROSA cluster. The following command automates the deployment of a ROSA compliant VPC and subnets via a managed CloudFormation template, eliminating manual resource configuration.
     
     ```bash
-    rosa create network
+    rosa create network --param Name=quickstart-stack --param AvailabilityZoneCount=1 --param VpcCidr=10.0.0.0/16
     ```
 
     {{% alert state="info" %}} Define `--param AvailabilityZoneCount=3` for multi AZ deployment.{{% /alert %}}
@@ -86,6 +86,10 @@ ROSA utilizes account-wide IAM roles to establish a centralized, reusable set of
       --hosted-cp \
       --prefix "${ACCOUNT_ROLES_PREFIX}" \
       --yes
+
+    export INSTALLER_ROLE_ARN=$(aws iam get-role --role-name "${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Installer-Role" --query 'Role.Arn' --output text)
+    export SUPPORT_ROLE_ARN=$(aws iam get-role --role-name "${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Support-Role" --query 'Role.Arn' --output text)
+    export WORKER_ROLE_ARN=$(aws iam get-role --role-name "${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Worker-Role" --query 'Role.Arn' --output text)
     ```
 
 ### Create the OIDC configuration
@@ -110,7 +114,7 @@ rosa create operator-roles --hosted-cp \
       --mode auto \
       --prefix="${OPERATOR_ROLES_PREFIX}" \
       --oidc-config-id="${OIDC_ID}" \
-      --installer-role-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ACCOUNT_ROLES_PREFIX}-HCP-ROSA-Installer-Role" \
+      --installer-role-arn $INSTALLER_ROLE_ARN \
       --yes
 ```
     
@@ -124,7 +128,10 @@ export CLUSTER_NAME=<cluster_name>
 rosa create cluster --cluster-name="${CLUSTER_NAME}" --mode=auto \
       --hosted-cp --operator-roles-prefix="${OPERATOR_ROLES_PREFIX}" \
       --oidc-config-id="${OIDC_ID}" --subnet-ids="${SUBNET_IDS}" \
-      --version 4.20.16
+      --role-arn="$INSTALLER_ROLE_ARN" \
+      --support-role-arn="$SUPPORT_ROLE_ARN" \
+      --worker-iam-role-arn="$WORKER_ROLE_ARN" \
+      --yes
 ```
 2. Check the status of your cluster.
 
@@ -139,3 +146,6 @@ When you no longer need the environment, remove the cluster to stop incurring ch
 ```bash
 rosa delete cluster --cluster="${CLUSTER_NAME}"
 ```
+## Additional Resources
+- [ROSA Documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4)
+- [Create Cluster via Terraform](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/creating-a-red-hat-openshift-service-on-aws-cluster-with-terraform)
