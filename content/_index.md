@@ -119,7 +119,7 @@ description: "Step-by-step tutorials from Red Hat experts to help you get the mo
 * [Limit Egress with Google Cloud Secure Web Proxy](/experts/osd/secure-web-proxy)
 * [Install Maximo Application Suite on Red Hat OpenShift Dedicated on GCP with automation](/experts/osd/mas/)
 * [Add an Ingress Controller to OpenShift Dedicated on GCP with a custom domain](/experts/osd/ingress-controller)
-* [OpenShift Dedicated - Cross-Cloud Workload Identity to Azure](/experts/ods/cross-cloud-wif)
+* [OpenShift Dedicated - Cross-Cloud Workload Identity to Azure](/experts/osd/cross-cloud-wif)
 
 ## Layered Products
 
