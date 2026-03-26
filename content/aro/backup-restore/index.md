@@ -5,6 +5,7 @@ tags: ["ARO", "OADP"]
 authors:
   - Nerav Doshi
 ---
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 This guide outlines how to implement OpenShift API for Data Protection (OADP) for comprehensive backup and recovery for Azure Red Hat OpenShift (ARO) clusters using a storage account.
 
