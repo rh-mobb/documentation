@@ -109,23 +109,29 @@ quay_aws_s3_tagging_body() {
   echo "${QUAY_AWS_TAGS_JSON}" | jq -c '{TagSet: .}'
 }
 
+# Fills _QUAY_AWS_TAG_PAIRS for --tags (bash 3+/zsh; avoids mapfile, which is bash 4+ only)
+load_quay_aws_tag_pairs() {
+  _QUAY_AWS_TAG_PAIRS=()
+  while IFS= read -r line; do
+    _QUAY_AWS_TAG_PAIRS+=("$line")
+  done < <(quay_aws_tags_to_cli_pairs)
+}
+
 export QUAY_AWS_S3_TAGGING_JSON=$(quay_aws_s3_tagging_body)
 ```
 
 **Usage pattern**
 
-* **EC2 `create-tags`:** load pairs into a bash array, then pass **`--tags "${ARRAY[@]}"`**:
+* **EC2 `create-tags`:** load pairs into an array, then pass **`--tags "${ARRAY[@]}"`**:
 
   ```bash
-  mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+  load_quay_aws_tag_pairs
   aws ec2 create-tags --resources "${RESOURCE_ID}" --region "${AWS_REGION}" --tags "${_QUAY_AWS_TAG_PAIRS[@]}"
   ```
 
 * **RDS / ElastiCache / IAM:** append **`--tags "${_QUAY_AWS_TAG_PAIRS[@]}"`** to **`create-db-subnet-group`**, **`create-db-instance`**, **`create-cache-subnet-group`**, **`create-cache-cluster`**, **`create-policy`**, and **`create-role`** (see **§2**, **§3**, **§5**).
 
 * **S3:** use **`${QUAY_AWS_S3_TAGGING_JSON}`** with **`aws s3api put-bucket-tagging --tagging`** (**§2**).
-
-{{% alert state="info" %}}**`mapfile`:** The examples use **`mapfile`** (bash 4+). If your shell lacks it, replace **`mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)`** with a loop that builds the **`--tags`** arguments from **`quay_aws_tags_to_cli_pairs`**.{{% /alert %}}
 
 ### 1.4 ROSA VPC and CIDR (for peering and security groups)
 
@@ -191,12 +197,12 @@ Create a dedicated **`VPC_DB`** for RDS and ElastiCache, **peer** it to the ROSA
 
 {{% alert state="info" %}}**VPC connectivity:** You **must** have private routing between the cluster and `VPC_DB`—either **VPC peering** (§3.2) or **Transit Gateway** (not detailed here). See [VPC peering](https://docs.aws.amazon.com/vpc/latest/peering/create-vpc-peering-connection.html) and [Transit Gateway](https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html).{{% /alert %}}
 
-Run **§1.2** and **§1.3** before **§3** so **`quay_aws_tags_to_cli_pairs`** is defined. Each subsection below runs **`mapfile`** to refresh **`_QUAY_AWS_TAG_PAIRS`** for that shell.
+Run **§1.2** and **§1.3** before **§3** so **`quay_aws_tags_to_cli_pairs`** and **`load_quay_aws_tag_pairs`** are defined. Each subsection below runs **`load_quay_aws_tag_pairs`** to refresh **`_QUAY_AWS_TAG_PAIRS`** for that shell.
 
 ### 3.1 VPC and subnets
 
 ```bash
-mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+load_quay_aws_tag_pairs
 
 VPC_DB=$(aws ec2 create-vpc --cidr-block 10.23.0.0/16 --region "${AWS_REGION}" | jq -r .Vpc.VpcId)
 aws ec2 modify-vpc-attribute --vpc-id "${VPC_DB}" --enable-dns-hostnames "{\"Value\":true}"
@@ -227,7 +233,7 @@ Run **after** §1.4 and §3.1 so `VPC_ROSA`, `ROSA_VPC_CIDR`, `VPC_DB`, and `VPC
 1. **Create and accept** the peering connection (same AWS account):
 
    ```bash
-   mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+   load_quay_aws_tag_pairs
 
    export VPC_PEERING_ID=$(aws ec2 create-vpc-peering-connection \
      --vpc-id "${VPC_ROSA}" \
@@ -292,7 +298,7 @@ Run **after** §1.4 and §3.1 so `VPC_ROSA`, `ROSA_VPC_CIDR`, `VPC_DB`, and `VPC
 ### 3.3 RDS subnet group
 
 ```bash
-mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+load_quay_aws_tag_pairs
 
 aws rds create-db-subnet-group \
   --db-subnet-group-name "db-group-${CLUSTER_NAME}" \
@@ -307,7 +313,7 @@ aws rds create-db-subnet-group \
 Private RDS **without** a public IP (reachable from ROSA over the peering):
 
 ```bash
-mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+load_quay_aws_tag_pairs
 
 RDS_DB="$(aws rds create-db-instance \
   --db-instance-identifier "psql-${CLUSTER_NAME}" \
@@ -349,7 +355,7 @@ For tighter security, use a **worker subnet CIDR** or **security group** referen
 ### 3.6 ElastiCache subnet group and security group
 
 ```bash
-mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+load_quay_aws_tag_pairs
 
 aws elasticache create-cache-subnet-group \
   --cache-subnet-group-name "quay-redis-${CLUSTER_NAME}" \
@@ -382,7 +388,7 @@ aws ec2 authorize-security-group-ingress \
 Single-node example (adjust node type for production). Leave `REDIS_AUTH_TOKEN` unset for the simplest path; enabling `AUTH` often requires **transit encryption** on the replication group—see [ElastiCache in-transit encryption](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption.html).
 
 ```bash
-mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+load_quay_aws_tag_pairs
 
 EARGS=(--cache-cluster-id "quay-redis-${CLUSTER_NAME}" --engine redis --cache-node-type cache.t4g.micro \
   --num-cache-nodes 1 --cache-subnet-group-name "quay-redis-${CLUSTER_NAME}" \
@@ -414,7 +420,7 @@ echo "DB_ENDPOINT=${DB_ENDPOINT} REDIS_ENDPOINT=${REDIS_ENDPOINT}"
 
 ### 3.9 Tags applied (end of AWS provisioning)
 
-This guide tags the following resources with **`QUAY_AWS_TAGS_JSON`** (**§1.2**) using **§1.3** helpers and the **`mapfile` / `--tags`** calls above:
+This guide tags the following resources with **`QUAY_AWS_TAGS_JSON`** (**§1.2**) using **§1.3** helpers and **`load_quay_aws_tag_pairs` / `--tags`** calls above:
 
 | AWS resource | Mechanism |
 |--------------|-----------|
@@ -510,7 +516,7 @@ cat <<EOF > "${SCRATCH_DIR}/quay-s3-policy.json"
 }
 EOF
 
-mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+load_quay_aws_tag_pairs
 
 S3_POLICY_ARN=$(aws iam create-policy \
   --policy-name "${CLUSTER_NAME}-quay-s3-policy" \
@@ -551,7 +557,7 @@ EOF
 
 ```bash
 QUAY_IRSA_ROLE_NAME="${CLUSTER_NAME}-quay-irsa"
-mapfile -t _QUAY_AWS_TAG_PAIRS < <(quay_aws_tags_to_cli_pairs)
+load_quay_aws_tag_pairs
 
 export QUAY_IRSA_ROLE_ARN=$(aws iam create-role \
   --role-name "${QUAY_IRSA_ROLE_NAME}" \
