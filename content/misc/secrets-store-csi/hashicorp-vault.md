@@ -2,7 +2,7 @@
 date: '2021-08-18'
 title: Installing the HashiCorp Vault Secret CSI Driver
 aliases: ['/experts/security/secrets-store-csi/hashicorp-vault']
-tags: ["ROSA", "ARO", "OSD"]
+tags: ["ROSA", "ARO", "OSD", "Miscellaneous"]
 authors:
   - Connor Wooley
 ---

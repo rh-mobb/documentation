@@ -1,0 +1,67 @@
+{{- /*
+  Optional hero for tag taxonomy/term pages. Front matter (all optional):
+    hero_blurb: "Short supporting text (Markdown OK)"
+    hero_background: openshift | none   # default: openshift (≥768px). none = solid bar only.
+    hero_primary:
+      text: "Label"
+      url: "/experts/..."   # or https://...
+    hero_secondary:
+      text: "Label"
+      url: "..."
+  When the hero renders, the page <h1> uses .Title (tag front matter "title"); main duplicate h1 is omitted (Page.Store).
+  https://ux.redhat.com/elements/call-to-action/code/
+*/ -}}
+{{- $rawBlurb := .Params.hero_blurb -}}
+{{- $hasBlurb := false -}}
+{{- if $rawBlurb -}}
+  {{- if gt (len (strings.TrimSpace (printf "%s" $rawBlurb))) 0 -}}
+    {{- $hasBlurb = true -}}
+  {{- end -}}
+{{- end -}}
+{{- $pri := .Params.hero_primary | default dict -}}
+{{- $priText := strings.TrimSpace (default "" (index $pri "text")) -}}
+{{- $priURL := strings.TrimSpace (default "" (index $pri "url")) -}}
+{{- $priOk := and (gt (len $priText) 0) (gt (len $priURL) 0) -}}
+{{- $sec := .Params.hero_secondary | default dict -}}
+{{- $secText := strings.TrimSpace (default "" (index $sec "text")) -}}
+{{- $secURL := strings.TrimSpace (default "" (index $sec "url")) -}}
+{{- $secOk := and (gt (len $secText) 0) (gt (len $secURL) 0) -}}
+{{- $hasHero := or $hasBlurb $priOk $secOk -}}
+{{- $bg := "openshift" -}}
+{{- if isset .Params "hero_background" -}}
+  {{- $bv := strings.TrimSpace (lower (printf "%s" .Params.hero_background)) -}}
+  {{- if or (eq $bv "none") (eq $bv "openshift") -}}
+    {{- $bg = $bv -}}
+  {{- end -}}
+{{- end -}}
+{{- if $hasHero -}}
+  {{- .Store.Set "tagHeroSuppressMainH1" true -}}
+<section id="hero" class="tag-page-hero tag-page-hero--bg-{{ $bg }}" aria-label="Introduction">
+  <div class="hero-container hero-container--tag">
+    <div class="hero-content">
+      <h1>{{ .Title }}</h1>
+      {{- if $hasBlurb -}}
+        <div class="tag-page-hero__blurb">{{ $rawBlurb | markdownify }}</div>
+      {{- end -}}
+    </div>
+    {{- if or $priOk $secOk -}}
+      <div class="hero-cta tag-page-hero__ctas" role="group" aria-label="Actions">
+        {{- if $priOk -}}
+          {{- $pu := $priURL -}}
+          {{- if not (strings.HasPrefix $pu "http") -}}
+            {{- $pu = relURL $pu -}}
+          {{- end -}}
+          <rh-cta variant="primary"><a href="{{ $pu }}">{{ $priText }}</a></rh-cta>
+        {{- end -}}
+        {{- if $secOk -}}
+          {{- $su := $secURL -}}
+          {{- if not (strings.HasPrefix $su "http") -}}
+            {{- $su = relURL $su -}}
+          {{- end -}}
+          <rh-cta variant="secondary"><a href="{{ $su }}">{{ $secText }}</a></rh-cta>
+        {{- end -}}
+      </div>
+    {{- end -}}
+  </div>
+</section>
+{{- end -}}
