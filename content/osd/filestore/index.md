@@ -14,7 +14,7 @@ By default, within OSD in GCP only the [GCE-PD StorageClass](https://kubernetes.
 
 Because of that, and for provide Storage with Shared Access (RWX) Access Mode to our OpenShift clusters a [GCP Filestore](https://cloud.google.com/filestore/docs) could be used.
 
-> GCP Filestore is not managed neither supported by Red Hat or Red Hat SRE team.
+> Google Filestore is not managed neither supported by Red Hat or Red Hat SRE team.
 
 ## Prerequisites
 

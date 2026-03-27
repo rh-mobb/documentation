@@ -1,7 +1,7 @@
 ---
 title: "OpenShift Dedicated on Google Cloud"
 date: 2022-09-14
-description: Guides for OpenShift Dedicated on Google Cloud
+description: Guides for OpenShift Dedicated
 archetype: chapter
 weight: 2
 skipMetadata: true
