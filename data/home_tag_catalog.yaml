@@ -4,22 +4,32 @@
   label: "Red Hat OpenShift Service on AWS (ROSA)"
 - slug: rosa-classic
   label: "Red Hat OpenShift Service on AWS (ROSA) Classic architecture"
+  limit: 6
 - slug: aro
   label: "Azure Red Hat OpenShift (ARO)"
 - slug: osd
   label: "OpenShift Dedicated"
 - slug: virtualization
-  label: "Virtualization"
+  label: "OpenShift Virtualization"
+  limit: 3
 - slug: rhoai
   label: "Red Hat OpenShift AI"
+  limit: 6
 - slug: acm
   label: "Red Hat Advanced Cluster Management for Kubernetes"
+  limit: 3
 - slug: acs
   label: "Red Hat Advanced Cluster Security for Kubernetes"
+  limit: 3
 - slug: gitops
   label: "OpenShift GitOps"
+  limit: 3
 - slug: idp
   label: "Identity Providers (IdP)"
-  limit: 4
+  limit: 3
+- slug: observability
+  label: "Observability"
+  limit: 3
 - slug: miscellaneous
   label: "Miscellaneous"
+  limit: 6

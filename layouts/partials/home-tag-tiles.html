@@ -1,43 +1,40 @@
 {{- /*
-  Home: per–tag sections. Featured paths render first in the matching section as rh-tile (same arrow CTA as peers)
-  with a title-bar-style label strip (https://ux.redhat.com/patterns/card/examples/#title-bar-card).
-  Remaining slots: newest by .Date, up to each section's limit (or home_tag_section_limit); featured count toward limit.
+  Home: per–tag sections. Featured tutorials are listed on each tag term page (content/tags/<slug>/_index.md) as
+  home_featured_paths: [ "path/to/page", ... ] — same logical paths as site.GetPage (e.g. rosa/sts, quickstart-aro).
+  Only pages that actually belong to that tag appear; order matches the array. Featured tiles use the title-bar strip
+  (https://ux.redhat.com/patterns/card/examples/#title-bar-card). Remaining slots: newest by .Date, up to limit.
   Section list + optional per-section limit: data/home_tag_catalog.yaml.
   https://ux.redhat.com/elements/tile/code/
 */ -}}
 {{- $defaultLimit := site.Params.home_tag_section_limit | default 12 -}}
-{{- $featuredPaths := site.Params.home_featured_paths | default slice -}}
 {{- $featuredHeader := site.Params.home_featured_header_label | default "Featured" -}}
 {{- $sections := site.Data.home_tag_catalog | default slice -}}
 
 <div class="home-tag-catalog">
-  {{- $claimed := slice -}}
   {{- range $sections -}}
     {{- $slug := .slug -}}
     {{- $label := .label -}}
     {{- $limit := index . "limit" | default $defaultLimit -}}
     {{- $term := site.GetPage (printf "/tags/%s" $slug) -}}
     {{- if $term -}}
+      {{- $pathList := $term.Params.home_featured_paths | default slice -}}
       {{- $featuredHere := slice -}}
-      {{- range $featuredPaths -}}
+      {{- range $pathList -}}
         {{- with site.GetPage . -}}
           {{- $p := . -}}
-          {{- if not (in $claimed $p.RelPermalink) -}}
-            {{- $hits := where $term.Pages "RelPermalink" $p.RelPermalink -}}
-            {{- if gt (len $hits) 0 -}}
-              {{- $featuredHere = $featuredHere | append $p -}}
-              {{- $claimed = $claimed | append $p.RelPermalink -}}
-            {{- end -}}
+          {{- $hits := where $term.Pages "RelPermalink" $p.RelPermalink -}}
+          {{- if gt (len $hits) 0 -}}
+            {{- $featuredHere = $featuredHere | append $p -}}
           {{- end -}}
         {{- end -}}
       {{- end -}}
 
+      {{- $sorted := sort $term.Pages ".Date" "desc" -}}
       {{- $featRels := slice -}}
       {{- range $featuredHere -}}
         {{- $featRels = $featRels | append .RelPermalink -}}
       {{- end -}}
 
-      {{- $sorted := sort $term.Pages ".Date" "desc" -}}
       {{- $rest := slice -}}
       {{- range $sorted -}}
         {{- if not (in $featRels .RelPermalink) -}}

@@ -2,7 +2,7 @@
 date: '2022-06-22'
 title: Stop default router from serving custom domain routes
 aliases: [/experts/ingress/default-router-custom-domain/README.md]
-tags: ["OSD", "ROSA"]
+tags: ["OSD", "ROSA", "Miscellaneous"]
 authors:
   - Connor Wooley
 ---

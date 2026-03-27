@@ -5,7 +5,7 @@ build:
   render: never
 date: '2022-09-14'
 title: Deploying OpenShift API for Data Protection on a ROSA cluster
-tags: ["ROSA", "OADP"]
+tags: ["ROSA", "OADP", "Miscellaneous"]
 authors:
   - Paul Czarkowski
   - Dustin Scott
