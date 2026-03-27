@@ -5,7 +5,7 @@ build:
   render: never
 date: '2022-09-23'
 title: Configure Microsoft Entra ID as an OIDC identity provider for ROSA/OSD
-tags: ["ARO", "ROSA", "OSD"]
+tags: ["ARO", "ROSA", "OSD", "IDP"]
 authors:
   - Michael McNeill
   - Andrea Bozzoni

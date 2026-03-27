@@ -1,6 +1,6 @@
 ---
 date: '2025-01-20'
-title: Add an Ingress Controller to an OSD GCP Cluster and optionally with a custom domain. 
+title: Add an Ingress Controller to an OpenShift Dedicated Cluster and optionally with a custom domain. 
 tags: ["OSD"]
 authors:
   - Kevin Collins

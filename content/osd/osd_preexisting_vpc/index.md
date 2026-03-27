@@ -1,6 +1,6 @@
 ---
 date: '2022-06-07'
-title: Creating a OSD in GCP with Existing VPCs
+title: Creating an OpenShift Dedicated Cluster with Existing VPCs
 aliases: ['/experts/gcp/osd_preexisting_vpc.md', '/experts/gcp/osd_preexisting_vpc/']
 tags: ["OSD"]
 authors:

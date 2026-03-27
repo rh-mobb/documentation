@@ -1,6 +1,7 @@
 ---
 date: '2022-03-28'
 title: Configure GitLab as an identity provider for ARO
+tags: ["IDP"]
 authors:
   - Steve Mirman
   - Paul Czarkowski

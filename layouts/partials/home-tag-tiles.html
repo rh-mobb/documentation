@@ -1,0 +1,83 @@
+{{- /*
+  Home: per–tag sections. Featured tutorials are listed on each tag term page (content/tags/<slug>/_index.md) as
+  home_featured_paths: [ "path/to/page", ... ] — same logical paths as site.GetPage (e.g. rosa/sts, quickstart-aro).
+  Only pages that actually belong to that tag appear; order matches the array. Featured tiles use the title-bar strip
+  (https://ux.redhat.com/patterns/card/examples/#title-bar-card). Remaining slots: newest by .Date, up to limit.
+  Section list + optional per-section limit: data/home_tag_catalog.yaml.
+  https://ux.redhat.com/elements/tile/code/
+*/ -}}
+{{- $defaultLimit := site.Params.home_tag_section_limit | default 12 -}}
+{{- $featuredHeader := site.Params.home_featured_header_label | default "Featured" -}}
+{{- $sections := site.Data.home_tag_catalog | default slice -}}
+
+<div class="home-tag-catalog">
+  {{- range $sections -}}
+    {{- $slug := .slug -}}
+    {{- $label := .label -}}
+    {{- $limit := index . "limit" | default $defaultLimit -}}
+    {{- $term := site.GetPage (printf "/tags/%s" $slug) -}}
+    {{- if $term -}}
+      {{- $pathList := $term.Params.home_featured_paths | default slice -}}
+      {{- $featuredHere := slice -}}
+      {{- range $pathList -}}
+        {{- with site.GetPage . -}}
+          {{- $p := . -}}
+          {{- $hits := where $term.Pages "RelPermalink" $p.RelPermalink -}}
+          {{- if gt (len $hits) 0 -}}
+            {{- $featuredHere = $featuredHere | append $p -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+
+      {{- $sorted := sort $term.Pages ".Date" "desc" -}}
+      {{- $featRels := slice -}}
+      {{- range $featuredHere -}}
+        {{- $featRels = $featRels | append .RelPermalink -}}
+      {{- end -}}
+
+      {{- $rest := slice -}}
+      {{- range $sorted -}}
+        {{- if not (in $featRels .RelPermalink) -}}
+          {{- $rest = $rest | append . -}}
+        {{- end -}}
+      {{- end -}}
+
+      {{- $cap := sub $limit (len $featuredHere) -}}
+      {{- if lt $cap 0 -}}
+        {{- $cap = 0 -}}
+      {{- end -}}
+      {{- $regular := first $cap $rest -}}
+
+      <section class="home-tag-section" aria-labelledby="home-tag-heading-{{ $slug }}">
+        <div class="home-tag-section__header">
+          <h2 id="home-tag-heading-{{ $slug }}" class="h3 home-tag-section__title">{{ $label }}</h2>
+          <a class="home-tag-section__all" href="{{ $term.RelPermalink }}">View all</a>
+        </div>
+
+        {{- if or $featuredHere $regular -}}
+          <div class="home-tag-tiles" role="list">
+            {{- range $featuredHere -}}
+              <div class="home-tag-tiles__cell home-tag-tiles__cell--featured" role="listitem">
+                <rh-tile class="home-featured-tile" compact link="public">
+                  <div slot="headline" class="home-featured-tile__head">
+                    <span class="home-featured-tile__label">{{ $featuredHeader }}</span>
+                    <a class="home-featured-tile__title" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
+                  </div>
+                </rh-tile>
+              </div>
+            {{- end -}}
+            {{- range $regular -}}
+              <div class="home-tag-tiles__cell" role="listitem">
+                <rh-tile compact link="public">
+                  <h3 class="h5" slot="headline"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h3>
+                </rh-tile>
+              </div>
+            {{- end -}}
+          </div>
+        {{- else -}}
+          <p class="home-tag-section__empty">No tutorials are tagged with this topic yet.</p>
+        {{- end -}}
+      </section>
+    {{- end -}}
+  {{- end -}}
+</div>
