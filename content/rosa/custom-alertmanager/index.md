@@ -1,6 +1,6 @@
 ---
 date: '2021-10-20'
-title: Custom Alerts in ROSA 4.11.x
+title: Custom Alerts in ROSA
 tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Paul Czarkowski

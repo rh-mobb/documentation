@@ -1,7 +1,7 @@
 ---
 date: '2024-02-06'
 title: Migrating ROSA Ingress Controllers from a CLB to NLB
-tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
+tags: ["ROSA", "ROSA Classic"]
 aliases: ['/experts/rosa/clb-to-nlb-migration']
 authors:
   - Michael McNeill

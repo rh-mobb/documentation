@@ -1,7 +1,7 @@
 ---
 date: '2023-12-18'
 title: Cross-account Access using Custom OIDC Provider
-tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
+tags: ["ROSA", "ROSA Classic"]
 authors:
   - James Land
 ---
