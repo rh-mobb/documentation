@@ -131,13 +131,25 @@ rosa create cluster --cluster-name="${CLUSTER_NAME}" --mode=auto \
       --role-arn="$INSTALLER_ROLE_ARN" \
       --support-role-arn="$SUPPORT_ROLE_ARN" \
       --worker-iam-role-arn="$WORKER_ROLE_ARN" \
-      --yes
+      --create-admin-user \
+      --cluster-admin-password <custom_password> --yes
 ```
+
+{{% alert state="info" %}} The password must
+- Be at least 14 characters (ASCII-standard) without whitespaces
+- Include uppercase letters, lowercase letters, and numbers or symbols (ASCII-standard characters only) {{% /alert %}}
+
 2. Check the status of your cluster.
 
 ```bash
 rosa describe cluster --cluster="${CLUSTER_NAME}"
 ```
+3. Once the cluster is ready, get the console URL
+
+```bash
+rosa describe cluster --cluster="${CLUSTER_NAME}" --output json | jq -r '.console.url'
+```
+4. Use the console URL and cluster-admin credentials to log into OpenShift via a web browser.
 
 ### Delete the cluster
 
