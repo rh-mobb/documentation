@@ -90,7 +90,7 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
     export CLUSTER_NAME=<your-cluster-name>
     export AWS_REGION=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .region.id)
-    export BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20241022-v2:0
+    export BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20250219-v2:0
     export OIDC_ENDPOINT=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .aws.sts.oidc_endpoint_url | sed 's|^https://||')
     export LIGHTSPEED_NAMESPACE=openshift-lightspeed
     export SERVICE_ACCOUNT_NAME=lightspeed-service-account
@@ -333,6 +333,7 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
     import boto3
     import json
     import os
+    import time
 
     app = Flask(__name__)
     bedrock = boto3.client('bedrock-runtime', region_name=os.environ.get('AWS_REGION', 'us-east-1'))
@@ -342,40 +343,87 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
         data = request.json
         model = data.get('model', os.environ.get('BEDROCK_MODEL_ID'))
         messages = data.get('messages', [])
+        stream = data.get('stream', False)
 
-        # Convert OpenAI format to Bedrock format
         prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
-
         body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": data.get('max_tokens', 4096),
             "messages": [{"role": "user", "content": prompt}]
         })
 
-        response = bedrock.invoke_model(
-            modelId=model,
-            body=body
-        )
+        if stream:
+            # Streaming response
+            def generate():
+                response = bedrock.invoke_model_with_response_stream(
+                    modelId=model,
+                    body=body
+                )
 
-        response_body = json.loads(response['body'].read())
+                request_id = response['ResponseMetadata']['RequestId']
 
-        # Convert Bedrock response to OpenAI format
-        openai_response = {
-            "id": "chatcmpl-" + response['ResponseMetadata']['RequestId'],
-            "object": "chat.completion",
-            "created": int(response['ResponseMetadata']['HTTPHeaders']['date']),
-            "model": model,
-            "choices": [{
-                "index": 0,
-                "message": {
-                    "role": "assistant",
-                    "content": response_body['content'][0]['text']
-                },
-                "finish_reason": response_body['stop_reason']
-            }]
-        }
+                for event in response['body']:
+                    chunk = json.loads(event['chunk']['bytes'].decode())
 
-        return json.dumps(openai_response)
+                    if chunk['type'] == 'content_block_delta':
+                        # Send SSE chunk
+                        sse_chunk = {
+                            "id": f"chatcmpl-{request_id}",
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": model,
+                            "choices": [{
+                                "index": 0,
+                                "delta": {
+                                    "content": chunk['delta']['text']
+                                },
+                                "finish_reason": None
+                            }]
+                        }
+                        yield f"data: {json.dumps(sse_chunk)}\n\n"
+
+                    elif chunk['type'] == 'message_stop':
+                        # Send final chunk
+                        final_chunk = {
+                            "id": f"chatcmpl-{request_id}",
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": model,
+                            "choices": [{
+                                "index": 0,
+                                "delta": {},
+                                "finish_reason": chunk.get('stop_reason', 'stop')
+                            }]
+                        }
+                        yield f"data: {json.dumps(final_chunk)}\n\n"
+                        yield "data: [DONE]\n\n"
+
+            return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
+        else:
+            # Non-streaming response (original code)
+            response = bedrock.invoke_model(
+                modelId=model,
+                body=body
+            )
+
+            response_body = json.loads(response['body'].read())
+
+            openai_response = {
+                "id": "chatcmpl-" + response['ResponseMetadata']['RequestId'],
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": model,
+                "choices": [{
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": response_body['content'][0]['text']
+                    },
+                    "finish_reason": response_body['stop_reason']
+                }]
+            }
+            return json.dumps(openai_response)
 
     if __name__ == '__main__':
         app.run(host='0.0.0.0', port=8000)
