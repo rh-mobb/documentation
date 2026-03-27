@@ -1,7 +1,7 @@
 ---
 date: '2025-06-09'
 title: Building LLM Cost and Performance Dashboard with Red Hat OpenShift AI on ROSA and Amazon Bedrock
-tags: ["ROSA", "RHOAI"]
+tags: ["RHOAI"]
 authors:
   - Diana Sari
   - Deepika Ranganathan

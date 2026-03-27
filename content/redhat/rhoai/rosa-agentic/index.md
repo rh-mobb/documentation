@@ -1,7 +1,7 @@
 ---
 date: '2025-06-05'
 title: Creating Agentic AI to deploy ARO cluster using Terraform with Red Hat OpenShift AI on ROSA and Amazon Bedrock
-tags: ["ARO", "ROSA", "RHOAI", "Terraform"]
+tags: ["RHOAI", "Terraform"]
 authors:
   - Diana Sari
 ---

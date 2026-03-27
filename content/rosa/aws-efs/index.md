@@ -1,7 +1,7 @@
 ---
 date: '2023-04-04'
 title: Enabling the AWS EFS CSI Driver Operator on ROSA
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 aliases:
 - /experts/rosa/aws-efs/aws-efs-csi-operator-on-rosa/
 - /experts/rosa/aws-efs/aws-efs-operator-on-rosa/

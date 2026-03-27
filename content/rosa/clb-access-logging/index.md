@@ -1,7 +1,7 @@
 ---
 date: '2024-02-01'
 title: Configuring AWS CLB Access Logging
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 aliases: ['/experts/rosa/clb-access-logging']
 authors:
   - Michael McNeill

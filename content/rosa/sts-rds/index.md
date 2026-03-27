@@ -1,7 +1,7 @@
 ---
 date: '2023-07-24'
 title: Connect to RDS database with STS from ROSA
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 aliases: ["/docs/rosa/using-sts-with-aws-services"]
 authors:
   - Florian Jacquin

@@ -1,7 +1,7 @@
 ---
 date: '2024-05-20'
 title: Deploying and Managing Virtual Machines on ROSA with OpenShift GitOps
-tags: ["ROSA", "Virtualization", "GitOps"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP", "Virtualization", "GitOps"]
 authors:
   - Kevin Collins, Kumudu Herath, John Quigley
 ---

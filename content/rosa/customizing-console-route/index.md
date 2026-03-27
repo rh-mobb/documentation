@@ -5,7 +5,7 @@ build:
   render: never
 date: '2023-11-30'
 title: Customizing the console URL in ROSA
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Charlotte Fung
   - Thatcher Hubbard 

@@ -1,7 +1,7 @@
 ---
 date: '2021-10-04'
 title: Extending ROSA STS to include authentication with AWS Services
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Connor Wooley
 ---

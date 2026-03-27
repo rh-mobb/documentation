@@ -1,7 +1,7 @@
 ---
 date: '2022-09-30'
 title: Security Reference Architecture for ROSA
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Tyler Stacey
   - Connor Wooley

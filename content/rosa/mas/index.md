@@ -1,7 +1,7 @@
 ---
 date: '2024-08-26'
 title: Maximo Application Suite on ROSA ( Red Hat OpenShift on AWS )
-tags: ["ROSA", "Maximo"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP", "Maximo"]
 authors:
   - Kevin Collins
 ---
