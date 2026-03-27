@@ -1,6 +1,7 @@
 ---
 date: '2022-02-16'
 title: Configure GitLab as an identity provider for ROSA/OSD
+tags: ["IDP"]
 authors:
   - Steve Mirman
   - Paul Czarkowski

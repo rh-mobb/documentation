@@ -1,7 +1,7 @@
 ---
 date: '2026-02-28'
 title: Configuring Cross-Tenant Azure DevOps Access from ArgoCD on ARO
-tags: ["ARO", "GitOps"]
+tags: ["ARO", "GitOps", "Miscellaneous"]
 authors:
   - Charlotte Fung
   - Deepika Ranganathan

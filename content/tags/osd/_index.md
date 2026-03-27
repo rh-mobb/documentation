@@ -1,10 +1,19 @@
 ---
-title: "OpenShift Dedicated on Google Cloud"
+title: "Red Hat OpenShift Dedicated"
 date: 2022-09-14
 description: Guides for OpenShift Dedicated on Google Cloud
 archetype: chapter
 weight: 2
 skipMetadata: true
+# home_featured_paths:
+#   - osd/osd-quickstart
+hero_blurb: |
+  A fully managed turnkey application platform that allows organizations to increase operational efficiency, refocus on innovation, and quickly build, deploy, and scale applications while taking advantage of native Google Cloud services.
+hero_primary:
+  text: "Quickstart guide"
+  url: "/experts/osd/osd-quickstart/"
+hero_secondary:
+  text: "Get started"
+  url: "https://console.cloud.google.com/marketplace/product/redhat-marketplace/red-hat-openshift-dedicated"
+hero_background: openshift
 ---
-
-###### Red Hat OpenShift Dedicated is a managed Red Hat OpenShift offering, available on Google Cloud. It provides an application platform to reduce operational complexity so you can focus on building and scaling applications that add more value to your business. OpenShift Dedicated lets you take advantage of native Google Cloud services, supports a flexible billing model, and can be purchased with your existing cloud committed spend discounts.
