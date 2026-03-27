@@ -4,6 +4,7 @@ title: Using OpenShift Lightspeed with AWS Bedrock on ROSA
 tags: ["ROSA", "ROSA HCP", "Lightspeed"]
 authors:
   - Kevin Collins
+  - Kumudu Herath
 ---
 
 {{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
