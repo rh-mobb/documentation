@@ -122,10 +122,20 @@
                 resultItems.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'result-item';
-                    div.innerHTML = `
-                        <label>${item.label}</label>
-                        <div class="value ${item.className || ''}">${item.value}</div>
-                    `;
+
+                    const labelEl = document.createElement('label');
+                    labelEl.textContent = item.label;
+
+                    const valueEl = document.createElement('div');
+                    valueEl.classList.add('value');
+                    if (item.className) {
+                        valueEl.classList.add(item.className);
+                    }
+                    valueEl.textContent = item.value;
+
+                    div.appendChild(labelEl);
+                    div.appendChild(valueEl);
+
                     resultsGrid.appendChild(div);
                 });
 
