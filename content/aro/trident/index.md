@@ -287,8 +287,6 @@ These errors usually indicate one or more of the following:
 * the service principal role assignment scope is too narrow
 * the service principal cannot read the VNet/subnet resources required for backend discovery
 
-Also note that if a StorageClass uses a selector such as:
-
 Useful validation commands:
 
 ```bash
