@@ -3,9 +3,9 @@ date: '2025-04-17'
 title: Configuring Cluster Observability Operator (COO) in ARO and Enabling remote writing of metrics to Azure Monitor Workspace
 tags: ["ARO", "Observability"]
 authors:
-   - Charlotte Fung 
+   - Charlotte Fung
+validated_version: "4.20"   
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 The Cluster Observability Operator (COO) is an optional OpenShift Container Platform Operator that enables administrators to create standalone monitoring stacks that are independently configurable for use by different services and users.
 
