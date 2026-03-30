@@ -76,9 +76,7 @@ ROSA utilizes account-wide IAM roles to establish a centralized, reusable set of
 1. Create the ROSA account roles:
 
     {{% alert state="info" %}}By default, account roles use the `ManagedOpenShift` prefix. If you prefer to change this, run the following command, replacing `<account-roles-prefix>` with your desired prefix: 
-    ```bash
-    export ACCOUNT_ROLES_PREFIX=<account-roles-prefix>
-    ```
+    `export ACCOUNT_ROLES_PREFIX=<account-roles-prefix>`
     {{% /alert %}}
 
     ```bash
