@@ -51,6 +51,7 @@ top of each article that you publish.
 * Title - This will be displayed page title
 * Tags - The tags associated with your page; they display alphabetically atop the page regardless of the order defined in the front matter
 * Authors - Anyone who has edited this page
+* `validated_version` (optional) - OpenShift version string (for example `4.20`) that you have validated the guide against. When set, the site-wide expert disclaimer at the top of the page also states that the guide was validated on that OpenShift version and that operator CRD names, API versions, and console paths may differ on other versions. Do **not** duplicate that message with a separate info `alert` shortcode in the body; use this field instead. Omit the field if the guide has not been validated against a specific version.
 
 Example:
 
@@ -61,6 +62,19 @@ title: Adding infrastructure nodes to an ARO cluster
 tags: ["ARO"]
 authors:
   - Paul Czarkowski
+---
+```
+
+Example with a validated OpenShift version:
+
+```yaml
+---
+date: '2026-03-26'
+title: Red Hat OpenShift Service on AWS (ROSA) Quickstart
+tags: ["ROSA HCP", "Quickstarts"]
+authors:
+  - Example Author
+validated_version: "4.20"
 ---
 ```
 

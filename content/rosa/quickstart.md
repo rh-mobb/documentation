@@ -7,8 +7,8 @@ authors:
   - Deepika Ranganathan
   - Michael McNeill
 tags: ["ROSA HCP", "Quickstarts"]
+validated_version: "4.20"
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 Follow this guide to quickly create a Red Hat OpenShift Service on AWS (ROSA) cluster using the ROSA command-line interface (CLI), grant user access, deploy your first application, and learn how to revoke user access and delete your cluster.
 

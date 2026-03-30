@@ -4,8 +4,8 @@ title: Adding infrastructure nodes to an ARO cluster
 tags: ["ARO"]
 authors:
   - Paul Czarkowski
+validated_version: "4.20"
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 This document shows how to set up infrastructure nodes in an ARO cluster and move infrastructure related workloads to them. This can help with larger clusters that have resource contention between user workloads and infrastructure workloads such as Prometheus.
 
