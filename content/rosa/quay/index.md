@@ -99,17 +99,14 @@ echo "QUAY_AWS_TAGS_JSON=${QUAY_AWS_TAGS_JSON}"
 Define helpers once (same shell session as **§2**–**§5**). They read **`QUAY_AWS_TAGS_JSON`** from **§1.2**.
 
 ```bash
-# RDS, ElastiCache, IAM: repeated --tags Key=a,Value=b ...
 quay_aws_tags_to_cli_pairs() {
   jq -r '.[] | "Key=\(.Key),Value=\(.Value)"' <<< "${QUAY_AWS_TAGS_JSON}"
 }
 
-# S3 PutBucketTagging body: {"TagSet":[...]}
 quay_aws_s3_tagging_body() {
   echo "${QUAY_AWS_TAGS_JSON}" | jq -c '{TagSet: .}'
 }
 
-# Fills _QUAY_AWS_TAG_PAIRS for --tags (bash 3+/zsh; avoids mapfile, which is bash 4+ only)
 load_quay_aws_tag_pairs() {
   _QUAY_AWS_TAG_PAIRS=()
   while IFS= read -r line; do
@@ -1011,7 +1008,11 @@ If subnet delete fails, dependencies remain (ENIs, load balancers, etc.); resolv
 * **Database connection errors:** Verify **VPC peering** (§3.2) routes and security group allows **5432** from **`${ROSA_VPC_CIDR}`** (§3.5), `DB_URI` credentials, and `sslmode` (often `require` for RDS).
 * **`example-registry-quay-app-upgrade-*` pod `CrashLoopBackOff` / `psycopg2.OperationalError`:** The **upgrade** (migration) `Job` uses the same `configBundleSecret` as the registry. Two common RDS issues show up together in logs:
   * **`FATAL: no pg_hba.conf entry for host "…", user "quay", database "quay", no encryption`** — The client connected **without TLS**. Amazon RDS for PostgreSQL expects SSL; keep **`DB_CONNECTION_ARGS`** with **`sslmode: require`** (see §7). If that block is missing or the secret was created before you added it, update `config.yaml`, re-create the config bundle secret, and let the operator reconcile (or delete the failed upgrade `Job` so it is recreated). With `force_ssl` enabled on the instance, non-SSL attempts are rejected and `pg_hba` can report **no encryption**.
-  * **`FATAL: password authentication failed for user "quay"`** — The password in **`DB_URI`** does not match the **`quay`** role in PostgreSQL (typo when pasting in §4, different `QUAY_DB_PASSWORD` than used in `CREATE USER`, or shell/`heredoc` altered the password). Reset with `ALTER USER quay WITH PASSWORD '...';` in `psql`, then set the same value in `DB_URI`, re-apply the secret, and fix the `Job`.
+  * **`FATAL: password authentication failed for user "quay"`** — The password in **`DB_URI`** does not match the **`quay`** role in PostgreSQL (typo when pasting in §4, different `QUAY_DB_PASSWORD` than used in `CREATE USER`, or shell/`heredoc` altered the password). **Align the database role with `DB_URI`:** connect to RDS with **`psql`** as the master user (same host/port/SSL as §4), then set the role password to **exactly** the string used in **`DB_URI`** (between `:` and `@` in `postgresql://quay:PASSWORD@…`—URL-decode if you encoded special characters):
+    ```sql
+    ALTER USER quay WITH PASSWORD 'same-password-as-in-DB_URI';
+    ```
+    Use your real password in place of the placeholder; if the password contains a single quote, double it (`''` inside the string). Update **`config.yaml`** / **`configBundleSecret`** if you change **`DB_URI`** instead, then let the operator reconcile or delete the failed **`quay-app-upgrade`** `Job` so it runs again.
   * Ensure **private** connectivity from the ROSA VPC to **`VPC_DB`** (§3.2) and that the RDS security group allows **`${ROSA_VPC_CIDR}`** on **5432** (§3.5).
 * **`CREATE DATABASE quay OWNER quay` → `ERROR: must be able to SET ROLE "quay"`:** Use **`CREATE DATABASE quay;`** then **`ALTER DATABASE quay OWNER TO quay;`** as in §4 (RDS master user is not always treated like a full superuser for the single-step `OWNER` clause).
 * **Redis / `BUILDLOGS_REDIS` … `context deadline exceeded`:** The client **timed out** connecting to Redis (wrong host/port, missing **§3.2** routes, or SG). Confirm **VPC peering** (or TGW) and **`${ROSA_VPC_CIDR}`** on **TCP 6379** (§3.6). Confirm **`host`** in `BUILDLOGS_REDIS` / `USER_EVENTS_REDIS` is the **primary endpoint** from `aws elasticache describe-cache-clusters`. If you enabled **Redis AUTH**, set **`password`** in both Redis blocks. If you enabled **in-transit encryption**, set **`ssl: true`** in config and follow [ElastiCache in-transit encryption](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption.html) (port is still typically **6379** for the cluster endpoint).
