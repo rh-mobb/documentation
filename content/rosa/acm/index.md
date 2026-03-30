@@ -6,9 +6,8 @@ authors:
   - Kevin Collins
   - Michael McNeill
   - Kumudu Herath
+validated_version: "4.20"
 ---
-
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 In the dynamic world of cloud-native development, efficiently managing Kubernetes clusters across diverse environments is paramount. This blog post dives into a powerful combination: deploying Red Hat OpenShift Service on AWS (ROSA) Hosted Control Planes (HCP) clusters, orchestrated and governed by Red Hat Advanced Cluster Management for Kubernetes (RHACM). This approach offers a compelling suite of benefits, including significant cost reductions by offloading control plane management to Red Hat, accelerated cluster provisioning times, and enhanced operational efficiency through a centralized management plane. By leveraging ROSA HCP with RHACM, organizations can achieve a more streamlined, secure, and scalable Kubernetes footprint on AWS, allowing teams to focus more on innovation and less on infrastructure overhead.
 
