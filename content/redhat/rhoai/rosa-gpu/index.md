@@ -5,6 +5,7 @@ tags: ["ROSA", "ROSA HCP", "RHOAI"]
 authors:
   - Diana Sari
   - Paul Czarkowski
+validated_version: "4.21"   
 ---
 
 ## 1. Introduction
@@ -156,90 +157,97 @@ In this tutorial, we'll use the [Stable Diffusion 2.1](https://huggingface.co/st
 
 And now that we have the environment ready, let's go to the RHOAI dashboard. From the navigator pane on the left hand side, select **Applications**, and click **Enabled**, which will then lead you to launch a Jupyter notebook. FYI, you could also take a look at the third section of our other guide [here](https://cloud.redhat.com/experts/misc/rhoai-s3/) for more details on the console. 
 
-Click **Launch application** and then select **TensorFlow 2024.1** notebook. You can leave the container size to **Small**. And then select **NVIDIA GPU** as the accelerator from the dropdown option. 
+Click **Launch application** and then select **TensorFlow 2025.2** notebook. You can leave the container size to **Small**. And then select **NVIDIA GPU** as the accelerator from the dropdown option. 
 
 ![NVIDIA-GPU](images/nvidiagpu-accl.png)
 <br />
 
-Click the **Start** server button and wait until the notebook is ready, and click **Open in new tab**. And once you're routed to the Jupyter notebook, click **Python 3.9** notebook button on top, and run the following script in a single cell.
+Click the **Start** server button and wait until the notebook is ready, and click **Open in new tab**. And once you're routed to the Jupyter notebook, click **Python 3.12** notebook button on top, and run the following script in a single cell.
 
 ```python
-# install the necessary dependencies and libraries
-!pip install --upgrade diffusers transformers torch accelerate matplotlib datasets torchvision
+# Cell 1: Install dependencies with CUDA 12.1-compatible PyTorch
+!pip install --upgrade diffusers transformers accelerate matplotlib datasets torchvision
+!pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121 --upgrade
 
+# Cell 2: Authenticate with Hugging Face (required for gated models)
+from huggingface_hub import login
+login(token="hf_YOUR_TOKEN_HERE")  # Replace with your token from https://huggingface.co/settings/tokens
+
+# Cell 3: Main script
 import torch
 from diffusers import StableDiffusionPipeline
-from datasets import load_dataset
-import random
-from torchvision import transforms
-from PIL import Image
 import matplotlib.pyplot as plt
 import gc
 
-# clean up memory and reset CUDA cache
 def cleanup_memory():
     gc.collect()
-    torch.cuda.empty_cache()
     if torch.cuda.is_available():
+        torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
 
-# load the Stable Diffusion model
 def load_model(model_id):
-    pipeline = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
-    pipeline = pipeline.to("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.float16 if device == "cuda" else torch.float32
+    print(f"Using device: {device}")
+
+    pipeline = StableDiffusionPipeline.from_pretrained(
+        model_id,
+        torch_dtype=dtype,
+        use_safetensors=True,
+    )
+    pipeline = pipeline.to(device)
+    pipeline.enable_attention_slicing()
     return pipeline
 
-# generate the images
 def generate_images(pipeline, prompts, num_images_per_prompt=1, num_inference_steps=50, guidance_scale=7.5):
     images = []
     for prompt in prompts:
+        print(f"Generating: {prompt}")
         batch = pipeline(
-            prompt, 
-            num_images_per_prompt=num_images_per_prompt, 
+            prompt,
+            num_images_per_prompt=num_images_per_prompt,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
-            output_type="pil"
+            output_type="pil",
         )
         images.extend(batch.images)
         cleanup_memory()
     return images
 
-# display the images
 def display_images(images, prompts):
     rows = len(images)
-    fig, axs = plt.subplots(rows, 1, figsize=(15, 5*rows))
-    
+    fig, axs = plt.subplots(rows, 1, figsize=(15, 5 * rows))
+
     if rows == 1:
-        axs = [axs]  
-    
+        axs = [axs]
+
     for img, ax, prompt in zip(images, axs, prompts):
         ax.imshow(img)
         ax.set_title(prompt, fontsize=10)
-        ax.axis('off')
-    
+        ax.axis("off")
+
     plt.tight_layout()
     plt.show()
 
-# execute the script
-if __name__ == "__main__":
-    try:        
-        pipeline = load_model('stabilityai/stable-diffusion-2-1')
-                
-        prompts = [
-            "A cute cat",
-            "A cute dog",
-            "A cute cat and a cute dog sit next to each other"
-        ]
-        num_images_per_prompt = 1
-        
-        generated_images = generate_images(pipeline, prompts, num_images_per_prompt, num_inference_steps=50, guidance_scale=7.5)
-        display_images(generated_images, prompts)
-        
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-    finally:
-        cleanup_memory()
-```
+try:
+    pipeline = load_model("stabilityai/stable-diffusion-2-1")
+
+    prompts = [
+        "A cute cat",
+        "A cute dog",
+        "A cute cat and a cute dog sit next to each other",
+    ]
+
+    generated_images = generate_images(
+        pipeline, prompts, num_images_per_prompt=1, num_inference_steps=50, guidance_scale=7.5
+    )
+    display_images(generated_images, prompts)
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    cleanup_memory()
+ ```   
 
 Here are some pictures that I've gotten from my run (note that the pictures may vary every run):
 
