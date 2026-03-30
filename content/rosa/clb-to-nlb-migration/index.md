@@ -1,7 +1,7 @@
 ---
 date: '2024-02-06'
 title: Migrating ROSA Ingress Controllers from a CLB to NLB
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 aliases: ['/experts/rosa/clb-to-nlb-migration']
 authors:
   - Michael McNeill

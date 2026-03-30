@@ -1,7 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-06-02'
 title: Using AWS Controllers for Kubernetes (ACK) on ROSA
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Paul Czarkowski
   - Connor Wooley

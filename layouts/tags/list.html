@@ -1,0 +1,14 @@
+{{ define "hero" }}
+  {{- partial "tags/hero.html" . -}}
+{{ end }}
+
+{{ define "main" }}
+  <section class="tag-page-list">
+    {{- partial "breadcrumbs.html" . }}
+    {{- if not (.Store.Get "tagHeroSuppressMainH1") -}}
+      <h1 class="h2" data-pagefind-weight="10">{{ .Title }}</h1>
+    {{- end -}}
+    <div data-pagefind-weight="0.65">{{ .Content }}</div>
+    {{- partial "tags/tile-grid.html" . -}}
+  </section>
+{{ end }}

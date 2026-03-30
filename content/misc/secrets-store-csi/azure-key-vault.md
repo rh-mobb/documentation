@@ -2,7 +2,7 @@
 date: '2021-08-16'
 title: Azure Key Vault CSI on Azure Red Hat OpenShift
 aliases: ['/experts/security/secrets-store-csi/azure-key-vault']
-tags: ["Azure", "ARO"]
+tags: ["ARO", "Miscellaneous"]
 authors:
   - Paul Czarkowski
   - Diana Sari

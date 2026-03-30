@@ -1,7 +1,7 @@
 ---
 date: '2021-10-04'
 title: Integrating with AWS resources using Pod Identity
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA"]
 authors:
   - Connor Wooley
 ---

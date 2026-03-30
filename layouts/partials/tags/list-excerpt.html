@@ -1,0 +1,16 @@
+{{- /*
+  Teaser for tag tile listings (plain text). RHDS Tile body slot: ~160 characters recommended.
+  https://ux.redhat.com/elements/tile/guidelines/#writing-content
+*/ -}}
+{{- $limit := 160 -}}
+{{- if .Description -}}
+  {{- $plain := .Description | plainify | strings.TrimSpace -}}
+  {{- if $plain -}}
+<p>{{ $plain | truncate $limit "…" }}</p>
+  {{- end -}}
+{{- else -}}
+  {{- $plain := strings.TrimSpace (.Summary | plainify) -}}
+  {{- if $plain -}}
+<p>{{ $plain | truncate $limit "…" }}</p>
+  {{- end -}}
+{{- end -}}

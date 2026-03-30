@@ -1,7 +1,7 @@
 ---
 date: '2025-04-03'
 title: ROSA - Federating Metrics to AWS Prometheus
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Kevin Collins
   - Paul Czarkowski

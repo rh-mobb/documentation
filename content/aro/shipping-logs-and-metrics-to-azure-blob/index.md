@@ -4,7 +4,7 @@ title: Shipping logs and metrics to Azure Blob storage
 authors:
   - Paul Czarkowski
   - Connor Wooley
-tags: ["ARO", "Azure"]
+tags: ["ARO", "Miscellaneous"]
 ---
 
 

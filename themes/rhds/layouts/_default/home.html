@@ -3,5 +3,11 @@
 {{ end }}
 
 {{ define "main" }}
-  {{ .Content }}
+  <div class="home-layout">
+    <div class="home-layout__main">
+      <div class="home-intro" data-pagefind-weight="0.65">{{ .Content }}</div>
+      {{- partial "home-tag-tiles.html" . -}}
+    </div>
+    {{- partial "home-jump-links.html" . -}}
+  </div>
 {{ end }}

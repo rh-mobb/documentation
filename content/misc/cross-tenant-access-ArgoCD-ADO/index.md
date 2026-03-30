@@ -1,10 +1,11 @@
 ---
 date: '2026-02-28'
 title: Configuring Cross-Tenant Azure DevOps Access from ArgoCD on ARO
-tags: ["ARO", "Azure", "Azure DevOps", "Managed Identities", "Workload Identity Federation", "GitOps", "ArgoCD"]
+tags: ["ARO", "GitOps", "Miscellaneous"]
 authors:
   - Charlotte Fung
   - Deepika Ranganathan
+validated_version: "4.20"
 ---
 
 In some large enterprises, it might be a requirement to have your **Azure DevOps (ADO)** tools in a centralized Azure Tenant different from the tenant where your cluster resides. It then becomes imperative to configure secure cross-tenant access between your **Azure Red Hat OpenShift (ARO)** cluster and your ADO. 

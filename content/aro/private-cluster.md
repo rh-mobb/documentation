@@ -1,7 +1,7 @@
 ---
 date: '2021-06-29'
 title: Private ARO Cluster with access via JumpHost
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 ---
 
 A Quickstart guide to deploying a Private Azure Red Hat OpenShift cluster.

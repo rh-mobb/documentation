@@ -1,6 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-09-19'
 title: Configure ROSA to use Microsoft Entra ID Group Claims
+tags: ["IDP"]
 authors:
   - Michael McNeill
   - Paul Czarkowski

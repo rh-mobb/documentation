@@ -1,7 +1,7 @@
 ---
 date: '2024-04-20'
 title: Install Portworx on Red Hat OpenShift Service on AWS (ROSA) with hosted control planes (HCP)
-tags: ["ROSA-HCP", "Portworx", "ROSA"]
+tags: ["ROSA HCP", "ROSA"]
 authors:
   - Nerav Doshi
 ---

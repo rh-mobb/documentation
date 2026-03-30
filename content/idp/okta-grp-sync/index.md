@@ -1,6 +1,7 @@
 ---
 date: '2022-07-25'
 title: Using Group Sync Operator with Okta and ROSA/OSD
+tags: ["IDP"]
 ---
 
 **Thatcher Hubbard**

@@ -1,7 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2023-11-30'
 title: Customizing the console URL in ROSA
-tags: ["ROSA", "AWS"]
+tags: ["ROSA"]
 authors:
   - Charlotte Fung
   - Thatcher Hubbard 

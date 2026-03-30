@@ -1,7 +1,7 @@
 ---
 date: '2025-04-21'
 title: Adding a Private Ingress Controller and a Public ALB to a ROSA Cluster 
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
   - Paul Czarkowski

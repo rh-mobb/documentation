@@ -1,7 +1,7 @@
 ---
 date: '2023-07-26'
 title: Deploying OpenShift API for Data Protection on an ARO cluster
-tags: ["ARO", "OADP", "Velero", "Backup", "Restore", "Storage"]
+tags: ["ARO", "OADP"]
 authors:
   - Dustin Scott
 ---

@@ -1,28 +1,28 @@
 [build]
   publish = "public"
-  command = "hugo --gc --minify && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
 
   [build.environment]
-    HUGO_VERSION = "0.118.2"
+    HUGO_VERSION = "0.157.0"
 
 [context.production.environment]
   HUGO_ENV           = "production"
   HUGO_ENABLEGITINFO = "true"
 
 [context.split1]
-  command = "hugo --gc --minify --enableGitInfo && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify --enableGitInfo && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
 
   [context.split1.environment]
     HUGO_ENV = "production"
 
 [context.deploy-preview]
-  command = "hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify --buildFuture -b $DEPLOY_PRIME_URL/experts/ && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
   
   [context.deploy-preview.environment]
     HUGO_ENV           = "staging"
 
 [context.branch-deploy]
-  command = "hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && cp public/experts/_redirects public/_redirects"
+  command = "npm ci && hugo --gc --minify -b $DEPLOY_PRIME_URL/experts/ && npx pagefind --site public/experts && cp public/experts/_redirects public/_redirects"
 
 [context.next.environment]
   HUGO_ENABLEGITINFO = "true"
@@ -64,6 +64,12 @@ status = 301
 [[redirects]]
 from = "/experts/tags/private-link/"
 to = "/experts/tags/privatelink/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/tags/openshift-virtualization/"
+to = "/experts/tags/virtualization/"
 status = 301
 force = true
 
@@ -154,8 +160,156 @@ to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/
 status = 301
 force = true
 
+# Content path migrations, ACS guide location, and section chapter roots → tag hubs
+[[redirects]]
+from = "/experts/redhat/rhacs"
+to = "/experts/redhat/acs/deployment/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/rhacs/"
+to = "/experts/redhat/acs/deployment/"
+status = 301
+force = true
+
+# Legacy /experts/rhoai URLs → content under redhat/rhoai
+[[redirects]]
+from = "/experts/rhoai"
+to = "/experts/redhat/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rhoai/"
+to = "/experts/redhat/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rhoai/*"
+to = "/experts/redhat/rhoai/:splat"
+status = 301
+force = true
+
+# Former content/gcp → content/osd
+[[redirects]]
+from = "/experts/gcp"
+to = "/experts/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/gcp/"
+to = "/experts/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/gcp/*"
+to = "/experts/osd/:splat"
+status = 301
+force = true
+
+# Section chapter roots (no rendered _index) → tag landing pages
+[[redirects]]
+from = "/experts/rosa"
+to = "/experts/tags/rosa/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/rosa/"
+to = "/experts/tags/rosa/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/aro"
+to = "/experts/tags/aro/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/aro/"
+to = "/experts/tags/aro/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/osd"
+to = "/experts/tags/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/osd/"
+to = "/experts/tags/osd/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/rhoai"
+to = "/experts/tags/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/rhoai/"
+to = "/experts/tags/rhoai/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/acm"
+to = "/experts/tags/acm/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/redhat/acm/"
+to = "/experts/tags/acm/"
+status = 301
+force = true
+
 [[redirects]]
 from = "/experts/rosa/rosa-gitops/"
 to = "/"
 status = 404
+force = true
+
+[[redirects]]
+from = "/experts/misc/jup/"
+to = "/"
+status = 404
+force = true
+
+[[redirects]]
+from = "/experts/misc/jup/buildnotebook/"
+to = "/"
+status = 404
+force = true
+
+[[redirects]]
+from = "/experts/misc/jup/opendatahub-gpu/"
+to = "/"
+status = 404
+force = true
+
+[[redirects]]
+from = "/experts/rosa/rosa-quickstart/"
+to = "/experts/rosa/quickstart/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/osd/osd-quickstart/"
+to = "/experts/osd/quickstart/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/quickstart-aro/"
+to = "/experts/aro/quickstart/"
+status = 301
 force = true

@@ -1,7 +1,7 @@
 ---
 date: '2025-10-15'
 title: Migrating Azure VMs to OpenShift Virtualization on ARO
-tags: ["ARO", "VIRT"]
+tags: ["ARO", "Virtualization"]
 authors:
   - Kevin Collins
   - Kumudu Herath

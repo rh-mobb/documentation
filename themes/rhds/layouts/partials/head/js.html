@@ -3,8 +3,120 @@
   import '@rhds/elements/rh-footer/rh-footer.js';
   import '@rhds/elements/rh-cta/rh-cta.js';
   import '@rhds/elements/rh-alert/rh-alert.js';
+  import '@rhds/elements/rh-button/rh-button.js';
+  import '@rhds/elements/rh-blockquote/rh-blockquote.js';
   import '@rhds/elements/rh-tag/rh-tag.js';
   import '@rhds/elements/rh-code-block/rh-code-block.js';
+  import '@rhds/elements/rh-back-to-top/rh-back-to-top.js';
+  import '@rhds/elements/rh-tile/rh-tile.js';
+  import '@rhds/elements/rh-jump-links/rh-jump-links.js';
+</script>
+
+<script src="{{ "pagefind/pagefind-ui.js" | relURL }}" defer></script>
+<script defer>
+  document.addEventListener('DOMContentLoaded', function () {
+    var margin = 12;
+
+    function updateDrawerMaxHeight() {
+      var header = document.querySelector('header');
+      if (!header) {
+        return;
+      }
+      var bottom = header.getBoundingClientRect().bottom;
+      var maxPx = Math.max(160, window.innerHeight - bottom - margin);
+      document.documentElement.style.setProperty('--pagefind-drawer-max-height', maxPx + 'px');
+    }
+
+    function enhanceSiteSearch() {
+      var root = document.getElementById('site-search');
+      if (!root) {
+        return;
+      }
+      var form = root.querySelector('.pagefind-ui__form');
+      var input = root.querySelector('.pagefind-ui__search-input');
+      if (!form || !input || form.getAttribute('data-site-search-enhanced') === '1') {
+        return;
+      }
+      form.setAttribute('data-site-search-enhanced', '1');
+
+      var submit = document.createElement('button');
+      submit.type = 'button';
+      submit.className = 'site-header__search-submit';
+      form.appendChild(submit);
+
+      function hasQuery() {
+        return Boolean(input.value && input.value.trim());
+      }
+
+      function syncButton() {
+        if (hasQuery()) {
+          submit.textContent = 'Clear';
+          submit.classList.add('site-header__search-submit--clear');
+          submit.setAttribute('aria-label', 'Clear search');
+        } else {
+          submit.textContent = 'Search';
+          submit.classList.remove('site-header__search-submit--clear');
+          submit.setAttribute('aria-label', 'Search documentation');
+        }
+      }
+
+      submit.addEventListener('click', function () {
+        if (hasQuery()) {
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.focus();
+        } else {
+          input.focus();
+        }
+        syncButton();
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!hasQuery()) {
+          input.focus();
+        }
+      });
+
+      input.addEventListener('input', syncButton);
+
+      syncButton();
+    }
+
+    updateDrawerMaxHeight();
+    window.addEventListener('resize', updateDrawerMaxHeight);
+    window.addEventListener('scroll', updateDrawerMaxHeight, { passive: true });
+    var mount = document.getElementById('site-search');
+    if (mount && typeof MutationObserver !== 'undefined') {
+      var mo = new MutationObserver(function () {
+        updateDrawerMaxHeight();
+        enhanceSiteSearch();
+      });
+      mo.observe(mount, { childList: true, subtree: true });
+    }
+
+    if (typeof window.PagefindUI === 'undefined') {
+      return;
+    }
+    new window.PagefindUI({
+      element: '#site-search',
+      /* One row per page: excerpt only, no per-heading sub-results */
+      showSubResults: false,
+      showImages: false,
+      excerptLength: 22,
+      /* Favor data-pagefind-weight (e.g. title h1) over raw term counts in long body copy */
+      ranking: {
+        termFrequency: 0.72
+      },
+      translations: {
+        placeholder: 'Search all tutorials',
+        search_label: 'Search Cloud Experts documentation',
+        clear_search: 'Clear'
+      }
+    });
+    enhanceSiteSearch();
+    updateDrawerMaxHeight();
+  });
 </script>
 
 {{- with resources.Get "js/main.js" }}

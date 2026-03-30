@@ -1,15 +1,15 @@
 ---
 date: '2022-05-27'
 title: Deploying ROSA in STS mode
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA", "ROSA Classic"]
 weight: 1
 aliases: ["/experts/quickstart-rosa.md"]
 
 authors:
   - Paul Czarkowski
   - Michael Ducy
+validated_version: "4.20"
 ---
-
 
 {{% alert state="info" %}}**Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).{{% /alert %}}
 
@@ -51,7 +51,7 @@ This is a summary of the [official docs](https://docs.openshift.com/rosa/rosa_ge
 
     ```bash
     rosa create cluster --sts --cluster-name ${ROSA_CLUSTER_NAME} \
-      --region ${REGION} --mode auto --yes
+      --region ${REGION} --mode auto --yes --version 4.20.16
     ```
 
 1. Watch the install logs

@@ -1,11 +1,17 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-07-01'
 title: How to deploy Jupyter Notebook
 aliases: ['/experts/misc/jup/BuildNotebook.md']
-tags: ["GPU", "OCP"]
+tags: ["Miscellaneous"]
 authors:
   - Connor Wooley
 ---
+
+# This content has been deprecated, the article remains available historically on GitHub.
 
 Retrieve the login command
 --------------------------

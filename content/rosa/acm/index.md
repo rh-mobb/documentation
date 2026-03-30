@@ -1,11 +1,12 @@
 ---
 date: '2025-06-26'
 title: Deploy ROSA with Red Hat Advanced Cluster Management for Kubernetes 
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP", "ACM"]
 authors:
   - Kevin Collins
   - Michael McNeill
   - Kumudu Herath
+validated_version: "4.20"
 ---
 
 In the dynamic world of cloud-native development, efficiently managing Kubernetes clusters across diverse environments is paramount. This blog post dives into a powerful combination: deploying Red Hat OpenShift Service on AWS (ROSA) Hosted Control Planes (HCP) clusters, orchestrated and governed by Red Hat Advanced Cluster Management for Kubernetes (RHACM). This approach offers a compelling suite of benefits, including significant cost reductions by offloading control plane management to Red Hat, accelerated cluster provisioning times, and enhanced operational efficiency through a centralized management plane. By leveraging ROSA HCP with RHACM, organizations can achieve a more streamlined, secure, and scalable Kubernetes footprint on AWS, allowing teams to focus more on innovation and less on infrastructure overhead.
@@ -42,7 +43,7 @@ rosa link user-role arn:aws:iam::...
 ```bash
 export ACM_CLUSTER_NAME=rosa-hcp-1
 export NEW_ROSA_CLUSTER_NAME=new-hcp
-export ROSA_VERSION=4.19.0
+export ROSA_VERSION=4.20.5
 export ROSA_REGION=us-east-1
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer | sed 's/https:\/\///')

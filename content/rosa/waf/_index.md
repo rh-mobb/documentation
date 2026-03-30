@@ -2,7 +2,7 @@
 date: '2021-06-17'
 title: Examples of using a WAF in front of ROSA / OSD on AWS / OCP on AWS
 aliases: ['/experts/aws/waf']
-tags: ["AWS", "ROSA", "OSD", "OCP"]
+tags: ["ROSA", "OSD"]
 ---
 ## Problem Statement
 
