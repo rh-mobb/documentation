@@ -1154,8 +1154,24 @@ rh-alert {
   margin-bottom: var(--rh-space-xl, 24px);
 }
 
-/* Global `p { max-width: 60rem }` applies to slotted light-DOM content; let alert copy use the full admonition width */
-rh-alert :is(p, ul, ol) {
+/* Shortcode / in-body alerts: match body copy measure (expert disclaimer uses .site-disclaimer below) */
+rh-alert:not(.site-disclaimer) {
+  box-sizing: border-box;
+  max-width: 60rem;
+  width: 100%;
+}
+
+rh-blockquote {
+  display: block;
+  margin-block: var(--rh-space-xl, 24px);
+}
+
+/*
+ * Global `p`/heading max-width applies to slotted light-DOM content.
+ * Let slotted copy use the full width of its component (host max-width still caps in-body alerts).
+ */
+rh-alert :is(p, ul, ol, h3),
+rh-blockquote :is(p, ul, ol) {
   max-width: none;
 }
 
