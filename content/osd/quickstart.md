@@ -6,8 +6,8 @@ authors:
   - Kevin Collins
   - Kumudu Herath
 tags: ["OSD", "Quickstarts"]
+validated_version: "4.20"
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 A Quickstart guide to deploying an OpenShift Dedicated cluster on Google Cloud Platform.
 

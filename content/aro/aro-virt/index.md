@@ -5,9 +5,8 @@ tags: ["ARO", "Virtualization"]
 authors:
   - Kevin Collins
   - Kumudu Herath
+validated_version: "4.20"
 ---
-
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 OpenShift Virtualization is a feature of OpenShift that allows you to run virtual machines alongside your containers.  This is useful for running legacy applications that can't be containerized, or for running applications that require special hardware or software that isn't available in a container.
 
