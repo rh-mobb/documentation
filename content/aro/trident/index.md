@@ -264,6 +264,42 @@ if you get a failure here, you can run to following command to review logs:
 
  To view log output that may help steer you in the right direction.
 
+
+#### Troubleshooting common Azure NetApp Files backend failures
+
+If the Azure NetApp Files backend does not initialize successfully, PVC creation can later fail with errors such as: `rpc error: code = Unknown desc = no available backends for storage class <storage-class-name>`
+
+This does not always mean the StorageClass is wrong. It can also mean Trident does not yet have a healthy backend available.
+
+Common Trident controller log symptoms include:
+
+- `Subnet query returned no data`
+- `Resource group referenced in pool not found`
+- `Virtual network referenced in pool not found`
+- `Subnet referenced in pool not found`
+- `no capacity pools found for storage pool <pool-name>`
+
+
+These errors usually indicate one or more of the following:
+
+* the resource group, virtual network, subnet, or capacity pool name does not exactly match the Azure resource
+* the subnet is not delegated to `Microsoft.NetApp/volumes`
+* the service principal role assignment scope is too narrow
+* the service principal cannot read the VNet/subnet resources required for backend discovery
+
+Also note that if a StorageClass uses a selector such as:
+
+Useful validation commands:
+
+```bash
+oc get tridentbackendconfig -n trident
+oc get tridentbackendconfig -n trident -o yaml
+oc get tbc -n trident -o yaml
+oc logs -n trident deploy/trident-controller -c trident-main
+oc describe pvc <pvc-name> -n <namespace>
+```
+
+
 ### Create storage class
 
 ```bash
@@ -287,6 +323,8 @@ output:
 ```bash
 storageclass.storage.k8s.io/standard created
 ```
+
+> **Note:** If your PVC reports `no available backends for storage class ...`, please first confirm that the backend is healthy and that the StorageClass selector matches the backend configuration.
 
 ### Provision volume
 
