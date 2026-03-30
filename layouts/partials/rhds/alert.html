@@ -1,3 +1,4 @@
-<rh-alert state="warning" variant="alternate">
-  <p>This content is authored by Red Hat experts, but has not yet been tested on every supported configuration.</p>
+{{/* RHDS Alert: https://ux.redhat.com/elements/alert/ (@rhds/elements 4.0.4+) */}}
+<rh-alert class="site-disclaimer" state="warning" variant="alternate">
+  <p>This content is authored by Red Hat experts, but has not yet been tested on every supported configuration.{{ with .Params.validated_version }} This guide has been validated on <strong>OpenShift {{ . }}</strong>. Operator CRD names, API versions, and console paths may differ on other versions.{{ end }}</p>
 </rh-alert>

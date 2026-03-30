@@ -1,15 +1,15 @@
 ---
 date: '2022-05-27'
 title: Deploying ROSA in STS mode
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic"]
 weight: 1
 aliases: ["/experts/quickstart-rosa.md"]
 
 authors:
   - Paul Czarkowski
   - Michael Ducy
+validated_version: "4.20"
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 {{% alert state="info" %}}**Tip** The official documentation for installing a ROSA cluster in STS mode can be found [here](https://docs.openshift.com/rosa/rosa_getting_started_sts/rosa-sts-getting-started-workflow.html).{{% /alert %}}
 

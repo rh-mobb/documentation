@@ -35,6 +35,13 @@ enableGitInfo = true
 [params]
   disableInlineCopyToClipBoard = true
   editURL = 'https://github.com/rh-mobb/documentation/edit/main/content/'
+  # Home page: default max items per tag section when a section omits its own limit (featured + rh-tile fill; newest first for non-featured)
+  home_tag_section_limit = 12
+  # Home featured tiles: optional home_featured_paths on each content/tags/<slug>/_index.md (see home-tag-tiles partial)
+  # Label in the featured tile header strip (RHDS title bar card pattern)
+  home_featured_header_label = "Featured"
+  # Home jump links sidebar (vertical rh-jump-links): heading text + aria-labelledby target
+  home_jump_links_heading = "Browse by topic"
 
 # Code highlight configuration
 [markup.highlight]
