@@ -9,7 +9,7 @@ hero_blurb: |
   A fully managed turnkey application platform that allows organizations to increase operational efficiency, refocus on innovation, and quickly build, deploy, and scale applications in a native AWS environment.
 hero_primary:
   text: "Quickstart guide"
-  url: "/experts/rosa/sts/"
+  url: "/experts/rosa/quickstart/"
 hero_secondary:
   text: "Get started"
   url: "https://console.redhat.com/openshift/create/rosa/getstarted"

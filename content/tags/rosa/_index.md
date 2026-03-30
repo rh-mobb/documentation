@@ -1,10 +1,17 @@
 ---
 title: "Red Hat OpenShift Service on AWS"
-date: 2022-09-18
-description: MOBB Docs and Guides for ROSA
+date: 2026-03-24
+description: Guides for Red Hat OpenShift Service on AWS
 archetype: chapter
 weight: 2
 skipMetadata: true
+hero_blurb: |
+  A fully managed turnkey application platform that allows organizations to increase operational efficiency, refocus on innovation, and quickly build, deploy, and scale applications in a native AWS environment.
+hero_primary:
+  text: "Quickstart guide"
+  url: "/experts/rosa/quickstart/"
+hero_secondary:
+  text: "Get started"
+  url: "https://console.redhat.com/openshift/create/rosa/getstarted"
+hero_background: openshift
 ---
-
-###### Red Hat OpenShift Service on AWS (ROSA) is a fully-managed turnkey application platform that allows you to focus on what matters most, delivering value to your customers by building and deploying applications. Red Hat and AWS site reliability engineering (SRE) experts manage the underlying platform so you don't have to worry about the complexity of infrastructure management.

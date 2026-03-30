@@ -11,7 +11,7 @@ hero_blurb: |
   A fully managed turnkey application platform that allows organizations to increase operational efficiency, refocus on innovation, and quickly build, deploy, and scale applications while taking advantage of native Google Cloud services.
 hero_primary:
   text: "Quickstart guide"
-  url: "/experts/osd/osd-quickstart/"
+  url: "/experts/osd/quickstart/"
 hero_secondary:
   text: "Get started"
   url: "https://console.cloud.google.com/marketplace/product/redhat-marketplace/red-hat-openshift-dedicated"
