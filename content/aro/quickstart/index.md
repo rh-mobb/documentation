@@ -203,7 +203,7 @@ Create a virtual network with two empty subnets
 
 1. Use the URL and the credentials provided by the output of the last two commands to log into OpenShift via a web browser.
 
-![ARO login page](../images/aro-login.png)
+![ARO login page](./images/aro-login.png)
 
 
 1. Deploy an application to OpenShift
@@ -237,7 +237,7 @@ Once you're done its a good idea to delete the cluster to ensure that you don't 
 
 ### Adding Quota to ARO account
 
-![aro quota support ticket request example](../images/aro-quota.png)
+![aro quota support ticket request example](./images/aro-quota-request.png)
 
 1. [Create an Azure Support Request](https://portal.azure.com/#blade/Microsoft_Azure_Support/HelpAndSupportBlade/newsupportrequest)
 
