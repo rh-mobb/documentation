@@ -295,3 +295,21 @@ from = "/experts/misc/jup/opendatahub-gpu/"
 to = "/"
 status = 404
 force = true
+
+[[redirects]]
+from = "/experts/rosa/rosa-quickstart/"
+to = "/experts/rosa/quickstart/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/osd/osd-quickstart/"
+to = "/experts/osd/quickstart/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/experts/quickstart-aro/"
+to = "/experts/aro/quickstart/"
+status = 301
+force = true
