@@ -1,11 +1,12 @@
 ---
 date: '2026-04-1'
 title: 'Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)'
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA HCP", "ROSA Classic"]
 authors:
   - Kevin Collins
   - Byron Miller
   - Deepika Ranganathan
+validated_version: "4.20"
 ---
 
 ## Prerequisites
