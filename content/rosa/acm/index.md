@@ -93,8 +93,37 @@ In the dynamic world of cloud-native development, efficiently managing Kubernete
      installPlanApproval: Automatic
    EOF
    ```
+2. Waiting for ACM Operator to install (this may take 2-5 minutes)
+   ```bash
+    for i in {1..60}; do
+        CSV_NAME=$(oc get csv -n open-cluster-management -o jsonpath='{.items[?(@.spec.displayName=="Advanced Cluster Management for Kubernetes")].metadata.name}' 2>/dev/null)
+        if [ -n "$CSV_NAME" ]; then
+            echo "Found CSV: $CSV_NAME"
+            break
+        fi
+        if [ $i -eq 60 ]; then
+            echo "Timeout waiting for CSV to be created"
+            exit 1
+        fi
+        sleep 5
+    done
 
-2. Create a MultiClusterHub Instance
+    oc wait --for=jsonpath='{.status.phase}'=Succeeded csv/$CSV_NAME -n open-cluster-management --timeout=10m
+
+    for i in {1..30}; do
+        if oc get crd multiclusterhubs.operator.open-cluster-management.io &>/dev/null; then
+            echo "✓ MultiClusterHub CRD is available"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            echo "Timeout waiting for MultiClusterHub CRD"
+            exit 1
+        fi
+        sleep 5
+    done
+
+   ```   
+3. Create a MultiClusterHub Instance
 
    ```bash
    cat << EOF | oc apply -f -
@@ -119,13 +148,13 @@ In the dynamic world of cloud-native development, efficiently managing Kubernete
    oc get MultiClusterHub multiclusterhub -n open-cluster-management -o jsonpath='{.status.phase}'
    ```
 
-3. Patch the multiclusterengine to support preview APIs
+4. Patch the multiclusterengine to support preview APIs
 
    ```bash
    oc patch multiclusterengine multiclusterengine --type=merge -p '{"spec":{"overrides":{"components":[{"name":"cluster-api-provider-aws-preview","enabled":true},{"name":"cluster-api","enabled":true},{"name":"hypershift-local-hosting","enabled":false},{"name":"hypershift","enabled":false}]}}}'
    ```
 
-4. Annotate the multiclusterengine to respect IRSA credentials
+5. Annotate the multiclusterengine to respect IRSA credentials
 
    ```bash
    oc annotate mce multiclusterengine installer.multicluster.openshift.io/pause=true
