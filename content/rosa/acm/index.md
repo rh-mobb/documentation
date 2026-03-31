@@ -457,4 +457,6 @@ While still being logged into the ACM cluster, run the following commands.
 
 Congratulations! You have successfully deployed a new ROSA HCP cluster using Red Hat Advanced Cluster Management for Kubernetes. Your cluster is now managed through the ACM console, providing centralized visibility and control. You can now leverage ACM's powerful features for application deployment, policy management, and multi-cluster governance across your ROSA infrastructure.
 
+![ACM Fleet Management Console showing the new cluster](acm-new-cluster.png)
+
 
