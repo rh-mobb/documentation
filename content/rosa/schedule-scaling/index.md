@@ -1,5 +1,5 @@
 ---
-date: ‘2025-02-26’
+date: '2025-02-26'
 title: Optimizing Costs with ROSA - Scheduled Cluster Scaling
 tags: ["ROSA", "ROSA HCP", "ROSA Classic"]
 authors:
