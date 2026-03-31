@@ -1,7 +1,7 @@
 ---
 date: '2023-02-21'
 title: ROSA with Nvidia GPU Workloads
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Chris Kang
   - Diana Sari

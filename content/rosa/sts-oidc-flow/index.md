@@ -1,7 +1,7 @@
 ---
 date: '2022-10-01'
 title: "STS OIDC in ROSA : How it works!"
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Connor Wooley
 ---

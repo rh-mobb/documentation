@@ -1,7 +1,7 @@
 ---
 date: '2023-02-28'
 title: Assign Consistent Egress IP for External Traffic
-tags: ["OSD", "ROSA", "ARO"]
+tags: ["OSD", "ROSA", "ROSA Classic", "ROSA HCP", "ARO"]
 authors:
   - 'Dustin Scott'
   - 'Paul Czarkowski'

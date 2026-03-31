@@ -1,7 +1,7 @@
 ---
 date: '2022-05-10'
 title: Adding a Public Ingress endpoint to a ROSA PrivateLink Cluster
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Paul Czarkowski
   - Connor Wooley

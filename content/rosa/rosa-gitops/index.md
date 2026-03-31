@@ -5,7 +5,7 @@ build:
   render: never
 date: '2023-06-26'
 title: Creating ROSA Components with GitOps
-tags: ["ROSA", "GitOps", "OCM"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP", "GitOps", "OCM"]
 authors:
   - Dustin Scott
 ---

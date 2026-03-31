@@ -1,7 +1,7 @@
 ---
 date: '2026-03-23'
 title: ECR Secret Operator
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Shaozhen Ding 
   - Deepika Ranganathan

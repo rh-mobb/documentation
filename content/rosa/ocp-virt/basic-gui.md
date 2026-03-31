@@ -1,7 +1,7 @@
 ---
 date: '2024-05-14'
 title: Deploying OpenShift Virtualization on ROSA (GUI)
-tags: ["ROSA", "Virtualization"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP", "Virtualization"]
 authors:
   - Paul Czarkowski
 ---

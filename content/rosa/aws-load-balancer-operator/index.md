@@ -2,7 +2,7 @@
 date: '2023-01-03T22:07:08.574151'
 title: AWS Load Balancer Operator On ROSA
 aliases: ['/experts/rosa/alb-sts']
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Shaozhen Ding
   - Paul Czarkowski

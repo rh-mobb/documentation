@@ -4,7 +4,7 @@
 date: '2021-06-10'
 title: ROSA Prerequisites
 weight: 1
-tags: ["ROSA", "Quickstarts"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP", "Quickstarts"]
 authors:
   - Steve Mirman
   - Paul Czarkowski

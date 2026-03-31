@@ -1,7 +1,7 @@
 ---
 date: '2024-08-26'
 title: Creating Images using Stable Diffusion on Red Hat OpenShift AI on ROSA cluster with GPU enabled
-tags: ["ROSA", "ROSA HCP", "RHOAI"]
+tags: ["RHOAI"]
 authors:
   - Diana Sari
   - Paul Czarkowski

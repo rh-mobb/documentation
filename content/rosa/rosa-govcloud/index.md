@@ -1,7 +1,7 @@
 ---
 date: '2024-07-05'
 title: Creating a ROSA cluster in AWS GovCloud
-tags: ["ROSA", "GovCloud"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP", "GovCloud"]
 authors:
   - Andy Krohg
 ---

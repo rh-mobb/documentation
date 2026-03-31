@@ -6,7 +6,7 @@ build:
 date: '2021-06-17'
 title: AWS ALB
 aliases: ['/experts/aws/waf/alb.md']
-tags: ["ROSA", "OSD"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP", "OSD"]
 authors:
   - Connor Wooley
 ---

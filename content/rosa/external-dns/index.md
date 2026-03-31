@@ -1,7 +1,7 @@
 ---
 date: '2023-02-19'
 title: External DNS for ROSA Custom Domain
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Chris Kang
 ---

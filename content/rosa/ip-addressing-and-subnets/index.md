@@ -1,7 +1,7 @@
 ---
 date: "2023-01-06"
 title: "VPC and Subnet IP Address Considerations with ROSA"
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
    - Thatcher Hubbard
 ---

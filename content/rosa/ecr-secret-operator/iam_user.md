@@ -1,7 +1,7 @@
 ---
 date: '2022-05-31'
 title: Create IAM user and Policy
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Shaozhen Ding 
 ---

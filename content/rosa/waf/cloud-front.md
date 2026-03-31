@@ -6,7 +6,7 @@ build:
 date: '2021-06-17'
 title: Using CloudFront + WAF
 aliases: ['/experts/aws/waf/cloud-front.md']
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 authors:
   - Connor Wooley
 ---
