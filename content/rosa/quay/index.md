@@ -5,9 +5,8 @@ tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kumudu Herath
   - Kevin Collins
+validated_version: "4.20"
 ---
-
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20** (ROSA HCP) with the **Red Hat Quay Operator** channel **`stable-3.16`**. CSV versions and Quay `config.yaml` fields may differ on other versions; confirm the channel with `oc get packagemanifest quay-operator -n openshift-marketplace`.{{% /alert %}}
 
 This guide deploys [Red Hat Quay](https://docs.redhat.com/en/documentation/red_hat_quay/) on **Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes (HCP)** using **only** the `oc` and `aws` CLIs. It uses:
 
@@ -50,7 +49,7 @@ export QUAY_REGISTRY_NAME="${QUAY_REGISTRY_NAME:-example-registry}"
 export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.apiServerURL}" | awk -F '.' '{print $2}')
 ```
 
-This **`CLUSTER_NAME`** segment is used in AWS resource names (RDS, subnet groups, IAM policy name, etc.). Override with `export CLUSTER_NAME=...` if your API server hostname does not match the name you want for those resources.
+This **`CLUSTER_NAME`** segment is used in AWS resource names (RDS, subnet groups, IAM policy name, database VPC **Name** tag **`quay-${CLUSTER_NAME}-Storage`**, etc.). Override with `export CLUSTER_NAME=...` if your API server hostname does not match the name you want for those resources.
 
 **Quay app service account** (used in the IAM trust policy) is typically:
 
@@ -198,6 +197,8 @@ Run **§1.2** and **§1.3** before **§3** so **`quay_aws_tags_to_cli_pairs`** a
 
 ### 3.1 VPC and subnets
 
+The database VPC (**`VPC_DB`**) is tagged with **`Name=quay-${CLUSTER_NAME}-Storage`** (in addition to **§1.2** tags).
+
 ```bash
 load_quay_aws_tag_pairs
 
@@ -205,7 +206,8 @@ VPC_DB=$(aws ec2 create-vpc --cidr-block 10.23.0.0/16 --region "${AWS_REGION}" |
 aws ec2 modify-vpc-attribute --vpc-id "${VPC_DB}" --enable-dns-hostnames "{\"Value\":true}"
 aws ec2 modify-vpc-attribute --vpc-id "${VPC_DB}" --enable-dns-support "{\"Value\":true}"
 
-aws ec2 create-tags --resources "${VPC_DB}" --region "${AWS_REGION}" --tags "${_QUAY_AWS_TAG_PAIRS[@]}"
+aws ec2 create-tags --resources "${VPC_DB}" --region "${AWS_REGION}" \
+  --tags "${_QUAY_AWS_TAG_PAIRS[@]}" "Key=Name,Value=quay-${CLUSTER_NAME}-Storage"
 
 export VPC_DB_CIDR=$(aws ec2 describe-vpcs --vpc-ids "${VPC_DB}" --region "${AWS_REGION}" \
   --query 'Vpcs[0].CidrBlock' --output text)
@@ -220,7 +222,7 @@ SUBNET_C=$(aws ec2 create-subnet --vpc-id "${VPC_DB}" --cidr-block 10.23.3.0/24 
 aws ec2 create-tags --resources "${SUBNET_A}" "${SUBNET_B}" "${SUBNET_C}" --region "${AWS_REGION}" \
   --tags "${_QUAY_AWS_TAG_PAIRS[@]}"
 
-echo "VPC_DB=${VPC_DB} VPC_DB_CIDR=${VPC_DB_CIDR}"
+echo "VPC_DB=${VPC_DB} Name=quay-${CLUSTER_NAME}-Storage VPC_DB_CIDR=${VPC_DB_CIDR}"
 ```
 
 ### 3.2 VPC peering (ROSA VPC ↔ database VPC)
@@ -422,7 +424,7 @@ This guide tags the following resources with **`QUAY_AWS_TAGS_JSON`** (**§1.2**
 | AWS resource | Mechanism |
 |--------------|-----------|
 | S3 bucket | **`aws s3api put-bucket-tagging`** (**§2**) |
-| **`VPC_DB`**, subnets **`SUBNET_A`–`C`**, VPC peering **`VPC_PEERING_ID`** | **`aws ec2 create-tags`** (**§3.1**, **§3.2**) |
+| **`VPC_DB`** (**`Name=quay-${CLUSTER_NAME}-Storage`**), subnets **`SUBNET_A`–`C`**, VPC peering **`VPC_PEERING_ID`** | **`aws ec2 create-tags`** (**§3.1**, **§3.2**) |
 | Redis security group **`REDIS_SG`** | **`aws ec2 create-tags`** (**§3.6**) |
 | RDS subnet group, RDS instance **`psql-${CLUSTER_NAME}`** | **`--tags`** on create (**§3.3**, **§3.4**) |
 | ElastiCache subnet group, Redis **`quay-redis-${CLUSTER_NAME}`** | **`--tags`** on create (**§3.6**, **§3.7**) |
@@ -802,13 +804,14 @@ oc annotate serviceaccount "${QUAY_APP_SA}" -n "${QUAY_NAMESPACE}" \
   eks.amazonaws.com/role-arn="${QUAY_IRSA_ROLE_ARN}" --overwrite
 ```
 
-Restart Quay app pods so they pick up the annotation:
+Restart workloads that use the **Quay application** service account so they pick up the annotation (deployment names follow **`${QUAY_REGISTRY_NAME}-quay-*`**, e.g. **`example-registry-quay-app`** and **`example-registry-quay-mirror`**):
 
 ```bash
-oc get deploy -n "${QUAY_NAMESPACE}"
-# Restart the Quay application deployment (name often contains "quay" and "app"), for example:
-# oc rollout restart deployment "${QUAY_REGISTRY_NAME}-quay-app" -n "${QUAY_NAMESPACE}"
+oc rollout restart deployment "${QUAY_REGISTRY_NAME}-quay-app" -n "${QUAY_NAMESPACE}"
+oc rollout restart deployment "${QUAY_REGISTRY_NAME}-quay-mirror" -n "${QUAY_NAMESPACE}"
 ```
+
+With **`mirror: managed: true`** (**§8**), **`${QUAY_REGISTRY_NAME}-quay-mirror`** is present (e.g. **`example-registry-quay-mirror`**). If you disabled mirror, skip the second command.
 
 If the trust policy `sub` does not match the actual SA, edit `quay-trust-policy.json`, run `aws iam update-assume-role-policy`, then verify again.
 
