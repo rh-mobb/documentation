@@ -4,6 +4,7 @@ title: Optimizing Costs with ROSA -  Scheduled Cluster Scaling
 tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
+validated_version: "4.20"
 ---
 
 
@@ -35,7 +36,7 @@ This guide utilizes several environment variables that will be referenced throug
 ### Set cluster and AWS environment variables
 ```bash
 export CLUSTER_NAME=rosa-cluster-name
-export REGION=$(rosa describe cluster -c ${CLUSTER} -o json | jq -r '.region.id')
+export REGION=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.region.id')
 export OIDC_PROVIDER=$(rosa describe cluster -c ${CLUSTER_NAME} -o json \
  | jq -r .aws.sts.oidc_endpoint_url | sed -e 's/^https:\/\///')
 export ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
@@ -169,13 +170,13 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
 1. Create a service account that the cron job will run under, notice that it uses IRSA and the role we just created
 
     ```bash
-    cat << EOF | oc apply -f - 
+    cat << EOF | oc apply -f -
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-    name: $OCP_SA
-    namespace: $OCP_PROJECT
-    annotations: 
+      name: $OCP_SA
+      namespace: $OCP_PROJECT
+      annotations:
         eks.amazonaws.com/role-arn: $ROLE
     EOF
     ```
@@ -374,6 +375,7 @@ To schedule scaling of the worker nodes, we will create 2 cronjobs which will co
               serviceAccount: ${OCP_SA}
    EOF
    ```
+{{% alert state="info" %}} If a scaling job fails and the pod logs report that the "specified username does not exist," the cluster is likely still reconciling permissions. This sync issue typically resolves itself automatically within an hour, so allow some time for the system to update before retrying or modifying your configuration. {{% /alert %}}
 
 1. Finally sit back and watch the machine pools scale on the schedule you configured.  To watch machine pools scaling up and down run this command:
 
