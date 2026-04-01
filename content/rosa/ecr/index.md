@@ -1,5 +1,5 @@
 ---
-date: '2026-04-1'
+date: '2026-03-30'
 title: 'Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)'
 tags: ["ROSA", "ROSA HCP", "ROSA Classic"]
 authors:
