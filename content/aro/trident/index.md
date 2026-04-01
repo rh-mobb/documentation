@@ -7,7 +7,7 @@ authors:
   - Connor Wooley
   - Kevin Collins
   - Diana Sari
-validated_version: 4.20
+validated_version: "4.20"
 ---
 
 Note:
@@ -98,7 +98,6 @@ az netappfiles pool create \
 
 Login to the Azure console, find the VNet used by your ARO cluster, and add a delegated subnet for Azure NetApp Files. Make sure the backend configuration later in this guide references the exact subnet name/path you created.
 
-![delegate subnet](delegate-subnet.png)
 
 ## Install Trident Operator from OperatorHub/Software Catalog
 
