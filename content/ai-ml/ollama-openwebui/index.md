@@ -1,7 +1,7 @@
 ---
 date: '2024-09-11'
 title: Deploying and Running Ollama and Open WebUI in a ROSA Cluster with GPUs
-tags: ["ROSA"]
+tags: ["ROSA", "Miscellaneous"]
 aliases: ["/docs/misc/ollama-openwebui"]
 authors:
   - Florian Jacquin

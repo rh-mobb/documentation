@@ -2,10 +2,13 @@
   <section class="list">
     {{- partial "breadcrumbs.html" . }}
     <h1 class="h2" data-pagefind-weight="10">{{ .Title }}</h1>
-    <div data-pagefind-weight="0.65">{{ .Content }}</div>
+    <div data-pagefind-weight="0.65">
+      {{- partial "rhds/alert.html" . }}
+      {{ .Content }}
+    </div>
     {{ range .Pages }}
       <h2 class="h4"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-      {{- partial "tags/list-excerpt.html" . -}}
+      {{ .Summary }}
     {{ end }}
   </section>
 {{ end }}

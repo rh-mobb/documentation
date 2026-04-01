@@ -1,0 +1,9 @@
+{{/* Regular Markdown blockquotes (`> `) → RHDS blockquote with highlight: https://ux.redhat.com/elements/blockquote/ */}}
+{{- if eq .Type "regular" -}}
+<rh-blockquote highlight>{{ .Text }}</rh-blockquote>
+{{- else -}}
+{{/* GitHub/Obsidian-style `> [!NOTE]` alerts — keep semantic blockquote (no author/title slots) */}}
+<blockquote>
+  {{ .Text }}
+</blockquote>
+{{- end -}}

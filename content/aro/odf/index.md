@@ -6,9 +6,8 @@ authors:
   - Kevin Collins
   - Mohsen Houshmand Sarvestani
   - Dustin Scott
+validated_version: "4.20"
 ---
-
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 > **NOTE**:
 This guide demonstrates how to setup and configure self-managed OpenShift Data Foundation in Internal Mode on an ARO Cluster and test it out.

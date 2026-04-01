@@ -5,6 +5,15 @@ description: Guides for Azure Red Hat OpenShift
 archetype: chapter
 weight: 2
 skipMetadata: true
+# home_featured_paths:
+#   - quickstart-aro
+hero_blurb: |
+  A fully managed turnkey application platform that helps organizations increase operational efficiency, focus on innovation, and quickly build, deploy, and scale applications. Jointly engineered, managed, and supported by Red Hat and Microsoft.
+hero_primary:
+  text: "Quickstart guide"
+  url: "/experts/aro/quickstart/"
+hero_secondary:
+  text: "Get started"
+  url: "https://www.redhat.com/en/technologies/cloud-computing/openshift/azure/get-started"
+hero_background: openshift
 ---
-
-###### Microsoft Azure Red Hat OpenShift is a turnkey application platform that provides highly available, fully managed Red Hat OpenShift clusters on demand. Red Hat and Microsoft jointly engineer, manage, and support the platform, allowing organizations to increase operational efficiency, refocus on innovation, and quickly build, deploy and scale applications.

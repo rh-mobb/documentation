@@ -6,8 +6,8 @@ authors:
   - Kumudu Herath
   - Kevin Collins
   - Deepika Ranganathan
+validated_version: "4.20"
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 
 ROSA HCP clusters now only support openshift Logging 6.x and above. This guide aims to provide a step-by-step guide for implementing logging 6.x on ROSA HCP,setting up a log store with Loki with S3 and/or log forwarding to AWS CloudWatch.
