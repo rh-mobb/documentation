@@ -86,7 +86,7 @@ echo "WIF_POOL_ID = " $WIF_POOL_ID
 
 ## Step 3: Verify Existing OIDC Provider
 
-OpenShift Dedicated clusters on GCP already have an OIDC provider already configured by OpenShift Cluster Manager. Verify it exists:
+OpenShift Dedicated clusters on GCP already have an OIDC provider configured by OpenShift Cluster Manager. Verify it exists:
 
 ```bash
 gcloud iam workload-identity-pools providers list \
