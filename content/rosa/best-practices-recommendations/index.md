@@ -23,7 +23,7 @@ The core of the ROSA HCP value proposition lies in the separation of concerns. R
 
 The connectivity between the worker nodes in the customer’s VPC and the control plane in the Red Hat-managed account is established through AWS PrivateLink. [^1] That keeps control-plane connectivity off the public internet while still supporting public API endpoints for developers where you enable them. Classic uses established in-VPC networking between your control plane and workers; HCP standardizes on PrivateLink for the hosted control plane path. That fits cleanly with AWS landing zones and private connectivity patterns. HCP also gives you independent upgrade lanes for the hosted control plane and each machine pool, so you can stage change with fine-grained control. [^3]
 
-#### Detailed architectural comparison of ROSA models
+#### Detailed architectural comparison of ROSA models [^1]
 
 | Architectural Feature | ROSA with HCP | ROSA Classic |
 | :---- | :---- | :---- |
@@ -35,7 +35,6 @@ The connectivity between the worker nodes in the customer’s VPC and the contro
 | Lifecycle Flexibility | Independent hosted control plane and machine pool upgrades | Coordinated cluster-wide upgrade cadence |
 | EC2 in customer account | Workers and data-plane resources | Workers, Classic control plane, and infra nodes |
 
-> *Source:* [^1]
 
 ROSA with HCP extends the strong compliance story customers already trust on ROSA: programs such as HIPAA-eligible use on the service, FedRAMP High milestones for hosted control planes in AWS GovCloud, and FIPS-enabled clusters at install time are all part of how teams run regulated workloads on OpenShift on AWS. [^1] The full matrix of regions, offerings, and attestations evolves with the product. For the latest, see the authoritative [ROSA compliance and security documentation](https://docs.aws.amazon.com/rosa/latest/userguide/security.html). Organizations comparing Classic and HCP will find both supported under the same managed-service model; choose the architecture that matches your accounting, networking, and migration timeline. Published examples combining HCP with multi-year AWS commitments have cited on the order of ~37% infrastructure savings and ~68% savings versus on-demand in representative scenarios; treat those as signals to explore with your AWS account team. [^6]
 
@@ -61,8 +60,6 @@ When calculating CIDR ranges for the Pod, Service, and Machine networks, archite
 | Service CIDR | Minimum /16 to support large-scale microservices | High |
 | Pod CIDR | Sufficiently large to prevent IP exhaustion (e.g., /14) | High |
 | DNS Settings | Set enableDnsHostnames and enableDnsSupport to true | High |
-
-> *Source:* [^9]
 
 Verification of the VPC configuration can be performed using the AWS CLI. To ensure that DNS attributes are correctly set, which is vital for Route 53 and PrivateLink interoperability, the following command should be executed:
 
@@ -167,8 +164,6 @@ ROSA HCP leverages two distinct sets of IAM roles: account-wide roles and operat
 | Storage Operator | Manages EBS volume attachments | ROSAAmazonEBSCSIDriverOperatorPolicy |
 | Control Plane Operator | Manages CP components in Red Hat account | ROSAControlPlaneOperatorPolicy |
 
-> *Source:* [^16]
-
 Administrators can verify the existence and configuration of these roles using the rosa CLI. A healthy cluster should return a list of roles associated with the specific OIDC provider:
 
 ```bash
@@ -261,13 +256,11 @@ The foundation of application reliability is the implementation of health check 
 
 **Probe design:** Liveness and readiness should not blindly reuse the same HTTP endpoint or identical logic. Liveness should be narrow and exist only to detect deadlocks or hung processes worthy of a restart. Readiness should reflect whether the instance can serve traffic right now (dependencies up, migrations complete, warm caches). Using the same heavy check, or a readiness signal that fails under load, as liveness often causes restart loops during spikes. Prefer distinct paths (for example `/livez` vs `/readyz`) and stricter timeouts on liveness than readiness where appropriate.
 
-| Probe Type | Recommended Test | Use Case |
+| Probe Type [^27] | Recommended Test | Use Case |
 | :---- | :---- | :---- |
 | Liveness | HTTP GET (e.g., /healthz) | Detects process crashes or infinite loops |
 | Readiness | HTTP GET (e.g., /readyz) | Ensures DB connections and cache are ready |
 | Startup | Exec command (e.g., cat /tmp/ready) | For apps that take minutes to initialize |
-
-> *Source:* [^27]
 
 Verification of probe status for a running workload can be achieved by describing the pod and inspecting the Conditions and Events sections:
 
@@ -475,14 +468,12 @@ In ROSA HCP, upgrades are not holistic cluster events. Administrators have the f
 
 Red Hat utilizes a "Node Surge" strategy during machine pool upgrades. A new node is provisioned in excess of the replica count (maxSurge) before an old node is drained and replaced. [^8] This ensures that the application's capacity is not compromised during the upgrade process, provided that PDBs and node surge settings are correctly configured. [^8]
 
-| Upgrade Action | Command | Verification |
+| Upgrade Action [^2] | Command | Verification |
 | :---- | :---- | :---- |
 | List Available Versions | `rosa list upgrade -c <cluster_id>` | Review "Notes" for recommendations |
 | Upgrade Control Plane | `rosa upgrade cluster -c <cluster_id> --version <version>` | `rosa describe cluster -c <cluster_id>` |
 | List Machine Pools | `rosa list machinepools -c <cluster_id>` | Check current version per pool |
 | Upgrade Machine Pool | `rosa upgrade machinepool -c <cluster_id> <name>` | `oc get nodes` |
-
-> *Source:* [^2]
 
 #### API compatibility and upgrade readiness
 
@@ -622,8 +613,6 @@ For controlling traffic leaving the cluster, EgressFirewall (OpenShift’s `Egre
 | Allow Ingress Controller | NetworkPolicy | Permit traffic from the Ingress namespace |
 | Block External Access | EgressFirewall | Deny traffic to unknown CIDRs |
 | Allow Specific API | EgressFirewall | Permit traffic to a target FQDN |
-
-> *Source:* [^48], [^49]
 
 #### The OpenShift Compliance Operator
 
@@ -768,13 +757,11 @@ Project-scoped quotas are the primary lever for fair sharing on multi-tenant ROS
 
 Pair ResourceQuota, LimitRange, ClusterResourceQuota, and related OpenShift objects with policy-as-code admission (for example Gatekeeper and Rego) if you require every workload to declare requests/limits. Quotas alone cap totals but do not always stop a lone Pod with missing resources from being created. [ACM governance policies](https://www.redhat.com/en/technologies/management/advanced-cluster-management) offer a fleet-scale way to require those same declarations and to reconcile quota- and LimitRange-related templates across many ROSA clusters from the hub. [^71] For how limits can shape or throttle application performance over time, see the upstream guide [Resource management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/). [^33] OpenShift-specific quota and LimitRange guidance is in the product docs under scalability and performance (for example [Using quotas and limit ranges](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/scalability_and_performance/compute-resource-quotas)). [^59]
 
-| Cost Control Object | Scope | Best Practice |
+| Cost Control Object [^32] | Scope | Best Practice |
 | :---- | :---- | :---- |
 | ResourceQuota | Namespace / project | Team or app budgets (CPU, memory, objects, storage) |
 | LimitRange | Namespace / project | Defaults and min/max per Pod or container |
 | ClusterResourceQuota | Multi-project | One budget spanning labeled projects (team or LOB) |
-
-> *Source:* [^32]
 
 Verification of active quotas in a namespace:
 
