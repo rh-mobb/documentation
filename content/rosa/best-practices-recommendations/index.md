@@ -108,7 +108,7 @@ Enterprise landing zones (hub-and-spoke setups with Transit Gateway, inspection 
 
 **Don’t:**
 
-- Imply “we use a landing zone” without egress and ingress paths that match NetworkPolicy / `EgressFirewall` (see Network isolation later) and AWS routing reality.
+- Imply “we use a landing zone” without egress and ingress paths that match NetworkPolicy / `EgressFirewall` (see **Network isolation with NetworkPolicies and Egress Firewalls** under Security hardening and automated compliance below) and AWS routing reality.
 - Burn worker CPU on full WAF inspection when a regional edge service is appropriate.
 - Terminate TLS at ALB without validating SNI, Host, and backend protocol against OpenShift Route semantics.
 - Hardcode IPs. Use FQDNs only (see Advanced DNS mechanics in HCP).
@@ -124,7 +124,7 @@ oc get ingresscontroller -n openshift-ingress-operator -o custom-columns=NAME:.m
 
 **Edge VPC and load balancers:** Common high-trust patterns place an internet-facing ALB or NLB in a peer or TGW-attached VPC, forward to an internal NLB or node ports that terminate at OpenShift ingress, and restrict security groups so only the edge tier is internet-reachable. Document that chain when you reference private clusters with public FQDNs so reviewers can see how DNS maps to listeners. Step-by-step patterns appear in this site’s [HCP private cluster + public NLB in edge VPC](/experts/rosa/hcp-private-nlb/) and [private ingress controller + public ALB + WAF considerations](/experts/rosa/private-ingress-controller-with-alb/) guides.
 
-**Egress alignment:** `EgressFirewall`, NAT, TGW inspection, egress proxy, and zero-egress mirroring are complementary layers. Pick the combination your security team signs off on so workloads cannot bypass policy via mis-tagged subnets or overly permissive NAT routes. Network isolation with NetworkPolicies and Egress Firewalls (later in this guide) expands namespace-level controls.
+**Egress alignment:** `EgressFirewall`, NAT, TGW inspection, egress proxy, and zero-egress mirroring are complementary layers. Pick the combination your security team signs off on so workloads cannot bypass policy via mis-tagged subnets or overly permissive NAT routes. **Network isolation with NetworkPolicies and Egress Firewalls** under Security hardening and automated compliance below expands namespace-level controls.
 
 **AWS WAF and CloudFront:** Attach AWS WAF to ALB, API Gateway, or CloudFront distributions that front OpenShift when you need managed rules, geo blocks, or bot controls. Prefer that edge over duplicating WAF logic inside every Pod. CloudFront patterns (with optional WAF) are illustrated in [CloudFront + WAF in front of the workload](/experts/rosa/waf/cloud-front/).
 
@@ -146,6 +146,12 @@ oc get certificates -A 2>/dev/null | head -20
 ```
 
 (`oc get certificates` lists cert-manager `Certificate` custom resources when the operator is installed.)
+
+#### OpenShift Routes, ingress policy, and OVN semantics on ROSA
+
+ROSA runs the same OpenShift networking objects as self-managed clusters: assume **OVN-Kubernetes** for the pod overlay (see Cluster pod network (OVN-Kubernetes)). Author `NetworkPolicy`, `EgressFirewall`, and AdminNetworkPolicy (when available) against OVN behavior in your OpenShift minor; cross-check product docs rather than assuming upstream-only `NetworkPolicy` examples apply verbatim.
+
+For Routes (and Ingress where you use it), document TLS end-to-end: **edge** terminates at the router, **passthrough** keeps client TLS to the Pod (pair with `IngressController` and load-balancer designs that do not break that chain), and **reencrypt** terminates at the router then re-establishes TLS to backends. Record certificate sources and CA trust for each hop; align hostnames and wildcards with private or public ingress (see Private clusters, landing-zone ingress, and application DNS/TLS and [Configuring Routes](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/networking/configuring-routes)). [^80]
 
 ## Identity and Access Management through STS and OIDC
 
@@ -242,11 +248,208 @@ Describe one application ServiceAccount to verify projection and annotations:
 oc describe serviceaccount <sa-name> -n <namespace>
 ```
 
+#### ROSA customer administration and break-glass
+
+Use [dedicated-admin](https://docs.aws.amazon.com/rosa/latest/userguide/using-dedicated-admins.html)-style privileges for supported day-two administration on ROSA. Reserve `cluster-admin`-class grants for exceptions your security and subscription policies approve. Remove **kubeadmin** once your external IdP and RBAC are validated (OIDC Configuration and Identity Providers), and document break-glass steps: who can restore access, how tickets are opened, and how ad-hoc `rosa create admin` users align with vault and rotation policy.
+
+## Security hardening and automated compliance
+
+The multi-layered security approach of ROSA HCP combines OpenShift-native controls with AWS-specific infrastructure protections. Achieving a "Zero Trust" posture requires the enforcement of restricted policies at both the network and workload levels. When you operate many clusters, centralized workload security and hub-level governance extend that model with consistent sensors, policies, and visibility (see About this guide). [^71] [^70]
+
+Treat OpenShift resources (`Route`, `Project`, `EgressFirewall`, SCC bindings, OperatorHub subscriptions) as first-class ROSA design inputs: match **OVN-Kubernetes** semantics, your DNS and TLS posture, and what ROSA customers can change, not legacy OpenShift SDN lore or generic Kubernetes tutorials alone.
+
+#### Security Context Constraints (SCC) and Pod Security
+
+OpenShift’s SCCs are more restrictive and granular than standard Kubernetes Pod Security Policies (PSPs). It is a critical recommendation to stick to the restricted SCC whenever possible. This policy prevents pods from running as the root user, using host network interfaces, or mounting sensitive host paths, which are common vectors for container breakout attacks. [^45]
+
+For applications that require additional capabilities (e.g., certain storage drivers or network tools), a custom SCC should be created rather than granting the privileged SCC, which provides absolute control over the host node. [^22]
+
+Keep ServiceAccount-to-SCC mapping intentional: prefer `restricted` or an approved custom SCC; `privileged` should be rare and documented. Namespace Pod Security labels (or synonyms on your version) should match what SCC actually admits. Avoid “restricted YAML, privileged at runtime” drift. Application AWS access stays IRSA-first (Application workloads: IRSA, STS, and AWS credentials); sensitive material belongs in Secrets Manager or Vault via External Secrets Operator for production baselines, not only raw Secret YAML in Git (Configuration, secrets, and external secret management).
+
+Verification of the SCCs applied to running pods:
+
+```bash
+oc get pods -A -o json | jq '.items[] | {name:.metadata.name, scc:.metadata.annotations["openshift.io/scc"]}'
+```
+
+#### Pod security context baselines (complements SCC)
+
+SCC admission decides which security profiles a Pod may use; `securityContext` on the Pod and containers should still encode team intent so manifests are portable, reviewable, and aligned with `restricted-v2` (or your approved custom SCC) without relying on implicit defaults.
+
+**Do:** Set `allowPrivilegeEscalation: false` when compatible so setuid binaries cannot gain more privileges than the container user; prefer `readOnlyRootFilesystem: true` and mount `emptyDir` or `tmpfs` only where the app must write; drop all capabilities then add the minimum set (`CAP_NET_BIND_SERVICE`, `CAP_SYS_TIME`, and similar) instead of running `CAP_SYS_ADMIN`-heavy images; set `seccompProfile.type: RuntimeDefault` (or `Restricted` where policy and SCC allow) instead of `Unconfined` unless documented; run `runAsNonRoot: true` with an explicit `runAsUser` / `runAsGroup` or `fsGroup` that matches your image contract and restricted SCC expectations. See [Managing security context constraints](https://docs.okd.io/latest/authentication/managing-security-context-constraints.html) (same SCC mechanics as OpenShift) and [Configure a security context for a Pod or container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) in the Kubernetes documentation. [^88] [^89]
+
+**Don’t:** Omit `securityContext` blocks and assume SCC will “fix it”; use `privileged: true` or `CAP_SYS_ADMIN` without a ticket-level exception; expand `readOnlyRootFilesystem: false` without listing which paths need write access.
+
+Inspect effective fields on a running Pod (replace namespace and pod-name):
+
+```bash
+oc get pod -n <namespace> <pod-name> -o jsonpath='{range .spec.containers[*]}{.name}{": allowPrivilegeEscalation="}{.securityContext.allowPrivilegeEscalation}{", readOnlyRootFS="}{.securityContext.readOnlyRootFilesystem}{"\n"}{end}'
+```
+
+#### Service accounts and RBAC for workloads
+
+**Do:** Create a dedicated `ServiceAccount` per application or integration (avoid `default` for production Deployments); set `automountServiceAccountToken: false` on Pods that do not call the Kubernetes API (fewer tokens on disk reduces lateral movement if a container is compromised); grant Roles or ClusterRoles with RoleBinding / ClusterRoleBinding using minimal verbs and resources (get/list/watch on specific APIs, not wildcard `*` unless the controller pattern requires it and policy reviews it); pair with IRSA (Application workloads: IRSA, STS, and AWS credentials) for AWS APIs instead of reusing the same ServiceAccount token for both Kubernetes and cloud.
+
+**Don’t:** Bind `cluster-admin` (or `edit` on cluster-scoped objects) to namespace service accounts to get unblocked; leave `automountServiceAccountToken` default true on stateless HTTP services that never need `oc`-style access.
+
+Inventory bindings and non-default ServiceAccounts:
+
+```bash
+oc get rolebindings -n <namespace>
+oc get pods -n <namespace> -o custom-columns=NAME:.metadata.name,SA:.spec.serviceAccountName,AUTOMOUNT:.spec.automountServiceAccountToken --no-headers
+```
+
+See [Using RBAC and defining authorization](https://docs.okd.io/latest/authentication/using-rbac.html) (aligned with OpenShift RBAC). [^90]
+
+#### Network isolation with NetworkPolicies and Egress Firewalls
+
+By default, OpenShift allows all pod-to-pod communication within the cluster until you define policies. With **OVN-Kubernetes**, NetworkPolicy objects are enforced in the OVN dataplane (see Cluster pod network (OVN-Kubernetes)). Use NetworkPolicy resources for namespace-scoped micro-segmentation (restricting traffic by labels, namespaces, and CIDR blocks) as described in the Network security guide. [^48] Where your cluster version supports them, AdminNetworkPolicy objects add an optional cluster-wide rule layer on top of namespace-scoped NetworkPolicies. [^76]
+
+For controlling traffic leaving the cluster, EgressFirewall (OpenShift’s `EgressFirewall` resource; historically referred to as egress network policy in some docs) allows or denies traffic to specific external domains or IP ranges. [^49] This is particularly useful for preventing data exfiltration or ensuring that internal applications only communicate with approved external APIs. Validate egress with flow logs, SIEM correlation, or workload-aware observability so policy and reality stay aligned, especially when several teams share a cluster.
+
+| Policy Objective | Resource Type | Implementation |
+| :---- | :---- | :---- |
+| Isolate Namespace | NetworkPolicy | Deny all ingress/egress by default |
+| Allow Ingress Controller | NetworkPolicy | Permit traffic from the Ingress namespace |
+| Block External Access | EgressFirewall | Deny traffic to unknown CIDRs |
+| Allow Specific API | EgressFirewall | Permit traffic to a target FQDN |
+
+#### The OpenShift Compliance Operator
+
+Maintaining compliance in a dynamic cloud environment requires automated auditing. The Compliance Operator allows administrators to describe the required compliance state (e.g., CIS Benchmarks, PCI-DSS, or FedRAMP) and provides remediation strategies for any detected gaps. [^51]
+
+The operator uses OpenSCAP to scan both the OpenShift API resources visible in your cluster context and the underlying nodes. [^47] For ROSA HCP, administrators must ensure that the operator is configured to run on worker nodes, as the hosted control plane components are handled by Red Hat's own compliance processes. [^53] Propagate scan configuration fleet-wide from your governance hub and pair operator results with workload security reporting when auditors need both views (see About this guide). [^71] [^70]
+
+To check the results of a compliance scan and identify failing controls:
+
+```bash
+oc get compliancecheckresults -n openshift-compliance | grep FAIL
+```
+
+## Operational excellence and lifecycle management
+
+Operational excellence in ROSA HCP is achieved through automation, proactive monitoring, and a disciplined approach to cluster maintenance. The HCP model's separate lifecycle for the control plane and worker nodes allows for more surgical maintenance windows and reduced risk during updates.
+
+**ROSA platform boundary:** Pair these practices with deliberate admin scope (ROSA customer administration and break-glass under Identity and Access Management through STS and OIDC): do not treat `cluster-admin` as routine access, do not document node SSH or customer-owned MachineConfig surgery as supported levers on ROSA HCP, and keep long-lived cloud or registry credentials out of integrated build specs (CI/CD and GitOps (platform-native) and Software supply chain and secure development).
+
+#### Decoupled upgrade strategy
+
+In ROSA HCP, upgrades are not holistic cluster events. Administrators have the flexibility to upgrade the hosted control plane first, followed by the individual machine pools. [^1] This is particularly advantageous for large-scale environments where different application teams may have different maintenance windows. A multi-cluster hub can add fleet visibility and staged rollouts on top of ROSA’s native upgrade APIs (see About this guide). [^71]
+
+Red Hat utilizes a "Node Surge" strategy during machine pool upgrades. A new node is provisioned in excess of the replica count (maxSurge) before an old node is drained and replaced. [^8] This ensures that the application's capacity is not compromised during the upgrade process, provided that PDBs and node surge settings are correctly configured. [^8]
+
+| Upgrade Action [^2] | Command | Verification |
+| :---- | :---- | :---- |
+| List Available Versions | `rosa list upgrade -c <cluster_id>` | Review "Notes" for recommendations |
+| Upgrade Control Plane | `rosa upgrade cluster -c <cluster_id> --version <version>` | `rosa describe cluster -c <cluster_id>` |
+| List Machine Pools | `rosa list machinepools -c <cluster_id>` | Check current version per pool |
+| Upgrade Machine Pool | `rosa upgrade machinepool -c <cluster_id> <name>` | `oc get nodes` |
+
+**ClusterOperator health:** Treat ClusterOperator status as part of upgrade and steady-state review. Resolve Degraded operators before you declare maintenance complete; pair `oc get clusteroperators` with [Insights Advisor](#proactive-health-monitoring-with-insights-advisor) findings.
+
+```bash
+oc get clusteroperators
+```
+
+#### API compatibility and upgrade readiness
+
+OpenShift and Kubernetes remove beta and GA APIs across minor releases. Manifests that still declare deprecated `apiVersion` pairs block clean upgrades or surprise GitOps controllers mid-window when admission starts rejecting apply traffic.
+
+**Do:** Author YAML with `apiVersion` and `kind` documented for your target cluster minor (for example `apps/v1` Deployment, `route.openshift.io/v1` Route, `project.openshift.io/v1` ProjectRequest templates, not `extensions/v1beta1`-era holdovers); run `oc explain` or `oc api-resources` when unsure which group or version is current; add CI or policy linters that fail pull requests on known removals. Community tools such as [Pluto](https://github.com/FairwindsOps/pluto) or [kubent](https://github.com/doitintl/kube-no-trouble) scan Helm charts and flat manifests for deprecated APIs before you upgrade control planes or machine pools. Pair them with [Insights Advisor](https://www.redhat.com/en/blog/insights-advisor-openshift-how-react-advisor-recommendations) and release notes for your ROSA layer so fleet and application repositories ship the same truth.
+
+**Don’t:** Copy five-year-old blog snippets into production `kustomize` bases without a version gate; rely only on manual `oc apply` the night before change freeze to discover removed CRDs.
+
+Sample inventory of API groups available to your user (trim output as needed):
+
+```bash
+oc api-resources -o wide | head -40
+oc explain deployment --api-version=apps/v1 | head -20
+```
+
+See the [Kubernetes Deprecated API Migration Guide](https://kubernetes.io/docs/reference/using-api/deprecation-guide/) for cross-version removal timelines tied to Kubernetes minors underlying your OpenShift version. [^95]
+
+#### Cluster API hygiene for automation
+
+Controllers, operators, Terraform providers, custom scripts, and CI jobs all talk to the same cluster API server quota and rate limits. Bursts of LIST or WATCH without backoff or shared informers amplify 429 Too Many Requests and transient 5xx responses, which increases etcd load and slows everyone else’s `oc` sessions.
+
+**Do:** Implement exponential backoff with jitter on 429, 500–504, and timeouts; reuse official client libraries (client-go, controller-runtime) that honor `Retry-After` and built-in rate limiters instead of tight `while` loops; batch reads where possible and scope RBAC so automation does not require cluster-wide LIST when a namespaced watch suffices.
+
+**Garbage collection and ownership:** Understand `metadata.ownerReferences` on objects your controllers create. When the parent is deleted, the API server may cascade-delete dependents unless policies or `blockOwnerDeletion` say otherwise. Design parent/child graphs deliberately so a namespace teardown or upper custom resource removal does not orphan secrets you thought were independent, or delete shared ConfigMaps still referenced by live Pods. See [Garbage collection](https://kubernetes.io/docs/concepts/architecture/garbage-collection/) in the Kubernetes documentation. [^96]
+
+Inspect owner links on a resource (replace kind, name, namespace):
+
+```bash
+oc get secret -n <namespace> <name> -o jsonpath='{.metadata.ownerReferences}' | jq .
+```
+
+#### Proactive health monitoring with Insights Advisor
+
+The Insights Operator is a core component of the OpenShift platform that provides continuous assessment of cluster health against Red Hat’s database of recommendations and best practices. It reports configuration drifts, security vulnerabilities, and performance bottlenecks to the Red Hat Hybrid Cloud Console. [^40]
+
+The Insights Advisor categorizes issues into four areas: Service Availability, Performance, Fault Tolerance, and Security. [^40] Each recommendation includes a detailed resolution guide tailored to the specific cluster. Administrators should treat Insights findings as high-priority tasks and integrate them into their regular operational reviews. Pair Insights with workload- and image-centric scanning from the Red Hat security portfolio where you need supply-chain and runtime depth (see About this guide). [^70]
+
+To verify that the Insights Operator is functioning and to inspect the data being reported:
+
+```bash
+oc get pods -n openshift-insights
+oc get configmap insights-config -n openshift-insights -o yaml
+```
+
+**Supported day-two tooling:** Prefer `oc` and `rosa` flows that match supported ROSA operations. Do not document SSH to nodes or MachineConfig surgery as customer-operable levers on HCP when those planes are SRE-owned. For Red Hat support, collect `oc adm must-gather` (and Insights where applicable) and attach outputs per your support playbook (Health assessment framework and investigative scripting).
+
+#### Centralized logging and metrics federation
+
+While platform monitoring is managed by Red Hat SREs, consumers are responsible for monitoring their own application workloads. Enable [user workload monitoring](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/configuring-user-workload-monitoring) so teams can deploy custom Prometheus rules and Grafana dashboards in application namespaces.
+
+For long-term persistence and audit compliance, federate metrics to an external system such as [Amazon Managed Service for Prometheus](https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-for-Prometheus.html) or an S3-backed destination where that fits your retention model. For logs from workloads and cluster infrastructure in your AWS account, use [Cluster Logging](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/about-logging) (and related forwarders) so application, infrastructure, and audit streams can land in sinks such as Loki, CloudWatch Logs, or a SIEM. That preserves evidence for forensics after a cluster is decommissioned or replaced.
+
+**Hosted control plane logs (ROSA HCP):** ROSA with Hosted Control Planes adds a managed control plane log forwarder that runs separately from your worker nodes, so forwarding control plane telemetry does not compete with application CPU or memory. You can deliver those logs to Amazon CloudWatch Logs or to an Amazon S3 bucket in your account (or configure both), using a small YAML file referenced from the ROSA CLI. Product guidance: prefer CloudWatch when you need live search, alarms, and operational triage (for example CloudWatch Logs Insights); prefer S3 when you prioritize durable object storage, long retention, or downstream analytics and partition-based scans. Forwarding and storage add AWS service charges; align log groups, retention, and lifecycle rules with FinOps and security stakeholders.
+
+
+**Configuring control plane log forwarding:**
+
+```bash
+rosa create log-forwarder -c <cluster> --log-fwd-config=<file>.yaml
+```
+
+See [Forwarding control plane logs](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/security_and_compliance/rosa-forwarding-control-plane-logs) in the Red Hat OpenShift Service on AWS documentation for IAM policy samples, YAML schemas, and troubleshooting. [^102]
+
+Keep user workload monitoring (introduced above) clearly owned by application teams when they run `PrometheusRule` and SLO burn-rate alerts, distinct from platform monitoring SREs operate. See [Monitoring](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/index) in the OpenShift documentation. [^91]
+
+If narratives cover audit or SOC reviews, align Cluster Logging forwarders, Loki (or external sinks), and retention with policy in the same way as workload and infrastructure streams above.
+
+For OperatorHub workloads, set Subscription `installPlanApproval` (Automatic versus Manual), pin channel and `startingCSV` discipline per your change model, and document catalog sources, including disconnected or mirror registries when egress policy requires them (Zero-Egress and Secure Egress architectures).
+
+```bash
+oc get subscription -A
+oc get installplan -A | head -30
+```
+
+#### Application observability: logs, metrics, traces, and SLOs
+
+Tier-1 services on ROSA should emit signals operators can aggregate, alert on, and retain, whether logs land in Loki, Amazon CloudWatch, or a SIEM downstream of [Cluster Logging](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/about-logging).
+
+Red Hat publishes optional operators that go beyond default platform monitoring and user workload monitoring. The [Cluster Observability Operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/cluster_observability_operator/index) helps you install and run a customer-managed observability stack (for example Prometheus, Alertmanager, and related monitoring UI or correlation tooling) when teams need a dedicated, customizable plane. The [Network Observability Operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/network_observability/) focuses on cluster networking: eBPF-based collectors, the cluster `FlowCollector` API, flow visualization, and optional export to stores such as Loki for search and retention. Treat both as add-ons: check OperatorHub channels, sizing and node overhead (especially for network flow collection), and support statements for your ROSA / OpenShift version before you bake them into a reference design. [^103] [^104]
+
+**Structured logs:** Prefer JSON or stable `key=value` formats (avoid prose-only printf strings that break field extraction in Loki, Elasticsearch, or CloudWatch Logs Insights). Annotate containers with consistent `app`, `version`, and instance labels via OpenShift metadata where your pipeline expects them.
+
+**RED / USE metrics for HTTP and gRPC:** Standardize rate, errors, and duration (RED) for request-driven services, and utilization, saturation, and errors (USE) for dependencies such as CPU, connection pools, and queues where SLOs matter. [User workload monitoring](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/index) (enable monitoring for user-defined projects per the Monitoring guide) exposes application Prometheus scrapes and `PrometheusRule` alerts alongside platform monitoring. Turn it on when teams own SLO burn-rate alerts. [^91]
+
+**Distributed traces:** Wire OpenTelemetry (or your mesh trace exporter) client libraries so latency spread across Routes, services, and managed backends is visible in Jaeger, Tempo, CloudWatch Service Lens, or enterprise APM. That visibility matters when p99 regressions cannot be blamed on a single Pod CPU graph.
+
+**SLOs and error budgets:** For customer-facing tiers, define objectives (for example 99.9% availability, p95 latency under 250 ms) and error-budget policy. Tie alert routing and freeze windows to budget burn so on-call responds to user-impacting risk, not every noisy counter.
+
+Quick ServiceMonitor inventory (user workload monitoring scrapes these when enabled for user projects):
+
+```bash
+oc get servicemonitor -A 2>/dev/null | head -20
+```
+
 ## Application reliability and workload resilience
 
 Application reliability in ROSA HCP is a [shared responsibility](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/introduction_to_rosa/policies-and-service-definition#rosa-policy-responsibility-matrix). While the platform provides the necessary primitives for resilience, developers must architect their workloads to survive infrastructure failures and the automated maintenance cycles inherent in a managed service.
 
-##### Health probes and the container lifecycle
+#### Health probes and the container lifecycle
 
 The foundation of application reliability is the implementation of health check probes in every pod definition. [^27] These probes allow OpenShift, through the kubelet on each node, to make informed decisions about the state of a container.
 
@@ -311,6 +514,10 @@ Administrators should regularly audit their clusters for pods without defined li
 ```bash
 oc get pods -A -o json | jq '.items[] | select(any(.spec.containers[]?; (.resources.limits // null) == null)) | .metadata.name'
 ```
+
+#### Projects, quotas, and project request templates
+
+Treat each OpenShift **Project** as a tenancy slice: RBAC, `ResourceQuota`, `LimitRange`, default `NetworkPolicy`, and SCC posture should be intentional, not ad hoc after self-service Project creation. For fleets, configure a **project request template** (or supported equivalent) so every new Project is born with baseline `ResourceQuota`, `LimitRange`, starter `NetworkPolicy` (for example default-deny with narrow egress), optional `EgressFirewall`, and RoleBinding patterns rather than hoping teams remember manual steps. See [Configuring project creation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/applications/projects/configuring-project-creation) in the OpenShift documentation and validate the exact menu path for your ROSA or OpenShift version. [^99]
 
 #### Persistent storage, CSI, and data planes on AWS
 
@@ -458,174 +665,6 @@ oc api-resources --api-group=maistra.io -o name 2>/dev/null
 oc get pods -A -l app.kubernetes.io/name=istio 2>/dev/null | head -5
 ```
 
-## Operational excellence and lifecycle management
-
-Operational excellence in ROSA HCP is achieved through automation, proactive monitoring, and a disciplined approach to cluster maintenance. The HCP model's separate lifecycle for the control plane and worker nodes allows for more surgical maintenance windows and reduced risk during updates.
-
-#### Decoupled upgrade strategy
-
-In ROSA HCP, upgrades are not holistic cluster events. Administrators have the flexibility to upgrade the hosted control plane first, followed by the individual machine pools. [^1] This is particularly advantageous for large-scale environments where different application teams may have different maintenance windows. A multi-cluster hub can add fleet visibility and staged rollouts on top of ROSA’s native upgrade APIs (see About this guide). [^71]
-
-Red Hat utilizes a "Node Surge" strategy during machine pool upgrades. A new node is provisioned in excess of the replica count (maxSurge) before an old node is drained and replaced. [^8] This ensures that the application's capacity is not compromised during the upgrade process, provided that PDBs and node surge settings are correctly configured. [^8]
-
-| Upgrade Action [^2] | Command | Verification |
-| :---- | :---- | :---- |
-| List Available Versions | `rosa list upgrade -c <cluster_id>` | Review "Notes" for recommendations |
-| Upgrade Control Plane | `rosa upgrade cluster -c <cluster_id> --version <version>` | `rosa describe cluster -c <cluster_id>` |
-| List Machine Pools | `rosa list machinepools -c <cluster_id>` | Check current version per pool |
-| Upgrade Machine Pool | `rosa upgrade machinepool -c <cluster_id> <name>` | `oc get nodes` |
-
-#### API compatibility and upgrade readiness
-
-OpenShift and Kubernetes remove beta and GA APIs across minor releases. Manifests that still declare deprecated `apiVersion` pairs block clean upgrades or surprise GitOps controllers mid-window when admission starts rejecting apply traffic.
-
-**Do:** Author YAML with `apiVersion` and `kind` documented for your target cluster minor (for example `apps/v1` Deployment, `route.openshift.io/v1` Route, `project.openshift.io/v1` ProjectRequest templates, not `extensions/v1beta1`-era holdovers); run `oc explain` or `oc api-resources` when unsure which group or version is current; add CI or policy linters that fail pull requests on known removals. Community tools such as [Pluto](https://github.com/FairwindsOps/pluto) or [kubent](https://github.com/doitintl/kube-no-trouble) scan Helm charts and flat manifests for deprecated APIs before you upgrade control planes or machine pools. Pair them with [Insights Advisor](https://www.redhat.com/en/blog/insights-advisor-openshift-how-react-advisor-recommendations) and release notes for your ROSA layer so fleet and application repositories ship the same truth.
-
-**Don’t:** Copy five-year-old blog snippets into production `kustomize` bases without a version gate; rely only on manual `oc apply` the night before change freeze to discover removed CRDs.
-
-Sample inventory of API groups available to your user (trim output as needed):
-
-```bash
-oc api-resources -o wide | head -40
-oc explain deployment --api-version=apps/v1 | head -20
-```
-
-See the [Kubernetes Deprecated API Migration Guide](https://kubernetes.io/docs/reference/using-api/deprecation-guide/) for cross-version removal timelines tied to Kubernetes minors underlying your OpenShift version. [^95]
-
-#### Cluster API hygiene for automation
-
-Controllers, operators, Terraform providers, custom scripts, and CI jobs all talk to the same cluster API server quota and rate limits. Bursts of LIST or WATCH without backoff or shared informers amplify 429 Too Many Requests and transient 5xx responses, which increases etcd load and slows everyone else’s `oc` sessions.
-
-**Do:** Implement exponential backoff with jitter on 429, 500–504, and timeouts; reuse official client libraries (client-go, controller-runtime) that honor `Retry-After` and built-in rate limiters instead of tight `while` loops; batch reads where possible and scope RBAC so automation does not require cluster-wide LIST when a namespaced watch suffices.
-
-**Garbage collection and ownership:** Understand `metadata.ownerReferences` on objects your controllers create. When the parent is deleted, the API server may cascade-delete dependents unless policies or `blockOwnerDeletion` say otherwise. Design parent/child graphs deliberately so a namespace teardown or upper custom resource removal does not orphan secrets you thought were independent, or delete shared ConfigMaps still referenced by live Pods. See [Garbage collection](https://kubernetes.io/docs/concepts/architecture/garbage-collection/) in the Kubernetes documentation. [^96]
-
-Inspect owner links on a resource (replace kind, name, namespace):
-
-```bash
-oc get secret -n <namespace> <name> -o jsonpath='{.metadata.ownerReferences}' | jq .
-```
-
-#### Proactive health monitoring with Insights Advisor
-
-The Insights Operator is a core component of the OpenShift platform that provides continuous assessment of cluster health against Red Hat’s database of recommendations and best practices. It reports configuration drifts, security vulnerabilities, and performance bottlenecks to the Red Hat Hybrid Cloud Console. [^40]
-
-The Insights Advisor categorizes issues into four areas: Service Availability, Performance, Fault Tolerance, and Security. [^40] Each recommendation includes a detailed resolution guide tailored to the specific cluster. Administrators should treat Insights findings as high-priority tasks and integrate them into their regular operational reviews. Pair Insights with workload- and image-centric scanning from the Red Hat security portfolio where you need supply-chain and runtime depth (see About this guide). [^70]
-
-To verify that the Insights Operator is functioning and to inspect the data being reported:
-
-```bash
-oc get pods -n openshift-insights
-oc get configmap insights-config -n openshift-insights -o yaml
-```
-
-#### Centralized logging and metrics federation
-
-While platform monitoring is managed by Red Hat SREs, consumers are responsible for monitoring their own application workloads. Enable [user workload monitoring](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/configuring-user-workload-monitoring) so teams can deploy custom Prometheus rules and Grafana dashboards in application namespaces.
-
-For long-term persistence and audit compliance, federate metrics to an external system such as [Amazon Managed Service for Prometheus](https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-for-Prometheus.html) or an S3-backed destination where that fits your retention model. For logs from workloads and cluster infrastructure in your AWS account, use [Cluster Logging](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/about-logging) (and related forwarders) so application, infrastructure, and audit streams can land in sinks such as Loki, CloudWatch Logs, or a SIEM. That preserves evidence for forensics after a cluster is decommissioned or replaced.
-
-**Hosted control plane logs (ROSA HCP):** ROSA with Hosted Control Planes adds a managed control plane log forwarder that runs separately from your worker nodes, so forwarding control plane telemetry does not compete with application CPU or memory. You can deliver those logs to Amazon CloudWatch Logs or to an Amazon S3 bucket in your account (or configure both), using a small YAML file referenced from the ROSA CLI. Product guidance: prefer CloudWatch when you need live search, alarms, and operational triage (for example CloudWatch Logs Insights); prefer S3 when you prioritize durable object storage, long retention, or downstream analytics and partition-based scans. Forwarding and storage add AWS service charges; align log groups, retention, and lifecycle rules with FinOps and security stakeholders.
-
-
-**Configuring control plane log forwarding:**
-
-```bash
-rosa create log-forwarder -c <cluster> --log-fwd-config=<file>.yaml
-```
-
-See [Forwarding control plane logs](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/security_and_compliance/rosa-forwarding-control-plane-logs) in the Red Hat OpenShift Service on AWS documentation for IAM policy samples, YAML schemas, and troubleshooting. [^102]
-
-#### Application observability: logs, metrics, traces, and SLOs
-
-Tier-1 services on ROSA should emit signals operators can aggregate, alert on, and retain, whether logs land in Loki, Amazon CloudWatch, or a SIEM downstream of [Cluster Logging](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/logging/about-logging).
-
-Red Hat publishes optional operators that go beyond default platform monitoring and user workload monitoring. The [Cluster Observability Operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/cluster_observability_operator/index) helps you install and run a customer-managed observability stack (for example Prometheus, Alertmanager, and related monitoring UI or correlation tooling) when teams need a dedicated, customizable plane. The [Network Observability Operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/network_observability/) focuses on cluster networking: eBPF-based collectors, the cluster `FlowCollector` API, flow visualization, and optional export to stores such as Loki for search and retention. Treat both as add-ons: check OperatorHub channels, sizing and node overhead (especially for network flow collection), and support statements for your ROSA / OpenShift version before you bake them into a reference design. [^103] [^104]
-
-**Structured logs:** Prefer JSON or stable `key=value` formats (avoid prose-only printf strings that break field extraction in Loki, Elasticsearch, or CloudWatch Logs Insights). Annotate containers with consistent `app`, `version`, and instance labels via OpenShift metadata where your pipeline expects them.
-
-**RED / USE metrics for HTTP and gRPC:** Standardize rate, errors, and duration (RED) for request-driven services, and utilization, saturation, and errors (USE) for dependencies such as CPU, connection pools, and queues where SLOs matter. [User workload monitoring](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/monitoring/index) (enable monitoring for user-defined projects per the Monitoring guide) exposes application Prometheus scrapes and `PrometheusRule` alerts alongside platform monitoring. Turn it on when teams own SLO burn-rate alerts. [^91]
-
-**Distributed traces:** Wire OpenTelemetry (or your mesh trace exporter) client libraries so latency spread across Routes, services, and managed backends is visible in Jaeger, Tempo, CloudWatch Service Lens, or enterprise APM. That visibility matters when p99 regressions cannot be blamed on a single Pod CPU graph.
-
-**SLOs and error budgets:** For customer-facing tiers, define objectives (for example 99.9% availability, p95 latency under 250 ms) and error-budget policy. Tie alert routing and freeze windows to budget burn so on-call responds to user-impacting risk, not every noisy counter.
-
-Quick ServiceMonitor inventory (user workload monitoring scrapes these when enabled for user projects):
-
-```bash
-oc get servicemonitor -A 2>/dev/null | head -20
-```
-
-## Security hardening and automated compliance
-
-The multi-layered security approach of ROSA HCP combines OpenShift-native controls with AWS-specific infrastructure protections. Achieving a "Zero Trust" posture requires the enforcement of restricted policies at both the network and workload levels. When you operate many clusters, centralized workload security and hub-level governance extend that model with consistent sensors, policies, and visibility (see About this guide). [^71] [^70]
-
-#### Security Context Constraints (SCC) and Pod Security
-
-OpenShift’s SCCs are more restrictive and granular than standard Kubernetes Pod Security Policies (PSPs). It is a critical recommendation to stick to the restricted SCC whenever possible. This policy prevents pods from running as the root user, using host network interfaces, or mounting sensitive host paths, which are common vectors for container breakout attacks. [^45]
-
-For applications that require additional capabilities (e.g., certain storage drivers or network tools), a custom SCC should be created rather than granting the privileged SCC, which provides absolute control over the host node. [^22]
-
-Verification of the SCCs applied to running pods:
-
-```bash
-oc get pods -A -o json | jq '.items[] | {name:.metadata.name, scc:.metadata.annotations["openshift.io/scc"]}'
-```
-
-#### Pod security context baselines (complements SCC)
-
-SCC admission decides which security profiles a Pod may use; `securityContext` on the Pod and containers should still encode team intent so manifests are portable, reviewable, and aligned with `restricted-v2` (or your approved custom SCC) without relying on implicit defaults.
-
-**Do:** Set `allowPrivilegeEscalation: false` when compatible so setuid binaries cannot gain more privileges than the container user; prefer `readOnlyRootFilesystem: true` and mount `emptyDir` or `tmpfs` only where the app must write; drop all capabilities then add the minimum set (`CAP_NET_BIND_SERVICE`, `CAP_SYS_TIME`, and similar) instead of running `CAP_SYS_ADMIN`-heavy images; set `seccompProfile.type: RuntimeDefault` (or `Restricted` where policy and SCC allow) instead of `Unconfined` unless documented; run `runAsNonRoot: true` with an explicit `runAsUser` / `runAsGroup` or `fsGroup` that matches your image contract and restricted SCC expectations. See [Managing security context constraints](https://docs.okd.io/latest/authentication/managing-security-context-constraints.html) (same SCC mechanics as OpenShift) and [Configure a security context for a Pod or container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) in the Kubernetes documentation. [^88] [^89]
-
-**Don’t:** Omit `securityContext` blocks and assume SCC will “fix it”; use `privileged: true` or `CAP_SYS_ADMIN` without a ticket-level exception; expand `readOnlyRootFilesystem: false` without listing which paths need write access.
-
-Inspect effective fields on a running Pod (replace namespace and pod-name):
-
-```bash
-oc get pod -n <namespace> <pod-name> -o jsonpath='{range .spec.containers[*]}{.name}{": allowPrivilegeEscalation="}{.securityContext.allowPrivilegeEscalation}{", readOnlyRootFS="}{.securityContext.readOnlyRootFilesystem}{"\n"}{end}'
-```
-
-#### Service accounts and RBAC for workloads
-
-**Do:** Create a dedicated `ServiceAccount` per application or integration (avoid `default` for production Deployments); set `automountServiceAccountToken: false` on Pods that do not call the Kubernetes API (fewer tokens on disk reduces lateral movement if a container is compromised); grant Roles or ClusterRoles with RoleBinding / ClusterRoleBinding using minimal verbs and resources (get/list/watch on specific APIs, not wildcard `*` unless the controller pattern requires it and policy reviews it); pair with IRSA (Application workloads: IRSA, STS, and AWS credentials) for AWS APIs instead of reusing the same ServiceAccount token for both Kubernetes and cloud.
-
-**Don’t:** Bind `cluster-admin` (or `edit` on cluster-scoped objects) to namespace service accounts to get unblocked; leave `automountServiceAccountToken` default true on stateless HTTP services that never need `oc`-style access.
-
-Inventory bindings and non-default ServiceAccounts:
-
-```bash
-oc get rolebindings -n <namespace>
-oc get pods -n <namespace> -o custom-columns=NAME:.metadata.name,SA:.spec.serviceAccountName,AUTOMOUNT:.spec.automountServiceAccountToken --no-headers
-```
-
-See [Using RBAC and defining authorization](https://docs.okd.io/latest/authentication/using-rbac.html) (aligned with OpenShift RBAC). [^90]
-
-#### Network isolation with NetworkPolicies and Egress Firewalls
-
-By default, OpenShift allows all pod-to-pod communication within the cluster until you define policies. With **OVN-Kubernetes**, NetworkPolicy objects are enforced in the OVN dataplane (see Cluster pod network (OVN-Kubernetes)). Use NetworkPolicy resources for namespace-scoped micro-segmentation (restricting traffic by labels, namespaces, and CIDR blocks) as described in the Network security guide. [^48] Where your cluster version supports them, AdminNetworkPolicy objects add an optional cluster-wide rule layer on top of namespace-scoped NetworkPolicies. [^76]
-
-For controlling traffic leaving the cluster, EgressFirewall (OpenShift’s `EgressFirewall` resource; historically referred to as egress network policy in some docs) allows or denies traffic to specific external domains or IP ranges. [^49] This is particularly useful for preventing data exfiltration or ensuring that internal applications only communicate with approved external APIs. Validate egress with flow logs, SIEM correlation, or workload-aware observability so policy and reality stay aligned, especially when several teams share a cluster.
-
-| Policy Objective | Resource Type | Implementation |
-| :---- | :---- | :---- |
-| Isolate Namespace | NetworkPolicy | Deny all ingress/egress by default |
-| Allow Ingress Controller | NetworkPolicy | Permit traffic from the Ingress namespace |
-| Block External Access | EgressFirewall | Deny traffic to unknown CIDRs |
-| Allow Specific API | EgressFirewall | Permit traffic to a target FQDN |
-
-#### The OpenShift Compliance Operator
-
-Maintaining compliance in a dynamic cloud environment requires automated auditing. The Compliance Operator allows administrators to describe the required compliance state (e.g., CIS Benchmarks, PCI-DSS, or FedRAMP) and provides remediation strategies for any detected gaps. [^51]
-
-The operator uses OpenSCAP to scan both the OpenShift API resources visible in your cluster context and the underlying nodes. [^47] For ROSA HCP, administrators must ensure that the operator is configured to run on worker nodes, as the hosted control plane components are handled by Red Hat's own compliance processes. [^53] Propagate scan configuration fleet-wide from your governance hub and pair operator results with workload security reporting when auditors need both views (see About this guide). [^71] [^70]
-
-To check the results of a compliance scan and identify failing controls:
-
-```bash
-oc get compliancecheckresults -n openshift-compliance | grep FAIL
-```
-
 ## Software supply chain and secure development
 
 Modern ROSA estates treat what runs in cluster as the output of a pipeline: known images, attested artifacts, and policy that survives promotion from development to production. Pair OpenShift-native and AWS registry practices with Red Hat tooling when your organization buys SBOM-driven governance or Sigstore-class signing; use [Insights](https://www.redhat.com/en/blog/insights-advisor-openshift-how-react-advisor-recommendations) for platform drift and the security portfolio described in About this guide for CVE and runtime depth.
@@ -674,7 +713,7 @@ Use [OpenShift Pipelines](https://docs.openshift.com/pipelines/latest/about/unde
 
 #### From BuildConfig / S2I toward modern CI/CD
 
-Where BuildConfig, ImageStream, and S2I remain, build out a modernization lane: Tekton Tasks (Dockerfile, buildpack, or wrapped S2I), digest-pinned promotion, admission or signing hooks from Software supply chain and secure development, and GitOps-owned deploys. That gives brownfield teams a sequenced move off integrated-only defaults without pretending everything must jump in one weekend.
+Where BuildConfig, ImageStream, and S2I remain, build out a modernization lane: Tekton Tasks (Dockerfile, buildpack, or wrapped S2I), digest-pinned promotion, admission or signing hooks from Software supply chain and secure development, and GitOps-owned deploys. That gives brownfield teams a sequenced move off integrated-only defaults without pretending everything must jump in one weekend. Where integrated builds remain in play, protect pull secrets and Git or registry credentials: scope secrets to the namespace, rotate them, and avoid stuffing cluster-wide kubeconfigs or static cloud keys into build Source blocks.
 
 #### Legacy Jenkins, scripts, and dual-run
 
@@ -700,6 +739,18 @@ oc get pipelinerun -A --no-headers 2>/dev/null | head -20
 
 Optimizing performance in a ROSA HCP cluster involves a data-driven approach to resource allocation and the intelligent use of AWS instance types.
 
+#### Worker memory, allocatable capacity, and mixed machine pools
+
+**GiB versus GB and Kubernetes quantities:** Catalog and marketing materials often cite instance memory in **gigabytes (GB)** using decimal conventions, while the scheduler compares Pod **memory requests and limits** to node **allocatable** memory expressed in **bytes** with Kubernetes [quantity](https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/quantity/) suffixes. In manifests, `Gi` and `Mi` are power-of-two (bibyte) units; `G` and `M` follow the decimal definitions on the same page. Teams should not assume a “32 GB” EC2 class label sums the same way as `32Gi` in a Pod spec. Use the **Memory resource units** discussion in the Kubernetes guide on [resource management for Pods and containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) so finance, architects, and platform engineers share one vocabulary. [^33]
+
+**Allocatable is what scheduling sees:** `Capacity` on a node is not what the scheduler uses for Pod placement. Platform components reserve CPU and memory before **Allocatable** is published. When sizing machine pools and application requests, account for **system reservations** (approximately **4.76 GiB** on typical worker planning baselines) and memory consumed by **mandatory cluster services** (approximately **3.8 GiB** in the same planning models) **before** sizing your own workloads. Those figures are planning aids; they vary by OpenShift version, instance family, and enabled features, so treat **`Allocatable`** from `oc describe node <node>` (or the Metrics/Node API) as authoritative for a live cluster. [^105]
+
+**Illustrative gap:** A workload that requests **24 Gi** of memory may remain **Pending** on a **32 GiB**-class worker because allocatable memory after kubelet and platform overhead can fall below that request. That mismatch shows up in scheduler events, not as an EC2 billing surprise. Right-size requests, choose a larger instance class, or split the workload across replicas that each fit within allocatable headroom.
+
+**Cluster autoscaler and “would a new node help?”:** Node autoscalers provision capacity when Pods cannot schedule on existing Nodes but **can** schedule on Nodes that match the autoscaler’s configured groups. The cluster autoscaler evaluates Pod scheduling constraints (including resource requests) against the **shape** of Nodes a machine pool will add. If a Pending Pod still would not fit on a newly provisioned node of that type, growing the pool does not achieve the goal, so the autoscaler will not scale up solely for that Pod until you change requests, placement rules (selectors, affinity, tolerations), or the pool’s instance type. [^106]
+
+**Multiple pool sizes in one cluster:** It is common to run **several machine pools** with different instance types in a single ROSA cluster. That gives the scheduler more placement options: steer large-memory or specialized tiers with **node labels** and **`nodeSelector` / node affinity**, and reduce **noisy-neighbor** risk by dedicating a pool to batch, analytics, or other bursty workloads so they do not share node size and kernel contention with latency-sensitive services. See [Scheduling spread, affinity, and noisy neighbors](#scheduling-spread-affinity-and-noisy-neighbors) for spread and affinity patterns that complement pool design.
+
 #### Multi-Dimensional Autoscaling
 
 Think of your ROSA worker nodes as loading bays in a warehouse, Pods as crews working a shift, and CPU and memory requests as how much space and tooling each crew reserves on the floor. Three different autoscalers solve three different problems. Stack them and you get elasticity at the node, replica, and per-Pod resource layers.
@@ -710,7 +761,7 @@ Think of your ROSA worker nodes as loading bays in a warehouse, Pods as crews wo
 | **Horizontal Pod Autoscaler (HPA)** | Send more crews to the same job when the queue grows | Pod replicas | Throughput and latency under load without changing each Pod’s size |
 | **Vertical Pod Autoscaler (VPA)** | Right-size each crew’s toolkit | CPU/memory requests and limits per Pod | Efficiency and stable scheduling signals for the other two |
 
-**Cluster Autoscaler (nodes):** When Pods stay Pending because no node has enough free requests, the cluster autoscaler grows the machine pool (adds EC2 workers) up to its maximum. That is how you scale the foundation, not the application logic directly. On ROSA HCP, each machine pool maps to a single Availability Zone, so run at least one autoscaled pool per AZ you want to grow in, and size min and max replicas so you always meet platform minimums (for example system workloads) while leaving headroom for bursts. [^55]
+**Cluster Autoscaler (nodes):** When Pods stay Pending because no node has enough free requests, the cluster autoscaler grows the machine pool (adds EC2 workers) up to its maximum, provided a new node of that pool’s shape would actually make the Pod schedulable (see **Worker memory, allocatable capacity, and mixed machine pools**). That is how you scale the foundation, not the application logic directly. On ROSA HCP, each machine pool maps to a single Availability Zone, so run at least one autoscaled pool per AZ you want to grow in, and size min and max replicas so you always meet platform minimums (for example system workloads) while leaving headroom for bursts. [^55]
 
 **HPA (replicas):** HPA adds or removes identical Pods based on CPU, memory, or custom metrics. It answers “how many copies of this service?”, not “how big should each copy be?”. It works best when requests and limits are already sensible (often informed by VPA recommendations); otherwise the scheduler may place too many small Pods on a node or trigger scaling off noisy metrics.
 
@@ -865,59 +916,6 @@ For network paths between regions, use inter-Region VPC peering, Transit Gateway
 #### Stateful Application Considerations
 
 Stateful applications remain a high-value focus: [managed relational tiers on AWS](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_HighAvailability.html) such as RDS or Aurora (often with global or cross-region options) simplify failover and align with AWS resilience patterns. Where data must stay on cluster storage, storage operators, replication, and workload-scoped Velero or OADP (with tested namespace- or PVC-level restores) must close the RPO/RTO gap explicitly, without treating whole-cluster restore as the only articulated path. [^63]
-
-## OpenShift platform alignment on ROSA
-
-OpenShift objects such as `Route`, `Project`, `EgressFirewall`, SCC bindings, and OperatorHub subscriptions need to match **OVN-Kubernetes** semantics, your DNS and TLS posture, and what ROSA customers can actually change, not legacy OpenShift SDN lore or generic Kubernetes tutorials alone.
-
-**Do:** State Route TLS modes explicitly (edge, passthrough, reencrypt) and who holds certificates; keep Pod Security admission and `securityContext` aligned with real SCC outcomes; scope admin tasks with [dedicated-admin](https://docs.aws.amazon.com/rosa/latest/userguide/using-dedicated-admins.html) patterns; validate ClusterOperators after upgrades; turn on user-defined monitoring when teams own `PrometheusRule` alerts; pin Operator channels and InstallPlan approval; use project templates so new Projects inherit quotas and network baselines.
-
-**Don’t:** Treat `cluster-admin` as routine day-two access without policy; leave kubeadmin active after IdP cutover; document node SSH or MachineConfig edits as if customers own the hosted control plane on ROSA HCP; embed long-lived pull or cloud credentials in BuildConfig specs.
-
-#### Networking: OVN, Routes, and policy
-
-Assume **OVN-Kubernetes** for pod networking (see Cluster pod network (OVN-Kubernetes)). Author NetworkPolicy, EgressFirewall, and AdminNetworkPolicy (when available) against OVN behavior in your OpenShift minor. Cross-check product docs rather than assuming upstream-only NetworkPolicy examples apply verbatim.
-
-For Routes (and Ingress where you use it), document TLS end-to-end: edge terminates at the router, passthrough keeps client TLS to the Pod (pair with IngressController and load-balancer designs that do not break that chain), and reencrypt terminates at the router then re-establishes TLS to backends. Record certificate sources and CA trust for each hop; align hostnames and wildcards with private or public ingress (see Private clusters, landing-zone ingress, and application DNS/TLS and [Configuring Routes](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/networking/configuring-routes)). [^80]
-
-#### Projects, quotas, and project request templates
-
-Treat each Project as a tenancy slice: RBAC, ResourceQuota, LimitRange, default NetworkPolicy, and SCC posture should be intentional, not ad hoc after self-service Project creation. For fleets, configure a project request template (or supported equivalent) so every new Project is born with baseline ResourceQuota, LimitRange, starter NetworkPolicy (for example default-deny with narrow egress), optional EgressFirewall, and RoleBinding patterns rather than hoping teams remember manual steps. See [Configuring project creation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/applications/projects/configuring-project-creation) in the OpenShift documentation and validate the exact menu path for your ROSA or OpenShift version. [^99]
-
-#### SCC, Pod Security, AWS access, and secrets
-
-Keep ServiceAccount-to-SCC mapping intentional: prefer `restricted` or an approved custom SCC; `privileged` should be rare and documented. Namespace Pod Security labels (or synonyms on your version) should match what SCC actually admits. Avoid “restricted YAML, privileged at runtime” drift. Application AWS access stays IRSA-first (Application workloads: IRSA, STS, and AWS credentials); sensitive material belongs in Secrets Manager or Vault via External Secrets Operator for production baselines, not only raw Secret YAML in Git (Configuration, secrets, and external secret management).
-
-#### Administration, identity, and break-glass
-
-Use [dedicated-admin](https://docs.aws.amazon.com/rosa/latest/userguide/using-dedicated-admins.html)-style privileges for supported customer administration; reserve `cluster-admin`-class grants for exceptions your security and subscription policies approve. Remove kubeadmin once external IdP and RBAC are validated (OIDC Configuration and Identity Providers), and write down break-glass steps (who can restore access, how tickets are opened).
-
-#### ClusterOperators, monitoring, logging, and OperatorHub
-
-Treat ClusterOperator health as part of upgrade and steady-state review. Resolve Degraded operators before declaring maintenance complete; use Insights alongside `oc get clusteroperators`.
-
-```bash
-oc get clusteroperators
-```
-
-When teams own application SLO burn-rate alerts, enable monitoring for user-defined projects and User Workload Monitoring and keep its ownership distinct from platform monitoring SREs run (Operational excellence and Monitoring product docs). [^91]
-
-If narratives cover audit or SOC reviews, align Cluster Logging forwarders, Loki (or external sinks), and retention with policy (same section as centralized logging above).
-
-For OperatorHub workloads, set Subscription `installPlanApproval` (Automatic versus Manual), pin channel and startingCSV discipline per your change model, and document catalog sources, including disconnected or mirror registries when egress policy requires them (Zero-Egress and Secure Egress architectures).
-
-```bash
-oc get subscription -A
-oc get installplan -A | head -30
-```
-
-#### Integrated builds (BuildConfig, ImageStream)
-
-Where BuildConfig, ImageStream, or S2I remain in play, protect pull secrets and Git or registry credentials: scope secrets to the namespace, rotate them, and avoid stuffing cluster-wide kubeconfigs or static cloud keys into build Source blocks.
-
-#### Day-2 tooling and support bundles
-
-Prefer `oc` and `rosa` flows that match supported ROSA operations. Do not document SSH to nodes or MachineConfig surgery as customer-operable levers on HCP when those planes are SRE-owned. For Red Hat support, collect `oc adm must-gather` (and Insights where applicable) and attach outputs per your support playbook (Health assessment framework).
 
 ## Health assessment framework and investigative scripting
 
@@ -1079,3 +1077,5 @@ For regulated environments, zero-egress–oriented installs, regional ECR, your 
 [^102]: Chapter 2. Forwarding control plane logs | Security and compliance | Red Hat OpenShift Service on AWS, accessed April 1, 2026, [https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/security_and_compliance/rosa-forwarding-control-plane-logs](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/security_and_compliance/rosa-forwarding-control-plane-logs)
 [^103]: Red Hat OpenShift Cluster Observability Operator | OpenShift Container Platform | 4.18, accessed April 1, 2026, [https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/cluster_observability_operator/index](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/cluster_observability_operator/index)
 [^104]: Network Observability | OpenShift Container Platform | 4.18, accessed April 1, 2026, [https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/network_observability/index](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/network_observability/index)
+[^105]: Chapter 4\. Planning resource usage in your cluster | Prepare your environment | Red Hat OpenShift Service on AWS classic architecture, accessed April 1, 2026, [https://docs.openshift.com/rosa/rosa_planning/rosa-planning-environment.html](https://docs.openshift.com/rosa/rosa_planning/rosa-planning-environment.html)
+[^106]: Node Autoscaling | Kubernetes Documentation, accessed April 1, 2026, [https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/](https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/)
