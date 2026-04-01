@@ -5,14 +5,33 @@ tags: ["ARO"]
 authors:
   - Daniel Penagos
   - Paul Czarkowski
+  - Diana Sari
+validated_version: "4.20"
 ---
 
 
-The Azure Blob Storage Container Storage Interface (CSI) is a CSI compliant driver that can be installed to an Azure Red Hat OpenShift (ARO) cluster to manage the lifecycle of Azure Blob storage.
+The Azure Blob Storage Container Storage Interface (CSI) is a CSI-compliant driver that can be installed on an Azure Red Hat OpenShift (ARO) cluster to provision and mount Azure Blob storage for Kubernetes workloads.
 
-When you use this CSI driver to mount an Azure Blob storage into a pod, it allows you to use blob storage to work with massive amounts of data.
+When you use this CSI driver to mount Azure Blob storage into a pod, it allows you to use blob storage to work with massive amounts of data.
 
-You can refer also to the driver's documentation [here](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/charts/README.md).
+You can also refer to the driver's documentation [here](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/charts/README.md).
+
+The Azure Blob CSI driver supports two common dynamic provisioning models:
+
+- **Driver-managed path**: the driver can select or create a suitable storage account when one is not explicitly specified in the StorageClass.
+- **Bring your own (BYO) storage account path**: the StorageClass is tied to an existing storage account that you create and manage.
+
+
+## Scope of validation
+
+* The steps below were validated on ARO using a dynamic provisioning path with BlobFuse2 and a manually specified storage account.
+* The driver-managed storage account creation path was outside the scope of this update.
+* During validation, additional ARO-specific controller credential wiring was required:
+  - `azure-cred-file` ConfigMap in `kube-system`
+  - `azure-cloud-provider` secret in `kube-system`
+  - explicit BlobFuse2 working directory in the StorageClass mount options
+* Static provisioning with Azure Blob CSI was also validated separately in lab testing, but it is outside the scope of this walkthrough.
+
 
 ## Prerequisites
 
@@ -20,21 +39,27 @@ You can refer also to the driver's documentation [here](https://github.com/kuber
 * [Helm - command line utility](https://helm.sh/docs/intro/install/)
 * oc - command line utility. 
 * jq - command line utility.
+* Azure CLI logged into the correct subscription.
+* Permissions to create or access an Azure Storage Account for the test workflow.
+* Permissions to create a service principal and assign Azure RBAC roles.
+
 
 1. Set the environment variables related to your cluster environment:
 
-    > Update the `LOCATION`, `CLUSTER_NAME`, and `RG_NAME` variables in the snippet below to match your cluster details:
+    > Update the `LOCATION`, `CLUSTER_NAME`, `RG_NAME`, and `VNET_NAME` variables in the snippet below to match your cluster details:
 
     ```bash
     export LOCATION=eastus
     export CLUSTER_NAME=my-cluster
-    export RG_NAME=myresourcegroup 
+    export RG_NAME=myresourcegroup
+    export VNET_NAME=my-vnet
     export TENANT_ID=$(az account show --query tenantId -o tsv)
-    export SUB_ID=$(az account show --query id)
+    export SUB_ID=$(az account show --query id -o tsv)
     export MANAGED_RG=$(az aro show -n $CLUSTER_NAME -g $RG_NAME --query 'clusterProfile.resourceGroupId' -o tsv)
-    export MANAGED_RG_NAME=`echo -e $MANAGED_RG | cut -d  "/" -f5`    
+    export MANAGED_RG_NAME=$(echo -e $MANAGED_RG | cut -d "/" -f5)
     ```
-1. Set some environment variables related to the project and secret names used to install the driver, and the testing project's name where a pod will be using the configured storage:
+
+1. Set environment variables related to the project and secret names used to install the driver, and the testing project where a pod will use the configured storage:
 
     ```bash
     export CSI_BLOB_PROJECT=csi-azure-blob
@@ -42,7 +67,7 @@ You can refer also to the driver's documentation [here](https://github.com/kuber
     export CSI_TESTING_PROJECT=testing-project
     ```
 
-1. Set other environment variables to be used to create the testing resources, such as the azure storage account and its blob container:
+1. Set additional environment variables for the storage resources used by the test workflow, including the storage account and blob container names:
 
     ```bash
     export APP_NAME=myapp
@@ -50,247 +75,425 @@ You can refer also to the driver's documentation [here](https://github.com/kuber
     export BLOB_CONTAINER_NAME=aroblob
     ```
 
+
 ## Create an identity for the CSI Driver to access the Blob Storage
 
-The cluster must use an identity with proper permissions to access the blob storage. 
-1. Create a specific service principal for this purpose. 
+The Azure Blob CSI driver needs Azure credentials so it can access the blob storage resources used by this walkthrough.
+
+For the validated ARO path used here, this includes:
+
+- a service principal with the required Azure permissions
+- a Kubernetes secret for the driver
+- additional ARO-specific controller cloud configuration in `kube-system`
+
+
+1. Create a service principal for the Blob CSI driver:
 
     ```bash
-    export APP=$(az ad sp create-for-rbac --display-name aro-blob-csi)
-    export AAD_CLIENT_ID=$(echo $APP | jq -r '.appId')
-    export AAD_CLIENT_SECRET=$(echo $APP | jq -r '.password')
-    export AAD_OBJECT_ID=$(az ad app list --app-id=${AAD_CLIENT_ID} | jq -r '.[0].id')
-
+    az ad sp create-for-rbac --name http://$CSI_BLOB_SECRET --skip-assignment
     ```
 
-1. Once we have all the environment variables set, we need to create the configuration file we will use to populate a json structure with all the data needed. 
+    Example output:
 
+    ```json
+    {
+      "appId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "displayName": "csi-azure-blob-secret",
+      "password": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "tenant": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    }
+    ```
+
+1. Export the values from the command output:
 
     ```bash
-    cat <<EOF >> cloud.conf
-    {
-    "tenantId": "$TENANT_ID",
-    "subscriptionId": $SUB_ID,
-    "resourceGroup": "$MANAGED_RG_NAME",
-    "location": "$LOCATION",
-    "useManagedIdentityExtension": false,
-    "aadClientId": "$AAD_CLIENT_ID",
-    "aadClientSecret": "$AAD_CLIENT_SECRET"
-    }
+    export AZURE_CLIENT_ID=<appId>
+    export AZURE_CLIENT_SECRET=<password>
+    export AZURE_TENANT_ID=<tenant>
+    ```
+
+1. Assign the required roles to the service principal.
+
+    For the validated ARO path in this article, the service principal required:
+    - `Contributor` on the VNet resource group
+    - `Storage Account Contributor` on the target storage account
+
+    Assign `Contributor` on the resource group:
+
+    ```bash
+    az role assignment create \
+      --assignee $AZURE_CLIENT_ID \
+      --role Contributor \
+      --scope /subscriptions/$SUB_ID/resourceGroups/$RG_NAME
+    ```
+
+    Assign `Storage Account Contributor` on the storage account:
+
+    ```bash
+    export STORAGE_ACCOUNT_ID=$(az storage account show \
+      --name $STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME \
+      --query id -o tsv)
+
+    az role assignment create \
+      --assignee $AZURE_CLIENT_ID \
+      --role "Storage Account Contributor" \
+      --scope $STORAGE_ACCOUNT_ID
+    ```
+
+1. Create the project for the Blob CSI driver resources:
+
+    ```bash
+    oc new-project $CSI_BLOB_PROJECT
+    ```
+
+1. Create the secret containing the storage account credentials:
+
+    ```bash
+    oc create secret generic $CSI_BLOB_SECRET \
+      --from-literal azurestorageaccountname=$STORAGE_ACCOUNT_NAME \
+      --from-literal azurestorageaccountkey="$(az storage account keys list \
+        --account-name $STORAGE_ACCOUNT_NAME \
+        --resource-group $RG_NAME \
+        --query '[0].value' -o tsv)" \
+      -n $CSI_BLOB_PROJECT
+    ```
+
+1. Create the `azure-cred-file` ConfigMap in `kube-system` so the controller can locate the host cloud configuration:
+
+    ```bash
+    cat <<'EOF' | oc apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: azure-cred-file
+      namespace: kube-system
+    data:
+      path: /etc/kubernetes/cloud.conf
+      path-windows: C:\\k\\cloud.conf
     EOF
     ```
 
-1. Check that all the attributes are populated. 
-
-    >NOTE: Take care when executing this validation, since sensitive information should be disclosed in your screen. 
+1. Create the `azure-cloud-provider` secret in `kube-system` with the Azure cloud configuration used by the controller:
 
     ```bash
-    cat cloud.conf
-    ```
+    cat <<EOF > azure-cloud-provider.json
+    {
+      "cloud": "AzurePublicCloud",
+      "tenantId": "$AZURE_TENANT_ID",
+      "subscriptionId": "$SUB_ID",
+      "aadClientId": "$AZURE_CLIENT_ID",
+      "aadClientSecret": "$AZURE_CLIENT_SECRET",
+      "resourceGroup": "$RG_NAME",
+      "vnetName": "$VNET_NAME",
+      "vnetResourceGroup": "$RG_NAME"
+    }
+    EOF
 
-1. Create the project where you are going to install the driver and then create the secret in it.
-
-    ```bash
-    oc new-project ${CSI_BLOB_PROJECT}
-
-    oc create secret generic ${CSI_BLOB_SECRET} --from-file=cloud-config=cloud.conf
-    ```
-
-    >NOTE: It is good idea to delete the cloud.conf file, since it has sensitive information. 
-
-    ```bash
-    rm cloud.conf
+    oc -n kube-system create secret generic azure-cloud-provider \
+      --from-file=cloud-config=azure-cloud-provider.json \
+      --dry-run=client -o yaml | oc apply -f -
     ```
 
 
 ## Driver installation
 
-Now, we need to install the driver, which could be done using a helm chart. This helm chart will install two pods in the driver's project. 
+After creating the identity and required Azure configuration, install the Azure Blob CSI driver on the cluster.
 
-1. Assign permissions to the defined driver service accounts prior to the helm chart installation.
-
-    ```bash 
-    cat <<EOF | oc apply -f -
-    apiVersion: security.openshift.io/v1
-    kind: SecurityContextConstraints
-    metadata:
-      name: csi-azureblob-scc
-      annotations:
-        kubernetes.io/description: >-
-          allows access to all privileged and host features and the
-          ability to run as any user, any group, any fsGroup, and with any SELinux
-          context.
-    allowHostPorts: true
-    allowPrivilegedContainer: true
-    runAsUser:
-      type: RunAsAny
-    users:
-      - 'system:serviceaccount:${CSI_BLOB_PROJECT}:csi-blob-controller-sa'
-      - 'system:serviceaccount:${CSI_BLOB_PROJECT}:csi-blob-node-sa'
-    allowHostDirVolumePlugin: true
-    seccompProfiles: 
-      - '*'
-    seLinuxContext:
-      type: RunAsAny 
-    fsGroup:
-      type: RunAsAny
-    groups:
-      - 'system:cluster-admins'
-      - 'system:nodes'
-      - 'system:masters'
-    volumes:
-      - '*'
-    allowHostPID: true
-    allowHostNetwork: true    
-    EOF
-    ```
-
-1. Use helm to install the driver once we have the permissions set. 
-
-    > Note: Blobfuse Proxy is supported on CoreOS (OpenShift) starting from v1.23.2  [Blobfuse Proxy Guide](https://github.com/kubernetes-sigs/blob-csi-driver/tree/master/deploy/blobfuse-proxy#enable-blobfuse-proxy-on-existing-blob-csi-driver).
-
+1. Add the Blob CSI driver Helm repository:
 
     ```bash
     helm repo add blob-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/charts
-
     helm repo update
-
-    helm install blob-csi-driver blob-csi-driver/blob-csi-driver \
-      --namespace ${CSI_BLOB_PROJECT} \
-      --set linux.distro=fedora \
-      --set node.enableBlobfuseProxy=true \
-      --set node.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} \
-      --set node.cloudConfigSecretName=${CSI_BLOB_SECRET} \
-      --set controller.cloudConfigSecretNamespace=${CSI_BLOB_PROJECT} \
-      --set controller.cloudConfigSecretName=${CSI_BLOB_SECRET}
-
     ```
+
+1. Install the Blob CSI driver chart:
+
+    ```bash
+    helm install blob-csi-driver blob-csi-driver/blob-csi-driver \
+      --namespace kube-system
+    ```
+
+1. Verify that the Blob CSI driver pods are running:
+
+    ```bash
+    oc get pods -n kube-system | grep blob
+    ```
+
+    Expected output should include the Blob CSI controller and node pods in a `Running` state.
+
+1. If you created or updated the ARO-specific controller configuration in the previous section, restart the controller so it picks up the latest configuration:
+
+    ```bash
+    oc rollout restart deploy/csi-blob-controller -n kube-system
+    oc rollout status deploy/csi-blob-controller -n kube-system
+    ```
+
+1. Confirm that the controller is healthy before continuing:
+
+    ```bash
+    oc get pods -n kube-system -l app=csi-blob-controller -o wide
+    oc logs -n kube-system deploy/csi-blob-controller -c blob --tail=100 | cat
+    ```
+
+    At this point, the Blob CSI controller should be running without missing cloud configuration errors and ready for the StorageClass and PVC workflow used in the next section.
+
 
 ## Test the CSI driver is working
 
-1. The first step for the test is the creation of the storage account and the blob container.
+To test the Blob CSI driver, create the required storage resources, then create a StorageClass, PersistentVolumeClaim, and a pod that mounts the provisioned storage.
+
+1. Create the storage account:
 
     ```bash
-    export AZURE_STORAGE_ACCOUNT=$(az storage account create --name $STORAGE_ACCOUNT_NAME --kind StorageV2 --sku Standard_LRS --location $LOCATION -g $RG_NAME)
-
-    export AZURE_STORAGE_ACCOUNT_ID=$(echo $AZURE_STORAGE_ACCOUNT | jq -r '.id')
-
-    export AZURE_STORAGE_ACCESS_KEY=$(az storage account keys list --account-name $STORAGE_ACCOUNT_NAME -g $RG_NAME --query "[0].value" | tr -d '"')
-
-    az storage container create --name $BLOB_CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
-
-    az storage container show --name $BLOB_CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
+    az storage account create \
+      --name $STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME \
+      --location $LOCATION \
+      --sku Standard_LRS \
+      --kind StorageV2
     ```
 
-1. At this point, you must give permissions to the driver to access the Blob storage.
-    ```bash
-    az role assignment create --assignee $AAD_CLIENT_ID \
-      --role "Contributor" \
-      --scope ${AZURE_STORAGE_ACCOUNT_ID}
-    ```
-
-1. We need to create another project where the testing pod will run. 
+1. Create the blob container:
 
     ```bash
-    oc new-project ${CSI_TESTING_PROJECT}
+    az storage container create \
+      --name $BLOB_CONTAINER_NAME \
+      --account-name $STORAGE_ACCOUNT_NAME
     ```
 
+1. Create the test project:
 
-1. Now, you are ready to create the storage class, the persistent volume claim and the testing pod. 
+    ```bash
+    oc new-project $CSI_TESTING_PROJECT
+    ```
+
+1. Create a secret in the test project containing the storage account credentials:
+
+    ```bash
+    oc create secret generic azure-secret \
+      --from-literal azurestorageaccountname=$STORAGE_ACCOUNT_NAME \
+      --from-literal azurestorageaccountkey="$(az storage account keys list \
+        --account-name $STORAGE_ACCOUNT_NAME \
+        --resource-group $RG_NAME \
+        --query '[0].value' -o tsv)" \
+      -n $CSI_TESTING_PROJECT
+    ```
+
+1. Create the StorageClass:
 
     ```bash
     cat <<EOF | oc apply -f -
     apiVersion: storage.k8s.io/v1
     kind: StorageClass
     metadata:
-      name: blob
+      name: azureblob-fuse2
     provisioner: blob.csi.azure.com
     parameters:
-      resourceGroup:  $RG_NAME
+      protocol: fuse2
+      skuName: Standard_LRS
+      containerName: $BLOB_CONTAINER_NAME
+      secretName: azure-secret
+      secretNamespace: $CSI_TESTING_PROJECT
       storageAccount: $STORAGE_ACCOUNT_NAME
-      containerName:  $BLOB_CONTAINER_NAME
-    reclaimPolicy: Retain  # if set as "Delete" container would be removed after pvc deletion
+    reclaimPolicy: Delete
     volumeBindingMode: Immediate
     mountOptions:
-      - -o allow_other
       - --file-cache-timeout-in-seconds=120
       - --use-attr-cache=true
-      - -o attr_timeout=120
-      - -o entry_timeout=120
-      - -o negative_timeout=120
-    
-    ---
-    
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      name: pvc-blob
-    spec:
-      accessModes:
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: blob
-    
-    ---
-    
-    kind: Pod
-    apiVersion: v1
-    metadata:
-      name: nginx-blob
-    spec:
-      nodeSelector:
-        "kubernetes.io/os": linux
-      containers:
-        - image: mcr.microsoft.com/oss/nginx/nginx:1.17.3-alpine
-          name: nginx-blob
-          command:
-            - "/bin/sh"
-            - "-c"
-            - while true; do echo $(date) >> /mnt/blob/outfile; sleep 1; done
-          volumeMounts:
-            - name: blob01
-              mountPath: "/mnt/blob"
-      volumes:
-        - name: blob01
-          persistentVolumeClaim:
-            claimName: pvc-blob
+      - --cancel-list-on-mount-seconds=10
+      - -o allow_other
+      - --default-working-dir=/tmp/blobfuse2
     EOF
     ```
 
-1. Wait until the Pod is created
-    
+    > Note:
+    > When using BlobFuse2 on ARO, adding `--default-working-dir=/tmp/blobfuse2` avoids mount failures caused by the default `/.blobfuse2` path being read-only.
+
+1. Create the PersistentVolumeClaim:
+
     ```bash
-    oc get po
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: azureblob-pvc
+      namespace: $CSI_TESTING_PROJECT
+    spec:
+      accessModes:
+        - ReadWriteMany
+      storageClassName: azureblob-fuse2
+      resources:
+        requests:
+          storage: 5Gi
+    EOF
     ```
 
-1. Get a shell inside the pod and view the file in the blob storage
-    
-    ```bash
-    oc exec -it nginx-blob -- sh
-    df -h
-    ls -al /mnt/blob/outfile
-    cat /mnt/blob/outfile
-    ```
-1. You should see an output like this:
+1. Create a test pod that mounts the claim:
 
-    ![Image](images/blob-test.png)
+    ```bash
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: blobfuse2-test-pod
+      namespace: $CSI_TESTING_PROJECT
+    spec:
+      containers:
+      - name: app
+        image: registry.access.redhat.com/ubi9/ubi-minimal
+        command: ["/bin/sh", "-c", "sleep infinity"]
+        volumeMounts:
+        - name: azureblob
+          mountPath: /mnt/blob
+      volumes:
+      - name: azureblob
+        persistentVolumeClaim:
+          claimName: azureblob-pvc
+    EOF
+    ```
+
+1. Verify that the pod is running:
+
+    ```bash
+    oc get pod -n $CSI_TESTING_PROJECT
+    ```
+
+1. Verify that the volume is mounted successfully:
+
+    ```bash
+    oc exec -it -n $CSI_TESTING_PROJECT blobfuse2-test-pod -- sh -c 'df -h /mnt/blob && ls -la /mnt/blob'
+    ```
+
+    Expected result:
+    - the pod is in `Running` state
+    - the mount is present at `/mnt/blob`
+    - the filesystem shows `blobfuse2`
+
+
+## Troubleshooting
+
+### Blob CSI controller is not healthy after installation
+
+If the controller pods are not running, check their status and logs:
+
+```bash
+oc get pods -n kube-system | grep blob
+oc logs -n kube-system deploy/csi-blob-controller -c blob --tail=100 | cat
+```
+
+During validation on ARO, dynamic provisioning required additional controller-side Azure configuration in `kube-system`:
+
+* `azure-cred-file` ConfigMap
+* `azure-cloud-provider` secret
+
+If those resources are missing or incomplete, the controller may fail to initialize correctly.
+
+You can recreate them and then restart the controller:
+
+```bash
+oc rollout restart deploy/csi-blob-controller -n kube-system
+oc rollout status deploy/csi-blob-controller -n kube-system
+```
+
+### PVC stays in Pending state
+
+If the PersistentVolumeClaim does not bind, describe the PVC and review the related events:
+
+```bash
+oc describe pvc azureblob-pvc -n $CSI_TESTING_PROJECT
+```
+
+Also verify:
+
+* the `StorageClass` name matches the PVC
+* the storage account name and key are correct in the secret
+* the blob container exists
+* the controller has the required Azure permissions
+
+### Pod is stuck in ContainerCreating
+
+If the pod does not start, describe the pod and review the events:
+
+```bash
+oc describe pod blobfuse2-test-pod -n $CSI_TESTING_PROJECT
+```
+
+During validation with BlobFuse2 on ARO, one observed failure was a read-only filesystem error for the default BlobFuse2 working directory.
+
+To avoid this, include the following mount option in the `StorageClass`:
+
+```text
+--default-working-dir=/tmp/blobfuse2
+```
+
+### Verify the mount inside the pod
+
+To confirm the mount is working:
+
+```bash
+oc exec -it -n $CSI_TESTING_PROJECT blobfuse2-test-pod -- sh -c 'df -h /mnt/blob && ls -la /mnt/blob'
+```
+
+Expected result:
+
+* the pod is in `Running` state
+* the mount is present at `/mnt/blob`
+* the filesystem shows `blobfuse2`
 
 
 ## Clean up
 
-This section is to delete all the resources created with this guideline. 
+After testing is complete, remove the test resources created for the Blob CSI validation.
 
-   ```bash
-   oc delete pod nginx-blob -n ${CSI_TESTING_PROJECT}
-   oc delete project ${CSI_TESTING_PROJECT}
-   helm uninstall blob-csi-driver -n ${CSI_BLOB_PROJECT}
-   oc delete project ${CSI_BLOB_PROJECT}
-   oc delete pvc pvc-blob
-   oc delete sc blob
-   oc delete pv $(oc get pv -o json | jq -r '.items[] | select(.spec.csi.driver | test("blob.csi.azure.com")).metadata.name')
-   az storage account delete --name $STORAGE_ACCOUNT_NAME -g $RG_NAME 
-   az ad app delete --id ${AAD_OBJECT_ID}
+1. Delete the test pod, PersistentVolumeClaim, and StorageClass:
 
-   ```
+    ```bash
+    oc delete pod blobfuse2-test-pod -n $CSI_TESTING_PROJECT
+    oc delete pvc azureblob-pvc -n $CSI_TESTING_PROJECT
+    oc delete storageclass azureblob-fuse2
+    ```
+
+1. Delete the secret from the test project:
+
+    ```bash
+    oc delete secret azure-secret -n $CSI_TESTING_PROJECT
+    ```
+
+1. Delete the test project:
+
+    ```bash
+    oc delete project $CSI_TESTING_PROJECT
+    ```
+
+1. If no longer needed, delete the Blob CSI driver resources project:
+
+    ```bash
+    oc delete project $CSI_BLOB_PROJECT
+    ```
+
+1. If you created the ARO-specific controller configuration for this validation and no longer need it, remove it from `kube-system`:
+
+    ```bash
+    oc delete configmap azure-cred-file -n kube-system
+    oc delete secret azure-cloud-provider -n kube-system
+    ```
+
+1. If no longer needed, delete the service principal created for the Blob CSI driver:
+
+    ```bash
+    az ad sp delete --id $AZURE_CLIENT_ID
+    ```
+
+1. If you created a temporary storage account and blob container specifically for this test, delete them:
+
+    ```bash
+    az storage container delete \
+      --name $BLOB_CONTAINER_NAME \
+      --account-name $STORAGE_ACCOUNT_NAME
+
+    az storage account delete \
+      --name $STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME \
+      --yes
+    ```
