@@ -50,15 +50,16 @@ ROSA and current OpenShift Container Platform clusters use **OVN-Kubernetes** as
 
 The primary recommendation for VPC design is the implementation of a centralized landing zone architecture for business-critical applications. This approach uses a secured PrivateLink and Security Token Service (STS) enabled cluster where all ingress and egress traffic is routed through a managed firewall or proxy server. This design minimizes the attack surface and ensures that cluster traffic adheres to corporate security policies. For private API endpoints, VPC and CIDR alignment, and proxy options on ROSA, see [Infrastructure security in ROSA](https://docs.aws.amazon.com/rosa/latest/userguide/infrastructure-security.html) in the AWS documentation.
 
-When calculating CIDR ranges for the Pod, Service, and Machine networks, architects must account for the maximum anticipated scale of the cluster. [^9] Early alignment with your network team pays dividends for routing simplicity and growth, especially if you keep Pod, Service, and Machine CIDRs unique across on-premises and cloud networks. Planning those ranges before install keeps connectivity straightforward through the life of the cluster.
+When calculating CIDR ranges for the Pod, Service, and Machine networks, treat the **ROSA installer defaults** as your standard unless IPAM, federation, or scale requires otherwise: machine `10.0.0.0/16`, service `172.30.0.0/16`, cluster network (pod) `10.128.0.0/14`, and host prefix `23` (`/23` of pod space per node). [^107] The **machine CIDR** is the contiguous range that must include **every subnet the cluster uses for machines**; it is not a mandate that the whole VPC be a `/16`. Many designs use **`/24` (or larger) private subnets per availability zone** and set the machine CIDR to the smallest supernet that covers those subnets (and any other subnets the cluster consumes in that network plan). Several of these values cannot change after install, so validate **maximum node count**, **pods per node** (host prefix and cluster network together), **service IPs**, and conflicts with OVN-Kubernetes reserved ranges before you provision. Run the numbers with the [OpenShift Network Calculator](/experts/calculator/) and cross-check [VPC and subnet IP considerations with ROSA](/experts/rosa/ip-addressing-and-subnets/). Early alignment with your network team still pays dividends for routing and growth, especially if you keep Pod, Service, and Machine CIDRs unique across on-premises and cloud networks.
 
 | Network Requirement | Configuration Best Practice | Priority |
 | :---- | :---- | :---- |
 | Availability Zones | Minimum of 3 AZs for production environments | High |
 | Subnet Segregation | Separate public and private subnets per AZ | High |
-| Machine CIDR | Match the VPC CIDR (usually /16) | High |
-| Service CIDR | Minimum /16 to support large-scale microservices | High |
-| Pod CIDR | Sufficiently large to prevent IP exhaustion (e.g., /14) | High |
+| Machine CIDR | ROSA default `10.0.0.0/16`; must cover all node subnets (often `/24` to preserve IPAM) [^107] | High |
+| Service CIDR | ROSA default `172.30.0.0/16` [^107] | High |
+| Pod CIDR (cluster network) | ROSA default `10.128.0.0/14` [^107] | High |
+| Host prefix | ROSA default `23` (with the default pod CIDR, sizes per-node pod subnets and max pods per node) [^107] | High |
 | DNS Settings | Set enableDnsHostnames and enableDnsSupport to true | High |
 
 Verification of the VPC configuration can be performed using the AWS CLI. To ensure that DNS attributes are correctly set, which is vital for Route 53 and PrivateLink interoperability, the following command should be executed:
@@ -1079,3 +1080,4 @@ For regulated environments, zero-egress–oriented installs, regional ECR, your 
 [^104]: Network Observability | OpenShift Container Platform | 4.18, accessed April 1, 2026, [https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/network_observability/index](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/network_observability/index)
 [^105]: Chapter 4\. Planning resource usage in your cluster | Prepare your environment | Red Hat OpenShift Service on AWS classic architecture, accessed April 1, 2026, [https://docs.openshift.com/rosa/rosa_planning/rosa-planning-environment.html](https://docs.openshift.com/rosa/rosa_planning/rosa-planning-environment.html)
 [^106]: Node Autoscaling | Kubernetes Documentation, accessed April 1, 2026, [https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/](https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/)
+[^107]: Chapter 2\. CIDR range definitions | Networking overview | Red Hat OpenShift Service on AWS, accessed April 1, 2026, [https://docs.redhat.com/en/documentation/red\_hat\_openshift\_service\_on\_aws/4/html/networking\_overview/cidr-range-definitions](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/networking_overview/cidr-range-definitions)
