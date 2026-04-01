@@ -1,11 +1,11 @@
 ---
 date: '2026-03-26'
-title: OpenShift Dedicated - Cross-Cloud Workload Identity to Azure 
+title: Cross-Cloud Workload Identity: Connecting OpenShift Dedicated to Azure Services 
 tags: ["OSD"]
 authors:
   - Kevin Collins
+validated_version: "4.20"
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 This guide demonstrates how to use Google Workload Identity Federation to enable workloads running on OpenShift Dedicated to authenticate to Azure Cosmos DB without static credentials.
 
