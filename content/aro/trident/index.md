@@ -231,7 +231,35 @@ Output:
 storageclass.storage.k8s.io/anf-sc created
 ```
 
-> **Note:** During validation on ARO 4.20, using `backendName` as a StorageClass parameter caused Trident to reject the StorageClass as an unrecognized storage attribute. Using `backendType: "azure-netapp-files"` allowed dynamic provisioning to succeed.
+### Troubleshooting notes
+
+If the backend does not initialize successfully, PVC creation can later fail with errors such as `no available backends for storage class ...` or remain in `Pending`.
+
+Common Azure resource discovery symptoms include:
+- `Subnet query returned no data`
+- `Resource group referenced in pool not found`
+- `Virtual network referenced in pool not found`
+- `Subnet referenced in pool not found`
+- `no capacity pools found for storage pool <pool-name>`
+
+These usually indicate one or more of the following:
+- the resource group, virtual network, subnet, or capacity pool name does not exactly match the Azure resource
+- the subnet is not delegated to `Microsoft.NetApp/volumes`
+- the service principal role assignment scope is too narrow
+- the service principal cannot read the VNet/subnet resources required for backend discovery
+
+During ARO 4.20 validation, two additional Trident-specific issues were observed:
+- inline backend credentials were rejected and had to be moved to a Kubernetes Secret referenced by `spec.credentials`
+- using `backendName` as a StorageClass parameter was rejected; `backendType: "azure-netapp-files"` worked
+
+Useful validation commands:
+
+```bash
+oc get tridentbackendconfig -n trident
+oc get tridentbackendconfig -n trident -o yaml
+oc logs -n trident deploy/trident-controller -c trident-main
+oc describe pvc <pvc-name> -n <namespace>
+```
 
 ## Provision volume
 
