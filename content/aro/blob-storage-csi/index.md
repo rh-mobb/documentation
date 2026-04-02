@@ -115,8 +115,9 @@ For the validated ARO path used here, this includes:
 1. Assign the required roles to the service principal.
 
     For the validated ARO path in this article, the service principal required:
-    - `Contributor` on the VNet resource group
-    - `Storage Account Contributor` on the target storage account
+    - `Contributor` on the relevant resource group
+    - `Storage Account Contributor` on the target storage account after that account is created
+
 
     Assign `Contributor` on the resource group:
 
@@ -127,37 +128,6 @@ For the validated ARO path used here, this includes:
       --scope /subscriptions/$SUB_ID/resourceGroups/$RG_NAME
     ```
 
-    Assign `Storage Account Contributor` on the storage account:
-
-    ```bash
-    export STORAGE_ACCOUNT_ID=$(az storage account show \
-      --name $STORAGE_ACCOUNT_NAME \
-      --resource-group $RG_NAME \
-      --query id -o tsv)
-
-    az role assignment create \
-      --assignee $AZURE_CLIENT_ID \
-      --role "Storage Account Contributor" \
-      --scope $STORAGE_ACCOUNT_ID
-    ```
-
-1. Create the project for the Blob CSI driver resources:
-
-    ```bash
-    oc new-project $CSI_BLOB_PROJECT
-    ```
-
-1. Create the secret containing the storage account credentials:
-
-    ```bash
-    oc create secret generic $CSI_BLOB_SECRET \
-      --from-literal azurestorageaccountname=$STORAGE_ACCOUNT_NAME \
-      --from-literal azurestorageaccountkey="$(az storage account keys list \
-        --account-name $STORAGE_ACCOUNT_NAME \
-        --resource-group $RG_NAME \
-        --query '[0].value' -o tsv)" \
-      -n $CSI_BLOB_PROJECT
-    ```
 
 1. Create the `azure-cred-file` ConfigMap in `kube-system` so the controller can locate the host cloud configuration:
 
@@ -252,6 +222,22 @@ To test the Blob CSI driver, create the required storage resources, then create 
       --location $LOCATION \
       --sku Standard_LRS \
       --kind StorageV2
+    ```
+
+    Assign `Storage Account Contributor` on the storage account:
+
+    ```bash
+    export STORAGE_ACCOUNT_ID=$(az storage account show \
+      --name $STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME \
+      --query id -o tsv)
+
+    test -n "$STORAGE_ACCOUNT_ID"
+
+    az role assignment create \
+      --assignee $AZURE_CLIENT_ID \
+      --role "Storage Account Contributor" \
+      --scope $STORAGE_ACCOUNT_ID
     ```
 
 1. Create the blob container:
