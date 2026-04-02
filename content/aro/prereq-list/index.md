@@ -4,6 +4,7 @@ title: Prerequisites Checklist to Deploy ARO Cluster
 tags: ["ARO"]
 authors:
   - Ricardo Macedo Martins
+  - Daniel Penagos
 validated_version: "4.20"
 ---
 
