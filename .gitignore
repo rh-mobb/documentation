@@ -12,6 +12,7 @@ ehthumbs.db
 Thumbs.db
 *.vscode
 resources/
+references/
 public/
 
 node_modules/

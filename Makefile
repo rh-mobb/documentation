@@ -1,6 +1,6 @@
 .PHONY: preview
 preview:
-	hugo server --minify --theme rhds -D -b http://localhost:1313/experts
+	hugo server --minify --theme rhds -D -b http://localhost:1313/experts --buildFuture
 
 # Build static HTML and generate the Pagefind index under public/experts/pagefind/
 .PHONY: search-index
@@ -21,7 +21,7 @@ preview.%:
 
 	gh repo set-default github.com/rh-mobb/documentation
 	gh pr checkout $*
-	hugo server --minify --theme rhds -D --baseURL http://localhost:1313/experts
+	hugo server --minify --theme rhds -D --baseURL http://localhost:1313/experts --buildFuture
 
 .PHONY: devspaces
 devspaces:
