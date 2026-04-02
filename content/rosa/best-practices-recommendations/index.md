@@ -1,5 +1,5 @@
 ---
-date: '2026-04-01'
+date: '2026-04-02'
 title: ROSA Best Practices and Recommendations
 tags: ["ROSA", "ROSA HCP", "ROSA Classic", "Best practices"]
 authors:
@@ -52,11 +52,13 @@ The primary recommendation for VPC design is the implementation of a centralized
 
 When calculating CIDR ranges for the Pod, Service, and Machine networks, treat the **ROSA installer defaults** as your standard unless IPAM, federation, or scale requires otherwise: machine `10.0.0.0/16`, service `172.30.0.0/16`, cluster network (pod) `10.128.0.0/14`, and host prefix `23` (`/23` of pod space per node). [^107] The **machine CIDR** is the contiguous range that must include **every subnet the cluster uses for machines**; it is not a mandate that the whole VPC be a `/16`. Many designs use **`/24` (or larger) private subnets per availability zone** and set the machine CIDR to the smallest supernet that covers those subnets (and any other subnets the cluster consumes in that network plan). Several of these values cannot change after install, so validate **maximum node count**, **pods per node** (host prefix and cluster network together), **service IPs**, and conflicts with OVN-Kubernetes reserved ranges before you provision. Run the numbers with the [OpenShift Network Calculator](/experts/calculator/) and cross-check [VPC and subnet IP considerations with ROSA](/experts/rosa/ip-addressing-and-subnets/). Early alignment with your network team still pays dividends for routing and growth, especially if you keep Pod, Service, and Machine CIDRs unique across on-premises and cloud networks.
 
+For **ROSA with HCP**, Red Hat documents **minimum** machine CIDR sizes: `/25` (128 IPv4 addresses) for a **single-AZ** cluster and `/24` (256 addresses) when the cluster uses **multiple availability zones**. Smaller ranges are outside supported sizing; the installer rejects them. [^107] The service currently supports **up to 500 worker nodes**. [^108] If you plan toward that ceiling, counting only a `/23` (512 addresses) for the machine supernet is often too tight: you still split addresses across subnets per zone, and **each IPv4 subnet reserves several addresses for AWS use**, so practical designs commonly allocate **at least `/22` (1024 addresses)** for the machine network (and proportionally sized subnets) and validate with the calculator and subnet math. [^107] [^109]
+
 | Network Requirement | Configuration Best Practice | Priority |
 | :---- | :---- | :---- |
 | Availability Zones | Minimum of 3 AZs for production environments | High |
 | Subnet Segregation | Separate public and private subnets per AZ | High |
-| Machine CIDR | ROSA default `10.0.0.0/16`; must cover all node subnets (often `/24` to preserve IPAM) [^107] | High |
+| Machine CIDR | Default `10.0.0.0/16`; must cover all node subnets. HCP minimums: `/25` (1 AZ), `/24` (multi-AZ); plan `/22` or larger when approaching 500 workers and AWS subnet reservations. [^107] [^108] [^109] | High |
 | Service CIDR | ROSA default `172.30.0.0/16` [^107] | High |
 | Pod CIDR (cluster network) | ROSA default `10.128.0.0/14` [^107] | High |
 | Host prefix | ROSA default `23` (with the default pod CIDR, sizes per-node pod subnets and max pods per node) [^107] | High |
@@ -1081,3 +1083,5 @@ For regulated environments, zero-egress–oriented installs, regional ECR, your 
 [^105]: Chapter 4\. Planning resource usage in your cluster | Prepare your environment | Red Hat OpenShift Service on AWS classic architecture, accessed April 1, 2026, [https://docs.openshift.com/rosa/rosa_planning/rosa-planning-environment.html](https://docs.openshift.com/rosa/rosa_planning/rosa-planning-environment.html)
 [^106]: Node Autoscaling | Kubernetes Documentation, accessed April 1, 2026, [https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/](https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/)
 [^107]: Chapter 2\. CIDR range definitions | Networking overview | Red Hat OpenShift Service on AWS, accessed April 1, 2026, [https://docs.redhat.com/en/documentation/red\_hat\_openshift\_service\_on\_aws/4/html/networking\_overview/cidr-range-definitions](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/networking_overview/cidr-range-definitions)
+[^108]: Section 5.4 (instance types; maximum worker nodes) | Introduction to ROSA | Red Hat OpenShift Service on AWS, accessed April 2, 2026, [https://docs.redhat.com/en/documentation/red\_hat\_openshift\_service\_on\_aws/4/html-single/introduction\_to\_rosa/index](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html-single/introduction_to_rosa/index)
+[^109]: Subnet CIDR blocks (IPv4 subnet sizing and reserved addresses) | Amazon Virtual Private Cloud | AWS Documentation, accessed April 2, 2026, [https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html)
