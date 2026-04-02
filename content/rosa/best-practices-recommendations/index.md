@@ -1,5 +1,5 @@
 ---
-date: '2026-04-02'
+date: '2026-04-01'
 title: ROSA Best Practices and Recommendations
 tags: ["ROSA", "ROSA HCP", "ROSA Classic", "Best practices"]
 authors:
@@ -12,6 +12,8 @@ validated_version: "4.18"
 **Purpose:** This guide collects architectural and operational recommendations for Red Hat OpenShift Service on AWS (ROSA), with emphasis on Hosted Control Planes (HCP) and how it compares to ROSA Classic. It spans networking, identity (STS, OIDC, IRSA), workload reliability, security and compliance, software supply chain, GitOps and CI/CD, scaling, cost, disaster recovery, and alignment with the AWS Well-Architected Framework. Citations point to product documentation; examples use `rosa`, `oc`, and `aws` where they help operators validate posture.
 
 **Audience:** Platform engineers, SREs, cloud and OpenShift architects, and lead application teams designing or running ROSA estates. Core Kubernetes or OpenShift and AWS networking familiarity is assumed; specialized topics link to Red Hat and AWS docs rather than re-derive fundamentals.
+
+**Planning a new deployment?** Start with the [ROSA Architecture Decision Checklist](/experts/rosa/best-practices-checklist/), which distills this guide into phase-by-phase decisions with safe defaults and links back here for full rationale.
 
 The architectural evolution of managed Kubernetes on AWS has reached a significant milestone with the introduction of **Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes (HCP)**. ROSA HCP builds on the same fully managed ROSA [Classic] experience by decoupling the control plane from the data plane and hosting that control plane in a Red Hat-managed AWS account. That frees customer accounts to focus capacity on applications. [^1] The result is a smaller minimum footprint in your VPC, cluster creation on the order of ten minutes, and the same SRE-backed operations customers expect from ROSA. [^3] Many customers adopt or migrate to HCP when they want that leaner data-plane footprint and faster provisioning while staying on a single familiar platform. The body of this guide synthesizes Red Hat’s operational expertise with the AWS Well-Architected Framework for hosted control plane deployments.
 
