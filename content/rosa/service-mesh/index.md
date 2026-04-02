@@ -6,6 +6,7 @@ authors:
   - Diana Sari
   - Daniel Axelrod
   - Kumudu Herath
+validated_version: "4.20"
 ---
 
 This is a simple guide to integrate [Red Hat OpenShift Service Mesh](https://www.redhat.com/en/technologies/cloud-computing/openshift/what-is-openshift-service-mesh) into your ROSA cluster. In this scenario, we will install Service Mesh using a custom domain (optional) and expose an app to test it. The first half of the guide will be integrating [Service Mesh 2.x](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/service_mesh/service-mesh-2-x) and second half will be integrating [Service Mesh 3.x](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/service_mesh/service-mesh-3-x). 
@@ -256,144 +257,268 @@ You should see the output `Hello OpenShift!`.
 
 ## Service Mesh 3.x
 
-### Step 1 - Create the Service Mesh Control Plane
+In this section, we will validate Red Hat OpenShift Service Mesh 3 using **sidecar mode** and the **Kubernetes Gateway API**.
 
-Let's first create a new project where the control plane resides.
+Unlike Service Mesh 2.x, Service Mesh 3 uses the `sailoperator.io/v1` API and manages the control plane with an `Istio` resource. For sidecar-based workloads, you also need to create an `IstioCNI` resource before injected application pods will work correctly.
+
+### Step 1 - Create the Service Mesh control plane namespace
+
+Create the namespace where the Service Mesh control plane will run.
 
 ```bash
 oc new-project istio-system
 ```
 
-Unlike Service Mesh 2, Service Mesh 3 uses the `sailoperator.io/v1` API and is built on Istio's Helm chart APIs. 
+### Step 2 - Create the Service Mesh 3 control plane
+
+Create a minimal `Istio` resource for the control plane.
 
 ```bash
 cat << EOF | oc apply -f -
 apiVersion: sailoperator.io/v1
 kind: Istio
 metadata:
-  name: basic
+  name: default
   namespace: istio-system
 spec:
-  profiles:
-  - default
-  components:
-    ingressGateways:
-    - name: istio-ingressgateway
-      enabled: true
-  values:
-    global:
-      jwtPolicy: third-party-jwt
-    cni:
-      enabled: false
-    pilot:
-      traceSampling: 100.0
+  namespace: istio-system
+  updateStrategy:
+    type: InPlace
 EOF
 ```
 
-Next, verify that the control plane (istiod) is running correctly. First, wait for the control plane to be ready:
+Wait for the control plane to be ready:
 
 ```bash
-oc get istio basic -n istio-system
-```
-
-Next. check that all pods are running:
-
-```bash
+oc wait --for=condition=Ready istios/default -n istio-system --timeout=5m
+oc get istio -n istio-system
 oc get pods -n istio-system
 ```
 
-### Step 2 - Deploy Hello OpenShift app (optional)
+You should see the `Istio` resource become `Healthy` and the `istiod` pod running.
 
-Skip this step if you have already created an app.
+### Step 3 - Create the Istio CNI resource
+
+For sidecar injection in Service Mesh 3, create an `IstioCNI` resource.
+
+```bash
+oc new-project istio-cni
+```
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: sailoperator.io/v1
+kind: IstioCNI
+metadata:
+  name: default
+  namespace: istio-cni
+spec:
+  namespace: istio-cni
+EOF
+```
+
+Wait for the CNI pods to be ready:
+
+```bash
+oc wait --for=condition=Ready istiocnis/default -n istio-cni --timeout=5m
+oc get istiocni -n istio-cni
+oc get pods -n istio-cni
+```
+
+After this completes, verify the `Istio` resource is still `Healthy`:
+
+```bash
+oc get istio -n istio-system
+```
+
+### Step 4 - Create an application namespace and enable sidecar injection
+
+Set the application namespace and enable sidecar injection using the namespace label.
+
+```bash
+export APP_NAMESPACE=my-public-app
+```
+
+Create the namespace:
 
 ```bash
 oc new-project $APP_NAMESPACE
-oc new-app --docker-image=docker.io/openshift/hello-openshift -n $APP_NAMESPACE
 ```
 
-Note that unlike Service Mesh 2, we don't need to add this namespace to a `ServiceMeshMemberRoll` since Service Mesh 3 uses a different approach for namespace membership.
-
-### Step 3 - Create Istio Gateway
-
-Here we will be creating an Istio Gateway resource to define how traffic enters our mesh. This is conceptually similar to Service Mesh 2, but the implementation aligns more closely with upstream Istio.
+Enable sidecar injection:
 
 ```bash
-cat << EOF | oc apply -f -
-apiVersion: networking.istio.io/v1beta1
+oc label namespace $APP_NAMESPACE istio-injection=enabled --overwrite
+```
+
+Verify the label:
+
+```bash
+oc get ns $APP_NAMESPACE --show-labels
+```
+
+### Step 5 - Deploy Hello OpenShift app
+
+Deploy a simple test application that listens on port `8080`.
+
+```bash
+cat << EOF | oc apply -n $APP_NAMESPACE -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-openshift
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-openshift
+  template:
+    metadata:
+      labels:
+        app: hello-openshift
+    spec:
+      containers:
+      - name: hello-openshift
+        image: docker.io/openshift/hello-openshift
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-openshift
+spec:
+  selector:
+    app: hello-openshift
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+EOF
+```
+
+Wait for the deployment:
+
+```bash
+oc rollout status deploy/hello-openshift -n $APP_NAMESPACE
+oc get pods -n $APP_NAMESPACE
+```
+
+Confirm that the workload received the injected sidecar by describing the pod:
+
+```bash
+oc describe pod -n $APP_NAMESPACE $(oc get pod -n $APP_NAMESPACE -l app=hello-openshift -o jsonpath='{.items[0].metadata.name}')
+```
+
+You should see the injected `istio-proxy` container in the pod details.
+
+### Step 6 - Create a Kubernetes Gateway API Gateway
+
+In Service Mesh 3 sidecar mode, we can expose the application using the Kubernetes Gateway API.
+
+```bash
+cat << EOF | oc apply -n $APP_NAMESPACE -f -
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: hello-gateway
-  namespace: $APP_NAMESPACE
 spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "hello.$DOMAIN"
+  gatewayClassName: istio
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    hostname: hello.example.com
+    allowedRoutes:
+      namespaces:
+        from: Same
 EOF
 ```
 
-### Step 4 - Create Virtual Service
+### Step 7 - Create an HTTPRoute
 
-Next, we will be creating a VirtualService to route traffic from the Gateway to our application. This defines the routing rules within the service mesh.
+Create an `HTTPRoute` that routes incoming traffic from the Gateway to the `hello-openshift` service.
 
 ```bash
-cat << EOF | oc apply -f -
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
+cat << EOF | oc apply -n $APP_NAMESPACE -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: hello-vs
-  namespace: $APP_NAMESPACE
+  name: hello-route
 spec:
-  hosts:
-  - "hello.$DOMAIN"
-  gateways:
-  - hello-gateway
-  http:
-  - route:
-    - destination:
-        host: hello-openshift
-        port:
-          number: 8080
+  parentRefs:
+  - name: hello-gateway
+  hostnames:
+  - hello.example.com
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: hello-openshift
+      port: 8080
 EOF
 ```
 
-### Step 5 - Create OpenShift Route
+Verify the gateway resources:
 
 ```bash
-oc create route edge hello-custom --service=hello-openshift --hostname=hello.$DOMAIN -n $APP_NAMESPACE
+oc get gateway -n $APP_NAMESPACE
+oc get httproute -n $APP_NAMESPACE
+oc get svc -n $APP_NAMESPACE
+oc get deploy -n $APP_NAMESPACE
+oc get pods -n $APP_NAMESPACE
 ```
 
-Note that unlike Service Mesh 2 where we created a route to the Istio ingressgateway, here we're creating a direct route to our application. In other word, we're skipping sidecar injection and using "external proxies" for service mesh functionality. 
+You should see a generated gateway deployment and `LoadBalancer` service, typically named something like `hello-gateway-istio`.
 
+### Step 8 - Test external access
 
-### Step 6 - Configure custom domain (optional)
-
-If you're using custom domain, then go to AWS Console and change the record to point to the route hostname.
-
-Get your canonical route hostname:
+Get the external address from the generated gateway service:
 
 ```bash
-oc get route hello-custom -n $APP_NAMESPACE -o jsonpath='{.status.ingress[0].routerCanonicalHostname}'
+oc get svc -n $APP_NAMESPACE
 ```
 
-This should give you an output like `router-default.apps.rosa.your-cluster-name.xxxx.px.openshiftapps.com`. Use this as the value of your domain.
-
-![cname](images/cname.png)
-<br />
-
-### Step 7 - Access the application
-
-Access your application by testing the route:
+Set the external address:
 
 ```bash
-curl -k https://hello.$DOMAIN
+export GW_ADDR=<external-load-balancer-hostname>
 ```
 
-You should see the output `Hello OpenShift!`. 
+Test the application by sending the expected `Host` header:
 
-> **Note**: If you are accessing your browser, you might get **Not Secure** warning due to certificate mismatch. Since this is a testing environment, you can safely ignore this. However, for production environment, you might want to use a custom certificate for your route, or use Let's Encrypt with OpenShift's cert-manager, for example. 
+```bash
+curl -sv -H 'Host: hello.example.com' "http://${GW_ADDR}/"
+```
+
+You should see:
+
+```text
+Hello OpenShift!
+```
+
+### Step 9 - Configure a custom domain (optional)
+
+If you want to use your own DNS name instead of a curl `Host` header, create a DNS record that points to the external hostname of the generated gateway service.
+
+For example, point your chosen hostname to the ELB hostname shown by:
+
+```bash
+oc get svc -n $APP_NAMESPACE
+```
+
+Then update the `hostname` in the `Gateway` and `hostnames` in the `HTTPRoute` to match your chosen DNS name.
+
+### Step 10 - Clean up (optional)
+
+Delete the application namespace and Service Mesh resources when you are done testing:
+
+```bash
+oc delete ns $APP_NAMESPACE
+oc delete istiocni default -n istio-cni
+oc delete ns istio-cni
+oc delete istio default -n istio-system
+oc delete ns istio-system
+```
