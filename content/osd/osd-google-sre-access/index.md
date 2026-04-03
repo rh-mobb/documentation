@@ -1,6 +1,6 @@
 ---
 date: '2026-04-03'
-title: 'Red Hat SRE Access: WIF and Private Service Connect (PSC)'
+title: 'Red Hat SRE Access: Workload Identity Federation (WIF) and Private Service Connect (PSC)'
 tags: ["OSD"]
 authors:
   - Kevin Collins
