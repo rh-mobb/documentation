@@ -2,11 +2,12 @@
 date: '2021-08-16'
 title: Azure Key Vault CSI on Azure Red Hat OpenShift
 aliases: ['/experts/security/secrets-store-csi/azure-key-vault']
-tags: ["ARO", "Miscellaneous"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
   - Diana Sari
   - Charlotte Fung
+validated_version: "4.20"
 ---
 
 This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/demos/standard-walkthrough/) specifically to run with Azure Red Hat OpenShift (ARO).
@@ -87,7 +88,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
      ```bash
     az role assignment create --role "Key Vault Administrator" \
       --assignee "<your-email-address>" \
-      --scope “/subscriptions/$SUB_ID/resourcegroups/$KEYVAULT_RESOURCE_GROUP/providers/microsoft.keyvault/vaults/$KEYVAULT_NAME"
+      --scope "/subscriptions/$AZ_SUB_ID/resourcegroups/$KEYVAULT_RESOURCE_GROUP/providers/microsoft.keyvault/vaults/$KEYVAULT_NAME"
     ```
    Replace \<your-email-address\> with your actual value, which is your sign-in name.   
 
@@ -116,7 +117,7 @@ This document is adapted from the [Azure Key Vault CSI Walkthrough](https://azur
     ```bash
     az role assignment create --role "Key Vault Secrets User" \
       --assignee ${SERVICE_PRINCIPAL_CLIENT_ID} \
-      --scope “/subscriptions/$SUB_ID/resourcegroups/$KEYVAULT_RESOURCE_GROUP/providers/microsoft.keyvault/vaults/$KEYVAULT_NAME" 
+      --scope "/subscriptions/$AZ_SUB_ID/resourcegroups/$KEYVAULT_RESOURCE_GROUP/providers/microsoft.keyvault/vaults/$KEYVAULT_NAME" 
     ```
 
 1. Create and label a secret for Kubernetes to use to access the Key Vault
