@@ -61,7 +61,7 @@ Red Hat SREs access customer OpenShift Dedicated clusters using **Google Cloud I
 
 ### Authentication Flow for SREs
 
-![Authentication Flow for SREs](auth-flow.png)
+<img src="auth-flow.png" alt="Authentication Flow for SREs" style="max-width: 800px; width: 100%;" />
 
 ### Key Components
 
@@ -115,7 +115,7 @@ WIF is used by:
 
 The following diagram illustrates how Workload Identity Federation enables keyless authentication for cluster components:
 
-![Workload Identity Federation Architecture](wif.png)
+<img src="wif.png" alt="Workload Identity Federation Architecture" style="max-width: 800px; width: 100%;" />
 
 In this architecture:
 - Cluster operators running inside OpenShift Dedicated request OIDC tokens from the cluster’s service account issuer
@@ -125,7 +125,7 @@ In this architecture:
 
 ### How WIF Works
 
-![How WIF Works](wif-flow.png)
+<img src="wif-flow.png" alt="How WIF Works" style="max-width: 800px; width: 100%;" />
 
 ### Key Components
 
@@ -245,7 +245,7 @@ Using the prerequisite data, the OCM CLI automatically provisions the following 
 The OCM CLI ensures that all resources in the customer's Google Cloud account match the expectations defined in the `wif_config` object. This validation step prevents configuration drift and ensures the cluster will have the permissions it needs.
 
 **Visual Flow:**
-![Create WIF Config](create-wif-config.png)
+<img src="create-wif-config.png" alt="Create WIF Config" style="max-width: 800px; width: 100%;" />
 
 
 ### Benefits of WIF for Cluster Components
@@ -278,7 +278,7 @@ PSC enables Red Hat SREs to securely access these private clusters by creating a
 
 The following diagram illustrates how Private Service Connect enables secure, private connectivity to OpenShift Dedicated clusters:
 
-![Private Service Connect Architecture](psc.png)
+<img src="psc.png" alt="Private Service Connect Architecture" style="max-width: 800px; width: 100%;" />
 
 In this architecture:
 - Red Hat's infrastructure connects to customer clusters via PSC endpoints, avoiding the public internet entirely
@@ -289,7 +289,7 @@ In this architecture:
 
 ### How PSC Works for OpenShift Dedicated-Google
 
-![How PSC Works for OpenShift Dedicated-Google](how-psc-works.png)
+<img src="how-psc-works.png" alt="How PSC Works for OpenShift Dedicated-Google" style="max-width: 800px; width: 100%;" />
 
 ### PSC Components
 
@@ -334,7 +334,7 @@ In this architecture:
 
 ### The Complete SRE Access Flow
 
-![he Complete SRE Access Flow](Red-Hat-SRE-Access.png)
+<img src="Red-Hat-SRE-Access.png" alt="The Complete SRE Access Flow" style="max-width: 800px; width: 100%;" />
 
 ### Security Improvements
 
