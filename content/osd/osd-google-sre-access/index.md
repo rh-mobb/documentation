@@ -61,42 +61,7 @@ Red Hat SREs access customer OpenShift Dedicated clusters using **Google Cloud I
 
 ### Authentication Flow for SREs
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Red Hat SRE                                                     │
-│                                                                 │
-│  1. SRE authenticates with Red Hat Google Workspace account     │
-│     - Uses standard Google OAuth flow                           │
-│     - Multi-factor authentication enforced                      │
-│     - Example: sre@redhat.com                                   │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Google Cloud IAM                                                │
-│                                                                 │
-│  2. Checks SRE’s group membership                               │
-│     - Is sre@redhat.com in group osd-sre-access@redhat.com?     │
-│     - Verifies group has IAM permissions in customer project    │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Customer’s Google Cloud Project                                 │
-│                                                                 │
-│  3. IAM Policy grants permissions based on group membership     │
-│     - Group has specific roles (e.g., Compute Viewer, etc.)     │
-│     - Follows principle of least privilege                      │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ OpenShift Dedicated Cluster (via PSC)                           │
-│                                                                 │
-│  4. SRE accesses cluster resources                              │
-│  5. All actions logged with SRE’s Google identity               │
-└─────────────────────────────────────────────────────────────────┘
-```
+![Authentication Flow for SREs](auth-flow.png)
 
 ### Key Components
 
@@ -160,36 +125,7 @@ In this architecture:
 
 ### How WIF Works
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ OpenShift Dedicated Cluster                                     │
-│                                                                 │
-│  1. Cluster operator needs to access Google Cloud service       │
-│     (e.g., image registry needs to write to Cloud Storage)      │
-│  2. Operator requests OIDC token from cluster                   │
-│     - Token signed by cluster’s service account issuer          │
-│     - Contains operator identity and permissions needed         │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │ OIDC Token
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Google Cloud STS (Security Token Service)                       │
-│                                                                 │
-│  3. Validates OIDC token against Workload Identity Pool         │
-│  4. Checks token claims match WIF configuration                 │
-│  5. Issues short-lived Google Cloud access token                │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │ Google Cloud Access Token
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Google Cloud Service (e.g., Cloud Storage, Compute API)         │
-│                                                                 │
-│  6. Operator performs authorized action                         │
-│  7. All actions logged with operator service account identity   │
-└─────────────────────────────────────────────────────────────────┘
-```
+![How WIF Works](wif-flow.png)
 
 ### Key Components
 
@@ -309,42 +245,8 @@ Using the prerequisite data, the OCM CLI automatically provisions the following 
 The OCM CLI ensures that all resources in the customer's Google Cloud account match the expectations defined in the `wif_config` object. This validation step prevents configuration drift and ensures the cluster will have the permissions it needs.
 
 **Visual Flow:**
+![Create WIF Config](create-wif-config.png)
 
-```
-User runs: ocm gcp create wif-config
-          │
-          ▼
-   ┌───────────────────────────────────────┐
-   │ OCM CLI                               │
-   │  - POST wif_config to backend         │
-   └───────────────────────────────────────┘
-          │
-          ▼
-   ┌───────────────────────────────────────┐
-   │ OCM Backend                           │
-   │  - Generate keypair                   │
-   │  - Store private key in GCP Secret    │
-   │  - Return prerequisite data + public  │
-   │    key to CLI                         │
-   └───────────────────────────────────────┘
-          │
-          ▼
-   ┌───────────────────────────────────────┐
-   │ OCM CLI                               │
-   │  - Create Service Accounts            │
-   │  - Create Custom IAM Roles            │
-   │  - Create IAM Bindings                │
-   │  - Create Credentials Configs         │
-   │  - Create WIF Pool (with public key)  │
-   └───────────────────────────────────────┘
-          │
-          ▼
-   ┌───────────────────────────────────────┐
-   │ Customer's GCP Project                │
-   │  - All resources ready for cluster    │
-   │    deployment                         │
-   └───────────────────────────────────────┘
-```
 
 ### Benefits of WIF for Cluster Components
 
@@ -387,54 +289,7 @@ In this architecture:
 
 ### How PSC Works for OpenShift Dedicated-Google
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ Customer's Google Project (VPC Network)                          │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ OpenShift Dedicated Cluster (Private)                      │  │
-│  │                                                            │  │
-│  │  • API Server: 10.0.1.100 (internal only)                  │  │
-│  │  • No public IP                                            │  │
-│  │  • Private Service Connect enabled                         │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                              ▲                                   │
-│                              │                                   │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ PSC Service Attachment                                     │  │
-│  │                                                            │  │
-│  │  • Exposes cluster to authorized consumers                 │  │
-│  │  • Red Hat's Google project is whitelisted                 │  │
-│  └────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────┘
-                              ▲
-                              │ Private Connection (no internet)
-                              │
-┌──────────────────────────────────────────────────────────────────┐
-│ Red Hat's Google Project (Backplane Infrastructure)              │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ PSC Endpoint                                               │  │
-│  │                                                            │  │
-│  │  • Connects to customer's PSC service attachment           │  │
-│  │  • Gets private IP in Red Hat's VPC                        │  │
-│  │  • Example: 192.168.100.50                                 │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                              ▲                                   │
-│                              │                                   │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ Identity-Aware Proxy (IAP) Tunnel                          │  │
-│  │                                                            │  │
-│  │  • Provides secure, audited access for SREs                │  │
-│  │  • Enforces additional authentication                      │  │
-│  │  • Logs all connection attempts                            │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                              ▲                                   │
-│                              │                                   │
-│                         Red Hat SRE                              │
-│                    (Authenticated via WIF)                       │
-└──────────────────────────────────────────────────────────────────┘
-```
+![How PSC Works for OpenShift Dedicated-Google](how-psc-works.png)
 
 ### PSC Components
 
@@ -479,62 +334,7 @@ In this architecture:
 
 ### The Complete SRE Access Flow
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ Step 1: Authentication (Google Workspace + Group Membership)     │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-    ┌───────────────────────────────────────────┐
-    │ Red Hat SRE                               │
-    │  - Authenticates with Google Workspace    │
-    │  - Example: sre@redhat.com                │
-    │  - MFA enforced                           │
-    └───────────────────────────────────────────┘
-                              │
-                              ▼
-    ┌───────────────────────────────────────────┐
-    │ Google Cloud IAM                          │
-    │  - Verifies SRE's group membership        │
-    │  - Checks: is sre@redhat.com in           │
-    │    osd-sre-access@redhat.com group?       │
-    │  - Group has IAM bindings in customer     │
-    │    project                                │
-    └───────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│ Step 2: Network Connectivity (PSC + IAP)                        │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-    ┌───────────────────────────────────────────┐
-    │ Red Hat Backplane                         │
-    │  - SRE requests cluster access            │
-    │  - Establishes IAP tunnel                 │
-    │  - Uses SRE's Google identity             │
-    │  - Connects through PSC endpoint          │
-    └───────────────────────────────────────────┘
-                              │
-                              ▼
-    ┌───────────────────────────────────────────┐
-    │ PSC Private Connection                    │
-    │  Red Hat VPC ←→ Customer VPC              │
-    │  (Internal Google network only)           │
-    └───────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│ Step 3: Cluster Access                                          │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-    ┌────────────────────────────────────────────────┐
-    │ Customer's Private OpenShift Dedicated Cluster │
-    │  - Receives authenticated request              │
-    │  - SRE authorized via Google IAM               │
-    │  - All actions logged with SRE identity        │
-    │  - Executes authorized operations              │
-    └────────────────────────────────────────────────┘
-```
+![he Complete SRE Access Flow](Red-Hat-SRE-Access.png)
 
 ### Security Improvements
 
