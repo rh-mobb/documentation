@@ -4,6 +4,8 @@ title: Prerequisites Checklist to Deploy ARO Cluster
 tags: ["ARO"]
 authors:
   - Ricardo Macedo Martins
+  - Daniel Penagos
+validated_version: "4.20"
 ---
 
 Before deploying an ARO cluster, ensure you meet the following prerequisites:
@@ -14,7 +16,16 @@ Before deploying an ARO cluster, ensure you meet the following prerequisites:
 
 ## Verify Resources
 
-- **Core Quota**: [Confirm availability of at least 40 cores](https://learn.microsoft.com/azure/quotas/per-vm-quota-requests) to create and run an OpenShift Cluster.
+- **Core Quota**: [Confirm availability of at least 44 vCPUs](https://learn.microsoft.com/azure/quotas/per-vm-quota-requests) to create and run an OpenShift Cluster. (24 for Control Plane, 12 for Worker Nodes, 8 for the bootstrap vm)
+- **Resource Availability**: Even with the quota enabled, the subscription may have restrictions on creating virtual machines from certain families in some availability zones. We need to identify this situation, which applies to both control plane machines and worker nodes. :
+
+```bash
+export REGION=eastus
+export FAMILY_SIZE=Standard_D
+#This command will show all the available families for the subscription. Execute it for the Standard_D (control plane) and for the desired family of worker nodes if it is a different one. 
+az vm list-skus --location $REGION --size $FAMILY_SIZE --all --output table | grep '1,2,3    None'
+
+```
 
 ## Permissions
 
