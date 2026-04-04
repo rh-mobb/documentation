@@ -1,23 +1,24 @@
 ---
 date: '2022-05-23'
-title: Trident NetApp operator setup for Azure NetApp files
+title: Trident operator setup for Azure NetApp Files on ARO
 tags: ["ARO"]
 authors:
   - Byron Miller
   - Connor Wooley
   - Kevin Collins
+  - Diana Sari
+validated_version: "4.20"
 ---
 
 Note:
-This guide a simple "happy path" to show the path of least friction to showcasing how to use NetApp files with Azure Red Hat OpenShift. This may not be the best behavior for any system beyond demonstration purposes.
+ This guide is a simple "happy path" that shows a minimal friction way to use Azure NetApp Files with Azure Red Hat OpenShift. This may not be the best behavior for any system beyond demonstration purposes.
 
 ## Prerequisites
 
-  * An Azure Red Hat OpenShift cluster installed with Service Principal role/credentials.
-  * [kubectl cli](https://kubernetes.io/releases/download/#kubectl)
+  * An Azure Red Hat OpenShift cluster installed with Service Principal role/credentials. 
   * [oc cli](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html)
-  * [helm 3 cli](https://helm.sh/docs/intro/install/)
-  * [Review official trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator)
+  
+Please review the current NetApp Trident documentation for Azure NetApp Files prerequisites and required permissions.
 
 In this guide, you will need service principal and region details. Please have these handy.
 
@@ -27,19 +28,19 @@ In this guide, you will need service principal and region details. Please have t
 * Azure clientSecret (Service Principal Secret)
 * Azure Region
 
-If you don't have your existing ARO service principal credentials, you can create your own service principal and grant it contributor to be able to manage the required resources. Please review the [official Trident documentation](https://netapp-trident.readthedocs.io/en/stable-v21.07/kubernetes/deploying/operator-deploy.html#deploying-with-operator) regarding Azure NetApp files and required permissions.
+If you do not want to reuse the existing ARO service principal, you can create a separate service principal and grant it the permissions required to manage the Azure NetApp Files resources used by Trident.
 
 ### Important Concepts
 
 Persistent Volume Claims are [namespaced objects](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#a-note-on-namespaces).  Mounting RWX/ROX is only possible within the same namespace.
 
-NetApp files must be have a delegated subnet within your ARO Vnet's and you must assign it to the Microsoft.Netapp/volumes service.
+Azure NetApp Files must have a delegated subnet within your ARO VNet, and that subnet must be delegated to `Microsoft.NetApp/volumes`.
 
 ## Configure Azure
 
-You must first register the Microsoft.NetApp provider and Create a NetApp account on Azure before you can use Azure NetApp Files.
+You must first register the `Microsoft.NetApp` provider and create an Azure NetApp Files account before you can use Azure NetApp Files.
 
-### Register NetApp files
+### Register Azure NetApp files
 
 [Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-register)
 
@@ -48,13 +49,13 @@ You must first register the Microsoft.NetApp provider and Create a NetApp accoun
 az provider register --namespace Microsoft.NetApp --wait
 ```
 
-### Create storage account
+### Create Azure NetApp Files account
 
 Again, for brevity I am using the same RESOURCE_GROUP and Service Principal that the cluster was created with.
 
 [Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-create-netapp-account)
 
-or az cli
+Or with the Azure CLI:
 
 ```bash
 RESOURCE_GROUP="myresourcegroup"
@@ -75,7 +76,7 @@ Creating one pool for now. The common pattern is to expose all three levels with
 
 [Azure Console](https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-set-up-capacity-pool)
 
-or az cli:
+Or with the Azure CLI:
 
 ```bash
 POOL_NAME="Standard"
@@ -95,351 +96,365 @@ az netappfiles pool create \
 
 ### Delegate subnet to ARO
 
-Login to azure console, find the subnets for your ARO cluster and click add subnet. We need to call this subnet anf.subnet since that is the name we refer to in later configuration.
-
-![delegate subnet](delegate-subnet.png)
-
-## Install Trident Operator
-
-### Login/Authenticate to ARO
-
-Login to your ARO cluster.   You can create a token to login via cli straight from the web gui
-
-![get openshift oc credentials](copy-login-command.png)
+Login to the Azure console, find the VNet used by your ARO cluster, and add a delegated subnet for Azure NetApp Files. Make sure the backend configuration later in this guide references the exact subnet name/path you created.
 
 
-```bash
-oc login --token=sha256~abcdefghijklmnopqrstuvwxyz --server=https://api.randomseq.eastus.aroapp.io:6443
+## Install Trident Operator from OperatorHub/Software Catalog
+
+Login to your ARO cluster and install **NetApp Trident** from **OperatorHub** (or **Software Catalog**) using the certified operator.
+
+1. In the OpenShift console, go to **OperatorHub**.
+2. Search for **NetApp Trident**.
+3. Select the most recent available operator version.
+4. Install the operator in the default recommended configuration.
+5. Create a `TridentOrchestrator` instance.
+
+Example:
+
+```yaml
+apiVersion: trident.netapp.io/v1
+kind: TridentOrchestrator
+metadata:
+  name: trident
+  namespace: openshift-operatorsß
+spec:
+  namespace: trident
+  IPv6: false
 ```
 
-### Helm Install
-
-Download latest Trident package
+Apply and verify:
 
 ```bash
-wget https://github.com/NetApp/trident/releases/download/v25.06.2/trident-installer-25.06.2.tar.gz
+oc apply -f tridentorchestrator.yaml
+oc get tridentorchestrator -n openshift-operators
+oc get pods -n trident
 ```
 
-Extract tar.gz into working directory
+
+## Create Trident backend
+
+Create the backend using a Kubernetes Secret and a `TridentBackendConfig` custom resource.
+
+Create the credentials secret first:
 
 ```bash
-tar -xzvf trident-installer-25.06.2.tar.gz
+oc -n trident create secret generic anf-credentials \
+  --from-literal=clientID="<app-id>" \
+  --from-literal=clientSecret="<app-secret>"
 ```
 
-cd into installer
+> Notes:
+>
+> * Ensure the service principal has the required Azure permissions for Azure NetApp Files resources.
+> * If permissions are missing, you may see an error similar to: `capacity pool query returned no data; no capacity pools found for storage pool`.
+
+Create the backend definition:
 
 ```bash
-cd trident-installer/helm
-```
-
-Helm install
-
-```bash
-oc new-project test-netapp
-
-helm install trident-operator trident-operator-100.2506.2.tgz
-```
-
-Example output from installation:
-
-```bash
-W0523 17:45:22.189592   30478 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+
-W0523 17:45:22.484071   30478 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+
-NAME: trident-operator
-LAST DEPLOYED: Mon May 23 17:45:20 2022
-NAMESPACE: openshift
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Thank you for installing trident-operator, which will deploy and manage NetApp's Trident CSI
-storage provisioner for Kubernetes.
-
-Your release is named 'trident-operator' and is installed into the 'test-netapp' namespace.
-Please note that there must be only one instance of Trident (and trident-operator) in a Kubernetes cluster.
-
-To configure Trident to manage storage resources, you will need a copy of tridentctl, which is
-available in pre-packaged Trident releases.  You may find all Trident releases and source code
-online at https://github.com/NetApp/trident.
-
-To learn more about the release, try:
-
-  $ helm status trident-operator
-  $ helm get all trident-operator
-```
-
-Validate
-
-```bash
-cd ..
-./tridentctl version
-+----------------+----------------+
-| SERVER VERSION | CLIENT VERSION |
-+----------------+----------------+
-| 22.04.0        | 22.04.0        |
-+----------------+----------------+
-```
-
-Note for mac users: take a look at the directory extras/macos/bin to find the proper tridentctl binary for MacOS 
-
-### Install tridentctl
-
-I put all my cli's in /usr/local/bin
-
-```bash
-sudo install tridentctl /usr/local/bin
-```
-example output:
-```bash
-which tridentctl
-/usr/local/bin/tridentctl
-```
-
-## Create trident backend
-
-FYI - Sample files for review are in sample-input/backends-samples/azure-netapp-files directory from the trident tgz we extracted earlier.
-
-1. Replace client ID with service principal ID
-2. Replace clientSecret with Service Principal Secret
-3. Replace tenantID with your account tenant ID
-4. Replace subscriptionID with your azure SubscriptionID
-5. Ensure location matches your Azure Region
-
-> Notes: 
->* In case you don't have the Service Principal Secret, you can create a new secret within the credentials pane of the service account in AAD/app registrations.
->* I have used nfsv3 for basic compatibility. You can remove that line and use NetApp files defaults.
->* For further steps you must ensure the Service Principal has the privileges in place. Otherwise you will face an error like this: *"error initializing azure-netapp-files SDK client. capacity pool query returned no data; no capacity pools found for storage pool"*. One way to avoid this situation is by creating a new custom role (Subscription->IAM->Create a custom role)with all privileges associated in official documentation ([netapp for azure](https://docs.netapp.com/us-en/trident/trident-use/anf-prep.html#prerequisites-for-nfs-and-smb-volumes)) and associate this new role to the cluster's service principal.
->![Storage Class](netapp-role-example.png)
-
-```bash
-vi backend-anf.json
+vi backend-anf.yaml
 ```
 
 Add the following snippet:
 
-```json
-{
-        "version": 1,
-        "nfsMountOptions": "nfsvers=3",
-        "storageDriverName": "azure-netapp-files",
-        "subscriptionID": "12abc678-4774-fake-a1b2-a7abcde39312",
-        "tenantID": "a7abcde3-edc1-fake-b111-a7abcde356cf",
-        "clientID": "abcde356-bf8e-fake-c111-abcde35613aa",
-        "clientSecret": "rR0rUmWXfNioN1KhtHisiSAnoTherboGuskey6pU",
-        "location": "southcentralus",
-        "subnet": "anf.subnet",
-        "labels": {
-                "cloud": "azure"
-        },
-        "storage": [
-                {
-                        "labels": {
-                                "performance": "Standard"
-                        },
-                        "serviceLevel": "Standard"
-                }
-        ]
-}
+```yaml
+apiVersion: trident.netapp.io/v1
+kind: TridentBackendConfig
+metadata:
+  name: anf-backend
+  namespace: trident
+spec:
+  version: 1
+  backendName: anf-backend
+  storageDriverName: azure-netapp-files
+  credentials:
+    name: anf-credentials
+  subscriptionID: "12abc678-4774-fake-a1b2-a7abcde39312"
+  tenantID: "a7abcde3-edc1-fake-b111-a7abcde356cf"
+  location: "southcentralus"
+  resourceGroups:
+    - "my-resource-group"
+  netappAccounts:
+    - "my-resource-group/my-anf-account"
+  capacityPools:
+    - "my-resource-group/my-anf-account/my-capacity-pool"
+  virtualNetwork: "my-resource-group/my-vnet"
+  subnet: "my-resource-group/my-vnet/my-anf-subnet"
+  nasType: "nfs"
 ```
 
-run
+Apply it:
+
 ```bash
-tridentctl -n openshift create backend -f backend-anf.json
+oc apply -f backend-anf.yaml
+oc get tridentbackendconfig -n trident
+oc describe tridentbackendconfig anf-backend -n trident
 ```
 
-example output:
+Example successful output:
 
 ```bash
-+------------------------+--------------------+--------------------------------------+--------+---------+
-|          NAME          |   STORAGE DRIVER   |                 UUID                 | STATE  | VOLUMES |
-+------------------------+--------------------+--------------------------------------+--------+---------+
-| azurenetappfiles_eb177 | azure-netapp-files | f7f211afe-d7f5-41a5-a356-fa67f25ee96b | online |       0 |
-+------------------------+--------------------+--------------------------------------+--------+---------+
+NAME          BACKEND NAME   BACKEND UUID                           PHASE   STATUS
+anf-backend   anf-backend    bf13f361-91c6-4fc3-8fbe-697601b3f4eb   Bound   Success
 ```
-if you get a failure here, you can run to following command to review logs:
+
+If backend creation fails, review the Trident controller logs:
 
 ```bash
- tridentctl logs
- ```
+oc logs -n trident deploy/trident-controller --since=10m
+```
 
- To view log output that may help steer you in the right direction.
 
-### Create storage class
+## Create storage class
+
+Example of StorageClass:
 
 ```bash
-cat <<EOF | kubectl apply -f -
+cat <<EOF | oc apply -f -
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: standard
+  name: anf-sc
 provisioner: csi.trident.netapp.io
 parameters:
   backendType: "azure-netapp-files"
-  fsType: "nfs"
-  selector: "performance=Standard"    # Matching labels in the backends...
-allowVolumeExpansion: true            # To allow volume resizing. This parameter is optional
+allowVolumeExpansion: true
 mountOptions:
-  - nconnect=16
+  - nfsvers=3
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
 EOF
 ```
-output:
+
+Output:
 
 ```bash
-storageclass.storage.k8s.io/standard created
+storageclass.storage.k8s.io/anf-sc created
 ```
 
-### Provision volume
+### Troubleshooting notes
 
-Let's create a new project and set up a persistent volume claim. Remember that PV Claims are namespaced objects and you must create the pvc in the namespace where it will be allocated. I'll use the project "netappdemo".
+If the backend does not initialize successfully, PVC creation can later fail with errors such as `no available backends for storage class ...` or remain in `Pending`.
+
+Common Azure resource discovery symptoms include:
+- `Subnet query returned no data`
+- `Resource group referenced in pool not found`
+- `Virtual network referenced in pool not found`
+- `Subnet referenced in pool not found`
+- `no capacity pools found for storage pool <pool-name>`
+
+These usually indicate one or more of the following:
+- the resource group, virtual network, subnet, or capacity pool name does not exactly match the Azure resource
+- the subnet is not delegated to `Microsoft.NetApp/volumes`
+- the service principal role assignment scope is too narrow
+- the service principal cannot read the VNet/subnet resources required for backend discovery
+
+During ARO 4.20 validation, two additional Trident-specific issues were observed:
+- inline backend credentials were rejected and had to be moved to a Kubernetes Secret referenced by `spec.credentials`
+- using `backendName` as a StorageClass parameter was rejected; `backendType: "azure-netapp-files"` worked
+
+Useful validation commands:
+
+```bash
+oc get tridentbackendconfig -n trident
+oc get tridentbackendconfig -n trident -o yaml
+oc logs -n trident deploy/trident-controller -c trident-main
+oc describe pvc <pvc-name> -n <namespace>
+```
+
+## Provision volume
+
+Create a new project and set up a persistent volume claim. PersistentVolumeClaims are namespaced objects, so create the claim in the namespace where it will be used. In this example, we use the project `netappdemo`.
 
 ```bash
 oc new-project netappdemo
 ```
 
-Now we'll create a PV claim in the "netappdemo" project we just created.
+Now create the PVC:
 
 ```bash
-cat <<EOF | kubectl apply -f -
-kind: PersistentVolumeClaim
+cat <<EOF | oc apply -f -
 apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: standard
+  name: anf-pvc
+  namespace: netappdemo
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 4000Gi
-  storageClassName: standard
+      storage: 100Gi
+  storageClassName: anf-sc
 EOF
 ```
 
-output:
+Output:
+
 ```bash
-persistentvolumeclaim/standard created
+persistentvolumeclaim/anf-pvc created
 ```
+
+Verify that the claim binds successfully:
+
+```bash
+oc get pvc -n netappdemo
+oc get pv
+```
+
 
 ## Verify
 
-Quick verification of storage, volumes and services.
+Verify that the StorageClass and PersistentVolumeClaim were created successfully.
 
-### Verify Kubectl
+### Verify with CLI
+
+Check the StorageClass:
 
 ```bash
-➜  kubectl get storageclass
-NAME                        PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGEmanaged-premium (default)   kubernetes.io/azure-disk   Delete          WaitForFirstConsumer true                   3h26m
-standard                    csi.trident.netapp.io      Delete          Immediate              true                   5m5s
-➜
+oc get sc
 ```
 
-### Verify OpenShift
+Example output:
 
-Login to your cluster as cluster-admin and verify your storage classes and persistent volumes.
+```bash
+NAME                         PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+anf-sc                       csi.trident.netapp.io   Delete          Immediate              true                   1m
+managed-csi (default)        disk.csi.azure.com      Delete          WaitForFirstConsumer   true                   12d
+```
 
-Storage Class
+Check the PersistentVolumeClaim:
 
-![Storage Class](storage-classes.png)
+```bash
+oc get pvc -n netappdemo
+```
 
-Persisent Volumes
-![Persistent Volumes](persistent-volumes.png)
+Example output:
 
+```bash
+NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+anf-pvc   Bound    pvc-b835e6c6-3f3e-4a6b-aeb3-3b2906df3bd5   100Gi      RWX            anf-sc         <unset>                 15s
+```
+
+Check the PersistentVolumes:
+
+```bash
+oc get pv
+```
+
+Example output:
+
+```bash
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM              STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-b835e6c6-3f3e-4a6b-aeb3-3b2906df3bd5   100Gi      RWX            Delete           Bound    netappdemo/anf-pvc anf-sc         <unset>                          15s
+```
+
+### Verify in OpenShift Console
+
+Login to the cluster as `cluster-admin` and confirm that:
+
+* the `anf-sc` StorageClass is present
+* the `anf-pvc` claim in the `netappdemo` project is `Bound`
+* a dynamically provisioned PersistentVolume was created for the claim
 
 ## Create Pods to test Azure NetApp
 
-We'll create two pods here to exercise the Azure NetApp file mount. One to write data and another to read data to show that it is mounted as "read write many" and correctly working.
+Create two pods to validate the Azure NetApp file mount. One pod writes data to the shared volume, and the second pod reads the same data back to confirm `ReadWriteMany` access is working correctly.
+
+> **Note:** On current OpenShift clusters, these simple demo pods may emit Pod Security warnings unless restricted-compatible `securityContext` settings are added. The sample still works for basic validation.
 
 ### Writer Pod
 
-This pod will write "hello netapp" to a shared NetApp mount.
+This pod writes `hello netapp` to the shared mount backed by the `anf-pvc` claim.
 
-```yaml
+```bash
 cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: test-netapp
-  labels:
-    app: test-aznetapp
-    deploymethod: trident
+  name: writer
+  namespace: netappdemo
 spec:
   containers:
-    - name: aznetapp
-      image: centos:latest
-      command: ["/bin/bash", "-c", "--"]
-      resources:
-        limits:
-          cpu: 1
-          memory: "1Gi"
+    - name: writer
+      image: registry.access.redhat.com/ubi9/ubi-minimal
+      command: ["/bin/sh", "-c"]
       args:
-        [
-          "while true; do echo 'hello netapp' | tee -a /mnt/netapp-data/verify-netapp && sleep 5; done;",
-        ]
+        - echo "hello netapp" > /data/hello.txt && sleep 3600
       volumeMounts:
-        - name: disk01
-          mountPath: "/mnt/netapp-data"
+        - name: shared
+          mountPath: /data
   volumes:
-    - name: disk01
+    - name: shared
       persistentVolumeClaim:
-        claimName: standard
+        claimName: anf-pvc
 EOF
 ```
 
-You can watch for this container to be ready:
+Watch for the pod to become ready:
 
 ```bash
-watch oc get pod test-netapp
+oc get pod writer -n netappdemo -w
 ```
 
-Or view it in the OpenShift Pod console for the netappdemo project.
+Verify the file was written:
 
-![Netapp Trident Demo Container](netapp-demo-pod.png)
+```bash
+oc exec -n netappdemo writer -- cat /data/hello.txt
+```
+
+Expected output:
+
+```bash
+hello netapp
+```
 
 ### Reader Pod
 
-This pod will read back the data from the shared NetApp mount.
+This pod reads the same file from the shared mount.
 
-```yaml
+```bash
 cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: test-netapp-read
+  name: reader
+  namespace: netappdemo
 spec:
   containers:
-    - name: test-netapp-read
-      image: centos:latest
-      command: ["/bin/bash", "-c", "--"]
-      resources:
-        limits:
-          cpu: 1
-          memory: "1Gi"
-      args: ["tail -f /mnt/netapp-data/verify-netapp"]
+    - name: reader
+      image: registry.access.redhat.com/ubi9/ubi-minimal
+      command: ["/bin/sh", "-c"]
+      args:
+        - cat /data/hello.txt && sleep 3600
       volumeMounts:
-        - name: disk01
-          mountPath: "/mnt/netapp-data"
+        - name: shared
+          mountPath: /data
   volumes:
-    - name: disk01
+    - name: shared
       persistentVolumeClaim:
-        claimName: standard
+        claimName: anf-pvc
 EOF
 ```
 
-Now let's verify the POD is reading from shared volume.
+Wait for the pod to be ready:
 
 ```bash
-oc logs test-netapp-read
-hello netapp
-hello netapp
-hello netapp
-hello netapp
-hello netapp
-hello netapp
-hello netapp
-hello netapp
+oc get pod reader -n netappdemo -w
+```
+
+Verify the reader pod can access the shared file:
+
+```bash
+oc logs -n netappdemo reader
+oc exec -n netappdemo reader -- cat /data/hello.txt
+```
+
+Expected output:
+
+```bash
 hello netapp
 hello netapp
 ```
 
-You can also see the pod details in OpenShift for the reader:
+The first `hello netapp` is from the pod logs, and the second is from the `oc exec` command. This confirms that both pods successfully accessed the same Azure NetApp-backed `ReadWriteMany` volume.
 
-![OpenShift Netapp Reader Pod](netapp-demo-reader.png)
