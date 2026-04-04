@@ -26,8 +26,7 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
 
 1. Configure the following environment variables:
    ```bash
-   export CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.apiServerURL}" | awk -F '.' '{print $2}')
-   export ROSA_CLUSTER_NAME=${CLUSTER_NAME}
+   export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.apiServerURL}" | awk -F '.' '{print $2}')
    export REGION=$(rosa describe cluster -c ${ROSA_CLUSTER_NAME} --output json | jq -r .region.id)
    export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer | sed 's|^https://||')
    export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
