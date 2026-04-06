@@ -8,7 +8,7 @@ authors:
 validated_version: "4.20"
 ---
 
-With Azure Red Hat OpenShift (ARO), you can take advantage of flexible pricing models, including pay-as-you-go and reserved instances, to further optimize your cloud spending. Its auto-scaling capabilities help reduce costs by avoiding over-provisioning, making it a cost-effective solution for organizations seeking to balance performance and expenditure
+With Azure Red Hat OpenShift (ARO), you can take advantage of flexible pricing models, including pay-as-you-go and reserved instances, to further optimize your cloud spending. Its auto-scaling capabilities help reduce costs by avoiding over-provisioning, making it a cost-effective solution for organizations seeking to balance performance and expenditure.
 
 This guide demonstrates how to implement scheduled scaling in Azure Red Hat OpenShift (ARO), enabling your cluster to automatically adjust its size according to a predefined schedule. By configuring scale-downs during periods of low activity and scale-ups when additional resources are needed, you can ensure both cost efficiency and optimal performance.
 
@@ -16,10 +16,10 @@ Leveraging ARO's automated scaling capabilities allows for dynamic adjustment of
 
 ## Prerequisites
 
-* Install `oc` [cli](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/cli_tools/openshift-cli-oc) 
+* Install `oc` [CLI](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/cli_tools/openshift-cli-oc) 
 * Azure Red Hat OpenShift (ARO) [cluster](https://cloud.redhat.com/experts/quickstart-aro/)
 
-> Note: You must log into your ARO cluster via your oc cli before going through the following steps.
+> Note: You must log into your ARO cluster via your oc CLI before going through the following steps.
 
 ### Create a New project and Service Account
 
@@ -318,7 +318,7 @@ oc logs -f job/manual-test-1 -n worker-scaling
 
 ### Confirm scaling results
 
-Once the job is done, monitor the MachineSet, Machine, and Node statuses to ensure the cluster is scaling as expected.
+Once the job is done, monitor the machineset, machines, and node statuses to ensure the cluster is scaling as expected.
 
 1. Check machinesets
 ```bash
