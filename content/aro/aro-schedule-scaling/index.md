@@ -4,6 +4,8 @@ title: Scalability and Cost Management for Azure Red Hat OpenShift
 tags: ["ARO"]
 authors:
   - Nerav Doshi
+  - Deepika Ranganathan
+validated_version: "4.20"
 ---
 
 With Azure Red Hat OpenShift (ARO), you can take advantage of flexible pricing models, including pay-as-you-go and reserved instances, to further optimize your cloud spending. Its auto-scaling capabilities help reduce costs by avoiding over-provisioning, making it a cost-effective solution for organizations seeking to balance performance and expenditure
@@ -14,28 +16,27 @@ Leveraging ARO's automated scaling capabilities allows for dynamic adjustment of
 
 ## Prerequisites
 
-The following three CLIs need to be installed.
-* `oc` cli 
-* Access to [Azure Red Hat OpenShift cluster](https://cloud.redhat.com/experts/quickstart-aro/)
+* Install `oc` [cli](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/cli_tools/openshift-cli-oc) 
+* Azure Red Hat OpenShift (ARO) [cluster](https://cloud.redhat.com/experts/quickstart-aro/)
 
 > Note: You must log into your ARO cluster via your oc cli before going through the following steps.
 
-## Step 1: Create a New project and Service Account
+### Create a New project and Service Account
 
-### Create a new project
+1. Create a new project
 ```bash
 oc new-project worker-scaling
 ```
 
-### Create the service account
+2. Create the service account
 
 ```bash
 oc create serviceaccount worker-scaler -n worker-scaling
 ```
 
-## Step 2: Create RBAC Resources
+### Create RBAC Resources
 
-Create the necessary ClusterRole and ClusterRoleBinding to grant permissions:
+1. Create the ClusterRole to grant permissions
 
 ```bash
 oc apply -f - <<EOF
@@ -52,6 +53,7 @@ rules:
   verbs: ["get", "list"]
 EOF
 ```
+2. Create the ClusterRoleBinding
 
 ```bash
 oc apply -f - <<EOF
@@ -70,13 +72,13 @@ subjects:
 EOF
 ```
 
-## Step 3: Create the Scaling Script
+### Create the Scaling Script
 
-### Environment Variables
+1. Set Environment Variables
 - `DESIRED_REPLICAS`: Number of replicas per machineset (default: 3)
 - `MACHINESET_LABEL`: Label selector for machinesets (default: worker role)
 
-Create a ConfigMap containing the scaling script:
+2. Create a ConfigMap containing the scaling script:
 
 ```bash
 oc apply -f - <<'EOF'
@@ -141,15 +143,15 @@ data:
 EOF
 ```
 
-## Step 4: Create the CronJob
+### Create the CronJob
 
-#### For testing you can adjust accordingly. For example
+Adjust the cron expression as needed. 
 - `"0 8 * * *"` - Daily at 8:00 AM
 - `"0 8 * * 1-5"` - Weekdays at 8:00 AM
 - `"0 8,20 * * *"` - Daily at 8:00 AM and 8:00 PM
 - `"*/30 * * * *"` - Every 30 minutes
 
-Create a CronJob that will execute the scaling script:
+1. Create a Scale-Up CronJob:
 
 ```bash
 oc apply -f - <<EOF
@@ -199,114 +201,7 @@ spec:
   failedJobsHistoryLimit: 1
 EOF
 ```
-
-## Step 5: Verify the Setup
-
-Check that all resources are created correctly:
-
-#### Verify service account
-```bash
-oc get serviceaccount worker-scaler -n worker-scaling
-```
-
-Example output:
-
-```bash
-aro-cluster$ oc get serviceaccount worker-scaler -n worker-scaling
-NAME            SECRETS   AGE
-worker-scaler   1         101m
-```
-
-#### Verify RBAC
-```bash
-oc get clusterrole worker-scaler
-oc get clusterrolebinding worker-scaler
-```
-Example output:
-
-```bash
-aro-cluster$ oc get clusterrole worker-scaler
-NAME            CREATED AT
-worker-scaler   2025-06-16T18:35:12Z
-aro-cluster$ oc get clusterrolebinding worker-scaler
-NAME            ROLE                        AGE
-worker-scaler   ClusterRole/worker-scaler   106m
-```
-#### Verify ConfigMap
-```bash
-oc get configmap scaling-script -n worker-scaling
-```
-
-Example output:
-
-```bash
-aro-cluster$ oc get configmap scaling-script -n worker-scaling
-NAME             DATA   AGE
-scaling-script   1      107m
-```
-#### Verify CronJob
-```bash
-oc get cronjob worker-scaler -n worker-scaling
-```
-Example output:
-```bash
-aro-cluster$ oc get cronjob worker-scaler -n worker-scaling
-NAME            SCHEDULE    SUSPEND   ACTIVE   LAST SCHEDULE   AGE
-worker-scaler   0 8 * * *   False     0        <none>          6s
-```
-## Step 6: Test the CronJob
-
-You can manually trigger the CronJob to test it:
-#### Create a manual job from the CronJob
-```bash
-oc create job --from=cronjob/worker-scaler manual-test-1 -n worker-scaling
-```
-
-#### Check the job status
-```bash
-oc get jobs -n worker-scaling
-```
-#### Check the pod logs
-```
-oc logs -f job/manual-test-1 -n worker-scaling
-```
-Example output:
-
-```bash
-aro-cluster$ oc get jobs -n worker-scaling
-NAME            COMPLETIONS   DURATION   AGE
-manual-test-1   0/1           17s        17s
-```
-## Step 7: Monitor and Manage
-Monitor the CronJob execution:
-
-#### Check CronJob status
-```bash
-oc get cronjob worker-scaler -n worker-scaling
-```
-Example output:
-```bash
-aro-cluster$ oc get cronjob worker-scaler -n worker-scaling
-NAME            SCHEDULE    SUSPEND   ACTIVE   LAST SCHEDULE   AGE
-worker-scaler   0 8 * * *   False     0        <none>          3m15s
-```
-
-#### View recent jobs
-```bash
-oc get jobs -n worker-scaling
-```
-
-Example output:
-```bash
-aro-cluster$ oc get jobs -n worker-scaling
-NAME            COMPLETIONS   DURATION   AGE
-manual-test-1   1/1           55s        2m51s
-```
-
-
-## Creating a Scale-Down CronJob
-
-To create a complementary scale-down job:
+2. Create a Scale-Down CronJob:
 
 ```bash
 oc apply -f - <<EOF
@@ -342,18 +237,100 @@ spec:
               defaultMode: 0755
 EOF
 ```
-### Finally sit back and watch the machinesets scale on the schedule you configured.  
 
-#### Check machinesets
+### Verify the Setup
+
+1. Verify service account
+```bash
+oc get serviceaccount worker-scaler -n worker-scaling
+```
+
+Example output:
+
+```bash
+aro-cluster$ oc get serviceaccount worker-scaler -n worker-scaling
+NAME            SECRETS   AGE
+worker-scaler   1         101m
+```
+
+2. Verify RBAC
+```bash
+oc get clusterrole worker-scaler
+oc get clusterrolebinding worker-scaler
+```
+Example output:
+
+```bash
+aro-cluster$ oc get clusterrole worker-scaler
+NAME            CREATED AT
+worker-scaler   2025-06-16T18:35:12Z
+aro-cluster$ oc get clusterrolebinding worker-scaler
+NAME            ROLE                        AGE
+worker-scaler   ClusterRole/worker-scaler   106m
+```
+3. Verify ConfigMap
+```bash
+oc get configmap scaling-script -n worker-scaling
+```
+
+Example output:
+
+```bash
+aro-cluster$ oc get configmap scaling-script -n worker-scaling
+NAME             DATA   AGE
+scaling-script   1      107m
+```
+
+4. Verify CronJob
+```bash
+oc get cronjob -n worker-scaling 
+```
+Example output:
+```bash
+aro-cluster$ oc get cronjob -n worker-scaling 
+NAME                 SCHEDULE      TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+worker-scaler        0 8 * * *     <none>     False     0        <none>          10s
+worker-scaler-down   0 18 * * *    <none>     False     0        <none>           6s
+```
+
+### Test the CronJob
+
+1. Manually trigger a Job from the CronJob to test it without waiting for the scheduled time.
+```bash
+oc create job --from=cronjob/worker-scaler manual-test-1 -n worker-scaling
+```
+
+2. Check the job status
+```bash
+oc get jobs -n worker-scaling
+```
+Example output:
+
+```bash
+aro-cluster$ oc get jobs -n worker-scaling
+NAME            COMPLETIONS   DURATION   AGE
+manual-test-1   0/1           17s        17s
+```
+3. Check the pod logs
+```
+oc logs -f job/manual-test-1 -n worker-scaling
+```
+
+### Confirm scaling results
+
+Once the job is done, monitor the MachineSet, Machine, and Node statuses to ensure the cluster is scaling as expected.
+
+1. Check machinesets
 ```bash
 oc get machinesets -n openshift-machine-api
 ```
-#### Check machines
+
+2. Check machines
 ```bash
 oc get machines -n openshift-machine-api
 ```
 
-#### Check nodes
+3. Check nodes
 ```bash
 oc get nodes
 ```
