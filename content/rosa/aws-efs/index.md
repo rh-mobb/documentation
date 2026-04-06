@@ -1,7 +1,7 @@
 ---
 date: '2023-04-04'
 title: Enabling the AWS EFS CSI Driver Operator on ROSA
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 aliases:
 - /experts/rosa/aws-efs/aws-efs-csi-operator-on-rosa/
 - /experts/rosa/aws-efs/aws-efs-operator-on-rosa/
@@ -9,6 +9,7 @@ authors:
   - Paul Czarkowski
   - Andy Repton
   - Shaozhen Ding
+validated_version: "4.20"
 ---
 
 The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
@@ -302,12 +303,12 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Configure a region-wide Mount Target for EFS (this will create a mount point in each subnet of your VPC by default)
 
    ```bash
-   for SUBNET in $PRIVATE_SUBNETS do \
-       MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
-          --subnet-id $SUBNET --security-groups $SG \
-          --region $AWS_REGION \
-          | jq -r '.MountTargetId'); \
-       echo $MOUNT_TARGET; \
+    for SUBNET in $=PRIVATE_SUBNETS; do 
+        MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
+            --subnet-id $SUBNET --security-groups $SG \
+            --region $AWS_REGION \
+            | jq -r '.MountTargetId'); \
+        echo $MOUNT_TARGET; \
     done
    ```
 
