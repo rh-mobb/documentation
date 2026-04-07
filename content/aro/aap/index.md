@@ -133,6 +133,9 @@ AAP 2.6 introduces a unified deployment model using the `AnsibleAutomationPlatfo
     > See `oc explain ansibleautomationplatform.spec` for full configuration options.
 
     ```bash
+    # Get the full apps domain including region (e.g., apps.xyz.region.aroapp.io)
+    export APPS_DOMAIN="$(oc get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
+    
     cat <<EOF | oc apply -f -
     apiVersion: aap.ansible.com/v1alpha1
     kind: AnsibleAutomationPlatform
@@ -141,8 +144,8 @@ AAP 2.6 introduces a unified deployment model using the `AnsibleAutomationPlatfo
       namespace: aap
     spec:
       admin_password_secret: aap-admin-password
-      hostname: aap.apps.$AAP_APPS_DOMAIN
-      route_host: aap.apps.$AAP_APPS_DOMAIN
+      hostname: aap.$APPS_DOMAIN
+      route_host: aap.$APPS_DOMAIN
       route_tls_termination_mechanism: Edge
       ingress_type: Route
       
@@ -216,43 +219,59 @@ AAP 2.6 introduces a unified deployment model using the `AnsibleAutomationPlatfo
 
 ## Access the AAP Components
 
-Once the deployment is complete, you can access each AAP component through its dedicated route:
+Once the deployment is complete, you can access each AAP component through its dedicated route.
+
+1. First, retrieve the actual route URLs:
+
+    ```bash
+    # Get all AAP routes
+    oc get routes -n aap
+    
+    # Or get specific URLs
+    echo "Platform Gateway:       https://$(oc get route aap -n aap -o jsonpath='{.spec.host}')"
+    echo "Automation Controller:  https://$(oc get route aap-controller -n aap -o jsonpath='{.spec.host}')"
+    echo "EDA Controller:         https://$(oc get route aap-eda -n aap -o jsonpath='{.spec.host}')"
+    echo "Automation Hub:         https://$(oc get route aap-hub -n aap -o jsonpath='{.spec.host}')"
+    ```
 
 1. **Platform Gateway** (Unified API Gateway):
 
-    ```
-    https://aap.apps.$AAP_APPS_DOMAIN
-    ```
+    The Platform Gateway provides a unified API endpoint and authentication for all AAP components. The URL will be in the format:
 
-    The Platform Gateway provides a unified API endpoint and authentication for all AAP components.
+    ```
+    https://aap.apps.<cluster-domain>.<region>.aroapp.io
+    ```
 
 1. **Automation Controller** (formerly Ansible Tower):
 
-    ```
-    https://aap-controller-aap.apps.$AAP_APPS_DOMAIN
-    ```
+    Access the controller at the URL shown by the route command. Login with `$AAP_ADMIN_USERNAME` and `$AAP_ADMIN_PASSWORD`. You will need to provide an AAP subscription via your Red Hat credentials and accept the EULA on first login.
 
-    Login with `$AAP_ADMIN_USERNAME` and `$AAP_ADMIN_PASSWORD`. You will need to provide an AAP subscription via your Red Hat credentials and accept the EULA on first login.
+    URL format:
+    ```
+    https://aap-controller-aap.apps.<cluster-domain>.<region>.aroapp.io
+    ```
 
     ![Dashboard](dashboard.png)
 
 1. **Event Driven Ansible Controller**:
 
-    ```
-    https://aap-eda-aap.apps.$AAP_APPS_DOMAIN
-    ```
-
     Login with the same credentials. This provides event-driven automation capabilities.
+
+    URL format:
+    ```
+    https://aap-eda-aap.apps.<cluster-domain>.<region>.aroapp.io
+    ```
 
     ![EDA Dashboard](eda-dashboard.png)
 
 1. **Automation Hub** (Private Content Repository):
 
-    ```
-    https://aap-hub-aap.apps.$AAP_APPS_DOMAIN
-    ```
-
     Login with the same credentials to manage private automation content.
+
+    URL format:
+    ```
+    https://aap-hub-aap.apps.<cluster-domain>.<region>.aroapp.io
+    ```
 
     ![Hub Dashboard](hub-dashboard.png)
 
