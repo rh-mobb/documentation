@@ -2,9 +2,10 @@
 date: '2021-08-18'
 title: Installing the HashiCorp Vault Secret CSI Driver
 aliases: ['/experts/security/secrets-store-csi/hashicorp-vault']
-tags: ["ROSA", "ARO", "OSD", "Miscellaneous"]
+tags: ["ROSA", "ARO", "OSD"]
 authors:
   - Connor Wooley
+validated_version: "4.20"
 ---
 
 The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in HashiCorp Vault as Kubernetes Volumes.
