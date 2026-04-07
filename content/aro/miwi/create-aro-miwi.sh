@@ -93,6 +93,7 @@ if [ "${CREATE_VNET}" = "true" ]; then
     az network vnet create \
       --resource-group ${VNET_RESOURCE_GROUP} \
       --name ${VNET_NAME} \
+      --location ${AZURE_LOCATION} \
       --address-prefixes "${VNET_CIDR}"
   else
     echo "${VNET_NAME} already exists!"
