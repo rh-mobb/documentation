@@ -285,7 +285,11 @@ Once the deployment is complete, you can access each AAP component through its d
     When you first login, you will se this.  Enter your Red Hat Ansible subscription manifest which you can retrieve from https://console.redhat.com/subscriptions/manifests
     
     <img src="aap-license.png" alt="Ansible Subscription" style="max-width: 800px; width: 100%;" />
-    
+
+   After entering your subscription and agree to the terms and conditions, you will see the Ansible Platform Gateway.
+
+   <img src="dashboard.png" alt="Ansible Dashboard" style="max-width: 800px; width: 100%;" />
+
 ## Migration from AAP 2.4 to 2.6
 
 If you have an existing AAP 2.4 deployment and are upgrading to AAP 2.6, be aware of the following important changes:
