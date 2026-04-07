@@ -138,7 +138,7 @@ chmod +x create-aro-miwi.sh
 ./create-aro-miwi.sh
 ```
 
-After the one-shot deployment completes, proceed to [Configure Workload Identity for Custom Workloads](#6-configure-workload-identity-for-custom-workloads-optional) or skip to [Access the Cluster](#access-the-cluster) to start using your cluster.
+After the one-shot deployment completes, proceed to [Access the Cluster](#access-the-cluster) to start using your cluster.
 
 ## Step-by-Step Deployment
 
@@ -255,10 +255,6 @@ az role assignment create \
   --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${INFRASTRUCTURE_RESOURCE_GROUP}
 ```
 
-{{% alert state="info" %}}
-Additional role assignments may be required based on your specific requirements. Consult the [ARO documentation](https://learn.microsoft.com/en-us/azure/openshift/howto-create-workload-identity) for complete permissions.
-{{% /alert %}}
-
 ### 5. Deploy ARO Cluster
 
 Create the ARO cluster with managed identity configuration:
@@ -319,44 +315,6 @@ az aro create \
 Cluster creation takes approximately 30-45 minutes. The script automatically includes the pull secret if the file exists.
 {{% /alert %}}
 
-### 6. Configure Workload Identity for Custom Workloads (Optional)
-
-{{% alert state="info" %}}
-Platform operators (cloud-controller-manager, ingress, machine-api, etc.) are **automatically configured** with workload identity when you deploy with `--enable-managed-identity`. This step is only needed for optional operators or custom applications that need Azure authentication.
-{{% /alert %}}
-
-For custom applications or optional operators that need to authenticate to Azure, create federated credentials:
-
-```bash
-# Get cluster credentials
-az aro get-admin-kubeconfig \
-  --resource-group ${RESOURCE_GROUP} \
-  --name ${ARO_CLUSTER_NAME} \
-  --file kubeconfig
-
-export KUBECONFIG=kubeconfig
-
-# Get OIDC issuer URL
-OIDC_ISSUER=$(az aro show \
-  --resource-group ${RESOURCE_GROUP} \
-  --name ${ARO_CLUSTER_NAME} \
-  --query "clusterProfile.oidcIssuerProfile.issuerUrl" -o tsv)
-
-# Example: Create federated credential for a custom application
-# Replace with your application's namespace, service account, and managed identity name
-az identity federated-credential create \
-  --name my-app-federated-credential \
-  --identity-name "${ARO_CLUSTER_NAME}-my-custom-identity" \
-  --resource-group ${RESOURCE_GROUP} \
-  --issuer ${OIDC_ISSUER} \
-  --subject system:serviceaccount:my-namespace:my-service-account \
-  --audience openshift
-```
-
-{{% alert state="info" %}}
-You must create a separate managed identity and federated credential for each custom application or optional operator that needs Azure access.
-{{% /alert %}}
-
 ## Access the Cluster
 
 ### Get Cluster Console URL
@@ -374,22 +332,6 @@ az aro show \
 az aro list-credentials \
   --name ${ARO_CLUSTER_NAME} \
   --resource-group ${RESOURCE_GROUP}
-```
-
-## Verify Workload Identity Configuration
-
-Verify that platform operators are using managed identities:
-
-```bash
-# Check cloud-controller-manager pod logs
-oc logs -n openshift-cloud-controller-manager \
-  -l app=cloud-controller-manager \
-  --tail=50 | grep -i "identity"
-
-# Verify no service principal secrets exist
-oc get secrets -n openshift-cloud-controller-manager | grep azure-cloud-credentials
-
-# Should return empty - credentials are provided via workload identity
 ```
 
 ## Cleanup
@@ -450,23 +392,6 @@ az role assignment list \
   --output table
 ```
 
-### Workload Identity Federation Issues
-
-Verify federated credentials:
-
-```bash
-az identity federated-credential list \
-  --identity-name "${ARO_CLUSTER_NAME}-cloud-controller-manager" \
-  --resource-group ${RESOURCE_GROUP} \
-  --output table
-```
-
-Confirm OIDC issuer matches:
-
-```bash
-echo ${OIDC_ISSUER}
-```
-
 ### Permission Errors
 
 Review Azure Activity Log for detailed error messages:
@@ -477,9 +402,3 @@ az monitor activity-log list \
   --max-events 50 \
   --output table
 ```
-
-## Additional Resources
-
-- [ARO Workload Identity Documentation](https://learn.microsoft.com/en-us/azure/openshift/howto-create-workload-identity)
-- [Azure Managed Identity Overview](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
-- [OpenShift on Azure](https://docs.openshift.com/container-platform/latest/installing/installing_azure/installing-azure-customizations.html)
