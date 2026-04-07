@@ -235,8 +235,6 @@ az aro create \
   --worker-vm-size $WORKER_VM_SIZE \
   $PULL_SECRET_ARG \
   --cluster-resource-group $INFRASTRUCTURE_RESOURCE_GROUP \
-  --master-enc-host \
-  --worker-enc-host \
   --apiserver-visibility $CLUSTER_EXPOSURE \
   --ingress-visibility $CLUSTER_EXPOSURE \
   --enable-managed-identity \
@@ -434,8 +432,6 @@ az aro create \
   --worker-vm-size $WORKER_VM_SIZE \
   $PULL_SECRET_ARG \
   --cluster-resource-group $INFRASTRUCTURE_RESOURCE_GROUP \
-  --master-enc-host \
-  --worker-enc-host \
   --apiserver-visibility $CLUSTER_EXPOSURE \
   --ingress-visibility $CLUSTER_EXPOSURE \
   --enable-managed-identity \
@@ -447,9 +443,13 @@ az aro create \
 Cluster creation takes approximately 30-45 minutes. The script automatically includes the pull secret if the file exists.
 {{% /alert %}}
 
-### 6. Configure Workload Identity
+### 6. Configure Workload Identity for Custom Workloads (Optional)
 
-After cluster creation, configure workload identity for platform operators:
+{{% alert state="info" %}}
+Platform operators (cloud-controller-manager, ingress, machine-api, etc.) are **automatically configured** with workload identity when you deploy with `--enable-managed-identity`. This step is only needed for optional operators or custom applications that need Azure authentication.
+{{% /alert %}}
+
+For custom applications or optional operators that need to authenticate to Azure, create federated credentials:
 
 ```bash
 # Get cluster credentials
@@ -466,18 +466,19 @@ OIDC_ISSUER=$(az aro show \
   --name $ARO_CLUSTER_NAME \
   --query "clusterProfile.oidcIssuerProfile.issuerUrl" -o tsv)
 
-# Create federated credentials for cloud-controller-manager
+# Example: Create federated credential for a custom application
+# Replace with your application's namespace, service account, and managed identity name
 az identity federated-credential create \
-  --name cloud-controller-manager-federated-credential \
-  --identity-name "${ARO_CLUSTER_NAME}-cloud-controller-manager" \
+  --name my-app-federated-credential \
+  --identity-name "${ARO_CLUSTER_NAME}-my-custom-identity" \
   --resource-group $RESOURCE_GROUP \
   --issuer $OIDC_ISSUER \
-  --subject system:serviceaccount:openshift-cloud-controller-manager:cloud-controller-manager \
+  --subject system:serviceaccount:my-namespace:my-service-account \
   --audience openshift
 ```
 
 {{% alert state="info" %}}
-Repeat the federated credential creation for each platform operator identity (ingress, machine-api, etc.) with the appropriate service account namespace and name.
+You must create a separate managed identity and federated credential for each custom application or optional operator that needs Azure access.
 {{% /alert %}}
 
 ## Access the Cluster
