@@ -181,9 +181,45 @@ AAP 2.6 introduces a unified deployment model using the `AnsibleAutomationPlatfo
     ```bash
     # Watch the AAP platform status
     oc get ansibleautomationplatform aap -n aap -w
+    ```
     
-    # Check all pods in the aap namespace
+    expected output:
+    
+    ```
+    oc get ansibleautomationplatform aap -n aap -w
+
+    NAME   AGE
+    aap    7s
+    aap    10s
+    ```
+    
+    Check all pods in the aap namespace
+    
+    ```bash
     oc get pods -n aap
+    ```
+
+    expected output:
+    ```
+    NAME                                                              READY   STATUS     RESTARTS   AGE
+    aap-eda-activation-worker-b9d649c5d-l9xvv                         0/1     Init:0/1   0          18s
+    aap-eda-activation-worker-b9d649c5d-v4crs                         0/1     Init:0/1   0          18s
+    aap-eda-api-655fddb565-xwrv6                                      0/3     Init:0/2   0          23s
+    aap-eda-default-worker-5cbd44dbfb-2gkgs                           0/1     Init:0/1   0          20s
+    aap-eda-default-worker-5cbd44dbfb-xz74s                           0/1     Init:0/1   0          20s
+    aap-eda-event-stream-577f6697f8-szjzd                             0/2     Init:0/1   0          9s
+    aap-eda-scheduler-57d694b8cf-jxxdd                                0/1     Init:0/1   0          16s
+    aap-eda-scheduler-57d694b8cf-xj9p8                                0/1     Init:0/1   0          16s
+    aap-gateway-7f7889b8b9-m548n                                      2/2     Running    0          4m52s
+    aap-gateway-7f7889b8b9-r5c9d                                      2/2     Running    0          4m52s
+    aap-gateway-operator-controller-manager-6d67956c65-4qg42          2/2     Running    0          9m53s
+    aap-postgres-15-0                                                 1/1     Running    0          6m15s
+    aap-redis-0                                                       1/1     Running    0          6m45s
+    ansible-lightspeed-operator-controller-manager-5c88768749-zlwdp   2/2     Running    0          9m52s
+    automation-controller-operator-controller-manager-779cff78drdc6   2/2     Running    0          9m53s
+    automation-hub-operator-controller-manager-5c4ff8cd8-26db7        2/2     Running    0          9m52s
+    eda-server-operator-controller-manager-57dbc986f7-lw48n           2/2     Running    0          9m53s
+    resource-operator-controller-manager-666884b955-lhftn             2/2     Running    0          9m52s
     ```
 
     The deployment typically takes 15-20 minutes. You should see pods for:
@@ -234,6 +270,8 @@ Once the deployment is complete, you can access each AAP component through its d
     echo "Automation Hub:         https://$(oc get route aap-hub -n aap -o jsonpath='{.spec.host}')"
     ```
 
+> **NOTE:** all the routes will redirect to the Platform Gateway which has a unified view for all Ansible components.
+
 1. **Platform Gateway** (Unified API Gateway):
 
     The Platform Gateway provides a unified API endpoint and authentication for all AAP components. The URL will be in the format:
@@ -242,40 +280,12 @@ Once the deployment is complete, you can access each AAP component through its d
     https://aap.apps.<cluster-domain>.<region>.aroapp.io
     ```
 
-1. **Automation Controller** (formerly Ansible Tower):
+    Access the Platform Gateway at the URL shown by the route command. Login with `$AAP_ADMIN_USERNAME` and `$AAP_ADMIN_PASSWORD`. You will need to provide an AAP subscription via your Red Hat credentials and accept the EULA on first login.
 
-    Access the controller at the URL shown by the route command. Login with `$AAP_ADMIN_USERNAME` and `$AAP_ADMIN_PASSWORD`. You will need to provide an AAP subscription via your Red Hat credentials and accept the EULA on first login.
-
-    URL format:
-    ```
-    https://aap-controller-aap.apps.<cluster-domain>.<region>.aroapp.io
-    ```
-
-    <img src="dashboard.png" alt="Automation Controller Dashboard" style="max-width: 800px; width: 100%;" />
-
-1. **Event Driven Ansible Controller**:
-
-    Login with the same credentials. This provides event-driven automation capabilities.
-
-    URL format:
-    ```
-    https://aap-eda-aap.apps.<cluster-domain>.<region>.aroapp.io
-    ```
-
-    <img src="eda-dashboard.png" alt="Event Driven Ansible Dashboard" style="max-width: 800px; width: 100%;" />
-
-1. **Automation Hub** (Private Content Repository):
-
-    Login with the same credentials to manage private automation content.
-
-    URL format:
-    ```
-    https://aap-hub-aap.apps.<cluster-domain>.<region>.aroapp.io
-    ```
-
-    <img src="hub-dashboard.png" alt="Automation Hub Dashboard" style="max-width: 800px; width: 100%;" />
-
-
+    When you first login, you will se this.  Enter your Red Hat Ansible subscription manifest which you can retrieve from https://console.redhat.com/subscriptions/manifests
+    
+    <img src="aap-license.png" alt="Ansible Subscription" style="max-width: 800px; width: 100%;" />
+    
 ## Migration from AAP 2.4 to 2.6
 
 If you have an existing AAP 2.4 deployment and are upgrading to AAP 2.6, be aware of the following important changes:
@@ -341,49 +351,3 @@ If you need to roll back to AAP 2.4:
 1. Change the operator channel back to `stable-2.4-cluster-scoped`
 2. Restore from backups if necessary
 3. Note that rolling back may result in data loss for configurations created in AAP 2.6
-
-## Troubleshooting
-
-Should you encounter issues during deployment:
-
-1. Check the AAP platform status:
-
-    ```bash
-    oc describe ansibleautomationplatform aap -n aap
-    ```
-
-1. Check operator logs:
-
-    ```bash
-    # Gateway operator
-    oc logs -n aap -l app.kubernetes.io/name=aap-gateway-operator
-
-    # Controller operator
-    oc logs -n aap -l app.kubernetes.io/name=automation-controller-operator
-    
-    # EDA operator
-    oc logs -n aap -l app.kubernetes.io/name=eda-server-operator
-    
-    # Hub operator
-    oc logs -n aap -l app.kubernetes.io/name=automation-hub-operator
-    ```
-
-1. Check component status:
-
-    ```bash
-    # Check all pod status
-    oc get pods -n aap
-    
-    # Check specific component
-    oc describe automationcontroller aap-controller -n aap
-    oc describe eda aap-eda -n aap
-    oc describe automationhub aap-hub -n aap
-    ```
-
-1. Common issues:
-
-    - **Database migration running**: Wait for the migration job to complete before pods start
-    - **Storage class errors**: Verify `managed-csi` and `azurefile-csi` storage classes exist
-    - **Image pull errors**: Ensure pull secret is configured correctly
-    - **Pod pending**: Check PVC status and storage provisioning
-
