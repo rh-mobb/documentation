@@ -251,7 +251,7 @@ Once the deployment is complete, you can access each AAP component through its d
     https://aap-controller-aap.apps.<cluster-domain>.<region>.aroapp.io
     ```
 
-    ![Dashboard](dashboard.png)
+    <img src="dashboard.png" alt="Automation Controller Dashboard" style="max-width: 800px; width: 100%;" />
 
 1. **Event Driven Ansible Controller**:
 
@@ -262,7 +262,7 @@ Once the deployment is complete, you can access each AAP component through its d
     https://aap-eda-aap.apps.<cluster-domain>.<region>.aroapp.io
     ```
 
-    ![EDA Dashboard](eda-dashboard.png)
+    <img src="eda-dashboard.png" alt="Event Driven Ansible Dashboard" style="max-width: 800px; width: 100%;" />
 
 1. **Automation Hub** (Private Content Repository):
 
@@ -273,7 +273,7 @@ Once the deployment is complete, you can access each AAP component through its d
     https://aap-hub-aap.apps.<cluster-domain>.<region>.aroapp.io
     ```
 
-    ![Hub Dashboard](hub-dashboard.png)
+    <img src="hub-dashboard.png" alt="Automation Hub Dashboard" style="max-width: 800px; width: 100%;" />
 
 
 ## Migration from AAP 2.4 to 2.6
