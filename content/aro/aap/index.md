@@ -286,7 +286,7 @@ Once the deployment is complete, you can access each AAP component through its d
     
     <img src="aap-license.png" alt="Ansible Subscription" style="max-width: 800px; width: 100%;" />
 
-   After entering your subscription and agree to the terms and conditions, you will see the Ansible Platform Gateway.
+   After entering your subscription and agreeing to the terms and conditions, you will see the Ansible Dashboard.
 
    <img src="dashboard.png" alt="Ansible Dashboard" style="max-width: 800px; width: 100%;" />
 
