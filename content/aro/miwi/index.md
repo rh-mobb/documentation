@@ -52,11 +52,10 @@ az version
     az login
     ```
 
-1. Set your subscription
+1. Set your subscription ID
 
     ```bash
-    SUBSCRIPTION_ID="<your-subscription-id>"
-    az account set --subscription $SUBSCRIPTION_ID
+    SUBSCRIPTION_ID=$(az account show --query id -o tsv)
     ```
 
 1. Register required resource providers
@@ -78,9 +77,8 @@ Configure the deployment parameters:
 
 ```bash
 # Azure Configuration
-SUBSCRIPTION_ID="<your-subscription-id>"
-AZURE_LOCATION="centralus"
-ARO_CLUSTER_NAME="my-aro-cluster"
+AZURE_LOCATION="eastus"
+ARO_CLUSTER_NAME="miwi-aro"
 
 # Resource Groups
 CREATE_RESOURCE_GROUPS="true"
