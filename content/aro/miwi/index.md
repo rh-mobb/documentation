@@ -209,6 +209,7 @@ if [ "${CREATE_MANAGED_IDENTITIES}" = "true" ]; then
                   image-registry file-csi-driver aro-operator; do
     az identity create \
       --name "${ARO_CLUSTER_NAME}-${IDENTITY}" \
+      --location ${AZURE_LOCATION} \
       --resource-group ${RESOURCE_GROUP}
   done
 fi

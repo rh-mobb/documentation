@@ -134,15 +134,15 @@ fi
 
 if [ "${CREATE_MANAGED_IDENTITIES}" = "true" ]; then
   echo "Creating managed identities..."
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-aro-cluster"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-cloud-controller-manager"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-ingress"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-machine-api"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-disk-csi-driver"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-cloud-network-config"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-image-registry"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-file-csi-driver"
-  az identity create --resource-group ${RESOURCE_GROUP} --name "${ARO_CLUSTER_NAME}-aro-operator"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-aro-cluster"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-cloud-controller-manager"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-ingress"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-machine-api"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-disk-csi-driver"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-cloud-network-config"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-image-registry"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-file-csi-driver"
+  az identity create --resource-group ${RESOURCE_GROUP} --location ${AZURE_LOCATION} --name "${ARO_CLUSTER_NAME}-aro-operator"
 fi
 
 ########################
