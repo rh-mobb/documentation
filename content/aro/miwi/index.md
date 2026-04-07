@@ -187,7 +187,7 @@ if [ $CREATE_VNET = "true" ]; then
   echo "Creating VNet and Subnets..."
 
   ## Create the VNet
-  if [ $(az network vnet list --resource-group $VNET_RESOURCE_GROUP --query "[?contains(name, '"$VNET_NAME"')]" | jq -r 'length') = "0" ]; then
+  if ! az network vnet show --resource-group $VNET_RESOURCE_GROUP --name $VNET_NAME &>/dev/null; then
     az network vnet create \
       --resource-group $VNET_RESOURCE_GROUP \
       --name $VNET_NAME \
@@ -197,7 +197,7 @@ if [ $CREATE_VNET = "true" ]; then
   fi
 
   ## Create the Control Plane Subnet
-  if [ $(az network vnet subnet list -g $VNET_RESOURCE_GROUP --vnet-name $VNET_NAME --query "[?contains(name, '"$VNET_CONTROL_PLANE_SUBNET_NAME"')]" | jq -r 'length') = "0" ]; then
+  if ! az network vnet subnet show -g $VNET_RESOURCE_GROUP --vnet-name $VNET_NAME --name $VNET_CONTROL_PLANE_SUBNET_NAME &>/dev/null; then
     az network vnet subnet create \
       --resource-group $VNET_RESOURCE_GROUP \
       --vnet-name $VNET_NAME \
@@ -209,7 +209,7 @@ if [ $CREATE_VNET = "true" ]; then
   fi
 
   ## Create the Application Node Subnet
-  if [ $(az network vnet subnet list -g $VNET_RESOURCE_GROUP --vnet-name $VNET_NAME --query "[?contains(name, '"$VNET_APP_NODE_SUBNET_NAME"')]" | jq -r 'length') = "0" ]; then
+  if ! az network vnet subnet show -g $VNET_RESOURCE_GROUP --vnet-name $VNET_NAME --name $VNET_APP_NODE_SUBNET_NAME &>/dev/null; then
     az network vnet subnet create \
       --resource-group $VNET_RESOURCE_GROUP \
       --vnet-name $VNET_NAME \
@@ -308,7 +308,7 @@ az aro create \
   --apiserver-visibility $CLUSTER_EXPOSURE \
   --ingress-visibility $CLUSTER_EXPOSURE \
   --version $(az aro get-versions --location $AZURE_LOCATION | jq -r '.[-1]') \
-  --pull-secret "@{PULL_SECRET_PATH}" \
+  --pull-secret "@${PULL_SECRET_PATH}" \
   --enable-managed-identity \
   --assign-cluster-identity /subscriptions/$SUBSCRIPTION_ID/resourcegroups/$RESOURCE_GROUP/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aro-cluster \
   --assign-platform-workload-identity file-csi-driver /subscriptions/$SUBSCRIPTION_ID/resourcegroups/$RESOURCE_GROUP/providers/Microsoft.ManagedIdentity/userAssignedIdentities/file-csi-driver \
