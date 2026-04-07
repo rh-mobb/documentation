@@ -125,48 +125,48 @@ Deploy the entire ARO cluster with managed identities in a single script:
 
 ```bash
 # Create resource groups
-if [ "$CREATE_RESOURCE_GROUPS" = "true" ]; then
+if [ "${CREATE_RESOURCE_GROUPS}" = "true" ]; then
   echo "Creating resource groups..."
-  az group create --name $RESOURCE_GROUP --location $AZURE_LOCATION
-  az group create --name $VNET_RESOURCE_GROUP --location $AZURE_LOCATION
+  az group create --name ${RESOURCE_GROUP} --location ${AZURE_LOCATION}
+  az group create --name ${VNET_RESOURCE_GROUP} --location ${AZURE_LOCATION}
 fi
 
 # Create virtual network
-if [ "$CREATE_VNET" = "true" ]; then
+if [ "${CREATE_VNET}" = "true" ]; then
   echo "Creating virtual network..."
   az network vnet create \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --name $VNET_NAME \
-    --address-prefixes $VNET_CIDR
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --name ${VNET_NAME} \
+    --address-prefixes ${VNET_CIDR}
 
   az network vnet subnet create \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --vnet-name $VNET_NAME \
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --vnet-name ${VNET_NAME} \
     --name control-plane-subnet \
-    --address-prefixes $VNET_CONTROL_PLANE_SUBNET_CIDR
+    --address-prefixes ${VNET_CONTROL_PLANE_SUBNET_CIDR}
 
   az network vnet subnet create \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --vnet-name $VNET_NAME \
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --vnet-name ${VNET_NAME} \
     --name worker-subnet \
-    --address-prefixes $VNET_APP_NODE_SUBNET_CIDR
+    --address-prefixes ${VNET_APP_NODE_SUBNET_CIDR}
 
   az network vnet subnet update \
     --name control-plane-subnet \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --vnet-name $VNET_NAME \
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --vnet-name ${VNET_NAME} \
     --disable-private-link-service-network-policies true
 fi
 
 # Create managed identities
-if [ "$CREATE_MANAGED_IDENTITIES" = "true" ]; then
+if [ "${CREATE_MANAGED_IDENTITIES}" = "true" ]; then
   echo "Creating managed identities..."
-  az identity create --name "${ARO_CLUSTER_NAME}-aro-cluster" --resource-group $RESOURCE_GROUP
+  az identity create --name "${ARO_CLUSTER_NAME}-aro-cluster" --resource-group ${RESOURCE_GROUP}
   
   for IDENTITY in cloud-controller-manager ingress machine-api \
                   disk-csi-driver cloud-network-config \
                   image-registry file-csi-driver aro-operator; do
-    az identity create --name "${ARO_CLUSTER_NAME}-${IDENTITY}" --resource-group $RESOURCE_GROUP
+    az identity create --name "${ARO_CLUSTER_NAME}-${IDENTITY}" --resource-group ${RESOURCE_GROUP}
   done
   
   # Wait for identities to be created
@@ -179,34 +179,34 @@ SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
 CLUSTER_IDENTITY_ID=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-aro-cluster" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query principalId -o tsv)
 
 az role assignment create \
-  --assignee $CLUSTER_IDENTITY_ID \
+  --assignee ${CLUSTER_IDENTITY_ID} \
   --role Contributor \
-  --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP
+  --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}
 
 CCM_IDENTITY_ID=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-cloud-controller-manager" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query principalId -o tsv)
 
 az role assignment create \
-  --assignee $CCM_IDENTITY_ID \
+  --assignee ${CCM_IDENTITY_ID} \
   --role "Network Contributor" \
-  --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$VNET_RESOURCE_GROUP
+  --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RESOURCE_GROUP}
 
 # Get managed identity resource IDs
 CLUSTER_IDENTITY=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-aro-cluster" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query id -o tsv)
 
 # Get VNet subnet IDs
 VNET_ID=$(az network vnet show \
-  --resource-group $VNET_RESOURCE_GROUP \
-  --name $VNET_NAME \
+  --resource-group ${VNET_RESOURCE_GROUP} \
+  --name ${VNET_NAME} \
   --query id -o tsv)
 
 CONTROL_PLANE_SUBNET_ID="${VNET_ID}/subnets/control-plane-subnet"
@@ -217,27 +217,27 @@ echo "Creating ARO cluster (this will take 30-45 minutes)..."
 
 # Build pull secret argument if provided
 PULL_SECRET_ARG=""
-if [ -n "$PULL_SECRET_PATH" ] && [ -f "$PULL_SECRET_PATH" ]; then
-  PULL_SECRET_ARG="--pull-secret @$PULL_SECRET_PATH"
+if [ -n "${PULL_SECRET_PATH}" ] && [ -f "${PULL_SECRET_PATH}" ]; then
+  PULL_SECRET_ARG="--pull-secret @${PULL_SECRET_PATH}"
 fi
 
 az aro create \
-  --resource-group $RESOURCE_GROUP \
-  --name $ARO_CLUSTER_NAME \
-  --location $AZURE_LOCATION \
-  --vnet-resource-group $VNET_RESOURCE_GROUP \
-  --master-subnet $CONTROL_PLANE_SUBNET_ID \
-  --worker-subnet $WORKER_SUBNET_ID \
-  --pod-cidr $POD_CIDR_SUBNET \
-  --service-cidr $SERVICE_CIDR_SUBNET \
-  --worker-vm-size $WORKER_VM_SIZE \
-  $PULL_SECRET_ARG \
-  --cluster-resource-group $INFRASTRUCTURE_RESOURCE_GROUP \
-  --apiserver-visibility $CLUSTER_EXPOSURE \
-  --ingress-visibility $CLUSTER_EXPOSURE \
+  --resource-group ${RESOURCE_GROUP} \
+  --name ${ARO_CLUSTER_NAME} \
+  --location ${AZURE_LOCATION} \
+  --vnet-resource-group ${VNET_RESOURCE_GROUP} \
+  --master-subnet ${CONTROL_PLANE_SUBNET_ID} \
+  --worker-subnet ${WORKER_SUBNET_ID} \
+  --pod-cidr ${POD_CIDR_SUBNET} \
+  --service-cidr ${SERVICE_CIDR_SUBNET} \
+  --worker-vm-size ${WORKER_VM_SIZE} \
+  ${PULL_SECRET_ARG} \
+  --cluster-resource-group ${INFRASTRUCTURE_RESOURCE_GROUP} \
+  --apiserver-visibility ${CLUSTER_EXPOSURE} \
+  --ingress-visibility ${CLUSTER_EXPOSURE} \
   --enable-managed-identity \
-  --assign-identity $CLUSTER_IDENTITY \
-  --assign-kubelet-identity $CLUSTER_IDENTITY
+  --assign-identity ${CLUSTER_IDENTITY} \
+  --assign-kubelet-identity ${CLUSTER_IDENTITY}
 
 echo "ARO cluster deployment complete!"
 
@@ -245,15 +245,15 @@ echo "ARO cluster deployment complete!"
 echo ""
 echo "=== Cluster Console URL ==="
 az aro show \
-  --name $ARO_CLUSTER_NAME \
-  --resource-group $RESOURCE_GROUP \
+  --name ${ARO_CLUSTER_NAME} \
+  --resource-group ${RESOURCE_GROUP} \
   --query consoleProfile.url -o tsv
 
 echo ""
 echo "=== Cluster Credentials ==="
 az aro list-credentials \
-  --name $ARO_CLUSTER_NAME \
-  --resource-group $RESOURCE_GROUP
+  --name ${ARO_CLUSTER_NAME} \
+  --resource-group ${RESOURCE_GROUP}
 ```
 
 {{% alert state="info" %}}
@@ -269,46 +269,46 @@ Alternatively, deploy each component individually for better control and underst
 ### 1. Create Resource Groups
 
 ```bash
-if [ "$CREATE_RESOURCE_GROUPS" = "true" ]; then
+if [ "${CREATE_RESOURCE_GROUPS}" = "true" ]; then
   az group create \
-    --name $RESOURCE_GROUP \
-    --location $AZURE_LOCATION
+    --name ${RESOURCE_GROUP} \
+    --location ${AZURE_LOCATION}
 
   az group create \
-    --name $VNET_RESOURCE_GROUP \
-    --location $AZURE_LOCATION
+    --name ${VNET_RESOURCE_GROUP} \
+    --location ${AZURE_LOCATION}
 fi
 ```
 
 ### 2. Create Virtual Network
 
 ```bash
-if [ "$CREATE_VNET" = "true" ]; then
+if [ "${CREATE_VNET}" = "true" ]; then
   # Create VNet
   az network vnet create \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --name $VNET_NAME \
-    --address-prefixes $VNET_CIDR
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --name ${VNET_NAME} \
+    --address-prefixes ${VNET_CIDR}
 
   # Create control plane subnet
   az network vnet subnet create \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --vnet-name $VNET_NAME \
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --vnet-name ${VNET_NAME} \
     --name control-plane-subnet \
-    --address-prefixes $VNET_CONTROL_PLANE_SUBNET_CIDR
+    --address-prefixes ${VNET_CONTROL_PLANE_SUBNET_CIDR}
 
   # Create worker subnet
   az network vnet subnet create \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --vnet-name $VNET_NAME \
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --vnet-name ${VNET_NAME} \
     --name worker-subnet \
-    --address-prefixes $VNET_APP_NODE_SUBNET_CIDR
+    --address-prefixes ${VNET_APP_NODE_SUBNET_CIDR}
 
   # Disable private link service network policies on control plane subnet
   az network vnet subnet update \
     --name control-plane-subnet \
-    --resource-group $VNET_RESOURCE_GROUP \
-    --vnet-name $VNET_NAME \
+    --resource-group ${VNET_RESOURCE_GROUP} \
+    --vnet-name ${VNET_NAME} \
     --disable-private-link-service-network-policies true
 fi
 ```
@@ -318,11 +318,11 @@ fi
 Create managed identities for ARO platform operators:
 
 ```bash
-if [ "$CREATE_MANAGED_IDENTITIES" = "true" ]; then
+if [ "${CREATE_MANAGED_IDENTITIES}" = "true" ]; then
   # Core cluster identity
   az identity create \
     --name "${ARO_CLUSTER_NAME}-aro-cluster" \
-    --resource-group $RESOURCE_GROUP
+    --resource-group ${RESOURCE_GROUP}
 
   # Platform operator identities
   for IDENTITY in cloud-controller-manager ingress machine-api \
@@ -330,7 +330,7 @@ if [ "$CREATE_MANAGED_IDENTITIES" = "true" ]; then
                   image-registry file-csi-driver aro-operator; do
     az identity create \
       --name "${ARO_CLUSTER_NAME}-${IDENTITY}" \
-      --resource-group $RESOURCE_GROUP
+      --resource-group ${RESOURCE_GROUP}
   done
 fi
 ```
@@ -346,35 +346,35 @@ SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 # Cluster identity - Contributor on resource group
 CLUSTER_IDENTITY_ID=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-aro-cluster" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query principalId -o tsv)
 
 az role assignment create \
-  --assignee $CLUSTER_IDENTITY_ID \
+  --assignee ${CLUSTER_IDENTITY_ID} \
   --role Contributor \
-  --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP
+  --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}
 
 # Network permissions for cloud-controller-manager
 CCM_IDENTITY_ID=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-cloud-controller-manager" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query principalId -o tsv)
 
 az role assignment create \
-  --assignee $CCM_IDENTITY_ID \
+  --assignee ${CCM_IDENTITY_ID} \
   --role "Network Contributor" \
-  --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$VNET_RESOURCE_GROUP
+  --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RESOURCE_GROUP}
 
 # Storage permissions for image-registry
 REGISTRY_IDENTITY_ID=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-image-registry" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query principalId -o tsv)
 
 az role assignment create \
-  --assignee $REGISTRY_IDENTITY_ID \
+  --assignee ${REGISTRY_IDENTITY_ID} \
   --role "Storage Account Contributor" \
-  --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$INFRASTRUCTURE_RESOURCE_GROUP
+  --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${INFRASTRUCTURE_RESOURCE_GROUP}
 ```
 
 {{% alert state="info" %}}
@@ -389,23 +389,23 @@ Create the ARO cluster with managed identity configuration:
 # Get managed identity resource IDs
 CLUSTER_IDENTITY=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-aro-cluster" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query id -o tsv)
 
 CCM_IDENTITY=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-cloud-controller-manager" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query id -o tsv)
 
 INGRESS_IDENTITY=$(az identity show \
   --name "${ARO_CLUSTER_NAME}-ingress" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --query id -o tsv)
 
 # Get VNet IDs
 VNET_ID=$(az network vnet show \
-  --resource-group $VNET_RESOURCE_GROUP \
-  --name $VNET_NAME \
+  --resource-group ${VNET_RESOURCE_GROUP} \
+  --name ${VNET_NAME} \
   --query id -o tsv)
 
 CONTROL_PLANE_SUBNET_ID="${VNET_ID}/subnets/control-plane-subnet"
@@ -413,28 +413,28 @@ WORKER_SUBNET_ID="${VNET_ID}/subnets/worker-subnet"
 
 # Build pull secret argument if provided
 PULL_SECRET_ARG=""
-if [ -n "$PULL_SECRET_PATH" ] && [ -f "$PULL_SECRET_PATH" ]; then
-  PULL_SECRET_ARG="--pull-secret @$PULL_SECRET_PATH"
+if [ -n "${PULL_SECRET_PATH}" ] && [ -f "${PULL_SECRET_PATH}" ]; then
+  PULL_SECRET_ARG="--pull-secret @${PULL_SECRET_PATH}"
 fi
 
 # Create cluster
 az aro create \
-  --resource-group $RESOURCE_GROUP \
-  --name $ARO_CLUSTER_NAME \
-  --location $AZURE_LOCATION \
-  --vnet-resource-group $VNET_RESOURCE_GROUP \
-  --master-subnet $CONTROL_PLANE_SUBNET_ID \
-  --worker-subnet $WORKER_SUBNET_ID \
-  --pod-cidr $POD_CIDR_SUBNET \
-  --service-cidr $SERVICE_CIDR_SUBNET \
-  --worker-vm-size $WORKER_VM_SIZE \
-  $PULL_SECRET_ARG \
-  --cluster-resource-group $INFRASTRUCTURE_RESOURCE_GROUP \
-  --apiserver-visibility $CLUSTER_EXPOSURE \
-  --ingress-visibility $CLUSTER_EXPOSURE \
+  --resource-group ${RESOURCE_GROUP} \
+  --name ${ARO_CLUSTER_NAME} \
+  --location ${AZURE_LOCATION} \
+  --vnet-resource-group ${VNET_RESOURCE_GROUP} \
+  --master-subnet ${CONTROL_PLANE_SUBNET_ID} \
+  --worker-subnet ${WORKER_SUBNET_ID} \
+  --pod-cidr ${POD_CIDR_SUBNET} \
+  --service-cidr ${SERVICE_CIDR_SUBNET} \
+  --worker-vm-size ${WORKER_VM_SIZE} \
+  ${PULL_SECRET_ARG} \
+  --cluster-resource-group ${INFRASTRUCTURE_RESOURCE_GROUP} \
+  --apiserver-visibility ${CLUSTER_EXPOSURE} \
+  --ingress-visibility ${CLUSTER_EXPOSURE} \
   --enable-managed-identity \
-  --assign-identity $CLUSTER_IDENTITY \
-  --assign-kubelet-identity $CLUSTER_IDENTITY
+  --assign-identity ${CLUSTER_IDENTITY} \
+  --assign-kubelet-identity ${CLUSTER_IDENTITY}
 ```
 
 {{% alert state="info" %}}
@@ -452,16 +452,16 @@ For custom applications or optional operators that need to authenticate to Azure
 ```bash
 # Get cluster credentials
 az aro get-admin-kubeconfig \
-  --resource-group $RESOURCE_GROUP \
-  --name $ARO_CLUSTER_NAME \
+  --resource-group ${RESOURCE_GROUP} \
+  --name ${ARO_CLUSTER_NAME} \
   --file kubeconfig
 
 export KUBECONFIG=kubeconfig
 
 # Get OIDC issuer URL
 OIDC_ISSUER=$(az aro show \
-  --resource-group $RESOURCE_GROUP \
-  --name $ARO_CLUSTER_NAME \
+  --resource-group ${RESOURCE_GROUP} \
+  --name ${ARO_CLUSTER_NAME} \
   --query "clusterProfile.oidcIssuerProfile.issuerUrl" -o tsv)
 
 # Example: Create federated credential for a custom application
@@ -469,8 +469,8 @@ OIDC_ISSUER=$(az aro show \
 az identity federated-credential create \
   --name my-app-federated-credential \
   --identity-name "${ARO_CLUSTER_NAME}-my-custom-identity" \
-  --resource-group $RESOURCE_GROUP \
-  --issuer $OIDC_ISSUER \
+  --resource-group ${RESOURCE_GROUP} \
+  --issuer ${OIDC_ISSUER} \
   --subject system:serviceaccount:my-namespace:my-service-account \
   --audience openshift
 ```
@@ -485,8 +485,8 @@ You must create a separate managed identity and federated credential for each cu
 
 ```bash
 az aro show \
-  --name $ARO_CLUSTER_NAME \
-  --resource-group $RESOURCE_GROUP \
+  --name ${ARO_CLUSTER_NAME} \
+  --resource-group ${RESOURCE_GROUP} \
   --query consoleProfile.url -o tsv
 ```
 
@@ -494,8 +494,8 @@ az aro show \
 
 ```bash
 az aro list-credentials \
-  --name $ARO_CLUSTER_NAME \
-  --resource-group $RESOURCE_GROUP
+  --name ${ARO_CLUSTER_NAME} \
+  --resource-group ${RESOURCE_GROUP}
 ```
 
 ## Verify Workload Identity Configuration
@@ -521,8 +521,8 @@ To delete the cluster and all resources:
 ```bash
 # Delete ARO cluster
 az aro delete \
-  --resource-group $RESOURCE_GROUP \
-  --name $ARO_CLUSTER_NAME \
+  --resource-group ${RESOURCE_GROUP} \
+  --name ${ARO_CLUSTER_NAME} \
   --yes
 
 # Delete managed identities
@@ -531,12 +531,12 @@ for IDENTITY in aro-cluster cloud-controller-manager ingress machine-api \
                 image-registry file-csi-driver aro-operator; do
   az identity delete \
     --name "${ARO_CLUSTER_NAME}-${IDENTITY}" \
-    --resource-group $RESOURCE_GROUP
+    --resource-group ${RESOURCE_GROUP}
 done
 
 # Delete resource groups
-az group delete --name $RESOURCE_GROUP --yes
-az group delete --name $VNET_RESOURCE_GROUP --yes
+az group delete --name ${RESOURCE_GROUP} --yes
+az group delete --name ${VNET_RESOURCE_GROUP} --yes
 ```
 
 {{% alert state="danger" %}}
@@ -568,7 +568,7 @@ Check role assignments:
 
 ```bash
 az role assignment list \
-  --assignee $CLUSTER_IDENTITY_ID \
+  --assignee ${CLUSTER_IDENTITY_ID} \
   --output table
 ```
 
@@ -579,14 +579,14 @@ Verify federated credentials:
 ```bash
 az identity federated-credential list \
   --identity-name "${ARO_CLUSTER_NAME}-cloud-controller-manager" \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --output table
 ```
 
 Confirm OIDC issuer matches:
 
 ```bash
-echo $OIDC_ISSUER
+echo ${OIDC_ISSUER}
 ```
 
 ### Permission Errors
@@ -595,7 +595,7 @@ Review Azure Activity Log for detailed error messages:
 
 ```bash
 az monitor activity-log list \
-  --resource-group $RESOURCE_GROUP \
+  --resource-group ${RESOURCE_GROUP} \
   --max-events 50 \
   --output table
 ```
