@@ -106,10 +106,18 @@ Instead of relying on stored JSON files, WIF establishes a secure trust relation
 
 ### Who Uses WIF?
 
-WIF is used by:
-- **Cluster Operators**: Components like the image registry, ingress controller, and storage CSI drivers
-- **Automated Tools**: Red Hat’s management automation and monitoring systems
+WIF is used by **day-1 cluster operators** that need to interact with Google Cloud APIs:
+- **Cluster Operators**: Components like the image registry, ingress controller, and storage CSI drivers that require GCP API access
+- **Automated Tools**: Red Hat’s management automation and monitoring systems that interact with Google Cloud services
 - **NOT used by SREs**: SREs use group membership (see Part 1)
+
+{{% alert state="info" %}}
+Not all day-2 operators that require WIF support have WIF-enablement implemented yet. If you deploy additional operators that need to authenticate to Google Cloud services, verify whether they support Workload Identity Federation before installation.
+{{% /alert %}}
+
+{{% alert state="warning" %}}
+If you are configuring GCP Organization Policy Constraints that are supported with OSD (e.g., `constraints/iam.allowedPolicyMemberDomains`), certain GCP project IDs must be whitelisted that are required for WIF. Failing to whitelist these project IDs will prevent Workload Identity Federation from functioning correctly.
+{{% /alert %}}
 
 ### High-Level Architecture
 
