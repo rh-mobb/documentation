@@ -36,7 +36,6 @@ For the latest syntax with `--assign-identity` and `--assign-kubelet-identity`, 
 ```bash
 brew upgrade azure-cli  # macOS
 ```
-{{% /alert %}}
 
 ### Red Hat Pull Secret
 
