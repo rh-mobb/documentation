@@ -12,11 +12,9 @@ authors:
 validated_version: "4.20"
 ---
 
-The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
+The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS (ROSA) clusters. This is a guide to quickly enable the EFS Operator on a ROSA cluster.
 
-This is a guide to quickly enable the EFS Operator on ROSA to a Red Hat OpenShift on AWS (ROSA) cluster with STS enabled.
-
-> Note: The official supported installation instructions for the EFS CSI Driver on ROSA are available [here](https://access.redhat.com/articles/6966373).
+> Note: The official supported installation instructions for the EFS CSI Driver on ROSA are available [here](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/storage/using-container-storage-interface-csi#persistent-storage-csi-aws-efs).
 
 ## Dynamic vs Static provisioning
 
@@ -32,7 +30,7 @@ Static provisioning mounts the entire volume to a pod.
 
 ## Prerequisites
 
-* A Red Hat OpenShift on AWS (ROSA) 4.10 cluster
+* ROSA [Cluster](https://cloud.redhat.com/experts/rosa/quickstart/)
 * The OC CLI
 * The AWS CLI
 * `jq` command
@@ -315,6 +313,8 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 ### Creating a single-zone EFS
 
 > Note: If you followed the instructions above to create a region wide EFS mount, skip the following steps and proceed to "Create a Storage Class for the EFS volume"
+
+> Note: Dynamic provisioning of single-zone EFS is supported only in single-zone clusters. All nodes in the cluster must be in the same AZ as the EFS volume that is used for the dynamic provisioning.
 
 1. Select the first subnet that you will make your EFS mount in (this will by default select the same Subnet your first node is in)
 
