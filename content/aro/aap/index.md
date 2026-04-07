@@ -32,7 +32,7 @@ Below represents a high-level architecture.  It is intended to show a simplified
 deployed.  Please note that components can easily be spread across multiple availability zones to achieve high 
 availability requirements, which is not represented in the overly simplified diagram below:
 
-![AAP on ARO Diagram](aap-on-aro.png)
+<img src="aap-on-aro.png" alt="AAP on ARO Architecture Diagram - AAP 2.6" style="max-width: 800px; width: 100%;" />
 
 ## Prepare your Environment
 
