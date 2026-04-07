@@ -112,7 +112,7 @@ WIF is used by **day-1 cluster operators** that need to interact with Google Clo
 - **NOT used by SREs**: SREs use group membership (see Part 1)
 
 {{% alert state="info" %}}
-Not all day-2 operators that require WIF support have WIF-enablement implemented yet. If you deploy additional operators that need to authenticate to Google Cloud services, verify whether they support Workload Identity Federation before installation.
+Some Day-2 operators do not yet support Workload Identity Federation (WIF). If you plan to deploy additional operators that require Google Cloud authentication, confirm they are WIF-compatible before installing them.
 {{% /alert %}}
 
 {{% alert state="warning" %}}
