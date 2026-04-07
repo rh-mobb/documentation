@@ -214,6 +214,7 @@ az aro create \
   --version $(az aro get-versions --location ${AZURE_LOCATION} | jq -r '.[-1]') \
   --pull-secret @$PULL_SECRET_PATH \
   --enable-managed-identity \
+  --location ${AZURE_LOCATION} \
   --assign-cluster-identity /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${ARO_CLUSTER_NAME}-aro-cluster \
   --assign-platform-workload-identity file-csi-driver /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${ARO_CLUSTER_NAME}-file-csi-driver \
   --assign-platform-workload-identity cloud-controller-manager /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${ARO_CLUSTER_NAME}-cloud-controller-manager \
