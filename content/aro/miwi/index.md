@@ -134,19 +134,9 @@ Download and execute the automated deployment script:
 curl -O https://raw.githubusercontent.com/rh-mobb/documentation/main/content/aro/miwi/create-aro-miwi.sh
 chmod +x create-aro-miwi.sh
 
-# Download the environment variables helper script (optional)
-curl -O https://raw.githubusercontent.com/rh-mobb/documentation/main/content/aro/miwi/set-env-vars.sh
-
-# Set environment variables (edit set-env-vars.sh as needed or set manually)
-source set-env-vars.sh
-
 # Run the deployment
 ./create-aro-miwi.sh
 ```
-
-{{% alert state="info" %}}
-Review and customize `set-env-vars.sh` before sourcing it to match your environment. Cluster creation takes approximately 30-45 minutes.
-{{% /alert %}}
 
 After the one-shot deployment completes, proceed to [Configure Workload Identity for Custom Workloads](#6-configure-workload-identity-for-custom-workloads-optional) or skip to [Access the Cluster](#access-the-cluster) to start using your cluster.
 
