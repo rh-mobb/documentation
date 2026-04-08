@@ -6,11 +6,8 @@ authors:
   - Kevin Collins
   - Connor Wooley
   - Thatcher Hubbard
+validated_version: "4.20"
 ---
-
-**Kevin Collins**
-
-*06/28/2022*
 
 One of the advantages of using OpenShift is the internal registry that comes with OpenShfit to build, deploy and manage container images locally.  By default, access to the registry is limited to the cluster ( by design ) but can be extended to usage outside of the cluster.  This guide will go through the steps required to access the OpenShift Registry on an ARO cluster outside of the cluster.
 

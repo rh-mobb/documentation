@@ -7,6 +7,7 @@ authors:
   - Kumudu Herath
   - Connor Wooley
   - Dustin Scott
+validated_version: "4.20"
 ---
 
 Effectively securing your Azure Storage Account requires more than just basic access controls. Azure Private Endpoints provide a powerful layer of protection by establishing a direct, private connection between your virtual network and storage resources—completely bypassing the public internet. This approach not only minimizes your attack surface and the risk of data exfiltration, but also enhances performance through reduced latency, simplifies network architecture, supports compliance efforts, and enables secure hybrid connectivity. It's a comprehensive solution for protecting your critical cloud data.

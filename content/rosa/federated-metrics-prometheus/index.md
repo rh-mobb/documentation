@@ -8,7 +8,7 @@ authors:
 
 This document has been removed as it was written for older ROSA clusters which did not allow for custom Alert Manager configs as a way to provide a second Prometheus with a configurable Alert Manager.
 
-If you want to configure custom Alerts, you can upgrade your cluster and follow the steps found at [Custom Alerts in ROSA 4.11.x](../custom-alertmanager).
+If you want to configure custom Alerts, you can upgrade your cluster and follow the steps found at [Custom Alerts in ROSA 4.18.x](../custom-alertmanager).
 
 If you want to federate your metrics to a central location we recommend using one of the following:
 
