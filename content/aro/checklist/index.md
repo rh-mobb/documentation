@@ -109,18 +109,6 @@ The guide is organized chronologically to match the ARO lifecycle:
 az provider show -n Microsoft.RedHatOpenShift --query "registrationState"
 az aro get-versions --location <location>
 
-# Create cluster (with managed identity)
-az aro create \
-  --resource-group <rg> \
-  --name <cluster-name> \
-  --vnet <vnet-name> \
-  --vnet-resource-group <vnet-rg> \
-  --master-subnet <master-subnet> \
-  --worker-subnet <worker-subnet> \
-  --enable-managed-identity \
-  --assign-cluster-identity <cluster-identity-resource-id> \
-  --assign-platform-workload-identity <operator> <identity-resource-id>
-
 # Get cluster credentials
 az aro list-credentials --name <cluster> --resource-group <rg>
 
@@ -157,16 +145,16 @@ oc get clusterversion
 | Master Nodes | 3x Standard_D8s_v5 | 3x Standard_D16s_v5 |
 | Worker Nodes | 3x Standard_D4s_v5 | 6x Standard_D8s_v5 or larger |
 
-### Emergency Contacts & Resources
+### Contacts & Resources
 
 | Resource | Link/Contact |
 |----------|--------------|
 | ARO Documentation | https://docs.microsoft.com/azure/openshift/ |
 | OpenShift Documentation | https://docs.openshift.com/ |
+| Red Hat Cloud Experts ARO Tutorials | https://cloud.redhat.com/experts/tags/aro/ |
 | Microsoft Support | Azure Portal > Support |
 | Red Hat Support | https://access.redhat.com/ |
-| Managed Identity Guide | https://learn.microsoft.com/en-us/azure/openshift/howto-understand-managed-identities |
-| ARO GitHub | https://github.com/Azure/ARO-RP |
+| ARO Resource Provider GitHub | https://github.com/Azure/ARO-RP |
 
 ---
 
@@ -221,7 +209,7 @@ Proper planning is essential for a successful ARO deployment. This section cover
 
 #### Tools Installation
 
-- [ ] **Azure CLI** (version 2.30.0 or later)
+- [ ] **Azure CLI** (version 2.84 or later)
   ```bash
   # Install Azure CLI
   # macOS: brew install azure-cli
@@ -241,17 +229,33 @@ Proper planning is essential for a successful ARO deployment. This section cover
   # Download from Red Hat
   # https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
   
-  # Or install via Azure
-  az aro get-admin-kubeconfig --name <cluster> --resource-group <rg> -f kubeconfig
-  
   # Verify oc is installed
   oc version
   ```
 
 - [ ] **kubectl** (optional, for Kubernetes-native commands)
+  
+  **Note:** The `oc` CLI includes `kubectl` functionality, so separate installation is typically not needed.
+  
+  If you need standalone kubectl:
   ```bash
-  # Install kubectl
-  az aks install-cli
+  # Option 1: Extract kubectl from oc installation
+  # kubectl is bundled with oc - create symlink or alias
+  
+  # Option 2: Download from Kubernetes official site
+  # Linux
+  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+  chmod +x kubectl
+  sudo mv kubectl /usr/local/bin/
+  
+  # macOS
+  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl"
+  chmod +x kubectl
+  sudo mv kubectl /usr/local/bin/
+  
+  # Or use package manager
+  # macOS: brew install kubectl
+  # Linux: see https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
   
   # Verify installation
   kubectl version --client
@@ -270,7 +274,7 @@ Proper planning is essential for a successful ARO deployment. This section cover
   **Why it's important:**
   - Provides access to Red Hat Operator Hub and certified operators
   - Enables access to Red Hat Container Registry
-  - Required for many enterprise features
+  - View ARO clusters and accelerate issue resolution by opening support cases directly through the Red Hat Hybrid Cloud Console.
   - Free with Red Hat account
   
   **How to obtain:**
@@ -332,177 +336,30 @@ Platform Workload Identities (OpenShift Operators):
 └─ aro-operator → Manages ARO service resources
 ```
 
-**Step 1: Create 9 User-Assigned Managed Identities**
-  
-```bash
-# Set variables
-SUBSCRIPTION_ID=$(az account show --query 'id' -o tsv)
-RESOURCE_GROUP=<rg>
-CLUSTER_NAME=<cluster-name>
-LOCATION=<location>
+**Setup Requirements:**
 
-# Create cluster identity (enables federated credential management)
-az identity create \
-  --resource-group ${RESOURCE_GROUP} \
-  --name aro-cluster \
-  --location ${LOCATION}
+⚠️ **CRITICAL:** You must complete these steps **before** cluster creation:
 
-# Create 8 platform workload identities for OpenShift operators
-az identity create --resource-group ${RESOURCE_GROUP} --name cloud-controller-manager --location ${LOCATION}
-az identity create --resource-group ${RESOURCE_GROUP} --name ingress --location ${LOCATION}
-az identity create --resource-group ${RESOURCE_GROUP} --name machine-api --location ${LOCATION}
-az identity create --resource-group ${RESOURCE_GROUP} --name disk-csi-driver --location ${LOCATION}
-az identity create --resource-group ${RESOURCE_GROUP} --name cloud-network-config --location ${LOCATION}
-az identity create --resource-group ${RESOURCE_GROUP} --name image-registry --location ${LOCATION}
-az identity create --resource-group ${RESOURCE_GROUP} --name file-csi-driver --location ${LOCATION}
-az identity create --resource-group ${RESOURCE_GROUP} --name aro-operator --location ${LOCATION}
-```
+1. **Create 9 user-assigned managed identities**: 1 cluster identity (`aro-cluster`) + 8 platform workload identities (one per operator listed above)
 
-**Step 2: Assign ARO Built-in Roles to Identities**
+2. **Assign ARO built-in roles** to each identity:
+   - Cluster identity → `Azure Red Hat OpenShift Federated Credential` role on all 8 operator identities
+   - Each operator identity → operator-specific ARO built-in role at subnet or VNet scope:
+     - `Azure Red Hat OpenShift Cloud Controller Manager`
+     - `Azure Red Hat OpenShift Cluster Ingress Operator`
+     - `Azure Red Hat OpenShift Machine API Operator`
+     - `Azure Red Hat OpenShift Network Operator`
+     - `Azure Red Hat OpenShift File Storage Operator`
+     - `Azure Red Hat OpenShift Image Registry Operator`
+     - `Azure Red Hat OpenShift Service Operator`
+   - ARO RP service principal → `Azure Red Hat OpenShift Cluster` role on VNet
 
-⚠️ **IMPORTANT:** These role assignments MUST be created **before** cluster creation.
+3. **Use `--enable-managed-identity` and `--assign-*` flags** during cluster creation to reference the identities
 
-```bash
-# Get VNet information (adjust if using existing VNet)
-VNET_NAME=<vnet-name>
-VNET_RG=<vnet-resource-group>  # Can be different from cluster RG
-MASTER_SUBNET=<master-subnet-name>
-WORKER_SUBNET=<worker-subnet-name>
-
-# Grant cluster identity the Federated Credential role on all 8 operator identities
-# This allows aro-cluster to create federated credentials for workload identities
-
-for IDENTITY in aro-operator cloud-controller-manager ingress machine-api disk-csi-driver cloud-network-config image-registry file-csi-driver; do
-  az role assignment create \
-    --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name aro-cluster --query principalId -o tsv)" \
-    --assignee-principal-type ServicePrincipal \
-    --role "Azure Red Hat OpenShift Federated Credential" \
-    --scope "/subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${IDENTITY}"
-done
-
-# Grant operator-specific roles at subnet or VNet scope
-
-# cloud-controller-manager: Manages Azure load balancers and public IPs
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name cloud-controller-manager --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Cloud Controller Manager" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${MASTER_SUBNET}"
-
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name cloud-controller-manager --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Cloud Controller Manager" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${WORKER_SUBNET}"
-
-# ingress: Manages ingress load balancers
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name ingress --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Cluster Ingress Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${MASTER_SUBNET}"
-
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name ingress --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Cluster Ingress Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${WORKER_SUBNET}"
-
-# machine-api: Creates and manages VMs
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name machine-api --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Machine API Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${MASTER_SUBNET}"
-
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name machine-api --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Machine API Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${WORKER_SUBNET}"
-
-# cloud-network-config: Manages networking resources
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name cloud-network-config --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Network Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}"
-
-# file-csi-driver: Manages Azure Files storage
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name file-csi-driver --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift File Storage Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}"
-
-# image-registry: Manages registry storage
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name image-registry --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Image Registry Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}"
-
-# aro-operator: Manages ARO service operations
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name aro-operator --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Service Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${MASTER_SUBNET}"
-
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name aro-operator --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Service Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}/subnets/${WORKER_SUBNET}"
-
-# Grant Azure Red Hat OpenShift RP service principal permissions on VNet
-az role assignment create \
-  --assignee-object-id "$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query '[0].id' -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Cluster" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}"
-```
-
-**Step 3: Create Cluster with Managed Identity Flags**
-
-During `az aro create`, reference the identities you created:
-
-```bash
-az aro create \
-  --resource-group ${RESOURCE_GROUP} \
-  --name ${CLUSTER_NAME} \
-  --vnet ${VNET_NAME} \
-  --vnet-resource-group ${VNET_RG} \
-  --master-subnet ${MASTER_SUBNET} \
-  --worker-subnet ${WORKER_SUBNET} \
-  --enable-managed-identity \
-  --assign-cluster-identity aro-cluster \
-  --assign-platform-workload-identity file-csi-driver file-csi-driver \
-  --assign-platform-workload-identity cloud-controller-manager cloud-controller-manager \
-  --assign-platform-workload-identity ingress ingress \
-  --assign-platform-workload-identity image-registry image-registry \
-  --assign-platform-workload-identity machine-api machine-api \
-  --assign-platform-workload-identity cloud-network-config cloud-network-config \
-  --assign-platform-workload-identity aro-operator aro-operator \
-  --assign-platform-workload-identity disk-csi-driver disk-csi-driver
-```
-
-**Additional Network Resources (if using BYO NSG, Route Table, NAT Gateway):**
-
-If you attach NSG, Route Table, or NAT Gateway to subnets, grant additional permissions:
-
-```bash
-# Example: If using BYO NSG on master subnet
-NSG_NAME=<master-nsg-name>
-
-az role assignment create \
-  --assignee-object-id "$(az identity show --resource-group ${RESOURCE_GROUP} --name aro-operator --query principalId -o tsv)" \
-  --assignee-principal-type ServicePrincipal \
-  --role "Azure Red Hat OpenShift Service Operator" \
-  --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${VNET_RG}/providers/Microsoft.Network/networkSecurityGroups/${NSG_NAME}"
-
-# Repeat for worker NSG, route tables, NAT gateways as needed
-```
+**Complete setup instructions:**
+- [Microsoft Official Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster)
+- [Red Hat Managed Identity Guide](https://cloud.redhat.com/experts/aro/miwi/)
+- [Managed Identity Concepts](https://learn.microsoft.com/en-us/azure/openshift/howto-understand-managed-identities)
 
 **Benefits:**
 - ✅ **No service principal required** - eliminates long-lived credential management
@@ -512,60 +369,23 @@ az role assignment create \
 - ✅ Significantly better security posture
 - ✅ Recommended for all production environments
 
-**References:**
-- Official Guide: https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster
-- Managed Identity Overview: https://learn.microsoft.com/en-us/azure/openshift/howto-understand-managed-identities
-- Red Hat Guide: https://cloud.redhat.com/experts/aro/miwi/
-
 #### Option 2: Service Principal (Legacy, Not Recommended)
 
 **Only use if managed identity is not an option due to specific organizational constraints.**
 
-- [ ] **Create Azure AD Service Principal for ARO**
-  ```bash
-  # Create service principal
-  az ad sp create-for-rbac \
-    --name ${CLUSTER_NAME}-sp \
-    --role Contributor \
-    --scopes /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}
-  
-  # Save the output (appId and password) securely
-  # WARNING: These credentials must be rotated before expiration
-  ```
+**Setup Requirements:**
+- Create Azure AD service principal with `Contributor` role
+- Assign roles to VNet resource group and network resources
+- Securely store credentials in Azure Key Vault
+- Establish credential rotation process (default expiration: 1 year)
 
-- [ ] **Assign Contributor role to VNet resource group**
-  ```bash
-  az role assignment create \
-    --assignee <service-principal-app-id> \
-    --role Contributor \
-    --scope /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/<vnet-rg>
-  ```
-
-- [ ] **Assign Network Contributor to route table** (if using BYO route table)
-
-- [ ] **Securely store credentials in Azure Key Vault**
-  ```bash
-  az keyvault secret set \
-    --vault-name <keyvault-name> \
-    --name "${CLUSTER_NAME}-sp-appid" \
-    --value <app-id>
-  
-  az keyvault secret set \
-    --vault-name <keyvault-name> \
-    --name "${CLUSTER_NAME}-sp-password" \
-    --value <password>
-  ```
-
-- [ ] **Set up credential rotation process**
-  - Service principals expire (default: 1 year)
-  - Must be rotated before expiration to avoid cluster outage
-  - Document rotation procedure
-  - Set calendar reminders
+**See:** [Service Principal Setup Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-create-service-principal)
 
 **Drawbacks:**
 - ❌ Requires manual credential rotation
 - ❌ Credentials can be leaked if not properly secured
 - ❌ Broader permissions than necessary (Contributor role vs. operator-specific roles)
+- ❌ Increased operational overhead
 - ❌ More operational overhead
 
 ---
@@ -632,7 +452,7 @@ ARO clusters require careful network planning. This section helps you design you
   | **NAT Gateway** | Dedicated outbound connectivity | High-throughput scenarios, predictable IPs |
   
   **Egress Lockdown Feature:**
-  - **NEW:** ARO clusters with Egress Lockdown enabled do NOT need direct internet access
+  - ARO clusters with Egress Lockdown enabled do NOT need direct internet access
   - All required Azure/Red Hat connections are proxied through the ARO service
   - Endpoints proxied automatically (no firewall rules needed):
     - `arosvc.azurecr.io` - System container images
@@ -662,7 +482,7 @@ ARO clusters require careful network planning. This section helps you design you
 
   | Resource | Minimum Size | Recommended Size | Example CIDR |
   |----------|--------------|------------------|--------------|
-  | VNet | /20 (4,096 IPs) | /16 (65,536 IPs) | 10.0.0.0/16 |
+  | VNet | /26 (64 IPs) | /16 (65,536 IPs) | 10.0.0.0/16 |
   | Master Subnet | /27 (32 IPs) | /26 (64 IPs) | 10.0.0.0/26 |
   | Worker Subnet | /27 (32 IPs) | /24 (256 IPs) | 10.0.1.0/24 |
   
@@ -676,6 +496,39 @@ ARO clusters require careful network planning. This section helps you design you
   - Scaling: Plan for autoscaling (e.g., up to 100 nodes)
   - Each node: 1 primary IP
   - Load balancers: Additional IPs needed
+
+- [ ] **Optional: Plan Multiple Worker Subnets for Node Segregation**
+
+  You can deploy worker nodes across multiple subnets to achieve workload isolation, security segmentation, or compliance requirements.
+  
+  **Use Cases:**
+  - **Security zones**: Separate PCI-compliant workloads from general workloads
+  - **Network policies**: Different firewall rules per subnet
+  - **Bandwidth/performance**: Dedicated network paths for specific workloads
+  - **Compliance**: Physical/logical separation of regulated data
+  
+  **Architecture Example:**
+  ```
+  VNet (10.0.0.0/16)
+  ├─ Master Subnet (10.0.0.0/26)
+  ├─ Worker-General Subnet (10.0.1.0/24)     - General purpose workloads
+  ├─ Worker-Database Subnet (10.0.2.0/24)    - Database workloads
+  └─ Worker-Sensitive Subnet (10.0.3.0/24)   - PCI/HIPAA workloads
+  ```
+  
+  **Implementation:**
+  - Create multiple subnets in your VNet before cluster deployment
+  - Deploy default worker MachineSet to first subnet during cluster creation
+  - After cluster creation, create additional MachineSets targeting other subnets
+  - Use node selectors/taints to schedule workloads to specific subnets
+  
+  **Important Considerations:**
+  - All worker subnets must meet minimum /27 size requirement
+  - Each subnet needs service endpoints for Microsoft.ContainerRegistry
+  - NSG rules (if using BYO NSG) must be configured for all worker subnets
+  - Managed identity permissions apply to all subnets
+  
+  **Complete guide:** [Segregate MachineSets Across Subnets](https://learn.microsoft.com/en-us/azure/openshift/howto-segregate-machinesets)
 
 - [ ] **Plan OpenShift Network CIDRs**
 
@@ -694,6 +547,11 @@ ARO clusters require careful network planning. This section helps you design you
   - Default provides 65,536 service IPs
   - Cannot be changed after cluster creation
   
+{{% alert state="warning" %}} Avoid using the following CIDR ranges for pod and service networks as they conflict with OVN-K:
+
+100.64.0.0/16
+100.88.0.0/16 {{% /alert %}}
+
   ```bash
   # Specify custom CIDRs during cluster creation
   az aro create \
@@ -791,9 +649,11 @@ For complete BYO NSG setup, see [Appendix A: Network Security Groups Deep Dive](
   - Master nodes: Always 3 nodes (fixed, cannot be changed)
   - Control plane etcd and API server run on master nodes
   - Cannot be scaled horizontally after creation
-  - Vertical scaling (resize) possible but complex
+  - Vertical scaling (resize) possible through a support case
 
 - [ ] **Plan Worker Node Configuration**
+
+For complete list of supported instances see [ARO Support Policies](https://learn.microsoft.com/en-us/azure/openshift/support-policies-v4)
 
   | Workload Type | VM Size | vCPU | Memory | Example Use Case |
   |---------------|---------|------|--------|------------------|
@@ -829,7 +689,7 @@ For complete BYO NSG setup, see [Appendix A: Network Security Groups Deep Dive](
   **Version Selection Strategy:**
   - Use latest stable version for new deployments
   - For production: Use n-1 version (one behind latest) for proven stability
-  - Check [OpenShift lifecycle](https://access.redhat.com/support/policy/updates/openshift) for support windows
+  - Check [ARO lifecycle](https://learn.microsoft.com/en-us/azure/openshift/support-lifecycle) for support windows
   - Plan for regular upgrades (quarterly recommended)
 
 #### Domain Configuration
@@ -935,7 +795,7 @@ ARO includes these storage classes by default:
   az aro create ... --disk-encryption-set <des-id>
   ```
   
-  See [ARO-RP Disk Encryption documentation](~/Documents/GitHub/ARO-RP/docs/disk-encryption-set.md) for details
+  See [Encrypt OS disks with a customer-managed key on Azure Red Hat OpenShift](https://learn.microsoft.com/en-us/azure/openshift/howto-byok) for details
 
 ---
 
@@ -1017,42 +877,12 @@ This section guides you through the actual deployment of your ARO cluster.
 
 ### Pre-Deployment Verification
 
-Before creating your cluster, verify all prerequisites are in place.
+Before creating your cluster, verify prerequisites:
 
-- [ ] **Verify Authentication**
-  ```bash
-  # Ensure you're logged in to Azure
-  az account show
-  
-  # Set correct subscription
-  az account set --subscription <subscription-id>
-  
-  # Verify subscription
-  az account show --query "{Name:name, ID:id, State:state}" -o table
-  ```
-
-- [ ] **Verify Azure CLI Version**
-  ```bash
-  # Check version (must be 2.30.0 or later)
-  az --version | grep azure-cli
-  
-  # Update if needed
-  # macOS: brew upgrade azure-cli
-  # Others: see https://docs.microsoft.com/cli/azure/update-azure-cli
-  ```
-
-- [ ] **Create Resource Groups**
-  ```bash
-  # Resource group for ARO cluster
-  az group create \
-    --name <resource-group> \
-    --location <location>
-  
-  # Resource group for VNet (if separate)
-  az group create \
-    --name <vnet-resource-group> \
-    --location <location>
-  ```
+- [ ] **Verify Azure CLI authentication** (`az account show`)
+- [ ] **Verify Azure CLI version** (2.30.0 or later)
+- [ ] **Create resource groups** for cluster and VNet (if separate)
+- [ ] **Verify managed identities created** (if using managed identity)
 
 ---
 
@@ -1060,246 +890,245 @@ Before creating your cluster, verify all prerequisites are in place.
 
 #### VNet and Subnets Creation
 
-- [ ] **Create Virtual Network**
-  ```bash
-  # Create VNet
-  az network vnet create \
-    --resource-group <vnet-rg> \
-    --name <vnet-name> \
-    --address-prefixes <vnet-cidr>  # e.g., 10.0.0.0/16
-  ```
+Create a Virtual Network with two dedicated subnets for ARO:
 
-- [ ] **Create Master Subnet**
-  ```bash
-  # Create master subnet with service endpoints
-  az network vnet subnet create \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name <master-subnet-name> \
-    --address-prefixes <master-subnet-cidr> \
-    --service-endpoints Microsoft.ContainerRegistry
-  
-  # Disable private link service network policies on master subnet
-  az network vnet subnet update \
-    --name <master-subnet-name> \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --private-link-service-network-policies Disabled
-  ```
-  
-  **Master Subnet Requirements:**
+**Requirements:**
+- **VNet**: Any CIDR that doesn't overlap with existing networks (e.g., 10.0.0.0/16)
+- **Master Subnet**: 
   - Minimum /27 (32 IPs)
   - Service endpoint for Microsoft.ContainerRegistry
   - Private link service network policies must be disabled
-
-- [ ] **Create Worker Subnet**
-  ```bash
-  # Create worker subnet with service endpoints
-  az network vnet subnet create \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name <worker-subnet-name> \
-    --address-prefixes <worker-subnet-cidr> \
-    --service-endpoints Microsoft.ContainerRegistry
-  ```
-  
-  **Worker Subnet Requirements:**
+- **Worker Subnet**: 
   - Minimum /27 (32 IPs), recommended /24 for scaling
   - Service endpoint for Microsoft.ContainerRegistry
 
-#### BYO NSG Configuration (If Applicable)
+**Deployment:**
+- [Azure CLI Network Setup](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking)
+- [Terraform Examples](https://github.com/rh-mobb/terraform-aro) (includes VNet configuration)
+
+#### BYO NSG Configuration (Optional)
 
 ⚠️ **Skip this section if using ARO-managed NSG (recommended)**
 
-If you chose to bring your own NSG in the planning phase:
+If bringing your own NSG:
+- Create NSGs for master and worker subnets
+- Configure required security rules (master ↔ worker communication, Azure service tags, ingress traffic)
+- Attach NSGs to subnets
+- Grant ARO identity permissions on NSGs (with managed identity, ARO built-in roles handle this automatically)
 
-- [ ] **Create Network Security Groups**
-  ```bash
-  # Create NSG for master subnet
-  az network nsg create \
-    --resource-group <vnet-rg> \
-    --name <cluster-name>-master-nsg \
-    --location <location>
-  
-  # Create NSG for worker subnet
-  az network nsg create \
-    --resource-group <vnet-rg> \
-    --name <cluster-name>-worker-nsg \
-    --location <location>
-  ```
-
-- [ ] **Attach NSGs to Subnets**
-  ```bash
-  # Attach to master subnet
-  az network vnet subnet update \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name <master-subnet-name> \
-    --network-security-group <cluster-name>-master-nsg
-  
-  # Attach to worker subnet
-  az network vnet subnet update \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name <worker-subnet-name> \
-    --network-security-group <cluster-name>-worker-nsg
-  ```
-
-- [ ] **Configure Required NSG Rules**
-  
-  See [Appendix A: Network Security Groups Deep Dive](#appendix-a-network-security-groups-deep-dive) for complete rule configuration.
-  
-  **Critical rules include:**
-  - Master ↔ Worker communication (ports 6443, 22623, 2379-2380, etc.)
-  - Azure service tags (AzureLoadBalancer, AzureCloud)
-  - Ingress traffic (ports 80, 443)
-
-- [ ] **Grant Identity Permissions on NSGs**
-  
-  **With Managed Identity:**
-  - ARO built-in roles are automatically assigned during cluster creation
-  - No manual action required
-  
-  **With Service Principal:**
-  ```bash
-  # Assign Network Contributor to service principal on NSGs
-  az role assignment create \
-    --assignee <service-principal-id> \
-    --role "Network Contributor" \
-    --scope /subscriptions/<sub-id>/resourceGroups/<vnet-rg>/providers/Microsoft.Network/networkSecurityGroups/<master-nsg-name>
-  
-  az role assignment create \
-    --assignee <service-principal-id> \
-    --role "Network Contributor" \
-    --scope /subscriptions/<sub-id>/resourceGroups/<vnet-rg>/providers/Microsoft.Network/networkSecurityGroups/<worker-nsg-name>
-  ```
-
----
-
-### Managed Identity Setup
-
-If you chose Managed Identity in planning (recommended), these identities should already be created. Verify they exist:
-
-- [ ] **Verify Managed Identities Exist**
-  ```bash
-  # List all identities in resource group
-  az identity list --resource-group <rg> -o table
-  
-  # Should see 9 identities:
-  # - <cluster-name>-aro-cluster
-  # - <cluster-name>-cloud-controller-manager
-  # - <cluster-name>-ingress
-  # - <cluster-name>-machine-api
-  # - <cluster-name>-disk-csi-driver
-  # - <cluster-name>-cloud-network-config
-  # - <cluster-name>-image-registry
-  # - <cluster-name>-file-csi-driver
-  # - <cluster-name>-aro-operator
-  ```
-
-If not created yet, create them now (see [Identity & Access Strategy](#identity--access-strategy) for commands).
+**Complete NSG requirements:** See [Appendix A: Network Security Groups Deep Dive](#appendix-a-network-security-groups-deep-dive)
 
 ---
 
 ### ARO Cluster Creation
 
-Now we're ready to create the actual ARO cluster.
+Choose your deployment method based on your infrastructure-as-code preferences and organizational standards.
 
-#### Recommended: Private Cluster with Managed Identity
+#### Deployment Methods
 
-This is the recommended configuration for production environments.
+| Method | Best For | Complexity | Documentation |
+|--------|----------|------------|---------------|
+| **Terraform** | Production, Infrastructure-as-Code, Repeatable deployments | Medium | [Red Hat MOBB Examples](https://github.com/rh-mobb/terraform-aro) |
+| **Azure CLI** | Quick deployments, Testing, Manual workflows | Low | [Microsoft Docs](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster) |
+| **ARM/Bicep** | Azure-native IaC, Integration with Azure DevOps | Medium | [Microsoft Docs](https://learn.microsoft.com/en-us/azure/openshift/quickstart-openshift-arm-bicep-template) |
+| **Azure Portal** | First-time users, Visual workflow | Low | [Portal Quickstart](https://learn.microsoft.com/en-us/azure/openshift/quickstart-portal) |
 
-- [ ] **Create Private ARO Cluster**
+---
 
-  ```bash
-  # Set variables
-  SUBSCRIPTION_ID=<subscription-id>
-  RESOURCE_GROUP=<rg>
-  CLUSTER_NAME=<cluster-name>
-  VNET_NAME=<vnet-name>
-  VNET_RG=<vnet-resource-group>
-  LOCATION=<location>
-  
-  # Create private ARO cluster with managed identities
-  # Prerequisites: Identities and role assignments must be created BEFORE running this command
-  # See "Identity & Access Strategy" section for identity creation and role assignment steps
-  az aro create \
-    --resource-group ${RESOURCE_GROUP} \
-    --name ${CLUSTER_NAME} \
-    --vnet ${VNET_NAME} \
-    --vnet-resource-group ${VNET_RG} \
-    --master-subnet <master-subnet-name> \
-    --worker-subnet <worker-subnet-name> \
-    --apiserver-visibility Private \
-    --ingress-visibility Private \
-    --pull-secret @pull-secret.txt \
-    --enable-managed-identity \
-    --assign-cluster-identity /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-aro-cluster \
-    --assign-platform-workload-identity file-csi-driver /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-file-csi-driver \
-    --assign-platform-workload-identity cloud-controller-manager /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-cloud-controller-manager \
-    --assign-platform-workload-identity ingress /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-ingress \
-    --assign-platform-workload-identity image-registry /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-image-registry \
-    --assign-platform-workload-identity machine-api /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-machine-api \
-    --assign-platform-workload-identity cloud-network-config /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-cloud-network-config \
-    --assign-platform-workload-identity aro-operator /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-aro-operator \
-    --assign-platform-workload-identity disk-csi-driver /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-disk-csi-driver
-  
-  # Optional parameters (add as needed):
-  # --domain <custom-domain>                    # Custom domain prefix
-  # --tags "key=value"                          # Resource tags
-  # --worker-count <number>                     # Worker node count (default: 3)
-  # --worker-vm-size <size>                     # Worker VM size (default: Standard_D4s_v5)
-  # --master-vm-size <size>                     # Master VM size (default: Standard_D8s_v5)
-  # --pod-cidr <cidr>                           # Pod CIDR (default: 10.128.0.0/14)
-  # --service-cidr <cidr>                       # Service CIDR (default: 172.30.0.0/16)
-  # --cluster-resource-group <rg-name>          # Infrastructure resource group name
-  # --outbound-type UserDefinedRouting          # If using custom routing
-  ```
-  
-  **Deployment Time:** 30-45 minutes
-  
-  Monitor deployment:
-  ```bash
-  # Check deployment status
-  az aro show --name ${CLUSTER_NAME} --resource-group ${RESOURCE_GROUP} --query provisioningState
-  
-  # Watch for completion
-  watch az aro show --name ${CLUSTER_NAME} --resource-group ${RESOURCE_GROUP} --query provisioningState -o tsv
-  ```
+#### Option 1: Terraform (Recommended for Production)
 
-#### Alternative: Public Cluster
+**Prerequisites:**
+- Terraform >= 1.0
+- Azure CLI authenticated (`az login`)
+- Managed identities and role assignments created (see [Identity & Access Strategy](#identity--access-strategy))
 
-⚠️ **Only use for development/testing. Not recommended for production.**
+**Red Hat MOBB Terraform Examples:**
 
-- [ ] **Create Public ARO Cluster**
+The Red Hat MOBB team provides production-ready Terraform modules with various configurations:
 
-  ```bash
-  # Set variables (same as above)
-  
-  # Create public ARO cluster - omit visibility flags for public access
-  az aro create \
-    --resource-group ${RESOURCE_GROUP} \
-    --name ${CLUSTER_NAME} \
-    --vnet ${VNET_NAME} \
-    --vnet-resource-group ${VNET_RG} \
-    --master-subnet <master-subnet-name> \
-    --worker-subnet <worker-subnet-name> \
-    --pull-secret @pull-secret.txt \
-    --enable-managed-identity \
-    --assign-cluster-identity /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-aro-cluster \
-    --assign-platform-workload-identity file-csi-driver /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-file-csi-driver \
-    --assign-platform-workload-identity cloud-controller-manager /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-cloud-controller-manager \
-    --assign-platform-workload-identity ingress /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-ingress \
-    --assign-platform-workload-identity image-registry /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-image-registry \
-    --assign-platform-workload-identity machine-api /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-machine-api \
-    --assign-platform-workload-identity cloud-network-config /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-cloud-network-config \
-    --assign-platform-workload-identity aro-operator /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-aro-operator \
-    --assign-platform-workload-identity disk-csi-driver /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${CLUSTER_NAME}-disk-csi-driver
-  ```
+📚 **Repository**: https://github.com/rh-mobb/terraform-aro
 
-#### Legacy: Service Principal Deployment
+**Available Examples:**
+- `private-cluster` - Private ARO with managed identities
+- `public-cluster` - Public ARO cluster (dev/test)
+- `byovnet` - Bring your own VNet
+- `custom-domain` - ARO with custom domain
+- `multiple-machinepools` - Multiple worker node pools
 
-⚠️ **Not recommended. Only use if managed identity is absolutely not an option.**
+**Quick Start:**
+```bash
+# Clone the repository
+git clone https://github.com/rh-mobb/terraform-aro.git
+cd terraform-aro/examples/private-cluster
+
+# Review and customize terraform.tfvars
+cp terraform.tfvars.example terraform.tfvars
+vi terraform.tfvars
+
+# Initialize Terraform
+terraform init
+
+# Preview changes
+terraform plan
+
+# Deploy cluster (30-45 minutes)
+terraform apply
+```
+
+**Official Terraform Provider:**
+
+📚 **Provider Documentation**: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster
+
+**Minimal Example:**
+```hcl
+resource "azurerm_redhat_openshift_cluster" "aro" {
+  name                = "aro-cluster"
+  location            = "eastus"
+  resource_group_name = azurerm_resource_group.aro.name
+
+  cluster_profile {
+    domain = "aro-cluster"
+    version = "4.20.0"
+  }
+
+  network_profile {
+    pod_cidr     = "10.128.0.0/14"
+    service_cidr = "172.30.0.0/16"
+  }
+
+  main_profile {
+    vm_size   = "Standard_D8s_v5"
+    subnet_id = azurerm_subnet.master.id
+  }
+
+  worker_profile {
+    vm_size      = "Standard_D4s_v5"
+    disk_size_gb = 128
+    node_count   = 3
+    subnet_id    = azurerm_subnet.worker.id
+  }
+
+  api_server_profile {
+    visibility = "Private"
+  }
+
+  ingress_profile {
+    visibility = "Private"
+  }
+
+  service_principal {
+    client_id     = var.client_id
+    client_secret = var.client_secret
+  }
+}
+```
+
+**For Managed Identity Configuration**, see the [Red Hat MOBB examples](https://github.com/rh-mobb/terraform-aro) which include complete managed identity setup.
+
+---
+
+#### Option 2: Azure CLI
+
+For detailed CLI deployment steps with all parameters and options, see:
+
+📚 **Official Guide**: https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster
+
+**Quick Command Reference:**
+
+```bash
+# Private cluster with managed identity (production)
+az aro create \
+  --resource-group <rg> \
+  --name <cluster-name> \
+  --vnet <vnet-name> \
+  --master-subnet <master-subnet> \
+  --worker-subnet <worker-subnet> \
+  --apiserver-visibility Private \
+  --ingress-visibility Private \
+  --pull-secret @pull-secret.txt \
+  --enable-managed-identity \
+  --assign-cluster-identity <cluster-identity-id> \
+  --assign-platform-workload-identity file-csi-driver <file-csi-identity-id> \
+  --assign-platform-workload-identity cloud-controller-manager <ccm-identity-id> \
+  --assign-platform-workload-identity ingress <ingress-identity-id> \
+  --assign-platform-workload-identity image-registry <registry-identity-id> \
+  --assign-platform-workload-identity machine-api <machine-api-identity-id> \
+  --assign-platform-workload-identity cloud-network-config <network-identity-id> \
+  --assign-platform-workload-identity aro-operator <operator-identity-id> \
+  --assign-platform-workload-identity disk-csi-driver <disk-csi-identity-id>
+
+# Monitor deployment
+az aro show --name <cluster-name> --resource-group <rg> --query provisioningState -o tsv
+```
+
+**Common Optional Parameters:**
+```bash
+--domain <custom-domain>              # Custom domain
+--worker-count <number>               # Worker nodes (default: 3)
+--worker-vm-size <size>               # Worker VM size
+--master-vm-size <size>               # Master VM size
+--pod-cidr <cidr>                     # Pod network (default: 10.128.0.0/14)
+--service-cidr <cidr>                 # Service network (default: 172.30.0.0/16)
+--outbound-type UserDefinedRouting    # Private cluster without public IP
+--disk-encryption-set <des-id>        # Customer-managed encryption
+```
+
+**Complete CLI deployment guide**: https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster
+
+---
+
+#### Option 3: ARM Template / Bicep
+
+For declarative infrastructure deployment integrated with Azure DevOps or Azure Pipelines:
+
+📚 **Official Guide**: https://learn.microsoft.com/en-us/azure/openshift/quickstart-openshift-arm-bicep-template
+
+**Quick Deploy:**
+```bash
+az deployment group create \
+  --resource-group <rg> \
+  --template-file azuredeploy.json \
+  --parameters azuredeploy.parameters.json
+```
+
+---
+
+#### Option 4: Azure Portal
+
+For visual deployment with step-by-step wizard:
+
+📚 **Portal Quickstart**: https://learn.microsoft.com/en-us/azure/openshift/quickstart-portal
+
+**Portal Deployment Steps:**
+1. Navigate to Azure Portal → Create a resource → Search "Azure Red Hat OpenShift"
+2. Fill in basics (subscription, resource group, cluster name, region)
+3. Configure networking (VNet, subnets, visibility)
+4. Configure authentication (managed identity or service principal)
+5. Review and create
+
+---
+
+#### Deployment Validation
+
+Regardless of deployment method, validate your cluster:
+
+```bash
+# Get cluster credentials
+az aro list-credentials --name <cluster-name> --resource-group <rg>
+
+# Get console URL
+az aro show --name <cluster-name> --resource-group <rg> --query consoleProfile.url -o tsv
+
+# Login with oc CLI
+oc login <api-url> --username kubeadmin --password <password>
+
+# Verify cluster health
+oc get nodes
+oc get clusteroperators
+oc get clusterversion
+```
+
+**Expected deployment time**: 30-45 minutes
 
 - [ ] **Create ARO Cluster with Service Principal**
 
@@ -1415,283 +1244,50 @@ After cluster creation completes, validate everything is working correctly.
 
 ### Initial Configuration
 
-These configurations are best done immediately after deployment to establish a baseline for operations.
+Essential configurations to establish immediately after deployment:
 
-#### Enable User Workload Monitoring
+- [ ] **Enable User Workload Monitoring** - Create ConfigMap in `openshift-monitoring` namespace ([guide](https://docs.openshift.com/container-platform/latest/monitoring/enabling-monitoring-for-user-defined-projects.html))
 
-- [ ] **Enable User Workload Monitoring**
-  ```bash
-  # Create ConfigMap to enable user workload monitoring
-  cat <<EOF | oc apply -f -
-  apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: cluster-monitoring-config
-    namespace: openshift-monitoring
-  data:
-    config.yaml: |
-      enableUserWorkload: true
-  EOF
-  
-  # Verify user workload monitoring pods are created
-  oc -n openshift-user-workload-monitoring get pods
-  ```
+- [ ] **Deploy Cluster Logging Operator** - Install operator and create ClusterLogging instance ([guide](https://docs.openshift.com/container-platform/latest/logging/cluster-logging-deploying.html))
 
-#### Deploy Cluster Logging Operator
+- [ ] **Enable API Audit Logging** - Update APIServer resource with audit policy (Default, WriteRequestBodies, or AllRequestBodies) ([guide](https://docs.openshift.com/container-platform/latest/security/audit-log-policy-config.html))
 
-- [ ] **Install Cluster Logging Operator**
-  ```bash
-  # Create namespace
-  oc create namespace openshift-logging
-  
-  # Create OperatorGroup
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1
-  kind: OperatorGroup
-  metadata:
-    name: cluster-logging
-    namespace: openshift-logging
-  spec:
-    targetNamespaces:
-    - openshift-logging
-  EOF
-  
-  # Create Subscription
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1alpha1
-  kind: Subscription
-  metadata:
-    name: cluster-logging
-    namespace: openshift-logging
-  spec:
-    channel: stable
-    name: cluster-logging
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-  EOF
-  
-  # Wait for operator to install
-  oc -n openshift-logging get csv
-  ```
+- [ ] **Create Admin Users/Groups** - Set up proper admin access via Azure AD or your IdP, then disable kubeadmin account ([guide](https://learn.microsoft.com/en-us/azure/openshift/configure-azure-ad-ui))
 
-- [ ] **Create ClusterLogging Instance**
-  ```bash
-  # Create ClusterLogging instance with default configuration
-  cat <<EOF | oc apply -f -
-  apiVersion: logging.openshift.io/v1
-  kind: ClusterLogging
-  metadata:
-    name: instance
-    namespace: openshift-logging
-  spec:
-    managementState: Managed
-    logStore:
-      type: lokistack
-      lokistack:
-        name: logging-loki
-    collection:
-      type: vector
-  EOF
-  
-  # Note: This requires LokiStack. For simpler setup, can use Elasticsearch
-  # See documentation for alternative configurations
-  ```
-
-#### Configure Audit Logging
-
-- [ ] **Enable API Audit Logging**
-  ```bash
-  # Update API server with audit policy
-  cat <<EOF | oc apply -f -
-  apiVersion: config.openshift.io/v1
-  kind: APIServer
-  metadata:
-    name: cluster
-  spec:
-    audit:
-      profile: Default  # Options: Default, WriteRequestBodies, AllRequestBodies
-  EOF
-  
-  # Verify audit logs are being generated
-  oc adm node-logs --role=master --path=openshift-apiserver/audit.log
-  ```
-
-#### Create Initial Admin Users
-
-⚠️ **IMPORTANT:** The kubeadmin account is for initial access only. Create proper admin users/groups.
-
-- [ ] **Create Cluster Admin Group and Users**
-  ```bash
-  # This example uses Azure AD. Adjust for your IdP.
-  
-  # Create cluster-admins group
-  oc adm groups new cluster-admins
-  
-  # Add Azure AD users to group
-  oc adm groups add-users cluster-admins <user@domain.com>
-  
-  # Grant cluster-admin role to group
-  oc adm policy add-cluster-role-to-group cluster-admin cluster-admins
-  
-  # Verify
-  oc get groups cluster-admins
-  oc describe group cluster-admins
-  ```
-
-- [ ] **Disable kubeadmin Account** (after verifying admin access)
-  ```bash
-  # ONLY do this after confirming you can login with a proper admin account
-  oc delete secret kubeadmin -n kube-system
-  
-  # WARNING: This cannot be undone easily. Ensure you have alternative admin access!
-  ```
+⚠️ **IMPORTANT:** Only disable kubeadmin after confirming alternative admin access works.
 
 ---
 
 ### Optional: Custom Domain Configuration
 
-If you plan to use a custom domain instead of the default `*.aroapp.io`:
+To use a custom domain instead of the default `*.aroapp.io`:
 
-- [ ] **Get Cluster IP Addresses**
-  ```bash
-  # Get API server IP and ingress IP
-  az aro show \
-    --name ${CLUSTER_NAME} \
-    --resource-group ${RESOURCE_GROUP} \
-    --query '{"API":apiserverProfile.ip, "Ingress":ingressProfiles[0].ip}' -o table
-  ```
+- [ ] **Get cluster IP addresses** (API server and ingress IPs)
+- [ ] **Create DNS A records** (`api.<domain>` and `*.apps.<domain>`)
+- [ ] **Update API server certificate** with custom TLS cert
+- [ ] **Update ingress controller certificate** with wildcard TLS cert
 
-- [ ] **Create DNS A Records**
-  
-  In your DNS zone, create:
-  - `api.<your-domain>` → API server IP
-  - `*.apps.<your-domain>` → Ingress IP
-  
-  Example:
-  ```
-  api.openshift.mycompany.com    A   10.0.0.100
-  *.apps.openshift.mycompany.com A   10.0.1.100
-  ```
-
-- [ ] **Update API Server Certificate**
-  ```bash
-  # Create or obtain TLS certificate for api.<your-domain>
-  # Update API server with custom certificate
-  
-  oc create secret tls api-cert \
-    --cert=api-cert.pem \
-    --key=api-key.pem \
-    -n openshift-config
-  
-  oc patch apiserver cluster \
-    --type=merge \
-    --patch='{"spec":{"servingCerts":{"namedCertificates":[{"names":["api.<your-domain>"],"servingCertificate":{"name":"api-cert"}}]}}}'
-  ```
-
-- [ ] **Update Ingress Controller Certificate**
-  ```bash
-  # Create or obtain wildcard TLS certificate for *.apps.<your-domain>
-  
-  oc create secret tls apps-cert \
-    --cert=apps-cert.pem \
-    --key=apps-key.pem \
-    -n openshift-ingress
-  
-  oc patch ingresscontroller default \
-    -n openshift-ingress-operator \
-    --type=merge \
-    --patch='{"spec":{"defaultCertificate":{"name":"apps-cert"}}}'
-  ```
+**Complete guide:** [Custom Domain Configuration](https://cloud.redhat.com/experts/aro/custom-domain/)
 
 ---
 
 ### Optional: Private Cluster Access
 
-For private clusters, you need a way to access the API server and console. Choose one or more:
+For private clusters, establish access to the API server and console:
 
-#### Option 1: Point-to-Site VPN
+#### Access Options
 
-- [ ] **Create VPN Gateway**
-  ```bash
-  # Create gateway subnet
-  az network vnet subnet create \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name GatewaySubnet \
-    --address-prefixes <gateway-subnet-cidr>  # e.g., 10.0.255.0/27
-  
-  # Create public IP for VPN gateway
-  az network public-ip create \
-    --resource-group <vnet-rg> \
-    --name <vpn-gw-pip-name> \
-    --allocation-method Static \
-    --sku Standard
-  
-  # Create VPN gateway (takes 30-45 minutes)
-  az network vnet-gateway create \
-    --resource-group <vnet-rg> \
-    --name <vpn-gw-name> \
-    --vnet <vnet-name> \
-    --public-ip-addresses <vpn-gw-pip-name> \
-    --gateway-type Vpn \
-    --vpn-type RouteBased \
-    --sku VpnGw1 \
-    --vpn-gateway-generation Generation1
-  ```
+| Method | Use Case | Setup Complexity |
+|--------|----------|------------------|
+| **Point-to-Site VPN** | Remote access, multiple users | Medium (30-45 min gateway creation) |
+| **Azure Bastion** | Browser-based access via jump box | Low |
+| **ExpressRoute/Site-to-Site VPN** | Enterprise connectivity | High |
+| **Jump Box VM** | Simple solution for testing | Low |
 
-- [ ] **Configure Point-to-Site VPN**
-  ```bash
-  # Generate root and client certificates
-  # See: https://docs.microsoft.com/azure/vpn-gateway/vpn-gateway-certificates-point-to-site
-  
-  # Upload root certificate to VPN gateway
-  az network vnet-gateway root-cert create \
-    --resource-group <vnet-rg> \
-    --gateway-name <vpn-gw-name> \
-    --name <root-cert-name> \
-    --public-cert-data <base64-encoded-cert>
-  
-  # Set address pool for VPN clients
-  az network vnet-gateway update \
-    --resource-group <vnet-rg> \
-    --name <vpn-gw-name> \
-    --address-prefixes <vpn-client-pool>  # e.g., 172.16.0.0/24
-  
-  # Download VPN client configuration
-  az network vnet-gateway vpn-client generate \
-    --resource-group <vnet-rg> \
-    --name <vpn-gw-name> \
-    --processor-architecture Amd64
-  ```
-
-#### Option 2: Azure Bastion
-
-- [ ] **Create Azure Bastion**
-  ```bash
-  # Create bastion subnet
-  az network vnet subnet create \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name AzureBastionSubnet \
-    --address-prefixes <bastion-subnet-cidr>  # e.g., 10.0.254.0/26 (must be /26 or larger)
-  
-  # Create public IP for bastion
-  az network public-ip create \
-    --resource-group <vnet-rg> \
-    --name <bastion-pip-name> \
-    --sku Standard \
-    --allocation-method Static
-  
-  # Create bastion host
-  az network bastion create \
-    --resource-group <vnet-rg> \
-    --name <bastion-name> \
-    --public-ip-address <bastion-pip-name> \
-    --vnet-name <vnet-name> \
-    --location <location>
-  ```
-
-- [ ] **Create Jump Box VM**
+**Detailed setup guides:**
+- [Point-to-Site VPN](https://learn.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal)
+- [Azure Bastion](https://learn.microsoft.com/en-us/azure/bastion/quickstart-host-portal)
+- [Private ARO Cluster Access](https://cloud.redhat.com/experts/aro/private-cluster/)
   ```bash
   # Create VM in VNet for bastion access
   az vm create \
@@ -1987,284 +1583,47 @@ These operations are essential for a production-ready ARO cluster.
 
 #### Azure AD Integration
 
-- [ ] **Configure Azure AD OAuth**
-  ```bash
-  # Create Azure AD application
-  APP_ID=$(az ad app create \
-    --display-name "${CLUSTER_NAME}-openshift-auth" \
-    --query appId -o tsv)
-  
-  # Create client secret
-  CLIENT_SECRET=$(az ad app credential reset \
-    --id ${APP_ID} \
-    --query password -o tsv)
-  
-  # Get tenant ID
-  TENANT_ID=$(az account show --query tenantId -o tsv)
-  
-  # Create OAuth secret in OpenShift
-  oc create secret generic azure-ad-client-secret \
-    --from-literal=clientSecret=${CLIENT_SECRET} \
-    -n openshift-config
-  
-  # Configure OAuth
-  cat <<EOF | oc apply -f -
-  apiVersion: config.openshift.io/v1
-  kind: OAuth
-  metadata:
-    name: cluster
-  spec:
-    identityProviders:
-    - name: AzureAD
-      type: OpenID
-      mappingMethod: claim
-      openID:
-        clientID: ${APP_ID}
-        clientSecret:
-          name: azure-ad-client-secret
-        issuer: https://login.microsoftonline.com/${TENANT_ID}/v2.0
-        claims:
-          preferredUsername:
-          - preferred_username
-          name:
-          - name
-          email:
-          - email
-  EOF
-  ```
+- [ ] **Configure Azure AD OAuth** - Create Azure AD app, configure OpenID Connect provider in cluster OAuth resource
+- [ ] **Update redirect URI** - Add OAuth callback URL to Azure AD app registration
+- [ ] **Test authentication** - Verify users can login via Azure AD
 
-- [ ] **Update Azure AD Application with Redirect URI**
-  ```bash
-  # Get OAuth callback URL
-  OAUTH_CALLBACK=$(oc get route oauth-openshift -n openshift-authentication -o jsonpath='{.spec.host}')
-  
-  # Add redirect URI to Azure AD app
-  az ad app update \
-    --id ${APP_ID} \
-    --web-redirect-uris "https://${OAUTH_CALLBACK}/oauth2callback/AzureAD"
-  ```
+**Complete guide:** [Configure Azure AD authentication](https://learn.microsoft.com/en-us/azure/openshift/configure-azure-ad-ui)
 
 #### RBAC Configuration
 
-- [ ] **Create RBAC Groups**
-  ```bash
-  # Create groups for different access levels
-  oc adm groups new cluster-admins
-  oc adm groups new cluster-viewers
-  oc adm groups new namespace-developers
-  
-  # Add users to groups (after Azure AD sync)
-  oc adm groups add-users cluster-admins user1@company.com user2@company.com
-  oc adm groups add-users cluster-viewers user3@company.com
-  ```
+- [ ] **Create groups** for different access levels (cluster-admins, developers, viewers)
+- [ ] **Assign cluster roles** to groups (`cluster-admin`, `edit`, `view`)
+- [ ] **Create custom roles** if built-in roles don't meet requirements
 
-- [ ] **Assign Cluster Roles**
-  ```bash
-  # Cluster admin access
-  oc adm policy add-cluster-role-to-group cluster-admin cluster-admins
-  
-  # Cluster viewer access
-  oc adm policy add-cluster-role-to-group view cluster-viewers
-  
-  # Namespace-specific access (example for development namespace)
-  oc adm policy add-role-to-group edit namespace-developers -n development
-  ```
-
-- [ ] **Create Custom Roles** (if needed)
-  ```yaml
-  apiVersion: rbac.authorization.k8s.io/v1
-  kind: ClusterRole
-  metadata:
-    name: custom-deployer
-  rules:
-  - apiGroups: ["apps", ""]
-    resources: ["deployments", "services", "configmaps"]
-    verbs: ["get", "list", "create", "update", "patch"]
-  ```
+**RBAC guide:** [OpenShift RBAC](https://docs.openshift.com/container-platform/latest/authentication/using-rbac.html)
 
 ---
 
 ### Monitoring & Observability
 
-#### Configure Prometheus
+- [ ] **Configure Prometheus retention** - Update cluster-monitoring-config ConfigMap with retention period and storage (default: 15 days)
+- [ ] **Enable Azure Monitor Container Insights** - Create Log Analytics workspace and link to ARO cluster
+- [ ] **Create critical alerts** - Define PrometheusRule resources for node health, memory, disk, and application metrics
 
-- [ ] **Configure Prometheus Retention**
-  ```bash
-  # Set retention period for Prometheus (default: 15 days)
-  cat <<EOF | oc apply -f -
-  apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: cluster-monitoring-config
-    namespace: openshift-monitoring
-  data:
-    config.yaml: |
-      enableUserWorkload: true
-      prometheusK8s:
-        retention: 30d
-        volumeClaimTemplate:
-          spec:
-            storageClassName: managed-premium
-            resources:
-              requests:
-                storage: 100Gi
-  EOF
-  ```
-
-#### Azure Monitor Integration
-
-- [ ] **Enable Azure Monitor Container Insights**
-  ```bash
-  # Create Log Analytics workspace
-  az monitor log-analytics workspace create \
-    --resource-group <rg> \
-    --workspace-name <workspace-name> \
-    --location <location>
-  
-  # Get workspace ID and key
-  WORKSPACE_ID=$(az monitor log-analytics workspace show -g <rg> -n <workspace-name> --query customerId -o tsv)
-  WORKSPACE_KEY=$(az monitor log-analytics workspace get-shared-keys -g <rg> -n <workspace-name> --query primarySharedKey -o tsv)
-  
-  # Enable Container Insights on ARO
-  az aro update \
-    --name ${CLUSTER_NAME} \
-    --resource-group ${RESOURCE_GROUP} \
-    --enable-log-analytics-workspace \
-    --log-analytics-workspace-id ${WORKSPACE_ID}
-  ```
-
-#### Alert Configuration
-
-- [ ] **Create Critical Alerts**
-  ```yaml
-  apiVersion: monitoring.coreos.com/v1
-  kind: PrometheusRule
-  metadata:
-    name: critical-alerts
-    namespace: openshift-monitoring
-  spec:
-    groups:
-    - name: cluster-health
-      interval: 30s
-      rules:
-      - alert: NodeDown
-        expr: up{job="node-exporter"} == 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Node {{ $labels.instance }} is down"
-      
-      - alert: HighMemoryUsage
-        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.1
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Node {{ $labels.instance }} has high memory usage"
-  ```
+**Monitoring guides:**
+- [ARO Monitoring Overview](https://learn.microsoft.com/en-us/azure/openshift/howto-create-service-principal)
+- [OpenShift Monitoring Stack](https://docs.openshift.com/container-platform/latest/monitoring/monitoring-overview.html)
+- [Azure Monitor Integration](https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-enable-arc-enabled-clusters)
 
 ---
 
 ### Backup & Disaster Recovery
 
-#### OADP Configuration
+- [ ] **Install OADP Operator** - Deploy OpenShift API for Data Protection from OperatorHub
+- [ ] **Configure Azure Blob Storage** - Create storage account and container for backup storage
+- [ ] **Create DataProtectionApplication** - Configure Velero with Azure provider and backup locations
+- [ ] **Create backup schedules** - Define regular backup schedules for etcd, PVs, and cluster resources
+- [ ] **Test restore procedures** - Validate backup/restore process in non-production environment
 
-- [ ] **Install OADP Operator**
-  ```bash
-  # Create namespace
-  oc create namespace openshift-adp
-  
-  # Create OperatorGroup
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1
-  kind: OperatorGroup
-  metadata:
-    name: openshift-adp
-    namespace: openshift-adp
-  spec:
-    targetNamespaces:
-    - openshift-adp
-  EOF
-  
-  # Create Subscription
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1alpha1
-  kind: Subscription
-  metadata:
-    name: redhat-oadp-operator
-    namespace: openshift-adp
-  spec:
-    channel: stable-1.3
-    name: redhat-oadp-operator
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-  EOF
-  ```
-
-- [ ] **Configure Azure Blob Storage for Backups**
-  ```bash
-  # Create storage account
-  az storage account create \
-    --name <storage-account-name> \
-    --resource-group <rg> \
-    --location <location> \
-    --sku Standard_GRS
-  
-  # Create blob container
-  az storage container create \
-    --name aro-backups \
-    --account-name <storage-account-name>
-  
-  # Get storage account key
-  STORAGE_KEY=$(az storage account keys list \
-    --resource-group <rg> \
-    --account-name <storage-account-name> \
-    --query '[0].value' -o tsv)
-  
-  # Create cloud credentials secret
-  cat <<EOF | oc apply -f -
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: cloud-credentials
-    namespace: openshift-adp
-  type: Opaque
-  stringData:
-    cloud: |
-      [default]
-      AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${STORAGE_KEY}
-      AZURE_CLOUD_NAME=AzurePublicCloud
-  EOF
-  ```
-
-- [ ] **Create DataProtectionApplication**
-  ```yaml
-  apiVersion: oadp.openshift.io/v1alpha1
-  kind: DataProtectionApplication
-  metadata:
-    name: velero
-    namespace: openshift-adp
-  spec:
-    backupLocations:
-    - velero:
-        config:
-          resourceGroup: <rg>
-          storageAccount: <storage-account-name>
-          subscriptionId: <subscription-id>
-        credential:
-          key: cloud
-          name: cloud-credentials
-        default: true
-        objectStorage:
-          bucket: aro-backups
-          prefix: velero
-        provider: azure
-    configuration:
-      velero:
-        defaultPlugins:
-        - azure
-        - openshift
+**Backup guides:**
+- [OADP with Azure](https://cloud.redhat.com/experts/aro/oadp/)
+- [ARO Backup Best Practices](https://learn.microsoft.com/en-us/azure/openshift/howto-create-a-backup)
+- [Disaster Recovery Planning](https://docs.openshift.com/container-platform/latest/backup_and_restore/index.html)
       restic:
         enable: true
     snapshotLocations:
@@ -2626,183 +1985,45 @@ If you want additional features (OperatorHub, Red Hat Telemetry, cluster updates
 
 ### DNS Forwarding Configuration
 
-Configure custom DNS forwarding to allow pods to resolve names from private DNS servers or custom domains. This is useful for hybrid scenarios with on-premises DNS or private DNS zones.
+Configure custom DNS forwarding to allow pods to resolve names from private DNS servers or custom domains.
 
 #### Use Cases
-
 - Resolve on-premises DNS names from pods
-- Use custom/private DNS servers
 - Integrate with Azure Private DNS Zones
+- Use custom/private DNS servers
 - Resolve names from peered VNets with custom DNS
 
-#### Configure DNS Forwarding
+#### Configuration
+ARO uses CoreDNS. Configure forwarding by modifying the DNS operator (`oc edit dns.operator/default`):
+- **Specific domains**: Forward select zones to custom DNS servers
+- **Global forwarding**: Forward all non-cluster queries to custom servers
+- **Azure Private Link**: Forward `privatelink.*` zones to Azure DNS (168.63.129.16)
+- **DNS caching**: Configure TTL for successful/denied responses
 
-ARO uses CoreDNS for cluster DNS resolution. You can configure forwarding by modifying the DNS operator.
-
-- [ ] **Configure DNS Forwarding for Specific Domains**
-  ```bash
-  # Edit DNS operator configuration
-  oc edit dns.operator/default
-  ```
-  
-  Replace `spec: {}` with forwarding configuration:
-  ```yaml
-  spec:
-    servers:
-    - name: example-dns
-      zones:
-      - example.com          # Domain to forward
-      - mycompany.local      # Can specify multiple domains
-      forwardPlugin:
-        policy: Random       # Or: RoundRobin, Sequential
-        upstreams:
-        - 192.168.100.10     # Your DNS server IP
-        - 192.168.100.11     # Backup DNS server (optional)
-    - name: azure-private-dns
-      zones:
-      - privatelink.database.windows.net
-      - privatelink.blob.core.windows.net
-      forwardPlugin:
-        upstreams:
-        - 168.63.129.16      # Azure internal DNS resolver
-  ```
-
-- [ ] **Configure Global DNS Forwarding**
-  
-  Forward all DNS queries not matching cluster domains to custom servers:
-  ```yaml
-  spec:
-    servers:
-    - name: default-forward
-      zones:
-      - .                    # Match all domains
-      forwardPlugin:
-        upstreams:
-        - 8.8.8.8            # Google DNS
-        - 1.1.1.1            # Cloudflare DNS
-  ```
-
-- [ ] **Verify DNS Forwarding**
-  ```bash
-  # Test DNS resolution from a pod
-  oc run -it --rm debug --image=busybox --restart=Never -- nslookup example.com
-  
-  # Should resolve using your custom DNS server
-  ```
-
-#### Advanced DNS Configuration
-
-- [ ] **Configure DNS Cache**
-  ```yaml
-  spec:
-    cache:
-      successTTL: 1h       # Cache successful responses for 1 hour
-      denialTTL: 30s       # Cache negative responses for 30 seconds
-  ```
-
-- [ ] **Configure DNS Logging (for troubleshooting)**
-  ```bash
-  # Edit DNS operator to enable query logging
-  oc edit dns.operator/default
-  ```
-  
-  Add logging configuration:
-  ```yaml
-  spec:
-    logLevel: Debug
-  ```
-  
-  View CoreDNS logs:
-  ```bash
-  oc logs -n openshift-dns -l dns.operator.openshift.io/daemonset-dns=default --tail=100
-  ```
-
-#### Common DNS Forwarding Patterns
-
-**Pattern 1: Split-Horizon DNS**
-```yaml
-spec:
-  servers:
-  - name: internal-domains
-    zones:
-    - internal.company.com
-    forwardPlugin:
-      upstreams:
-      - 10.0.0.4           # Internal DNS server
-  - name: external-domains
-    zones:
-    - .                    # Everything else
-    forwardPlugin:
-      upstreams:
-      - 8.8.8.8            # Public DNS
-```
-
-**Pattern 2: Azure Private Link DNS**
-```yaml
-spec:
-  servers:
-  - name: azure-private-endpoints
-    zones:
-    - privatelink.azurecr.io
-    - privatelink.vaultcore.azure.net
-    - privatelink.database.windows.net
-    - privatelink.blob.core.windows.net
-    - privatelink.file.core.windows.net
-    forwardPlugin:
-      upstreams:
-      - 168.63.129.16      # Azure DNS (for private endpoints)
-```
-
-**Pattern 3: On-Premises Integration**
-```yaml
-spec:
-  servers:
-  - name: on-prem-dns
-    zones:
-    - corp.local
-    - prod.internal
-    forwardPlugin:
-      policy: Sequential   # Try servers in order
-      upstreams:
-      - 10.10.0.10         # Primary on-prem DNS
-      - 10.10.0.11         # Secondary on-prem DNS
-```
+**Complete guide:** [DNS Forwarding on ARO](https://learn.microsoft.com/en-us/azure/openshift/dns-forwarding)
 
 #### Troubleshooting DNS
 
+**Quick diagnostics:**
 ```bash
 # Check DNS operator status
 oc get dns.operator/default
 
-# View CoreDNS pods
-oc get pods -n openshift-dns
+# Test DNS from pod
+oc run -it --rm debug --image=nicolaka/netshoot --restart=Never -- nslookup example.com
 
-# Check CoreDNS configuration
-oc get configmap dns-default -n openshift-dns -o yaml
-
-# Test DNS from within cluster
-oc run -it --rm debug --image=nicolaka/netshoot --restart=Never -- bash
-# Inside pod:
-nslookup example.com
-dig example.com
-ping -c 3 example.com
-
-# Check if DNS queries are timing out
-oc logs -n openshift-dns -l dns.operator.openshift.io/daemonset-dns=default | grep -i timeout
+# View CoreDNS logs
+oc logs -n openshift-dns -l dns.operator.openshift.io/daemonset-dns=default
 ```
 
-**Common Issues:**
-- **Issue**: DNS queries timeout
-  - **Solution**: Check firewall rules allow UDP/53 to upstream DNS servers
-- **Issue**: Pods can't resolve custom domains
-  - **Solution**: Verify zones are correctly specified in DNS operator config
-- **Issue**: DNS resolution slow
-  - **Solution**: Enable DNS caching or add more upstream servers
+**Common issues:**
+- DNS timeout → Check firewall allows UDP/53 to upstream DNS
+- Custom domains not resolving → Verify zones in DNS operator config
+- Slow resolution → Enable DNS caching
 
 **References:**
-- DNS Forwarding Guide: https://learn.microsoft.com/en-us/azure/openshift/dns-forwarding
-- OpenShift DNS Operator: https://docs.openshift.com/container-platform/latest/networking/dns-operator.html
-- CoreDNS Documentation: https://coredns.io/manual/toc/
+- [DNS Forwarding Guide](https://learn.microsoft.com/en-us/azure/openshift/dns-forwarding)
+- [OpenShift DNS Operator](https://docs.openshift.com/container-platform/latest/networking/dns-operator.html)
 
 ---
 
@@ -2827,183 +2048,45 @@ Keep your ARO cluster up-to-date with the latest OpenShift features, security pa
 
 #### Pre-Upgrade Checklist
 
-- [ ] **Verify Cluster Health**
-  ```bash
-  # Check cluster operators - all should be Available=True, Degraded=False
-  oc get clusteroperators
-  
-  # Check node status
-  oc get nodes
-  
-  # Check for failing pods
-  oc get pods -A --field-selector status.phase!=Running,status.phase!=Succeeded
-  
-  # Review cluster version status
-  oc get clusterversion
-  ```
+- [ ] **Verify cluster health** (`oc get clusteroperators`, `oc get nodes`)
+- [ ] **Check credentials** - Verify managed identity role assignments or SP expiration
+- [ ] **Backup critical data** - etcd, PVs, configurations (use OADP if configured)
+- [ ] **Review release notes** - Check for breaking changes and deprecated APIs
 
-- [ ] **Verify Service Principal/Managed Identity Credentials**
-  
-  For Service Principal (legacy):
-  ```bash
-  # Check SP credential expiration
-  az ad sp credential list --id <sp-app-id>
-  
-  # Rotate if needed
-  # See: https://learn.microsoft.com/en-us/azure/openshift/howto-service-principal-credential-rotation
-  ```
-  
-  For Managed Identity:
-  ```bash
-  # Verify identities exist and have correct roles
-  az identity list --resource-group <rg> -o table
-  
-  # Verify role assignments (select one identity to check)
-  IDENTITY_PRINCIPAL=$(az identity show \
-    --resource-group <rg> \
-    --name <identity-name> \
-    --query principalId -o tsv)
-  
-  az role assignment list --assignee ${IDENTITY_PRINCIPAL}
-  ```
+#### Upgrade Methods
 
-- [ ] **Backup Critical Data**
-  ```bash
-  # Backup etcd (if OADP not configured)
-  # Backup application PVs
-  # Export important configurations
-  oc get <resource> -o yaml > backup.yaml
-  ```
+| Method | Use Case | Documentation |
+|--------|----------|---------------|
+| **OpenShift Console** | Interactive upgrades | Navigate to Administration → Cluster Settings |
+| **CLI (`oc adm upgrade`)** | Scripted upgrades | [CLI Upgrade Guide](https://docs.openshift.com/container-platform/latest/updating/updating_a_cluster/updating-cluster-cli.html) |
+| **Managed Upgrade Operator** | Scheduled maintenance windows | Create UpgradeConfig resource with `upgradeAt` time |
 
-- [ ] **Review Release Notes**
-  - Check OpenShift release notes for breaking changes
-  - Review deprecated API versions
-  - Identify features requiring post-upgrade configuration
+**Quick CLI upgrade:**
+```bash
+# Set channel and upgrade
+oc adm upgrade channel stable-4.19
+oc adm upgrade --to-latest=true
 
-#### Option 1: Upgrade via OpenShift Web Console
-
-- [ ] **Set Update Channel**
-  1. Login to OpenShift web console as cluster-admin
-  2. Navigate to **Administration** → **Cluster Settings**
-  3. Click **Channel** and select desired channel:
-     - `stable-4.19` - Stable releases for 4.19
-     - `eus-4.18` - Extended Update Support for 4.18
-     - `fast-4.19` - Fast channel (not recommended for production)
-  4. Click **Save**
-
-- [ ] **Initiate Upgrade**
-  1. In **Cluster Settings**, review available updates
-  2. Select target version
-  3. Click **Update**
-  4. Monitor progress in console
-
-#### Option 2: Upgrade via CLI
-
-- [ ] **Initiate Upgrade**
-  ```bash
-  # Set desired channel
-  oc adm upgrade channel stable-4.19
-  
-  # Check available updates
-  oc adm upgrade
-  
-  # Upgrade to specific version
-  oc adm upgrade --to=4.19.15
-  
-  # Or upgrade to latest in channel
-  oc adm upgrade --to-latest=true
-  ```
-
-- [ ] **Monitor Upgrade Progress**
-  ```bash
-  # Watch cluster version
-  oc get clusterversion --watch
-  
-  # Check operator progress
-  oc get clusteroperators
-  
-  # View detailed status
-  oc describe clusterversion
-  ```
-
-#### Option 3: Scheduled Upgrade via Managed Upgrade Operator (MUO)
-
-Schedule upgrades during maintenance windows using the managed-upgrade-operator.
-
-- [ ] **Create UpgradeConfig**
-  ```yaml
-  apiVersion: upgrade.managed.openshift.io/v1alpha1
-  kind: UpgradeConfig
-  metadata:
-    name: managed-upgrade-config
-    namespace: openshift-managed-upgrade-operator
-  spec:
-    type: "ARO"
-    upgradeAt: "2026-04-15T02:00:00Z"  # UTC time for upgrade
-    PDBForceDrainTimeout: 60
-    desired:
-      channel: "stable-4.19"
-      version: "4.19.15"
-  ```
-  
-  Apply the configuration:
-  ```bash
-  oc create -f upgrade-config.yaml
-  
-  # Monitor upgrade status
-  oc get upgradeconfig -n openshift-managed-upgrade-operator --watch
-  ```
+# Monitor progress
+oc get clusterversion --watch
+```
 
 #### EUS-to-EUS Upgrades
 
-For Extended Update Support (EUS) version upgrades (e.g., 4.16 → 4.18):
+⚠️ **Must upgrade through intermediate versions** (e.g., 4.16 → 4.17 → 4.18)
 
-⚠️ **IMPORTANT:** Must upgrade through intermediate versions. Control Plane Only updates are NOT supported.
-
-- [ ] **EUS Upgrade Path Example: 4.16 → 4.18**
-  ```bash
-  # Step 1: Update channel to 4.17
-  oc adm upgrade channel stable-4.17
-  
-  # Step 2: Upgrade to 4.17 (latest)
-  oc adm upgrade --to-latest=true
-  # Wait for upgrade to complete
-  
-  # Step 3: Change channel to EUS-4.18
-  oc adm upgrade channel eus-4.18
-  
-  # Step 4: Upgrade to 4.18
-  oc adm upgrade --to-latest=true
-  ```
+**Example:** 4.16 → 4.18 requires: change to `stable-4.17` → upgrade → change to `eus-4.18` → upgrade
 
 #### Post-Upgrade Validation
 
-- [ ] **Verify Upgrade Success**
-  ```bash
-  # Confirm new version
-  oc get clusterversion
-  
-  # Check all operators are healthy
-  oc get clusteroperators
-  
-  # Verify nodes updated
-  oc get nodes -o wide
-  
-  # Check for degraded pods
-  oc get pods -A --field-selector status.phase!=Running
-  
-  # Test application functionality
-  # Verify monitoring and logging still work
-  ```
+```bash
+# Verify upgrade success
+oc get clusterversion
+oc get clusteroperators
 
-- [ ] **Update Workload Compatibility**
-  ```bash
-  # Check for deprecated API versions
-  oc get apiservices | grep -i deprecated
-  
-  # Update any deprecated resources
-  # Test application deployments
-  ```
+# Check for deprecated APIs
+oc get apiservices | grep -i deprecated
+```
 
 #### Upgrade Troubleshooting
 
@@ -3039,147 +2122,36 @@ oc delete pod -n openshift-<operator-namespace> <pod-name>
 
 ### Cluster Configuration Management
 
-#### Node Pools and MachineSets
+#### Infrastructure Nodes
 
-- [ ] **Create Infrastructure Nodes MachineSet**
-  ```bash
-  # Get existing MachineSet as template
-  oc get machineset -n openshift-machine-api -o yaml > machinesets-backup.yaml
-  
-  # Create infrastructure MachineSet
-  # Modify the template to create infra nodes
-  cat <<EOF | oc apply -f -
-  apiVersion: machine.openshift.io/v1beta1
-  kind: MachineSet
-  metadata:
-    name: ${CLUSTER_NAME}-infra-<zone>
-    namespace: openshift-machine-api
-  spec:
-    replicas: 3
-    selector:
-      matchLabels:
-        machine.openshift.io/cluster-api-cluster: ${CLUSTER_NAME}
-        machine.openshift.io/cluster-api-machineset: ${CLUSTER_NAME}-infra-<zone>
-    template:
-      metadata:
-        labels:
-          machine.openshift.io/cluster-api-cluster: ${CLUSTER_NAME}
-          machine.openshift.io/cluster-api-machineset: ${CLUSTER_NAME}-infra-<zone>
-          machine.openshift.io/cluster-api-machine-role: infra
-          machine.openshift.io/cluster-api-machine-type: infra
-      spec:
-        metadata:
-          labels:
-            node-role.kubernetes.io/infra: ""
-        taints:
-        - key: node-role.kubernetes.io/infra
-          effect: NoSchedule
-        # ... rest of MachineSet spec
-  EOF
-  ```
+- [ ] **Create infrastructure node MachineSet** - Dedicated nodes for cluster components (router, registry, monitoring)
+- [ ] **Move infrastructure components** - Update IngressController, ImageRegistry, and monitoring to use infra nodes
 
-- [ ] **Move Infrastructure Components to Infra Nodes**
-  ```bash
-  # Move router pods
-  oc patch ingresscontroller default -n openshift-ingress-operator \
-    --type=merge --patch='{"spec":{"nodePlacement":{"nodeSelector":{"matchLabels":{"node-role.kubernetes.io/infra":""}},"tolerations":[{"key":"node-role.kubernetes.io/infra","effect":"NoSchedule"}]}}}'
-  
-  # Move registry pods
-  oc patch config cluster -n openshift-image-registry \
-    --type=merge --patch='{"spec":{"nodeSelector":{"node-role.kubernetes.io/infra":""},"tolerations":[{"key":"node-role.kubernetes.io/infra","effect":"NoSchedule"}]}}'
-  
-  # Move monitoring pods
-  # Edit cluster-monitoring-config ConfigMap
-  oc -n openshift-monitoring edit configmap cluster-monitoring-config
-  # Add nodeSelector and tolerations for each component
-  ```
+**Guide:** [Creating Infrastructure MachineSets](https://docs.openshift.com/container-platform/latest/machine_management/creating-infrastructure-machinesets.html)
 
-#### Autoscaling Configuration
+#### Autoscaling
 
-- [ ] **Configure Cluster Autoscaler**
-  ```yaml
-  apiVersion: autoscaling.openshift.io/v1
-  kind: ClusterAutoscaler
-  metadata:
-    name: default
-  spec:
-    podPriorityThreshold: -10
-    resourceLimits:
-      maxNodesTotal: 50
-      cores:
-        min: 16
-        max: 200
-      memory:
-        min: 64
-        max: 800
-    scaleDown:
-      enabled: true
-      delayAfterAdd: 10m
-      delayAfterDelete: 5m
-      delayAfterFailure: 3m
-      unneededTime: 10m
-  ```
+- [ ] **Configure ClusterAutoscaler** - Set global scaling limits (max nodes, cores, memory)
+- [ ] **Configure MachineAutoscaler** - Set per-MachineSet scaling bounds (min/max replicas)
 
-- [ ] **Configure MachineAutoscaler for Each MachineSet**
-  ```yaml
-  apiVersion: autoscaling.openshift.io/v1beta1
-  kind: MachineAutoscaler
-  metadata:
-    name: worker-autoscaler
-    namespace: openshift-machine-api
-  spec:
-    minReplicas: 3
-    maxReplicas: 12
-    scaleTargetRef:
-      apiVersion: machine.openshift.io/v1beta1
-      kind: MachineSet
-      name: ${CLUSTER_NAME}-worker-<zone>
-  ```
+**Guide:** [Cluster Autoscaling](https://docs.openshift.com/container-platform/latest/machine_management/applying-autoscaling.html)
 
 ---
 
 ### Advanced Storage
 
-#### Azure Files CSI Driver
+**Built-in storage classes:**
+- `managed-csi` - Azure Disk (default)
+- `managed-premium` - Premium SSD
+- `azurefile-csi` - Azure Files (RWX support)
 
-- [ ] **Create Custom Azure Files StorageClass**
-  ```yaml
-  apiVersion: storage.k8s.io/v1
-  kind: StorageClass
-  metadata:
-    name: azurefile-premium-retain
-  provisioner: file.csi.azure.com
-  parameters:
-    skuName: Premium_LRS
-    resourceGroup: <rg>
-  reclaimPolicy: Retain
-  volumeBindingMode: Immediate
-  allowVolumeExpansion: true
-  ```
+**Custom storage classes:**
+- Create custom StorageClasses for specific performance tiers (Premium_LRS, etc.)
+- Azure Blob CSI driver for object storage workloads
 
-#### Azure Blob CSI Driver
-
-- [ ] **Install Azure Blob CSI Driver**
-  ```bash
-  # Install from OperatorHub
-  # Or manually deploy from https://github.com/kubernetes-sigs/blob-csi-driver
-  
-  # Create StorageClass for Blob
-  cat <<EOF | oc apply -f -
-  apiVersion: storage.k8s.io/v1
-  kind: StorageClass
-  metadata:
-    name: azureblob-fuse-premium
-  provisioner: blob.csi.azure.com
-  parameters:
-    skuName: Premium_LRS
-    containerNamePrefix: blob-
-    protocol: fuse
-  reclaimPolicy: Delete
-  volumeBindingMode: Immediate
-  allowVolumeExpansion: true
-  EOF
-  ```
+**Storage guides:**
+- [Azure Disk CSI](https://docs.openshift.com/container-platform/latest/storage/container_storage_interface/persistent-storage-csi-azure-disk.html)
+- [Azure Files CSI](https://docs.openshift.com/container-platform/latest/storage/container_storage_interface/persistent-storage-csi-azure-file.html)
 
 ---
 
@@ -3491,153 +2463,23 @@ az role assignment create \
 
 ### Compliance & Auditing
 
-#### Compliance Scanning
+- [ ] **Install Compliance Operator** from OperatorHub
+- [ ] **Run compliance scans** - CIS benchmarks for OpenShift (ocp4-cis, ocp4-cis-node)
+- [ ] **Remediate findings** - Apply remediations or document exceptions
 
-- [ ] **Install Compliance Operator**
-  ```bash
-  # Create namespace
-  oc create namespace openshift-compliance
-  
-  # Install operator
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1alpha1
-  kind: Subscription
-  metadata:
-    name: compliance-operator
-    namespace: openshift-compliance
-  spec:
-    channel: stable
-    name: compliance-operator
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-  EOF
-  ```
-
-- [ ] **Run Compliance Scan**
-  ```yaml
-  apiVersion: compliance.openshift.io/v1alpha1
-  kind: ScanSettingBinding
-  metadata:
-    name: cis-compliance
-    namespace: openshift-compliance
-  profiles:
-  - name: ocp4-cis-node
-    kind: Profile
-    apiGroup: compliance.openshift.io/v1alpha1
-  - name: ocp4-cis
-    kind: Profile
-    apiGroup: compliance.openshift.io/v1alpha1
-  settingsRef:
-    name: default
-    kind: ScanSetting
-    apiGroup: compliance.openshift.io/v1alpha1
-  ```
-
----
-
-### Cluster Maintenance
-
-#### Upgrade Procedures
-
-- [ ] **Plan Cluster Upgrade**
-  ```bash
-  # Check available upgrade paths
-  oc adm upgrade
-  
-  # View update graph
-  oc get clusterversion version -o json | jq '.status.availableUpdates'
-  ```
-
-- [ ] **Perform Cluster Upgrade**
-  ```bash
-  # Upgrade to specific version
-  oc adm upgrade --to=<version>
-  
-  # Monitor upgrade progress
-  oc get clusterversion
-  oc get clusteroperators
-  
-  # Check if any operators are progressing
-  watch oc get co
-  ```
-
-- [ ] **Pause MachineHealthChecks Before Upgrade**
-  ```bash
-  # Pause all MachineHealthChecks
-  oc annotate mhc --all machine.openshift.io/exclude-node-draining="" -n openshift-machine-api
-  
-  # Resume after upgrade
-  oc annotate mhc --all machine.openshift.io/exclude-node-draining- -n openshift-machine-api
-  ```
+**Guide:** [Compliance Operator](https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html)
 
 ---
 
 ### Cost Optimization
 
-- [ ] **Implement Resource Quotas**
-  ```yaml
-  apiVersion: v1
-  kind: ResourceQuota
-  metadata:
-    name: compute-quota
-    namespace: development
-  spec:
-    hard:
-      requests.cpu: "50"
-      requests.memory: 100Gi
-      limits.cpu: "100"
-      limits.memory: 200Gi
-      persistentvolumeclaims: "10"
-  ```
+- [ ] **Resource Quotas** - Set namespace-level limits for CPU, memory, PVCs
+- [ ] **LimitRanges** - Define default/max container resource requests
+- [ ] **Azure Cost Management** - Tag resources, monitor costs, set budgets
+- [ ] **Pod Disruption Budgets** - Ensure availability during maintenance
+- [ ] **Right-size VMs** - Review node utilization, adjust VM sizes
 
-- [ ] **Set Up LimitRanges**
-  ```yaml
-  apiVersion: v1
-  kind: LimitRange
-  metadata:
-    name: resource-limits
-    namespace: development
-  spec:
-    limits:
-    - max:
-        memory: 2Gi
-        cpu: "2"
-      min:
-        memory: 100Mi
-        cpu: 100m
-      default:
-        memory: 512Mi
-        cpu: 500m
-      defaultRequest:
-        memory: 256Mi
-        cpu: 250m
-      type: Container
-  ```
-
-- [ ] **Monitor Costs with Azure Cost Management**
-  ```bash
-  # Tag resources for cost tracking
-  az aro update \
-    --name ${CLUSTER_NAME} \
-    --resource-group ${RESOURCE_GROUP} \
-    --tags "CostCenter=Engineering" "Project=Platform"
-  
-  # View costs in Azure Portal > Cost Management
-  ```
-
-- [ ] **Implement Pod Disruption Budgets**
-  ```yaml
-  apiVersion: policy/v1
-  kind: PodDisruptionBudget
-  metadata:
-    name: app-pdb
-    namespace: production
-  spec:
-    minAvailable: 2
-    selector:
-      matchLabels:
-        app: myapp
-  ```
+**Cost optimization guide:** [ARO Cost Management](https://learn.microsoft.com/en-us/azure/openshift/howto-optimize-costs)
 
 ---
 
@@ -3678,183 +2520,65 @@ Ongoing operations to maintain cluster health and performance.
 
 ### Daily Operations
 
-- [ ] **Morning Health Check**
-  ```bash
-  # Check cluster operators
-  oc get clusteroperators
-  
-  # Check node status
-  oc get nodes
-  
-  # Check for degraded resources
-  oc get pods --all-namespaces --field-selector status.phase!=Running
-  
-  # Review recent alerts
-  # Check Prometheus Alert Manager or Azure Monitor
-  ```
+**Daily health check commands:**
+```bash
+# Cluster operators and nodes
+oc get clusteroperators
+oc get nodes
 
-- [ ] **Review Alert Queue**
-  - Check Prometheus AlertManager
-  - Review Azure Monitor alerts
-  - Triage and assign critical alerts
-  - Document resolutions
+# Failed pods
+oc get pods --all-namespaces --field-selector status.phase!=Running
 
-- [ ] **Monitor Resource Utilization**
-  ```bash
-  # Node resource usage
-  oc adm top nodes
-  
-  # Pod resource usage
-  oc adm top pods --all-namespaces
-  
-  # Check for resource-constrained pods
-  oc get events --all-namespaces --field-selector reason=FailedScheduling
-  ```
+# Resource utilization
+oc adm top nodes
+oc adm top pods --all-namespaces
 
-- [ ] **Verify Backup Completion**
-  ```bash
-  # Check OADP backup status
-  oc get backup -n openshift-adp
-  
-  # Check for failed backups
-  oc get backup -n openshift-adp --field-selector status.phase!=Completed
-  ```
+# Backup status
+oc get backup -n openshift-adp
+```
+
+**Daily tasks:**
+- [ ] Review Prometheus/Azure Monitor alerts
+- [ ] Check resource utilization trends
+- [ ] Verify backup completion
+- [ ] Review failed deployments or restarts
 
 ### Weekly Operations
 
-- [ ] **Security Update Review**
-  ```bash
-  # Check for available cluster updates
-  oc adm upgrade
-  
-  # Review CVEs and security advisories
-  # Check Red Hat security advisories: https://access.redhat.com/security/security-updates/
-  ```
-
-- [ ] **Capacity Planning Review**
-  ```bash
-  # Review node capacity trends
-  # Check autoscaler events
-  oc get events -n openshift-machine-api | grep -i autoscaler
-  
-  # Review storage utilization
-  oc get pv
-  oc get pvc --all-namespaces
-  ```
-
-- [ ] **Cost Analysis**
-  - Review Azure Cost Management reports
-  - Identify cost anomalies
-  - Right-size over-provisioned resources
-  - Review unused PVs and snapshots
-
-- [ ] **Incident Review Meeting**
-  - Review incidents from past week
-  - Document root causes
-  - Create action items for prevention
-  - Update runbooks
+- [ ] **Security updates** - Check for cluster updates (`oc adm upgrade`), review CVEs
+- [ ] **Capacity planning** - Review node/storage utilization trends, autoscaler events
+- [ ] **Cost analysis** - Review Azure Cost Management, identify anomalies, right-size resources
+- [ ] **Incident review** - Document root causes, update runbooks
 
 ### Monthly Operations
 
-- [ ] **Disaster Recovery Test**
-  ```bash
-  # Test cluster backup restore (in non-prod environment)
-  oc create -f test-restore.yaml
-  
-  # Verify application functionality after restore
-  # Document any issues or gaps
-  ```
-
-- [ ] **Security Compliance Scan**
-  ```bash
-  # Run compliance operator scan
-  oc annotate scansettingbindings cis-compliance compliance.openshift.io/rescan=""
-  
-  # Review scan results
-  oc get compliancescan -n openshift-compliance
-  
-  # Remediate findings
-  ```
-
-- [ ] **Performance Baseline Review**
-  - Review Prometheus metrics trends
-  - Update performance baselines
-  - Identify degradation patterns
-  - Tune resource limits if needed
-
-- [ ] **Documentation Updates**
-  - Update operational runbooks
-  - Document configuration changes
-  - Update network diagrams
-  - Review and update disaster recovery procedures
+- [ ] **DR test** - Test backup/restore in non-prod
+- [ ] **Compliance scan** - Run Compliance Operator scan, remediate findings
+- [ ] **Performance baseline review** - Update baselines, identify degradation patterns
+- [ ] **Documentation updates** - Runbooks, diagrams, DR procedures
 
 ### Quarterly Operations
 
-- [ ] **Major Version Upgrade Planning**
-  - Review upcoming OpenShift releases
-  - Plan upgrade timeline
-  - Test upgrade in non-production environment
-  - Schedule maintenance window
-
-- [ ] **Architecture Review**
-  - Review cluster architecture
-  - Assess scaling requirements
-  - Plan for new capabilities
-  - Review security posture
-
-- [ ] **Disaster Recovery Drill**
-  - Full DR failover test
-  - Measure RTO/RPO achievement
-  - Document lessons learned
-  - Update DR procedures
-
-- [ ] **Training and Knowledge Sharing**
-  - Conduct team training on new features
-  - Share lessons learned
-  - Update team documentation
-  - Cross-train team members
+- [ ] **Major version upgrade planning** - Test in non-prod, schedule maintenance window
+- [ ] **Architecture review** - Assess scaling, security posture, new capabilities
+- [ ] **DR drill** - Full failover test, measure RTO/RPO
+- [ ] **Training and knowledge sharing** - Team training, cross-training, documentation updates
 
 ### Incident Response
 
-#### Escalation Procedures
+**Severity levels:** P1 (Critical - immediate), P2 (High - < 1hr), P3 (Medium - < 4hr), P4 (Low - < 1 day)
 
-**Severity Definitions:**
+**Escalation:** On-call engineer → Team lead → Platform architect → Microsoft/Red Hat support
 
-| Severity | Description | Response Time | Example |
-|----------|-------------|---------------|---------|
-| **P1 - Critical** | Cluster down, complete service outage | Immediate | API server unreachable |
-| **P2 - High** | Major functionality impaired | < 1 hour | Multiple nodes down |
-| **P3 - Medium** | Degraded performance, workaround available | < 4 hours | Single node degraded |
-| **P4 - Low** | Minor issue, no immediate impact | < 1 business day | Non-critical warning |
+**Example SLA targets:**
+- Cluster availability: 99.9%
+- API response time: < 200ms (p95)
+- Pod startup time: < 30s (p95)
 
-**Escalation Path:**
-1. On-call engineer (initial response)
-2. Team lead (if unresolved in 30 min for P1, 2 hours for P2)
-3. Platform architect (if unresolved in 1 hour for P1)
-4. Microsoft/Red Hat support (as needed)
-
-#### SLA Targets
-
-| Metric | Target |
-|--------|--------|
-| Cluster Availability | 99.9% |
-| API Server Response Time | < 200ms (p95) |
-| Pod Startup Time | < 30s (p95) |
-| PV Provisioning Time | < 2 minutes |
-
-#### Change Management Process
-
-- [ ] **Change Request Template**
-  1. Change description and justification
-  2. Impact assessment
-  3. Rollback procedure
-  4. Testing plan
-  5. Approval from team lead
-
-- [ ] **Change Windows**
-  - Standard changes: Tuesday/Thursday 10 AM - 2 PM
-  - Emergency changes: As needed with approval
-  - Freeze periods: Last week of quarter, major holidays
+**Change management:**
+- Standard changes: Defined maintenance windows
+- Emergency changes: As needed with approval
+- Freeze periods: Quarter-end, holidays
 
 ---
 
