@@ -1,22 +1,11 @@
 ---
-title: "Azure Red Hat OpenShift Operations Guide"
-description: "Comprehensive guide for deploying and operating Azure Red Hat OpenShift clusters"
-date: 2026-03-26
+date: '2026-03-26'
+title: 'Azure Red Hat OpenShift Operations Guide'
+tags: ["ARO"]
 authors:
   - Kevin Collins
   - Kumudu Herath
-version: 2.0
-categories:
-  - Azure
-  - OpenShift
-  - Operations
-tags:
-  - ARO
-  - Azure Red Hat OpenShift
-  - Kubernetes
-  - Day 1
-  - Day 2
-  - Operations
+validated_version: "4.20"
 ---
 
 # Azure Red Hat OpenShift Operations Guide
