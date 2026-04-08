@@ -437,13 +437,18 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
 1. Create a Pod to read from the EFS Volume
 
-   ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: Pod
-   metadata:
+  ```bash
+  cat <<EOF | oc apply -f -
+  apiVersion: v1
+  kind: Pod
+  metadata:
     name: test-efs-read
-   spec:
+  spec:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
     volumes:
       - name: efs-storage-vol
         persistentVolumeClaim:
@@ -456,8 +461,17 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
         volumeMounts:
           - mountPath: "/mnt/efs-data"
             name: efs-storage-vol
-   EOF
-   ```
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+  EOF
+  ```
 
 1. Verify the second POD can read the EFS Volume
 
