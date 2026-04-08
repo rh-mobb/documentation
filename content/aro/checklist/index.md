@@ -139,7 +139,7 @@ oc get clusterversion
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
 | vCPU Quota | 40 cores | 60+ cores |
-| VNet CIDR | /20 | /16 or larger |
+| VNet CIDR | /26 | /24 or larger |
 | Master Subnet | /27 (32 IPs) | /26 (64 IPs) |
 | Worker Subnet | /27 (32 IPs) | /24 (256 IPs) |
 | Master Nodes | 3x Standard_D8s_v5 | 3x Standard_D16s_v5 |
