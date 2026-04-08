@@ -393,11 +393,16 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
    ```bash
    cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: Pod
-   metadata:
+  apiVersion: v1
+  kind: Pod
+  metadata:
     name: test-efs
-   spec:
+  spec:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: RuntimeDefault
     volumes:
       - name: efs-storage-vol
         persistentVolumeClaim:
@@ -410,7 +415,16 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
         volumeMounts:
           - mountPath: "/mnt/efs-data"
             name: efs-storage-vol
-   EOF
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+  EOF
    ```
 
    > It may take a few minutes for the pod to be ready.  If you see errors such as `Output: Failed to resolve "fs-XXXX.efs.us-east-2.amazonaws.com"` it likely means its still setting up the EFS volume, just wait longer.
