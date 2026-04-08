@@ -321,7 +321,7 @@ Proper planning is essential for a successful ARO deployment. This section cover
 
 **Architecture:**
 <br>
-<img src="miwi-architecture.png" alt="Authentication Flow for SREs" style="max-width: 800px; width: 100%;" />
+<img src="miwi-architecture.png" alt="Managed Identity Architecture" style="max-width: 800px; width: 100%;" />
 
 
 **Setup Requirements:**
@@ -381,6 +381,9 @@ Proper planning is essential for a successful ARO deployment. This section cover
 
 ARO clusters require careful network planning. This section helps you design your network topology.
 
+A great getting starting reference is the [ARO Landing Zone Accelerator](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/scenarios/app-platform/azure-red-hat-openshift/landing-zone-accelerator)
+
+
 #### Network Topology Decisions
 
 - [ ] **Choose Network Topology**
@@ -396,20 +399,10 @@ ARO clusters require careful network planning. This section helps you design you
   - VNet peering connects hub and spoke
   - Suitable for: Production, multi-cluster, enterprise environments
   
-  ```
-  Hub-Spoke Example:
-  
-  Hub VNet (10.0.0.0/16)
-  ├─ Firewall Subnet (10.0.1.0/24)
-  ├─ Gateway Subnet (10.0.2.0/24)
-  └─ DNS Subnet (10.0.3.0/24)
-       │
-       │ (VNet Peering)
-       ↓
-  Spoke VNet (10.1.0.0/16) - ARO Cluster
-  ├─ Master Subnet (10.1.0.0/24)
-  └─ Worker Subnet (10.1.1.0/24)
-  ```
+  ARO Landing Zone Accelerator Architecture
+
+  <br>
+<img src="landing-zone-architecture.png" alt="ARO Landing Zone Architecture" style="max-width: 800px; width: 100%;" />
 
 - [ ] **Choose Cluster Visibility**
 
