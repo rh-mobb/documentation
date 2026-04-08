@@ -437,41 +437,41 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
 1. Create a Pod to read from the EFS Volume
 
-  ```bash
-  cat <<EOF | oc apply -f -
-  apiVersion: v1
-  kind: Pod
-  metadata:
-    name: test-efs-read
-  spec:
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      seccompProfile:
-        type: RuntimeDefault
-    volumes:
-      - name: efs-storage-vol
-        persistentVolumeClaim:
-          claimName: pvc-efs-volume
-    containers:
-      - name: test-efs-read
-        image: centos:latest
-        command: [ "/bin/bash", "-c", "--" ]
-        args: [ "tail -f /mnt/efs-data/verify-efs" ]
-        volumeMounts:
-          - mountPath: "/mnt/efs-data"
-            name: efs-storage-vol
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsNonRoot: true
-          runAsUser: 1000
-          capabilities:
-            drop:
-              - ALL
-          seccompProfile:
-            type: RuntimeDefault
-  EOF
-  ```
+    ```bash
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: test-efs-read
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: efs-storage-vol
+          persistentVolumeClaim:
+            claimName: pvc-efs-volume
+      containers:
+        - name: test-efs-read
+          image: centos:latest
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "tail -f /mnt/efs-data/verify-efs" ]
+          volumeMounts:
+            - mountPath: "/mnt/efs-data"
+              name: efs-storage-vol
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+    EOF
+    ```
 
 1. Verify the second POD can read the EFS Volume
 
