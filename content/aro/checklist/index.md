@@ -320,21 +320,8 @@ Proper planning is essential for a successful ARO deployment. This section cover
 - Follows principle of least privilege with operator-specific roles
 
 **Architecture:**
-```
-Cluster Identity (aro-cluster)
-├─ Creates federated credentials for platform operator identities
-└─ ARO built-in role: Azure Red Hat OpenShift Federated Credential (on each of the 8 identities below)
+<img src="miwi-architecture.png" alt="Authentication Flow for SREs" style="max-width: 800px; width: 100%;" />
 
-Platform Workload Identities (OpenShift Operators):
-├─ cloud-controller-manager → Manages load balancers, IPs
-├─ ingress → Manages ingress resources
-├─ machine-api → Creates/manages VMs
-├─ disk-csi-driver → Manages disk storage
-├─ cloud-network-config → Manages networking
-├─ image-registry → Manages registry storage
-├─ file-csi-driver → Manages file storage
-└─ aro-operator → Manages ARO service resources
-```
 
 **Setup Requirements:**
 
