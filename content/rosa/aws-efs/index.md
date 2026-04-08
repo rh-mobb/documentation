@@ -391,41 +391,41 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
 1. Create a Pod to write to the EFS Volume
 
-   ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: test-efs
-   spec:
-     securityContext:
-       runAsNonRoot: true
-       runAsUser: 1000
-       seccompProfile:
-         type: RuntimeDefault
-     volumes:
-       - name: efs-storage-vol
-         persistentVolumeClaim:
-           claimName: pvc-efs-volume
-     containers:
-       - name: test-efs
-         image: centos:latest
-         command: [ "/bin/bash", "-c", "--" ]
-         args: [ "while true; do echo 'hello efs' | tee -a /mnt/efs-data/verify-efs && sleep 5; done;" ]
-         volumeMounts:
-           - mountPath: "/mnt/efs-data"
-             name: efs-storage-vol
-         securityContext:
-           allowPrivilegeEscalation: false
-           runAsNonRoot: true
-           runAsUser: 1000
-           capabilities:
-             drop:
-               - ALL
-           seccompProfile:
-             type: RuntimeDefault
-   EOF
-   ```
+    ```bash
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: test-efs
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: efs-storage-vol
+          persistentVolumeClaim:
+            claimName: pvc-efs-volume
+      containers:
+        - name: test-efs
+          image: centos:latest
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "while true; do echo 'hello efs' | tee -a /mnt/efs-data/verify-efs && sleep 5; done;" ]
+          volumeMounts:
+            - mountPath: "/mnt/efs-data"
+              name: efs-storage-vol
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+    EOF
+    ```
 
    > It may take a few minutes for the pod to be ready.  If you see errors such as `Output: Failed to resolve "fs-XXXX.efs.us-east-2.amazonaws.com"` it likely means its still setting up the EFS volume, just wait longer.
 
