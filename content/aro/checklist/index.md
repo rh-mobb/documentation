@@ -352,7 +352,6 @@ Platform Workload Identities (OpenShift Operators):
      - `Azure Red Hat OpenShift File Storage Operator`
      - `Azure Red Hat OpenShift Image Registry Operator`
      - `Azure Red Hat OpenShift Service Operator`
-   - ARO RP service principal → `Azure Red Hat OpenShift Cluster` role on VNet
 
 3. **Use `--enable-managed-identity` and `--assign-*` flags** during cluster creation to reference the identities
 
@@ -842,7 +841,6 @@ ARO includes these storage classes by default:
 - [ ] **Plan Backup Strategy**
   
   **What to back up:**
-  - etcd (control plane state)
   - Persistent Volumes (application data)
   - Cluster configuration (GitOps recommended)
   - Application manifests
@@ -853,7 +851,6 @@ ARO includes these storage classes by default:
   - Azure Backup (for Azure-native backups)
   
   **Backup frequency:**
-  - etcd: Daily minimum, hourly for critical workloads
   - PVs: Based on RPO requirements (e.g., every 6 hours)
   - Configuration: On every change (GitOps)
 
@@ -880,7 +877,7 @@ This section guides you through the actual deployment of your ARO cluster.
 Before creating your cluster, verify prerequisites:
 
 - [ ] **Verify Azure CLI authentication** (`az account show`)
-- [ ] **Verify Azure CLI version** (2.30.0 or later)
+- [ ] **Verify Azure CLI version** (2.84 or later)
 - [ ] **Create resource groups** for cluster and VNet (if separate)
 - [ ] **Verify managed identities created** (if using managed identity)
 
@@ -903,7 +900,7 @@ Create a Virtual Network with two dedicated subnets for ARO:
   - Service endpoint for Microsoft.ContainerRegistry
 
 **Deployment:**
-- [Azure CLI Network Setup](https://learn.microsoft.com/en-us/azure/openshift/concepts-networking)
+- [ARO with Managed Identities with AZ CLI](https://cloud.redhat.com/experts/aro/miwi/)
 - [Terraform Examples](https://github.com/rh-mobb/terraform-aro) (includes VNet configuration)
 
 #### BYO NSG Configuration (Optional)
@@ -928,7 +925,7 @@ Choose your deployment method based on your infrastructure-as-code preferences a
 
 | Method | Best For | Complexity | Documentation |
 |--------|----------|------------|---------------|
-| **Terraform** | Production, Infrastructure-as-Code, Repeatable deployments | Medium | [Red Hat MOBB Examples](https://github.com/rh-mobb/terraform-aro) |
+| **Terraform** | Production, Infrastructure-as-Code, Repeatable deployments | Medium | [Red Hat MOBB Examples](https://github.com/rh-mobb/terraform-aro) | [Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster)
 | **Azure CLI** | Quick deployments, Testing, Manual workflows | Low | [Microsoft Docs](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster) |
 | **ARM/Bicep** | Azure-native IaC, Integration with Azure DevOps | Medium | [Microsoft Docs](https://learn.microsoft.com/en-us/azure/openshift/quickstart-openshift-arm-bicep-template) |
 | **Azure Portal** | First-time users, Visual workflow | Low | [Portal Quickstart](https://learn.microsoft.com/en-us/azure/openshift/quickstart-portal) |
@@ -938,7 +935,7 @@ Choose your deployment method based on your infrastructure-as-code preferences a
 #### Option 1: Terraform (Recommended for Production)
 
 **Prerequisites:**
-- Terraform >= 1.0
+- Terraform >= 1.14.8
 - Azure CLI authenticated (`az login`)
 - Managed identities and role assignments created (see [Identity & Access Strategy](#identity--access-strategy))
 
@@ -988,7 +985,7 @@ resource "azurerm_redhat_openshift_cluster" "aro" {
 
   cluster_profile {
     domain = "aro-cluster"
-    version = "4.20.0"
+    version = "4.20.5"
   }
 
   network_profile {
@@ -1250,6 +1247,8 @@ Essential configurations to establish immediately after deployment:
 
 - [ ] **Deploy Cluster Logging Operator** - Install operator and create ClusterLogging instance ([guide](https://docs.openshift.com/container-platform/latest/logging/cluster-logging-deploying.html))
 
+- [ ] **Using Cluster Logging Forwarder in ARO with Azure Monitor (Optional)** - Install operator for native forwarding to Azure Monitor and Azure Log Analytics ([guide](https://cloud.redhat.com/experts/aro/clf-to-azure/))
+
 - [ ] **Enable API Audit Logging** - Update APIServer resource with audit policy (Default, WriteRequestBodies, or AllRequestBodies) ([guide](https://docs.openshift.com/container-platform/latest/security/audit-log-policy-config.html))
 
 - [ ] **Create Admin Users/Groups** - Set up proper admin access via Azure AD or your IdP, then disable kubeadmin account ([guide](https://learn.microsoft.com/en-us/azure/openshift/configure-azure-ad-ui))
@@ -1288,22 +1287,6 @@ For private clusters, establish access to the API server and console:
 - [Point-to-Site VPN](https://learn.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal)
 - [Azure Bastion](https://learn.microsoft.com/en-us/azure/bastion/quickstart-host-portal)
 - [Private ARO Cluster Access](https://cloud.redhat.com/experts/aro/private-cluster/)
-  ```bash
-  # Create VM in VNet for bastion access
-  az vm create \
-    --resource-group <vnet-rg> \
-    --name jumpbox \
-    --image Ubuntu2204 \
-    --vnet-name <vnet-name> \
-    --subnet <subnet-name> \
-    --public-ip-address "" \
-    --admin-username azureuser \
-    --generate-ssh-keys
-  
-  # Access via Bastion in Azure Portal
-  # Install oc CLI on jump box
-  # Access ARO from jump box
-  ```
 
 #### Option 3: ExpressRoute
 
@@ -1403,7 +1386,7 @@ Create a fully private ARO cluster with **NO public IP address** using User-Defi
 
 **References:**
 - Official Guide: https://learn.microsoft.com/en-us/azure/openshift/howto-create-private-cluster-4x
-- OpenShift Egress IPs: https://docs.openshift.com/container-platform/4.13/networking/ovn_kubernetes_network_provider/configuring-egress-ips-ovn.html
+- OpenShift Egress IPs: https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/ovn-kubernetes_network_plugin/configuring-egress-ips-ovn
 
 ---
 
@@ -1606,7 +1589,7 @@ These operations are essential for a production-ready ARO cluster.
 - [ ] **Create critical alerts** - Define PrometheusRule resources for node health, memory, disk, and application metrics
 
 **Monitoring guides:**
-- [ARO Monitoring Overview](https://learn.microsoft.com/en-us/azure/openshift/howto-create-service-principal)
+- [Configuring Azure Monitor for Prometheus remove write](https://learn.microsoft.com/en-us/azure/openshift/howto-remotewrite-prometheus)
 - [OpenShift Monitoring Stack](https://docs.openshift.com/container-platform/latest/monitoring/monitoring-overview.html)
 - [Azure Monitor Integration](https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-enable-arc-enabled-clusters)
 
@@ -1623,16 +1606,7 @@ These operations are essential for a production-ready ARO cluster.
 **Backup guides:**
 - [OADP with Azure](https://cloud.redhat.com/experts/aro/oadp/)
 - [ARO Backup Best Practices](https://learn.microsoft.com/en-us/azure/openshift/howto-create-a-backup)
-- [Disaster Recovery Planning](https://docs.openshift.com/container-platform/latest/backup_and_restore/index.html)
-      restic:
-        enable: true
-    snapshotLocations:
-    - velero:
-        config:
-          resourceGroup: <rg>
-          subscriptionId: <subscription-id>
-        provider: azure
-  ```
+- [ARO Disaster Recovery Planning](https://cloud.redhat.com/experts/aro/disaster-recovery/)
 
 #### Backup Schedules
 
@@ -1679,6 +1653,7 @@ These operations are essential for a production-ready ARO cluster.
 
 #### Security Context Constraints
 
+[Managing security context constraints](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/authentication_and_authorization/managing-pod-security-policies)
 - [ ] **Review Default SCCs**
   ```bash
   # List all SCCs
@@ -1729,6 +1704,8 @@ These operations are essential for a production-ready ARO cluster.
 
 #### Network Policies
 
+[Network Policy Guide](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/network_security/network-policy)
+
 - [ ] **Enable Network Policies for Namespaces**
   ```yaml
   # Default deny all ingress
@@ -1762,46 +1739,14 @@ These operations are essential for a production-ready ARO cluster.
 
 #### Secrets Management
 
-- [ ] **Configure External Secrets Operator** (if using Azure Key Vault)
-  ```bash
-  # Install External Secrets Operator
-  # This allows syncing secrets from Azure Key Vault to OpenShift
-  
-  # Create SecretStore pointing to Azure Key Vault
-  cat <<EOF | oc apply -f -
-  apiVersion: external-secrets.io/v1beta1
-  kind: SecretStore
-  metadata:
-    name: azure-keyvault
-    namespace: production
-  spec:
-    provider:
-      azurekv:
-        authType: ManagedIdentity
-        vaultUrl: https://<keyvault-name>.vault.azure.net
-  EOF
-  
-  # Create ExternalSecret to sync specific secret
-  cat <<EOF | oc apply -f -
-  apiVersion: external-secrets.io/v1beta1
-  kind: ExternalSecret
-  metadata:
-    name: db-credentials
-    namespace: production
-  spec:
-    refreshInterval: 1h
-    secretStoreRef:
-      name: azure-keyvault
-      kind: SecretStore
-    target:
-      name: db-credentials
-      creationPolicy: Owner
-    data:
-    - secretKey: password
-      remoteRef:
-        key: database-password
-  EOF
-  ```
+- [ ] **Configure External Secrets** 
+ 
+  [Azure Key Vault CSI on Azure Red Hat OpenShift](https://cloud.redhat.com/experts/misc/secrets-store-csi/azure-key-vault/)
+ 
+  [Installing the HashiCorp Vault Secret CSI Driver]https://cloud.redhat.com/experts/misc/secrets-store-csi/hashicorp-vault/
+ 
+  *Note: other methods can be use, these are just two common methods
+
 
 ---
 
@@ -1876,105 +1821,11 @@ If you want additional features (OperatorHub, Red Hat Telemetry, cluster updates
 
 #### Azure Firewall Configuration Example
 
+  [End to End Example](https://cloud.redhat.com/experts/aro/private-cluster/)
+  
 - [ ] **Create Azure Firewall**
-  ```bash
-  # Create firewall subnet
-  az network vnet subnet create \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name AzureFirewallSubnet \
-    --address-prefixes <fw-subnet-cidr>  # Must be named AzureFirewallSubnet
-  
-  # Create public IP for firewall
-  az network public-ip create \
-    --name <fw-pip-name> \
-    --resource-group <vnet-rg> \
-    --location <location> \
-    --sku Standard \
-    --allocation-method Static
-  
-  # Create firewall
-  az network firewall create \
-    --name <fw-name> \
-    --resource-group <vnet-rg> \
-    --location <location>
-  
-  # Create firewall IP configuration
-  az network firewall ip-config create \
-    --firewall-name <fw-name> \
-    --name FW-config \
-    --public-ip-address <fw-pip-name> \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name>
-  
-  # Get firewall private IP
-  FWPRIVATE_IP=$(az network firewall show \
-    --resource-group <vnet-rg> \
-    --name <fw-name> \
-    --query "ipConfigurations[0].privateIPAddress" -o tsv)
-  ```
-
 - [ ] **Create Firewall Application Rules**
-  ```bash
-  # Create application rule collection for required endpoints
-  az network firewall application-rule create \
-    --collection-name ARO-Required \
-    --firewall-name <fw-name> \
-    --name Allow-RedHat-Registries \
-    --protocols https=443 \
-    --resource-group <vnet-rg> \
-    --target-fqdns \
-      registry.redhat.io \
-      "*.quay.io" \
-      quay.io \
-      cdn.quay.io \
-      cdn0?.quay.io \
-      access.redhat.com \
-      registry.access.redhat.com \
-      registry.connect.redhat.com \
-    --source-addresses <worker-subnet-cidr> \
-    --priority 100 \
-    --action Allow
-  
-  # Add rule for OpenShift updates
-  az network firewall application-rule create \
-    --collection-name ARO-Required \
-    --firewall-name <fw-name> \
-    --name Allow-OpenShift-Updates \
-    --protocols https=443 \
-    --resource-group <vnet-rg> \
-    --target-fqdns \
-      api.openshift.com \
-      mirror.openshift.com \
-    --source-addresses <worker-subnet-cidr> \
-    --priority 100 \
-    --action Allow
-  ```
-
 - [ ] **Create Route Table to Force Traffic Through Firewall**
-  ```bash
-  # Create route table
-  az network route-table create \
-    --name <rt-name> \
-    --resource-group <vnet-rg> \
-    --location <location>
-  
-  # Create route to firewall
-  az network route-table route create \
-    --resource-group <vnet-rg> \
-    --name RouteToAzureFirewall \
-    --route-table-name <rt-name> \
-    --address-prefix 0.0.0.0/0 \
-    --next-hop-type VirtualAppliance \
-    --next-hop-ip-address ${FWPRIVATE_IP}
-  
-  # Associate with worker subnet
-  az network vnet subnet update \
-    --resource-group <vnet-rg> \
-    --vnet-name <vnet-name> \
-    --name <worker-subnet> \
-    --route-table <rt-name>
-  ```
 
 **References:**
 - Egress Lockdown: https://learn.microsoft.com/en-us/azure/openshift/concepts-egress-lockdown
@@ -2000,7 +1851,7 @@ ARO uses CoreDNS. Configure forwarding by modifying the DNS operator (`oc edit d
 - **Azure Private Link**: Forward `privatelink.*` zones to Azure DNS (168.63.129.16)
 - **DNS caching**: Configure TTL for successful/denied responses
 
-**Complete guide:** [DNS Forwarding on ARO](https://learn.microsoft.com/en-us/azure/openshift/dns-forwarding)
+**Complete guide:** [DNS Forwarding on ARO](https://learn.microsoft.com/en-us/azure/openshift/dns-forwarding) | [Configure Custom DNS](https://learn.microsoft.com/en-us/azure/openshift/howto-custom-dns)
 
 #### Troubleshooting DNS
 
@@ -2029,6 +1880,8 @@ oc logs -n openshift-dns -l dns.operator.openshift.io/daemonset-dns=default
 
 ### Cluster Maintenance and Upgrades
 
+{{% alert state="info" %}} For production clusters, open a [proactive](https://access.redhat.com/solutions/3521621) support case {{% /alert %}}
+
 Keep your ARO cluster up-to-date with the latest OpenShift features, security patches, and bug fixes.
 
 #### Understanding ARO Version Support
@@ -2038,7 +1891,7 @@ Keep your ARO cluster up-to-date with the latest OpenShift features, security pa
 - **Monthly Updates**: Security and bug fix updates released monthly (z-stream)
 - **EUS Channels**: Extended Update Support available for select versions (4.16, 4.18, 4.20, etc.)
 
-**Check ARO Lifecycle:** https://access.redhat.com/support/policy/updates/openshift
+**Check ARO Lifecycle:** https://learn.microsoft.com/en-us/azure/openshift/support-lifecycle
 
 - [ ] **Check Available Versions for Your Region**
   ```bash
@@ -2058,8 +1911,7 @@ Keep your ARO cluster up-to-date with the latest OpenShift features, security pa
 | Method | Use Case | Documentation |
 |--------|----------|---------------|
 | **OpenShift Console** | Interactive upgrades | Navigate to Administration → Cluster Settings |
-| **CLI (`oc adm upgrade`)** | Scripted upgrades | [CLI Upgrade Guide](https://docs.openshift.com/container-platform/latest/updating/updating_a_cluster/updating-cluster-cli.html) |
-| **Managed Upgrade Operator** | Scheduled maintenance windows | Create UpgradeConfig resource with `upgradeAt` time |
+| **CLI (`oc adm upgrade`)** | Scripted upgrades | [CLI Upgrade Guide](https://docs.openshift.com/container-platform/latest/updating/updating_a_cluster/updating-cluster-cli.html) 
 
 **Quick CLI upgrade:**
 ```bash
@@ -2088,30 +1940,7 @@ oc get clusteroperators
 oc get apiservices | grep -i deprecated
 ```
 
-#### Upgrade Troubleshooting
 
-**Issue: Upgrade Stuck/Not Progressing**
-```bash
-# Check cluster operator status
-oc get co
-oc describe co <degraded-operator>
-
-# Check Machine Config Operator
-oc get mcp
-oc get nodes -o wide
-
-# Force node drain if stuck
-oc adm drain <node-name> --ignore-daemonsets --delete-emptydir-data --force
-```
-
-**Issue: Operators Degraded After Upgrade**
-```bash
-# Check operator logs
-oc logs -n openshift-<operator-namespace> <pod-name>
-
-# Restart operator pods
-oc delete pod -n openshift-<operator-namespace> <pod-name>
-```
 
 **References:**
 - Upgrade Guide: https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade
@@ -2122,12 +1951,12 @@ oc delete pod -n openshift-<operator-namespace> <pod-name>
 
 ### Cluster Configuration Management
 
-#### Infrastructure Nodes
+#### Infrastructure Nodes (optional)
 
 - [ ] **Create infrastructure node MachineSet** - Dedicated nodes for cluster components (router, registry, monitoring)
 - [ ] **Move infrastructure components** - Update IngressController, ImageRegistry, and monitoring to use infra nodes
 
-**Guide:** [Creating Infrastructure MachineSets](https://docs.openshift.com/container-platform/latest/machine_management/creating-infrastructure-machinesets.html)
+**Guide:** [Creating Infrastructure MachineSets](https://learn.microsoft.com/en-us/azure/openshift/howto-infrastructure-nodes)
 
 #### Autoscaling
 
@@ -2159,186 +1988,52 @@ oc delete pod -n openshift-<operator-namespace> <pod-name>
 
 #### Workload Identity for Applications (Recommended for Azure Resource Access)
 
-**Workload Identity** allows your applications running on ARO to securely access Azure resources (Key Vault, Storage, SQL, etc.) without storing credentials in secrets. It uses OIDC federation with managed identities.
+**Workload Identity** allows applications running on ARO to securely access Azure resources (Key Vault, Storage, SQL, etc.) without storing credentials in secrets. It uses OIDC federation with managed identities.
 
 **How It Works:**
-1. Create a user-assigned managed identity for your application
-2. Grant that identity permissions on Azure resources
-3. Create a Kubernetes ServiceAccount with identity annotation
-4. Create a federated identity credential linking the ServiceAccount to the managed identity
-5. Deploy your application with the ServiceAccount - it automatically gets Azure credentials
+1. Verify pod-identity-webhook is deployed (ARO prerequisite)
+2. Create a user-assigned managed identity
+3. Grant the identity permissions on Azure resources
+4. Create a Kubernetes ServiceAccount with workload identity annotation
+5. Create federated identity credential linking ServiceAccount to managed identity
+6. Deploy application with ServiceAccount and required label
+7. ARO's mutating webhook automatically injects Azure credentials
 
 **Prerequisites:**
-- ARO cluster created with managed identity (has OIDC issuer)
-- `pod-identity-webhook` running in `openshift-cloud-credential-operator` namespace (automatic on managed identity clusters)
+- ARO cluster with managed identity enabled
+- `pod-identity-webhook` deployed in `openshift-cloud-credential-operator` namespace
 
-**Example: Application Accessing Azure Key Vault**
+---
 
-- [ ] **Step 1: Get OIDC Issuer URL**
-  ```bash
-  # Get OIDC issuer from cluster
-  export ARO_OIDC_ISSUER="$(oc get authentication cluster -o jsonpath='{.spec.serviceAccountIssuer}')"
-  
-  # Verify format: https://{region}.oic.aro.azure.net/{tenant_id}/{uuid}
-  echo $ARO_OIDC_ISSUER
-  ```
+**Complete Setup Guide:**
 
-- [ ] **Step 2: Create Azure Resources (Example: Key Vault)**
-  ```bash
-  # Set variables
-  export KEYVAULT_NAME="myapp-kv-$(openssl rand -hex 2)"
-  export KEYVAULT_RG=<resource-group>
-  export KEYVAULT_LOCATION=<location>
-  export USER_ASSIGNED_IDENTITY_NAME="myapp-identity"
-  export SERVICE_ACCOUNT_NAMESPACE="myapp"
-  export SERVICE_ACCOUNT_NAME="myapp-sa"
-  export FEDERATED_IDENTITY_NAME="myapp-federated-identity"
-  
-  # Create Key Vault
-  az keyvault create \
-    --resource-group ${KEYVAULT_RG} \
-    --location ${KEYVAULT_LOCATION} \
-    --name ${KEYVAULT_NAME}
-  
-  # Add a secret
-  az keyvault secret set \
-    --vault-name ${KEYVAULT_NAME} \
-    --name "my-secret" \
-    --value "Hello from Azure!"
-  
-  # Get Key Vault resource ID
-  export KEYVAULT_RESOURCE_ID=$(az keyvault show \
-    --resource-group ${KEYVAULT_RG} \
-    --name ${KEYVAULT_NAME} \
-    --query id -o tsv)
-  ```
+[Deploy and configure an application using workload identity on an Azure Red Hat OpenShift managed identity cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-deploy-configure-application)
+---
 
-- [ ] **Step 3: Create User-Assigned Managed Identity**
-  ```bash
-  # Create the identity for your application
-  az identity create \
-    --name ${USER_ASSIGNED_IDENTITY_NAME} \
-    --resource-group ${KEYVAULT_RG}
-  
-  # Get identity client ID and principal ID
-  export USER_ASSIGNED_IDENTITY_CLIENT_ID=$(az identity show \
-    --name ${USER_ASSIGNED_IDENTITY_NAME} \
-    --resource-group ${KEYVAULT_RG} \
-    --query 'clientId' -o tsv)
-  
-  export USER_ASSIGNED_IDENTITY_OBJECT_ID=$(az identity show \
-    --name ${USER_ASSIGNED_IDENTITY_NAME} \
-    --resource-group ${KEYVAULT_RG} \
-    --query 'principalId' -o tsv)
-  ```
+**How It Works (Behind the Scenes):**
 
-- [ ] **Step 4: Grant Identity Permissions on Azure Resource**
-  ```bash
-  # Assign "Key Vault Secrets User" role to the identity
-  az role assignment create \
-    --assignee-object-id "${USER_ASSIGNED_IDENTITY_OBJECT_ID}" \
-    --role "Key Vault Secrets User" \
-    --scope "${KEYVAULT_RESOURCE_ID}" \
-    --assignee-principal-type ServicePrincipal
-  ```
-
-- [ ] **Step 5: Create Kubernetes ServiceAccount**
-  ```bash
-  # Create namespace
-  oc new-project ${SERVICE_ACCOUNT_NAMESPACE}
-  
-  # Create ServiceAccount with identity annotation
-  cat <<EOF | oc apply -f -
-  apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    name: ${SERVICE_ACCOUNT_NAME}
-    namespace: ${SERVICE_ACCOUNT_NAMESPACE}
-    annotations:
-      azure.workload.identity/client-id: ${USER_ASSIGNED_IDENTITY_CLIENT_ID}
-  EOF
-  ```
-
-- [ ] **Step 6: Create Federated Identity Credential**
-  ```bash
-  # Link the ServiceAccount to the managed identity via OIDC federation
-  az identity federated-credential create \
-    --name "${FEDERATED_IDENTITY_NAME}" \
-    --identity-name "${USER_ASSIGNED_IDENTITY_NAME}" \
-    --resource-group "${KEYVAULT_RG}" \
-    --issuer "${ARO_OIDC_ISSUER}" \
-    --subject "system:serviceaccount:${SERVICE_ACCOUNT_NAMESPACE}:${SERVICE_ACCOUNT_NAME}"
-  ```
-
-- [ ] **Step 7: Deploy Application with Workload Identity**
-  ```yaml
-  cat <<EOF | oc apply -f -
-  apiVersion: v1
-  kind: Pod
-  metadata:
-    name: myapp
-    namespace: ${SERVICE_ACCOUNT_NAMESPACE}
-    labels:
-      azure.workload.identity/use: "true"  # REQUIRED label
-  spec:
-    serviceAccountName: ${SERVICE_ACCOUNT_NAME}  # REQUIRED
-    securityContext:
-      runAsNonRoot: true
-      seccompProfile:
-        type: RuntimeDefault
-    containers:
-    - name: app
-      image: ghcr.io/azure/azure-workload-identity/msal-go
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
-      env:
-      - name: KEYVAULT_URL
-        value: https://${KEYVAULT_NAME}.vault.azure.net/
-      - name: SECRET_NAME
-        value: my-secret
-      # These are automatically injected by pod-identity-webhook:
-      # AZURE_CLIENT_ID
-      # AZURE_TENANT_ID
-      # AZURE_FEDERATED_TOKEN_FILE: /var/run/secrets/azure/tokens/azure-identity-token
-      # AZURE_AUTHORITY_HOST
-  EOF
-  ```
-
-- [ ] **Step 8: Verify Workload Identity**
-  ```bash
-  # Check pod has environment variables injected
-  oc describe pod myapp -n ${SERVICE_ACCOUNT_NAMESPACE}
-  # Look for AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE, etc.
-  
-  # Check pod can access Azure Key Vault
-  oc logs myapp -n ${SERVICE_ACCOUNT_NAMESPACE}
-  # Should show: successfully got secret "Hello from Azure!"
-  
-  # Verify projected token volume
-  oc get pod myapp -n ${SERVICE_ACCOUNT_NAMESPACE} -o yaml | grep -A 5 "azure-identity-token"
-  ```
-
-**What Just Happened:**
-1. ✅ Your pod gets a Kubernetes service account token (JWT) signed by ARO's OIDC issuer
-2. ✅ The token is projected to `/var/run/secrets/azure/tokens/azure-identity-token`
-3. ✅ Azure SDK uses this token to exchange for an Azure AD access token via OIDC federation
-4. ✅ The access token has permissions defined by the managed identity's role assignments
-5. ✅ **No credentials stored in cluster** - tokens are short-lived and auto-rotated
+1. ✅ Pod-identity-webhook mutates pod spec during creation
+2. ✅ Kubernetes projects service account token to `/var/run/secrets/azure/tokens/azure-identity-token`
+3. ✅ Token expiration: 3600 seconds (1 hour), auto-rotated
+4. ✅ Azure SDK detects `AZURE_FEDERATED_TOKEN_FILE` environment variable
+5. ✅ SDK exchanges Kubernetes token for Azure AD access token via OIDC federation
+6. ✅ Access token has permissions based on managed identity's role assignments
+7. ✅ **No credentials stored in cluster** - tokens are ephemeral and short-lived
 
 **Common Use Cases:**
-- Access Azure Key Vault secrets from applications
-- Read/write to Azure Storage (Blob, Files) without storage account keys
-- Connect to Azure SQL Database with managed identity authentication
+- Access Azure Key Vault secrets
+- Read/write Azure Storage (Blob, Files, Queue, Table)
+- Connect to Azure SQL Database with managed identity auth
 - Access Azure Service Bus, Event Hubs, Cosmos DB
-- Call Azure APIs with proper authentication
+- Call Azure Resource Manager APIs
 
 **Troubleshooting:**
 
 ```bash
-# Check if pod-identity-webhook is running
+# Verify pod-identity-webhook is running
 oc get deployment pod-identity-webhook -n openshift-cloud-credential-operator
+
+# Check webhook logs
 oc logs -n openshift-cloud-credential-operator deployment/pod-identity-webhook
 
 # Verify ServiceAccount annotation
@@ -2346,20 +2041,18 @@ oc get sa ${SERVICE_ACCOUNT_NAME} -n ${SERVICE_ACCOUNT_NAMESPACE} -o yaml
 
 # Check federated credential
 az identity federated-credential show \
-  --name "${FEDERATED_IDENTITY_NAME}" \
+  --name "${FEDERATED_IDENTITY_CREDENTIAL_NAME}" \
   --identity-name "${USER_ASSIGNED_IDENTITY_NAME}" \
-  --resource-group "${KEYVAULT_RG}"
+  --resource-group "${RESOURCE_GROUP}"
 
 # Verify role assignment
-az role assignment list \
-  --assignee ${USER_ASSIGNED_IDENTITY_CLIENT_ID} \
-  --all
+az role assignment list --assignee ${USER_ASSIGNED_IDENTITY_CLIENT_ID} --all
 ```
 
 **References:**
-- Official Guide: https://learn.microsoft.com/en-us/azure/openshift/howto-deploy-configure-application
-- Workload Identity Overview: https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-overview
-- Red Hat Guide: https://cloud.redhat.com/experts/aro/miwi/
+- **Official ARO Guide:** https://learn.microsoft.com/en-us/azure/openshift/howto-deploy-configure-application
+- [Azure Workload Identity Overview](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-overview)
+- [Red Hat Managed Identity Guide](https://cloud.redhat.com/experts/aro/miwi/)
 
 ---
 
@@ -2367,109 +2060,14 @@ az role assignment list \
 
 **Option 1: Workload Identity (Recommended for Managed Identity Clusters)**
 
-Use workload identity to authenticate to ACR without storing credentials. See [Workload Identity for Applications](#workload-identity-for-applications-recommended-for-azure-resource-access) section for complete setup.
-
-Example for ACR access:
-```bash
-# Create managed identity for ACR access
-az identity create --name acr-pull-identity --resource-group <rg>
-
-# Grant AcrPull role to identity
-az role assignment create \
-  --assignee-object-id $(az identity show --name acr-pull-identity --resource-group <rg> --query principalId -o tsv) \
-  --role "AcrPull" \
-  --scope $(az acr show -n <acr-name> --query id -o tsv) \
-  --assignee-principal-type ServicePrincipal
-
-# Create ServiceAccount and federated credential (see Workload Identity section)
-# Deploy pods with ServiceAccount to pull from ACR
-```
+- [ ] Use workload identity to authenticate to ACR without storing credentials. See [Workload Identity for Applications](#workload-identity-for-applications-recommended-for-azure-resource-access) section for complete setup.
 
 **Option 2: Service Principal Pull Secret (Legacy)**
 
-- [ ] **Configure ACR Pull Secret with Service Principal**
-  ```bash
-  # Create service principal for ACR
-  ACR_NAME=<acr-name>
-  ACR_REGISTRY_ID=$(az acr show -n ${ACR_NAME} --query id -o tsv)
-  
-  SP_PASSWD=$(az ad sp create-for-rbac \
-    --name ${ACR_NAME}-aro-pull \
-    --scopes ${ACR_REGISTRY_ID} \
-    --role acrpull \
-    --query password -o tsv)
-  
-  SP_APP_ID=$(az ad sp list --display-name ${ACR_NAME}-aro-pull --query '[0].appId' -o tsv)
-  
-  # Create pull secret in OpenShift
-  oc create secret docker-registry acr-pull-secret \
-    --docker-server=${ACR_NAME}.azurecr.io \
-    --docker-username=${SP_APP_ID} \
-    --docker-password=${SP_PASSWD} \
-    -n openshift-config
-  
-  # Link secret to global pull secret
-  oc set data secret/pull-secret \
-    -n openshift-config \
-    --from-file=.dockerconfigjson=<(oc get secret/pull-secret -n openshift-config -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d | jq ".auths += {\"${ACR_NAME}.azurecr.io\":{\"auth\":\"$(echo -n ${SP_APP_ID}:${SP_PASSWD} | base64 -w0)\"}}" | base64 -w0)
-  ```
+- [ ] **Configure ACR Pull Secret with Service Principal.** See [ACR with ARO](https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro) | [Guide on using Azure Container Registry in Private ARO clusters](https://cloud.redhat.com/experts/aro/aro-acr/)
 
 **References:**
-- ACR with ARO: https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro
-
-#### Azure Service Operator (ASO)
-
-- [ ] **Install Azure Service Operator**
-  ```bash
-  # Install from OperatorHub
-  # Search for "Azure Service Operator" in the OpenShift console
-  
-  # Or install via CLI
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1alpha1
-  kind: Subscription
-  metadata:
-    name: azure-service-operator
-    namespace: openshift-operators
-  spec:
-    channel: stable
-    name: azure-service-operator
-    source: community-operators
-    sourceNamespace: openshift-marketplace
-  EOF
-  ```
-
-- [ ] **Configure ASO Credentials**
-  ```bash
-  # Create service principal for ASO
-  ASO_SP=$(az ad sp create-for-rbac --name aso-${CLUSTER_NAME})
-  
-  # Create secret with credentials
-  cat <<EOF | oc apply -f -
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: azureoperatorsettings
-    namespace: azureoperator-system
-  stringData:
-    AZURE_SUBSCRIPTION_ID: "${SUBSCRIPTION_ID}"
-    AZURE_TENANT_ID: "$(echo ${ASO_SP} | jq -r .tenant)"
-    AZURE_CLIENT_ID: "$(echo ${ASO_SP} | jq -r .appId)"
-    AZURE_CLIENT_SECRET: "$(echo ${ASO_SP} | jq -r .password)"
-  EOF
-  ```
-
----
-
-### Compliance & Auditing
-
-- [ ] **Install Compliance Operator** from OperatorHub
-- [ ] **Run compliance scans** - CIS benchmarks for OpenShift (ocp4-cis, ocp4-cis-node)
-- [ ] **Remediate findings** - Apply remediations or document exceptions
-
-**Guide:** [Compliance Operator](https://docs.openshift.com/container-platform/latest/security/compliance_operator/compliance-operator-understanding.html)
-
----
+- [ACR with ARO](https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro)
 
 ### Cost Optimization
 
@@ -2490,27 +2088,23 @@ These enhancements are for specific use cases and advanced requirements.
 ### AI/ML and Advanced Workloads
 
 For GPU workloads, Red Hat OpenShift AI, and advanced compute scenarios, see specialized guides:
-- [GPU Configuration Guide](link)
-- [Red Hat OpenShift AI Setup](link)
-- [OpenShift Virtualization](link)
+- [GPU Configuration Guide](https://cloud.redhat.com/experts/aro/gpu/)
+- [Red Hat OpenShift AI Setup](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.4/html/installing_and_uninstalling_openshift_ai_self-managed/installing-and-deploying-openshift-ai_install)
+- [OpenShift Virtualization](https://cloud.redhat.com/experts/aro/aro-virt/)
 
 ### GitOps & CI/CD
 
 For ArgoCD, Tekton, and CI/CD integration, see:
-- [GitOps with OpenShift GitOps (ArgoCD)](link)
-- [CI/CD with OpenShift Pipelines (Tekton)](link)
-- [Azure DevOps Integration](link)
+- [GitOps with OpenShift GitOps (ArgoCD)](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/gitops/index)
+- [CI/CD with OpenShift Pipelines (Tekton)](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/pipelines/index)
+- [Azure DevOps Integration](https://cloud.redhat.com/experts/misc/azure-dev-ops-with-managed-openshift/)
+- [Configuring Cross-Tenant Azure DevOps Access from ArgoCD on ARO](https://cloud.redhat.com/experts/misc/cross-tenant-access-argocd-ado/)
 
 ### Multi-Cluster Management
 
 For Advanced Cluster Management, Submariner, and multi-cluster setups, see:
-- [Red Hat Advanced Cluster Management Guide](link)
-- [Multi-Cluster Networking with Submariner](link)
-
-### Enterprise Applications
-
-For SAP, Maximo, and other enterprise application deployments, see:
-- [Enterprise Application Deployment Guides](link)
+- [Red Hat Advanced Cluster Management Guide](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.16)
+- [Deploying Advanced Cluster Management and OpenShift Data Foundation for ARO Disaster Recovery](https://cloud.redhat.com/experts/aro/acm-odf-aro/)
 
 ---
 
@@ -2553,7 +2147,6 @@ oc get backup -n openshift-adp
 ### Monthly Operations
 
 - [ ] **DR test** - Test backup/restore in non-prod
-- [ ] **Compliance scan** - Run Compliance Operator scan, remediate findings
 - [ ] **Performance baseline review** - Update baselines, identify degradation patterns
 - [ ] **Documentation updates** - Runbooks, diagrams, DR procedures
 
@@ -2571,7 +2164,7 @@ oc get backup -n openshift-adp
 **Escalation:** On-call engineer → Team lead → Platform architect → Microsoft/Red Hat support
 
 **Example SLA targets:**
-- Cluster availability: 99.9%
+- Cluster availability: 99.95%
 - API response time: < 200ms (p95)
 - Pod startup time: < 30s (p95)
 
@@ -2646,365 +2239,142 @@ When using ARO-managed NSGs:
       -o table
     ```
 
-- [ ] **Adding Custom Rules:**
-  
-  Use priority range 3001+ for custom application rules:
-  ```bash
-  # Example: Allow specific application port
-  az network nsg rule create \
-    --resource-group ${INFRA_RG} \
-    --nsg-name <worker-nsg-name> \
-    --name AllowApp8080 \
-    --priority 3001 \
-    --source-address-prefixes 10.0.0.0/16 \
-    --destination-port-ranges 8080 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound
-  ```
-
 ---
 
 ### BYO NSG (Bring Your Own NSG)
 
 ⚠️ **WARNING:** BYO NSG requires precise configuration. Misconfigured NSGs can prevent cluster deployment or cause operational issues.
 
+**Official ARO Guide:** [Bring Your Own NSG](https://learn.microsoft.com/en-us/azure/openshift/howto-bring-nsg)
+
+---
+
 #### When to Use BYO NSG
 
 Use BYO NSG only when:
-- Organizational security policy requires pre-creation of NSGs
-- Compliance mandates prohibit ARO from creating NSGs
-- Advanced network segmentation requires custom NSG placement
+- Organizational security policy requires pre-creation of NSGs in a specific resource group
+- Compliance mandates prohibit ARO from creating NSGs in the managed resource group
+- You need full control to add/remove NSG rules during the cluster lifetime
+
+**Typical Architecture:**
+
+```
+Base/VNet Resource Group (you control)
+├─ Virtual Network
+├─ Master Subnet → Your NSG attached
+├─ Worker Subnet → Your NSG attached
+└─ Your preconfigured NSGs
+
+Managed Resource Group (ARO controls)
+└─ Default NSG (created but NOT attached to subnets)
+```
+
+---
+
+#### General Capabilities and Limitations
+
+**Requirements:**
+- ✅ MUST attach preconfigured NSGs to BOTH master and worker subnets BEFORE cluster creation
+- ✅ Can use same NSG or different NSGs for master and worker subnets
+- ✅ Can only be enabled at cluster creation time (NOT on existing clusters)
+- ✅ Not configurable from Azure Portal (CLI only)
+
+**How It Works:**
+1. You create and attach NSGs to subnets before cluster creation
+2. ARO creates cluster with `--enable-preconfigured-nsg` flag
+3. ARO still creates a default NSG in managed resource group BUT doesn't attach it to subnets
+4. You can modify your NSGs during cluster lifetime
+5. You can detach/reattach NSGs at any time (including switching to ARO's default NSG)
+
+**Critical Warnings:**
+
+⚠️ **Manual NSG Updates Required:** When you create Kubernetes LoadBalancer services or OpenShift routes, you MUST manually update NSG rules. ARO does NOT automatically update your preconfigured NSGs (unlike the default ARO-managed NSG).
+
+⚠️ **Prohibited DENY Rules:** Your NSGs MUST NOT have INBOUND/OUTBOUND DENY rules blocking these traffic flows (will break cluster):
+- Master Subnet ↔ Master Subnet (all ports)
+- Worker Subnet ↔ Worker Subnet (all ports)
+- Master Subnet ↔ Worker Subnet (all ports)
+
+⚠️ **NSG Flow Logs:** If using BYO NSG with flow logs, use [NSG Flow Logs](https://learn.microsoft.com/en-us/azure/network-watcher/nsg-flow-logs-overview) documentation (not the generic flow log docs).
+
+---
 
 #### BYO NSG Planning Checklist
 
-- [ ] Understand all required ARO NSG rules
-- [ ] Plan priority ranges (ARO uses 500-3000, custom rules use 3001+)
-- [ ] Document NSG design and rule purposes
-- [ ] Plan for identity permissions on NSGs
-- [ ] Set up NSG flow logs for troubleshooting
+- [ ] Understand you must manually update NSG rules for LoadBalancer services and routes
+- [ ] Verify no DENY rules will block master↔master, worker↔worker, or master↔worker traffic
+- [ ] Plan for NSG flow logs for troubleshooting
+- [ ] Review [OpenShift network flows](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/installation_configuration/configuring-firewall#network-flow-matrix-common_configuring-firewall) for minimal permissive rules
 - [ ] Create testing procedure before production deployment
+
+---
 
 #### BYO NSG Implementation Guide
 
-##### Step 1: Create NSGs
+##### Step 1: Create VNet and Subnets
 
-- [ ] **Create Master Subnet NSG:**
+- [ ] **Create VNet and Subnets:**
   ```bash
+  # Create VNet
+  az network vnet create \
+    --resource-group <vnet-rg> \
+    --name <vnet-name> \
+    --address-prefixes <vnet-cidr>
+  
+  # Create master subnet
+  az network vnet subnet create \
+    --resource-group <vnet-rg> \
+    --vnet-name <vnet-name> \
+    --name <master-subnet-name> \
+    --address-prefixes <master-subnet-cidr> \
+    --service-endpoints Microsoft.ContainerRegistry
+  
+  # Disable private link policies on master subnet
+  az network vnet subnet update \
+    --resource-group <vnet-rg> \
+    --vnet-name <vnet-name> \
+    --name <master-subnet-name> \
+    --private-link-service-network-policies Disabled
+  
+  # Create worker subnet
+  az network vnet subnet create \
+    --resource-group <vnet-rg> \
+    --vnet-name <vnet-name> \
+    --name <worker-subnet-name> \
+    --address-prefixes <worker-subnet-cidr> \
+    --service-endpoints Microsoft.ContainerRegistry
+  ```
+
+##### Step 2: Create and Configure Preconfigured NSGs
+
+**Option A: Start with Default Rules (Recommended)**
+
+- [ ] **Create NSGs with Azure default rules:**
+  ```bash
+  # Create master NSG (starts with Azure default rules)
   az network nsg create \
     --resource-group <vnet-rg> \
-    --name ${CLUSTER_NAME}-master-nsg \
-    --location <location> \
-    --tags "Cluster=${CLUSTER_NAME}" "Purpose=ARO-Master"
-  ```
-
-- [ ] **Create Worker Subnet NSG:**
-  ```bash
+    --name <cluster-name>-master-nsg \
+    --location <location>
+  
+  # Create worker NSG (starts with Azure default rules)
   az network nsg create \
     --resource-group <vnet-rg> \
-    --name ${CLUSTER_NAME}-worker-nsg \
-    --location <location> \
-    --tags "Cluster=${CLUSTER_NAME}" "Purpose=ARO-Worker"
+    --name <cluster-name>-worker-nsg \
+    --location <location>
   ```
 
-##### Step 2: Configure Master NSG Rules
+**Option B: Start with No Rules (Advanced)**
 
-- [ ] **Allow API Server from Workers (Priority 500):**
+- [ ] **Create empty NSGs:**
   ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowAPIServerFromWorkers \
-    --priority 500 \
-    --source-address-prefixes <worker-subnet-cidr> \
-    --destination-port-ranges 6443 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow API server access from worker nodes"
+  # You can create NSGs with no custom rules and add rules later
+  # Azure still includes the default rules (AllowVNetInBound, etc.)
   ```
 
-- [ ] **Allow Machine Config Server from Workers (Priority 501):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowMCSFromWorkers \
-    --priority 501 \
-    --source-address-prefixes <worker-subnet-cidr> \
-    --destination-port-ranges 22623 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow Machine Config Server from workers"
-  ```
+##### Step 3: Attach NSGs to Subnets
 
-- [ ] **Allow etcd Between Masters (Priority 502):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowEtcdBetweenMasters \
-    --priority 502 \
-    --source-address-prefixes <master-subnet-cidr> \
-    --destination-port-ranges 2379-2380 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow etcd communication between master nodes"
-  ```
-
-- [ ] **Allow Kubernetes API Between Masters (Priority 503):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowKubeAPIBetweenMasters \
-    --priority 503 \
-    --source-address-prefixes <master-subnet-cidr> \
-    --destination-port-ranges 10250-10259 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow Kubernetes API server communication between masters"
-  ```
-
-- [ ] **Allow VXLAN Between Masters (Priority 504):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowVXLANBetweenMasters \
-    --priority 504 \
-    --source-address-prefixes <master-subnet-cidr> \
-    --destination-port-ranges 4789 \
-    --protocol Udp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow VXLAN overlay network between masters"
-  ```
-
-- [ ] **Allow Geneve Between Masters (Priority 505):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowGeneveBetweenMasters \
-    --priority 505 \
-    --source-address-prefixes <master-subnet-cidr> \
-    --destination-port-ranges 6081 \
-    --protocol Udp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow Geneve overlay network between masters"
-  ```
-
-- [ ] **Allow Azure Load Balancer (Priority 506):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowAzureLoadBalancer \
-    --priority 506 \
-    --source-address-prefixes AzureLoadBalancer \
-    --destination-port-ranges '*' \
-    --protocol '*' \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow Azure Load Balancer health probes"
-  ```
-
-- [ ] **Allow All Outbound (Priority 100):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-master-nsg \
-    --name AllowAllOutbound \
-    --priority 100 \
-    --destination-address-prefixes '*' \
-    --destination-port-ranges '*' \
-    --protocol '*' \
-    --access Allow \
-    --direction Outbound \
-    --description "Allow all outbound traffic from master nodes"
-  ```
-
-##### Step 3: Configure Worker NSG Rules
-
-- [ ] **Allow HTTPS from Internet (Priority 500) - Public Cluster Only:**
-  ```bash
-  # Only for public clusters
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowHTTPSFromInternet \
-    --priority 500 \
-    --source-address-prefixes Internet \
-    --destination-port-ranges 443 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow HTTPS ingress from Internet (public cluster)"
-  ```
-
-- [ ] **Allow HTTP from Internet (Priority 501) - Public Cluster Only:**
-  ```bash
-  # Only for public clusters
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowHTTPFromInternet \
-    --priority 501 \
-    --source-address-prefixes Internet \
-    --destination-port-ranges 80 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow HTTP ingress from Internet (public cluster)"
-  ```
-
-- [ ] **Allow HTTPS from VNet (Priority 500) - Private Cluster:**
-  ```bash
-  # For private clusters - restrict to VNet or specific sources
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowHTTPSFromVNet \
-    --priority 500 \
-    --source-address-prefixes VirtualNetwork \
-    --destination-port-ranges 443 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow HTTPS ingress from VNet (private cluster)"
-  ```
-
-- [ ] **Allow HTTP from VNet (Priority 501) - Private Cluster:**
-  ```bash
-  # For private clusters
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowHTTPFromVNet \
-    --priority 501 \
-    --source-address-prefixes VirtualNetwork \
-    --destination-port-ranges 80 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow HTTP ingress from VNet (private cluster)"
-  ```
-
-- [ ] **Allow Azure Load Balancer (Priority 502):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowAzureLoadBalancer \
-    --priority 502 \
-    --source-address-prefixes AzureLoadBalancer \
-    --destination-port-ranges '*' \
-    --protocol '*' \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow Azure Load Balancer health probes"
-  ```
-
-- [ ] **Allow All from Master Subnet (Priority 503):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowFromMasters \
-    --priority 503 \
-    --source-address-prefixes <master-subnet-cidr> \
-    --destination-port-ranges '*' \
-    --protocol '*' \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow all traffic from master nodes"
-  ```
-
-- [ ] **Allow VXLAN Between Workers (Priority 504):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowVXLANBetweenWorkers \
-    --priority 504 \
-    --source-address-prefixes <worker-subnet-cidr> \
-    --destination-port-ranges 4789 \
-    --protocol Udp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow VXLAN overlay network between workers"
-  ```
-
-- [ ] **Allow Geneve Between Workers (Priority 505):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowGeneveBetweenWorkers \
-    --priority 505 \
-    --source-address-prefixes <worker-subnet-cidr> \
-    --destination-port-ranges 6081 \
-    --protocol Udp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow Geneve overlay network between workers"
-  ```
-
-- [ ] **Allow Kubelet from Workers (Priority 506):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowKubeletBetweenWorkers \
-    --priority 506 \
-    --source-address-prefixes <worker-subnet-cidr> \
-    --destination-port-ranges 10250 \
-    --protocol Tcp \
-    --access Allow \
-    --direction Inbound \
-    --description "Allow Kubelet communication between workers"
-  ```
-
-- [ ] **Allow All Outbound (Priority 100):**
-  ```bash
-  az network nsg rule create \
-    --resource-group <vnet-rg> \
-    --nsg-name ${CLUSTER_NAME}-worker-nsg \
-    --name AllowAllOutbound \
-    --priority 100 \
-    --destination-address-prefixes '*' \
-    --destination-port-ranges '*' \
-    --protocol '*' \
-    --access Allow \
-    --direction Outbound \
-    --description "Allow all outbound traffic from worker nodes"
-  ```
-
-##### Step 4: Additional Rules for Optional Components
-
-- [ ] **If Using BYO Route Table - Add to Master NSG:**
-  ```bash
-  # No specific NSG rule needed, but identity needs Network Contributor on route table
-  ```
-
-- [ ] **If Using NAT Gateway - Add to Worker NSG:**
-  ```bash
-  # NAT Gateway handles outbound, ensure outbound rules don't conflict
-  # Verify NSG allows outbound to NAT Gateway subnet
-  ```
-
-- [ ] **If Using Azure Firewall:**
-  ```bash
-  # Ensure NSG allows outbound to Azure Firewall subnet
-  # Coordinate with User Defined Routes (UDR)
-  ```
-
-##### Step 5: Attach NSGs to Subnets
+**CRITICAL:** NSGs MUST be attached BEFORE cluster creation.
 
 - [ ] **Attach Master NSG to Master Subnet:**
   ```bash
@@ -3038,131 +2408,197 @@ Use BYO NSG only when:
     --query networkSecurityGroup.id -o tsv
   ```
 
-##### Step 6: Grant Identity Permissions
+##### Step 4: Create ARO Cluster with BYO NSG
 
-- [ ] **With Managed Identity (Recommended):**
-  - ARO built-in roles are automatically assigned during cluster creation
-  - No manual action required
-  - Verify after cluster creation:
-    ```bash
-    # Get aro-operator identity principal ID
-    IDENTITY_PRINCIPAL_ID=$(az identity show \
-      --resource-group <rg> \
-      --name ${CLUSTER_NAME}-aro-operator \
-      --query principalId -o tsv)
-    
-    # Verify role assignments on master NSG
-    az role assignment list \
-      --assignee ${IDENTITY_PRINCIPAL_ID} \
-      --scope /subscriptions/<sub-id>/resourceGroups/<vnet-rg>/providers/Microsoft.Network/networkSecurityGroups/${CLUSTER_NAME}-master-nsg
-    
-    # Should see "Azure Red Hat OpenShift Service Operator" role
-    ```
-
-- [ ] **With Service Principal (Legacy):**
+- [ ] **Create cluster with preconfigured NSG feature:**
   ```bash
-  # Assign Network Contributor to service principal on master NSG
-  az role assignment create \
-    --assignee <service-principal-app-id> \
-    --role "Network Contributor" \
-    --scope /subscriptions/<sub-id>/resourceGroups/<vnet-rg>/providers/Microsoft.Network/networkSecurityGroups/${CLUSTER_NAME}-master-nsg
+  az aro create \
+    --resource-group <base-resource-group> \
+    --name <cluster-name> \
+    --vnet <vnet-name> \
+    --master-subnet <master-subnet-name> \
+    --worker-subnet <worker-subnet-name> \
+    --enable-preconfigured-nsg \
+    --pull-secret @pull-secret.txt \
+    # Add other cluster creation parameters as needed
+  ```
   
-  # Assign Network Contributor to service principal on worker NSG
-  az role assignment create \
-    --assignee <service-principal-app-id> \
-    --role "Network Contributor" \
-    --scope /subscriptions/<sub-id>/resourceGroups/<vnet-rg>/providers/Microsoft.Network/networkSecurityGroups/${CLUSTER_NAME}-worker-nsg
+  **Key Points:**
+  - `--enable-preconfigured-nsg` flag is REQUIRED to use BYO NSG
+  - If managed identity cluster: add managed identity flags
+  - If service principal cluster: add `--client-id` and `--client-secret`
+  - Cluster creation will fail if NSGs are not attached to both subnets
+
+- [ ] **Verify cluster creation:**
+  ```bash
+  # Monitor cluster provisioning
+  az aro show --name <cluster-name> --resource-group <rg> --query provisioningState -o tsv
   
-  # Verify assignments
-  az role assignment list \
-    --assignee <service-principal-app-id> \
-    --scope /subscriptions/<sub-id>/resourceGroups/<vnet-rg>
+  # Check that default NSG was created but NOT attached
+  INFRA_RG=$(az aro show -n <cluster-name> -g <rg> --query 'clusterProfile.resourceGroupId' -o tsv | cut -d'/' -f5)
+  az network nsg list -g ${INFRA_RG} -o table
+  # You'll see an NSG in managed RG, but it won't be attached to subnets
   ```
 
-##### Step 7: Enable NSG Flow Logs (Highly Recommended)
+##### Step 5: Update NSGs with Required Rules
 
-- [ ] **Create Storage Account for Flow Logs:**
+After cluster creation, update your NSGs based on cluster requirements:
+
+- [ ] **Required rules for public cluster access:**
+  
   ```bash
+  # For API server access (port 6443 on master subnet)
+  # From Internet (or your source IPs) → master subnet port 6443
+  
+  # For OpenShift router/console access (ports 80/443)
+  # From Internet (or your source IPs) → default-v4 public IP on worker load balancer ports 80/443
+  
+  # See cluster's default NSG (in managed RG) for reference
+  az network nsg show -g ${INFRA_RG} -n <default-nsg-name>
+  ```
+
+- [ ] **Examine default NSG for reference:**
+  
+  ```bash
+  # View default NSG rules (created but not attached)
+  az network nsg rule list \
+    --resource-group ${INFRA_RG} \
+    --nsg-name <default-nsg-name> \
+    -o table
+  
+  # Use these as a template for your preconfigured NSG
+  ```
+
+- [ ] **Example: Add rule for LoadBalancer service:**
+  
+  When you create a Kubernetes LoadBalancer service, you MUST manually add NSG rule:
+  
+  ```bash
+  # Get service's public IP
+  oc get svc <service-name> -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+  
+  # Add INBOUND rule to worker NSG
+  az network nsg rule create \
+    --resource-group <vnet-rg> \
+    --nsg-name <worker-nsg-name> \
+    --name AllowServicePort \
+    --priority <priority> \
+    --source-address-prefixes Internet \
+    --destination-port-ranges <service-port> \
+    --protocol Tcp \
+    --access Allow \
+    --direction Inbound
+  ```
+
+**Important NSG Rule Guidelines:**
+
+See [OpenShift Network Flows](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/installation_configuration/configuring-firewall#network-flow-matrix-common_configuring-firewall) for complete port requirements.
+
+**AVOID these DENY rules** (will break cluster):
+- Master Subnet ↔ Master Subnet
+- Worker Subnet ↔ Worker Subnet  
+- Master Subnet ↔ Worker Subnet
+
+##### Step 6: Enable NSG Flow Logs (Recommended)
+
+NSG flow logs are critical for troubleshooting BYO NSG configurations.
+
+⚠️ **Important:** Use [NSG Flow Logs for Network Security Groups](https://learn.microsoft.com/en-us/azure/network-watcher/nsg-flow-logs-overview) documentation (not generic flow log docs).
+
+- [ ] **Enable flow logs:**
+  ```bash
+  # Create storage account
   az storage account create \
-    --name ${CLUSTER_NAME}nsgflowlogs \
+    --name <storage-name> \
     --resource-group <vnet-rg> \
-    --location <location> \
-    --sku Standard_LRS \
-    --kind StorageV2
-  ```
-
-- [ ] **Enable Flow Logs for Master NSG:**
-  ```bash
-  az network watcher flow-log create \
-    --location <location> \
-    --name ${CLUSTER_NAME}-master-flow-log \
-    --nsg ${CLUSTER_NAME}-master-nsg \
-    --resource-group <vnet-rg> \
-    --storage-account ${CLUSTER_NAME}nsgflowlogs \
-    --enabled true \
-    --retention 7 \
-    --format JSON \
-    --log-version 2
-  ```
-
-- [ ] **Enable Flow Logs for Worker NSG:**
-  ```bash
-  az network watcher flow-log create \
-    --location <location> \
-    --name ${CLUSTER_NAME}-worker-flow-log \
-    --nsg ${CLUSTER_NAME}-worker-nsg \
-    --resource-group <vnet-rg> \
-    --storage-account ${CLUSTER_NAME}nsgflowlogs \
-    --enabled true \
-    --retention 7 \
-    --format JSON \
-    --log-version 2
-  ```
-
-- [ ] **Enable Traffic Analytics (Optional):**
-  ```bash
-  # Create Log Analytics workspace
-  az monitor log-analytics workspace create \
-    --resource-group <vnet-rg> \
-    --workspace-name ${CLUSTER_NAME}-nsg-analytics \
-    --location <location>
+    --sku Standard_LRS
   
-  # Enable Traffic Analytics on flow logs
-  az network watcher flow-log update \
+  # Enable flow logs for master NSG
+  az network watcher flow-log create \
     --location <location> \
-    --name ${CLUSTER_NAME}-master-flow-log \
-    --traffic-analytics true \
-    --workspace ${CLUSTER_NAME}-nsg-analytics
+    --name master-flow-log \
+    --nsg <master-nsg-name> \
+    --resource-group <vnet-rg> \
+    --storage-account <storage-name> \
+    --enabled true
+  
+  # Enable flow logs for worker NSG
+  az network watcher flow-log create \
+    --location <location> \
+    --name worker-flow-log \
+    --nsg <worker-nsg-name> \
+    --resource-group <vnet-rg> \
+    --storage-account <storage-name> \
+    --enabled true
   ```
+
+---
 
 ---
 
 ### BYO NSG Day 2 Operations
 
-#### Regular Auditing
+#### Manual NSG Updates for LoadBalancer Services and Routes
 
-- [ ] **Review NSG Flow Logs for Anomalies:**
+⚠️ **CRITICAL:** ARO does NOT automatically update your preconfigured NSGs when you create LoadBalancer services or OpenShift routes. You MUST update NSG rules manually.
+
+- [ ] **When creating LoadBalancer services:**
   ```bash
-  # List flow log blobs
-  az storage blob list \
-    --account-name ${CLUSTER_NAME}nsgflowlogs \
-    --container-name insights-logs-networksecuritygroupflowevent \
-    -o table
+  # 1. Create the service
+  oc expose deployment myapp --type=LoadBalancer --port=80
   
-  # Download recent flow log
-  az storage blob download \
-    --account-name ${CLUSTER_NAME}nsgflowlogs \
-    --container-name insights-logs-networksecuritygroupflowevent \
-    --name <blob-name> \
-    --file flowlog.json
+  # 2. Get the service's public IP
+  LB_IP=$(oc get svc myapp -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo "LoadBalancer IP: ${LB_IP}"
   
-  # Analyze denied flows
-  cat flowlog.json | jq '.records[] | select(.properties.flows[].flows[].flowTuples[] | contains("D"))'
+  # 3. Manually add NSG rule to allow traffic
+  az network nsg rule create \
+    --resource-group <vnet-rg> \
+    --nsg-name <worker-nsg-name> \
+    --name Allow-myapp-80 \
+    --priority <priority> \
+    --source-address-prefixes Internet \
+    --destination-address-prefixes ${LB_IP} \
+    --destination-port-ranges 80 \
+    --protocol Tcp \
+    --access Allow \
+    --direction Inbound
   ```
 
-- [ ] **Verify No Unauthorized Rule Changes:**
+- [ ] **Check default NSG for automatic updates:**
   ```bash
-  # Export current rules for comparison
+  # The default NSG (in managed RG) IS still automatically updated
+  # Use it as a reference for what rules you should add to your NSG
+  
+  INFRA_RG=$(az aro show -n <cluster> -g <rg> --query 'clusterProfile.resourceGroupId' -o tsv | cut -d'/' -f5)
+  
+  az network nsg rule list \
+    --resource-group ${INFRA_RG} \
+    --nsg-name <default-nsg> \
+    -o table
+  ```
+
+#### Monitor for Misconfigured Rules
+
+Azure Monitor can alert on misconfigured NSG rules that interfere with cluster operations.
+
+- [ ] **Check for NSG configuration signals:**
+  ```bash
+  # Review Azure Monitor alerts for the cluster
+  # Misconfigured rules trigger signals to help troubleshoot
+  ```
+
+- [ ] **Review NSG Flow Logs for denied traffic:**
+  ```bash
+  # Analyze flow logs for denied flows
+  # Look for traffic that should be allowed but is being denied
+  ```
+
+#### Regular Maintenance
+
+- [ ] **Verify no DENY rules blocking cluster traffic:**
+  ```bash
+  # Check for prohibited DENY rules
   az network nsg rule list \
     --resource-group <vnet-rg> \
     --nsg-name ${CLUSTER_NAME}-master-nsg \
@@ -3251,59 +2687,55 @@ Use BYO NSG only when:
 
 ⚠️ **ALWAYS:**
 - Test rule changes in non-production environment first
-- Maintain identity permissions on NSGs (managed identities: ARO built-in roles; service principals: Network Contributor)
-- Keep NSG flow logs enabled for troubleshooting
-- Document all custom rules and their purpose
-- Verify changes don't break cluster operations before applying to production
-
-#### Change Management Process
-
-- [ ] **Implement Approval Process:**
-  1. Submit change request with justification
-  2. Document expected impact
-  3. Create rollback procedure
-  4. Test in non-production
-  5. Get approval from team lead
-  6. Apply during approved change window
-  7. Monitor for issues
-  8. Update documentation
-
-- [ ] **Maintain Change Log:**
+    --nsg-name <master-nsg-name> \
+    --query "[?access=='Deny']" \
+    -o table
+  
+  # Look for DENY rules blocking master↔master, worker↔worker, master↔worker
   ```
-  | Date | Rule Name | Priority | Change Type | Requestor | Approver | Notes |
-  |------|-----------|----------|-------------|-----------|----------|-------|
-  | 2026-03-01 | AllowApp8080 | 3001 | Add | user1 | lead1 | New app requirement |
+
+- [ ] **Document all custom rules:**
+  - Maintain a change log for NSG rule modifications
+  - Document purpose and requester for each custom rule
+  - Keep NSG flow logs enabled for troubleshooting
+
+- [ ] **Optional: Switch NSGs:**
+  
+  You can detach your preconfigured NSG and attach a different NSG (or the default ARO NSG):
+  
+  ```bash
+  # Detach preconfigured NSG
+  az network vnet subnet update \
+    --resource-group <vnet-rg> \
+    --vnet-name <vnet-name> \
+    --name <worker-subnet-name> \
+    --network-security-group ""
+  
+  # Attach default ARO NSG (from managed resource group)
+  az network vnet subnet update \
+    --resource-group <vnet-rg> \
+    --vnet-name <vnet-name> \
+    --name <worker-subnet-name> \
+    --network-security-group ${INFRA_RG}/<default-nsg-name>
+  
+  # Cluster now behaves like a non-BYO NSG cluster
   ```
 
 ---
 
-### NSG Rule Reference Tables
+### NSG Rule Reference
 
-#### Master Subnet NSG Required Rules
+**For complete NSG rule requirements**, refer to:
+- The default NSG created in your cluster's managed resource group (use as template)
+- [OpenShift Network Flow Matrix](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/installation_configuration/configuring-firewall#network-flow-matrix-common_configuring-firewall)
+- [ARO BYO NSG Official Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-bring-nsg)
 
-| Priority | Name | Source | Destination Port | Protocol | Direction | Purpose |
-|----------|------|--------|------------------|----------|-----------|---------|
-| 500 | AllowAPIServerFromWorkers | Worker subnet | 6443 | TCP | Inbound | API server access |
-| 501 | AllowMCSFromWorkers | Worker subnet | 22623 | TCP | Inbound | Machine Config Server |
-| 502 | AllowEtcdBetweenMasters | Master subnet | 2379-2380 | TCP | Inbound | etcd cluster |
-| 503 | AllowKubeAPIBetweenMasters | Master subnet | 10250-10259 | TCP | Inbound | Kubernetes API |
-| 504 | AllowVXLANBetweenMasters | Master subnet | 4789 | UDP | Inbound | VXLAN overlay |
-| 505 | AllowGeneveBetweenMasters | Master subnet | 6081 | UDP | Inbound | Geneve overlay |
-| 506 | AllowAzureLoadBalancer | AzureLoadBalancer | * | * | Inbound | Health probes |
-| 100 | AllowAllOutbound | * | * | * | Outbound | Internet/Azure access |
-
-#### Worker Subnet NSG Required Rules
-
-| Priority | Name | Source | Destination Port | Protocol | Direction | Purpose |
-|----------|------|--------|------------------|----------|-----------|---------|
-| 500 | AllowHTTPS | Internet/VNet | 443 | TCP | Inbound | HTTPS ingress |
-| 501 | AllowHTTP | Internet/VNet | 80 | TCP | Inbound | HTTP ingress |
-| 502 | AllowAzureLoadBalancer | AzureLoadBalancer | * | * | Inbound | Health probes |
-| 503 | AllowFromMasters | Master subnet | * | * | Inbound | All master traffic |
-| 504 | AllowVXLANBetweenWorkers | Worker subnet | 4789 | UDP | Inbound | VXLAN overlay |
-| 505 | AllowGeneveBetweenWorkers | Worker subnet | 6081 | UDP | Inbound | Geneve overlay |
-| 506 | AllowKubeletBetweenWorkers | Worker subnet | 10250 | TCP | Inbound | Kubelet |
-| 100 | AllowAllOutbound | * | * | * | Outbound | Internet/Azure access |
+**Key requirements:**
+- Allow master ↔ master communication (all ports)
+- Allow worker ↔ worker communication (all ports)
+- Allow master ↔ worker communication (all ports)
+- Allow Azure Load Balancer health probes
+- For public clusters: Allow Internet → port 6443 (API) and ports 80/443 (router)
 
 ---
 
@@ -3332,289 +2764,7 @@ ARO clusters use TLS certificates for:
 
 cert-manager automates certificate issuance and renewal using various CA providers including Let's Encrypt, Azure Key Vault, and HashiCorp Vault.
 
-#### Install cert-manager Operator
-
-- [ ] **Deploy cert-manager from OperatorHub:**
-  ```bash
-  # Create namespace
-  oc create namespace cert-manager-operator
-  
-  # Create OperatorGroup
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1
-  kind: OperatorGroup
-  metadata:
-    name: cert-manager-operator
-    namespace: cert-manager-operator
-  spec:
-    targetNamespaces:
-    - cert-manager-operator
-  EOF
-  
-  # Create Subscription
-  cat <<EOF | oc apply -f -
-  apiVersion: operators.coreos.com/v1alpha1
-  kind: Subscription
-  metadata:
-    name: openshift-cert-manager-operator
-    namespace: cert-manager-operator
-  spec:
-    channel: stable-v1
-    name: openshift-cert-manager-operator
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    installPlanApproval: Automatic
-  EOF
-  ```
-
-- [ ] **Wait for Installation to Complete:**
-  ```bash
-  # Check operator status
-  oc get csv -n cert-manager-operator
-  
-  # Should see: PHASE = Succeeded
-  
-  # Verify cert-manager pods are running
-  oc get pods -n cert-manager
-  # Should see: cert-manager, cert-manager-cainjector, cert-manager-webhook
-  ```
-
-#### Configure Let's Encrypt Issuers
-
-- [ ] **Create Production Let's Encrypt ClusterIssuer:**
-  ```yaml
-  apiVersion: cert-manager.io/v1
-  kind: ClusterIssuer
-  metadata:
-    name: letsencrypt-prod
-  spec:
-    acme:
-      server: https://acme-v02.api.letsencrypt.org/directory
-      email: admin@example.com  # Change to your email
-      privateKeySecretRef:
-        name: letsencrypt-prod
-      solvers:
-      - http01:
-          ingress:
-            class: openshift-default
-  ```
-
-- [ ] **Create Staging Let's Encrypt ClusterIssuer (for testing):**
-  ```yaml
-  apiVersion: cert-manager.io/v1
-  kind: ClusterIssuer
-  metadata:
-    name: letsencrypt-staging
-  spec:
-    acme:
-      server: https://acme-staging-v02.api.letsencrypt.org/directory
-      email: admin@example.com  # Change to your email
-      privateKeySecretRef:
-        name: letsencrypt-staging
-      solvers:
-      - http01:
-          ingress:
-            class: openshift-default
-  ```
-
-- [ ] **Apply Issuers:**
-  ```bash
-  oc apply -f letsencrypt-prod-issuer.yaml
-  oc apply -f letsencrypt-staging-issuer.yaml
-  
-  # Verify issuers are ready
-  oc get clusterissuer
-  # Both should show: READY = True
-  ```
-
-#### Configure Azure DNS Issuer (for DNS-01 Challenge)
-
-Use DNS-01 challenge when:
-- API server is private (HTTP-01 won't work)
-- You need wildcard certificates
-- You control Azure DNS zone
-
-- [ ] **Create Managed Identity for DNS Updates:**
-  ```bash
-  # Create managed identity
-  az identity create \
-    --name ${CLUSTER_NAME}-cert-manager-dns \
-    --resource-group <rg>
-  
-  # Get identity details
-  IDENTITY_CLIENT_ID=$(az identity show \
-    --name ${CLUSTER_NAME}-cert-manager-dns \
-    --resource-group <rg> \
-    --query clientId -o tsv)
-  
-  IDENTITY_RESOURCE_ID=$(az identity show \
-    --name ${CLUSTER_NAME}-cert-manager-dns \
-    --resource-group <rg> \
-    --query id -o tsv)
-  ```
-
-- [ ] **Grant DNS Zone Contributor to Identity:**
-  ```bash
-  # Get DNS zone resource ID
-  DNS_ZONE_ID=$(az network dns zone show \
-    --name <domain.com> \
-    --resource-group <dns-rg> \
-    --query id -o tsv)
-  
-  # Assign DNS Zone Contributor role
-  az role assignment create \
-    --assignee ${IDENTITY_CLIENT_ID} \
-    --role "DNS Zone Contributor" \
-    --scope ${DNS_ZONE_ID}
-  ```
-
-- [ ] **Create Azure DNS ClusterIssuer:**
-  ```yaml
-  apiVersion: cert-manager.io/v1
-  kind: ClusterIssuer
-  metadata:
-    name: letsencrypt-dns
-  spec:
-    acme:
-      server: https://acme-v02.api.letsencrypt.org/directory
-      email: admin@example.com
-      privateKeySecretRef:
-        name: letsencrypt-dns
-      solvers:
-      - dns01:
-          azureDNS:
-            subscriptionID: <subscription-id>
-            resourceGroupName: <dns-zone-rg>
-            hostedZoneName: <domain.com>
-            managedIdentity:
-              clientID: <identity-client-id>
-            # For ROSA or if using service principal:
-            # clientID: <sp-app-id>
-            # clientSecretSecretRef:
-            #   name: azuredns-credentials
-            #   key: client-secret
-            # tenantID: <tenant-id>
-  ```
-
-#### Issue Certificates for API Server
-
-- [ ] **Create Certificate for API Server:**
-  ```yaml
-  apiVersion: cert-manager.io/v1
-  kind: Certificate
-  metadata:
-    name: api-server-cert
-    namespace: openshift-config
-  spec:
-    secretName: api-server-tls
-    duration: 2160h  # 90 days
-    renewBefore: 360h  # Renew 15 days before expiry
-    subject:
-      organizations:
-      - Example Organization
-    commonName: api.<cluster-domain>.com
-    dnsNames:
-    - api.<cluster-domain>.com
-    issuerRef:
-      name: letsencrypt-prod  # or letsencrypt-dns for private clusters
-      kind: ClusterIssuer
-      group: cert-manager.io
-  ```
-
-- [ ] **Apply API Server Certificate:**
-  ```bash
-  oc apply -f api-server-cert.yaml
-  
-  # Wait for certificate to be issued
-  oc get certificate -n openshift-config
-  # STATUS should be "True"
-  
-  # Verify secret was created
-  oc get secret api-server-tls -n openshift-config
-  ```
-
-- [ ] **Update API Server to Use Certificate:**
-  ```bash
-  oc patch apiserver cluster \
-    --type=merge \
-    --patch='{"spec":{"servingCerts":{"namedCertificates":[{"names":["api.<cluster-domain>.com"],"servingCertificate":{"name":"api-server-tls"}}]}}}'
-  
-  # Verify configuration
-  oc get apiserver cluster -o yaml
-  ```
-
-#### Issue Certificates for Ingress Controller
-
-- [ ] **Create Wildcard Certificate for Ingress:**
-  ```yaml
-  apiVersion: cert-manager.io/v1
-  kind: Certificate
-  metadata:
-    name: ingress-wildcard-cert
-    namespace: openshift-ingress
-  spec:
-    secretName: ingress-tls
-    duration: 2160h  # 90 days
-    renewBefore: 360h  # Renew 15 days before expiry
-    subject:
-      organizations:
-      - Example Organization
-    commonName: "*.apps.<cluster-domain>.com"
-    dnsNames:
-    - "*.apps.<cluster-domain>.com"
-    issuerRef:
-      name: letsencrypt-prod  # or letsencrypt-dns for wildcard
-      kind: ClusterIssuer
-      group: cert-manager.io
-  ```
-  
-  **Note:** Wildcard certificates require DNS-01 challenge. Use `letsencrypt-dns` issuer.
-
-- [ ] **Apply Ingress Certificate:**
-  ```bash
-  oc apply -f ingress-wildcard-cert.yaml
-  
-  # Wait for certificate
-  oc get certificate -n openshift-ingress
-  
-  # Verify secret
-  oc get secret ingress-tls -n openshift-ingress
-  ```
-
-- [ ] **Update Ingress Controller to Use Certificate:**
-  ```bash
-  oc patch ingresscontroller default \
-    -n openshift-ingress-operator \
-    --type=merge \
-    --patch='{"spec":{"defaultCertificate":{"name":"ingress-tls"}}}'
-  
-  # Verify ingress controller picked up the certificate
-  oc get ingresscontroller default -n openshift-ingress-operator -o yaml
-  ```
-
-#### Automated Certificate for Routes
-
-- [ ] **Annotate Routes for Automatic Certificate Issuance:**
-  ```yaml
-  apiVersion: route.openshift.io/v1
-  kind: Route
-  metadata:
-    name: myapp
-    namespace: production
-    annotations:
-      cert-manager.io/issuer: letsencrypt-prod
-      cert-manager.io/issuer-kind: ClusterIssuer
-  spec:
-    host: myapp.apps.<cluster-domain>.com
-    to:
-      kind: Service
-      name: myapp
-      port:
-        targetPort: 8080
-    tls:
-      termination: edge
-      insecureEdgeTerminationPolicy: Redirect
-  ```
+[End to End Guide](https://cloud.redhat.com/experts/aro/cert-manager/)
   
   cert-manager will automatically:
   1. Create a Certificate resource
@@ -3686,30 +2836,7 @@ Use DNS-01 challenge when:
 For simple deployments or when using a corporate CA.
 
 #### API Server Certificate
-
-- [ ] **Obtain Certificate from CA:**
-  - CN (Common Name): `api.<cluster-domain>.com`
-  - SAN (Subject Alternative Names): `api.<cluster-domain>.com`
-  - Valid for at least 90 days
-
-- [ ] **Create Secret in openshift-config:**
-  ```bash
-  oc create secret tls api-cert \
-    --cert=api-cert.pem \
-    --key=api-key.pem \
-    -n openshift-config
-  ```
-
-- [ ] **Patch API Server:**
-  ```bash
-  oc patch apiserver cluster \
-    --type=merge \
-    --patch='{"spec":{"servingCerts":{"namedCertificates":[{"names":["api.<cluster-domain>.com"],"servingCertificate":{"name":"api-cert"}}]}}}'
-  ```
-
-- [ ] **Set Renewal Reminder:**
-  - Add calendar reminder for 30 days before expiry
-  - Document renewal procedure
+This is managed by the ARO service. To request an update to Azure Red Hat OpenShift cluster certificates follow this [Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-update-certificates)
 
 #### Ingress Controller Certificate
 
@@ -3727,17 +2854,18 @@ For simple deployments or when using a corporate CA.
 
 - [ ] **Patch Ingress Controller:**
   ```bash
-  oc patch ingresscontroller default \
+  oc patch ingresscontroller <ingress name> \
     -n openshift-ingress-operator \
     --type=merge \
     --patch='{"spec":{"defaultCertificate":{"name":"apps-cert"}}}'
   ```
 
+*Note: the default IngressController is managed by the ARO service. To request an update to Azure Red Hat OpenShift cluster certificates follow this [Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-update-certificates)
 ---
 
 ## Appendix C: Troubleshooting Guide
 
-Comprehensive troubleshooting for common ARO issues.
+Comprehensive troubleshooting for common ARO issues.  ARO is a managed service, you can always open a support case.  [Open a support case with Red Hat](https://support.redhat.com/)
 
 ### NSG Troubleshooting
 
@@ -3862,33 +2990,6 @@ oc delete pods -n openshift-<operator-namespace> --all
 # Check cluster version for upgrade issues
 oc get clusterversion
 oc describe clusterversion
-```
-
-#### Issue: ARO Operator Issues
-
-**Symptoms:**
-- `oc get pods -n openshift-azure-operator` shows failing pods
-- ARO-specific functionality not working
-- Cluster unable to scale or perform Azure operations
-
-**Resolution:**
-```bash
-# Check ARO operator pods
-oc get pods -n openshift-azure-operator
-
-# Check ARO operator logs
-oc logs -n openshift-azure-operator deployment/aro-operator-master
-oc logs -n openshift-azure-operator deployment/aro-operator-worker
-
-# Check for identity/permission issues
-# Verify managed identities have correct roles
-az role assignment list --assignee <identity-principal-id>
-
-# Check ARO cluster status in Azure
-az aro show -n ${CLUSTER_NAME} -g ${RESOURCE_GROUP} --query provisioningState
-
-# Restart ARO operator if needed
-oc delete pods -n openshift-azure-operator --all
 ```
 
 ---
@@ -4017,34 +3118,9 @@ oc describe node <node-name>
 
 # Check node conditions (Ready, MemoryPressure, DiskPressure, PIDPressure)
 oc get node <node-name> -o jsonpath='{.status.conditions[*].type}{"\n"}{.status.conditions[*].status}'
-
-# SSH to node (via debug pod)
-oc debug node/<node-name>
-
-# In debug pod, check:
-# - Kubelet status
-chroot /host
-systemctl status kubelet
-journalctl -u kubelet -n 100
-
-# - Network connectivity
-ping 8.8.8.8
-nslookup api.<cluster-domain>
-
-# - Disk space
-df -h
-
-# - Memory
-free -h
-
-# Cordon and drain node if needed
-oc adm cordon <node-name>
-oc adm drain <node-name> --ignore-daemonsets --delete-emptydir-data
-
-# Delete node and machine to trigger replacement
-oc delete node <node-name>
-oc delete machine <machine-name> -n openshift-machine-api
 ```
+
+ ARO is a managed service, you can always open a support case.  [Open a support case with Red Hat](https://support.redhat.com/)
 
 ---
 
@@ -4133,29 +3209,8 @@ dig @8.8.8.8 google.com
 - Applications experiencing slow Kubernetes API calls
 
 **Resolution:**
-```bash
-# Check API server pods
-oc get pods -n openshift-kube-apiserver
 
-# Check API server logs for errors
-oc logs -n openshift-kube-apiserver <kube-apiserver-pod> | grep -i error
-
-# Check etcd health
-oc get pods -n openshift-etcd
-oc exec -n openshift-etcd <etcd-pod> -- etcdctl endpoint health
-
-# Check control plane node load
-oc adm top nodes | grep master
-
-# Check for high number of objects
-oc get all -A --no-headers | wc -l
-
-# Check for resource contention on control plane
-oc describe node <master-node>
-
-# Review metrics in Prometheus
-# Query: apiserver_request_duration_seconds_bucket
-```
+ARO is a managed service, you can always open a support case.  [Open a support case with Red Hat](https://support.redhat.com/)
 
 #### Issue: High Worker Node CPU/Memory
 
@@ -4189,6 +3244,8 @@ oc scale machineset <machineset> -n openshift-machine-api --replicas=<number>
 ---
 
 ### General Troubleshooting Commands
+
+ARO is a managed service, you can always open a support case.  [Open a support case with Red Hat](https://support.redhat.com/)
 
 ```bash
 # Cluster health overview
@@ -4301,13 +3358,9 @@ ARO clusters require outbound connectivity to the following endpoints:
 
 ### Supported Azure VM Sizes for ARO
 
-#### Master Nodes (Control Plane)
+**See:** https://docs.microsoft.com/azure/openshift/support-policies-v4#supported-virtual-machine-sizes
 
-| VM Size | vCPU | RAM | Temp Storage | Use Case |
-|---------|------|-----|--------------|----------|
-| **Standard_D8s_v5** | 8 | 32 GB | Remote | Minimum supported |
-| **Standard_D16s_v5** | 16 | 64 GB | Remote | Recommended for production |
-| **Standard_D32s_v5** | 32 | 128 GB | Remote | Large clusters (100+ nodes) |
+#### Master Nodes (Control Plane)
 
 **Requirements:**
 - Minimum 8 vCPU, 32 GB RAM
@@ -4315,39 +3368,7 @@ ARO clusters require outbound connectivity to the following endpoints:
 - Always 3 master nodes (cannot be changed)
 
 #### Worker Nodes (Compute)
-
-**General Purpose:**
-| VM Size | vCPU | RAM | Temp Storage | Use Case |
-|---------|------|-----|--------------|----------|
-| Standard_D2s_v3 | 2 | 8 GB | Remote | Development (not for production) |
-| **Standard_D4s_v5** | 4 | 16 GB | Remote | General workloads (recommended minimum) |
-| Standard_D8s_v5 | 8 | 32 GB | Remote | Standard production workloads |
-| Standard_D16s_v5 | 16 | 64 GB | Remote | Larger workloads |
-| Standard_D32s_v5 | 32 | 128 GB | Remote | Large workloads |
-
-**Compute Optimized:**
-| VM Size | vCPU | RAM | Use Case |
-|---------|------|-----|----------|
-| Standard_F4s_v2 | 4 | 8 GB | CPU-intensive workloads |
-| Standard_F8s_v2 | 8 | 16 GB | Batch processing, analytics |
-| Standard_F16s_v2 | 16 | 32 GB | High-performance compute |
-
-**Memory Optimized:**
-| VM Size | vCPU | RAM | Use Case |
-|---------|------|-----|----------|
-| Standard_E4s_v5 | 4 | 32 GB | Memory-intensive applications |
-| Standard_E8s_v5 | 8 | 64 GB | In-memory databases, caches |
-| Standard_E16s_v5 | 16 | 128 GB | Large in-memory workloads |
-
-**GPU Workloads:**
-| VM Size | GPU | vCPU | RAM | Use Case |
-|---------|-----|------|-----|----------|
-| Standard_NC6s_v3 | 1x V100 | 6 | 112 GB | ML training, inference |
-| Standard_NC12s_v3 | 2x V100 | 12 | 224 GB | Multi-GPU ML workloads |
-| Standard_NC24s_v3 | 4x V100 | 24 | 448 GB | Large-scale ML training |
-| Standard_ND40rs_v2 | 8x V100 | 40 | 672 GB | Distributed ML training |
-
-**See:** https://docs.microsoft.com/azure/openshift/support-policies-v4#supported-virtual-machine-sizes
+- Minimum of 3
 
 ---
 
@@ -4364,34 +3385,7 @@ az aro get-versions --location <location>
 - Regular updates released monthly
 - End-of-life versions deprecated with advance notice
 
-**Check lifecycle:** https://access.redhat.com/support/policy/updates/openshift
-
----
-
-### Common Azure Service Tags for NSG Rules
-
-| Service Tag | Purpose |
-|-------------|---------|
-| **AzureLoadBalancer** | Azure Load Balancer health probes (REQUIRED) |
-| **AzureCloud** | All Azure public IP addresses |
-| **AzureCloud.<region>** | Azure IPs for specific region |
-| **VirtualNetwork** | VNet address space and connected networks |
-| **Internet** | Public internet |
-| **Storage** | Azure Storage service |
-| **Storage.<region>** | Azure Storage for specific region |
-| **Sql** | Azure SQL Database |
-| **AzureContainerRegistry** | Azure Container Registry |
-| **AzureFrontDoor.Backend** | Azure Front Door backend IPs |
-| **AzureKeyVault** | Azure Key Vault |
-| **AzureMonitor** | Azure Monitor |
-
-**Usage Example:**
-```bash
-az network nsg rule create \
-  --source-address-prefixes AzureLoadBalancer \
-  --destination-port-ranges '*' \
-  --access Allow
-```
+**Check lifecycle:** https://learn.microsoft.com/en-us/azure/openshift/support-lifecycle
 
 ---
 
@@ -4440,7 +3434,3 @@ az network nsg rule create \
 
 ---
 
-**End of Azure Red Hat OpenShift Operations Guide v2.0**
-
-*Last Updated: 2026-03-26*  
-*Authors: Kevin Collins, Kumudu Herath*
