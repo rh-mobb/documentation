@@ -41,159 +41,152 @@ A second, and preferred method, is to attach an ECR Policy to your cluster's wor
 
 ROSA worker nodes are provisioned with predefined IAM roles ( ManagedOpenShift-HCP-ROSA-Worker-Role for ROSA HCP and ManagedOpenShift-Worker-Role for ROSA Classic) which can be updated with an Amazon ECR policy to allow the cluster to pull images from your registries.
 
-> Note: If you used a different prefix for your Account Roles, you will need to change the following environment variable (CLASSIC_WORKER_ROLE, HCP_WORKER_ROLE).
-
 ## Configure ECR with ROSA
 
 1. Set ENV variables
 
-```
-export REGION="us-east-1"
-export REPO_NAME="hello-ecr"
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export REPO_ARN="arn:aws:ecr:${REGION}:${ACCOUNT_ID}:repository/${REPO_NAME}"
-export SCRATCH_DIR=~/tmp/rosa-ecr
-mkdir -p $SCRATCH_DIR
-    
-CLASSIC_WORKER_ROLE="ManagedOpenShift-Worker-Role"
-HCP_WORKER_ROLE="ManagedOpenShift-HCP-ROSA-Worker-Role"
-```
+    ```
+    export REGION="us-east-1"
+    export REPO_NAME="hello-ecr"
+    export CLUSTER_NAME="my-cluster"
+    export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    export REPO_ARN="arn:aws:ecr:${REGION}:${ACCOUNT_ID}:repository/${REPO_NAME}"
+    export SCRATCH_DIR=~/tmp/rosa-ecr
+    mkdir -p $SCRATCH_DIR
+        
+    export WORKER_ROLE=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.aws.sts.role_arn | split("/")[-1]')
+    echo $WORKER_ROLE
+    ```
    
 2. Create an ECR repository
 
-```
-aws ecr create-repository \
-    --repository-name $REPO_NAME \
-    --image-scanning-configuration scanOnPush=true \
-    --region $REGION
-```
+    ```
+    aws ecr create-repository \
+        --repository-name $REPO_NAME \
+        --image-scanning-configuration scanOnPush=true \
+        --region $REGION
+    ```
 
 3. Create the IAM policy with ECR permissions.
 
-```
-cat <<EOF > $SCRATCH_DIR/rosa-ecr-read-policy.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "ECRAuth",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:GetAuthorizationToken"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "ECRScopedRead",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:GetRepositoryPolicy",
-                "ecr:DescribeRepositories",
-                "ecr:ListImages",
-                "ecr:DescribeImages",
-                "ecr:BatchGetImage",
-                "ecr:GetLifecyclePolicy",
-                "ecr:GetLifecyclePolicyPreview",
-                "ecr:ListTagsForResource",
-                "ecr:DescribeImageScanFindings"
-            ],
-            "Resource": "$REPO_ARN"
-        }
-    ]
-}
-EOF
-```
+    ```
+    cat <<EOF > $SCRATCH_DIR/rosa-ecr-read-policy.json
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "ECRAuth",
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:GetAuthorizationToken"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Sid": "ECRScopedRead",
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:GetRepositoryPolicy",
+                    "ecr:DescribeRepositories",
+                    "ecr:ListImages",
+                    "ecr:DescribeImages",
+                    "ecr:BatchGetImage",
+                    "ecr:GetLifecyclePolicy",
+                    "ecr:GetLifecyclePolicyPreview",
+                    "ecr:ListTagsForResource",
+                    "ecr:DescribeImageScanFindings"
+                ],
+                "Resource": "$REPO_ARN"
+            }
+        ]
+    }
+    EOF
+    ```
 
 4. Create the Customer Managed Policy
  
- ```
- POLICY_ARN=$(aws iam create-policy \
-        --policy-name ROSA-ECR-Scoped-Read-Policy \
-        --policy-document file://$SCRATCH_DIR/rosa-ecr-read-policy.json \
-        --query 'Policy.Arn' --output text)
- ```
+     ```
+     POLICY_ARN=$(aws iam create-policy \
+            --policy-name ROSA-ECR-Scoped-Read-Policy \
+            --policy-document file://$SCRATCH_DIR/rosa-ecr-read-policy.json \
+            --query 'Policy.Arn' --output text)
+     ```
 
 5. Attach policy to the worker IAM role. 
 
-#### For ROSA Classic:
-
-```
-aws iam attach-role-policy \
-  --role-name $CLASSIC_WORKER_ROLE \
-  --policy-arn $POLICY_ARN
-```
-#### For ROSA HCP
-
-```
-aws iam attach-role-policy \
-  --role-name $HCP_WORKER_ROLE \
-  --policy-arn $POLICY_ARN
-```
+    ```
+    aws iam attach-role-policy \
+      --role-name $WORKER_ROLE \
+      --policy-arn $POLICY_ARN
+    ```
+    
 6. Log into ECR  
 
-```
-podman login -u AWS -p $(aws ecr get-login-password --region $REGION) $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
-```
+    ```
+    podman login -u AWS -p $(aws ecr get-login-password --region $REGION) $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+    ```
 
 7. Pull an image  
 
-```
-podman pull openshift/hello-openshift
-```
+    ```
+    podman pull openshift/hello-openshift
+    ```
 
 8. Tag the image for ecr  
 
-```
-podman tag openshift/hello-openshift:latest $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
-```
+    ```
+    podman tag openshift/hello-openshift:latest $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
+    ```
 
 9. Push the image to ECR  
 
-```
-podman push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
-```
+    ```
+    podman push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
+    ```
 
 10. Create a new project  
 
-```
-oc new-project hello-ecr
-```
+    ```
+    oc new-project hello-ecr
+    ```
 
 11. Create a new app using the image on ECR  
 
-```
-oc new-app --name hello-ecr --allow-missing-images \
-     --image $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
-```
+    ```
+    oc new-app --name hello-ecr --allow-missing-images \
+         --image $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
+    ```
 
 12. View a list of pods in the namespace you created:
+        
+    ```
+    oc get pods
+    ```
+
+    Expected output:
     
-```
-oc get pods
-```
-
-   Expected output:
-
-   If you see the hello-ecr pod running ... congratulations!  You can now pull images from your ECR repository.
+     If you see the hello-ecr pod running ... congratulations!  You can now pull images from your ECR repository.
 
 ## Clean up    
 
 1. Simply delete the project you created to test pulling images:
-```
-oc delete project hello-ecr
-```
 
-2. Detach and delete the IAM policy
-```
-aws iam detach-role-policy --role-name $CLASSIC_WORKER_ROLE --policy-arn $POLICY_ARN
-aws iam detach-role-policy --role-name $HCP_WORKER_ROLE --policy-arn $POLICY_ARN
-aws iam delete-policy --policy-arn $POLICY_ARN
-```
+   ```
+    oc delete project hello-ecr
+    ```
 
-Remove local files and ECR repository
-```
-rm -rf $SCRATCH_DIR
-aws ecr delete-repository --repository-name $REPO_NAME --force
-```
+3. Detach and delete the IAM policy
+
+    ```
+    aws iam detach-role-policy --role-name $WORKER_ROLE --policy-arn $POLICY_ARN
+    aws iam delete-policy --policy-arn $POLICY_ARN
+    ```
+
+4. Remove local files and ECR repository
+
+    ```
+    rm -rf $SCRATCH_DIR
+    aws ecr delete-repository --repository-name $REPO_NAME --force
+    ```
