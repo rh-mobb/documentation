@@ -4,6 +4,7 @@ title: Backup and Restore for Azure Red Hat OpenShift using OpenShift API for Da
 tags: ["ARO", "OADP"]
 authors:
   - Nerav Doshi
+validated_version: "4.20" 
 ---
 
 This guide outlines how to implement OpenShift API for Data Protection (OADP) for comprehensive backup and recovery for Azure Red Hat OpenShift (ARO) clusters using a storage account.
