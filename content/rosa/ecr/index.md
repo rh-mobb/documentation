@@ -54,7 +54,7 @@ ROSA worker nodes are provisioned with predefined IAM roles ( ManagedOpenShift-H
     export SCRATCH_DIR=~/tmp/rosa-ecr
     mkdir -p $SCRATCH_DIR
         
-    export WORKER_ROLE=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.aws.sts.role_arn | split("/")[-1]')
+    export WORKER_ROLE=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.aws.sts.instance_iam_roles.worker_role_arn | split("/")[-1]')
     echo $WORKER_ROLE
     ```
    
