@@ -320,6 +320,7 @@ Proper planning is essential for a successful ARO deployment. This section cover
 - Follows principle of least privilege with operator-specific roles
 
 **Architecture:**
+<br>
 <img src="miwi-architecture.png" alt="Authentication Flow for SREs" style="max-width: 800px; width: 100%;" />
 
 
