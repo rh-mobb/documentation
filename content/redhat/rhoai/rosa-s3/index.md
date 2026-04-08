@@ -273,7 +273,6 @@ To verify that, open the S3 bucket in the AWS console and confirm that the `mode
 <br />
 
 ![s3-bucket-v1](images/s3-bucket-v1.png)
-
 <br />
 
 That confirms the end-to-end workflow from OpenShift AI workbench to Amazon S3.
