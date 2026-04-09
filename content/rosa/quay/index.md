@@ -81,11 +81,11 @@ Set **`QUAY_AWS_TAGS_JSON`** to a **JSON array** of `{"Key":"…","Value":"…"}
 
 ```bash
 export QUAY_AWS_TAGS_JSON='[
-  {"Key":"cost-center","Value":"CC468"},
-  {"Key":"owner","Value":"kherath@redhat.com"}
+  {"Key":"cost-center","Value":"YOUR-COST-CENTER"},
+  {"Key":"owner","Value":"you@example.com"}
 ]'
 
-# Optional: compact / validate JSON (helpers below read this variable)
+# Replace with your organization's tag keys and values. Optional: compact / validate JSON (helpers below read this variable)
 export QUAY_AWS_TAGS_JSON="$(echo "${QUAY_AWS_TAGS_JSON}" | jq -c .)"
 
 echo "QUAY_AWS_TAGS_JSON=${QUAY_AWS_TAGS_JSON}"
@@ -95,7 +95,7 @@ echo "QUAY_AWS_TAGS_JSON=${QUAY_AWS_TAGS_JSON}"
 
 ### 1.3 Tag helper functions
 
-Define helpers once (same shell session as **§2**–**§5**). They read **`QUAY_AWS_TAGS_JSON`** from **§1.2**.
+Define helpers once in the same shell session you use for **§2** through **§5**. They read **`QUAY_AWS_TAGS_JSON`** from **§1.2**.
 
 ```bash
 quay_aws_tags_to_cli_pairs() {
@@ -118,11 +118,11 @@ export QUAY_AWS_S3_TAGGING_JSON=$(quay_aws_s3_tagging_body)
 
 **Usage pattern**
 
-* **EC2 `create-tags`:** load pairs into an array, then pass **`--tags "${ARRAY[@]}"`**:
+* **EC2 `create-tags`:** load pairs into an array, then pass **`--tags "${ARRAY[@]}"`**. For example, after **§3.1** creates the database VPC, **`VPC_DB`** is set and you can run:
 
   ```bash
   load_quay_aws_tag_pairs
-  aws ec2 create-tags --resources "${RESOURCE_ID}" --region "${AWS_REGION}" --tags "${_QUAY_AWS_TAG_PAIRS[@]}"
+  aws ec2 create-tags --resources "${VPC_DB}" --region "${AWS_REGION}" --tags "${_QUAY_AWS_TAG_PAIRS[@]}"
   ```
 
 * **RDS / ElastiCache / IAM:** append **`--tags "${_QUAY_AWS_TAG_PAIRS[@]}"`** to **`create-db-subnet-group`**, **`create-db-instance`**, **`create-cache-subnet-group`**, **`create-cache-cluster`**, **`create-policy`**, and **`create-role`** (see **§2**, **§3**, **§5**).
