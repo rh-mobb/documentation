@@ -1020,7 +1020,7 @@ For detailed CLI deployment steps with all parameters and options, see:
 # Private cluster with managed identity (production)
 az aro create \
   --resource-group <rg> \
-  --location <AZURE-LOCATION> \
+  --location <Azure-location> \
   --name <cluster-name> \
   --vnet <vnet-name> \
   --master-subnet <master-subnet> \
@@ -1118,7 +1118,7 @@ oc get clusterversion
   # Only use if managed identity is not an option
   az aro create \
     --resource-group ${RESOURCE_GROUP} \
-    --location <AZURE-LOCATION> \
+    --location <Azure-location> \
     --name ${CLUSTER_NAME} \
     --vnet ${VNET_NAME} \
     --vnet-resource-group ${VNET_RG} \
@@ -1337,7 +1337,7 @@ Create a fully private ARO cluster with **NO public IP address** using User-Defi
   ```bash
   az aro create \
     --resource-group ${RESOURCE_GROUP} \
-    --location <AZURE-LOCATION> \
+    --location <Azure-location> \
     --name ${CLUSTER_NAME} \
     --vnet <vnet-name> \
     --master-subnet <master-subnet-name> \
@@ -1469,7 +1469,7 @@ Encrypt ARO cluster disks (OS and data) with your own encryption keys stored in 
   ```bash
   az aro create \
     --resource-group ${RESOURCE_GROUP} \
-    --location <AZURE-LOCATION> \
+    --location <Azure-location> \
     --name ${CLUSTER_NAME} \
     --vnet <vnet-name> \
     --master-subnet <master-subnet> \
@@ -1588,7 +1588,7 @@ These operations are essential for a production-ready ARO cluster.
 - [ ] **Install OADP Operator** - Deploy OpenShift API for Data Protection from OperatorHub
 - [ ] **Configure Azure Blob Storage** - Create storage account and container for backup storage
 - [ ] **Create DataProtectionApplication** - Configure Velero with Azure provider and backup locations
-- [ ] **Create backup schedules** - Define regular backup schedules for etcd, PVs, and cluster resources
+- [ ] **Create backup schedules** - Define regular backup schedules for PVs, and cluster resources
 - [ ] **Test restore procedures** - Validate backup/restore process in non-production environment
 
 **Backup guides:**
@@ -1597,25 +1597,6 @@ These operations are essential for a production-ready ARO cluster.
 - [ARO Disaster Recovery Planning](https://cloud.redhat.com/experts/aro/disaster-recovery/)
 
 #### Backup Schedules
-
-- [ ] **Create etcd Backup Schedule**
-  ```yaml
-  apiVersion: velero.io/v1
-  kind: Schedule
-  metadata:
-    name: etcd-backup
-    namespace: openshift-adp
-  spec:
-    schedule: "0 2 * * *"  # Daily at 2 AM
-    template:
-      includedNamespaces:
-      - openshift-etcd
-      includedResources:
-      - secrets
-      - configmaps
-      storageLocation: velero-1
-      ttl: 720h0m0s  # 30 days
-  ```
 
 - [ ] **Create Application Backup Schedule**
   ```yaml
@@ -1891,7 +1872,7 @@ Keep your ARO cluster up-to-date with the latest OpenShift features, security pa
 
 - [ ] **Verify cluster health** (`oc get clusteroperators`, `oc get nodes`)
 - [ ] **Check credentials** - Verify managed identity role assignments or SP expiration
-- [ ] **Backup critical data** - etcd, PVs, configurations (use OADP if configured)
+- [ ] **Backup critical data** - PVs, configurations (use OADP if configured)
 - [ ] **Review release notes** - Check for breaking changes and deprecated APIs
 
 #### Upgrade Methods
