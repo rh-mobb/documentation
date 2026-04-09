@@ -5,6 +5,8 @@ tags: ["ARO"]
 authors:
   - Paul Czarkowski
   - Kumudu Herath
+  - Nerav Doshi
+validated_version: "4.20"  
 ---
 
 By default Azure Red Hat OpenShift (ARO) stores metrics in Ephemeral volumes, and its advised that users do not change this setting. However its not unreasonable to expect that metrics should be persisted for a set amount of time.
@@ -30,7 +32,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     export NAMESPACE="aro-thanos-af"
     ```
 
-## Azure Preperation
+## Azure Preparation
 
 1. Create an Azure storage account
 
@@ -50,6 +52,15 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     ```bash
     AZR_STORAGE_KEY=$(az storage account keys list -g $AZR_RESOURCE_GROUP \
       -n $AZR_STORAGE_ACCOUNT_NAME --query "[0].value" -o tsv)
+    ```
+
+1. Create the Azure Blob container that Thanos will use to store metrics
+
+    ```bash
+    az storage container create \
+      --name $CLUSTER_NAME \
+      --account-name $AZR_STORAGE_ACCOUNT_NAME \
+      --account-key $AZR_STORAGE_KEY
     ```
 
 1. Create a namespace to use
@@ -82,7 +93,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
     ```bash
     oc rollout status -n $NAMESPACE \
-      deployment/grafana-operator-controller-manager
+      deployment/grafana-operator-controller-manager-v5
     ```
 
 1. Use Helm deploy the OpenShift Patch Operator
@@ -102,7 +113,9 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
 1. Deploy ARO Thanos Azure Blob container Helm Chart (mobb/aro-thanos-af)
 
-    **> Note: `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics. If you have customized them already, you may need to modify `patch-monitoring-configs.yaml` in the Helm chart to include your changes.
+    > **Note:** `enableUserWorkloadMetrics=true` will overwrite configs for cluster and userworkload metrics. If you have customized them already, you may need to modify `patch-monitoring-configs.yaml` in the Helm chart to include your changes.
+    >
+    > If your cluster version is not 4.17, add `--set "aro.clusterVersion=4.xx"` to the command below.
      
     ```bash
     helm upgrade -n $NAMESPACE aro-thanos-af \
@@ -116,13 +129,13 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 
 ## Validate Grafana is installed and seeing metrics from Azure Blob storage
 
-1. get the Route URL for Grafana (remember its https) and login using username `admin` and the password `password`.
+1. Get the Route URL for Grafana (remember its https) and login using username `admin` and the default password from the chart values (or the one you set via `--set "grafana-cr.basicAuthPassword=<your-password>"` during install).
 
     ```bash
-    oc -n $NAMESPACE get route grafana-route
+    oc get route -n $NAMESPACE
     ```
 
-1. Once logged in go to **Dashboards->Manage** and expand the **aro-thanos-af** group and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
+1. Once logged in go to **Dashboards** and expand the **aro-thanos-af** folder and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
 
     > **Note:   If it complains about a missing datasource run the following: `oc annotate -n $NAMESPACE grafanadatasource aro-thanos-af-prometheus "retry=1"`**
 
@@ -136,16 +149,23 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     helm delete -n $NAMESPACE aro-thanos-af
     ```
 
-1. Uninstall the `federated-metrics-operators` chart
+1. Uninstall the `grafana-operator` chart
 
     ```bash
-    helm delete -n $NAMESPACE federated-metrics-operators
+    helm delete -n $NAMESPACE grafana-operator
     ```
 
-1. Delete the `aro-thanos-af` namespace
+1. Uninstall the `patch-operator` chart
+
+    ```bash
+    helm delete -n patch-operator patch-operator
+    ```
+
+1. Delete the namespaces
 
     ```bash
     oc delete namespace $NAMESPACE
+    oc delete namespace patch-operator
     ```
 
 1. Delete the storage account
