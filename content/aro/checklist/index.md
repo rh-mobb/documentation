@@ -2287,6 +2287,7 @@ Managed Resource Group (ARO controls)
   # Create VNet
   az network vnet create \
     --resource-group <vnet-rg> \
+    --location <Azure-location> \
     --name <vnet-name> \
     --address-prefixes <vnet-cidr>
   
@@ -2383,6 +2384,7 @@ Managed Resource Group (ARO controls)
   ```bash
   az aro create \
     --resource-group <base-resource-group> \
+    --location <Azure-location> \
     --name <cluster-name> \
     --vnet <vnet-name> \
     --master-subnet <master-subnet-name> \
@@ -2480,6 +2482,7 @@ NSG flow logs are critical for troubleshooting BYO NSG configurations.
   az storage account create \
     --name <storage-name> \
     --resource-group <vnet-rg> \
+    --location <Azure-location> \
     --sku Standard_LRS
   
   # Enable flow logs for master NSG
