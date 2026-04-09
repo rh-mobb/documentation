@@ -816,7 +816,11 @@ ARO includes these storage classes by default:
   # Apply tags during cluster creation
   az aro create ... --tags "Environment=Production" "CostCenter=IT" "Owner=platform-team"
   ```
+- [ ] **Azure Policy to tag ARO resources**
 
+  Use [Azure Policy](https://learn.microsoft.com/en-us/azure/openshift/howto-tag-resources#create-json-files) to Tag ARO resources
+      
+      
 #### Backup and DR Planning
 
 - [ ] **Plan Backup Strategy**
