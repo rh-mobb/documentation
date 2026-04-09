@@ -1,10 +1,11 @@
 ---
 date: '2022-03-28'
 title: Configure GitLab as an identity provider for ARO
-tags: ["IDP"]
+tags: ["IDP", "ARO"]
 authors:
   - Steve Mirman
   - Paul Czarkowski
+validated_version: "4.20"
 ---
 
 The following instructions will detail how to configure GitLab as the identity provider for Azure Red Hat OpenShift:

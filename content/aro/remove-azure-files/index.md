@@ -5,11 +5,12 @@ tags: ["ARO"]
 authors:
   - Kevin Collins
   - Kumudu Herath
+validated_version: "4.20"
 ---
 
 Azure Red Hat OpenShift (ARO) clusters, while offering a robust application platform for containerized applications, come with a default storage class named azurefile-csi. This default storage class is provided for user convenience, allowing for immediate persistent storage provisioning using Azure Files without additional configuration. However, it's crucial to understand that this azurefile-csi storage class, by default, does not leverage a private endpoint. This can introduce a significant security vulnerability, as data traffic to and from Azure Files shares a public endpoint, potentially exposing sensitive information. Therefore, for environments with stringent security requirements, removing or replacing this default azurefile-csi storage class and implementing a solution that utilizes private endpoints is a critical step in securing your ARO deployment.
 
-## Pre Requisites
+## Prerequisites
 
 - ARO cluster logged into
 - oc cli

@@ -1,13 +1,14 @@
 ---
 date: '2024-07-05'
 title: Creating a ROSA cluster in AWS GovCloud
-tags: ["ROSA", "GovCloud"]
+tags: ["ROSA", "GovCloud", "ROSA Classic"]
 authors:
   - Andy Krohg
+validated_version: "4.18"
 ---
-This guide outlines the procedure for creating a ROSA cluster in AWS GovCloud. There are some key differences between the ROSA offerings in AWS GovCloud and AWS Commercial. They’re outlined in detail in the AWS documentation [here](https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-rosa.html#govcloud-diffs), but a few requirements in GovCloud that are worth highlighting:
+This guide outlines the procedure for creating a ROSA Classic cluster in AWS GovCloud. There are some key differences between the ROSA offerings in AWS GovCloud and AWS Commercial. They’re outlined in detail in the AWS documentation [here](https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-rosa.html#govcloud-diffs), but a few requirements in GovCloud that are worth highlighting:
 
-* Only ROSA Classic is supported (not Hosted Control Plane)
+* Both ROSA Classic and ROSA Hosted Control Planes are supported
 * STS mode is required
 * PrivateLink is required
 * FIPS mode is required

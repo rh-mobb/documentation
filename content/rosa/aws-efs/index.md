@@ -1,7 +1,7 @@
 ---
 date: '2023-04-04'
 title: Enabling the AWS EFS CSI Driver Operator on ROSA
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic", "ROSA HCP"]
 aliases:
 - /experts/rosa/aws-efs/aws-efs-csi-operator-on-rosa/
 - /experts/rosa/aws-efs/aws-efs-operator-on-rosa/
@@ -9,13 +9,12 @@ authors:
   - Paul Czarkowski
   - Andy Repton
   - Shaozhen Ding
+validated_version: "4.20"
 ---
 
-The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS clusters. With the release of OpenShift 4.10 the EFS CSI Driver is now GA and available.
+The Amazon Web Services Elastic File System (AWS EFS) is a Network File System (NFS) that can be provisioned on Red Hat OpenShift Service on AWS (ROSA) clusters. This is a guide to quickly enable the EFS Operator on a ROSA cluster.
 
-This is a guide to quickly enable the EFS Operator on ROSA to a Red Hat OpenShift on AWS (ROSA) cluster with STS enabled.
-
-> Note: The official supported installation instructions for the EFS CSI Driver on ROSA are available [here](https://access.redhat.com/articles/6966373).
+> Note: The official supported installation instructions for the EFS CSI Driver on ROSA are available [here](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/storage/using-container-storage-interface-csi#persistent-storage-csi-aws-efs).
 
 ## Dynamic vs Static provisioning
 
@@ -31,7 +30,7 @@ Static provisioning mounts the entire volume to a pod.
 
 ## Prerequisites
 
-* A Red Hat OpenShift on AWS (ROSA) 4.10 cluster
+* ROSA [Cluster](https://cloud.redhat.com/experts/rosa/quickstart/)
 * The OC CLI
 * The AWS CLI
 * `jq` command
@@ -302,18 +301,20 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 1. Configure a region-wide Mount Target for EFS (this will create a mount point in each subnet of your VPC by default)
 
    ```bash
-   for SUBNET in $PRIVATE_SUBNETS do \
-       MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
-          --subnet-id $SUBNET --security-groups $SG \
-          --region $AWS_REGION \
-          | jq -r '.MountTargetId'); \
-       echo $MOUNT_TARGET; \
+    for SUBNET in $=PRIVATE_SUBNETS; do 
+        MOUNT_TARGET=$(aws efs create-mount-target --file-system-id $EFS \
+            --subnet-id $SUBNET --security-groups $SG \
+            --region $AWS_REGION \
+            | jq -r '.MountTargetId'); \
+        echo $MOUNT_TARGET; \
     done
    ```
 
 ### Creating a single-zone EFS
 
 > Note: If you followed the instructions above to create a region wide EFS mount, skip the following steps and proceed to "Create a Storage Class for the EFS volume"
+
+> Note: Dynamic provisioning of single-zone EFS is supported only in single-zone clusters. All nodes in the cluster must be in the same AZ as the EFS volume that is used for the dynamic provisioning.
 
 1. Select the first subnet that you will make your EFS mount in (this will by default select the same Subnet your first node is in)
 
@@ -390,27 +391,41 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
 1. Create a Pod to write to the EFS Volume
 
-   ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: Pod
-   metadata:
-    name: test-efs
-   spec:
-    volumes:
-      - name: efs-storage-vol
-        persistentVolumeClaim:
-          claimName: pvc-efs-volume
-    containers:
-      - name: test-efs
-        image: centos:latest
-        command: [ "/bin/bash", "-c", "--" ]
-        args: [ "while true; do echo 'hello efs' | tee -a /mnt/efs-data/verify-efs && sleep 5; done;" ]
-        volumeMounts:
-          - mountPath: "/mnt/efs-data"
-            name: efs-storage-vol
-   EOF
-   ```
+    ```bash
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: test-efs
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: efs-storage-vol
+          persistentVolumeClaim:
+            claimName: pvc-efs-volume
+      containers:
+        - name: test-efs
+          image: centos:latest
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "while true; do echo 'hello efs' | tee -a /mnt/efs-data/verify-efs && sleep 5; done;" ]
+          volumeMounts:
+            - mountPath: "/mnt/efs-data"
+              name: efs-storage-vol
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+    EOF
+    ```
 
    > It may take a few minutes for the pod to be ready.  If you see errors such as `Output: Failed to resolve "fs-XXXX.efs.us-east-2.amazonaws.com"` it likely means its still setting up the EFS volume, just wait longer.
 
@@ -422,27 +437,41 @@ In order to use the AWS EFS CSI Driver we need to create IAM roles and policies 
 
 1. Create a Pod to read from the EFS Volume
 
-   ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: Pod
-   metadata:
-    name: test-efs-read
-   spec:
-    volumes:
-      - name: efs-storage-vol
-        persistentVolumeClaim:
-          claimName: pvc-efs-volume
-    containers:
-      - name: test-efs-read
-        image: centos:latest
-        command: [ "/bin/bash", "-c", "--" ]
-        args: [ "tail -f /mnt/efs-data/verify-efs" ]
-        volumeMounts:
-          - mountPath: "/mnt/efs-data"
-            name: efs-storage-vol
-   EOF
-   ```
+    ```bash
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: test-efs-read
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: efs-storage-vol
+          persistentVolumeClaim:
+            claimName: pvc-efs-volume
+      containers:
+        - name: test-efs-read
+          image: centos:latest
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "tail -f /mnt/efs-data/verify-efs" ]
+          volumeMounts:
+            - mountPath: "/mnt/efs-data"
+              name: efs-storage-vol
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+    EOF
+    ```
 
 1. Verify the second POD can read the EFS Volume
 

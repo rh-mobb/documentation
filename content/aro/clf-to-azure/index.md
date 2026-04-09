@@ -5,6 +5,7 @@ tags: ["ARO"]
 authors:
   - Paul Czarkowski
   - Thatcher Hubbard
+validated_version: "4.20"
 ---
 
 > **NOTE**: Starting from version 5.9, OpenShift Logging supports native forwarding to Azure Monitor and Azure Log Analytics, which is available on clusters running OpenShift 4.13 or higher. Please note that apiVersion was changed from `logging.openshift.io/v1` to `observability.openshift.io/v1` on OpenShift Logging 6.0, which is the version used on this guide. For clusters running OpenShift 4.12 or earlier, see the [legacy setup document here](/experts/aro/clf-to-azure-old/) for help with configuration.
@@ -15,7 +16,7 @@ If you're running Azure Red Hat OpenShift (ARO), you may want to be able to view
 
 1. [Deploy](/experts/quickstart-aro) an ARO cluster
 
-1. Follow the OpenShift documentation for [installing the OpenShift Logging Operator](https://docs.openshift.com/container-platform/4.16/observability/logging/cluster-logging-deploying.html) for your version of OpenShift. These instructions cover the various methods (CLI, Web Console) of installation.
+1. Follow the OpenShift documentation for [installing the OpenShift Logging Operator](https://docs.redhat.com/en/documentation/red_hat_openshift_logging/6.5/html/installing_logging/installing-logging#installing-logging-operator-web-console_installing-logging) for your version of OpenShift. These instructions cover the various methods (CLI, Web Console) of installation.
 
 1. Set some environment variables
 

@@ -1,0 +1,35 @@
+id,phase,decision_point,safe_default
+1,Pre-provisioning,HCP or Classic?,HCP for new deployments
+2,Pre-provisioning,AZs and CIDR ranges,3 AZs; ROSA defaults; `/22`+ machine CIDR at scale
+3,Pre-provisioning,Private or public API / ingress?,Private API + edge VPC for internet workloads
+4,Pre-provisioning,Egress model,Zero-egress or firewall/proxy via TGW
+5,Pre-provisioning,"STS roles, OIDC, IAM scoping",STS always; reusable OIDC; least-privilege roles
+6,Pre-provisioning,AWS-managed or CMK in KMS?,CMK for regulated / multi-tenant estates
+7,Pre-provisioning,EC2 families and pool layout,Current-gen GP; evaluate Graviton; multiple pools
+8,Pre-provisioning,Quotas reviewed and raised?,"Review during architecture review, not cutover"
+9,Day-1 configuration,"IdP, admin model, break-glass",External IdP + MFA; remove kubeadmin; vault for break-glass
+10,Day-1 configuration,SCC baseline and enforcement,`restricted` for all; custom SCCs over `privileged`
+11,Day-1 configuration,Project template with defaults?,Auto-create quota + NetworkPolicy + LimitRange
+12,Day-1 configuration,NetworkPolicy and EgressFirewall,Default-deny per namespace
+13,Day-1 configuration,"Monitoring, logging, metrics",User workload monitoring + log forwarding to CloudWatch/SIEM
+14,Day-1 configuration,GitOps / CI / CD operators,OpenShift GitOps + Pipelines or external CI
+15,Day-1 configuration,Secret delivery mechanism,ESO + Secrets Manager via IRSA
+16,Day-1 configuration,Compliance profiles,Compliance Operator with regulatory profiles
+17,Workload onboarding,Probe design per workload,Distinct liveness (`/livez`) and readiness (`/readyz`)
+18,Workload onboarding,SIGTERM handling and grace period,Handle SIGTERM; tune `terminationGracePeriodSeconds`
+19,Workload onboarding,"Requests, limits, QoS",Always set requests; VPA recommend-only to inform sizing
+20,Workload onboarding,"Topology spread, replica count",`topologySpreadConstraints` + 3+ replicas for tier-1
+21,Workload onboarding,PDB policy,`maxUnavailable: 1`
+22,Workload onboarding,Storage tier per workload,EBS gp3 (RWO); EFS only for RWX; S3 for objects
+23,Workload onboarding,Managed vs in-cluster state,Managed AWS services for tier-1 data
+24,Workload onboarding,IRSA wiring per app,Dedicated SA + IAM role per app; no static keys
+25,Workload onboarding,SA and RBAC scoping,Dedicated SA; `automountServiceAccountToken: false`
+26,Workload onboarding,Image pinning and rebuild,Pin by digest; rebuild on CVE
+27,Workload onboarding,TLS mode and cert source,TLS always; cert-manager + External DNS
+28,Steady-state operations,Upgrade sequencing,"Control plane first, then pools; verify ClusterOperators"
+29,Steady-state operations,CA / HPA / VPA,CA per AZ + HPA + VPA recommend-only
+30,Steady-state operations,"Savings Plans, tagging",Savings Plans for production; consistent FinOps tags
+31,Steady-state operations,"RPO, RTO, backup scope",Workload-scoped backup; rehearse restores
+32,Steady-state operations,Multi-Region posture,Hot/warm + Aurora Global / S3 CRR / Route 53
+33,Steady-state operations,Health check tooling,Insights + health scripts + Compliance Operator
+34,Steady-state operations,IaC tooling,Terraform / CloudFormation / ROSA CLI in Git
