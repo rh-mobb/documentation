@@ -132,7 +132,7 @@ This guide shows how to set up Thanos to federate both System and User Workload 
 1. Get the Route URL for Grafana (remember its https) and login using username `admin` and the default password from the chart values (or the one you set via `--set "grafana-cr.basicAuthPassword=<your-password>"` during install).
 
     ```bash
-    oc  get route -n $NAMESPACE
+    oc get route -n $NAMESPACE
     ```
 
 1. Once logged in go to **Dashboards** and expand the **aro-thanos-af** folder and you should see the cluster metrics dashboards.  Click on the **Use Method / Cluster** Dashboard and you should see metrics.  \o/.
@@ -149,16 +149,23 @@ This guide shows how to set up Thanos to federate both System and User Workload 
     helm delete -n $NAMESPACE aro-thanos-af
     ```
 
-1. Uninstall the `federated-metrics-operators` chart
+1. Uninstall the `grafana-operator` chart
 
     ```bash
-    helm delete -n $NAMESPACE federated-metrics-operators
+    helm delete -n $NAMESPACE grafana-operator
     ```
 
-1. Delete the `aro-thanos-af` namespace
+1. Uninstall the `patch-operator` chart
+
+    ```bash
+    helm delete -n patch-operator patch-operator
+    ```
+
+1. Delete the namespaces
 
     ```bash
     oc delete namespace $NAMESPACE
+    oc delete namespace patch-operator
     ```
 
 1. Delete the storage account
