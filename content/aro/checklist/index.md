@@ -817,7 +817,7 @@ ARO includes these storage classes by default:
   ```
 - [ ] **Azure Policy to tag ARO resources**
 
-  Use [Azure Policy](https://learn.microsoft.com/en-us/azure/openshift/howto-tag-resources#create-json-files) to Tag ARO resources
+  Use [Azure Policy](https://learn.microsoft.com/en-us/azure/openshift/howto-tag-resources) to Tag ARO resources
       
       
 #### Backup and DR Planning
@@ -1020,6 +1020,7 @@ For detailed CLI deployment steps with all parameters and options, see:
 # Private cluster with managed identity (production)
 az aro create \
   --resource-group <rg> \
+  --location <AZURE-LOCATION> \
   --name <cluster-name> \
   --vnet <vnet-name> \
   --master-subnet <master-subnet> \
@@ -1117,6 +1118,7 @@ oc get clusterversion
   # Only use if managed identity is not an option
   az aro create \
     --resource-group ${RESOURCE_GROUP} \
+    --location <AZURE-LOCATION> \
     --name ${CLUSTER_NAME} \
     --vnet ${VNET_NAME} \
     --vnet-resource-group ${VNET_RG} \
@@ -1335,6 +1337,7 @@ Create a fully private ARO cluster with **NO public IP address** using User-Defi
   ```bash
   az aro create \
     --resource-group ${RESOURCE_GROUP} \
+    --location <AZURE-LOCATION> \
     --name ${CLUSTER_NAME} \
     --vnet <vnet-name> \
     --master-subnet <master-subnet-name> \
@@ -1466,6 +1469,7 @@ Encrypt ARO cluster disks (OS and data) with your own encryption keys stored in 
   ```bash
   az aro create \
     --resource-group ${RESOURCE_GROUP} \
+    --location <AZURE-LOCATION> \
     --name ${CLUSTER_NAME} \
     --vnet <vnet-name> \
     --master-subnet <master-subnet> \
