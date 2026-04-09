@@ -1,10 +1,12 @@
 ---
-date: '2022-04-26'
+date: '2026-03-30'
 title: 'Configuring a ROSA cluster to pull images from AWS Elastic Container Registry (ECR)'
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA HCP", "ROSA Classic"]
 authors:
   - Kevin Collins
   - Byron Miller
+  - Deepika Ranganathan
+validated_version: "4.20"
 ---
 
 ## Prerequisites
@@ -12,11 +14,10 @@ authors:
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 * [Openshift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.11+
 * [Podman Desktop](https://podman-desktop.io/)
-* [ROSA Cluster](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-sts-auto.html)
+* [ROSA Cluster](https://cloud.redhat.com/experts/rosa/quickstart/)
 
-> Note your ROSA cluster must be a classic STS cluster
 
-### Background
+## Background
 Quick Introduction by Ryan Niksch & Charlotte Fung on [YouTube](https://youtu.be/1PBFtpCIMBo).
 
  <iframe width="560" height="315" src="https://www.youtube.com/embed/1PBFtpCIMBo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>  <br/>
@@ -38,106 +39,154 @@ However Amazon ECR tokens expire every 12 hours which will mean you will need to
 
 A second, and preferred method, is to attach an ECR Policy to your cluster's worker machine profiles which this guide will walk you through.
 
-
-## Attach ECR Policy Role
-
-You can attach an ECR policy to your cluster giving the cluster permissions to pull images from your registries.  ROSA worker machine instances comes with pre-defined IAM roles (`ManagedOpenShift-Worker-Role`) which we can add the ECR policy to.
-
-![resulting output](./images/nonsts-roles.png)
-
-> Note: If you used a different prefix for your Account Roles, you will need to change the following `aws iam attach-role-policy` command to suit.
+ROSA worker nodes are provisioned with predefined IAM roles ( ManagedOpenShift-HCP-ROSA-Worker-Role for ROSA HCP and ManagedOpenShift-Worker-Role for ROSA Classic) which can be updated with an Amazon ECR policy to allow the cluster to pull images from your registries.
 
 ## Configure ECR with ROSA
 
-ECR has several pre-defined policies that give permissions to interact with the service.  In the case of ROSA, we will be pulling images from ECR and will only need to add the `AmazonEC2ContainerRegistryReadOnly` policy.
+1. Set ENV variables
 
-1. Add the `AmazonEC2ContainerRegistryReadOnly` policy to the `ManagedOpenShift-Worker-Role` for STS clusters (or the `<cluster name>-<identifier>-worker-role` for non-STS clusters).
+    ```
+    export REGION="us-east-1"
+    export REPO_NAME="hello-ecr"
+    export CLUSTER_NAME="my-cluster"
+    export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    export REPO_ARN="arn:aws:ecr:${REGION}:${ACCOUNT_ID}:repository/${REPO_NAME}"
+    export SCRATCH_DIR=~/tmp/rosa-ecr
+    mkdir -p $SCRATCH_DIR
+        
+    export WORKER_ROLE=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.aws.sts.instance_iam_roles.worker_role_arn | split("/")[-1]')
+    echo $WORKER_ROLE
+    ```
+   
+2. Create an ECR repository
 
-   STS Example:
+    ```
+    aws ecr create-repository \
+        --repository-name $REPO_NAME \
+        --image-scanning-configuration scanOnPush=true \
+        --region $REGION
+    ```
 
-   ```
+3. Create the IAM policy with ECR permissions.
+
+    ```
+    cat <<EOF > $SCRATCH_DIR/rosa-ecr-read-policy.json
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "ECRAuth",
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:GetAuthorizationToken"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Sid": "ECRScopedRead",
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:GetRepositoryPolicy",
+                    "ecr:DescribeRepositories",
+                    "ecr:ListImages",
+                    "ecr:DescribeImages",
+                    "ecr:BatchGetImage",
+                    "ecr:GetLifecyclePolicy",
+                    "ecr:GetLifecyclePolicyPreview",
+                    "ecr:ListTagsForResource",
+                    "ecr:DescribeImageScanFindings"
+                ],
+                "Resource": "$REPO_ARN"
+            }
+        ]
+    }
+    EOF
+    ```
+
+4. Create the Customer Managed Policy
+ 
+     ```
+     POLICY_ARN=$(aws iam create-policy \
+            --policy-name ROSA-ECR-Scoped-Read-Policy \
+            --policy-document file://$SCRATCH_DIR/rosa-ecr-read-policy.json \
+            --query 'Policy.Arn' --output text)
+     ```
+
+5. Attach policy to the worker IAM role. 
+
+    ```
     aws iam attach-role-policy \
-     --role-name ManagedOpenShift-Worker-Role \
-     --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-   ```
+      --role-name $WORKER_ROLE \
+      --policy-arn $POLICY_ARN
+    ```
+    
+6. Log into ECR  
 
-2. Set ENV variables
+    ```
+    podman login -u AWS -p $(aws ecr get-login-password --region $REGION) $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+    ```
 
-   Set our AWS Region and Registry name for creating a new ECR
+7. Pull an image  
 
-   ```
-   REGION=us-east-2
-   REGISTRY=hello-ecr
-   ```
+    ```
+    podman pull openshift/hello-openshift
+    ```
 
-3. Create a repository
+8. Tag the image for ecr  
 
-   ```
-   aws ecr create-repository \
-    --repository-name $REGISTRY \
-    --image-scanning-configuration scanOnPush=true \
-    --region $REGION
-   ```
+    ```
+    podman tag openshift/hello-openshift:latest $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
+    ```
 
-4. Set Registry ID
+9. Push the image to ECR  
 
-   ```
-   REGISTRYID=`aws ecr describe-repositories --repository-name $REGISTRY | jq -r '.repositories[].registryId'`
-   ```
-
-5. Log into ECR  
-
-   ```
-   podman login -u AWS -p $(aws ecr get-login-password --region $REGION) $REGISTRYID.dkr.ecr.$REGION.amazonaws.com
-   ```
-
-6. Pull an image  
-
-   ```
-   podman pull openshift/hello-openshift
-   ```
-
-7. Tag the image for ecr  
-
-   ```
-   podman tag openshift/hello-openshift:latest $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
-   ```
-
-8. Push the image to ECR  
-
-   ```
-   podman push $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest
-   ```
+    ```
+    podman push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
+    ```
 
 10. Create a new project  
 
-   ```
-   oc new-project hello-ecr
-   ```
+    ```
+    oc new-project hello-ecr
+    ```
 
 11. Create a new app using the image on ECR  
 
-   ```
-   oc new-app --name hello-ecr --allow-missing-images \
-     --image $REGISTRYID.dkr.ecr.$REGION.amazonaws.com/hello-ecr:latest 
-   ```
+    ```
+    oc new-app --name hello-ecr --allow-missing-images \
+         --image $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/${REPO_NAME}:latest
+    ```
 
 12. View a list of pods in the namespace you created:
+        
+    ```
+    oc get pods
+    ```
+
+    Expected output:
     
-   ```
-   oc get pods
-   ```
-
-   Expected output:
-
-   If you see the hello-ecr pod running ... congratulations!  You can now pull images from your ECR repository.
+     If you see the hello-ecr pod running ... congratulations!  You can now pull images from your ECR repository.
 
 ## Clean up    
 
 1. Simply delete the project you created to test pulling images:
 
-    ```
+   ```
     oc delete project hello-ecr
     ```
 
-   You may also want to remove the `arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly` policy from the worker nodes if you do no want them to continue to have access to the ECR.
+3. Detach and delete the IAM policy
+
+    ```
+    aws iam detach-role-policy --role-name $WORKER_ROLE --policy-arn $POLICY_ARN
+    aws iam delete-policy --policy-arn $POLICY_ARN
+    ```
+
+4. Remove local files and ECR repository
+
+    ```
+    rm -rf $SCRATCH_DIR
+    aws ecr delete-repository --repository-name $REPO_NAME --force
+    ```
