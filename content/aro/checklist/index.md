@@ -3,8 +3,7 @@ date: '2026-03-26'
 title: 'Azure Red Hat OpenShift Operations Guide'
 tags: ["ARO"]
 authors:
-  - Kevin Collins
-  - Kumudu Herath
+  - Red Hat Cloud Experts
 validated_version: "4.20"
 ---
 
