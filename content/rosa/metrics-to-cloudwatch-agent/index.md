@@ -5,6 +5,7 @@ tags: ["ROSA"]
 authors:
   - Kevin Collins
   - Michael McNeill
+validated_version: "4.20"
 ---
 This document shows how you can use the AWS CloudWatch Agent to scrape Prometheus endpoints and publish metrics to CloudWatch in a Red Hat OpenShift Service on AWS (ROSA) cluster.
 
@@ -25,7 +26,7 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
 
 1. Configure the following environment variables:
    ```bash
-   export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.infrastructureName}"  | sed 's/-[a-z0-9]\{5\}$//')
+   export ROSA_CLUSTER_NAME=$(oc get infrastructure cluster -o=jsonpath="{.status.apiServerURL}" | awk -F '.' '{print $2}')
    export REGION=$(rosa describe cluster -c ${ROSA_CLUSTER_NAME} --output json | jq -r .region.id)
    export OIDC_ENDPOINT=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer | sed 's|^https://||')
    export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
@@ -319,7 +320,7 @@ Currently the AWS CloudWatch Agent [does not support](https://github.com/aws/ama
 1. Download the Sample Dashboard
 
    ```bash
-   wget -O ${SCRATCH}/dashboard.json https://raw.githubusercontent.com/rh-mobb/documentation/main/content/rosa/metrics-to-cloudwatch-agent/dashboard.json
+   curl -L -o ${SCRATCH}/dashboard.json https://raw.githubusercontent.com/rh-mobb/documentation/main/content/rosa/metrics-to-cloudwatch-agent/dashboard.json
    ```
 
 1. Update the Sample Dashboard
