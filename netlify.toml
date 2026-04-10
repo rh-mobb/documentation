@@ -81,12 +81,6 @@ status = 301
 force = true
 
 [[redirects]]
-from = "/experts/rosa/clf-cloudwatch-sts/"
-to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/deploying-an-application#forwarding-logs-to-cloudwatch"
-status = 301
-force = true
-
-[[redirects]]
 from = "/experts/rosa/verify-permissions/"
 to = "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/rosa-mobb-verify-permissions-sts-deployment"
 status = 301
