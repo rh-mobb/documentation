@@ -417,21 +417,6 @@ export REDIS_ENDPOINT=$(aws elasticache describe-cache-clusters \
 echo "DB_ENDPOINT=${DB_ENDPOINT} REDIS_ENDPOINT=${REDIS_ENDPOINT}"
 ```
 
-### 3.9 Tags applied (end of AWS provisioning)
-
-This guide tags the following resources with **`QUAY_AWS_TAGS_JSON`** (**§1.2**) using **§1.3** helpers and **`load_quay_aws_tag_pairs` / `--tags`** calls above:
-
-| AWS resource | Mechanism |
-|--------------|-----------|
-| S3 bucket | **`aws s3api put-bucket-tagging`** (**§2**) |
-| **`VPC_DB`** (**`Name=quay-${CLUSTER_NAME}-Storage`**), subnets **`SUBNET_A`–`C`**, VPC peering **`VPC_PEERING_ID`** | **`aws ec2 create-tags`** (**§3.1**, **§3.2**) |
-| Redis security group **`REDIS_SG`** | **`aws ec2 create-tags`** (**§3.6**) |
-| RDS subnet group, RDS instance **`psql-${CLUSTER_NAME}`** | **`--tags`** on create (**§3.3**, **§3.4**) |
-| ElastiCache subnet group, Redis **`quay-redis-${CLUSTER_NAME}`** | **`--tags`** on create (**§3.6**, **§3.7**) |
-| IAM policy **`${CLUSTER_NAME}-quay-s3-policy`**, IRSA role **`${CLUSTER_NAME}-quay-irsa`** | **`--tags`** on create (**§5.1**, **§5.3**) |
-
-The RDS instance **default VPC security group** in **`VPC_DB`** is not tagged by this guide (only the ingress rule in §3.5 is added).
-
 ---
 
 ## 4. Prepare PostgreSQL for Quay
