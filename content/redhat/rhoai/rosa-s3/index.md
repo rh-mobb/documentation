@@ -20,6 +20,7 @@ Note that this article does not cover model serving. Starting with Red Hat OpenS
 Before you start, make sure you have:
 
 - a ROSA [cluster](https://cloud.redhat.com/experts/rosa/quickstart/) with [cluster-admin](https://access.redhat.com/solutions/7014602) level access
+- the OpenShift CLI [`oc`](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/cli_tools/openshift-cli-oc#installing-openshift-cli) installed
 - a default dynamic storage class on the cluster (typically already present on ROSA)
 - an Amazon S3 bucket and AWS credentials, or permission to create them
 - a machine pool with enough worker capacity for OpenShift AI
