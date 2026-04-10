@@ -6,7 +6,7 @@ aliases:
   - /experts/misc/rhoai-s3
 authors:
   - Diana Sari
-validated_version: "4.20"
+validated_version: "4.21"
 ---
 
 
@@ -14,17 +14,17 @@ Red Hat OpenShift AI has evolved significantly in recent releases. In this walkt
 
 Note that this article does not cover model serving. Starting with Red Hat OpenShift AI 2.25, the [KServe Serverless deployment mode is deprecated](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.25/html/release_notes/support-removals_relnotes#deprecated_kserve_serverless_deployment_mode). KServe RawDeployment remains available and uses fewer dependencies.
 
+
 ## 0. Prerequisites
 
 Before you start, make sure you have:
 
-- a working ROSA cluster
-- cluster-admin access
-- a default dynamic storage class
-- enough worker capacity for OpenShift AI
-- an S3 bucket and credentials
+- a ROSA [cluster](https://cloud.redhat.com/experts/rosa/quickstart/) with [cluster-admin](https://access.redhat.com/solutions/7014602) level access
+- a default dynamic storage class on the cluster (typically already present on ROSA)
+- an Amazon S3 bucket and AWS credentials, or permission to create them
+- a machine pool with enough worker capacity for OpenShift AI
 
-If your existing worker nodes are too small or already heavily used, create a dedicated machine pool for OpenShift AI before continuing.
+In our validation, a 2-worker `m5.xlarge` setup was not enough for this walkthrough because some OpenShift AI components could not be scheduled and the dashboard stayed in a `Not Ready` state. For this reason, plan for at least 3 worker nodes for OpenShift AI, enable autoscaling, or use a dedicated machine pool if your existing workers are already heavily used.`
 
 Verify that your cluster has healthy worker nodes and a default storage class:
 
@@ -41,11 +41,11 @@ From the OpenShift web console:
 2. Search for **Red Hat OpenShift AI**
 3. Install the operator
 
-At this point, the default OpenShift AI installation can leave the `DataScienceCluster` in a `Not Ready` state because `KServe` is enabled by default and expects additional serving-related dependencies, even though this walkthrough only uses workbenches and Amazon S3.
+On recent OpenShift AI releases, the default installation can get stuck before the `DataScienceCluster` is created because Service Mesh-related components are expected even though this walkthrough only uses workbenches and Amazon S3.
 
-## 2. Disable KServe-related blockers for this walkthrough
+## 2. Remove the unnecessary serving dependencies
 
-This guide does not use model serving, so remove the unnecessary serving dependencies after installing OpenShift AI.
+This guide does not use model serving, so remove the unnecessary serving-related dependencies first.
 
 Patch the DSCI to remove Service Mesh:
 
@@ -57,7 +57,26 @@ spec:
 '
 ```
 
-Patch the DSC to remove KServe:
+After patching the DSCI, check whether the default `DataScienceCluster` was created:
+
+```bash
+oc get datasciencecluster -n redhat-ods-applications
+```
+
+If `default-dsc` does not exist, create it:
+
+```bash
+cat <<'EOF' | oc apply -f -
+apiVersion: datasciencecluster.opendatahub.io/v1
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+  namespace: redhat-ods-applications
+spec: {}
+EOF
+```
+
+Then patch the DSC to remove KServe:
 
 ```bash
 oc patch datasciencecluster default-dsc -n redhat-ods-applications --type=merge -p '
@@ -79,6 +98,7 @@ You want the output to become:
 ```text
 Ready
 ```
+
 
 ## 3. Create the Amazon S3 bucket
 
@@ -149,7 +169,7 @@ After the installation completes, restart the kernel before continuing.
 
 In this walkthrough, we use `distilbert-base-uncased`, which is a safe and  mainstream choice for a lightweight demo. This example also keeps the dataset intentionally small and uses one epoch so the walkthrough finishes in a reasonable time on CPU.
 
-Run the following on the next cell.
+Before running this on the next cell, set the `AWS_S3_BUCKET` environment variable in your workbench if you want to use a bucket name other than the example default.
 
 ```python
 # import the necessary functions and APIs
@@ -222,7 +242,7 @@ model.save_pretrained(model_save_dir)
 
 # upload to S3
 s3_client = boto3.client("s3")
-bucket_name = "rhoai-test-s3-bucket"
+bucket_name = os.environ.get("AWS_S3_BUCKET", "rhoai-test-s3-bucket")
 model_save_path = "model/"
 
 for file_name in os.listdir(model_save_dir):
@@ -243,14 +263,14 @@ small_dataset = dataset["train"].shuffle(seed=42).select(range(20))
 
 ## 8. Understanding the notebook output
 
-Note that you may see similar output to below snippet.
+You may see similar output to below snippet.
 
 <br />
 
 ![output-v1](images/output-v1.png)
 <br />
 
-Some of the notebook output is expected and does not indicate a failure.
+Note that some of the notebook output is expected and does not indicate a failure.
 
 The Hugging Face warning simply means the model is being downloaded without an authentication token. The `UNEXPECTED` and `MISSING` entries in the DistilBERT load report are also expected when loading a base pretrained model for a sequence classification task. 
 
