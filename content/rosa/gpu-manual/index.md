@@ -176,11 +176,12 @@ In this validation, the installed CSV was `gpu-operator-certified.v26.3.0`.
 Create the `ClusterPolicy` using the operator-provided defaults:
 
 ```bash
-oc get csv -n nvidia-gpu-operator gpu-operator-certified.v26.3.0 \
+CSV=$(oc get csv -n nvidia-gpu-operator -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep '^gpu-operator-certified' | head -n1)
+
+oc get csv -n nvidia-gpu-operator "$CSV" \
   -o jsonpath='{.metadata.annotations.alm-examples}' \
 | jq -r '.[] | select(.kind=="ClusterPolicy")' > gpu-cluster-policy.json
 
-cat gpu-cluster-policy.json
 oc apply -f gpu-cluster-policy.json
 ```
 
@@ -344,3 +345,78 @@ nvidia-smi
 <br />
 
 As seen from the above output, `nvidia-smi` inside the workbench showed an NVIDIA Tesla T4, confirming that the workbench had end-to-end GPU access through OpenShift AI.
+
+## 10. Cleanup
+
+If you no longer need the GPU test resources, remove them after validation.
+
+Delete the standalone validation pod:
+
+```bash
+oc delete pod nvidia-smi --ignore-not-found
+```
+
+Delete the OpenShift AI workbench from the dashboard, or remove the workbench pod and project resources from the CLI as needed:
+
+```bash
+oc get pods -n project-gpu
+```
+
+If you created a dedicated OpenShift AI project only for this test, you can remove it:
+
+```bash
+oc delete project project-gpu
+```
+
+Delete the `ClusterPolicy`:
+
+```bash
+oc delete clusterpolicy gpu-cluster-policy
+```
+
+Delete the GPU Operator resources:
+
+```bash
+oc delete subscription gpu-operator-certified -n nvidia-gpu-operator
+oc delete operatorgroup nvidia-gpu-operator -n nvidia-gpu-operator
+oc delete namespace nvidia-gpu-operator
+```
+
+Delete the NFD resources:
+
+```bash
+oc delete nodefeaturediscovery nfd-instance -n openshift-nfd
+oc delete subscription nfd -n openshift-nfd
+oc delete operatorgroup openshift-nfd -n openshift-nfd
+oc delete namespace openshift-nfd
+```
+
+If you no longer need GPU worker capacity on the cluster, delete the GPU machine pool:
+
+```bash
+rosa delete machinepool --cluster=$CLUSTER --machinepool=gpu
+```
+
+Verify that the GPU node has been removed:
+
+```bash
+rosa list machinepools -c $CLUSTER
+oc get nodes
+```
+
+If you enabled hardware profiles only for this validation and do not want to leave them exposed in the dashboard, you can revert the dashboard setting:
+
+```bash
+oc patch odhdashboardconfig odh-dashboard-config \
+  -n redhat-ods-applications \
+  --type merge \
+  -p '{
+    "spec": {
+      "dashboardConfig": {
+        "disableHardwareProfiles": true
+      }
+    }
+  }'
+```
+
+If you created a dedicated GPU hardware profile in the OpenShift AI dashboard, remove it from **Settings -> Hardware profiles** when it is no longer needed.
