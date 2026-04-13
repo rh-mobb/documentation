@@ -330,10 +330,10 @@ oc get pod -n project-gpu project-gpu-workbench-0 -o yaml | egrep -n "nvidia.com
 
 At this stage, the workbench pod should:
 
-* runs on the GPU node
-* requests `nvidia.com/gpu: "1"`
-* uses `nodeSelector: nvidia.com/gpu.present: "true"`
-* includes a toleration for `nvidia.com/gpu=true:NoSchedule`
+* run on the GPU node
+* request `nvidia.com/gpu: "1"`
+* use `nodeSelector: nvidia.com/gpu.present: "true"`
+* include a toleration for `nvidia.com/gpu=true:NoSchedule`
 
 Finally, open a terminal in the running workbench and confirm that the GPU is available:
 
