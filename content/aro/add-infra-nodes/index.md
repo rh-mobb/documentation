@@ -41,11 +41,6 @@ We'll use the MOBB Helm chart to add ARO `machinesets` for `infra` nodes. It loo
     Create a `values.yaml` file like this:
 
     ```yaml
-    # Optional: override infra node count.
-    # Default behavior is 3 nodes total, with 1 node in each AZ.
-    # zoneCount: 3
-    # replicasPerZone: 1
-
     machineRole: "infra"
     vmSize: "Standard_E4s_v5"
 
@@ -59,6 +54,11 @@ We'll use the MOBB Helm chart to add ARO `machinesets` for `infra` nodes. It loo
     machineSetSpec:
       tags:
         node_role: infra
+
+    # Optional: override infra node count.
+    # Default behavior is 3 nodes total, with 1 node in each AZ.
+    # zoneCount: 3
+    # replicasPerZone: 1
     ```
 
     ```bash
