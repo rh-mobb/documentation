@@ -62,7 +62,6 @@ The Azure Blob CSI driver supports two common dynamic provisioning models:
 1. Set environment variables related to the project and secret names used to install the driver, and the testing project where a pod will use the configured storage:
 
     ```bash
-    export CSI_BLOB_PROJECT=csi-azure-blob
     export CSI_BLOB_SECRET=csi-azure-blob-secret
     export CSI_TESTING_PROJECT=testing-project
     ```
@@ -166,6 +165,8 @@ For the validated ARO path used here, this includes:
     oc -n kube-system create secret generic azure-cloud-provider \
       --from-file=cloud-config=azure-cloud-provider.json \
       --dry-run=client -o yaml | oc apply -f -
+
+    rm -f azure-cloud-provider.json
     ```
 
 
@@ -173,7 +174,7 @@ For the validated ARO path used here, this includes:
 
 After creating the identity and required Azure configuration, install the Azure Blob CSI driver on the cluster.
 
-On ARO, the default Blob CSI Helm install needs an additional workaround. During validation on ARO 4.20, the default chart left the node pods stuck in `Init:CreateContainerError` because the init container tries to mount `/usr/local`, which is a symlink on RHCOS. And therefore, disable those components at install time and remove the init container from the node DaemonSet.
+On ARO, the default Blob CSI Helm install needs an additional workaround. During validation on ARO 4.20, the default chart left the node pods stuck in `Init:CreateContainerError` because the init container tries to mount `/usr/local`, which is a symlink on RHCOS. To work around this, disable those components at install time and remove the init container from the node DaemonSet.
 
 1. Add the Blob CSI driver Helm repository:
 
