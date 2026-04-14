@@ -41,6 +41,20 @@ From the OpenShift web console:
 1. Go to **Ecosystem** -> **Software Catalog** (this is formerly known as OperatorHub)
 2. Search for **Red Hat OpenShift AI**
 3. Install the operator
+4. Create `DataScienceCluster` when prompted (if it throws error, wait for a few minutes, refresh the page, and try create again)
+
+Alternatively, create `DataScienceCluster` using CLI:
+
+```bash
+cat <<'EOF' | oc apply -f -
+apiVersion: datasciencecluster.opendatahub.io/v1
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+  namespace: redhat-ods-applications
+spec: {}
+EOF
+```
 
 On recent OpenShift AI releases, the default installation can get stuck before the `DataScienceCluster` is created because Service Mesh-related components are expected even though this walkthrough only uses workbenches and Amazon S3.
 
@@ -56,25 +70,6 @@ spec:
   serviceMesh:
     managementState: Removed
 '
-```
-
-After patching the DSCI, check whether the default `DataScienceCluster` was created:
-
-```bash
-oc get datasciencecluster -n redhat-ods-applications
-```
-
-If `default-dsc` does not exist, create it:
-
-```bash
-cat <<'EOF' | oc apply -f -
-apiVersion: datasciencecluster.opendatahub.io/v1
-kind: DataScienceCluster
-metadata:
-  name: default-dsc
-  namespace: redhat-ods-applications
-spec: {}
-EOF
 ```
 
 Then patch the DSC to remove KServe:
