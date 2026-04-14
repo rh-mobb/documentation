@@ -9,7 +9,9 @@ validated_version: "4.20"
 
 This document shows how to set up infrastructure nodes in an ARO cluster and move infrastructure related workloads to them. This can help with larger clusters that have resource contention between user workloads and infrastructure workloads such as Prometheus.
 
-> **Important note:** Infrastructure nodes are billed at the same rates as your existing ARO worker nodes.
+> **Important note:** For nodes to be recognized as infrastructure nodes in ARO, follow the current Microsoft requirements for VM size, node count, and Azure VM tags. If these criteria are not met, nodes are treated as regular workers for billing.
+
+Microsoft reference: <https://learn.microsoft.com/en-us/azure/openshift/howto-infrastructure-nodes>
 
 You can find the original (and more detailed) document describing the process for a self-managed OpenShift Container Platform cluster [here](https://docs.openshift.com/container-platform/latest/machine_management/creating-infrastructure-machinesets.html#creating-infra-machines_creating-infrastructure-machinesets)
 
@@ -20,8 +22,7 @@ You can find the original (and more detailed) document describing the process fo
 
 ## Create Infra Nodes
 
-We'll use the MOBB Helm Chart for adding ARO `machinesets` which parameters for creating `infra` nodes, it looks up an existing `machineset` to collect cluster specific settings and then creates a new `machineset` specific for `infra` nodes with the same settings.
-The chart used to default to infra nodes up to version `0.2.0` from and including version 0.2.0 you need to specify the roles, labels and taints explicitly.
+We'll use the MOBB Helm chart to add ARO `machinesets` for `infra` nodes. It looks up an existing `machineset` to collect cluster-specific settings, then creates a new `machineset` for `infra` nodes with matching provider settings.
 
 1. Add the MOBB chart repository to your Helm
 
@@ -40,7 +41,13 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
     Create a `values.yaml` file like this:
 
     ```yaml
+    # Optional: override infra node count.
+    # Default behavior is 3 nodes total, with 1 node in each AZ.
+    # zoneCount: 3
+    # replicasPerZone: 1
+
     machineRole: "infra"
+    vmSize: "Standard_E4s_v5"
 
     machineLabels:
       node-role.kubernetes.io/infra: ""
@@ -50,12 +57,6 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
         effect: NoSchedule
 
     machineSetSpec:
-      location: example-cluster-region # Replace this with your region
-      networkResourceGroup: example-vnet-rg # Replace this with your VNet's resource group
-      publicLoadBalancer: example-cluster-name-xxxxx # Replace this with the public load balancer name. This usually corresponds to the cluster's Infra ID
-      resourceGroup: example-cluster-rg # Replace this with the name of the resourcegroup created by the ARO sevrice
-      subnet: example-worker-subnet # Replace this with the name of the specific subnet for these machines
-      vnet: example-vnet # Replace this with your ARO VNet name
       tags:
         node_role: infra
     ```
