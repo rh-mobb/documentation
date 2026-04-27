@@ -25,7 +25,7 @@ Before you start, make sure you have:
 - an Amazon S3 bucket and AWS credentials, or permission to create them
 - a machine pool with enough worker capacity for OpenShift AI
 
-In our validation, a 2-worker `m5.xlarge` setup was not enough for this walkthrough because some OpenShift AI components could not be scheduled and the dashboard stayed in a `Not Ready` state. For this reason, plan for at least 3 worker nodes for OpenShift AI, enable autoscaling, or use a dedicated machine pool if your existing workers are already heavily used.`
+In our validation, a 2-worker `m5.xlarge` setup was not enough for this walkthrough because some OpenShift AI components could not be scheduled and the dashboard stayed in a `Not Ready` state. For this reason, plan for at least 3 worker nodes for OpenShift AI, enable autoscaling, or use a dedicated machine pool if your existing workers are already heavily used.
 
 Verify that your cluster has healthy worker nodes and a default storage class:
 
