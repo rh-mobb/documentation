@@ -229,6 +229,8 @@ oc get pods -n nvidia-gpu-operator
 
 The `gpu-cluster-policy` should reach `State: ready`.
 
+Note that it may take 15-20 minutes for the ClusterPolicy to become ready while the NVIDIA driver components are deployed and initialized on the GPU node.
+
 
 ## 5. Verify GPU capacity on the node
 
