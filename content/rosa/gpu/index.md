@@ -35,6 +35,8 @@ Before you begin, make sure you have:
 * sufficient AWS quota and capacity for a GPU instance type in your target Region and Availability Zone
 * Red Hat OpenShift AI already installed if you want to validate GPU-backed workbenches from the dashboard. You can follow Step 1-2 from [this article](https://cloud.redhat.com/experts/redhat/rhoai/rosa-s3/) to install RHOAI operator.
 
+During validation, a 2-worker `m5.xlarge` machine pool did not provide enough schedulable capacity for this walkthrough. Some OpenShift AI components could not be scheduled, and the OpenShift AI dashboard remained in a `Not Ready` state. Use at least 3 worker nodes, enable autoscaling, or create a dedicated machine pool for OpenShift AI if the existing workers are already heavily used.
+
 This walkthrough was validated on an existing ROSA cluster in `ca-central-1` using a `g4dn.xlarge` GPU machine pool.
 
 
