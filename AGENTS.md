@@ -119,6 +119,7 @@ Three related artifacts work as one editorial unit:
 | **Authoritative** | [`content/rosa/best-practices-recommendations/index.md`](./content/rosa/best-practices-recommendations/index.md) |
 | **Derivative checklist** | [`content/rosa/best-practices-checklist/index.md`](./content/rosa/best-practices-checklist/index.md) (numbered sections, per-item tables, **Quick-reference summary** at the end) |
 | **Table export (CSV)** | [`static/rosa/best-practices-checklist-decisions.csv`](./static/rosa/best-practices-checklist-decisions.csv) (`publishDir` is `public/experts`, so this is served at `/experts/rosa/best-practices-checklist-decisions.csv`) |
+| **Category tags (visual)** | [`layouts/shortcodes/rh-category.html`](./layouts/shortcodes/rh-category.html) is the **source of truth** for label names, emoji, and `rh-tag` colours. In the recommendations and checklist intros, list the five ROSA BP categories **explicitly** in the shortcode (do not use `legend`), so the page does not pick up extra tags if `legend` changes. In the recommendations guide, `{{< rh-category >}}` rows sit under **`####` subsection** headings (not under `##`). CSV `category` column stays plain text; keep wording aligned with that shortcode. |
 
 **Source of truth:** The recommendations guide owns scope, rationale, and alignment with product docs. The checklist distills that into decision items and links back into the guide. The CSV mirrors the **Quick-reference summary** table (same rows, order, text, and **category** labels).
 
