@@ -15,17 +15,26 @@ validated_version: "4.18"
 
 **Planning a new deployment?** Start with the [ROSA Architecture Decision Checklist](/experts/rosa/best-practices-checklist/), which distills this guide into phase-by-phase decisions with safe defaults and links back here for full rationale.
 
+**Categories in this guide:** Major sections use the same five labels as the checklist (**Security**, **Compliance**, **Performance**, **Resilience**, **Availability**). A line reading **Categories:** under a heading summarizes the dominant themes for that section, not an exhaustive taxonomy of every paragraph.
+
 The architectural evolution of managed Kubernetes on AWS has reached a significant milestone with the introduction of **Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes (HCP)**. ROSA HCP builds on the same fully managed ROSA [Classic] experience by decoupling the control plane from the data plane and hosting that control plane in a Red Hat-managed AWS account. That frees customer accounts to focus capacity on applications. [^1] The result is a smaller minimum footprint in your VPC, cluster creation on the order of ten minutes, and the same SRE-backed operations customers expect from ROSA. [^3] Many customers adopt or migrate to HCP when they want that leaner data-plane footprint and faster provisioning while staying on a single familiar platform. The body of this guide synthesizes Red Hat’s operational expertise with the AWS Well-Architected Framework for hosted control plane deployments.
 
 Across a fleet of ROSA clusters, [Red Hat Advanced Cluster Management for Kubernetes (ACM)](https://www.redhat.com/en/technologies/management/advanced-cluster-management) extends these practices with hub-level governance, policy-driven configuration, application lifecycle management (including GitOps integration), and a single operational view of clusters and workloads, which suits teams that standardize ROSA HCP from a central platform org. [^71] [Red Hat Advanced Cluster Security for Kubernetes (ACS)](https://www.redhat.com/en/technologies/cloud-computing/openshift/advanced-cluster-security-kubernetes) adds deep image vulnerability scanning, deploy-time risk scoring, runtime threat detection, and OpenShift-native security policies that complement OpenShift’s built-in controls and ROSA’s managed boundary. [^70]
 
-## Fundamental architecture and the paradigm shift
+## Comparison: ROSA with HCP vs ROSA Classic
+
+**Categories:** Performance, Resilience, Availability, Compliance
 
 The core of the ROSA HCP value proposition lies in the separation of concerns. ROSA Classic runs a highly available control plane in your AWS account (typically seven or more EC2 instances for masters, workers, and infrastructure), so every layer stays visible in your cost and capacity reports while Red Hat SREs continue to operate the cluster end to end. [^1] ROSA with HCP moves that control plane into a Red Hat-managed service account, so your bill and VPC center on worker and application capacity; Red Hat SREs still own availability and performance of the control plane. [^1] Both models remove customer toil for etcd quorums and API server lifecycle; HCP adds a streamlined path for teams that want maximum focus on application delivery and the smallest data-plane footprint. [^6]
 
 The connectivity between the worker nodes in the customer’s VPC and the control plane in the Red Hat-managed account is established through AWS PrivateLink. [^1] That keeps control-plane connectivity off the public internet while still supporting public API endpoints for developers where you enable them. Classic uses established in-VPC networking between your control plane and workers; HCP standardizes on PrivateLink for the hosted control plane path. That fits cleanly with AWS landing zones and private connectivity patterns. HCP also gives you independent upgrade lanes for the hosted control plane and each machine pool, so you can stage change with fine-grained control. [^3]
 
-#### Detailed architectural comparison of ROSA models [^1]
+ROSA with HCP extends the strong compliance story customers already trust on ROSA: programs such as **HIPAA-eligible** use on the service, F**edRAMP High** milestones for hosted control planes in **AWS GovCloud,** and **FIPS-enabled** clusters at install time are all part of how teams run regulated workloads on OpenShift on AWS. [^1] The full matrix of regions, offerings, and attestations evolves with the product. For the latest, see the authoritative [ROSA compliance and security documentation](https://docs.aws.amazon.com/rosa/latest/userguide/security.html).
+
+Organizations comparing Classic and HCP will find both supported under the same managed-service model; choose the architecture that matches your accounting, networking, and migration timeline. Published examples combining HCP with multi-year AWS commitments have cited on the order of ~37% infrastructure savings and ~68% savings versus on-demand in representative scenarios; treat those as signals to explore with your AWS account team. [^6]
+
+<details open>
+<summary><b>Detailed architectural comparison of ROSA models</b></summary>
 
 | Architectural Feature | ROSA with HCP | ROSA Classic |
 | :---- | :---- | :---- |
@@ -37,10 +46,15 @@ The connectivity between the worker nodes in the customer’s VPC and the contro
 | Lifecycle Flexibility | Independent hosted control plane and machine pool upgrades | Coordinated cluster-wide upgrade cadence |
 | EC2 in customer account | Workers and data-plane resources | Workers, Classic control plane, and infra nodes |
 
+</details>
 
-ROSA with HCP extends the strong compliance story customers already trust on ROSA: programs such as HIPAA-eligible use on the service, FedRAMP High milestones for hosted control planes in AWS GovCloud, and FIPS-enabled clusters at install time are all part of how teams run regulated workloads on OpenShift on AWS. [^1] The full matrix of regions, offerings, and attestations evolves with the product. For the latest, see the authoritative [ROSA compliance and security documentation](https://docs.aws.amazon.com/rosa/latest/userguide/security.html). Organizations comparing Classic and HCP will find both supported under the same managed-service model; choose the architecture that matches your accounting, networking, and migration timeline. Published examples combining HCP with multi-year AWS commitments have cited on the order of ~37% infrastructure savings and ~68% savings versus on-demand in representative scenarios; treat those as signals to explore with your AWS account team. [^6]
+<br><br>
+
+
 
 ## Strategic infrastructure and network design
+
+**Categories:** Security, Resilience, Availability
 
 A resilient ROSA HCP environment is built on a foundation of meticulously designed networking. ROSA HCP follows a Bring Your Own VPC (BYO-VPC) model: you prepare subnets and routing before cluster creation so the platform lands exactly where your security and landing-zone standards require. [^2] That upfront design is a strength: it lets you embed OpenShift in existing guardrails instead of adapting your enterprise network to a one-size-fits-all cluster network.
 
@@ -56,6 +70,9 @@ When calculating CIDR ranges for the Pod, Service, and Machine networks, treat t
 
 For **ROSA with HCP**, Red Hat documents **minimum** machine CIDR sizes: `/25` (128 IPv4 addresses) for a **single-AZ** cluster and `/24` (256 addresses) when the cluster uses **multiple availability zones**. Smaller ranges are outside supported sizing; the installer rejects them. [^107] The service currently supports **up to 500 worker nodes**. [^108] If you plan toward that ceiling, counting only a `/23` (512 addresses) for the machine supernet is often too tight: you still split addresses across subnets per zone, and **each IPv4 subnet reserves several addresses for AWS use**, so practical designs commonly allocate **at least `/22` (1024 addresses)** for the machine network (and proportionally sized subnets) and validate with the calculator and subnet math. [^107] [^109]
 
+<details open>
+<summary><b>VPC and CIDR: network requirements quick reference</b></summary>
+
 | Network Requirement | Configuration Best Practice | Priority |
 | :---- | :---- | :---- |
 | Availability Zones | Minimum of 3 AZs for production environments | High |
@@ -65,6 +82,10 @@ For **ROSA with HCP**, Red Hat documents **minimum** machine CIDR sizes: `/25` (
 | Pod CIDR (cluster network) | ROSA default `10.128.0.0/14` [^107] | High |
 | Host prefix | ROSA default `23` (with the default pod CIDR, sizes per-node pod subnets and max pods per node) [^107] | High |
 | DNS Settings | Set enableDnsHostnames and enableDnsSupport to true | High |
+
+</details>
+
+<br><br>
 
 Verification of the VPC configuration can be performed using the AWS CLI. To ensure that DNS attributes are correctly set, which is vital for Route 53 and PrivateLink interoperability, the following command should be executed:
 
@@ -160,11 +181,16 @@ For Routes (and Ingress where you use it), document TLS end-to-end: **edge** ter
 
 ## Identity and Access Management through STS and OIDC
 
+**Categories:** Security, Compliance
+
 The security model of ROSA HCP is fundamentally rooted in the AWS Security Token Service (STS). This mechanism provides a significant security advantage over static, long-term credentials by utilizing short-lived, dynamic tokens for all administrative and operational actions. [^16] In the HCP architecture, Red Hat SREs and internal cluster operators obtain credentials that expire in one hour or less, drastically reducing the risk of credential theft or leakage. [^16]
 
 #### IAM Roles and the Principle of Least Privilege
 
 ROSA HCP leverages two distinct sets of IAM roles: account-wide roles and operator-specific roles. [^16] Account-wide roles establish the foundational trust between the customer’s AWS account and Red Hat’s management tools, allowing Red Hat SREs to provide support and manage infrastructure. [^19] Operator-specific roles are more granular, assigned to specific pods within the cluster (for example the Ingress Controller or the EBS CSI driver) via OpenID Connect (OIDC). [^16] This follows the IAM Roles for Service Accounts (IRSA) pattern, ensuring that each cluster component has only the exact permissions required for its function.
+
+<details open>
+<summary><b>ROSA HCP IAM roles and critical managed policies</b></summary>
 
 | Role Type | Purpose | Critical Managed Policy |
 | :---- | :---- | :---- |
@@ -174,6 +200,10 @@ ROSA HCP leverages two distinct sets of IAM roles: account-wide roles and operat
 | Ingress Operator | Manages Load Balancers and Route 53 | ROSAIngressOperatorPolicy |
 | Storage Operator | Manages EBS volume attachments | ROSAAmazonEBSCSIDriverOperatorPolicy |
 | Control Plane Operator | Manages CP components in Red Hat account | ROSAControlPlaneOperatorPolicy |
+
+</details>
+
+<br><br>
 
 Administrators can verify the existence and configuration of these roles using the rosa CLI. A healthy cluster should return a list of roles associated with the specific OIDC provider:
 
@@ -259,6 +289,8 @@ Use [dedicated-admin](https://docs.aws.amazon.com/rosa/latest/userguide/using-de
 
 ## Security hardening and automated compliance
 
+**Categories:** Security, Compliance
+
 The multi-layered security approach of ROSA HCP combines OpenShift-native controls with AWS-specific infrastructure protections. Achieving a "Zero Trust" posture requires the enforcement of restricted policies at both the network and workload levels. When you operate many clusters, centralized workload security and hub-level governance extend that model with consistent sensors, policies, and visibility (see About this guide). [^71] [^70]
 
 Treat OpenShift resources (`Route`, `Project`, `EgressFirewall`, SCC bindings, OperatorHub subscriptions) as first-class ROSA design inputs: match **OVN-Kubernetes** semantics, your DNS and TLS posture, and what ROSA customers can change, not legacy OpenShift SDN lore or generic Kubernetes tutorials alone.
@@ -312,12 +344,19 @@ By default, OpenShift allows all pod-to-pod communication within the cluster unt
 
 For controlling traffic leaving the cluster, EgressFirewall (OpenShift’s `EgressFirewall` resource; historically referred to as egress network policy in some docs) allows or denies traffic to specific external domains or IP ranges. [^49] This is particularly useful for preventing data exfiltration or ensuring that internal applications only communicate with approved external APIs. Validate egress with flow logs, SIEM correlation, or workload-aware observability so policy and reality stay aligned, especially when several teams share a cluster.
 
+<details open>
+<summary><b>NetworkPolicy and EgressFirewall patterns by objective</b></summary>
+
 | Policy Objective | Resource Type | Implementation |
 | :---- | :---- | :---- |
 | Isolate Namespace | NetworkPolicy | Deny all ingress/egress by default |
 | Allow Ingress Controller | NetworkPolicy | Permit traffic from the Ingress namespace |
 | Block External Access | EgressFirewall | Deny traffic to unknown CIDRs |
 | Allow Specific API | EgressFirewall | Permit traffic to a target FQDN |
+
+</details>
+
+<br><br>
 
 #### The OpenShift Compliance Operator
 
@@ -333,6 +372,8 @@ oc get compliancecheckresults -n openshift-compliance | grep FAIL
 
 ## Operational excellence and lifecycle management
 
+**Categories:** Resilience, Performance, Availability
+
 Operational excellence in ROSA HCP is achieved through automation, proactive monitoring, and a disciplined approach to cluster maintenance. The HCP model's separate lifecycle for the control plane and worker nodes allows for more surgical maintenance windows and reduced risk during updates.
 
 **ROSA platform boundary:** Pair these practices with deliberate admin scope (ROSA customer administration and break-glass under Identity and Access Management through STS and OIDC): do not treat `cluster-admin` as routine access, do not document node SSH or customer-owned MachineConfig surgery as supported levers on ROSA HCP, and keep long-lived cloud or registry credentials out of integrated build specs (CI/CD and GitOps (platform-native) and Software supply chain and secure development).
@@ -343,12 +384,19 @@ In ROSA HCP, upgrades are not holistic cluster events. Administrators have the f
 
 Red Hat utilizes a "Node Surge" strategy during machine pool upgrades. A new node is provisioned in excess of the replica count (maxSurge) before an old node is drained and replaced. [^8] This ensures that the application's capacity is not compromised during the upgrade process, provided that PDBs and node surge settings are correctly configured. [^8]
 
+<details open>
+<summary><b>ROSA upgrade commands and verification</b></summary>
+
 | Upgrade Action [^2] | Command | Verification |
 | :---- | :---- | :---- |
 | List Available Versions | `rosa list upgrade -c <cluster_id>` | Review "Notes" for recommendations |
 | Upgrade Control Plane | `rosa upgrade cluster -c <cluster_id> --version <version>` | `rosa describe cluster -c <cluster_id>` |
 | List Machine Pools | `rosa list machinepools -c <cluster_id>` | Check current version per pool |
 | Upgrade Machine Pool | `rosa upgrade machinepool -c <cluster_id> <name>` | `oc get nodes` |
+
+</details>
+
+<br><br>
 
 **ClusterOperator health:** Treat ClusterOperator status as part of upgrade and steady-state review. Resolve Degraded operators before you declare maintenance complete; pair `oc get clusteroperators` with [Insights Advisor](#proactive-health-monitoring-with-insights-advisor) findings.
 
@@ -452,6 +500,8 @@ oc get servicemonitor -A 2>/dev/null | head -20
 
 ## Application reliability and workload resilience
 
+**Categories:** Resilience, Availability, Performance
+
 Application reliability in ROSA HCP is a [shared responsibility](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/introduction_to_rosa/policies-and-service-definition#rosa-policy-responsibility-matrix). While the platform provides the necessary primitives for resilience, developers must architect their workloads to survive infrastructure failures and the automated maintenance cycles inherent in a managed service.
 
 #### Health probes and the container lifecycle
@@ -464,11 +514,18 @@ The foundation of application reliability is the implementation of health check 
 
 **Probe design:** Liveness and readiness should not blindly reuse the same HTTP endpoint or identical logic. Liveness should be narrow and exist only to detect deadlocks or hung processes worthy of a restart. Readiness should reflect whether the instance can serve traffic right now (dependencies up, migrations complete, warm caches). Using the same heavy check, or a readiness signal that fails under load, as liveness often causes restart loops during spikes. Prefer distinct paths (for example `/livez` vs `/readyz`) and stricter timeouts on liveness than readiness where appropriate.
 
+<details open>
+<summary><b>Health probe types, recommended tests, and use cases</b></summary>
+
 | Probe Type [^27] | Recommended Test | Use Case |
 | :---- | :---- | :---- |
 | Liveness | HTTP GET (e.g., /healthz) | Detects process crashes or infinite loops |
 | Readiness | HTTP GET (e.g., /readyz) | Ensures DB connections and cache are ready |
 | Startup | Exec command (e.g., cat /tmp/ready) | For apps that take minutes to initialize |
+
+</details>
+
+<br><br>
 
 Verification of probe status for a running workload can be achieved by describing the pod and inspecting the Conditions and Events sections:
 
@@ -672,6 +729,8 @@ oc get pods -A -l app.kubernetes.io/name=istio 2>/dev/null | head -5
 
 ## Software supply chain and secure development
 
+**Categories:** Security, Compliance
+
 Modern ROSA estates treat what runs in cluster as the output of a pipeline: known images, attested artifacts, and policy that survives promotion from development to production. Pair OpenShift-native and AWS registry practices with Red Hat tooling when your organization buys SBOM-driven governance or Sigstore-class signing; use [Insights](https://www.redhat.com/en/blog/insights-advisor-openshift-how-react-advisor-recommendations) for platform drift and the security portfolio described in About this guide for CVE and runtime depth.
 
 **Do:** Reference container images by immutable digest (`sha256:…`) or pinned tags with a rebuild discipline; track base image and runtime updates and redeploy on vendor CVE fixes; adopt [Red Hat Trusted Profile Analyzer](https://docs.redhat.com/en/documentation/red_hat_trusted_profile_analyzer/) when SBOMs, VEX, and component policy anchor release gates; adopt [Red Hat Trusted Artifact Signer](https://docs.redhat.com/en/documentation/red_hat_trusted_artifact_signer/) when signatures must prove integrity at registry, pipeline, or admission; adopt [Red Hat Advanced Developer Suite](https://developers.redhat.com/products/advanced-developer-suite) when golden paths and developer portals should connect those controls end to end via [Red Hat Developer Hub](https://developers.redhat.com/products/developer-hub/overview).
@@ -701,6 +760,8 @@ oc get pods -n <namespace> -o jsonpath='{range .items[*]}{.metadata.name}{": "}{
 [Red Hat Advanced Developer Suite](https://developers.redhat.com/products/advanced-developer-suite) bundles developer experience and supply chain security so teams do not stitch ad hoc portals, scanners, and signers alone. [Red Hat Developer Hub](https://developers.redhat.com/products/developer-hub/overview) is a supported, Backstage-based internal developer portal that hosts software templates, documentation, and plugins that encode golden paths onto OpenShift (with integrations to OpenShift GitOps, OpenShift Pipelines, Dev Spaces, and the wider portfolio). Trusted Profile Analyzer and Trusted Artifact Signer complete the arc from scaffold → build → attest → sign → deploy. Align platform enablement content with that narrative when you describe secure SDLC on ROSA, not three isolated SKUs.
 
 ## CI/CD and GitOps (platform-native)
+
+**Categories:** Security, Resilience
 
 Production ROSA estates benefit when deploy and build patterns match supported OpenShift operators: OpenShift GitOps (Argo CD) for declarative desired state, and OpenShift Pipelines (Tekton) or external CI for build, test, and promote. BuildConfig, ImageStream, and S2I stay valid, especially in brownfield, but they should not be documented as the only “OpenShift way” without a path toward Git-backed deploys and registry-native promotion.
 
@@ -742,6 +803,8 @@ oc get pipelinerun -A --no-headers 2>/dev/null | head -20
 
 ## Performance efficiency and dynamic scaling
 
+**Categories:** Performance, Resilience
+
 Optimizing performance in a ROSA HCP cluster involves a data-driven approach to resource allocation and the intelligent use of AWS instance types.
 
 #### Worker memory, allocatable capacity, and mixed machine pools
@@ -760,11 +823,18 @@ Optimizing performance in a ROSA HCP cluster involves a data-driven approach to 
 
 Think of your ROSA worker nodes as loading bays in a warehouse, Pods as crews working a shift, and CPU and memory requests as how much space and tooling each crew reserves on the floor. Three different autoscalers solve three different problems. Stack them and you get elasticity at the node, replica, and per-Pod resource layers.
 
+<details open>
+<summary><b>Multi-dimensional autoscaling: layers at a glance</b></summary>
+
 | Layer | “Workers” idea | What it scales | Primary benefit |
 | :---- | :---- | :---- | :---- |
 | **Cluster Autoscaler** | Open more bays when there is no dock space left | Worker nodes (machine pools) | Capacity for new Pods when the cluster is out of schedulable room |
 | **Horizontal Pod Autoscaler (HPA)** | Send more crews to the same job when the queue grows | Pod replicas | Throughput and latency under load without changing each Pod’s size |
 | **Vertical Pod Autoscaler (VPA)** | Right-size each crew’s toolkit | CPU/memory requests and limits per Pod | Efficiency and stable scheduling signals for the other two |
+
+</details>
+
+<br><br>
 
 **Cluster Autoscaler (nodes):** When Pods stay Pending because no node has enough free requests, the cluster autoscaler grows the machine pool (adds EC2 workers) up to its maximum, provided a new node of that pool’s shape would actually make the Pod schedulable (see **Worker memory, allocatable capacity, and mixed machine pools**). That is how you scale the foundation, not the application logic directly. On ROSA HCP, each machine pool maps to a single Availability Zone, so run at least one autoscaled pool per AZ you want to grow in, and size min and max replicas so you always meet platform minimums (for example system workloads) while leaving headroom for bursts. [^55]
 
@@ -797,6 +867,8 @@ oc get nodes -o custom-columns=NAME:.metadata.name,INSTANCE-TYPE:.metadata.label
 
 ## Financial engineering and cost optimization
 
+**Categories:** Performance, Compliance
+
 ROSA HCP provides several mechanisms to reduce the Total Cost of Ownership (TCO) of an OpenShift environment. Moving to HCP focuses your AWS spend on worker and application capacity because control-plane EC2 leaves your account bill; published examples cite on the order of ~37% infrastructure savings in customer-ready scenarios, which is a useful starting point for a conversation with your AWS team. [^6]
 
 #### Reserved Instances and Savings Plans (ROSA HCP)
@@ -813,11 +885,18 @@ Project-scoped quotas are the primary lever for fair sharing on multi-tenant ROS
 
 Pair ResourceQuota, LimitRange, ClusterResourceQuota, and related OpenShift objects with policy-as-code admission (for example Gatekeeper and Rego) if you require every workload to declare requests/limits. Quotas alone cap totals but do not always stop a lone Pod with missing resources from being created. [ACM governance policies](https://www.redhat.com/en/technologies/management/advanced-cluster-management) offer a fleet-scale way to require those same declarations and to reconcile quota- and LimitRange-related templates across many ROSA clusters from the hub. [^71] For how limits can shape or throttle application performance over time, see the upstream guide [Resource management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/). [^33] OpenShift-specific quota and LimitRange guidance is in the product docs under scalability and performance (for example [Using quotas and limit ranges](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/scalability_and_performance/compute-resource-quotas)). [^59]
 
+<details open>
+<summary><b>Cost and quota objects: scope and best practice</b></summary>
+
 | Cost Control Object [^32] | Scope | Best Practice |
 | :---- | :---- | :---- |
 | ResourceQuota | Namespace / project | Team or app budgets (CPU, memory, objects, storage) |
 | LimitRange | Namespace / project | Defaults and min/max per Pod or container |
 | ClusterResourceQuota | Multi-project | One budget spanning labeled projects (team or LOB) |
+
+</details>
+
+<br><br>
 
 Verification of active quotas in a namespace:
 
@@ -826,6 +905,8 @@ oc get resourcequotas -n <namespace>
 ```
 
 ## AWS Well-Architected lens for ROSA
+
+**Categories:** Security, Compliance, Performance, Resilience, Availability
 
 ROSA clusters sit on your VPC, IAM, KMS, load balancers, and data plane services. Design choices there should follow the [AWS Well-Architected Framework](https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html) (security, reliability, performance, cost, and operational excellence pillars) together with [ROSA documentation on AWS](https://docs.aws.amazon.com/rosa/latest/userguide/welcome.html). This section names the customer–AWS–Red Hat boundary and fills gaps that are easy to miss when the narrative stays inside Kubernetes objects alone.
 
@@ -879,6 +960,8 @@ Consult the Service Quotas console and [ROSA service documentation](https://docs
 
 ## Disaster Recovery and business continuity
 
+**Categories:** Resilience, Availability
+
 **Vocabulary:** High availability (HA) here means surviving failures inside a deployment scope, typically within one AWS Region (for example loss of an Availability Zone), not automatically surviving a full regional outage. Disaster recovery (DR) means recovering from a wider blast radius: a failed deployment, data corruption, regional impairment, ransomware, or other events you express with RPO and RTO.
 
 **Cluster platform HA vs. workload HA:** A **multi-AZ** ROSA cluster means the **platform** is built for availability across zones: Red Hat runs the hosted **control plane** for HA, and you place **worker** machine pools across multiple AZs so the cluster retains schedulable capacity when a zone degrades. That is **cluster-level** resilience (managed service plus AWS networking and compute layout), not automatic **application-level** resilience. **You** are responsible for using **OpenShift** workload APIs and patterns (multiple replicas, PodDisruptionBudgets, topology spread constraints, readiness and liveness probes, Routes/Services, rolling updates aligned with maintenance) and **AWS** data and edge primitives (Multi-AZ or replicated RDS/Aurora and caches, load balancers, health checks, backups, replication) so **each workload and data tier** you care about can ride out the same events the cluster survives. Saying “our cluster is multi-AZ” states **infrastructure** posture; saying “our service is HA in-region” requires that **workload** and **data** story too. Saying “we can fail away from `us-east-1`” is a **DR** commitment. Be explicit for compliance or executive readers. Promising “high availability” for a production tier should tie together multi-AZ workers, replicated or Multi-AZ data, and enough spread replicas; if a leg is missing, narrow the claim (dev/test, tier-2, or explicit risk acceptance).
@@ -923,6 +1006,8 @@ For network paths between regions, use inter-Region VPC peering, Transit Gateway
 Stateful applications remain a high-value focus: [managed relational tiers on AWS](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_HighAvailability.html) such as RDS or Aurora (often with global or cross-region options) simplify failover and align with AWS resilience patterns. Where data must stay on cluster storage, storage operators, replication, and workload-scoped Velero or OADP (with tested namespace- or PVC-level restores) must close the RPO/RTO gap explicitly, without treating whole-cluster restore as the only articulated path. [^63]
 
 ## Health assessment framework and investigative scripting
+
+**Categories:** Resilience, Security, Performance
 
 Many teams codify health checks with the OpenShift and ROSA CLIs. A modular script can run proactive checks that reflect the best practices in this document.
 
@@ -1002,6 +1087,8 @@ Beyond custom scripting, several open-source and native tools are designed for d
 * **Must-Gather Analyzer:** A specialized skill that parses the complex directory structures produced by must-gather to provide readable summaries of failing pods and degraded operators. [^69]
 
 ## Nuanced conclusions and expert recommendations
+
+**Categories:** Resilience, Security, Performance, Availability
 
 ROSA HCP is a major step forward in managed OpenShift on AWS: faster time-to-cluster, a data-plane-centric footprint, and independent upgrade lanes that let platform teams move at the speed of the business. ROSA Classic customers get the same SRE partnership and add a clear migration path when they are ready for that next wave of efficiency, all without leaving the ROSA product family.
 

@@ -38,6 +38,22 @@ Draft content: `draft: true` in front matter; local preview uses `-D` in the Mak
 - **Code fences** are enabled; highlight style and options are under `[markup.highlight]`.
 - **Minify**: `disableJS` and `disableJSON` are `true` so builds do not choke on code blocks labeled `json` or `js`. Keep those labels accurate.
 - **Shortcodes** ship with the theme under `themes/rhds/layouts/shortcodes/` (for example `alert`, `notice`, `expand`, `tabs` / `tab`, `mermaid`, `include`, `attachments`, `button`, `children`, `swagger`, `math`, `siteparam`). Prefer existing shortcodes over ad-hoc HTML when they fit.
+- **`expand` shortcode:** Do **not** rely on it for collapsible sections in this repo. The theme partial uses **jQuery** in its `onclick` handler, but RHDS layouts never load jQuery, so content stays hidden and **clicking the label does not expand**. Fixing that would require a theme change (out of scope for content-only work).
+- **Collapsible sections (recommended):** Use native **`<details>`** and **`<summary>`** in content. Browsers handle open/close with no JavaScript. With Goldmark `unsafe = true`, put a **blank line after `</summary>`** so Markdown inside (paragraphs, lists, **tables**) still renders. Example:
+
+  ```html
+  <details open>
+  <summary>Section title</summary>
+
+  | Column A | Column B |
+  |----------|----------|
+  | …        | …        |
+
+  </details>
+  ```
+
+  Omit the `open` attribute on `<details>` if the block should **start collapsed** instead.
+
 - **`{{< alert >}}`**: supports RHDS-aligned `state` values (see [`themes/rhds/layouts/shortcodes/alert.html`](./themes/rhds/layouts/shortcodes/alert.html)); avoid redundant version-validation callouts when `validated_version` is set.
 - **Em dash (`—`)**: Do not use em dashes in site content (guides, chapter pages, etc.). Prefer commas, parentheses, colons, or split into two sentences.
 
@@ -104,7 +120,7 @@ Three related artifacts work as one editorial unit:
 | **Derivative checklist** | [`content/rosa/best-practices-checklist/index.md`](./content/rosa/best-practices-checklist/index.md) (numbered sections, per-item tables, **Quick-reference summary** at the end) |
 | **Table export (CSV)** | [`static/rosa/best-practices-checklist-decisions.csv`](./static/rosa/best-practices-checklist-decisions.csv) (`publishDir` is `public/experts`, so this is served at `/experts/rosa/best-practices-checklist-decisions.csv`) |
 
-**Source of truth:** The recommendations guide owns scope, rationale, and alignment with product docs. The checklist distills that into decision items and links back into the guide. The CSV mirrors the **Quick-reference summary** table (same rows, order, and text).
+**Source of truth:** The recommendations guide owns scope, rationale, and alignment with product docs. The checklist distills that into decision items and links back into the guide. The CSV mirrors the **Quick-reference summary** table (same rows, order, text, and **category** labels).
 
 **When editing any one of these files:** Do **not** silently update the other files in the same turn. **Propose a short plan** that names which sibling file(s) need updates and why (for example: safe default changed, new or renumbered item, heading slug / anchor change, new summary row). **Ask the user for explicit permission** before applying cross-file edits.
 
