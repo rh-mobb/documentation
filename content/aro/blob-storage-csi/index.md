@@ -317,8 +317,9 @@ To test the Blob CSI driver, create the required storage resources, then create 
     EOF
     ```
 
-    > Note:
-    > When using BlobFuse2 on ARO, adding `--default-working-dir=/tmp/blobfuse2` avoids mount failures caused by the default `/.blobfuse2` path being read-only.
+    {{< alert state="info" >}}
+    When using BlobFuse2 on ARO, adding `--default-working-dir=/tmp/blobfuse2` avoids mount failures caused by the default `/.blobfuse2` path being read-only.
+    {{< /alert >}}
 
 1. Create the PersistentVolumeClaim:
 
