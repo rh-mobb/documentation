@@ -478,13 +478,10 @@ You should see a generated gateway deployment and `LoadBalancer` service, typica
 Get the external address from the generated gateway service:
 
 ```bash
-oc get svc -n $APP_NAMESPACE
-```
-
-Set the external address:
-
-```bash
-export GW_ADDR=<external-load-balancer-hostname>
+export GW_ADDR=$(oc get svc -n $APP_NAMESPACE \
+  -l gateway.networking.k8s.io/gateway-name=hello-gateway \
+  -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')
+echo "Gateway address: $GW_ADDR"
 ```
 
 Test the application by sending the expected `Host` header:
