@@ -1,7 +1,7 @@
 ---
 date: '2023-02-21'
 title: ROSA with NVIDIA GPU workloads and OpenShift AI
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA HCP", "RHOAI"]
 authors:
   - Chris Kang
   - Diana Sari
@@ -33,7 +33,7 @@ Before you begin, make sure you have:
 * the `rosa` CLI configured for your cluster
 * the `oc` CLI configured and logged in
 * sufficient AWS quota and capacity for a GPU instance type in your target Region and Availability Zone
-* Red Hat OpenShift AI already installed if you want to validate GPU-backed workbenches from the dashboard. You can follow Step 1-2 from [this article](https://cloud.redhat.com/experts/redhat/rhoai/rosa-s3/) to install RHOAI operator.
+* Red Hat OpenShift AI already installed if you want to validate GPU-backed workbenches from the dashboard. You can follow Step 1-2 from [this article](/experts/redhat/rhoai/rosa-s3/) to install RHOAI operator.
 
 During validation, a 2-worker `m5.xlarge` machine pool did not provide enough schedulable capacity for this walkthrough. Some OpenShift AI components could not be scheduled, and the OpenShift AI dashboard remained in a `Not Ready` state. Use at least 3 worker nodes, enable autoscaling, or create a dedicated machine pool for OpenShift AI if the existing workers are already heavily used.
 
@@ -63,7 +63,7 @@ The GPU machine pool can take several minutes to provision. Wait until the new n
 ```bash
 rosa list machinepools -c $CLUSTER
 oc get nodes
-oc get nodes -L node-role.kubernetes.io/gpu
+oc get nodes -l node-role.kubernetes.io/gpu=
 ```
 
 At this stage, the GPU node existed but did not yet advertise `nvidia.com/gpu`, because the GPU software stack had not yet been installed.
@@ -73,9 +73,9 @@ At this stage, the GPU node existed but did not yet advertise `nvidia.com/gpu`, 
 
 Install the Node Feature Discovery (NFD) Operator. NFD is used to discover hardware capabilities and label nodes appropriately.  
 
-> In this guide, the operators are installed with the CLI for repeatability and easy copy/paste. You can also install the same operators from Software Catalog (formerly known as OperatorHub) in the OpenShift web console if you prefer clicking through a UI.
-
-
+{{< alert state="info" >}}
+In this guide, the operators are installed with the CLI for repeatability and easy copy/paste. You can also install the same operators from Software Catalog (formerly known as OperatorHub) in the OpenShift web console if you prefer clicking through a UI.
+{{< /alert >}}
 
 ```bash
 cat <<'EOF' | oc apply -f -
@@ -140,7 +140,9 @@ At this point, all NFD components should be in `Running` state.
 
 After NFD is installed, install the NVIDIA GPU Operator.
 
-> In this guide, the operators are installed with the CLI for repeatability and easy copy/paste. You can also install the same operators from Software Catalog (formerly known as OperatorHub) in the OpenShift web console if you prefer a UI-based workflow.
+{{< alert state="info" >}}
+In this guide, the operators are installed with the CLI for repeatability and easy copy/paste. You can also install the same operators from Software Catalog (formerly known as OperatorHub) in the OpenShift web console if you prefer a UI-based workflow.
+{{< /alert >}}
 
 ### Option A: Install the certified operator from Software Catalog
 
@@ -172,7 +174,7 @@ spec:
   source: certified-operators
   sourceNamespace: openshift-marketplace
 EOF
-````
+```
 
 Wait for the CSV:
 
@@ -201,7 +203,9 @@ helm install --wait --generate-name \
 
 In this validation, the installed chart version was `v26.3.0`.
 
-> To see newer chart versions, run `helm search repo nvidia/gpu-operator --versions` before installing.
+{{< alert state="info" >}}
+To see newer chart versions, run `helm search repo nvidia/gpu-operator --versions` before installing.
+{{< /alert >}}
 
 
 ## 4. Create the ClusterPolicy
@@ -312,7 +316,7 @@ Verify that the change took effect:
 
 ```bash
 oc get odhdashboardconfig odh-dashboard-config \
-  -n redhat-ods-applications -o yaml | egrep -n 'disableHardwareProfiles|disableAcceleratorProfiles'
+  -n redhat-ods-applications -o yaml | grep -En 'disableHardwareProfiles|disableAcceleratorProfiles'
 ```
 
 Wait for a few minutes and refresh the dashboard page. The dashboard should now display  **Hardware profiles** under **Settings**. 
@@ -366,7 +370,7 @@ To verify where the workbench landed and what resources it requested, inspect th
 ```bash
 oc get pods -n project-gpu -o wide
 
-oc get pod -n project-gpu project-gpu-workbench-0 -o yaml | egrep -n "nvidia.com/gpu|nodeSelector|tolerations"
+oc get pod -n project-gpu project-gpu-workbench-0 -o yaml | grep -En "nvidia.com/gpu|nodeSelector|tolerations"
 ```
 
 At this stage, the workbench pod should:
