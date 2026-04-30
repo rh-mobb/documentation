@@ -23,7 +23,7 @@ Use all three layers together, each at the stage where it is most effective.
 | **ACM Governance** | Continuous policy engine across a fleet | Ongoing enforcement and auto-remediation |
 
 
-<br><BR>
+<br><br>
 **kube-linter** catches misconfigurations in manifests *before* they merge, when feedback is still cheap.
 **Popeye** catches what only a running cluster can reveal: drift, hand-applied changes, right-sizing deltas, and runtime-only problems that never appeared in a branch lint.
 **ACM Governance** is the enterprise control plane: policies are continuously evaluated against every managed cluster and can automatically remediate non-compliant resources rather than just reporting them.
@@ -861,7 +861,7 @@ The CronJob runs every 15 minutes.
 To run a scan immediately without waiting:
 
 ```bash
-kubectl -n popeye-obs create job --from=cronjob/popeye popeye-manual-$(date +%s)
+oc -n popeye-obs create job --from=cronjob/popeye popeye-manual-$(date +%s)
 ```
 
 ### Access Grafana
@@ -869,14 +869,14 @@ kubectl -n popeye-obs create job --from=cronjob/popeye popeye-manual-$(date +%s)
 **Port-forward (plain Kubernetes or OpenShift):**
 
 ```bash
-kubectl -n popeye-obs port-forward svc/grafana 3000:3000
+oc -n popeye-obs port-forward svc/grafana 3000:3000
 # Open http://localhost:3000
 ```
 
 **Retrieve the admin password:**
 
 ```bash
-kubectl -n popeye-obs get secret grafana-admin \
+oc -n popeye-obs get secret grafana-admin \
   -o jsonpath='{.data.admin-password}' | base64 -d; echo
 ```
 
@@ -920,9 +920,9 @@ Common failure causes:
 ### Tear down the stack
 
 ```bash
-kubectl delete namespace popeye-obs
-kubectl delete clusterrole popeye-scan
-kubectl delete clusterrolebinding popeye-scan
+oc delete namespace popeye-obs
+oc delete clusterrole popeye-scan
+oc delete clusterrolebinding popeye-scan
 ```
 
 ## 🏢 ACM governance at fleet scale
