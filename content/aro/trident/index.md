@@ -10,8 +10,9 @@ authors:
 validated_version: "4.20"
 ---
 
-Note:
- This guide is a simple "happy path" that shows a minimal friction way to use Azure NetApp Files with Azure Red Hat OpenShift. This may not be the best behavior for any system beyond demonstration purposes.
+{{< alert state="info" >}}
+This guide is a simple "happy path" that shows a minimal friction way to use Azure NetApp Files with Azure Red Hat OpenShift. This may not be the best behavior for any system beyond demonstration purposes.
+{{< /alert >}}
 
 ## Prerequisites
 
@@ -116,7 +117,7 @@ apiVersion: trident.netapp.io/v1
 kind: TridentOrchestrator
 metadata:
   name: trident
-  namespace: openshift-operatorsß
+  namespace: openshift-operators
 spec:
   namespace: trident
   IPv6: false
@@ -143,10 +144,10 @@ oc -n trident create secret generic anf-credentials \
   --from-literal=clientSecret="<app-secret>"
 ```
 
-> Notes:
->
-> * Ensure the service principal has the required Azure permissions for Azure NetApp Files resources.
-> * If permissions are missing, you may see an error similar to: `capacity pool query returned no data; no capacity pools found for storage pool`.
+{{< alert state="info" >}}
+* Ensure the service principal has the required Azure permissions for Azure NetApp Files resources.
+* If permissions are missing, you may see an error similar to: `capacity pool query returned no data; no capacity pools found for storage pool`.
+{{< /alert >}}
 
 Create the backend definition:
 
@@ -360,7 +361,9 @@ Login to the cluster as `cluster-admin` and confirm that:
 
 Create two pods to validate the Azure NetApp file mount. One pod writes data to the shared volume, and the second pod reads the same data back to confirm `ReadWriteMany` access is working correctly.
 
-> **Note:** On current OpenShift clusters, these simple demo pods may emit Pod Security warnings unless restricted-compatible `securityContext` settings are added. The sample still works for basic validation.
+{{< alert state="info" >}}
+On current OpenShift clusters, these simple demo pods may emit Pod Security warnings unless restricted-compatible `securityContext` settings are added. The sample still works for basic validation.
+{{< /alert >}}
 
 ### Writer Pod
 
@@ -457,4 +460,3 @@ hello netapp
 ```
 
 The first `hello netapp` is from the pod logs, and the second is from the `oc exec` command. This confirms that both pods successfully accessed the same Azure NetApp-backed `ReadWriteMany` volume.
-
