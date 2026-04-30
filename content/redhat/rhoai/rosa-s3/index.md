@@ -19,7 +19,7 @@ Note that this article does not cover model serving. Starting with Red Hat OpenS
 
 Before you start, make sure you have:
 
-- a ROSA [cluster](https://cloud.redhat.com/experts/rosa/quickstart/) with [cluster-admin](https://access.redhat.com/solutions/7014602) level access
+- a ROSA [cluster](/experts/rosa/quickstart/) with [cluster-admin](https://access.redhat.com/solutions/7014602) level access
 - the OpenShift CLI [`oc`](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/cli_tools/openshift-cli-oc#installing-openshift-cli) installed
 - a default dynamic storage class on the cluster (typically already present on ROSA)
 - an Amazon S3 bucket and AWS credentials, or permission to create them
@@ -41,7 +41,7 @@ From the OpenShift web console:
 1. Go to **Ecosystem** -> **Software Catalog** (this is formerly known as OperatorHub)
 2. Search for **Red Hat OpenShift AI**
 3. Install the operator
-4. Create `DataScienceCluster` when prompted (if it throws error, wait for a few minutes, refresh the page, and try create again)
+4. Create `DataScienceCluster` when prompted (if it throws an error, wait a few minutes, refresh the page, and try again)
 
 Alternatively, create `DataScienceCluster` using CLI:
 
@@ -100,7 +100,7 @@ Ready
 
 Create an S3 bucket in the AWS console or by using the AWS CLI. If you already have an S3 bucket and credentials available, you can skip this step and use your existing bucket instead.
 
-For this walkthrough, I used `rhoai-test-s3-bucket` in `ca-central-1`, the same AWS region as the ROSA cluster. Using the same region keeps the example simple and avoids unnecessary cross-region configuration. 
+For this walkthrough, I used `rhoai-test-s3-bucket` in `ca-central-1`, the same AWS region as the ROSA cluster. Using the same region keeps the example simple and avoids unnecessary cross-region configuration.
 
 The regional Amazon S3 endpoint for `ca-central-1` is:
 
@@ -163,7 +163,7 @@ After the installation completes, restart the kernel before continuing.
 
 ## 7. Train a lightweight model and upload the artifacts to S3
 
-In this walkthrough, we use `distilbert-base-uncased`, which is a safe and  mainstream choice for a lightweight demo. This example also keeps the dataset intentionally small and uses one epoch so the walkthrough finishes in a reasonable time on CPU.
+In this walkthrough, we use `distilbert-base-uncased`, which is a safe and mainstream choice for a lightweight demo. This example also keeps the dataset intentionally small and uses one epoch so the walkthrough finishes in a reasonable time on CPU.
 
 Before running this on the next cell, set the `AWS_S3_BUCKET` environment variable in your workbench if you want to use a bucket name other than the example default.
 
@@ -268,7 +268,7 @@ You may see similar output to below snippet.
 
 Note that some of the notebook output is expected and does not indicate a failure.
 
-The Hugging Face warning simply means the model is being downloaded without an authentication token. The `UNEXPECTED` and `MISSING` entries in the DistilBERT load report are also expected when loading a base pretrained model for a sequence classification task. 
+The Hugging Face warning simply means the model is being downloaded without an authentication token. The `UNEXPECTED` and `MISSING` entries in the DistilBERT load report are also expected when loading a base pretrained model for a sequence classification task.
 
 The tokenization progress confirms that the dataset was processed successfully, and the `pin_memory` warning only indicates that the workbench is using CPU rather than GPU.
 
