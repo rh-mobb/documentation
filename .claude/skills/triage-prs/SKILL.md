@@ -1,0 +1,261 @@
+---
+name: triage-prs
+description: Use when the user asks to triage, review, list, or prioritize open pull requests for the rh-mobb/documentation repo. Also use when reviewing a specific PR for quality, code impressions, preview feedback, or suggesting/posting fixes.
+---
+
+# PR Triage — rh-mobb/documentation
+
+## Overview
+
+Lists open PRs sorted oldest-first (most waiting = highest priority). For specific PR review: check out the PR locally, run the local preview server, assess quality against standards, make approved fixes, then restore the original branch.
+
+---
+
+## Local Preview URL
+
+```
+http://localhost:1313/experts/
+```
+
+Netlify fallback (only if local preview is not possible):
+```
+https://deploy-preview-{PR_NUMBER}--rh-cloud-experts.netlify.app/experts/
+```
+
+---
+
+## Triage List (default behavior)
+
+```bash
+gh pr list --repo rh-mobb/documentation --state open \
+  --json number,title,body,createdAt,author,url \
+  --limit 50
+```
+
+Sort by `createdAt` ascending (oldest = top priority). Output per PR:
+
+```
+### PR #NNN — Title
+- **Author:** @username
+- **Age:** X days (opened YYYY-MM-DD)
+- **PR:** https://github.com/rh-mobb/documentation/pull/NNN
+- **Preview:** https://deploy-preview-NNN--rh-cloud-experts.netlify.app/experts/
+- **Description:** <first 2 sentences of body, or title if empty>
+```
+
+---
+
+## Specific PR Review
+
+Do ALL steps below in order.
+
+### Step 0 — Pre-flight check
+
+Before touching anything, verify the working tree is clean and record the current branch so you can restore it at the end:
+
+```bash
+# Confirm clean working tree — abort if there are uncommitted changes
+git status --short
+
+# Record current branch for cleanup at the end
+ORIGINAL_BRANCH=$(git branch --show-current)
+echo "Will return to: $ORIGINAL_BRANCH"
+```
+
+If `git status --short` produces any output, **stop and tell the user** they have uncommitted changes that need to be stashed or committed before proceeding. Do not continue until the working tree is clean.
+
+### Step 1 — Fetch metadata and check out the PR locally
+
+Fetch PR metadata, then check out the branch directly. Reading files locally is simpler and more reliable than decoding blobs via the GitHub API.
+
+```bash
+# Metadata
+gh pr view NNN --repo rh-mobb/documentation \
+  --json number,title,body,createdAt,author,url,headRefOid,additions,deletions,changedFiles
+
+# Full diff
+gh pr diff NNN --repo rh-mobb/documentation
+
+# Check out the branch locally
+gh pr checkout NNN --repo rh-mobb/documentation
+```
+
+Read the changed files directly with the Read tool — no blob SHA gymnastics needed.
+
+### Step 2 — Run the local preview server
+
+Start Hugo and navigate the browser to the changed article path. Derive the article URL from the changed file path (e.g. `content/aro/trident/index.md` → `http://localhost:1313/experts/aro/trident/`).
+
+```bash
+make preview
+```
+
+Hugo serves at `http://localhost:1313/experts/`. If the browser MCP tool is available:
+
+```
+mcp__chrome-devtools__navigate_page  url=http://localhost:1313/experts/<article-path>/
+mcp__chrome-devtools__take_screenshot
+mcp__chrome-devtools__take_snapshot
+```
+
+Look for: rendering errors, code block display, shortcode output (alerts, notices, tabs), navigation integrity, layout issues.
+
+If `make preview` is not available or fails, fall back to the Netlify preview URL.
+
+### Step 3 — Code quality assessment
+
+Evaluate the diff (and local files) against AGENTS.md standards:
+
+- Front matter: `date`, `title`, `tags`, `authors` all present and correct
+- `validated_version` used when appropriate; no redundant version alert callouts
+- No em dashes in content
+- Internal links use `/experts/...` root-relative paths (not hardcoded hostnames or Netlify URLs)
+- Shortcodes used correctly (`{{< alert >}}`, `{{< notice >}}`, `{{< tabs >}}`, etc.) — prefer shortcodes over raw blockquotes/HTML for callouts
+- No changes to `themes/rhds` in a content-only PR
+- Tag taxonomy follows CONTRIBUTING.md (no invented tags without coordination)
+- `kubectl` → `oc` for OpenShift content
+- No EOL or deprecated container images (e.g. `centos:latest`)
+- `egrep` used instead of `grep -E` (deprecated and removed on some systems)
+
+### Step 4 — Find exact line numbers for suggestions
+
+Since the PR is checked out locally, just read the file and grep:
+
+```bash
+grep -n "pattern to find" content/path/to/index.md
+```
+
+Or use the Read tool and note line numbers directly from the output.
+
+### Step 5 — Present findings and ask how to proceed
+
+Present the full review report to the user using the output format below, then **stop and ask** which approach they want for addressing the issues. Do not post comments or edit files until the user has confirmed — unless they already specified upfront (e.g., "review and fix" or "review and post suggestions").
+
+```
+## PR #NNN — Title
+
+**Author:** @username | **Age:** X days | **+ADD / -DEL lines**
+**PR:** <link> | **Preview:** <local or netlify link used>
+
+### Description
+<PR body summary>
+
+### Code Review
+<diff observations — quality, correctness, standards adherence>
+
+**Issues found:** <numbered list, or "None">
+
+### Preview Impressions
+<what the browser showed — rendering, layout, content quality>
+
+### Verdict
+**Quality:** <Good / Acceptable / Needs Work / Poor>
+**Confidence this is a good change:** XX%
+<1-2 sentence rationale>
+```
+
+Then ask:
+
+> How would you like to handle the fixes?
+> 1. **Post as GitHub suggestion blocks** — inline suggestions the author can apply with one click
+> 2. **Fix locally and push** — apply edits, commit, and push to the PR branch
+> 3. **Just the report** — no action
+
+Use `AskUserQuestion` with those three options.
+
+### Step 6 — Post review comments to GitHub (if user chose option 1)
+
+Use `gh api --input` with a JSON file written by the Write tool. **Do not use the GitHub MCP review tools** — they require credentials that are typically absent and will return 401.
+
+**Important:** Use `"event": "REQUEST_CHANGES"` when issues need fixing, `"event": "APPROVE"` when the PR is clean. If the API returns 422 (you are the PR author), retry with `"event": "COMMENT"`.
+
+**Do not use `gh api --field` for review bodies** — shell interpolation breaks on multi-line strings containing special characters (pipes, colons, quotes). Always write the payload to a file with the Write tool first:
+
+```
+Write tool → /tmp/pr{NNN}-review.json
+{
+  "commit_id": "<head SHA from step 1>",
+  "body": "<overall review summary>",
+  "event": "REQUEST_CHANGES",
+  "comments": [
+    {
+      "path": "content/path/to/index.md",
+      "line": 36,
+      "side": "RIGHT",
+      "body": "Issue description.\n\n```suggestion\nreplacement line here\n```"
+    }
+  ]
+}
+```
+
+Then post it:
+
+```bash
+gh api repos/rh-mobb/documentation/pulls/{NNN}/reviews \
+  --method POST \
+  --input /tmp/pr{NNN}-review.json
+```
+
+GitHub renders ` ```suggestion ``` ` blocks as one-click apply buttons on the PR — use them for all line-level fixes.
+
+### Step 7 — Commit and push local fixes
+
+After applying approved edits:
+
+```bash
+# Get user identity for co-author line
+GIT_NAME=$(git config user.name)
+GIT_EMAIL=$(git config user.email)
+
+git add <changed files>
+git commit -m "$(cat <<'EOF'
+fix: <short description of fixes>
+
+<bullet list of what was fixed>
+
+Co-Authored-By: $GIT_NAME <$GIT_EMAIL>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+EOF
+)"
+git push
+```
+
+Use the actual expanded values of `$GIT_NAME` and `$GIT_EMAIL` in the commit message — do not pass the shell variables literally.
+
+**Always confirm with the user before committing or pushing.**
+
+### Step 8 — Cleanup
+
+After the review is complete (whether or not any fixes were pushed), stop the preview server and restore the original branch:
+
+```bash
+pkill hugo
+git checkout $ORIGINAL_BRANCH
+```
+
+Confirm the branch has been restored before reporting the review as done.
+
+---
+
+## Confidence Score Guidelines
+
+| Score | Meaning |
+|-------|---------|
+| 90–100% | Clean diff, preview renders perfectly, follows all conventions |
+| 70–89% | Minor fixable issues; solid overall |
+| 50–69% | Notable problems; needs revision |
+| <50% | Significant issues — wrong approach, broken preview, or policy violations |
+
+---
+
+## Common Issues to Flag
+
+- Hardcoded Netlify/hostname URLs in content (must be root-relative `/experts/...`)
+- Em dashes in guide text
+- Missing or incorrect front matter fields
+- Invented tags not in established taxonomy
+- Raw `> blockquote` callouts that should use `{{< alert >}}`
+- Theme edits in a content PR
+- `kubectl` used instead of `oc`
+- Stale/EOL container images
+- Typos or stray characters in YAML/code examples (these break copy-paste)
