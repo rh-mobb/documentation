@@ -9,6 +9,23 @@ description: Use when the user asks to triage, review, list, or prioritize open 
 
 Lists open PRs sorted oldest-first (most waiting = highest priority). For specific PR review: check out the PR locally, run the local preview server, assess quality against standards, make approved fixes, then restore the original branch.
 
+## GitHub API rule — always use a JSON file for POST requests
+
+**Never use `--field` or inline body strings with `gh api --method POST`.** Shell interpolation breaks on multi-line strings containing backticks, colons, pipes, or quotes. This applies to every POST: reviews, comments, replies — everything.
+
+Always write the payload with the Write tool first, then pass it via `--input`:
+
+```bash
+# Write tool → ./tmp/pr{NNN}-payload.json
+gh api repos/rh-mobb/documentation/<endpoint> --method POST --input ./tmp/pr{NNN}-payload.json
+```
+
+Use `./tmp/` (project-local, in `.gitignore`) — not `/tmp/`. Delete payload files after each API call:
+
+```bash
+rm ./tmp/pr{NNN}-payload.json
+```
+
 ---
 
 ## Local Preview URL
@@ -215,7 +232,7 @@ Use `gh api --input` with a JSON file written by the Write tool. **Do not use th
 **Do not use `gh api --field` for review bodies** — shell interpolation breaks on multi-line strings containing special characters (pipes, colons, quotes). Always write the payload to a file with the Write tool first:
 
 ```
-Write tool → /tmp/pr{NNN}-review.json
+Write tool → ./tmp/pr{NNN}-review.json
 {
   "commit_id": "<head SHA from step 1>",
   "body": "<overall review summary>",
@@ -236,7 +253,7 @@ Then post it:
 ```bash
 gh api repos/rh-mobb/documentation/pulls/{NNN}/reviews \
   --method POST \
-  --input /tmp/pr{NNN}-review.json
+  --input ./tmp/pr{NNN}-review.json && rm ./tmp/pr{NNN}-review.json
 ```
 
 GitHub renders ` ```suggestion ``` ` blocks as one-click apply buttons on the PR — use them for all line-level fixes.
