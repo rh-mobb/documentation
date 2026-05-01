@@ -6,7 +6,7 @@ authors:
   - Paul Czarkowski
 ---
 
-This document describes how to build and operate Kubernetes workloads that are secure, reliable, and operationally sound on Red Hat managed cloud services (ROSA, ARO, and OpenShift Dedicated/Service Delivery clusters).
+This document describes how to build and operate Kubernetes workloads that are secure, reliable, and operationally sound on Red Hat managed cloud services (ROSA, ARO, and OpenShift Dedicated clusters).
 It covers the recommended best practices and three complementary enforcement layers: **kube-linter** for catching misconfigurations before they merge, **Popeye** for auditing live cluster state on a schedule, and **Red Hat Advanced Cluster Management (ACM)** for continuously enforcing policies and auto-remediating drift across an entire fleet.
 
 The best practices catalogue and tool coverage data in this guide are based on research conducted for the [paulczar/wurst-practices](https://github.com/paulczar/wurst-practices) repository, which provides deliberately misconfigured Kubernetes manifests for evaluating cluster sanitizers and policy tools.
@@ -265,7 +265,7 @@ Prometheus scrapes the Pushgateway; Grafana charts scores and findings over time
 ## Deploying the Popeye observability stack
 
 The following heredocs deploy a complete Popeye + Pushgateway + Prometheus + Grafana stack into a dedicated namespace on OpenShift.
-Apply them with `kubectl apply -f -` or save to files and apply together.
+Apply them with `oc apply -f -` or save to files and apply together.
 
 {{% alert state="warning" %}}
 **This is a proof-of-concept deployment, not a production-ready configuration.** It is intended to demonstrate the Popeye observability pattern and help you evaluate the tooling quickly. Specific limitations include: `emptyDir` volumes (data lost on pod restart), a plaintext default Grafana password, no TLS between components, and no persistent storage for Prometheus metrics. Before running this in any environment beyond a throwaway cluster, harden storage, credentials, network policies, and TLS termination to meet your organization's requirements.
@@ -274,7 +274,7 @@ Apply them with `kubectl apply -f -` or save to files and apply together.
 ### 1. Namespace
 
 ```bash
-kubectl apply -f - <<'EOF'
+oc apply -f - <<'EOF'
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -290,7 +290,7 @@ Popeye needs read access to most resource types across all namespaces.
 Grant exactly what it lists; do not use `cluster-admin`.
 
 ```bash
-kubectl -n popeye-obs apply -f - <<'EOF'
+oc -n popeye-obs apply -f - <<'EOF'
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -358,7 +358,7 @@ EOF
 ### 3. Spinach ConfigMap (scan exclusions)
 
 ```bash
-kubectl -n popeye-obs apply -f - <<'EOF'
+oc -n popeye-obs apply -f - <<'EOF'
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -382,7 +382,7 @@ Popeye pushes its Prometheus metrics here after each scan.
 Prometheus scrapes this endpoint.
 
 ```bash
-kubectl -n popeye-obs apply -f - <<'EOF'
+oc -n popeye-obs apply -f - <<'EOF'
 ---
 apiVersion: v1
 kind: Service
@@ -458,7 +458,7 @@ EOF
 Configured to scrape the Pushgateway so that Popeye metrics are available for Grafana.
 
 ```bash
-kubectl -n popeye-obs apply -f - <<'EOF'
+oc -n popeye-obs apply -f - <<'EOF'
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -568,7 +568,7 @@ Provisioned with a Prometheus datasource pointing at the in-cluster Prometheus.
 The admin password is read from a mounted Secret file, not from a plain environment variable.
 
 ```bash
-kubectl -n popeye-obs apply -f - <<'EOF'
+oc -n popeye-obs apply -f - <<'EOF'
 ---
 apiVersion: v1
 kind: Secret
@@ -718,7 +718,7 @@ EOF
 Skip this step on plain Kubernetes; use port-forward instead (see below).
 
 ```bash
-kubectl -n popeye-obs apply -f - <<'EOF'
+oc -n popeye-obs apply -f - <<'EOF'
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
@@ -762,7 +762,7 @@ Set `--cluster-name` to something meaningful so metrics from multiple clusters c
 `--force-exit-zero` prevents non-critical Popeye findings from failing the Job (the Job should fail only on scan or push errors, not on linter findings).
 
 ```bash
-kubectl -n popeye-obs apply -f - <<'EOF'
+oc -n popeye-obs apply -f - <<'EOF'
 apiVersion: batch/v1
 kind: CronJob
 metadata:
