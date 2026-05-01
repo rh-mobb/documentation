@@ -35,6 +35,14 @@ Claude will check out the branch, spin up the local preview server, assess the d
 - `"go ahead and make the suggestion"` — apply a fix locally and push it to the branch
 - `"just comment on the PR"` — post feedback without touching the code
 
+If the PR is yours and you want to address reviewer comments, phrase it accordingly:
+
+```
+> PR 123 is mine, I want to address any comments/concerns
+```
+
+Claude will fetch the prior review comments, check what's been addressed and what hasn't, assess the diff, apply fixes locally, and push them back to your branch.
+
 ### Contributing
 
 For contributing to this repository, please follow the guidelines specified in the [contributing.md](./CONTRIBUTING.md)
