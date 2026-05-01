@@ -66,7 +66,7 @@ If `git status --short` produces any output, **stop and tell the user** they hav
 
 ### Step 1 — Fetch metadata and check out the PR locally
 
-Fetch PR metadata, then check out the branch directly. Reading files locally is simpler and more reliable than decoding blobs via the GitHub API.
+Fetch PR metadata, prior reviews, and inline comments in parallel — then check out the branch.
 
 ```bash
 # Metadata
@@ -76,11 +76,21 @@ gh pr view NNN --repo rh-mobb/documentation \
 # Full diff
 gh pr diff NNN --repo rh-mobb/documentation
 
+# Prior reviews (who reviewed, what state, what they said)
+gh api repos/rh-mobb/documentation/pulls/NNN/reviews \
+  | jq '.[] | {user: .user.login, state, body: .body[:300]}'
+
+# Prior inline comments (line-level suggestions and notes)
+gh api repos/rh-mobb/documentation/pulls/NNN/comments \
+  | jq '.[] | {user: .user.login, path, line, body: .body[:300]}'
+
 # Check out the branch locally
 gh pr checkout NNN --repo rh-mobb/documentation
 ```
 
 Read the changed files directly with the Read tool — no blob SHA gymnastics needed.
+
+If prior reviews or inline comments exist, note them — they drive the re-review checklist in Step 3.
 
 ### Step 2 — Run the local preview server
 
@@ -119,7 +129,14 @@ If local preview is not possible at all, fall back to the Netlify preview URL.
 
 ### Step 3 — Code quality assessment
 
-Evaluate the diff (and local files) against AGENTS.md standards:
+**If prior reviews or inline comments exist**, go through each one and verify whether it was addressed in the current file. For each prior comment:
+- ✅ Addressed — note what changed
+- ❌ Not addressed — carry it forward as an active issue
+- ⚠️ Partially addressed — describe what's still missing
+
+Include a prior-comments summary table in the Step 5 report.
+
+**Evaluate the diff (and local files) against AGENTS.md standards:**
 
 - Front matter: `date`, `title`, `tags`, `authors` all present and correct
 - `validated_version` used when appropriate; no redundant version alert callouts
@@ -154,6 +171,9 @@ Present the full review report to the user using the output format below, then *
 
 ### Description
 <PR body summary>
+
+### Prior Review Status
+<table of prior comments and whether each was addressed — omit section if no prior reviews>
 
 ### Code Review
 <diff observations — quality, correctness, standards adherence>
