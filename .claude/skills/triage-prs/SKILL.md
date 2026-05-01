@@ -171,12 +171,20 @@ Present the full review report to the user using the output format below, then *
 
 Then ask:
 
-> How would you like to handle the fixes?
+> How would you like to handle this?
 > 1. **Post as GitHub suggestion blocks** — inline suggestions the author can apply with one click
 > 2. **Fix locally and push** — apply edits, commit, and push to the PR branch
-> 3. **Just the report** — no action
+> 3. **Approve on GitHub** — post an APPROVE review (use when all issues are resolved)
+> 4. **Approve and merge (squash)** — approve then immediately squash-merge
+> 5. **Just the report** — no action
 
-Use `AskUserQuestion` with those three options.
+Use `AskUserQuestion` with the relevant options. Omit options 3/4 if there are unresolved issues; omit 1/2 if the PR is clean with nothing to fix.
+
+To squash-merge after approving (option 4):
+
+```bash
+gh pr merge {NNN} --repo rh-mobb/documentation --squash
+```
 
 ### Step 6 — Post review comments to GitHub (if user chose option 1)
 
