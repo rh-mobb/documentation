@@ -6,6 +6,8 @@ aliases:
   - /experts/misc/rhoai-s3
 authors:
   - Diana Sari
+  - Nerav Doshi
+validated_version: "4.21" 
 ---
 
 ## 1. Introduction
@@ -24,7 +26,7 @@ This guide is a simple example on how to run and deploy LLMs on a [Red Hat OpenS
 
 
 ## 3. Installing RHOAI and Jupyter notebook
-From your cluster console, go to **OperatorHub** under **Operators** from the left tab, and put **Red Hat OpenShift AI** into the search query and install the operator. The most recent version of the operator in the time of writing is 2.9.0, and here I choose the default option for the installation, and thus the operator will be installed in the `redhat-ods-operator` namespace which will be created automatically upon installation.
+From your cluster console, go to **Software Catalog** under **Ecosystem** from the left tab, and put **Red Hat OpenShift AI** into the search query and install the operator. The most recent version of the operator in the time of writing is 2.25.6, and here I choose the default option for the installation, and thus the operator will be installed in the `redhat-ods-operator` namespace which will be created automatically upon installation.
 
 ![RHOAI-operator](images/RHOAI-operator.png)
 <br />
@@ -44,7 +46,7 @@ Next, go to your cluster console and click the 9-boxes icon on the upper right s
 ![RHOAI-ROSA-shortcut](images/RHOAI-ROSA-shortcut.png)
 <br />
 
-Once launched, go to the server page and on the left tab, look under **Applications** and select **Enabled**. And then launch **Jupyter** to see the notebook options available to install. In this case, I choose **TensorFlow 2024.1** and I leave the size of container to **small** which is the default. And finally, click **Start server** button at the bottom. Note that if the server failed to start, then you might want to scale up your worker nodes.
+Once launched, go to the server page and on the left tab, look under **Applications** and select **Enabled**. And then launch **Jupyter** to see the notebook options available to install. In this case, I choose **TensorFlow 2025.2** and I leave the size of container to **small** which is the default. And finally, click **Start server** button at the bottom. Note that if the server failed to start, then you might want to scale up your worker nodes.
 
 ![RHOAI-notebooks](images/RHOAI-notebooks.png)
 <br />
@@ -108,28 +110,45 @@ Now that you have the notebook installed, AWS CLI and credentials configured, an
 
 The code for the notebook and the explanation of each on the commented lines (and please change the bucket name to your own bucket name):
 ```
-# install the necessary libraries
-!pip install transformers datasets torch evaluate accelerate boto3
+# 1. CLEAN INSTALLS (Ensures boto3 and transformers are in sync)
+import sys
+import subprocess
 
-# import the necessary functions and APIs
+print("Installing/Updating libraries... please wait.")
+packages = ["transformers", "datasets", "torch", "evaluate", "accelerate", "boto3", "s3transfer", "botocore", "sentencepiece"]
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-U"] + packages)
+
+# 2. IMPORTS (necessary API and functions)
+import os
 import numpy as np
 import evaluate
 import boto3
-import os
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
+from transformers import (
+    BertTokenizer, 
+    BertForSequenceClassification, 
+    BertConfig, 
+    TrainingArguments, 
+    Trainer
+)
 
-# disable tokenizers parallelism warning
+# 3. SETTINGS & PATHS
+MODEL_NAME = "prajjwal1/bert-tiny"
+S3_BUCKET = 'llm-bucket-nddemo' 
+MODEL_SAVE_DIR = "./model"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-# load a portion of the AG News dataset (500 examples)
+# 4. LOAD & PREPARE DATA - load a portion of the AG News dataset (500 examples)
+print("Loading dataset...")
 dataset = load_dataset("ag_news")
 small_dataset = dataset["train"].shuffle(seed=42).select(range(500))
 
-# load the model (prajjwal1/bert-tiny), tokenizer, and pre-trained model
-model_name = "prajjwal1/bert-tiny"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=4)
+# 5. INITIALIZE MODEL & TOKENIZER - load the model (prajjwal1/bert-tiny), tokenizer, and pre-trained model
+print("Initializing model...")
+# Using force_download=True to clear any previous corrupted config files
+config = BertConfig.from_pretrained(MODEL_NAME, num_labels=4, force_download=True)
+tokenizer = BertTokenizer.from_pretrained(MODEL_NAME, force_download=True)
+model = BertForSequenceClassification.from_pretrained(MODEL_NAME, config=config, force_download=True)
 
 # define the function to tokenize text examples using the loaded tokenizer
 def tokenize_function(examples):
@@ -138,7 +157,7 @@ def tokenize_function(examples):
 # apply the tokenize_function to the small_dataset using map function
 tokenized_datasets = small_dataset.map(tokenize_function, batched=True)
 
-# specify the training arguments, i.e. output directory, evaluation strategy, learning rate, batch size, number of epochs, weight decay, and load the best model at the end
+# 6. TRAINING ARGUMENTS
 training_args = TrainingArguments(
     output_dir="./results",
     eval_strategy="epoch",
@@ -149,46 +168,55 @@ training_args = TrainingArguments(
     num_train_epochs=3,
     weight_decay=0.01,
     load_best_model_at_end=True,
+    report_to="none"
 )
 
 # load the accuracy metric from the evaluate library
 metric = evaluate.load("accuracy")
 
-# compute evaluate metrics by taking the eval predictions (logits and labels) and calculate the accuracy using the loaded metric
+# compute evaluate metrics by taking the eval predictions (logits and labels) a
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
     predictions = np.argmax(logits, axis=-1)
     return metric.compute(predictions=predictions, references=labels)
 
-# set up the training process by taking the model, training arguments, train and eval datasets, tokenizer and the compute_metrics function
+# 7. TRAINER SETUP
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_datasets,
     eval_dataset=tokenized_datasets,
-    tokenizer=tokenizer,
+    processing_class=tokenizer, # Compatible with latest Transformers versions
     compute_metrics=compute_metrics,
 )
 
-# start the training process using the configured trainer
+# 8. RUN TRAINING - start the training process using the configured trainer
+print("Starting training...")
 trainer.train()
 
-# save the model and tokenizer into model folder
-model_save_dir = "./model"
-tokenizer.save_pretrained(model_save_dir)
-model.save_pretrained(model_save_dir)
+# 9. SAVE LOCALLY
+print("Saving model locally...")
+os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
+tokenizer.save_pretrained(MODEL_SAVE_DIR)
+model.save_pretrained(MODEL_SAVE_DIR)
 
-# upload the saved model to s3 bucket
-s3_client = boto3.client('s3')
-bucket_name = 'llm-bucket-dsari' # please change this with your own bucket name
-model_save_path = 'model/'
+# 10. ROBUST S3 UPLOAD
+print(f"Uploading to S3 bucket: {S3_BUCKET}...")
+try:
+    # Creating a fresh session helps avoid the 'TRANSFER_CONFIG_SUPPORTS_CRT' error
+    session = boto3.Session()
+    s3_client = session.client('s3')
+    
+    for file_name in os.listdir(MODEL_SAVE_DIR):
+        file_path = os.path.join(MODEL_SAVE_DIR, file_name)
+        s3_client.upload_file(file_path, S3_BUCKET, f"model/{file_name}")
+        print(f"  ✅ Uploaded: {file_name}")
+        
+    print("\n🚀 SUCCESS: Model trained and uploaded to S3!")
+except Exception as e:
+    print(f"\n❌ S3 Upload failed: {e}")
+    print("TIP: Check your AWS credentials and Bucket permissions.")
 
-for file_name in os.listdir(model_save_dir):
-    s3_client.upload_file(
-        os.path.join(model_save_dir, file_name),
-        bucket_name,
-        model_save_path + file_name
-    )
 ```
 
 In summary, the code loads the dataset, tokenizes the text examples, sets up the training arguments, defines the evaluation metrics, and trains the model using the `Trainer` class. Finally, it saves the trained model and tokenizer locally and then upload and save them to the S3 bucket.
