@@ -86,11 +86,26 @@ Read the changed files directly with the Read tool — no blob SHA gymnastics ne
 
 Start Hugo and navigate the browser to the changed article path. Derive the article URL from the changed file path (e.g. `content/aro/trident/index.md` → `http://localhost:1313/experts/aro/trident/`).
 
+First, verify the local Hugo version matches (or exceeds) the version pinned in `netlify.toml`:
+
+```bash
+REQUIRED=$(grep HUGO_VERSION netlify.toml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+INSTALLED=$(hugo version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+echo "Required: $REQUIRED  Installed: $INSTALLED"
+```
+
+If the installed version is older than required, warn the user to upgrade Hugo to at least the version in `netlify.toml` before proceeding. If the version is sufficient, run:
+
 ```bash
 make preview
 ```
 
-Hugo serves at `http://localhost:1313/experts/`. If the browser MCP tool is available:
+If `make preview` fails, troubleshoot in this order:
+1. **Port conflict** — port 1313 may be in use: `hugo server --theme rhds --port 1314`
+2. **Theme missing** — run `git submodule update --init` then retry `make preview`
+3. **Build error** — run `hugo --theme rhds` (no server) to see the full error output; if the error looks version-related, tell the user to install the exact Hugo version specified in `netlify.toml`
+
+Hugo serves at `http://localhost:1313/experts/` (or alternate port). If the browser MCP tool is available:
 
 ```
 mcp__chrome-devtools__navigate_page  url=http://localhost:1313/experts/<article-path>/
@@ -100,7 +115,7 @@ mcp__chrome-devtools__take_snapshot
 
 Look for: rendering errors, code block display, shortcode output (alerts, notices, tabs), navigation integrity, layout issues.
 
-If `make preview` is not available or fails, fall back to the Netlify preview URL.
+If local preview is not possible at all, fall back to the Netlify preview URL.
 
 ### Step 3 — Code quality assessment
 
@@ -115,7 +130,7 @@ Evaluate the diff (and local files) against AGENTS.md standards:
 - Tag taxonomy follows CONTRIBUTING.md (no invented tags without coordination)
 - `kubectl` → `oc` for OpenShift content
 - No EOL or deprecated container images (e.g. `centos:latest`)
-- `egrep` used instead of `grep -E` (deprecated and removed on some systems)
+- `grep -E` instead of `egrep` (`egrep` is deprecated and removed on some systems)
 
 ### Step 4 — Find exact line numbers for suggestions
 
