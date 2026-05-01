@@ -151,6 +151,7 @@ These are the tag strings currently in use:
 * ACM
 * ACS
 * ARO
+* Best practices
 * DevSpaces
 * GitOps
 * GovCloud
