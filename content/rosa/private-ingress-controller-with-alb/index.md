@@ -169,11 +169,15 @@ Next, under **Listeners and routing**, select `HTTPS` as protocol, and click **C
 <br />
 
 
-Click **Next** at the end of the page and this will lead you to the **Register targets** group. Now, enter the IP addresses of your NLB that you've retrieved previously. Once you added them, click **Include as pending below**. And at the **Review targets** section, you should see the health checks are in **Pending** state. Click **Create target group** to proceed.
+Click **Next** at the end of the page and this will lead you to the **Register targets** group. Now, enter the IP addresses of your NLB that you've retrieved previously. Once you added them, click **Include as pending below**. And at the **Review targets** section, you should see the health checks are in **Pending** state. Click **Next** to proceed. 
 
 ![tg_review](images/tg_review.png)
 <br />
 
+On the next screen, review your target group entries. Click **Create target group** to proceed.
+
+![tg_create](images/tg_create.png)
+<br />
 
 Next, go back to the ALB creation page, refresh the target group option, and select the target group you just created. 
 
