@@ -7,9 +7,10 @@ authors:
   - Paul Czarkowski
   - Diana Sari
   - Daniel Axelrod
+validated_version: "4.20"
 ---
 
-Starting with OpenShift 4.14, Red Hat OpenShift Service on AWS (ROSA) supports adding additional Ingress Controllers which can be used to configure a custom domain on a ROSA cluster. This guide shows how to leverage this feature to create a complete routing solution with both a private Ingress Controller (which creates an Network Load Balancer (NLB)) and a public Application Load Balancer (ALB) in front of it, providing a path from the internet to your applications.
+Red Hat OpenShift Service on AWS (ROSA) supports adding additional Ingress Controllers which can be used to configure a custom domain on a ROSA cluster. This guide shows how to leverage this feature to create a complete routing solution with both a private Ingress Controller (which creates an Network Load Balancer (NLB)) and a public Application Load Balancer (ALB) in front of it, providing a path from the internet to your applications.
 
 In essence, the routing flow will look like this: Internet -> ALB -> NLB -> Application. 
 
