@@ -1,10 +1,12 @@
 ---
 date: '2025-04-03'
 title: ROSA - Federating Metrics to AWS Prometheus
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
   - Paul Czarkowski
+  - Nerav Doshi
+validated_version: "4.20"
 ---
 
 Federating Metrics from ROSA is a bit tricky as the cluster metrics require pulling from its `/federated` endpoint while the user workload metrics require using the prometheus `remoteWrite` configuration.
@@ -20,6 +22,8 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 * [A ROSA HCP cluster](/experts/rosa/terraform/hcp/)
 * aws CLI
 * jq
+* AWS account permissions to create IAM policies/roles, AMP workspaces, and (optionally) CloudWatch read access
+* Cluster administrator access (`cluster-admin` or equivalent) to configure cluster monitoring and user workload monitoring
 
 ## Set up environment
 
@@ -65,7 +69,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
       --values https://raw.githubusercontent.com/rh-mobb/helm-charts/main/charts/rosa-aws-prometheus/files/operatorhub.yaml
     ```
 
-1. Wait for the Operator to install
+1. Wait for the Grafana Operator to install
 
     ```bash
     oc rollout status deployment grafana-operator-controller-manager-v5
@@ -77,11 +81,11 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
     deployment "grafana-operator-controller-manager-v5" successfully rolled out
     ```
 
-### Deploy and Configure the AWS Sigv4 Proxy and the Grafana Agent
+### Deploy and configure AWS SigV4 proxy and Grafana Alloy
 
 1. Create a Policy for access to AWS CloudWatch
 
-   ```json
+   ```bash
    cat <<EOF > $SCRATCH_DIR/PermissionPolicyCloudWatch.json
    {
        "Version": "2012-10-17",
@@ -145,7 +149,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 
 1. Create a Trust Policy
 
-   ```json
+   ```bash
    cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
    {
      "Version": "2012-10-17",
@@ -198,7 +202,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 1. Create an AWS Prometheus Workspace
 
     ```bash
-    PROM_WS=$(aws amp create-workspace --alias $CLUSTER \
+    PROM_WS=$(aws amp create-workspace --alias $CLUSTER --region "$REGION" \
       --query "workspaceId" --output text)
     echo $PROM_WS
     ```
@@ -212,13 +216,29 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
     --set "rosa.clusterName=$CLUSTER" \
     --set "grafana-cr.serviceAccountAnnotations.eks\.amazonaws\.com/role-arn=$PROM_ROLE" \
     --set "grafana-cr.sigv4Proxy.region=$REGION" \
-     aws-prometheus-proxy mobb/rosa-aws-prometheus
+    aws-prometheus-proxy mobb/rosa-aws-prometheus
     ```
+
+1. Enable monitoring for user-defined projects if it is not already enabled. The procedure is documented in the *Monitoring* collection for your OpenShift version; for reference, see [Enabling monitoring for user-defined projects](https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html/configuring_user_workload_monitoring/preparing-to-configure-the-monitoring-stack-uwm) 
+
+    ```bash
+    cat << EOF | oc apply -f -
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: cluster-monitoring-config
+      namespace: openshift-monitoring
+    data:
+      config.yaml: |
+        enableUserWorkload: true
+    EOF
+    ```
+
 
 1. Configure remoteWrite for user workloads
 
     ```bash
-    cat << EOF | kubectl apply -f -
+    cat << EOF | oc apply -f -
     apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -237,7 +257,7 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 1. Access Grafana and check for metrics
 
     ```bash
-    echo "https://$(oc get route -n custom-metrics grafana-route -o jsonpath='{.status.ingress[0].host}')"
+    echo "https://$(oc get route -n $PROM_NAMESPACE grafana-route -o jsonpath='{.status.ingress[0].host}')"
     ```
 
 1. Browse to the URL provided in the above command and log in with your OpenShift Credentials
@@ -249,11 +269,13 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
     If not, you may have hit a race condition that can be fixed by running the following then trying again
 
     ```bash
-    kubectl delete grafanadatasources.integreatly.org aws-prometheus-proxy-prometheus
+    oc delete grafanadatasources.integreatly.org aws-prometheus-proxy-prometheus
     helm upgrade --install -n $PROM_NAMESPACE --set "aws.region=$REGION" \
       --set "aws.roleArn=$PROM_ROLE" --set "fullnameOverride=$PROM_SA" \
       --set "aws.workspaceId=$PROM_WS" \
+      --set "rosa.clusterName=$CLUSTER" \
       --set "grafana-cr.serviceAccountAnnotations.eks\.amazonaws\.com/role-arn=$PROM_ROLE" \
+      --set "grafana-cr.sigv4Proxy.region=$REGION" \
       aws-prometheus-proxy mobb/rosa-aws-prometheus
     ```
 
@@ -267,19 +289,19 @@ As a bonus it will set up a CloudWatch datasource to view any metrics or logs yo
 1. Delete the `aws-prometheus-proxy` Helm Release
 
     ```bash
-    helm delete -n custom-metrics aws-prometheus-proxy
+    helm delete -n $PROM_NAMESPACE aws-prometheus-proxy
     ```
 
 1. Delete the `custom-metrics-operators` Helm Release
 
     ```bash
-    helm delete -n custom-metrics custom-metrics-operators
+    helm delete -n $PROM_NAMESPACE custom-metrics-operators
     ```
 
-1. Delete the `custom-metrics` namespace
+1. Delete the project namespace
 
     ```bash
-    kubectl delete namespace custom-metrics
+    oc delete project $PROM_NAMESPACE
     ```
 
 1. Detach AWS Role Policies
