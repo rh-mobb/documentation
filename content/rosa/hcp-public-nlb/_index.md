@@ -5,20 +5,34 @@ tags: ["AWS", "ROSA"]
 authors:
   - Nerav Doshi
   - Michael McNeill
+validated_version: "4.20"
 ---
 ## Overview
 
 This document provides guidance on using a public AWS Network Load Balancer (NLB) to connect to a private Red Hat OpenShift on AWS (ROSA) Hosted Control Plane (HCP) cluster. When the cluster is private and lacks direct public IP access, the NLB facilitates secure and reliable routing of traffic from public sources to the private cluster by exposing a stable endpoint while maintaining network isolation. This setup ensures that the private cluster can effectively handle external traffic, such as requests from APIs or services, without directly exposing sensitive internal infrastructure to the Internet.
 
+The end-to-end traffic flow is:
+
+``` bash
+Client (Internet)
+  → DNS (api.example.com)
+  → Internet-facing NLB (TLS:443, ACM certificate for api.example.com)
+  → Target group (IP addresses, TLS:443)
+  → Private IPs of ROSA HCP VPC endpoint ENIs
+  → Cluster Kubernetes API
+```
+
 ## Pre-requisites
 
-1. You will need a Private ROSA HCP cluster (see the [Deploying ROSA HCP documentation](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-hcp.html)).  
+1. A private ROSA HCP cluster already running (4.20+) (see the [Deploying ROSA HCP documentation](https://docs.aws.amazon.com/rosa/latest/userguide/getting-started-hcp.html)).  
 
 2. In this example, we will use Entra ID as the external authentication for ROSA HCP cluster (see [Configuring Microsoft Entra ID as an external authentication provider](https://cloud.redhat.com/experts/rosa/entra-external-auth))
 
 
 3. (Optional) Launch a Jump Host EC2 instance in Public NLB VPC
 This guide requires connectivity to the cluster. Since we are using a private cluster you must ensure that your workstation is connected to the AWS VPC hosting the ROSA cluster.   If you already have this connectivity through a VPN, Direct Connect or other method you can skip this section. If you do need to establish connectivity to the cluster [these instructions](https://cloud.redhat.com/experts/rosa/hcp-private-nlb/rosa-private-nlb-jumphost/) will guide you through creating a jump host and connect to the ROSA HCP cluster.
+
+4. A public domain you control (for example example.com) with a Route 53 public hosted zone in the same AWS account
 
 ## Create a security group, a target group and network load balancer in your AWS account
 
