@@ -1,15 +1,19 @@
 ---
-date: '2025-08-04'
+date: '2024-08-04'
 title: Configuring oTEL to collect OpenShift Logs
-tags: ["Observability"]
+tags: ["Observability", "ROSA HCP"]
 authors:
   - Paul Czarkowski
+  - Kumudu Herath
+validated_version: "4.21"
 ---
 
 {{% alert state="warning" %}}
-The Filelog and JournalD Receivers are a Technology Preview feature only. Technology Preview features are not supported with Red Hat production service level agreements (SLAs) and might not be functionally complete. Red Hat does not recommend using them in production. These features provide early access to upcoming product features, enabling customers to test functionality and provide feedback during the development process.
+**Receiver Support Status in OpenShift 4.21:**
+- **Filelog Receiver**: Generally Available (GA) - Full production support with Red Hat SLAs
+- **JournalD Receiver**: Technology Preview - Not supported with Red Hat production SLAs and might not be functionally complete. Red Hat does not recommend using it in production.
 
-For more information about the support scope of Red Hat Technology Preview features, see [Technology Preview Features Support Scope](https://access.redhat.com/support/offerings/techpreview/?extIdCarryOver=true&sc_cid=701f2000001Css5AAC).
+For more information, see [Technology Preview Features Support Scope](https://access.redhat.com/support/offerings/techpreview).
 {{% /alert %}}
 
 OpenShift's **Cluster Log Forwarder (CLF)** is the traditional way to collect the cluster's **Audit**, **Infrastructure**, and **Application** logs and forward them to a SIEMs or other central system for log aggregation and visibility.  However the **oTEL Operator** is a bit more flexible, especially when it comes to the output options, for instance the CLF system does not support exporting to **AWS S3**.
@@ -166,6 +170,7 @@ If you are familiar with Helm, we recommend you go with Option 1 below, if you a
 
     ```bash
     oc -n opentelemetry-logging rollout status ds/ocp-otel-logging-collector
+    ```
 
     ```
     daemon set "ocp-otel-logging-collector" successfully rolled out
