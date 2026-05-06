@@ -323,7 +323,11 @@ aws-efs-csi-driver-operator-xxxxx     1/1   Running
 Check the `ClusterCSIDriver` conditions:
 
 ```bash
-oc get clustercsidriver efs.csi.aws.com -o json | jq -r '.status.conditions[] | [.type, .status, .reason, .message] | @tsv'
+oc get clustercsidriver efs.csi.aws.com -o json | jq -r '
+  .status.conditions[]
+  | select(.type == "AWSEFSDriverNodeServiceControllerAvailable" or .type == "AWSEFSDriverControllerServiceControllerAvailable")
+  | [.type, .status, .reason, .message]
+  | @tsv'
 ```
 
 The driver is ready when the controller and node services are available:
@@ -433,9 +437,40 @@ export WORKER_VPC_ID=$(aws ec2 describe-instances \
   --query 'Reservations[0].Instances[0].VpcId' \
   --output text)
 
+export WORKER_INSTANCE_PROFILE_ARN=$(aws ec2 describe-instances \
+  --region "$AWS_REGION" \
+  --instance-ids "$WORKER_INSTANCE_ID" \
+  --query 'Reservations[0].Instances[0].IamInstanceProfile.Arn' \
+  --output text)
+
+export WORKER_INSTANCE_PROFILE_NAME="${WORKER_INSTANCE_PROFILE_ARN##*/}"
+
+export WORKER_ROLE_NAME=$(aws iam get-instance-profile \
+  --instance-profile-name "$WORKER_INSTANCE_PROFILE_NAME" \
+  --query 'InstanceProfile.Roles[0].RoleName' \
+  --output text)
+
 echo "Worker subnet: $WORKER_SUBNET_ID"
 echo "Worker SG:     $WORKER_SG_ID"
 echo "Worker VPC:    $WORKER_VPC_ID"
+echo "Worker role:   $WORKER_ROLE_NAME"
+```
+
+## Attach EFS permissions to the worker role
+
+The worker nodes need EFS permissions to resolve and mount the EFS file system. Attach the AWS managed EFS CSI driver policy to the worker role:
+
+```bash
+export EFS_CSI_POLICY_ARN="arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy"
+
+aws iam attach-role-policy \
+  --role-name "$WORKER_ROLE_NAME" \
+  --policy-arn "$EFS_CSI_POLICY_ARN"
+
+aws iam list-attached-role-policies \
+  --role-name "$WORKER_ROLE_NAME" \
+  --query "AttachedPolicies[?PolicyArn=='${EFS_CSI_POLICY_ARN}'].{PolicyName:PolicyName,PolicyArn:PolicyArn}" \
+  --output table
 ```
 
 ## Create an EFS security group
@@ -644,6 +679,7 @@ EOF
 Verify that the pod is running and can read the file:
 
 ```bash
+oc wait --for=condition=Ready pod/test-efs -n efs-demo --timeout=180s
 oc get pod -n efs-demo test-efs
 oc exec -n efs-demo test-efs -- cat /mnt/efs/hello.txt
 ```
@@ -695,6 +731,7 @@ EOF
 Verify the second pod logs:
 
 ```bash
+oc wait --for=condition=Ready pod/test-efs-read -n efs-demo --timeout=180s
 oc logs -n efs-demo test-efs-read
 ```
 
@@ -777,21 +814,43 @@ Before deleting the EFS file system, confirm that the file system ID belongs to 
 Delete the test pods, PVC, project, and `StorageClass`:
 
 ```bash
+export EFS_PV_NAME=$(oc get pv -o json | jq -r '.items[] | select(.spec.storageClassName == "efs-sc") | .metadata.name' | head -n 1)
+echo "$EFS_PV_NAME"
+
 oc delete pod -n efs-demo test-efs test-efs-read --ignore-not-found
 oc delete pvc -n efs-demo pvc-efs-volume --ignore-not-found
 oc delete project efs-demo --ignore-not-found
 oc delete storageclass efs-sc --ignore-not-found
 ```
 
-Confirm that no EFS PV remains:
+Confirm that no EFS PV remains. If the PV remains in `Released` state, remove the finalizer so Kubernetes can finish deleting the dynamically provisioned resource:
 
 ```bash
-oc get pv | grep efs || true
+if [ -n "$EFS_PV_NAME" ] && oc get pv "$EFS_PV_NAME" >/dev/null 2>&1; then
+  oc patch pv "$EFS_PV_NAME" \
+    -p '{"metadata":{"finalizers":null}}' \
+    --type=merge
+fi
+
+if [ -n "$EFS_PV_NAME" ]; then
+  oc get pv "$EFS_PV_NAME" 2>/dev/null || true
+fi
 ```
 
-Confirm that the dynamically created EFS Access Point was removed:
+Confirm that the dynamically created EFS Access Point was removed. If an access point remains, delete it before deleting the file system:
 
 ```bash
+for AP in $(aws efs describe-access-points \
+  --file-system-id "$EFS_ID" \
+  --region "$AWS_REGION" \
+  --query 'AccessPoints[*].AccessPointId' \
+  --output text); do
+  echo "Deleting access point: $AP"
+  aws efs delete-access-point \
+    --access-point-id "$AP" \
+    --region "$AWS_REGION"
+done
+
 aws efs describe-access-points \
   --file-system-id "$EFS_ID" \
   --region "$AWS_REGION" \
@@ -848,9 +907,10 @@ Verify that the file system is gone:
 
 ```bash
 aws efs describe-file-systems \
+  --file-system-id "$EFS_ID" \
   --region "$AWS_REGION" \
   --query 'FileSystems[*].{FileSystemId:FileSystemId,CreationToken:CreationToken,LifeCycleState:LifeCycleState,Name:Name}' \
-  --output table
+  --output table 2>/dev/null || true
 ```
 
 ### Remove the EFS security group
@@ -911,9 +971,17 @@ oc delete secret aws-efs-cloud-credentials \
   --ignore-not-found
 ```
 
-### Remove the IAM role and policy
+### Remove the IAM roles and policies
 
-Detach the IAM policy from the role, then delete the role and policy:
+If you attached the AWS managed EFS CSI driver policy to the worker role only for this guide, detach it after removing the test workload:
+
+```bash
+aws iam detach-role-policy \
+  --role-name "$WORKER_ROLE_NAME" \
+  --policy-arn "$EFS_CSI_POLICY_ARN" 2>/dev/null || true
+```
+
+Detach the IAM policy from the EFS CSI Operator role, then delete the role and policy:
 
 ```bash
 export EFS_ROLE_NAME="${CLUSTER_NAME}-aws-efs-csi-operator"
@@ -960,7 +1028,7 @@ oc get clustercsidriver efs.csi.aws.com 2>/dev/null || true
 oc get subscription,csv,pods -n openshift-cluster-csi-drivers | grep -i efs || true
 oc get secret -n openshift-cluster-csi-drivers aws-efs-cloud-credentials 2>/dev/null || true
 
-aws efs describe-file-systems --region "$AWS_REGION" --output table
+aws efs describe-file-systems --file-system-id "$EFS_ID" --region "$AWS_REGION" --output table 2>/dev/null || true
 aws ec2 describe-security-groups --region "$AWS_REGION" --group-ids "$EFS_SG_ID" 2>/dev/null || true
 aws iam get-role --role-name "${CLUSTER_NAME}-aws-efs-csi-operator" 2>/dev/null || true
 ```
