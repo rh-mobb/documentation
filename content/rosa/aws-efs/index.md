@@ -384,7 +384,7 @@ Some AWS CLI versions might not support `aws efs wait file-system-available`. Th
 
 ## Find worker subnets, VPC, security groups, and IAM roles
 
-The EFS mount targets must be reachable by the ROSA worker nodes over NFS port `2049`. For a Multi-AZ data plane, create one EFS mount target in each Availability Zone where worker nodes run.
+The EFS mount targets must be reachable by the ROSA worker nodes over NFS port `2049`. For a Multi-AZ data plane, create one EFS mount target in each Availability Zone where worker nodes run. The commands in this section keep multi-value results newline-separated and use `while read` loops so they work in shells that do not split variables on whitespace automatically.
 
 Get the worker node private IPs:
 
@@ -404,11 +404,12 @@ echo "$WORKER_PRIVATE_IPS"
 Find the EC2 instance IDs for those workers:
 
 ```bash
-export WORKER_INSTANCE_IDS=$(aws ec2 describe-instances \
+aws ec2 describe-instances \
   --region "$AWS_REGION" \
   --filters "Name=private-ip-address,Values=${WORKER_PRIVATE_IPS}" \
-  --query 'Reservations[].Instances[].InstanceId' \
-  --output text)
+  --output json > "$SCRATCH_DIR/worker-instances.json"
+
+export WORKER_INSTANCE_IDS=$(jq -r '.Reservations[].Instances[].InstanceId' "$SCRATCH_DIR/worker-instances.json")
 
 echo "$WORKER_INSTANCE_IDS"
 ```
@@ -416,42 +417,32 @@ echo "$WORKER_INSTANCE_IDS"
 Get the worker subnets, worker security groups, VPC, and worker IAM roles:
 
 ```bash
-export WORKER_SUBNET_IDS=$(aws ec2 describe-instances \
-  --region "$AWS_REGION" \
-  --instance-ids $WORKER_INSTANCE_IDS \
-  --query 'Reservations[].Instances[].SubnetId' \
-  --output text | tr '\t' '\n' | sort -u)
+export WORKER_SUBNET_IDS=$(jq -r '.Reservations[].Instances[].SubnetId' "$SCRATCH_DIR/worker-instances.json" | sort -u)
 
-export WORKER_SG_IDS=$(aws ec2 describe-instances \
-  --region "$AWS_REGION" \
-  --instance-ids $WORKER_INSTANCE_IDS \
-  --query 'Reservations[].Instances[].SecurityGroups[].GroupId' \
-  --output text | tr '\t' '\n' | sort -u)
+export WORKER_SG_IDS=$(jq -r '.Reservations[].Instances[].SecurityGroups[].GroupId' "$SCRATCH_DIR/worker-instances.json" | sort -u)
 
-export WORKER_VPC_ID=$(aws ec2 describe-instances \
-  --region "$AWS_REGION" \
-  --instance-ids $WORKER_INSTANCE_IDS \
-  --query 'Reservations[0].Instances[0].VpcId' \
-  --output text)
+export WORKER_VPC_ID=$(jq -r '.Reservations[0].Instances[0].VpcId' "$SCRATCH_DIR/worker-instances.json")
 
-export WORKER_INSTANCE_PROFILE_NAMES=$(aws ec2 describe-instances \
-  --region "$AWS_REGION" \
-  --instance-ids $WORKER_INSTANCE_IDS \
-  --query 'Reservations[].Instances[].IamInstanceProfile.Arn' \
-  --output text | tr '\t' '\n' | sed 's#.*/##' | sort -u)
+export WORKER_INSTANCE_PROFILE_NAMES=$(jq -r '.Reservations[].Instances[].IamInstanceProfile.Arn' "$SCRATCH_DIR/worker-instances.json" | sed 's#.*/##' | sort -u)
 
-export WORKER_ROLE_NAMES=$(for PROFILE_NAME in $WORKER_INSTANCE_PROFILE_NAMES; do
-  aws iam get-instance-profile \
-    --instance-profile-name "$PROFILE_NAME" \
-    --query 'InstanceProfile.Roles[0].RoleName' \
-    --output text
+export WORKER_ROLE_NAMES=$(printf '%s\n' "$WORKER_INSTANCE_PROFILE_NAMES" | while IFS= read -r PROFILE_NAME; do
+  if [ -n "$PROFILE_NAME" ]; then
+    aws iam get-instance-profile \
+      --instance-profile-name "$PROFILE_NAME" \
+      --query 'InstanceProfile.Roles[0].RoleName' \
+      --output text
+  fi
 done | sort -u)
 
-export EFS_MOUNT_TARGET_SUBNET_IDS=$(aws ec2 describe-subnets \
-  --region "$AWS_REGION" \
-  --subnet-ids $WORKER_SUBNET_IDS \
-  --query 'Subnets[].{SubnetId:SubnetId,AvailabilityZone:AvailabilityZone}' \
-  --output json | jq -r 'sort_by(.AvailabilityZone) | group_by(.AvailabilityZone)[] | .[0].SubnetId')
+export EFS_MOUNT_TARGET_SUBNET_IDS=$(printf '%s\n' "$WORKER_SUBNET_IDS" | while IFS= read -r WORKER_SUBNET_ID; do
+  if [ -n "$WORKER_SUBNET_ID" ]; then
+    aws ec2 describe-subnets \
+      --region "$AWS_REGION" \
+      --subnet-ids "$WORKER_SUBNET_ID" \
+      --query 'Subnets[0].{SubnetId:SubnetId,AvailabilityZone:AvailabilityZone}' \
+      --output json
+  fi
+done | jq -s -r 'sort_by(.AvailabilityZone) | group_by(.AvailabilityZone)[] | .[0].SubnetId')
 
 echo "Worker subnets:"
 echo "$WORKER_SUBNET_IDS"
@@ -471,7 +462,11 @@ The worker nodes need EFS permissions to resolve and mount the EFS file system. 
 ```bash
 export EFS_CSI_POLICY_ARN="arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy"
 
-for WORKER_ROLE_NAME in $WORKER_ROLE_NAMES; do
+printf '%s\n' "$WORKER_ROLE_NAMES" | while IFS= read -r WORKER_ROLE_NAME; do
+  if [ -z "$WORKER_ROLE_NAME" ]; then
+    continue
+  fi
+
   aws iam attach-role-policy \
     --role-name "$WORKER_ROLE_NAME" \
     --policy-arn "$EFS_CSI_POLICY_ARN"
@@ -502,7 +497,11 @@ echo "$EFS_SG_ID"
 Allow NFS traffic from the worker security groups to the EFS security group:
 
 ```bash
-for WORKER_SG_ID in $WORKER_SG_IDS; do
+printf '%s\n' "$WORKER_SG_IDS" | while IFS= read -r WORKER_SG_ID; do
+  if [ -z "$WORKER_SG_ID" ]; then
+    continue
+  fi
+
   aws ec2 authorize-security-group-ingress \
     --region "$AWS_REGION" \
     --group-id "$EFS_SG_ID" \
@@ -517,7 +516,11 @@ done
 Create one EFS mount target in one worker subnet per Availability Zone. This covers both Single-AZ and Multi-AZ data planes:
 
 ```bash
-for EFS_MOUNT_TARGET_SUBNET_ID in $EFS_MOUNT_TARGET_SUBNET_IDS; do
+printf '%s\n' "$EFS_MOUNT_TARGET_SUBNET_IDS" | while IFS= read -r EFS_MOUNT_TARGET_SUBNET_ID; do
+  if [ -z "$EFS_MOUNT_TARGET_SUBNET_ID" ]; then
+    continue
+  fi
+
   echo "Creating mount target in subnet: $EFS_MOUNT_TARGET_SUBNET_ID"
   aws efs create-mount-target \
     --region "$AWS_REGION" \
@@ -988,7 +991,11 @@ oc delete secret aws-efs-cloud-credentials \
 If you attached the AWS managed EFS CSI driver policy to the worker roles only for this guide, detach it after removing the test workload:
 
 ```bash
-for WORKER_ROLE_NAME in $WORKER_ROLE_NAMES; do
+printf '%s\n' "$WORKER_ROLE_NAMES" | while IFS= read -r WORKER_ROLE_NAME; do
+  if [ -z "$WORKER_ROLE_NAME" ]; then
+    continue
+  fi
+
   aws iam detach-role-policy \
     --role-name "$WORKER_ROLE_NAME" \
     --policy-arn "$EFS_CSI_POLICY_ARN" 2>/dev/null || true
