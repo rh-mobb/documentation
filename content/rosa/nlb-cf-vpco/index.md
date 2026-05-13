@@ -6,6 +6,8 @@ authors:
   - Diana Sari
   - Daniel Axelrod
   - Kevin Collins
+  - Charlotte Fung
+validated_version: "4.20"
 ---
 
 
@@ -106,14 +108,14 @@ Leave the rest advance settings as default. Then click the **Next** button at th
 ![ip-tg](images/ip-tg.png)
 <br />
 
-On the **Review targets** section, be sure to check that all three IP addresses are in **Pending** health status. Click **Create target group** button.
+On the **Review targets** section, be sure to check that all three IP addresses are in **Pending** health status. Click **Next** to proceed. Review your entries one more time for accuracy, and click **Create target group** button on the lower right. 
 
 
 ### 4.3. Create outer NLB
 
 Still on the **EC2** sidebar, click **Load Balancers**, and click **Create load balancer** button on the upper right corner. Select NLB as the type and hit the **Create** button.
 
-On the creation page, name it `outer nlb`, select **Internal** as scheme, and leave the IP address type to **IPv4**. Under the **Network mapping** section, be sure to select your VPC, and select all the AZs and select the relevant private subnets for each. Then, under **Security groups**, add the security group, e.g. **outer-nlb-sg** that you created earlier.  
+On the creation page, name it `outer-nlb`, select **Internal** as scheme, and leave the IP address type to **IPv4**. Under the **Network mapping** section, be sure to select your VPC, and select all the AZs and select the relevant private subnets for each. Then, under **Security groups**, add the security group, e.g. **outer-nlb-sg** that you created earlier.  
 
 ![nlb-sg](images/nlb-sg.png)
 <br />
@@ -130,7 +132,7 @@ Next, click **Create load balancer** button at the bottom of the page. It will t
 
 ### 5.1. Create CloudFront VPC Origin
 
-On the AWS console, look for **CloudFront**, and on the CloudFront sidebar select **VPC origins**, and then hit the **Create VPC origin** button on the upper right corner. Give it a name like `rosa-vpc-og` and paste the outer NLB ARN that you copied before for the **Origin ARN**. Choose **HTTPS only** for the protocol, leave the port ot **443** and the minimum origin SSL protocol to **TLSv1.2**. 
+On the AWS console, look for **CloudFront**, and on the CloudFront sidebar select **VPC origins**, and then hit the **Create VPC origin** button on the upper right corner. Give it a name like `rosa-vpc-og` and paste the outer NLB ARN that you copied before for the **Origin ARN**. Choose **HTTPS only** for the protocol, leave the port to **443** and the minimum origin SSL protocol to **TLSv1.2**. 
 
 ![vpco-create](images/vpco-create.png)
 <br />
@@ -140,31 +142,40 @@ Hit **Create VPC origin** button at the end of the page, and wait for a few minu
 
 ### 5.2. Create CloudFront Distribution
 
-On the CloudFront sidebar, click **Distributions**, and hit **Create distribution** button on the upper right corner. Note that at the time of the writing, AWS actually just released a new UI for creating CloudFront distribution, however, this guide will show you how to create one using the previous/old one.
+On the CloudFront sidebar, click **Distributions**, and hit the **Create distribution** button on the upper right corner. If this is your first time creating a distribution, you will be routed to a screen as below to choose a plan. We will be using the **Pay as you go** plan for this guide. 
+Click on **Next** to proceed.
 
-On the **Origin** section, under **Origin domain** look for the name of the VPC origin you created, e.g. `rosa-vpc-og`, select it and it will also auto-populate the VPC origin domain and the name below it. Leave the origin path to blanks and the rest of the origin settings to default.
+>  The **Free** and **Pro** plans do not support VPC origins which is the required Origin type for this routing pattern.
 
-![vpcd-cr-0](images/vpcd-cr-0.png)
+![cf-dist-plan](images/cf-dist-plan.png)
 <br />
 
-On the **Default cache behavior** section, under the **Viewer** part, choose **Redirect HTTP to HTTPS** for viewer protocol policy, and select **GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE** for allowed HTTP methods.
+On the **Distribution options** section, under **Distribution name**, give the distribution a name like `rosa-cf-distribution`. You can add a description if you want. Under **Distribution type**, select the type that works for your use case. We will be using the `single-website or app` option. 
 
-![vpcd-cr-1](images/vpcd-cr-1.png)
+![cf-dist-options.png](images/cf-dist-options.png)
 <br />
 
-Then under the **Cache key and origin requests**, select **CachingDisabled** for the cache policy, and choose **AllViewer** for the origin request policy. Leave the rest of the settings to default.
+ Skip the **Domain** section if you will be using a domain from a different DNS provider.
+ If your domain is already registered with Route 53 in your AWS account, on the **Domain** section under **Route 53 managed domain**, enter your domain name and click on **check domain** to validate it. In this guide, we will be using a wildcard domain as shown below. Click **Next** to proceed. 
 
-![vpcd-cr-2](images/vpcd-cr-2.png)
+![cf-dist-r53-domain](images/cf-dist-r53-domain.png)
 <br />
 
-On the **Web Application Firewall (WAF)** section, select **Do not enable security protections**. Note that you can always enable WAF after you created the distribution later but we are not covering it here for the sake of simplicity. 
+On the **Origin type** section, under the **Origin type**, select **VPC origin**. Next, on the **Origin** section, under **VPC origin**, click on **Browse VPC origins** and select the VPC origin you previously created e.g `rosa-vpc-og`. It will also auto-populate the VPC origin endpoint. Leave the origin path to blanks.
 
-On the **Settings** section, under the alternate domain name (CNAME) part, click **Add item** button, and add your domain name there, along with the custom SSL certificate. See snippet below as an example. Leave the rest of the settings to default.
+On the **Settings** section, leave the **Origin settings** to the default recommended setting. Under **Cache settings**, select **customize cache settings**. For the **Cache policy**, select **CachingDisabled** and choose **AllViewer** under **Origin request policy**. Leave the rest of the settings to default and click on **Next** at the end of the page
 
-![vpcd-cr-3](images/vpcd-cr-3.png)
+![cf-dist-origin](images/cf-dist-origin.png)
 <br />
 
-And finally, click the **Create distribution** button. And once it finished deploying, copy the **Distribution domain name** as you would need it for next step.
+On the **Web Application Firewall (WAF)** section, select **Do not enable security protections**. Note that you can always enable WAF after you create the distribution later but we are not covering it here for the sake of simplicity. 
+
+On the **TLS certificate** section, select the certificate for your domain. If there are no available certificates in AWS Certificate Manager for your domain, you will be prompted to create one. Click on **Next** to proceed
+
+![cf-dist-tls-cert](images/cf-dist-tls-cert.png)
+<br />
+
+And finally, review your entries and click the **Create distribution** button. And once it finished deploying, copy the **Distribution domain name** as you would need it for next step.
 
 
 ## 6. Create (or update) custom domain on Route 53 
