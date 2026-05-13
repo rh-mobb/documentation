@@ -28,8 +28,6 @@
       source: redhat-operators
       sourceNamespace: openshift-marketplace
       name: kubevirt-hyperconverged
-      startingCSV: kubevirt-hyperconverged-operator.v4.15.1
-      channel: "stable"
     EOF
     ```
 
@@ -53,6 +51,7 @@
       labels:
         app: kubevirt-hyperconverged
     spec:
+      enableApplicationAwareQuota: false
       applicationAwareConfig:
         allowApplicationAwareClusterResourceQuota: false
         vmiCalcConfigName: DedicatedVirtualResources
@@ -68,15 +67,8 @@
         alignCPUs: false
         autoResourceLimits: false
         deployKubeSecondaryDNS: false
-        deployTektonTaskResources: false
-        deployVmConsoleProxy: false
         disableMDevConfiguration: false
-        enableApplicationAwareQuota: false
-        enableCommonBootImageImport: true
-        enableManagedTenantQuota: false
-        nonRoot: true
         persistentReservation: false
-        withHostPassthroughCPU: false
       infra: {}
       liveMigrationConfig:
         allowAutoConverge: false
