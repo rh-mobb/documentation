@@ -35,10 +35,9 @@ If you don't want to deploy the resources yourself, you can watch the video belo
     ```
      rosa create machine-pool -c $CLUSTER \
      --replicas 1 --availability-zone $METAL_AZ \
-     --instance-type m5zn.metal --name virt
+     --instance-type c6g.metal --name virt
     ```
 
-m7i.metal-24xl
 {{< readfile file="/content/rosa/ocp-virt/deploy-operator-cli.md" markdown="true" >}}
 
 ## Create a Virtual Machine
@@ -137,6 +136,7 @@ m7i.metal-24xl
     ```
 
 1. Watch for the VM to be ready
+	  > It will take a couple of minutes for the disk image to be provisioned and files copied because this is the first VM to be created on the cluster.
 
     ```bash
     watch oc get vm example-vm
@@ -151,7 +151,7 @@ m7i.metal-24xl
 1. SSH into the VM
 
     ```bash
-    virtctl ssh cloud-user@example-vm -i ~/.ssh/id_rsa
+    virtctl ssh cloud-user@vm/example-vm -i ~/.ssh/id_rsa
     ```
 
     ```output
