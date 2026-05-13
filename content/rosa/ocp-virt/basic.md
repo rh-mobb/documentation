@@ -30,7 +30,7 @@ If you don't want to deploy the resources yourself, you can watch the video belo
     ```
 
 1. Create a bare metal machine pool
-	> The `c6g.metal` instance type was the cheapest as of the last edit of this document. In general, bare metal instances are expensive, so be careful not to leave them running if they're not in-use.
+	{{% alert state="warning" %}}The `c6g.metal` instance type was the cheapest as of the last edit of this document. In general, bare metal instances are expensive, so be careful not to leave them running if they're not in-use.{{% /warning %}}
 
     ```
      rosa create machine-pool -c $CLUSTER \
