@@ -1,260 +1,362 @@
 ---
-date: '2022-01-11'
+date: '2026-04-29'
 title: Advanced Cluster Management Observability on ROSA
 aliases: ['/experts/acm/observability/rosa']
 tags: ["Observability", "ROSA", "ACM"]
 authors:
   - Connor Wooley
+  - Nerav Doshi
+validated_version: "4.21"
 ---
 
-<!-- commented sections enable STS support which isn't fully working as
-the operator will on occasion wipe out the service account annotations -->
 
-This document will take you through deploying ACM Observability on a ROSA cluster. see [here](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.4/html/observability/observing-environments-intro#enabling-observability) for the original documentation.
+## Deploying RHACM Observability on ROSA
+This document provides a complete guide to deploying ACM Observability on a ROSA cluster with Thanos-based metrics storage using AWS S3
 
-<!--
-**Note:** This guide uses an unsupported (by ACM) method to utilize ROSA's STS authentication back into AWS S3 and is not advised for production use at this time. -->
+- **Thanos-based metrics storage** using AWS S3 for persistent, long-term metrics retention
+- **Grafana dashboards** for multi-cluster observability and visualization
+- **Persistent metrics** retention across managed clusters
 
 ## Prerequisites
 
-* An existing ROSA cluster
-* An Advanced Cluster Management (ACM) deployment
+**Required:**
+- An existing ROSA cluster (Classic or HCP)
+- Advanced Cluster Management (ACM) 2.10+ installed and operational
+- AWS CLI configured with appropriate permissions
+- `oc` CLI authenticated to your ROSA cluster
 
-## Set up environment
+### Verify Prerequisites
 
-1. Set environment variables
+Before proceeding, validate your environment meets all requirements:
 
-   ```bash
-   export CLUSTER_NAME=my-cluster
-   export S3_BUCKET=$CLUSTER_NAME-acm-observability
-   export REGION=us-east-2
-   export NAMESPACE=open-cluster-management-observability
-   export SA=tbd
-   export SCRATCH_DIR=/tmp/scratch
-   export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-   export AWS_PAGER=""
-   rm -rf $SCRATCH_DIR
-   mkdir -p $SCRATCH_DIR
-   ```
+```bash
+# 1. Verify ROSA cluster access
 
-<!--
-    export OIDC_PROVIDER=$(oc get authentication.config.openshift.io cluster -o json | jq -r .spec.serviceAccountIssuer| sed -e "s/^https:\/\///")
--->
+oc login https://api.cluster_name.t6k4.i1.organization.org:6443 \
+> --username cluster-admin \
+> --password mypa55w0rd
+Login successful.
+You have access to 77 projects, the list has been suppressed. You can list all projects with ' projects'
 
-## Prepare AWS Account
+# 2. Verify ACM is installed (CRITICAL - must show "Running" status)
+oc get multiclusterhub -n open-cluster-management
 
-1. Create an S3 bucket
+# 3. Verify ACM operators are running
+oc get csv -n open-cluster-management | grep advanced-cluster-management
 
-   ```bash
-   aws s3 mb s3://$S3_BUCKET
-   ```
+# 4. Verify AWS CLI is configured
+aws sts get-caller-identity
+```
 
-1. Create a Policy for access to S3
+**If ACM is not installed:** You must install ACM first. Follow the [ACM Installation Guide](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.11/html/install/index) before proceeding.
 
-   ```bash
-   cat <<EOF > $SCRATCH_DIR/s3-policy.json
-   {
-       "Version": "2012-10-17",
-       "Statement": [
-           {
-               "Sid": "Statement",
-               "Effect": "Allow",
-               "Action": [
-                   "s3:ListBucket",
-                   "s3:GetObject",
-                   "s3:DeleteObject",
-                   "s3:PutObject",
-                   "s3:PutObjectAcl",
-                   "s3:CreateBucket",
-                   "s3:DeleteBucket"
-               ],
-               "Resource": [
-                   "arn:aws:s3:::$S3_BUCKET/*",
-                   "arn:aws:s3:::$S3_BUCKET"
-               ]
-           }
-       ]
-   }
-   EOF
-   ```
+## Architecture Overview
 
-1. Apply the Policy
+ACM Observability uses Thanos to collect, store, and query metrics from all managed clusters:
+- Metrics are collected from managed clusters via the observability addon
+- Thanos components (Query, Store, Compact) process and store metrics
+- S3 provides durable, long-term storage for historical metrics
+- Grafana provides visualization and dashboards
 
-   ```bash
-   S3_POLICY=$(aws iam create-policy --policy-name $CLUSTER_NAME-acm-obs \
-     --policy-document file://$SCRATCH_DIR/s3-policy.json \
-     --query 'Policy.Arn' --output text)
-   echo $S3_POLICY
-   ```
+## Step 1: Environment Setup
 
-1. Create service account
+Set environment variables for the deployment:
 
-   ```bash
-   aws iam create-user --user-name $CLUSTER_NAME-acm-obs  \
-     --query User.Arn --output text
-   ```
+```bash
+export CLUSTER_NAME=my-cluster
+export S3_BUCKET=$CLUSTER_NAME-acm-observability
+export REGION=us-east-2
+export NAMESPACE=open-cluster-management-observability
+export SCRATCH_DIR=/tmp/scratch
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export AWS_PAGER=""
 
-1. Attach policy to user
+# Create scratch directory for temporary files
+rm -rf $SCRATCH_DIR
+mkdir -p $SCRATCH_DIR
+```
 
-   ```bash
-   aws iam attach-user-policy --user-name $CLUSTER_NAME-acm-obs \
-     --policy-arn ${S3_POLICY}
-   ```
+### Validate Environment Variables
 
-1. Create Access Keys
+Verify all required variables are set:
 
-   ```bash
-   read -r ACCESS_KEY_ID ACCESS_KEY < <(aws iam create-access-key \
-     --user-name $CLUSTER_NAME-acm-obs \
-     --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)
-   ```
+```bash
+echo "Cluster Name: $CLUSTER_NAME"
+echo "S3 Bucket: $S3_BUCKET"
+echo "AWS Region: $REGION"
+echo "Namespace: $NAMESPACE"
+echo "AWS Account ID: $AWS_ACCOUNT_ID"
+```
+## Step 2: Prepare AWS Infrastructure
 
-<!--
-1. Create a Trust Policy
+### Create S3 Bucket
 
-    ```bash
-cat <<EOF > $SCRATCH_DIR/TrustPolicy.json
+```bash
+aws s3 mb s3://$S3_BUCKET
+```
+
+**Verify:**
+```bash
+aws s3 ls s3://$S3_BUCKET
+```
+
+### Create IAM Policy for S3 Access
+
+```bash
+cat <<EOF > $SCRATCH_DIR/s3-policy.json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${OIDC_PROVIDER}:sub": [
-            "system:serviceaccount:${NAMESPACE}:observability-thanos-query",
-            "system:serviceaccount:${NAMESPACE}:observability-thanos-store-shard",
-            "system:serviceaccount:${NAMESPACE}:observability-thanos-compact"
-          ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Statement",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl",
+                "s3:CreateBucket",
+                "s3:DeleteBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::$S3_BUCKET/*",
+                "arn:aws:s3:::$S3_BUCKET"
+            ]
         }
-      }
-    }
-  ]
+    ]
 }
 EOF
-    ```
+```
 
+**Apply the Policy:**
 
-1. Create Role for AWS Prometheus and CloudWatch
+```bash
+S3_POLICY=$(aws iam create-policy --policy-name $CLUSTER_NAME-acm-obs \
+  --policy-document file://$SCRATCH_DIR/s3-policy.json \
+  --query 'Policy.Arn' --output text)
+echo "Created policy: $S3_POLICY"
+```
 
-    ```bash
-    S3_ROLE=$(aws iam create-role \
-      --role-name "$CLUSTER_NAME-acm-obs-s3" \
-      --assume-role-policy-document file://$SCRATCH_DIR/TrustPolicy.json \
-      --query "Role.Arn" --output text)
-    echo $S3_ROLE
-    ```
+**Verify:**
+```bash
+aws iam get-policy --policy-arn $S3_POLICY
+```
 
-1. Attach the Policies to the Role
+### Create IAM User
 
-    ```bash
-    aws iam attach-role-policy \
-      --role-name "$CLUSTER_NAME-acm-obs-s3" \
-      --policy-arn $S3_POLICY
-    ```
--->
+```bash
+aws iam create-user --user-name $CLUSTER_NAME-acm-obs \
+  --query User.Arn --output text
+```
 
-## ACM Hub
+**Verify:**
+```bash
+aws iam get-user --user-name $CLUSTER_NAME-acm-obs
+```
 
-Log into the OpenShift cluster that is running your ACM Hub.  We'll set up Observability here
+### Attach Policy to User
 
-1. Create a namespace for the observability
+```bash
+aws iam attach-user-policy --user-name $CLUSTER_NAME-acm-obs \
+  --policy-arn ${S3_POLICY}
+```
 
-   ```bash
-   oc new-project $NAMESPACE
-   ```
+**Verify:**
+```bash
+aws iam list-attached-user-policies --user-name $CLUSTER_NAME-acm-obs
+```
 
-1. Generate a pull secret (this will check if the pull secret exists, if not, it will create it)
+### Generate Access Keys
 
-   ```bash
-   DOCKER_CONFIG_JSON=`oc extract secret/multiclusterhub-operator-pull-secret -n open-cluster-management --to=-` || \
-     DOCKER_CONFIG_JSON=`oc extract secret/pull-secret -n openshift-config --to=-` && \
-     oc create secret generic multiclusterhub-operator-pull-secret \
-     -n open-cluster-management-observability \
-     --from-literal=.dockerconfigjson="$DOCKER_CONFIG_JSON" \
-     --type=kubernetes.io/dockerconfigjson
-   ```
+```bash
+read -r ACCESS_KEY_ID ACCESS_KEY < <(aws iam create-access-key \
+  --user-name $CLUSTER_NAME-acm-obs \
+  --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)
 
-1. Create a Secret containing your S3 details
+echo "Access Key ID: $ACCESS_KEY_ID"
+echo "Secret Key: [HIDDEN]"
+```
 
-   ```yaml
-   cat << EOF | kubectl apply -f -
-   apiVersion: v1
-   kind: Secret
-   metadata:
-     name: thanos-object-storage
-     namespace: open-cluster-management-observability
-   type: Opaque
-   stringData:
-     thanos.yaml: |
-       type: s3
-       config:
-         bucket: $S3_BUCKET
-         endpoint: s3.$REGION.amazonaws.com
-         signature_version2: false
-         access_key: $ACCESS_KEY_ID
-         secret_key: $ACCESS_KEY
-   EOF
-   ```
+## Step 3: Configure ACM Observability on OpenShift
 
-1. Create a CR for `MulticlusterHub`
+### Create Observability Namespace
 
-   ```yaml
-   cat << EOF | kubectl apply -f -
-   apiVersion: observability.open-cluster-management.io/v1beta2
-   kind: MultiClusterObservability
-   metadata:
-     name: observability
-   spec:
-     observabilityAddonSpec: {}
-     storageConfig:
-       metricObjectStorage:
-         name: thanos-object-storage
-         key: thanos.yaml
-   EOF
-   ```
+```bash
+oc new-project $NAMESPACE
+```
 
-<!--
-1. Annotate the service accounts to use STS
+### Create Pull Secret
 
-    ```bash
-oc annotate -n open-cluster-management-observability serviceaccount observability-thanos-query \
-      eks.amazonaws.com/role-arn=$S3_ROLE
-oc annotate -n open-cluster-management-observability serviceaccount observability-thanos-store-shard \
-      eks.amazonaws.com/role-arn=$S3_ROLE
-oc annotate -n open-cluster-management-observability serviceaccount observability-thanos-compact \
-      eks.amazonaws.com/role-arn=$S3_ROLE
-    ```
+The observability components need a pull secret to download container images:
 
-1. Restart thanos pods to use the new credentials
+```bash
+DOCKER_CONFIG_JSON=$(oc extract secret/multiclusterhub-operator-pull-secret -n open-cluster-management --to=- 2>/dev/null) || \
+  DOCKER_CONFIG_JSON=$(oc extract secret/pull-secret -n openshift-config --to=-)
 
-    ```bash
-kubectl rollout restart deployment/observability-thanos-query
-kubectl rollout restart statefulset/observability-thanos-compact
-kubectl rollout restart statefulset/observability-thanos-store-shard-0
-kubectl rollout restart statefulset/observability-thanos-store-shard-1
-kubectl rollout restart statefulset/observability-thanos-store-shard-2
-    ```
+oc create secret generic multiclusterhub-operator-pull-secret \
+  -n $NAMESPACE \
+  --from-literal=.dockerconfigjson="$DOCKER_CONFIG_JSON" \
+  --type=kubernetes.io/dockerconfigjson
+```
 
-1. Check for any pods that aren't running
+**Verify:**
+```bash
+oc get secret multiclusterhub-operator-pull-secret -n $NAMESPACE
+```
 
-    ```bash
-    kubectl get pods --field-selector status.phase!=Running
-    ```
+### Create Thanos Object Storage Secret
 
-    Delete any pods that are not running in order to have them recreated with the correct credentials
+This secret contains S3 credentials for Thanos to store metrics:
 
-    ```bash
-    kubectl delete pods $(kubectl get pods --field-selector status.phase!=Running -o name | xargs)
-    ```
--->
+```bash
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thanos-object-storage
+  namespace: $NAMESPACE
+type: Opaque
+stringData:
+  thanos.yaml: |
+    type: s3
+    config:
+      bucket: $S3_BUCKET
+      endpoint: s3.$REGION.amazonaws.com
+      signature_version2: false
+      access_key: $ACCESS_KEY_ID
+      secret_key: $ACCESS_KEY
+EOF
+```
 
-## Access ACM Observability
+**Verify:**
+```bash
+oc get secret thanos-object-storage -n $NAMESPACE
+```
 
-1. Log into Advanced Cluster management and access the new Grafana dashboard
+**Validate secret content:**
+```bash
+oc get secret thanos-object-storage -n $NAMESPACE -o jsonpath='{.data.thanos\.yaml}' | base64 -d
+```
+
+## Step 4: Deploy MultiClusterObservability
+
+Create the MultiClusterObservability custom resource to enable observability:
+
+```bash
+cat << EOF | oc apply -f -
+apiVersion: observability.open-cluster-management.io/v1beta2
+kind: MultiClusterObservability
+metadata:
+  name: observability
+spec:
+  observabilityAddonSpec: {}
+  storageConfig:
+    metricObjectStorage:
+      name: thanos-object-storage
+      key: thanos.yaml
+EOF
+```
+
+**Expected Output:** Resource created (status may show "Pending" initially)
+```bash
+oc get multiclusterobservability observability -n $NAMESPACE
+```
+
+## Step 5: Verify Deployment
+
+### Monitor Deployment Progress
+After the immediate creation of MultiClusterObservability, pods will start within 2 to 5 minutes, reach a running state within 5 to 10 minutes, and display the first metrics in 10 to 15 minutes.
+
+```bash
+# Watch MultiClusterObservability status
+oc get multiclusterobservability observability -w
+
+# In another terminal, watch pods being created
+oc get pods -n $NAMESPACE -w
+```
+
+### Check All Pods Are Running
+
+```bash
+oc get pods -n $NAMESPACE
+```
+
+**Expected Output:**
+```
+NAME                                                  READY   STATUS
+observability-thanos-query-...                        3/3     Running
+observability-thanos-query-frontend-...               1/1     Running
+observability-thanos-receive-default-...              1/1     Running
+observability-thanos-store-shard-0-...                1/1     Running
+observability-rbac-query-proxy-...                    2/2     Running
+observability-observatorium-api-...                   1/1     Running
+observability-grafana-...                             2/2     Running
+```
+
+### Verify S3 Bucket Has Data
+
+After 10-15 minutes, metrics should start appearing in S3:
+
+```bash
+aws s3 ls s3://$S3_BUCKET/ --recursive | head -10
+```
+
+### Get Grafana Route
+
+```bash
+GRAFANA_URL=$(oc get route grafana -n $NAMESPACE -o jsonpath='{.spec.host}' 2>/dev/null)
+```
+
+### Test Grafana Access
+
+```bash
+curl -k -I https://$GRAFANA_URL
+```
+
+## Step 6: Access ACM Observability Dashboards
+
+1. **Via ACM Console:**
+   - Log into the OpenShift console
+   - Navigate to **ACM** > **Overview**
+   - Click on **Grafana** link in the Observability section
+
+2. **Direct Access:**
+   - Visit the Grafana URL from the previous step
+   - Log in with your OpenShift credentials
+
+3. **Available Dashboards:**
+   - **ACM - Clusters Overview**: Health and status of all managed clusters
+   - **ACM - Resource Optimization**: Resource usage and capacity planning
+   - **ACM - Applications**: Application deployment metrics
 
 ![ACM Grafana Dashboard](./acm-grafana.png)
+
+## Cleanup / Uninstall
+
+To remove ACM Observability:
+
+```bash
+# Delete MultiClusterObservability resource
+oc delete multiclusterobservability observability
+
+# Wait for all resources to be cleaned up
+oc wait --for=delete pods --all -n $NAMESPACE --timeout=300s
+
+# Delete namespace
+oc delete namespace $NAMESPACE
+
+# Delete AWS resources (CAUTION: This deletes the S3 bucket and all metrics)
+aws s3 rb s3://$S3_BUCKET --force
+aws iam detach-user-policy --user-name $CLUSTER_NAME-acm-obs --policy-arn $S3_POLICY
+aws iam delete-access-key --user-name $CLUSTER_NAME-acm-obs --access-key-id $ACCESS_KEY_ID
+aws iam delete-user --user-name $CLUSTER_NAME-acm-obs
+aws iam delete-policy --policy-arn $S3_POLICY
+```
+
+## Additional Resources
+
+- **ACM Installation Guide:** [Installing ACM on OpenShift](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.11/html/install/index)
+- **ACM Observability Documentation:** [Red Hat ACM 2.11 Observability](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.11/html/observability/index)
+- **Thanos Documentation:** [Thanos S3 Configuration](https://thanos.io/tip/thanos/storage.md/#s3)
+- **ROSA Documentation:** [Red Hat OpenShift Service on AWS](https://docs.openshift.com/rosa/welcome/index.html)
