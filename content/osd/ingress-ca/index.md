@@ -4,6 +4,7 @@ title: Using Google Cloud Armor with a Secondary IngressController on OpenShift 
 tags: ["OSD"]
 authors:
   - Kevin Collins
+  - Kumudu Herath
 validated_version: "4.21"
 ---
 
