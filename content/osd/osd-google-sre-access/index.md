@@ -358,6 +358,149 @@ In this architecture:
 
 ---
 
+## Audit Log Examples
+
+Customers can monitor SRE access through two types of audit logs: OpenShift audit logs when SREs interact with cluster resources, and Google Cloud audit logs when SREs interact with Google Cloud resources.
+
+### OpenShift Audit Logs
+
+When an SRE accesses your cluster through the Red Hat Backplane, OpenShift generates detailed Kubernetes audit logs. These logs capture all API interactions, including service account creation and usage.
+
+**Example: SRE Establishes Cluster Access via Backplane**
+
+When an SRE connects to your cluster, the Backplane API first checks if the ephemeral service account exists, creates it if needed, and establishes the session:
+
+```json
+{
+    "kind": "Event",
+    "apiVersion": "audit.k8s.io/v1",
+    "level": "RequestResponse",
+    "auditID": "25d09203-a0eb-4132-86c5-5a02ee15c445",
+    "stage": "ResponseComplete",
+    "requestURI": "/api/v1/namespaces/openshift-backplane-srep/serviceaccounts",
+    "verb": "create",
+    "user": {
+        "username": "system:admin",
+        "groups": [
+            "system:masters",
+            "system:authenticated"
+        ]
+    },
+    "sourceIPs": [
+        "35.191.77.105"
+    ],
+    "userAgent": "backplane-api/v0.0.0 (linux/amd64) kubernetes/$Format",
+    "objectRef": {
+        "resource": "serviceaccounts",
+        "namespace": "openshift-backplane-srep",
+        "name": "5233a861805e585f9b1ff02b870923a4",
+        "apiVersion": "v1"
+    },
+    "responseStatus": {
+        "metadata": {},
+        "code": 201
+    },
+    "requestObject": {
+        "kind": "ServiceAccount",
+        "apiVersion": "v1",
+        "metadata": {
+            "name": "5233a861805e585f9b1ff02b870923a4",
+            "namespace": "openshift-backplane-srep",
+            "labels": {
+                "hive.openshift.io/managed": "true",
+                "managed.openshift.io/backplane": "true"
+            },
+            "annotations": {
+                "managed.openshift.io/backplane-expiry-duration": "720"
+            }
+        }
+    },
+    "requestReceivedTimestamp": "2026-05-14T22:08:05.812486Z",
+    "stageTimestamp": "2026-05-14T22:08:05.816768Z",
+    "annotations": {
+        "authorization.k8s.io/decision": "allow",
+        "authorization.k8s.io/reason": ""
+    }
+}
+```
+
+**Key Details in OpenShift Audit Logs:**
+- **namespace**: `openshift-backplane-srep` indicates Red Hat SRE activity
+- **sourceIPs**: IP address of the Backplane API service
+- **userAgent**: Identifies the request as coming from the Backplane API
+- **annotations**: The `backplane-expiry-duration` shows the service account expires after 720 minutes (12 hours)
+- **timestamp**: Precise time when the SRE session was established
+
+### Google Cloud Audit Logs
+
+When an SRE interacts with Google Cloud resources in your project (e.g., stopping a VM, modifying a load balancer, or checking compute instances), Google Cloud generates Cloud Audit Logs that identify the specific SRE by their @redhat.com email address.
+
+**Example: SRE Stops a Compute Instance**
+
+```json
+{
+    "insertId": "ftdqm0d2f7u",
+    "labels": {
+      "compute.googleapis.com/root_trigger_id": "dea104a0-a3c0-430f-94ab-f4759164b8a1"
+    },
+    "logName": "projects/mobb-demo/logs/cloudaudit.googleapis.com%2Factivity",
+    "operation": {
+      "id": "operation-1779241123187-65235db1e0ab2-bd90e2b0-768355f6",
+      "last": true,
+      "producer": "compute.googleapis.com"
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "authenticationInfo": {
+        "principalEmail": "sre-name@redhat.com"
+      },
+      "methodName": "v1.compute.instances.stop",
+      "request": {
+        "@type": "type.googleapis.com/compute.instances.stop"
+      },
+      "requestMetadata": {
+        "callerIp": "122.57.54.121",
+        "callerSuppliedUserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36,gzip(gfe),gzip(gfe)"
+      },
+      "resourceName": "projects/mobb-demo/zones/us-east1-b/instances/kmc-logging-2-m9c22-worker-b-8lwkz",
+      "serviceName": "compute.googleapis.com"
+    },
+    "receiveTimestamp": "2026-05-20T01:39:24.249666766Z",
+    "resource": {
+      "labels": {
+        "instance_id": "1716125396705996266",
+        "project_id": "mobb-demo",
+        "zone": "us-east1-b"
+      },
+      "type": "gce_instance"
+    },
+    "severity": "NOTICE",
+    "timestamp": "2026-05-20T01:39:23.450361Z"
+}
+```
+
+**Key Details in Google Cloud Audit Logs:**
+- **principalEmail**: The individual SRE's email address (e.g., `sre-name@redhat.com`)
+- **methodName**: The specific Google Cloud API method called (e.g., `v1.compute.instances.stop`)
+- **callerIp**: The source IP address of the SRE
+- **resourceName**: The exact resource that was accessed or modified
+- **timestamp**: Precise time of the action
+
+### How to Access Audit Logs
+
+**OpenShift Audit Logs:**
+- Available through the OpenShift console under **Observe → Logs**
+- Can be forwarded to external log aggregation systems (e.g., Google Cloud Logging, Splunk, Elasticsearch)
+- Filter for `namespace="openshift-backplane-srep"` to see SRE activity
+
+**Google Cloud Audit Logs:**
+- Access via **Google Cloud Console → Logging → Logs Explorer**
+- Filter for `protoPayload.authenticationInfo.principalEmail:@redhat.com`
+- Can be exported to BigQuery, Cloud Storage, or Pub/Sub for long-term retention
+- Use Log Analytics to create dashboards and alerts for SRE access patterns
+
+---
+
 ## Key Takeaways
 
 1. **SREs Use Group Membership**: Red Hat SREs access clusters using Google Workspace accounts and Google Cloud IAM group membership, not service account keys or WIF tokens<br><br>
