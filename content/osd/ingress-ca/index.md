@@ -584,6 +584,8 @@ gcloud compute security-policies rules delete 100 \
 
 ### SQL Injection Protection
 
+**Note:** Make sure to delete the rate limiting rule from the previous test before proceeding, otherwise you may get rate-limited (429 errors) during testing.
+
 Block common SQL injection patterns:
 
 ```bash
@@ -602,13 +604,15 @@ sleep 60
 Test SQL injection protection:
 
 ```bash
-# Attempt a SQL injection pattern (should be blocked)
-curl "https://hello.$INGRESS_NAME.$DOMAIN/?id=1' OR '1'='1"
-# Should return: HTTP 403 Forbidden
+# Attempt a SQL injection pattern (URL-encoded: 1' OR '1'='1)
+echo "Testing SQL injection pattern (should be blocked):"
+curl "https://hello.$INGRESS_NAME.$DOMAIN/?id=1%27%20OR%20%271%27=%271"
+echo ""
 
 # Normal request (should work)
+echo "Testing normal request (should succeed):"
 curl "https://hello.$INGRESS_NAME.$DOMAIN/"
-# Should return: Hello OpenShift!
+echo ""
 ```
 
 Remove the SQL injection rule:
@@ -619,6 +623,8 @@ gcloud compute security-policies rules delete 200 \
 ```
 
 ### XSS Protection
+
+**Note:** Make sure to delete the SQL injection rule from the previous test before proceeding.
 
 Block cross-site scripting attempts:
 
@@ -638,13 +644,15 @@ sleep 60
 Test XSS protection:
 
 ```bash
-# Attempt an XSS pattern (should be blocked)
-curl "https://hello.$INGRESS_NAME.$DOMAIN/?name=<script>alert('xss')</script>"
-# Should return: HTTP 403 Forbidden
+# Attempt an XSS pattern (URL-encoded: <script>alert('xss')</script>)
+echo "Testing XSS pattern (should be blocked):"
+curl "https://hello.$INGRESS_NAME.$DOMAIN/?name=%3Cscript%3Ealert%28%27xss%27%29%3C/script%3E"
+echo ""
 
 # Normal request (should work)
+echo "Testing normal request (should succeed):"
 curl "https://hello.$INGRESS_NAME.$DOMAIN/"
-# Should return: Hello OpenShift!
+echo ""
 ```
 
 Remove the XSS protection rule:
