@@ -679,14 +679,11 @@ gcloud compute url-maps delete ${CLUSTER_NAME}-armor-urlmap --quiet
 # Delete SSL certificate
 gcloud compute ssl-certificates delete ${CLUSTER_NAME}-armor-cert --global --quiet
 
-# Detach and delete security policy
-gcloud compute backend-services update ${CLUSTER_NAME}-armor-backend \
-  --global \
-  --no-security-policy
-gcloud compute security-policies delete ${CLUSTER_NAME}-armor-policy --quiet
-
-# Delete backend service
+# Delete backend service (this automatically detaches the security policy)
 gcloud compute backend-services delete ${CLUSTER_NAME}-armor-backend --global --quiet
+
+# Delete security policy
+gcloud compute security-policies delete ${CLUSTER_NAME}-armor-policy --quiet
 
 # Delete health check
 gcloud compute health-checks delete ${CLUSTER_NAME}-armor-hc --quiet
