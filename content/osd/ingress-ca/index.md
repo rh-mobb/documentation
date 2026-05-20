@@ -1,7 +1,7 @@
 ---
 date: '2026-05-20'
 title: Using Google Cloud Armor with a Secondary IngressController on OpenShift Dedicated (GCP)
-tags: ["OSD", "GCP"]
+tags: ["OSD"]
 authors:
   - Kevin Collins
 validated_version: "4.21"
