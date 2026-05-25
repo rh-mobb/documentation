@@ -44,6 +44,7 @@ This approach allows you to:
 * The `oc` CLI logged in to your cluster
 * The `gcloud` CLI configured with access to the GCP project
 * A domain name for testing (these instructions assume you control DNS for the domain)
+* certbot installed. On macOS: brew install certbot or On RHEL/Fedora: sudo dnf install certbot
 
 ## 2. Set Environment Variables
 
@@ -114,7 +115,7 @@ done
 Verify the Internal Load Balancer was created with a private IP:
 
 ```bash
-# Verify it's a private IP (should be in the 10.x.x.x range)
+# Verify it is a private IP (should be in the 10.x.x.x range)
 if [[ $INTERNAL_NLB_IP == 10.* ]]
 then
   echo "✓ Confirmed: Internal Load Balancer with private IP"
@@ -129,12 +130,19 @@ The Internal Network Load Balancer is not accessible from the internet. Traffic 
 
 Create Network Endpoint Groups (NEGs) that point to the Internal NLB IP address. This step automatically detects all zones where router pods are running and creates NEGs in each zone for high availability:
 
+**Note:** Get the ODS cluster's VPC Network name. If VPC network has cluster name you could use following, if not define NETWORK value manually. 
+```bash
+# Get network name
+NETWORK=$(gcloud compute networks list --filter="name~${CLUSTER_NAME}" --format="value(name)" | head -1)
+```
+
 ```bash
 # Get the internal NLB IP
 INTERNAL_NLB_IP=$(oc get svc router-${INGRESS_NAME} -n openshift-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 # Get network name
-NETWORK=$(gcloud compute networks list --filter="name~${CLUSTER_NAME}" --format="value(name)" | head -1)
+[ -z "$NETWORK" ] && { echo "X Error: NETWORK is empty. No network found for ${CLUSTER_NAME}";}
+echo "Using network: $NETWORK"
 
 # Detect zones where router pods are running
 ZONES=$(oc get pods -n openshift-ingress \
