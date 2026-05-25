@@ -140,7 +140,7 @@ NETWORK=$(gcloud compute networks list --filter="name~${CLUSTER_NAME}" --format=
 # Get the internal NLB IP
 INTERNAL_NLB_IP=$(oc get svc router-${INGRESS_NAME} -n openshift-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-# Get network name
+# Validate network name
 [ -z "$NETWORK" ] && { echo "X Error: NETWORK is empty. No network found for ${CLUSTER_NAME}";}
 echo "Using network: $NETWORK"
 
