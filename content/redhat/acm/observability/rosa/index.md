@@ -319,7 +319,9 @@ curl -k -I https://$GRAFANA_URL
 1. **Via ACM Console:**
    - Log into the OpenShift console
    - Navigate to **ACM** > **Overview**
-   - Click on **Grafana** link in the Observability section
+   - Click on **Grafana** link iocated in the top-right corner
+
+![ACM Grafana Link](./acm-grafana-link.png)   
 
 2. **Direct Access:**
    - Visit the Grafana URL from the previous step
