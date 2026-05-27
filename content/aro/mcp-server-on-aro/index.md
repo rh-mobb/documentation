@@ -3,7 +3,7 @@ date: '2026-05-26'
 title: 'OpenShift MCP Server Deployment on ARO'
 tags: ["ARO", "Miscellaneous"]
 authors:
-  - dbhamre
+  - Dharmeshkumar Bhamre
 ---
 
 This guide walks through deploying the [OpenShift Kubernetes MCP Server](https://github.com/openshift/openshift-mcp-server) on an **Azure Red Hat OpenShift (ARO)** cluster. You install the server with Helm, bind a read-only ClusterRole to a dedicated service account, and expose the MCP endpoint on an OpenShift route for client testing.
