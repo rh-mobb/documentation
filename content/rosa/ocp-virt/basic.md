@@ -6,6 +6,8 @@ authors:
   - Paul Czarkowski
 ---
 
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
+
 OpenShift Virtualization is a feature of OpenShift that allows you to run virtual machines alongside your containers.  This is useful for running legacy applications that can't be containerized, or for running applications that require special hardware or software that isn't available in a container.
 
 In this tutorial, I'll show you how to deploy OpenShift Virtualization on Red Hat OpenShift on AWS (ROSA).  I'll show you how to create a ROSA cluster, deploy the OpenShift Virtualization operator, and create a virtual machine.
@@ -21,19 +23,19 @@ If you don't want to deploy the resources yourself, you can watch the video belo
 1. You will need a A ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).
 
 1. Set the cluster name as an environment variable (in the example we re-use the variable from the Terraform guide).
-ort METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
-    ```
+
     ```bash
     export CLUSTER="${TF_VAR_cluster_name}"
-    exp
+    export METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
+    ```
 
 1. Create a bare metal machine pool
-	> Note bare metal machines are not cheap, so be warned!
+	{{% alert state="warning" %}}The `c6g.metal` instance type was the cheapest as of the last edit of this document. In general, bare metal instances are expensive, so be careful not to leave them running if they're not in-use.{{% /alert %}}
 
     ```
      rosa create machine-pool -c $CLUSTER \
-       --replicas 1 --availability-zone $METAL_AZ \
-       --instance-type m5zn.metal --name virt
+     --replicas 1 --availability-zone $METAL_AZ \
+     --instance-type c6g.metal --name virt
     ```
 
 {{< readfile file="/content/rosa/ocp-virt/deploy-operator-cli.md" markdown="true" >}}
@@ -70,7 +72,7 @@ ort METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
             resources:
               requests:
                 storage: 30Gi
-      running: false
+      runStrategy: Halted
       template:
         metadata:
           labels:
@@ -135,8 +137,11 @@ ort METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
 
 1. Watch for the VM to be ready
 
+	{{% alert state="info" %}}It will take a couple of minutes for the disk image to be provisioned and files copied because this is the first VM to be created on the cluster.{{% /alert %}}
+
     ```bash
     watch oc get vm example-vm
+    ```
 
     ```
     Every 2.0s: oc get vm
@@ -147,7 +152,7 @@ ort METAL_AZ=$(terraform output -json private_subnet_azs | jq -r '.[0]')
 1. SSH into the VM
 
     ```bash
-    virtctl ssh cloud-user@example-vm -i ~/.ssh/id_rsa
+    virtctl ssh cloud-user@vm/example-vm -i ~/.ssh/id_rsa
     ```
 
     ```output
