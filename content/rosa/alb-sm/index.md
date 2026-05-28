@@ -1,16 +1,16 @@
 ---
 date: '2026-05-27'
-title: Deploy gRPC Applications with AWS ALB and WAF on ROSA using Service Mesh
-tags: ["ROSA", "ROSA HCP", "GovCloud"]
+title: Deploy gRPC Applications with AWS ALB and WAF on ROSA HCP using Service Mesh
+tags: ["ROSA HCP", "GovCloud"]
 authors:
   - Kevin Collins
   - Diana Sari
 validated_version: "4.21"
 ---
 
-Organizations deploying gRPC applications on Red Hat OpenShift Service on AWS (ROSA) often need to meet security requirements that mandate AWS Web Application Firewall (WAF) protection. However, combining gRPC support with WAF presents a unique challenge: WAF can only be attached to Application Load Balancers (ALB), and configuring ALB to properly handle gRPC traffic requires a specific architectural approach.
+Organizations deploying gRPC applications on Red Hat OpenShift Service on AWS (ROSA) Hosted Control Plane (HCP) often need to meet security requirements that mandate AWS Web Application Firewall (WAF) protection. However, combining gRPC support with WAF presents a unique challenge: WAF can only be attached to Application Load Balancers (ALB), and configuring ALB to properly handle gRPC traffic requires a specific architectural approach.
 
-This guide demonstrates how to successfully deploy gRPC applications on ROSA with full WAF support using AWS Application Load Balancer with native gRPC protocol support and Red Hat OpenShift Service Mesh (Istio). This architecture works in both AWS Commercial Cloud and AWS GovCloud regions.
+This guide demonstrates how to successfully deploy gRPC applications on ROSA HCP with full WAF support using AWS Application Load Balancer with native gRPC protocol support and Red Hat OpenShift Service Mesh (Istio). This architecture works in both AWS Commercial Cloud and AWS GovCloud regions.
 
 ## Why This Architecture
 
@@ -43,7 +43,7 @@ This architecture is the optimal solution for gRPC on ROSA when WAF is required 
 
 ## Prerequisites
 
-* A ROSA cluster (HCP or Classic) in AWS Commercial Cloud or AWS GovCloud
+* A ROSA HCP cluster in AWS Commercial Cloud or AWS GovCloud
 * AWS CLI configured with appropriate credentials
 * `oc` CLI tool
 * `rosa` CLI tool
@@ -58,7 +58,8 @@ Set environment variables:
 ```bash
 export ROSA_CLUSTER_NAME=<your cluster name>
 export REGION=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r .region.id)
-export VPC_ID=$(rosa list machinepools -c $ROSA_CLUSTER_NAME -o json | jq -r '.[0].subnets[0]' | xargs -I {} aws ec2 describe-subnets --subnet-ids {} --query 'Subnets[0].VpcId' --output text)
+export SUBNET_ID=$(rosa list machinepools -c $ROSA_CLUSTER_NAME -o json | jq -r '.[0].subnet')
+export VPC_ID=$(aws ec2 describe-subnets --subnet-ids $SUBNET_ID --query 'Subnets[0].VpcId' --output text)
 export DOMAIN=<your domain>  # e.g., example.com
 export GRPC_HOSTNAME=grpc.$DOMAIN
 ```
@@ -152,8 +153,6 @@ Red Hat OpenShift Service Mesh provides the Envoy proxy layer needed for proper 
 
 1. Deploy the Service Mesh Control Plane
 
-   For ROSA HCP clusters, use `ThirdParty` identity type for OIDC compatibility:
-
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: maistra.io/v2
@@ -165,7 +164,7 @@ Red Hat OpenShift Service Mesh provides the Envoy proxy layer needed for proper 
      version: v2.6
      security:
        identity:
-         type: ThirdParty  # Required for ROSA HCP
+         type: ThirdParty  # Required for ROSA HCP OIDC compatibility
      tracing:
        type: None
      gateways:
@@ -179,8 +178,6 @@ Red Hat OpenShift Service Mesh provides the Envoy proxy layer needed for proper 
                service.beta.kubernetes.io/aws-load-balancer-internal: "true"
    EOF
    ```
-
-   For ROSA Classic clusters, you can omit the `security.identity` section.
 
 1. Wait for the control plane to be ready
 
@@ -903,7 +900,7 @@ To remove all resources created in this guide:
 
 ## Summary
 
-This architecture provides a production-ready solution for deploying gRPC applications on ROSA with full WAF protection in both AWS Commercial Cloud and AWS GovCloud environments. By using AWS ALB's native gRPC support (via IP target type and GRPC protocol version) combined with Istio Service Mesh's Envoy ingress, you get:
+This architecture provides a production-ready solution for deploying gRPC applications on ROSA HCP with full WAF protection in both AWS Commercial Cloud and AWS GovCloud environments. By using AWS ALB's native gRPC support (via IP target type and GRPC protocol version) combined with Istio Service Mesh's Envoy ingress, you get:
 
 - ✅ Full gRPC protocol support (HTTP/2, trailers, bidirectional streaming)
 - ✅ AWS WAF integration for Layer 7 security
@@ -912,3 +909,5 @@ This architecture provides a production-ready solution for deploying gRPC applic
 - ✅ Enterprise support for all components
 
 The key insight is that ALB's gRPC support requires IP-based targeting rather than NLB-to-NLB architecture, and Envoy provides the HTTP/2-aware ingress layer that traditional HAProxy-based routes cannot deliver. This universal approach works across all AWS environments, making it ideal for organizations operating in regulated industries that require GovCloud while also maintaining commercial cloud deployments.
+
+**Note**: While this guide is specific to ROSA HCP, the architecture also works on ROSA Classic. The only difference is that ROSA Classic clusters can optionally omit the `security.identity.type: ThirdParty` setting in the ServiceMeshControlPlane configuration.
