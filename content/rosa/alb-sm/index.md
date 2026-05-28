@@ -404,20 +404,112 @@ This is the critical step where we configure ALB with native gRPC support.
 
 1. Get or create an ACM certificate for your domain
 
-   ```bash
-   # List existing certificates
-   aws acm list-certificates --region $REGION
+   **Option A: Use an existing validated certificate** (faster)
    
-   # Or request a new one
+   ```bash
+   # List existing issued certificates
+   aws acm list-certificates --region $REGION --certificate-statuses ISSUED
+   
+   # Set the ARN of an existing certificate
+   export CERT_ARN=<your-existing-certificate-arn>
+   ```
+
+   **Option B: Request a new certificate**
+   
+   ```bash
+   # Request a new certificate
    CERT_ARN=$(aws acm request-certificate \
      --domain-name "*.$DOMAIN" \
      --validation-method DNS \
      --region $REGION \
      --query CertificateArn \
      --output text)
+   
+   echo "Certificate ARN: $CERT_ARN"
    ```
 
-   If you requested a new certificate, complete DNS validation in the ACM console.
+1. Validate the certificate via DNS (only if you requested a new certificate)
+
+   Get the DNS validation record:
+   
+   ```bash
+   # Get validation CNAME record details
+   aws acm describe-certificate \
+     --certificate-arn $CERT_ARN \
+     --region $REGION \
+     --query 'Certificate.DomainValidationOptions[0].ResourceRecord.{Name:Name,Type:Type,Value:Value}' \
+     --output table
+   
+   # Store the validation record details
+   VALIDATION_NAME=$(aws acm describe-certificate \
+     --certificate-arn $CERT_ARN \
+     --region $REGION \
+     --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Name' \
+     --output text)
+   
+   VALIDATION_VALUE=$(aws acm describe-certificate \
+     --certificate-arn $CERT_ARN \
+     --region $REGION \
+     --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Value' \
+     --output text)
+   ```
+
+   Add the CNAME record to Route 53:
+   
+   ```bash
+   # Get your hosted zone ID
+   HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name \
+     --dns-name $DOMAIN \
+     --query "HostedZones[0].Id" \
+     --output text | cut -d'/' -f3)
+   
+   echo "Hosted Zone ID: $HOSTED_ZONE_ID"
+   
+   # Create the validation CNAME record
+   cat <<EOF > /tmp/acm-validation.json
+   {
+     "Changes": [
+       {
+         "Action": "UPSERT",
+         "ResourceRecordSet": {
+           "Name": "$VALIDATION_NAME",
+           "Type": "CNAME",
+           "TTL": 300,
+           "ResourceRecords": [
+             {
+               "Value": "$VALIDATION_VALUE"
+             }
+           ]
+         }
+       }
+     ]
+   }
+   EOF
+   
+   aws route53 change-resource-record-sets \
+     --hosted-zone-id $HOSTED_ZONE_ID \
+     --change-batch file:///tmp/acm-validation.json
+   ```
+
+   Wait for certificate validation to complete:
+   
+   ```bash
+   echo "Waiting for certificate validation (this can take 5-30 minutes)..."
+   aws acm wait certificate-validated \
+     --certificate-arn $CERT_ARN \
+     --region $REGION
+   
+   echo "Certificate validated!"
+   
+   # Verify status is ISSUED
+   aws acm describe-certificate \
+     --certificate-arn $CERT_ARN \
+     --region $REGION \
+     --query 'Certificate.Status' \
+     --output text
+   ```
+   
+   Expected output: `ISSUED`
 
 1. Create a security group for the ALB
 
