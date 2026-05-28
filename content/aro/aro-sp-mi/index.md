@@ -126,7 +126,7 @@ sequenceDiagram
 
     rect rgb(238, 245, 255)
     Note over Webhook,Azure: Runtime (every pod start)
-    Webhook->>Pod: 5. Webhook injects into pod:<br>• AZURE_CLIENT_ID<br>• AZURE_TENANT_ID<br>• AZURE_FEDERATED_TOKEN_FILE<br>• Projected volume (short-lived K8s JWT)
+    Webhook->>Pod: 5. Webhook injects into pod:<br>• AZURE_CLIENT_ID<br>• AZURE_TENANT_ID<br>• AZURE_FEDERATED_TOKEN_FILE<br>• AZURE_AUTHORITY_HOST<br>• Projected volume (short-lived K8s JWT)
     Pod->>SDK: 6. App calls DefaultAzureCredential()
     SDK->>SDK: 7. Reads K8s JWT from projected volume
     SDK->>EntraID: 8. OIDC token exchange<br>(K8s JWT → Azure access token)
