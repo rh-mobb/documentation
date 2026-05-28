@@ -171,31 +171,13 @@ No. Service principal is fully supported for both existing and new ARO clusters.
 
 **5. Consistent with other OpenShift managed services.** ROSA on AWS already uses IAM Roles for Service Accounts (IRSA) and OSD on GCP uses Workload Identity — both follow the same pattern of short-lived, OIDC-based credentials scoped per component. ARO's managed identity model brings the same approach to Azure. Organizations running multiple OpenShift managed services will find a consistent security model across clouds.
 
-**6. Tooling support.** The Azure Portal already automates MI setup — managed identities, role assignments, and federated credentials are created automatically when you deploy a new ARO cluster through the portal. The `az aro` CLI does not yet automate this, so CLI-based deployments currently require manual identity and role assignment setup. A simplified CLI command (`az aro assign-roles`) is planned and expected to be available soon.
+**6. Tooling support.** The Azure Portal already automates MI setup — managed identities, role assignments, and federated credentials are created automatically when you deploy a new ARO cluster through the portal. The `az aro` CLI does not yet automate this, so CLI-based deployments currently require manual identity and role assignment setup. A simplified CLI experience is expected to be available soon.
 
-### What About Existing SP Clusters?
+### MI Operational Considerations
 
-If you already have ARO clusters running on service principal, they will continue to work — SP is fully supported with no deprecation timeline. Keep them as they are, and ensure you have a process to rotate the client secret before it expires. For any **new** ARO cluster, use managed identity.
-
-### Things to Keep in Mind
-
-Whichever model you use, there are operational considerations specific to each:
-
-**Service principal clusters:**
-
-- The client secret has a maximum lifetime of 2 years. You must [rotate the credential](https://learn.microsoft.com/en-us/azure/openshift/howto-service-principal-credential-rotation) before it expires — there is no automatic rotation or built-in reminder.
-- If the secret expires, cluster operations that depend on Azure APIs (node scaling, load balancer updates, DNS, storage provisioning) will begin to fail.
-
-**Managed identity clusters:**
-
-- Initial setup requires more steps — 9 managed identities and 17-28 role assignments. The Azure Portal automates this, and a simplified CLI command (`az aro assign-roles`) is planned.
 - You need **Contributor + User Access Administrator** (or Owner) permissions on the subscription, compared to Contributor only for SP.
 - Before each cluster upgrade, you must reconcile federated credentials and set the `upgradeable-to` annotation on the cluster's CloudCredential resource. Without these steps, the upgrade is blocked. See [Upgrade an ARO cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade-aro-openshift-cluster).
 - The default Azure Files StorageClass is disabled (it relies on storage account keys). If your workloads need ReadWriteMany volumes, [create the StorageClass manually](https://learn.microsoft.com/en-us/azure/openshift/howto-configure-azure-file-storageclass).
-
-For installation instructions, see the official guides:
-- **Service principal:** [Tutorial: Create an ARO cluster](https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster)
-- **Managed identity:** [Create an ARO cluster with managed identities](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster?pivots=aro-deploy-az-cli)
 
 ## Migrating from SP to MI
 
@@ -217,19 +199,35 @@ The cluster infrastructure changes, but your application code may not need to. W
 
 | Scenario | Code change? | Config change? |
 |----------|-------------|---------------|
-| App uses `DefaultAzureCredential` (Azure SDK) | **No** — SDK auto-detects workload identity | **Yes** — replace K8s Secret with ServiceAccount annotation |
-| App uses explicit `ClientSecretCredential` | **Yes** — one-line change to `DefaultAzureCredential` | **Yes** — replace K8s Secret with ServiceAccount annotation |
+| App uses `DefaultAzureCredential` (Azure SDK) | **No** — SDK auto-detects workload identity (ensure SDK meets [minimum version](#azure-sdk-minimum-versions)) | **Yes** — replace K8s Secret with ServiceAccount annotation |
+| App uses explicit `ClientSecretCredential` | **Yes** — change to `DefaultAzureCredential` | **Yes** — replace K8s Secret with ServiceAccount annotation |
+| App authenticates via connection strings (e.g., Storage account key, SQL password) | **No** — deploy as-is (these don't use SP) | **No** — optionally migrate to workload identity later for secretless access |
 | App does not access Azure services | **No** | **No** — deploy as-is |
 | Stateful app with PVC (Azure Disk) | **No** | **Yes** — backup data, recreate PVC on new cluster, restore |
 | App using Azure Files (RWX) | **No** | **Yes** — create StorageClass manually on MI cluster first |
 
-For each app that accesses Azure services, the K8s manifest changes are:
+For each app that accesses Azure services via the Azure SDK, the K8s manifest changes are:
 
 - **Remove:** Secret references (`envFrom` or `env.valueFrom`) that inject `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`
 - **Add:** ServiceAccount with annotation `azure.workload.identity/client-id: <managed-identity-client-id>`
 - **Add:** Pod label `azure.workload.identity/use: "true"`
+- **Set:** `.spec.serviceAccountName` in the pod/deployment spec to reference the annotated ServiceAccount
 
 The workload identity webhook automatically injects the credentials into the pod at runtime.
+
+#### Azure SDK Minimum Versions
+
+If your app already uses `DefaultAzureCredential`, ensure the Azure Identity SDK version includes `WorkloadIdentityCredential` support:
+
+| Language | Library | Minimum version |
+|----------|---------|----------------|
+| .NET | Azure.Identity | 1.9.0 |
+| Go | azidentity | 1.3.0 |
+| Java | azure-identity | 1.9.0 |
+| Node.js | @azure/identity | 3.2.0 |
+| Python | azure-identity | 1.13.0 |
+
+Older SDK versions will not auto-detect workload identity, even if the webhook injects the correct environment variables.
 
 **Phase 3: Deploy and validate**
 
