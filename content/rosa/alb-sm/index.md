@@ -100,7 +100,7 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    oc create namespace istio-system
    ```
 
-1. Deploy the Istio control plane with ingress gateway
+1. Deploy the Istio control plane
 
    ```bash
    cat <<EOF | oc apply -f -
@@ -111,13 +111,6 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    spec:
      namespace: istio-system
      version: v1.28-latest
-     values:
-       gateways:
-         istio-ingressgateway:
-           type: LoadBalancer
-           serviceAnnotations:
-             service.beta.kubernetes.io/aws-load-balancer-type: nlb
-             service.beta.kubernetes.io/aws-load-balancer-internal: "true"
    EOF
    ```
 
@@ -125,6 +118,72 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 
    ```bash
    oc wait --for=condition=Ready istio/default --timeout=900s
+   ```
+
+1. Deploy the ingress gateway
+
+   Service Mesh 3 doesn't automatically create an ingress gateway. Deploy one manually:
+
+   ```bash
+   cat <<EOF | oc apply -f -
+   apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: istio-ingressgateway
+     namespace: istio-system
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: istio-ingressgateway
+     namespace: istio-system
+   spec:
+     replicas: 2
+     selector:
+       matchLabels:
+         app: istio-ingressgateway
+         istio: ingressgateway
+     template:
+       metadata:
+         labels:
+           app: istio-ingressgateway
+           istio: ingressgateway
+           sidecar.istio.io/inject: "true"
+         annotations:
+           inject.istio.io/templates: gateway
+       spec:
+         serviceAccountName: istio-ingressgateway
+         containers:
+         - name: istio-proxy
+           image: auto
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: istio-ingressgateway
+     namespace: istio-system
+     annotations:
+       service.beta.kubernetes.io/aws-load-balancer-type: nlb
+       service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+   spec:
+     type: LoadBalancer
+     selector:
+       app: istio-ingressgateway
+       istio: ingressgateway
+     ports:
+     - name: status-port
+       port: 15021
+       protocol: TCP
+       targetPort: 15021
+     - name: http2
+       port: 80
+       protocol: TCP
+       targetPort: 8080
+     - name: https
+       port: 443
+       protocol: TCP
+       targetPort: 8443
+   EOF
    ```
 
 1. Wait for the ingress gateway to be ready
