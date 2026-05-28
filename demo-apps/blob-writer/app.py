@@ -3,9 +3,6 @@
 This app already uses DefaultAzureCredential (best practice). During
 migration from SP to MI cluster, NO code change is needed — only K8s
 manifest changes (ServiceAccount annotation + pod label).
-
-The app writes entries to Azure Blob Storage and keeps a local log on a
-PVC to demonstrate stateful migration (PVC data backup/restore).
 """
 
 import json
@@ -20,7 +17,6 @@ app = Flask(__name__)
 
 STORAGE_ACCOUNT_URL = os.environ["AZURE_STORAGE_ACCOUNT_URL"]
 CONTAINER_NAME = os.environ.get("AZURE_STORAGE_CONTAINER", "demo-data")
-LOCAL_LOG_PATH = os.environ.get("LOCAL_LOG_PATH", "/data/entries.json")
 
 credential = DefaultAzureCredential()
 blob_service = BlobServiceClient(account_url=STORAGE_ACCOUNT_URL, credential=credential)
@@ -33,27 +29,11 @@ def _ensure_container():
         pass
 
 
-def _load_local_log() -> list:
-    try:
-        with open(LOCAL_LOG_PATH) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-
-def _save_local_log(entries: list):
-    os.makedirs(os.path.dirname(LOCAL_LOG_PATH), exist_ok=True)
-    with open(LOCAL_LOG_PATH, "w") as f:
-        json.dump(entries, f, indent=2)
-
-
 @app.route("/")
 def index():
-    entries = _load_local_log()
     return jsonify({
         "status": "ok",
         "app": "blob-writer",
-        "local_entries": len(entries),
         "auth_method": _detect_auth_method(),
     })
 
@@ -74,21 +54,10 @@ def write_entry():
     container_client = blob_service.get_container_client(CONTAINER_NAME)
     container_client.upload_blob(blob_name, json.dumps(entry), overwrite=True)
 
-    entries = _load_local_log()
-    entries.append(entry)
-    _save_local_log(entries)
-
     return jsonify({
         "status": "written",
         "blob": blob_name,
-        "local_count": len(entries),
     })
-
-
-@app.route("/entries")
-def list_entries():
-    entries = _load_local_log()
-    return jsonify({"source": "local-pvc", "entries": entries})
 
 
 @app.route("/blobs")

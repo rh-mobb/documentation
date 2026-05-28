@@ -1,4 +1,4 @@
-## SP cluster version — uses K8s Secret for Azure credentials + PVC for local state
+## SP cluster version — uses K8s Secret for Azure credentials
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -14,19 +14,6 @@ stringData:
   AZURE_TENANT_ID: "<your-tenant-id>"
   AZURE_CLIENT_ID: "<your-sp-client-id>"
   AZURE_CLIENT_SECRET: "<your-sp-client-secret>"
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: blob-writer-data
-  namespace: blob-writer
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: managed-csi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -53,20 +40,11 @@ spec:
               value: "https://<your-storage-account>.blob.core.windows.net"
             - name: AZURE_STORAGE_CONTAINER
               value: "demo-data"
-            - name: LOCAL_LOG_PATH
-              value: "/data/entries.json"
             - name: CLUSTER_NAME
               value: "sp-cluster"
           envFrom:
             - secretRef:
                 name: azure-sp-credentials
-          volumeMounts:
-            - name: data
-              mountPath: /data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: blob-writer-data
 ---
 apiVersion: v1
 kind: Service
