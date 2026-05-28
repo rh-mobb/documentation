@@ -171,7 +171,7 @@ No. Service principal is fully supported for both existing and new ARO clusters.
 
 **5. Consistent with other OpenShift managed services.** ROSA on AWS already uses IAM Roles for Service Accounts (IRSA) and OSD on GCP uses Workload Identity — both follow the same pattern of short-lived, OIDC-based credentials scoped per component. ARO's managed identity model brings the same approach to Azure. Organizations running multiple OpenShift managed services will find a consistent security model across clouds.
 
-**6. Where things are heading.** As of today, the Azure Portal defaults to MI when creating new ARO clusters, and the latest documentation leads with MI as the primary setup path. These are observable signals — not an official deprecation statement — but they suggest that MI is where the platform experience is converging.
+**6. Tooling support.** The Azure Portal already automates MI setup — managed identities, role assignments, and federated credentials are created automatically when you deploy a new ARO cluster through the portal. The `az aro` CLI does not yet automate this, so CLI-based deployments currently require manual identity and role assignment setup. A simplified CLI command (`az aro assign-roles`) is planned and expected to be available soon.
 
 ### What About Existing SP Clusters?
 
