@@ -6,7 +6,7 @@ authors:
   - Kevin Ye
 ---
 
-This is **Part 2** of a two-part series. [Part 1](index.md) covers the what, why, and how to choose between service principal and managed identity for ARO. This article walks through a hands-on migration of two demo applications from an SP cluster to an MI cluster.
+This is **Part 2** of a two-part series. [Part 1](index.md) covers what changes in authentication and how to plan your move. This article walks through a hands-on migration of two demo applications from an SP cluster to an MI cluster.
 
 ## What This Demo Covers
 
@@ -433,7 +433,7 @@ oc exec -n keyvault-reader deploy/keyvault-reader -- env | grep AZURE_
 
 1. **Code change is only needed when using explicit credential classes** like `ClientSecretCredential`. If your app already uses `DefaultAzureCredential`, no code change is required.
 
-2. **K8s manifest changes are the same for every app**: remove the Secret reference, add a ServiceAccount with the workload identity annotation, and add the pod label.
+2. **K8s manifest changes are the same for every app**: remove the Secret reference, add a ServiceAccount with the workload identity annotation, set `.spec.serviceAccountName`, and add the pod label.
 
 3. **The application container image is identical** on both SP and MI clusters. The difference is entirely in how credentials are provided to the pod.
 
