@@ -5,6 +5,7 @@ tags: ["ROSA HCP", "GovCloud"]
 authors:
   - Kevin Collins
   - Diana Sari
+  - Kumudu Herath
 validated_version: "4.21"
 ---
 
@@ -207,6 +208,38 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
        port: 443
        protocol: TCP
        targetPort: 8443
+   EOF
+   ```
+
+1. Create RBAC for the ingress gateway to access TLS secrets
+
+   The ingress gateway ServiceAccount needs permission to read secrets for TLS certificates:
+
+   ```bash
+   cat <<EOF | oc apply -f -
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: Role
+   metadata:
+     name: istio-ingressgateway-sds
+     namespace: istio-system
+   rules:
+   - apiGroups: [""]
+     resources: ["secrets"]
+     verbs: ["get", "watch", "list"]
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: RoleBinding
+   metadata:
+     name: istio-ingressgateway-sds
+     namespace: istio-system
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: Role
+     name: istio-ingressgateway-sds
+   subjects:
+   - kind: ServiceAccount
+     name: istio-ingressgateway
+     namespace: istio-system
    EOF
    ```
 
@@ -461,11 +494,41 @@ This is the critical step where we configure ALB with native gRPC support.
    Add the CNAME record to Route 53:
    
    ```bash
-   # Get your hosted zone ID
-   HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name \
-     --dns-name $DOMAIN \
-     --query "HostedZones[0].Id" \
+   # Get or create your hosted zone
+   HOSTED_ZONE_ID=$(aws route53 list-hosted-zones \
+     --query "HostedZones[?Name=='${DOMAIN}.'].Id" \
      --output text | cut -d'/' -f3)
+   
+   # If the hosted zone doesn't exist, create it
+   if [ -z "$HOSTED_ZONE_ID" ]; then
+     echo "Creating hosted zone for domain: $DOMAIN"
+     HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
+       --name $DOMAIN \
+       --caller-reference $(date +%s) \
+       --query 'HostedZone.Id' \
+       --output text | cut -d'/' -f3)
+     
+     # If this is a subdomain (e.g., myapp.example.com), you need to set up NS delegation
+     # Get the nameservers for the new zone
+     NAMESERVERS=$(aws route53 list-resource-record-sets \
+       --hosted-zone-id $HOSTED_ZONE_ID \
+       --query 'ResourceRecordSets[?Type==`NS`].ResourceRecords[].Value' \
+       --output text | tr '\t' '\n')
+     
+     echo "Hosted zone created. If this is a subdomain, add these NS records to the parent domain:"
+     echo "$NAMESERVERS"
+     echo ""
+     echo "Example: If your domain is 'myapp.example.com' and parent is 'example.com',"
+     echo "add NS records in the 'example.com' zone pointing to the above nameservers."
+     echo ""
+     # If you control the parent zone, automate NS delegation:
+     # PARENT_DOMAIN=$(echo $DOMAIN | sed 's/^[^.]*\.//')
+     # PARENT_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='${PARENT_DOMAIN}.'].Id" --output text | cut -d'/' -f3)
+     # if [ -n "$PARENT_ZONE_ID" ]; then
+     #   echo "Setting up NS delegation in parent zone..."
+     #   # Create NS delegation JSON and apply
+     # fi
+   fi
    
    echo "Hosted Zone ID: $HOSTED_ZONE_ID"
    
@@ -497,7 +560,13 @@ This is the critical step where we configure ALB with native gRPC support.
 
    Wait for certificate validation to complete:
    
+   **Important**: If you created a new hosted zone for a subdomain, ensure NS delegation is set up in the parent domain before continuing. ACM cannot validate the certificate until the DNS records are resolvable.
+   
    ```bash
+   # Verify DNS resolution of the validation record
+   dig +short $VALIDATION_NAME CNAME
+   # Should return the validation value
+   
    echo "Waiting for certificate validation (this can take 5-30 minutes)..."
    aws acm wait certificate-validated \
      --certificate-arn $CERT_ARN \
@@ -585,7 +654,7 @@ This is the critical step where we configure ALB with native gRPC support.
      --health-check-protocol HTTPS \
      --health-check-port traffic-port \
      --health-check-path /grpc.health.v1.Health/Check \
-     --matcher GrpcCode=0-12 \
+     --matcher GrpcCode=0-99 \
      --region $REGION \
      --query 'TargetGroups[0].TargetGroupArn' \
      --output text)
@@ -593,7 +662,9 @@ This is the critical step where we configure ALB with native gRPC support.
    echo "Target Group ARN: $TG_ARN"
    ```
 
-   **Why this works**: Using IP target type allows AWS to accept `GRPC` as the protocol version. If you use `--target-type alb` or target an NLB by ARN, AWS forces HTTP2 protocol, which causes protocol mismatch errors.
+   **Why this works**: 
+   - Using `--target-type ip` allows AWS to accept `GRPC` as the protocol version. If you use `--target-type alb` or target an NLB by ARN, AWS forces HTTP2 protocol, which causes protocol mismatch errors.
+   - The `GrpcCode=0-99` matcher accepts any valid gRPC status code. Using `GrpcCode=0` (only OK/SERVING) may cause health check failures if the backend returns other codes during startup or under certain conditions.
 
 1. Register the Istio NLB IP addresses as targets
 
@@ -1030,7 +1101,7 @@ ALB health checks follow the same path:
 1. ALB sends: `HTTPS GET /grpc.health.v1.Health/Check` to NLB IPs
 2. Envoy receives and routes via VirtualService
 3. Application responds with gRPC status code
-4. ALB checks if `grpc-status` matches GrpcCode matcher (0-12)
+4. ALB checks if `grpc-status` matches GrpcCode matcher (0-99)
 5. Target marked healthy if response is in range
 
 ## Troubleshooting
@@ -1046,7 +1117,7 @@ aws elbv2 describe-target-groups --target-group-arns $TG_ARN \
 Ensure:
 - `ProtocolVersion: GRPC`
 - `HealthCheckPath: /grpc.health.v1.Health/Check`
-- `Matcher: {GrpcCode: "0-12"}`
+- `Matcher: {GrpcCode: "0-99"}`
 
 **Check Istio configuration:**
 ```bash
@@ -1055,7 +1126,12 @@ oc get secret istio-ingressgateway-certs -n istio-system
 
 # Verify VirtualService routes health check
 oc get virtualservice -n grpc-demo -o yaml | grep -A 5 "grpc.health.v1.Health"
+
+# Check istiod logs for certificate access errors
+oc logs -n istio-system deployment/istiod --tail=50 | grep -i "unauthorized\|secret"
 ```
+
+If you see errors like "attempted to access unauthorized certificates", ensure the RBAC Role and RoleBinding were created to allow the ingress gateway ServiceAccount to read secrets in the istio-system namespace.
 
 **Check connectivity:**
 ```bash
