@@ -327,13 +327,15 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 
 1. Create the Istio Gateway
 
+   **Important**: The Gateway must be created in the `istio-system` namespace (where the ingress gateway pods run) for the TLS configuration to be properly applied in Service Mesh 3.
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: networking.istio.io/v1beta1
    kind: Gateway
    metadata:
      name: grpc-gateway
-     namespace: grpc-demo
+     namespace: istio-system
    spec:
      selector:
        istio: ingressgateway
@@ -354,6 +356,8 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 
 1. Create VirtualServices for health checks and application traffic
 
+   **Important**: VirtualServices must reference the Gateway using the `namespace/name` format since the Gateway is in a different namespace.
+
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: networking.istio.io/v1beta1
@@ -365,7 +369,7 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
      hosts:
      - "*"
      gateways:
-     - grpc-gateway
+     - istio-system/grpc-gateway
      http:
      - match:
        - uri:
@@ -385,7 +389,7 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
      hosts:
      - "$GRPC_HOSTNAME"
      gateways:
-     - grpc-gateway
+     - istio-system/grpc-gateway
      http:
      - match:
        - uri:
@@ -627,6 +631,7 @@ This is the critical step where we configure ALB with native gRPC support.
    while true; do
      HEALTHY_COUNT=$(aws elbv2 describe-target-health \
        --target-group-arn $TG_ARN \
+       --region $REGION \
        --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`] | length(@)' \
        --output text)
      
@@ -647,13 +652,44 @@ This is the critical step where we configure ALB with native gRPC support.
 
 ## Configure DNS
 
-Create a DNS record pointing to your ALB:
+1. Create or find the hosted zone for your domain
 
-```bash
-HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name \
-  --dns-name $DOMAIN \
-  --query "HostedZones[0].Id" \
-  --output text | cut -d'/' -f3)
+   ```bash
+   # Check if hosted zone already exists
+   HOSTED_ZONE_ID=$(aws route53 list-hosted-zones \
+     --query "HostedZones[?Name=='${DOMAIN}.'].Id" \
+     --output text | cut -d'/' -f3)
+   
+   if [ -z "$HOSTED_ZONE_ID" ]; then
+     echo "Creating hosted zone for domain: $DOMAIN"
+     HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
+       --name $DOMAIN \
+       --caller-reference $(date +%s) \
+       --query 'HostedZone.Id' \
+       --output text | cut -d'/' -f3)
+     
+     echo "Created hosted zone: $HOSTED_ZONE_ID"
+     
+     # Get the name servers for delegation
+     echo ""
+     echo "Name servers for this hosted zone:"
+     aws route53 get-hosted-zone \
+       --id $HOSTED_ZONE_ID \
+       --query 'DelegationSet.NameServers' \
+       --output table
+     
+     echo ""
+     echo "If this is a subdomain, you need to create NS records in the parent domain."
+     echo "Example: If your domain is 'test.example.com' and parent is 'example.com',"
+     echo "create NS records in 'example.com' pointing to the name servers above."
+   else
+     echo "Using existing hosted zone: $HOSTED_ZONE_ID for domain: $DOMAIN"
+   fi
+   ```
+
+1. Create a DNS record pointing to your ALB
+
+   ```bash
 
 cat <<EOF > /tmp/dns-record.json
 {
@@ -741,22 +777,6 @@ nslookup $GRPC_HOSTNAME
    Sent 1 request and received 1 response
    ```
 
-1. Test with curl (HTTP/2)
-
-   ```bash
-   curl -k --http2 -v -X POST \
-     -H "content-type: application/grpc" \
-     https://$GRPC_HOSTNAME:443/grpc.health.v1.Health/Check \
-     2>&1 | grep -E "< HTTP|< grpc-status|< content-type"
-   ```
-
-   Expected output:
-   ```
-   < HTTP/2 200
-   < content-type: application/grpc
-   < grpc-status: 0
-   ```
-
 ## Add AWS WAF (Optional)
 
 Now that gRPC is working, you can add WAF protection:
@@ -796,19 +816,52 @@ Now that gRPC is working, you can add WAF protection:
 
 1. Associate WAF with ALB
 
+   **Note**: Wait 30-60 seconds after creating the WAF before associating it. AWS WAFv2 may return `WAFUnavailableEntityException` if the services haven't fully synchronized.
+
    ```bash
-   aws wafv2 associate-web-acl \
-     --web-acl-arn $WAF_ARN \
-     --resource-arn $ALB_ARN \
-     --region $REGION
+   # Wait for WAF to be ready
+   echo "Waiting for WAF to be fully available..."
+   sleep 30
+   
+   # Associate WAF with ALB (retry if needed)
+   MAX_RETRIES=3
+   RETRY_COUNT=0
+   
+   while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+     if aws wafv2 associate-web-acl \
+       --web-acl-arn $WAF_ARN \
+       --resource-arn $ALB_ARN \
+       --region $REGION 2>&1; then
+       echo "✓ WAF successfully associated with ALB"
+       break
+     else
+       RETRY_COUNT=$((RETRY_COUNT + 1))
+       if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+         echo "Retry $RETRY_COUNT/$MAX_RETRIES: Waiting 30 seconds..."
+         sleep 30
+       else
+         echo "Failed to associate WAF after $MAX_RETRIES attempts"
+         exit 1
+       fi
+     fi
+   done
    ```
 
 1. Verify WAF is attached
 
    ```bash
-   aws wafv2 get-web-acl-for-resource \
+   WAF_NAME=$(aws wafv2 get-web-acl-for-resource \
      --resource-arn $ALB_ARN \
-     --region $REGION
+     --region $REGION \
+     --query 'WebACL.Name' \
+     --output text)
+   
+   if [ -n "$WAF_NAME" ]; then
+     echo "✓ WAF '$WAF_NAME' is successfully attached to ALB"
+   else
+     echo "✗ No WAF found attached to ALB"
+     exit 1
+   fi
    ```
 
 1. Test that gRPC still works with WAF enabled
@@ -824,14 +877,111 @@ Now that gRPC is working, you can add WAF protection:
 
 ## Verification Checklist
 
-Confirm your deployment is working correctly:
+Run this comprehensive verification script to confirm your deployment is working correctly:
 
-- [ ] ALB target group shows all targets healthy
-- [ ] `grpcurl` successfully calls gRPC health check
-- [ ] Response includes `content-type: application/grpc` header
-- [ ] Response includes `grpc-status: 0` (OK)
-- [ ] WAF is associated with ALB (if configured)
-- [ ] Application logs show successful gRPC requests
+```bash
+cat > /tmp/verify-grpc.sh << 'EOF'
+#!/bin/bash
+echo "=========================================="
+echo "gRPC on ROSA - Verification Checklist"
+echo "=========================================="
+echo ""
+
+# 1. Check ALB target health
+echo "Checking ALB target health..."
+HEALTHY_COUNT=$(aws elbv2 describe-target-health \
+  --target-group-arn $TG_ARN \
+  --region $REGION \
+  --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`] | length(@)' \
+  --output text)
+
+if [ "$HEALTHY_COUNT" -ge "2" ]; then
+  echo "  ✓ $HEALTHY_COUNT healthy targets found"
+else
+  echo "  ✗ Only $HEALTHY_COUNT healthy targets (need at least 2)"
+  exit 1
+fi
+
+# 2. Test gRPC health check
+echo ""
+echo "Testing gRPC health check..."
+GRPC_RESPONSE=$(grpcurl -proto /tmp/health.proto -import-path /tmp -insecure \
+  -d '{"service":""}' \
+  ${GRPC_HOSTNAME:-$ALB_DNS}:443 \
+  grpc.health.v1.Health/Check 2>&1)
+
+if echo "$GRPC_RESPONSE" | grep -q "SERVING"; then
+  echo "  ✓ gRPC health check returned SERVING"
+else
+  echo "  ✗ gRPC health check failed"
+  echo "  Response: $GRPC_RESPONSE"
+  exit 1
+fi
+
+# 3. Check response headers
+echo ""
+echo "Verifying gRPC headers..."
+HEADERS=$(grpcurl -v -proto /tmp/health.proto -import-path /tmp -insecure \
+  -d '{"service":""}' \
+  ${GRPC_HOSTNAME:-$ALB_DNS}:443 \
+  grpc.health.v1.Health/Check 2>&1)
+
+if echo "$HEADERS" | grep -q "content-type: application/grpc"; then
+  echo "  ✓ Response includes content-type: application/grpc"
+else
+  echo "  ✗ Missing application/grpc content-type"
+fi
+
+if echo "$HEADERS" | grep -q "grpc-status: 0"; then
+  echo "  ✓ Response includes grpc-status: 0 (OK)"
+else
+  echo "  ✗ Missing grpc-status: 0"
+fi
+
+# 4. Check WAF association
+if [ -n "$WAF_ARN" ]; then
+  echo ""
+  echo "Checking WAF association..."
+  WAF_NAME=$(aws wafv2 get-web-acl-for-resource \
+    --resource-arn $ALB_ARN \
+    --region $REGION \
+    --query 'WebACL.Name' \
+    --output text 2>/dev/null)
+  
+  if [ -n "$WAF_NAME" ]; then
+    echo "  ✓ WAF ${WAF_NAME} is attached to ALB"
+  else
+    echo "  ⚠ No WAF attached (optional)"
+  fi
+fi
+
+# 5. Check Istio gateway pods
+echo ""
+echo "Checking Istio ingress gateway pods..."
+POD_COUNT=$(oc get pods -n istio-system -l app=istio-ingressgateway \
+  --field-selector=status.phase=Running \
+  --no-headers 2>/dev/null | wc -l | tr -d ' ')
+
+if [ "$POD_COUNT" -ge "1" ]; then
+  echo "  ✓ $POD_COUNT ingress gateway pod(s) running"
+else
+  echo "  ✗ No ingress gateway pods running"
+  exit 1
+fi
+
+echo ""
+echo "=========================================="
+echo "✓ All checks passed!"
+echo "=========================================="
+echo ""
+echo "Your gRPC on ROSA deployment is fully functional."
+EOF
+
+chmod +x /tmp/verify-grpc.sh
+/tmp/verify-grpc.sh
+```
+
+This creates the script in a file first using a heredoc, then executes it. This avoids quote escaping issues when copy-pasting.
 
 ## Architecture Deep Dive
 
