@@ -100,20 +100,24 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    oc create namespace istio-system
    ```
 
-1. Deploy the Istio control plane
+1. Deploy the Istio control plane with ingress gateway
 
    ```bash
    cat <<EOF | oc apply -f -
-   apiVersion: sailoperator.io/v1alpha1
+   apiVersion: sailoperator.io/v1
    kind: Istio
    metadata:
      name: default
    spec:
-     version: v1.23
      namespace: istio-system
+     version: v1.28-latest
      values:
-       global:
-         istioNamespace: istio-system
+       gateways:
+         istio-ingressgateway:
+           type: LoadBalancer
+           serviceAnnotations:
+             service.beta.kubernetes.io/aws-load-balancer-type: nlb
+             service.beta.kubernetes.io/aws-load-balancer-internal: "true"
    EOF
    ```
 
@@ -123,113 +127,16 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    oc wait --for=condition=Ready istio/default --timeout=900s
    ```
 
-1. Deploy the Istio ingress gateway
-
-   ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: sailoperator.io/v1alpha1
-   kind: IstioCNI
-   metadata:
-     name: default
-   spec:
-     version: v1.23
-     namespace: istio-cni
-   ---
-   apiVersion: sailoperator.io/v1alpha1
-   kind: IstioRevision
-   metadata:
-     name: default
-   spec:
-     version: v1.23
-     namespace: istio-system
-     values:
-       pilot:
-         env:
-           PILOT_ENABLE_GATEWAY_API: "true"
-           PILOT_ENABLE_GATEWAY_API_STATUS: "true"
-           PILOT_ENABLE_GATEWAY_API_DEPLOYMENT_CONTROLLER: "true"
-   ---
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: istio-ingress
-   ---
-   apiVersion: v1
-   kind: ServiceAccount
-   metadata:
-     name: istio-ingressgateway
-     namespace: istio-ingress
-   ---
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: istio-ingressgateway
-     namespace: istio-ingress
-   spec:
-     replicas: 2
-     selector:
-       matchLabels:
-         app: istio-ingressgateway
-         istio: ingressgateway
-     template:
-       metadata:
-         labels:
-           app: istio-ingressgateway
-           istio: ingressgateway
-           sidecar.istio.io/inject: "false"
-       spec:
-         serviceAccountName: istio-ingressgateway
-         containers:
-         - name: istio-proxy
-           image: auto
-           ports:
-           - containerPort: 8080
-             protocol: TCP
-           - containerPort: 8443
-             protocol: TCP
-           - containerPort: 15090
-             protocol: TCP
-             name: http-envoy-prom
-   ---
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: istio-ingressgateway
-     namespace: istio-ingress
-     annotations:
-       service.beta.kubernetes.io/aws-load-balancer-type: nlb
-       service.beta.kubernetes.io/aws-load-balancer-internal: "true"
-   spec:
-     type: LoadBalancer
-     selector:
-       app: istio-ingressgateway
-       istio: ingressgateway
-     ports:
-     - name: status-port
-       port: 15021
-       protocol: TCP
-       targetPort: 15021
-     - name: http2
-       port: 80
-       protocol: TCP
-       targetPort: 8080
-     - name: https
-       port: 443
-       protocol: TCP
-       targetPort: 8443
-   EOF
-   ```
-
 1. Wait for the ingress gateway to be ready
 
    ```bash
-   oc wait --for=condition=Available deployment/istio-ingressgateway -n istio-ingress --timeout=300s
+   oc wait --for=condition=Available deployment/istio-ingressgateway -n istio-system --timeout=300s
    ```
 
 1. Get the Istio ingress gateway NLB IP addresses
 
    ```bash
-   NLB_DNS=$(oc get svc istio-ingressgateway -n istio-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+   NLB_DNS=$(oc get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
    echo "Istio NLB DNS: $NLB_DNS"
    
    # Get the IP addresses (these will be used as ALB targets)
@@ -320,7 +227,7 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    ```bash
    openssl req -x509 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -days 365 -nodes -subj "/CN=*.$DOMAIN"
    
-   oc create secret tls istio-ingressgateway-certs --cert=/tmp/tls.crt --key=/tmp/tls.key -n istio-ingress
+   oc create secret tls istio-ingressgateway-certs --cert=/tmp/tls.crt --key=/tmp/tls.key -n istio-system
    ```
 
 1. Create the Istio Gateway
@@ -804,7 +711,7 @@ Ensure:
 **Check Istio configuration:**
 ```bash
 # Verify Gateway has TLS certificate
-oc get secret istio-ingressgateway-certs -n istio-ingress
+oc get secret istio-ingressgateway-certs -n istio-system
 
 # Verify VirtualService routes health check
 oc get virtualservice -n grpc-demo -o yaml | grep -A 5 "grpc.health.v1.Health"
@@ -831,7 +738,7 @@ aws ec2 describe-security-groups --group-ids $ALB_SG \
 
 **Check Envoy logs:**
 ```bash
-oc logs -n istio-ingress -l istio=ingressgateway --tail=50
+oc logs -n istio-system -l istio=ingressgateway --tail=50
 ```
 
 ### HTTP 464 errors
@@ -917,11 +824,7 @@ To remove all resources created in this guide:
    ```bash
    oc delete namespace grpc-demo
    oc delete istio default
-   oc delete istiorevision default
-   oc delete istiocni default
-   oc delete namespace istio-ingress
    oc delete namespace istio-system
-   oc delete namespace istio-cni
    ```
 
 1. Uninstall Service Mesh 3 Operator (optional)
