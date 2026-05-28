@@ -94,10 +94,11 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    oc wait --for=condition=Available deployment/servicemesh-operator3 -n openshift-operators --timeout=300s
    ```
 
-1. Create the Service Mesh control plane namespace
+1. Create the Service Mesh namespaces
 
    ```bash
-   oc create namespace istio-system
+   oc new-project istio-system
+   oc new-project istio-cni
    ```
 
 1. Deploy IstioCNI (required for sidecar injection)
@@ -112,6 +113,12 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
      version: v1.28-latest
      namespace: istio-cni
    EOF
+   ```
+
+1. Wait for IstioCNI to be ready
+
+   ```bash
+   oc wait --for=condition=Ready istiocni/default --timeout=300s
    ```
 
 1. Deploy the Istio control plane
@@ -240,7 +247,7 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 1. Create a namespace for your application
 
    ```bash
-   oc create namespace grpc-demo
+   oc new-project grpc-demo
    ```
 
 1. Enable automatic sidecar injection for the namespace
@@ -435,16 +442,19 @@ This is the critical step where we configure ALB with native gRPC support.
 1. Create the Application Load Balancer
 
    ```bash
-   # Get public subnet IDs
-   PUBLIC_SUBNET_IDS=$(aws ec2 describe-subnets \
+   # Get public subnet IDs (ensure at least 2 subnets in different AZs)
+   PUBLIC_SUBNETS=$(aws ec2 describe-subnets \
      --filters "Name=vpc-id,Values=$VPC_ID" "Name=tag:Name,Values=*public*" \
      --query 'Subnets[*].SubnetId' \
      --output text \
      --region $REGION)
    
+   # Convert space-separated list to comma-separated for --subnets parameter
+   PUBLIC_SUBNET_IDS=$(echo $PUBLIC_SUBNETS | tr ' ' ',')
+   
    ALB_ARN=$(aws elbv2 create-load-balancer \
      --name grpc-alb \
-     --subnets $PUBLIC_SUBNET_IDS \
+     --subnets $(echo $PUBLIC_SUBNETS) \
      --security-groups $ALB_SG \
      --scheme internet-facing \
      --type application \
