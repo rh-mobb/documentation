@@ -58,7 +58,7 @@ Set environment variables:
 ```bash
 export ROSA_CLUSTER_NAME=<your cluster name>
 export REGION=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r .region.id)
-export VPC_ID=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r .network.vpc_id)
+export VPC_ID=$(rosa list machinepools -c $ROSA_CLUSTER_NAME -o json | jq -r '.[0].subnets[0]' | xargs -I {} aws ec2 describe-subnets --subnet-ids {} --query 'Subnets[0].VpcId' --output text)
 export DOMAIN=<your domain>  # e.g., example.com
 export GRPC_HOSTNAME=grpc.$DOMAIN
 ```
