@@ -247,7 +247,7 @@ Older SDK versions will not auto-detect workload identity, even if the webhook i
 2. Remove the old service principal and its app registration from Entra ID
 3. Clean up the old resource group
 
-{{% alert state="info" %}}For a hands-on walkthrough of this methodology with two demo applications (stateless with Azure Key Vault and stateful with Azure Blob Storage + PVC), see [Part 2: Migrating Applications from SP to MI Cluster](migration-demo.md).{{% /alert %}}
+{{% alert state="info" %}}For a hands-on walkthrough with two demo applications — one that requires a code change (Key Vault with `ClientSecretCredential`) and one that requires only manifest changes (Blob Storage with `DefaultAzureCredential`) — see [Part 2: Hands-On Migration Walkthrough](migration-demo.md).{{% /alert %}}
 
 ## References
 
