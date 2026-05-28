@@ -14,12 +14,12 @@ In Part 1, we outlined five migration phases and a scenario table showing what c
 
 **keyvault-reader** — A stateless REST API that reads secrets from Azure Key Vault. It demonstrates the most common migration case: changing from `ClientSecretCredential` to `DefaultAzureCredential` (a one-line code change) and replacing the K8s Secret with a ServiceAccount annotation.
 
-**blob-writer** — A REST API that writes entries to Azure Blob Storage and keeps a local activity log on a PersistentVolumeClaim (PVC). It demonstrates that apps already using `DefaultAzureCredential` need no code change at all — only K8s manifest changes. The PVC stores a local cache only; primary data lives in Azure Blob Storage, so recreating the PVC on the new cluster is straightforward.
+**blob-writer** — A stateless REST API that writes entries to Azure Blob Storage. It demonstrates that apps already using `DefaultAzureCredential` need no code change at all — only K8s manifest changes (replace the Secret with a ServiceAccount annotation).
 
 | Demo App | Azure Service | SP Auth Method | Code Change? | Config Change? |
 |----------|--------------|----------------|-------------|---------------|
 | **keyvault-reader** (stateless) | Azure Key Vault | `ClientSecretCredential` with K8s Secret | **Yes** — one-line change to `DefaultAzureCredential` | **Yes** — replace Secret with ServiceAccount |
-| **blob-writer** (with PVC) | Azure Blob Storage | `DefaultAzureCredential` with K8s Secret | **No** — SDK auto-detects workload identity | **Yes** — replace Secret with ServiceAccount |
+| **blob-writer** (stateless) | Azure Blob Storage | `DefaultAzureCredential` with K8s Secret | **No** — SDK auto-detects workload identity | **Yes** — replace Secret with ServiceAccount |
 
 ### Demo Environment
 
@@ -44,7 +44,6 @@ This walkthrough assumes you have an existing SP cluster with applications and a
   │  blob-writer             │    │  blob-writer             │
   │   └─ DefaultAzureCred    │    │   └─ DefaultAzureCred    │
   │   └─ K8s Secret ⚠       │    │   └─ ServiceAccount ✓    │
-  │   └─ PVC (local cache)   │    │   └─ PVC (recreated)     │
   └──────────────────────────┘    └──────────────────────────┘
   ⚠ Long-lived client secret       ✓ Short-lived OIDC token
     stored in cluster                 no secrets in cluster
@@ -125,8 +124,6 @@ curl -s https://$KV_URL/secret/demo-secret | jq .
 
 The app already uses `DefaultAzureCredential` (best practice). Azure credentials are still stored in a K8s Secret — `DefaultAzureCredential` detects the `AZURE_CLIENT_SECRET` environment variable and uses `ClientSecretCredential` under the hood.
 
-The PVC stores a local activity log (`entries.json`) as a cache. The primary data is written to Azure Blob Storage.
-
 **Application code (`app.py`):**
 
 ```python
@@ -150,17 +147,6 @@ stringData:
   AZURE_CLIENT_ID: "<your-sp-client-id>"
   AZURE_CLIENT_SECRET: "<your-sp-client-secret>"
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: blob-writer-data
-spec:
-  accessModes: [ReadWriteOnce]
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: managed-csi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -173,23 +159,18 @@ spec:
           env:
             - name: AZURE_STORAGE_ACCOUNT_URL
               value: "https://<your-storage-account>.blob.core.windows.net"
+            - name: AZURE_STORAGE_CONTAINER
+              value: "demo-data"
           envFrom:
             - secretRef:
                 name: azure-sp-credentials
-          volumeMounts:
-            - name: data
-              mountPath: /data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: blob-writer-data
 ```
 
 **Expected behavior:**
 
 ```bash
 curl -s https://$BLOB_URL/ | jq .
-# {"status":"ok","app":"blob-writer","local_entries":3,"auth_method":"service-principal (ClientSecretCredential)"}
+# {"status":"ok","app":"blob-writer","auth_method":"service-principal (ClientSecretCredential)"}
 ```
 
 ## The MI Cluster: Target State
@@ -278,21 +259,16 @@ curl -s https://$KV_URL/secret/demo-secret | jq .
 | **Pod label** | None | `azure.workload.identity/use: "true"` |
 | **serviceAccountName** | Not set | `blob-writer-sa` |
 | **envFrom** | `secretRef: azure-sp-credentials` | **Removed** |
-| **PVC** | `blob-writer-data` (1Gi, managed-csi) | Same spec — recreated on new cluster |
-
-The PVC is created fresh on the MI cluster. Since blob-writer's PVC stores only a local cache (the primary data lives in Azure Blob Storage), the local log simply starts empty. Existing data remains accessible in Blob Storage across both clusters.
-
-{{% alert state="info" %}}**PVC and SP-to-MI migration:** PVC configuration (StorageClass, size, access mode) is not affected by the SP-to-MI change. The PVC is recreated on the new cluster as part of any cluster-to-cluster migration, not because of the identity model change. For applications where the PVC is the primary data store (e.g., a database), use Azure Disk snapshots, `oc rsync`, or application-level backup/restore.{{% /alert %}}
 
 **Expected behavior:**
 
 ```bash
 curl -s https://$BLOB_URL/ | jq .
-# {"status":"ok","app":"blob-writer","local_entries":0,"auth_method":"workload-identity (DefaultAzureCredential)"}
+# {"status":"ok","app":"blob-writer","auth_method":"workload-identity (DefaultAzureCredential)"}
 
 curl -s -X POST https://$BLOB_URL/write -H "Content-Type: application/json" \
   -d '{"message": "First entry from MI cluster"}' | jq .
-# {"status":"written","blob":"entry-20260528-095721.json","local_count":1}
+# {"status":"written","blob":"entry-20260528-095721.json"}
 ```
 
 ## Migration Steps
@@ -500,42 +476,19 @@ oc annotate serviceaccount blob-writer-sa \
   azure.workload.identity/client-id=$BLOB_IDENTITY_CLIENT_ID \
   -n blob-writer
 
-# Create PVC for local cache
-oc apply -f - <<EOF
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: blob-writer-data
-  namespace: blob-writer
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: managed-csi
-EOF
-
 # Deploy
 oc create deployment blob-writer \
   --image=image-registry.openshift-image-registry.svc:5000/blob-writer/blob-writer:latest \
   -n blob-writer
 
-# Patch for workload identity + PVC + env vars
+# Patch for workload identity + env vars
 oc patch deployment blob-writer -n blob-writer --type=json -p='[
   {"op": "add", "path": "/spec/template/metadata/labels/azure.workload.identity~1use", "value": "true"},
   {"op": "add", "path": "/spec/template/spec/serviceAccountName", "value": "blob-writer-sa"},
   {"op": "add", "path": "/spec/template/spec/containers/0/env", "value": [
     {"name": "AZURE_STORAGE_ACCOUNT_URL", "value": "'"$STORAGE_URL"'"},
     {"name": "AZURE_STORAGE_CONTAINER", "value": "demo-data"},
-    {"name": "LOCAL_LOG_PATH", "value": "/data/entries.json"},
     {"name": "CLUSTER_NAME", "value": "mi-cluster"}
-  ]},
-  {"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts", "value": [
-    {"name": "data", "mountPath": "/data"}
-  ]},
-  {"op": "add", "path": "/spec/template/spec/volumes", "value": [
-    {"name": "data", "persistentVolumeClaim": {"claimName": "blob-writer-data"}}
   ]}
 ]'
 
@@ -570,15 +523,12 @@ curl -s https://$KV_URL/secret/demo-secret | jq .
 # Health check
 curl -s https://$BLOB_URL/ | jq .
 
-# Write an entry to Blob Storage + local PVC
+# Write an entry to Blob Storage
 curl -s -X POST https://$BLOB_URL/write \
   -H "Content-Type: application/json" \
   -d '{"message": "First entry from MI cluster"}' | jq .
 
-# Check local entries (stored on PVC)
-curl -s https://$BLOB_URL/entries | jq .
-
-# Check Azure Blob Storage entries
+# List blobs in Azure Blob Storage
 curl -s https://$BLOB_URL/blobs | jq .
 ```
 
@@ -604,9 +554,7 @@ oc exec -n keyvault-reader deploy/keyvault-reader -- env | grep AZURE_
 
 3. **The application container image is identical** on both SP and MI clusters. The difference is entirely in how credentials are provided to the pod.
 
-4. **PVC configuration is not affected by SP-to-MI migration.** PVC recreation is a standard cluster-to-cluster migration concern, not specific to the identity model change. For apps where the PVC is a cache (like blob-writer), the PVC starts fresh. For apps where the PVC is the primary data store, use Azure Disk snapshots, `oc rsync`, or application-level backup/restore.
-
-5. **`DefaultAzureCredential` is the best practice** for any new Azure SDK code. It works transparently across SP clusters (using env vars), MI clusters (using workload identity), and local development (using Azure CLI credentials).
+4. **`DefaultAzureCredential` is the best practice** for any new Azure SDK code. It works transparently across SP clusters (using env vars), MI clusters (using workload identity), and local development (using Azure CLI credentials).
 
 ## Cleanup
 
@@ -648,8 +596,8 @@ demo-apps/
     ├── requirements.txt
     ├── Dockerfile
     └── k8s/
-        ├── deploy-sp.yaml  # Full SP manifest (with K8s Secret + PVC)
-        └── deploy-mi.yaml  # Full MI manifest (with ServiceAccount + PVC)
+        ├── deploy-sp.yaml  # Full SP manifest (with K8s Secret)
+        └── deploy-mi.yaml  # Full MI manifest (with ServiceAccount)
 ```
 
 ## References
