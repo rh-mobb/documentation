@@ -30,9 +30,7 @@ This architecture is the optimal solution for gRPC on ROSA when WAF is required 
 
 ## Architecture Overview
 
-```
-Internet → ALB (gRPC Target Group + WAF) → Istio NLB IPs → Envoy Gateway → gRPC Application
-```
+![Architecture Diagram](architecture.png)
 
 **Key Components:**
 
