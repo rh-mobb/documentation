@@ -10,20 +10,82 @@ This is **Part 2** of a two-part series. [Part 1](index.md) covers what changes 
 
 ## What This Demo Covers
 
-In Part 1, we outlined five migration phases and a scenario table showing what changes for different application types. This article puts that methodology into practice with two Python Flask applications:
+In Part 1, we outlined five migration phases and a scenario table showing what changes for different application types. This article puts that methodology into practice with two Python Flask applications that access Azure services:
+
+**keyvault-reader** — A stateless REST API that reads secrets from Azure Key Vault. On the SP cluster, it authenticates using `ClientSecretCredential` with a client secret stored in a K8s Secret. On the MI cluster, a one-line code change switches to `DefaultAzureCredential`, and the K8s Secret is replaced with a ServiceAccount annotation — the workload identity webhook handles the rest.
+
+**blob-writer** — A stateful REST API that writes entries to Azure Blob Storage and maintains a local log on a PersistentVolumeClaim (PVC). On the SP cluster, it already uses `DefaultAzureCredential` (with credentials injected from a K8s Secret). On the MI cluster, no code change is needed — only the K8s manifest changes (replace Secret with ServiceAccount, recreate PVC).
 
 | Demo App | Azure Service | SP Auth Method | Code Change? | Config Change? |
 |----------|--------------|----------------|-------------|---------------|
 | **keyvault-reader** (stateless) | Azure Key Vault | `ClientSecretCredential` with K8s Secret | **Yes** — one-line change to `DefaultAzureCredential` | **Yes** — replace Secret with ServiceAccount |
 | **blob-writer** (stateful + PVC) | Azure Blob Storage | `DefaultAzureCredential` with K8s Secret | **No** — SDK auto-detects workload identity | **Yes** — replace Secret with ServiceAccount + PVC migration |
 
-By the end, both apps run on the MI cluster using workload identity — no Azure secrets stored in the cluster.
+### Expected Behavior: Before and After
+
+**Before (SP cluster):**
+
+```bash
+# keyvault-reader — authenticates with client secret
+curl -s https://$KV_URL/ | jq .
+# {"status":"ok","app":"keyvault-reader","auth_method":"service-principal (ClientSecretCredential)"}
+
+# blob-writer — authenticates with client secret injected via K8s Secret
+curl -s https://$BLOB_URL/ | jq .
+# {"status":"ok","app":"blob-writer","auth_method":"service-principal (ClientSecretCredential)"}
+```
+
+**After (MI cluster):**
+
+```bash
+# keyvault-reader — authenticates via workload identity (no secrets)
+curl -s https://$KV_URL/ | jq .
+# {"status":"ok","app":"keyvault-reader","auth_method":"workload-identity (DefaultAzureCredential)"}
+
+# blob-writer — same code, different auth method detected automatically
+curl -s https://$BLOB_URL/ | jq .
+# {"status":"ok","app":"blob-writer","auth_method":"workload-identity (DefaultAzureCredential)"}
+```
+
+The application logic and API endpoints are identical — only the `auth_method` field changes, reflecting how the Azure SDK authenticates under the hood.
+
+## Demo Environment
+
+This walkthrough assumes you have an existing SP cluster with applications and a new MI cluster as the migration target. Both clusters access the same shared Azure services (Key Vault, Blob Storage).
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Azure Services (shared)                      │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │  Azure Key Vault  │  │  Azure Blob      │  │ Entra ID     │  │
+│  │  (demo-secret)    │  │  Storage          │  │ (auth)       │  │
+│  └──────────────────┘  └──────────────────┘  └──────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────┐    ┌──────────────────────────┐
+  │  ARO SP Cluster (Before) │    │  ARO MI Cluster (After)  │
+  │                          │    │                          │
+  │  keyvault-reader         │    │  keyvault-reader         │
+  │   └─ ClientSecretCred    │    │   └─ DefaultAzureCred    │
+  │   └─ K8s Secret ⚠       │    │   └─ ServiceAccount ✓    │
+  │                          │    │                          │
+  │  blob-writer             │    │  blob-writer             │
+  │   └─ DefaultAzureCred    │    │   └─ DefaultAzureCred    │
+  │   └─ K8s Secret ⚠       │    │   └─ ServiceAccount ✓    │
+  │   └─ PVC (local state)   │    │   └─ PVC (recreated)     │
+  └──────────────────────────┘    └──────────────────────────┘
+  ⚠ Long-lived client secret       ✓ Short-lived OIDC token
+    stored in cluster                 no secrets in cluster
+```
+
+{{% alert state="info" %}}You do not need to deploy on the SP cluster to follow this walkthrough. If you already have applications running on an SP cluster, skip directly to the MI cluster steps.{{% /alert %}}
 
 ## Prerequisites
 
+- An existing ARO **SP cluster** (for the "before" deployment, optional if you have existing workloads)
 - An existing ARO **MI cluster** (see [Create an ARO cluster with managed identities](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster?pivots=aro-deploy-az-cli))
 - Azure CLI v2.84.0+ with `aro` extension
-- `oc` CLI logged into the MI cluster
+- `oc` CLI
 - A Red Hat pull secret (for internal registry access)
 - Contributor + User Access Administrator on the subscription
 
