@@ -1,6 +1,6 @@
 ---
 date: '2026-05-25'
-title: 'ARO Migration Demo: Moving Applications from SP to MI Cluster (Part 2)'
+title: 'ARO Service Principal to Managed Identity: Hands-On Migration Walkthrough'
 tags: ["ARO", "Azure"]
 authors:
   - Kevin Ye
