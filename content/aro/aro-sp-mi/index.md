@@ -1,26 +1,24 @@
 ---
 date: '2026-05-25'
-title: 'ARO Authentication: Service Principal vs Managed Identity Explained (Part 1)'
+title: 'ARO Service Principal to Managed Identity: What Changes in Authentication and How to Move'
 tags: ["ARO", "Azure"]
 authors:
   - Kevin Ye
 ---
 
-This is **Part 1** of a two-part series. This article covers what's different, why managed identity matters, and how to migrate. [Part 2](migration-demo.md) walks through a hands-on migration with two demo applications.
+This is **Part 1** of a two-part series. This article covers what changes in authentication, why managed identity matters, and how to plan your move. [Part 2](migration-demo.md) walks through a hands-on migration with two demo applications.
 
 ## TL;DR
 
-**What's different?** Service principal is the proven model that has been running ARO clusters reliably since day one — it works well and requires only that you rotate the client secret before it expires. Managed identity takes this further by removing credential management entirely. No secrets are stored in the cluster, each operator gets only the permissions it needs, and your applications can authenticate to Azure services without managing any credentials at all. It is an evolution, not a replacement of something broken.
+**What changed and what stays the same?** Service principal (SP) remains fully supported — there is no deprecation timeline, and existing SP clusters continue to work. What changes with managed identity (MI) is how authentication works at both layers. At the cluster layer, a single shared credential with broad Contributor permissions is replaced by nine scoped managed identities — one per operator plus a cluster identity that manages federated credentials for the others — each with only the permissions it needs — and no secrets stored in the cluster. At the application layer, MI clusters enable workload identity, which lets your application pods authenticate to Azure services like Key Vault, Storage, and SQL Database without managing any credentials. This capability is not available on SP clusters. From a security perspective, MI is the recommended approach for all new ARO clusters.
 
-**Should I adopt MI?** Yes. Managed identity eliminates credential rotation as an operational burden, enforces least-privilege per operator, and is the only model that enables workload identity for your applications. It is the recommended approach for all new ARO clusters. Service principal remains fully supported and is still a practical choice for short-lived clusters like POCs or demos, but for any cluster you plan to run long-term, managed identity is the way to go.
+**How do I move?** There is no in-place conversion — you deploy a new MI cluster alongside the existing one and migrate workloads using a blue-green approach. The migration effort depends on your workload complexity, not on the SP-to-MI change itself. Most applications need only Kubernetes manifest changes (replacing secret references with ServiceAccount annotations). This article (Part 1) covers what changes and why; [Part 2](migration-demo.md) walks through a hands-on migration with two demo applications.
 
-**How do I migrate?** There is no in-place conversion — you need a new MI cluster. The migration itself is largely standard application migration using a blue-green approach. This article provides guidelines on the phases involved and highlights the SP-to-MI-specific considerations, such as which apps need code or config changes. In most cases, only Kubernetes manifest changes are needed.
+## Why We Wrote This
 
-## Why I Wrote This
+When we started working with customers on ARO managed identity, we found ourselves answering the same questions over and over: "What actually changes?" "Do we have to move?" "What happens to our apps?" The official Microsoft documentation is thorough, but the answers are scattered across half a dozen articles.
 
-When I started working with customers on ARO managed identity, I found myself answering the same questions over and over: "What actually changes?" "Do we have to move?" "What happens to our apps?" The official Microsoft documentation is thorough, but the answers are scattered across half a dozen articles — and none of them show you the full picture of how authentication actually works at runtime, or what the migration really involves.
-
-I wrote this article to put everything in one place. If you are an architect evaluating whether to adopt managed identity, or a team lead planning a migration from an existing SP cluster, this should give you what you need to make the decision and understand the path forward.
+We wrote this article to put everything in one place. If you are an architect evaluating whether to adopt managed identity, or a team lead planning a migration from an existing SP cluster, this should give you what you need to make the decision and understand the path forward.
 
 ## What's Different: SP vs MI in ARO
 
@@ -35,35 +33,36 @@ SP and MI handle both layers differently.
 
 #### Service Principal Cluster
 
-A single service principal is shared by all eight cluster operators. They all read the same client ID and client secret from a Kubernetes Secret in the cluster. The SP has broad Contributor access to the VNet and the entire managed resource group.
+A single service principal is shared by all eight cluster operators. The SP has broad Contributor access to the VNet and the entire managed resource group. The ARO platform injects the SP credentials into the cluster — operators read the same client ID and client secret at runtime.
 
 ```mermaid
 sequenceDiagram
     participant Admin as Admin / DevOps
     participant EntraID as Microsoft Entra ID
-    participant K8s as K8s Secret<br>(in cluster)
+    participant ARO as ARO Platform
     participant Operators as All 8 ARO Operators<br>(networking, storage,<br>ingress, DNS, etc.)
     participant Azure as Azure APIs<br>(VMs, LBs, Disks, DNS)
 
     rect rgb(255, 245, 238)
-    Note over Admin,K8s: Setup (one-time)
-    Admin->>EntraID: 1. Create App Registration
-    EntraID-->>Admin: Client ID + Client Secret<br>(valid up to 2 years)
-    Admin->>K8s: 2. Store as K8s Secret
+    Note over Admin,ARO: Setup (during cluster creation)
+    Admin->>EntraID: 1. Create SP (or let az aro create do it)
+    EntraID-->>Admin: Client ID + Client Secret<br>(default 1 year, max 2 years)
+    Admin->>ARO: 2. Provide SP credentials to az aro create
+    ARO->>ARO: 3. Inject SP credentials into cluster
     end
 
     rect rgb(238, 245, 255)
-    Note over K8s,Azure: Runtime
-    K8s->>Operators: 3. All operators read SAME secret
-    Operators->>EntraID: 4. Authenticate with Client ID + Secret
-    EntraID-->>Operators: 5. Access token
-    Operators->>Azure: 6. API calls with BROAD Contributor permissions
+    Note over Operators,Azure: Runtime
+    Operators->>Operators: 4. All operators read SAME credential
+    Operators->>EntraID: 5. Authenticate with Client ID + Secret
+    EntraID-->>Operators: 6. Access token
+    Operators->>Azure: 7. API calls with BROAD Contributor permissions
     end
 
-    Note over K8s: ⚠ One secret, shared by all operators<br>Contributor on VNet + entire managed RG
+    Note over Operators: ⚠ One credential, shared by all operators<br>Contributor on VNet + entire managed RG
 ```
 
-This model is simple and has been running ARO clusters reliably since the beginning. The key operational requirement is that the customer must rotate the client secret before it expires (maximum 2 years).
+This model is simple and has been running ARO clusters reliably since the beginning. The key operational requirement is that the customer must rotate the client secret before it expires (default 1 year, maximum 2 years). Rotation is performed via `az aro update`, not by manually editing cluster secrets.
 
 #### Managed Identity Cluster
 
@@ -74,7 +73,7 @@ sequenceDiagram
     participant Admin as Admin / DevOps
     participant MIs as 9 User-Assigned<br>Managed Identities
     participant EntraID as Microsoft Entra ID
-    participant Webhook as Workload Identity<br>Webhook
+    participant CCO as Cloud Credential<br>Operator (CCO)
     participant Operator as Individual ARO Operator<br>(e.g., ingress)
     participant Azure as Azure APIs<br>(scoped resource only)
 
@@ -86,8 +85,8 @@ sequenceDiagram
     end
 
     rect rgb(238, 245, 255)
-    Note over Webhook,Azure: Runtime
-    Webhook->>Operator: 4. Webhook injects short-lived K8s JWT<br>(unique per operator, auto-rotated)
+    Note over CCO,Azure: Runtime
+    CCO->>Operator: 4. Projected service account token<br>(short-lived K8s JWT, unique per operator, auto-rotated)
     Operator->>EntraID: 5. OIDC token exchange<br>(K8s JWT → Azure token)
     EntraID->>EntraID: 6. Validate JWT against cluster OIDC issuer
     EntraID-->>Operator: 7. Scoped Azure access token
