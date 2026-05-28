@@ -102,7 +102,7 @@ If one operator's identity is compromised, the blast radius is limited to that o
 
 The choice between SP and MI also determines how your application pods can authenticate to Azure services like Key Vault, Storage, or SQL Database.
 
-**On an SP cluster**, there is no OIDC issuer. Your applications must create their own service principals with secrets to access Azure services — the same long-lived secret problem at the application layer.
+**On an SP cluster**, there is no OIDC issuer. Your applications must create their own service principals with secrets to access Azure services, which means managing credential rotation at the application layer as well.
 
 **On an MI cluster**, the OIDC issuer is enabled. Your applications can use workload identity to authenticate without any secrets:
 
@@ -149,7 +149,7 @@ This is the same pattern used by ROSA with IAM Roles for Service Accounts (IRSA)
 |-------|--------------------------|-------------------------|
 | **Cluster operators** | 1 shared SP with Contributor role | 9 scoped MIs with least-privilege roles |
 | **Application workloads** | Apps manage their own SP credentials | Workload identity — secretless via OIDC |
-| **Credentials in cluster** | Client secret (rotate before 2-year expiry) | None — short-lived tokens, auto-rotated |
+| **Credentials in cluster** | Client secret (default 1-year expiry, max 2 years) | None — short-lived tokens, auto-rotated |
 | **Blast radius** | Shared credential covers all operators | Each operator isolated to its own scope |
 | **Credential management** | Customer rotates on schedule | Azure handles automatically |
 
@@ -169,9 +169,9 @@ No. Service principal is fully supported for both existing and new ARO clusters.
 
 **3. Workload identity for applications.** This is the capability that only MI clusters can provide. MI clusters include an OIDC issuer, which enables your application pods to authenticate to Azure services (Key Vault, Storage, SQL Database) using `DefaultAzureCredential` — with no secrets stored in the cluster or in your application configuration. On SP clusters, applications that access Azure services need their own service principals with secrets, which means managing credential rotation at the application layer as well.
 
-**5. Consistent with other OpenShift managed services.** ROSA on AWS already uses IAM Roles for Service Accounts (IRSA) and OSD on GCP uses Workload Identity — both follow the same pattern of short-lived, OIDC-based credentials scoped per component. ARO's managed identity model brings the same approach to Azure. Organizations running multiple OpenShift managed services will find a consistent security model across clouds.
+**4. Consistent with other OpenShift managed services.** ROSA on AWS already uses IAM Roles for Service Accounts (IRSA) and OSD on GCP uses Workload Identity — both follow the same pattern of short-lived, OIDC-based credentials scoped per component. ARO's managed identity model brings the same approach to Azure. Organizations running multiple OpenShift managed services will find a consistent security model across clouds.
 
-**6. Tooling support.** The Azure Portal already automates MI setup — managed identities, role assignments, and federated credentials are created automatically when you deploy a new ARO cluster through the portal. The `az aro` CLI does not yet automate this, so CLI-based deployments currently require manual identity and role assignment setup. A simplified CLI experience is expected to be available soon.
+**5. Tooling support.** The Azure Portal already automates MI setup — managed identities, role assignments, and federated credentials are created automatically when you deploy a new ARO cluster through the portal. The `az aro` CLI does not yet automate this, so CLI-based deployments currently require manual identity and role assignment setup. A simplified CLI experience is expected to be available soon.
 
 ### MI Operational Considerations
 
