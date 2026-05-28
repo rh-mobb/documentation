@@ -100,6 +100,20 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    oc create namespace istio-system
    ```
 
+1. Deploy IstioCNI (required for sidecar injection)
+
+   ```bash
+   cat <<EOF | oc apply -f -
+   apiVersion: sailoperator.io/v1
+   kind: IstioCNI
+   metadata:
+     name: default
+   spec:
+     version: v1.28-latest
+     namespace: istio-cni
+   EOF
+   ```
+
 1. Deploy the Istio control plane
 
    ```bash
@@ -898,7 +912,9 @@ To remove all resources created in this guide:
    ```bash
    oc delete namespace grpc-demo
    oc delete istio default
+   oc delete istiocni default
    oc delete namespace istio-system
+   oc delete namespace istio-cni
    ```
 
 1. Uninstall Service Mesh 3 Operator (optional)
