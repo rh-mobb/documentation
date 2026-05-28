@@ -66,83 +66,30 @@ export GRPC_HOSTNAME=grpc.$DOMAIN
 
 ## Install Red Hat OpenShift Service Mesh
 
-Red Hat OpenShift Service Mesh provides the Envoy proxy layer needed for proper gRPC handling.
+Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for proper gRPC handling. Service Mesh 3 uses the Sail Operator, which is based on upstream Istio and provides a simpler installation experience.
 
-1. Install the required operators
+1. Install the Sail Operator
 
    ```bash
    cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: openshift-operators-redhat
-   ---
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: openshift-distributed-tracing
-   ---
-   apiVersion: operators.coreos.com/v1
-   kind: OperatorGroup
-   metadata:
-     name: openshift-operators-redhat
-     namespace: openshift-operators-redhat
-   spec: {}
-   ---
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
-     name: elasticsearch-operator
-     namespace: openshift-operators-redhat
-   spec:
-     channel: stable
-     installPlanApproval: Automatic
-     name: elasticsearch-operator
-     source: redhat-operators
-     sourceNamespace: openshift-marketplace
-   ---
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     name: jaeger-product
-     namespace: openshift-distributed-tracing
-   spec:
-     channel: stable
-     installPlanApproval: Automatic
-     name: jaeger-product
-     source: redhat-operators
-     sourceNamespace: openshift-marketplace
-   ---
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     name: kiali-ossm
+     name: sailoperator
      namespace: openshift-operators
    spec:
      channel: stable
      installPlanApproval: Automatic
-     name: kiali-ossm
-     source: redhat-operators
-     sourceNamespace: openshift-marketplace
-   ---
-   apiVersion: operators.coreos.com/v1alpha1
-   kind: Subscription
-   metadata:
-     name: servicemeshoperator
-     namespace: openshift-operators
-   spec:
-     channel: stable
-     installPlanApproval: Automatic
-     name: servicemeshoperator
+     name: sailoperator
      source: redhat-operators
      sourceNamespace: openshift-marketplace
    EOF
    ```
 
-1. Wait for operators to be ready
+1. Wait for the Sail Operator to be ready
 
    ```bash
-   oc wait --for=condition=Ready pod -l name=istio-operator -n openshift-operators --timeout=300s
+   oc wait --for=condition=Ready pod -l name=sail-operator -n openshift-operators --timeout=300s
    ```
 
 1. Create the Service Mesh control plane namespace
@@ -151,44 +98,136 @@ Red Hat OpenShift Service Mesh provides the Envoy proxy layer needed for proper 
    oc create namespace istio-system
    ```
 
-1. Deploy the Service Mesh Control Plane
+1. Deploy the Istio control plane
 
    ```bash
    cat <<EOF | oc apply -f -
-   apiVersion: maistra.io/v2
-   kind: ServiceMeshControlPlane
+   apiVersion: sailoperator.io/v1alpha1
+   kind: Istio
    metadata:
-     name: basic
-     namespace: istio-system
+     name: default
    spec:
-     version: v2.6
-     security:
-       identity:
-         type: ThirdParty  # Required for ROSA HCP OIDC compatibility
-     tracing:
-       type: None
-     gateways:
-       ingress:
-         enabled: true
-         service:
-           type: LoadBalancer
-           metadata:
-             annotations:
-               service.beta.kubernetes.io/aws-load-balancer-type: nlb
-               service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+     version: v1.23
+     namespace: istio-system
+     values:
+       global:
+         istioNamespace: istio-system
    EOF
    ```
 
 1. Wait for the control plane to be ready
 
    ```bash
-   oc wait --for=condition=Ready smcp/basic -n istio-system --timeout=900s
+   oc wait --for=condition=Ready istio/default --timeout=900s
+   ```
+
+1. Deploy the Istio ingress gateway
+
+   ```bash
+   cat <<EOF | oc apply -f -
+   apiVersion: sailoperator.io/v1alpha1
+   kind: IstioCNI
+   metadata:
+     name: default
+   spec:
+     version: v1.23
+     namespace: istio-cni
+   ---
+   apiVersion: sailoperator.io/v1alpha1
+   kind: IstioRevision
+   metadata:
+     name: default
+   spec:
+     version: v1.23
+     namespace: istio-system
+     values:
+       pilot:
+         env:
+           PILOT_ENABLE_GATEWAY_API: "true"
+           PILOT_ENABLE_GATEWAY_API_STATUS: "true"
+           PILOT_ENABLE_GATEWAY_API_DEPLOYMENT_CONTROLLER: "true"
+   ---
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: istio-ingress
+   ---
+   apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: istio-ingressgateway
+     namespace: istio-ingress
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: istio-ingressgateway
+     namespace: istio-ingress
+   spec:
+     replicas: 2
+     selector:
+       matchLabels:
+         app: istio-ingressgateway
+         istio: ingressgateway
+     template:
+       metadata:
+         labels:
+           app: istio-ingressgateway
+           istio: ingressgateway
+           sidecar.istio.io/inject: "false"
+       spec:
+         serviceAccountName: istio-ingressgateway
+         containers:
+         - name: istio-proxy
+           image: auto
+           ports:
+           - containerPort: 8080
+             protocol: TCP
+           - containerPort: 8443
+             protocol: TCP
+           - containerPort: 15090
+             protocol: TCP
+             name: http-envoy-prom
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: istio-ingressgateway
+     namespace: istio-ingress
+     annotations:
+       service.beta.kubernetes.io/aws-load-balancer-type: nlb
+       service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+   spec:
+     type: LoadBalancer
+     selector:
+       app: istio-ingressgateway
+       istio: ingressgateway
+     ports:
+     - name: status-port
+       port: 15021
+       protocol: TCP
+       targetPort: 15021
+     - name: http2
+       port: 80
+       protocol: TCP
+       targetPort: 8080
+     - name: https
+       port: 443
+       protocol: TCP
+       targetPort: 8443
+   EOF
+   ```
+
+1. Wait for the ingress gateway to be ready
+
+   ```bash
+   oc wait --for=condition=Available deployment/istio-ingressgateway -n istio-ingress --timeout=300s
    ```
 
 1. Get the Istio ingress gateway NLB IP addresses
 
    ```bash
-   NLB_DNS=$(oc get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+   NLB_DNS=$(oc get svc istio-ingressgateway -n istio-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
    echo "Istio NLB DNS: $NLB_DNS"
    
    # Get the IP addresses (these will be used as ALB targets)
@@ -207,20 +246,10 @@ Red Hat OpenShift Service Mesh provides the Envoy proxy layer needed for proper 
    oc create namespace grpc-demo
    ```
 
-1. Add the namespace to the Service Mesh
+1. Enable automatic sidecar injection for the namespace
 
    ```bash
-   cat <<EOF | oc apply -f -
-   apiVersion: maistra.io/v1
-   kind: ServiceMeshMember
-   metadata:
-     name: default
-     namespace: grpc-demo
-   spec:
-     controlPlaneRef:
-       name: basic
-       namespace: istio-system
-   EOF
+   oc label namespace grpc-demo istio-injection=enabled
    ```
 
 1. Deploy the gRPC health checking server
@@ -289,7 +318,7 @@ Red Hat OpenShift Service Mesh provides the Envoy proxy layer needed for proper 
    ```bash
    openssl req -x509 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -days 365 -nodes -subj "/CN=*.$DOMAIN"
    
-   oc create secret tls istio-ingressgateway-certs --cert=/tmp/tls.crt --key=/tmp/tls.key -n istio-system
+   oc create secret tls istio-ingressgateway-certs --cert=/tmp/tls.crt --key=/tmp/tls.key -n istio-ingress
    ```
 
 1. Create the Istio Gateway
@@ -773,7 +802,7 @@ Ensure:
 **Check Istio configuration:**
 ```bash
 # Verify Gateway has TLS certificate
-oc get secret istio-ingressgateway-certs -n istio-system
+oc get secret istio-ingressgateway-certs -n istio-ingress
 
 # Verify VirtualService routes health check
 oc get virtualservice -n grpc-demo -o yaml | grep -A 5 "grpc.health.v1.Health"
@@ -800,7 +829,7 @@ aws ec2 describe-security-groups --group-ids $ALB_SG \
 
 **Check Envoy logs:**
 ```bash
-oc logs -n istio-system -l istio=ingressgateway --tail=50
+oc logs -n istio-ingress -l istio=ingressgateway --tail=50
 ```
 
 ### HTTP 464 errors
@@ -885,17 +914,18 @@ To remove all resources created in this guide:
 
    ```bash
    oc delete namespace grpc-demo
-   oc delete smcp basic -n istio-system
+   oc delete istio default
+   oc delete istiorevision default
+   oc delete istiocni default
+   oc delete namespace istio-ingress
    oc delete namespace istio-system
+   oc delete namespace istio-cni
    ```
 
-1. Uninstall Service Mesh operators (optional)
+1. Uninstall Sail Operator (optional)
 
    ```bash
-   oc delete subscription servicemeshoperator -n openshift-operators
-   oc delete subscription kiali-ossm -n openshift-operators
-   oc delete subscription jaeger-product -n openshift-distributed-tracing
-   oc delete subscription elasticsearch-operator -n openshift-operators-redhat
+   oc delete subscription sailoperator -n openshift-operators
    ```
 
 ## Summary
@@ -910,4 +940,4 @@ This architecture provides a production-ready solution for deploying gRPC applic
 
 The key insight is that ALB's gRPC support requires IP-based targeting rather than NLB-to-NLB architecture, and Envoy provides the HTTP/2-aware ingress layer that traditional HAProxy-based routes cannot deliver. This universal approach works across all AWS environments, making it ideal for organizations operating in regulated industries that require GovCloud while also maintaining commercial cloud deployments.
 
-**Note**: While this guide is specific to ROSA HCP, the architecture also works on ROSA Classic. The only difference is that ROSA Classic clusters can optionally omit the `security.identity.type: ThirdParty` setting in the ServiceMeshControlPlane configuration.
+**Note**: While this guide is specific to ROSA HCP, the architecture also works on ROSA Classic with identical Service Mesh 3 configuration.
