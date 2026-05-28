@@ -12,44 +12,16 @@ This is **Part 2** of a two-part series. [Part 1](index.md) covers what changes 
 
 In Part 1, we outlined five migration phases and a scenario table showing what changes for different application types. This article puts that methodology into practice with two Python Flask applications that access Azure services:
 
-**keyvault-reader** — A stateless REST API that reads secrets from Azure Key Vault. On the SP cluster, it authenticates using `ClientSecretCredential` with a client secret stored in a K8s Secret. On the MI cluster, a one-line code change switches to `DefaultAzureCredential`, and the K8s Secret is replaced with a ServiceAccount annotation — the workload identity webhook handles the rest.
+**keyvault-reader** — A stateless REST API that reads secrets from Azure Key Vault. It demonstrates the most common migration case: changing from `ClientSecretCredential` to `DefaultAzureCredential` (a one-line code change) and replacing the K8s Secret with a ServiceAccount annotation.
 
-**blob-writer** — A stateful REST API that writes entries to Azure Blob Storage and maintains a local log on a PersistentVolumeClaim (PVC). On the SP cluster, it already uses `DefaultAzureCredential` (with credentials injected from a K8s Secret). On the MI cluster, no code change is needed — only the K8s manifest changes (replace Secret with ServiceAccount, recreate PVC).
+**blob-writer** — A REST API that writes entries to Azure Blob Storage and keeps a local activity log on a PersistentVolumeClaim (PVC). It demonstrates that apps already using `DefaultAzureCredential` need no code change at all — only K8s manifest changes. The PVC stores a local cache only; primary data lives in Azure Blob Storage, so recreating the PVC on the new cluster is straightforward.
 
 | Demo App | Azure Service | SP Auth Method | Code Change? | Config Change? |
 |----------|--------------|----------------|-------------|---------------|
 | **keyvault-reader** (stateless) | Azure Key Vault | `ClientSecretCredential` with K8s Secret | **Yes** — one-line change to `DefaultAzureCredential` | **Yes** — replace Secret with ServiceAccount |
-| **blob-writer** (stateful + PVC) | Azure Blob Storage | `DefaultAzureCredential` with K8s Secret | **No** — SDK auto-detects workload identity | **Yes** — replace Secret with ServiceAccount + PVC migration |
+| **blob-writer** (with PVC) | Azure Blob Storage | `DefaultAzureCredential` with K8s Secret | **No** — SDK auto-detects workload identity | **Yes** — replace Secret with ServiceAccount |
 
-### Expected Behavior: Before and After
-
-**Before (SP cluster):**
-
-```bash
-# keyvault-reader — authenticates with client secret
-curl -s https://$KV_URL/ | jq .
-# {"status":"ok","app":"keyvault-reader","auth_method":"service-principal (ClientSecretCredential)"}
-
-# blob-writer — authenticates with client secret injected via K8s Secret
-curl -s https://$BLOB_URL/ | jq .
-# {"status":"ok","app":"blob-writer","auth_method":"service-principal (ClientSecretCredential)"}
-```
-
-**After (MI cluster):**
-
-```bash
-# keyvault-reader — authenticates via workload identity (no secrets)
-curl -s https://$KV_URL/ | jq .
-# {"status":"ok","app":"keyvault-reader","auth_method":"workload-identity (DefaultAzureCredential)"}
-
-# blob-writer — same code, different auth method detected automatically
-curl -s https://$BLOB_URL/ | jq .
-# {"status":"ok","app":"blob-writer","auth_method":"workload-identity (DefaultAzureCredential)"}
-```
-
-The application logic and API endpoints are identical — only the `auth_method` field changes, reflecting how the Azure SDK authenticates under the hood.
-
-## Demo Environment
+### Demo Environment
 
 This walkthrough assumes you have an existing SP cluster with applications and a new MI cluster as the migration target. Both clusters access the same shared Azure services (Key Vault, Blob Storage).
 
@@ -72,24 +44,262 @@ This walkthrough assumes you have an existing SP cluster with applications and a
   │  blob-writer             │    │  blob-writer             │
   │   └─ DefaultAzureCred    │    │   └─ DefaultAzureCred    │
   │   └─ K8s Secret ⚠       │    │   └─ ServiceAccount ✓    │
-  │   └─ PVC (local state)   │    │   └─ PVC (recreated)     │
+  │   └─ PVC (local cache)   │    │   └─ PVC (recreated)     │
   └──────────────────────────┘    └──────────────────────────┘
   ⚠ Long-lived client secret       ✓ Short-lived OIDC token
     stored in cluster                 no secrets in cluster
 ```
 
-{{% alert state="info" %}}You do not need to deploy on the SP cluster to follow this walkthrough. If you already have applications running on an SP cluster, skip directly to the MI cluster steps.{{% /alert %}}
-
 ## Prerequisites
 
-- An existing ARO **SP cluster** (for the "before" deployment, optional if you have existing workloads)
+- An existing ARO **SP cluster** (optional — the SP state is described below for reference)
 - An existing ARO **MI cluster** (see [Create an ARO cluster with managed identities](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster?pivots=aro-deploy-az-cli))
 - Azure CLI v2.84.0+ with `aro` extension
 - `oc` CLI
 - A Red Hat pull secret (for internal registry access)
 - Contributor + User Access Administrator on the subscription
 
-## Environment Setup
+## The SP Cluster: Starting State
+
+This section describes how the two demo applications are configured on an existing SP cluster. If you already have applications running on your SP cluster, the patterns here will look familiar — a K8s Secret holding Azure credentials, injected into pods via `envFrom`.
+
+### keyvault-reader on SP
+
+The app uses `ClientSecretCredential` to authenticate to Key Vault. Azure credentials are stored in a K8s Secret and injected into the pod.
+
+**Application code (`app_sp.py`):**
+
+```python
+from azure.identity import ClientSecretCredential
+from azure.keyvault.secrets import SecretClient
+
+credential = ClientSecretCredential(
+    tenant_id=os.environ["AZURE_TENANT_ID"],
+    client_id=os.environ["AZURE_CLIENT_ID"],
+    client_secret=os.environ["AZURE_CLIENT_SECRET"],
+)
+client = SecretClient(vault_url=VAULT_URL, credential=credential)
+```
+
+**K8s manifest (key resources):**
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-sp-credentials
+type: Opaque
+stringData:
+  AZURE_TENANT_ID: "<your-tenant-id>"
+  AZURE_CLIENT_ID: "<your-sp-client-id>"
+  AZURE_CLIENT_SECRET: "<your-sp-client-secret>"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keyvault-reader
+spec:
+  template:
+    spec:
+      containers:
+        - name: keyvault-reader
+          env:
+            - name: AZURE_KEYVAULT_URL
+              value: "https://<your-keyvault>.vault.azure.net/"
+          envFrom:
+            - secretRef:
+                name: azure-sp-credentials
+```
+
+**Expected behavior:**
+
+```bash
+curl -s https://$KV_URL/ | jq .
+# {"status":"ok","app":"keyvault-reader","auth_method":"service-principal (ClientSecretCredential)"}
+
+curl -s https://$KV_URL/secret/demo-secret | jq .
+# {"name":"demo-secret","value":"Hello from ARO MI migration demo","auth_method":"service-principal (ClientSecretCredential)"}
+```
+
+### blob-writer on SP
+
+The app already uses `DefaultAzureCredential` (best practice). Azure credentials are still stored in a K8s Secret — `DefaultAzureCredential` detects the `AZURE_CLIENT_SECRET` environment variable and uses `ClientSecretCredential` under the hood.
+
+The PVC stores a local activity log (`entries.json`) as a cache. The primary data is written to Azure Blob Storage.
+
+**Application code (`app.py`):**
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
+
+credential = DefaultAzureCredential()
+blob_service = BlobServiceClient(account_url=STORAGE_ACCOUNT_URL, credential=credential)
+```
+
+**K8s manifest (key resources):**
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-sp-credentials
+type: Opaque
+stringData:
+  AZURE_TENANT_ID: "<your-tenant-id>"
+  AZURE_CLIENT_ID: "<your-sp-client-id>"
+  AZURE_CLIENT_SECRET: "<your-sp-client-secret>"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blob-writer-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: managed-csi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blob-writer
+spec:
+  template:
+    spec:
+      containers:
+        - name: blob-writer
+          env:
+            - name: AZURE_STORAGE_ACCOUNT_URL
+              value: "https://<your-storage-account>.blob.core.windows.net"
+          envFrom:
+            - secretRef:
+                name: azure-sp-credentials
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: blob-writer-data
+```
+
+**Expected behavior:**
+
+```bash
+curl -s https://$BLOB_URL/ | jq .
+# {"status":"ok","app":"blob-writer","local_entries":3,"auth_method":"service-principal (ClientSecretCredential)"}
+```
+
+## The MI Cluster: Target State
+
+After migration, both apps run on the MI cluster using workload identity — no Azure secrets stored in the cluster. This section shows what changes for each app.
+
+### keyvault-reader on MI
+
+**Code change:** Replace `ClientSecretCredential` with `DefaultAzureCredential` (one line).
+
+```python
+# Before (SP)
+from azure.identity import ClientSecretCredential
+credential = ClientSecretCredential(
+    tenant_id=os.environ["AZURE_TENANT_ID"],
+    client_id=os.environ["AZURE_CLIENT_ID"],
+    client_secret=os.environ["AZURE_CLIENT_SECRET"],
+)
+
+# After (MI)
+from azure.identity import DefaultAzureCredential
+credential = DefaultAzureCredential()
+```
+
+`DefaultAzureCredential` auto-detects the authentication method. On an MI cluster with workload identity, it uses the federated token injected by the webhook. On an SP cluster, it falls back to environment variables — making it work in both environments.
+
+**Manifest changes:**
+
+| What | SP Cluster | MI Cluster |
+|------|-----------|-----------|
+| **Secret** | `azure-sp-credentials` with client ID, secret, tenant ID | **Removed** |
+| **ServiceAccount** | Default | `keyvault-reader-sa` with `azure.workload.identity/client-id` annotation |
+| **Pod label** | None | `azure.workload.identity/use: "true"` |
+| **serviceAccountName** | Not set | `keyvault-reader-sa` |
+| **envFrom** | `secretRef: azure-sp-credentials` | **Removed** |
+
+**MI manifest (key resources):**
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: keyvault-reader-sa
+  annotations:
+    azure.workload.identity/client-id: "<your-managed-identity-client-id>"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keyvault-reader
+spec:
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: keyvault-reader-sa
+      containers:
+        - name: keyvault-reader
+          env:
+            - name: AZURE_KEYVAULT_URL
+              value: "https://<your-keyvault>.vault.azure.net/"
+          # No envFrom, no secretRef — workload identity webhook injects credentials
+```
+
+**Expected behavior:**
+
+```bash
+curl -s https://$KV_URL/ | jq .
+# {"status":"ok","app":"keyvault-reader","auth_method":"workload-identity (DefaultAzureCredential)"}
+
+curl -s https://$KV_URL/secret/demo-secret | jq .
+# {"name":"demo-secret","value":"Hello from ARO MI migration demo","auth_method":"workload-identity (DefaultAzureCredential)"}
+```
+
+### blob-writer on MI
+
+**Code change:** None. The app already uses `DefaultAzureCredential`.
+
+**Manifest changes:**
+
+| What | SP Cluster | MI Cluster |
+|------|-----------|-----------|
+| **Secret** | `azure-sp-credentials` with client ID, secret, tenant ID | **Removed** |
+| **ServiceAccount** | Default | `blob-writer-sa` with `azure.workload.identity/client-id` annotation |
+| **Pod label** | None | `azure.workload.identity/use: "true"` |
+| **serviceAccountName** | Not set | `blob-writer-sa` |
+| **envFrom** | `secretRef: azure-sp-credentials` | **Removed** |
+| **PVC** | `blob-writer-data` (1Gi, managed-csi) | Same spec — recreated on new cluster |
+
+The PVC is created fresh on the MI cluster. Since blob-writer's PVC stores only a local cache (the primary data lives in Azure Blob Storage), the local log simply starts empty. Existing data remains accessible in Blob Storage across both clusters.
+
+{{% alert state="info" %}}**PVC and SP-to-MI migration:** PVC configuration (StorageClass, size, access mode) is not affected by the SP-to-MI change. The PVC is recreated on the new cluster as part of any cluster-to-cluster migration, not because of the identity model change. For applications where the PVC is the primary data store (e.g., a database), use Azure Disk snapshots, `oc rsync`, or application-level backup/restore.{{% /alert %}}
+
+**Expected behavior:**
+
+```bash
+curl -s https://$BLOB_URL/ | jq .
+# {"status":"ok","app":"blob-writer","local_entries":0,"auth_method":"workload-identity (DefaultAzureCredential)"}
+
+curl -s -X POST https://$BLOB_URL/write -H "Content-Type: application/json" \
+  -d '{"message": "First entry from MI cluster"}' | jq .
+# {"status":"written","blob":"entry-20260528-095721.json","local_count":1}
+```
+
+## Migration Steps
+
+Now that we have seen the before and after states, here are the detailed steps to set up the MI cluster and deploy the applications.
+
+### Environment Setup
 
 Set the variables used throughout this walkthrough. Adjust values to match your environment:
 
@@ -114,46 +324,41 @@ echo "OIDC Issuer: $OIDC_ISSUER"
 
 {{% alert state="info" %}}The OIDC issuer URL is only available on MI clusters. If this returns empty, the cluster is SP-based and does not support workload identity.{{% /alert %}}
 
-## Step 1: Create Azure Resources
+### Step 1: Create Azure Resources
 
-### Key Vault (for keyvault-reader)
+#### Key Vault (for keyvault-reader)
 
 ```bash
-# Create Key Vault
 az keyvault create \
   --name $KEYVAULT_NAME \
   --resource-group $RESOURCEGROUP \
   --location $LOCATION
 
-# Add a test secret
 az keyvault secret set \
   --vault-name $KEYVAULT_NAME \
   --name demo-secret \
   --value "Hello from ARO MI migration demo"
 ```
 
-### Storage Account (for blob-writer)
+#### Storage Account (for blob-writer)
 
 ```bash
-# Create Storage Account
 az storage account create \
   --name $STORAGE_ACCOUNT \
   --resource-group $RESOURCEGROUP \
   --location $LOCATION \
   --sku Standard_LRS
 
-# Get the storage account URL
 STORAGE_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net"
 ```
 
-## Step 2: Create Managed Identities for Applications
+### Step 2: Create Managed Identities
 
 Each application gets its own user-assigned managed identity with only the permissions it needs.
 
-### keyvault-reader identity
+#### keyvault-reader identity
 
 ```bash
-# Create managed identity
 az identity create \
   --name keyvault-reader-identity \
   --resource-group $RESOURCEGROUP \
@@ -177,10 +382,9 @@ az role assignment create \
   --scope $(az keyvault show --name $KEYVAULT_NAME --query id -o tsv)
 ```
 
-### blob-writer identity
+#### blob-writer identity
 
 ```bash
-# Create managed identity
 az identity create \
   --name blob-writer-identity \
   --resource-group $RESOURCEGROUP \
@@ -204,7 +408,7 @@ az role assignment create \
   --scope $(az storage account show --name $STORAGE_ACCOUNT --query id -o tsv)
 ```
 
-## Step 3: Create Federated Credentials
+### Step 3: Create Federated Credentials
 
 Federated credentials link each managed identity to a Kubernetes ServiceAccount. This is what enables secretless authentication — the workload identity webhook exchanges a K8s token for an Azure token automatically.
 
@@ -230,9 +434,9 @@ az identity federated-credential create \
 
 {{% alert state="info" %}}The `--subject` format is `system:serviceaccount:<namespace>:<serviceaccount-name>`. This must exactly match the ServiceAccount in your K8s manifests.{{% /alert %}}
 
-## Step 4: Build and Deploy the Applications
+### Step 4: Build and Deploy
 
-### Login to the cluster
+#### Login to the MI cluster
 
 ```bash
 API_SERVER=$(az aro show \
@@ -248,28 +452,27 @@ KUBEADMIN_PASSWORD=$(az aro list-credentials \
 oc login $API_SERVER -u kubeadmin -p $KUBEADMIN_PASSWORD
 ```
 
-### Deploy keyvault-reader
+#### Deploy keyvault-reader
 
 ```bash
-# Create namespace and build from source
 oc new-project keyvault-reader
 
-# Build using OpenShift's built-in S2I or binary build
+# Build from source using OpenShift binary build
 oc new-build --binary --name=keyvault-reader -n keyvault-reader
 oc start-build keyvault-reader --from-dir=demo-apps/keyvault-reader -n keyvault-reader --follow
 
-# Create the ServiceAccount with workload identity annotation
+# Create ServiceAccount with workload identity annotation
 oc create serviceaccount keyvault-reader-sa -n keyvault-reader
 oc annotate serviceaccount keyvault-reader-sa \
   azure.workload.identity/client-id=$KV_IDENTITY_CLIENT_ID \
   -n keyvault-reader
 
-# Deploy the application
+# Deploy
 oc create deployment keyvault-reader \
   --image=image-registry.openshift-image-registry.svc:5000/keyvault-reader/keyvault-reader:latest \
   -n keyvault-reader
 
-# Patch the deployment to use workload identity
+# Patch for workload identity
 oc patch deployment keyvault-reader -n keyvault-reader --type=json -p='[
   {"op": "add", "path": "/spec/template/metadata/labels/azure.workload.identity~1use", "value": "true"},
   {"op": "add", "path": "/spec/template/spec/serviceAccountName", "value": "keyvault-reader-sa"},
@@ -278,27 +481,26 @@ oc patch deployment keyvault-reader -n keyvault-reader --type=json -p='[
   ]}
 ]'
 
-# Expose the service
+# Expose
 oc expose deployment keyvault-reader --port=8080 -n keyvault-reader
 oc create route edge --service=keyvault-reader -n keyvault-reader
 ```
 
-### Deploy blob-writer
+#### Deploy blob-writer
 
 ```bash
-# Create namespace and build from source
 oc new-project blob-writer
 
 oc new-build --binary --name=blob-writer -n blob-writer
 oc start-build blob-writer --from-dir=demo-apps/blob-writer -n blob-writer --follow
 
-# Create the ServiceAccount with workload identity annotation
+# Create ServiceAccount with workload identity annotation
 oc create serviceaccount blob-writer-sa -n blob-writer
 oc annotate serviceaccount blob-writer-sa \
   azure.workload.identity/client-id=$BLOB_IDENTITY_CLIENT_ID \
   -n blob-writer
 
-# Create PVC for local state
+# Create PVC for local cache
 oc apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -314,12 +516,12 @@ spec:
   storageClassName: managed-csi
 EOF
 
-# Deploy the application
+# Deploy
 oc create deployment blob-writer \
   --image=image-registry.openshift-image-registry.svc:5000/blob-writer/blob-writer:latest \
   -n blob-writer
 
-# Patch the deployment for workload identity + PVC + env vars
+# Patch for workload identity + PVC + env vars
 oc patch deployment blob-writer -n blob-writer --type=json -p='[
   {"op": "add", "path": "/spec/template/metadata/labels/azure.workload.identity~1use", "value": "true"},
   {"op": "add", "path": "/spec/template/spec/serviceAccountName", "value": "blob-writer-sa"},
@@ -337,14 +539,12 @@ oc patch deployment blob-writer -n blob-writer --type=json -p='[
   ]}
 ]'
 
-# Expose the service
+# Expose
 oc expose deployment blob-writer --port=8080 -n blob-writer
 oc create route edge --service=blob-writer -n blob-writer
 ```
 
-## Step 5: Validate the Applications
-
-### Get the route URLs
+### Step 5: Validate
 
 ```bash
 KV_URL=$(oc get route keyvault-reader -n keyvault-reader -o jsonpath='{.spec.host}')
@@ -354,7 +554,7 @@ echo "keyvault-reader: https://$KV_URL"
 echo "blob-writer:     https://$BLOB_URL"
 ```
 
-### Test keyvault-reader
+#### Test keyvault-reader
 
 ```bash
 # Health check — should return auth_method: workload-identity
@@ -364,17 +564,7 @@ curl -s https://$KV_URL/ | jq .
 curl -s https://$KV_URL/secret/demo-secret | jq .
 ```
 
-Expected output:
-
-```json
-{
-  "name": "demo-secret",
-  "value": "Hello from ARO MI migration demo",
-  "auth_method": "workload-identity (DefaultAzureCredential)"
-}
-```
-
-### Test blob-writer
+#### Test blob-writer
 
 ```bash
 # Health check
@@ -392,96 +582,11 @@ curl -s https://$BLOB_URL/entries | jq .
 curl -s https://$BLOB_URL/blobs | jq .
 ```
 
-## What Changed: SP vs MI Comparison
+#### Verify workload identity injection
 
-Now that both apps are running on workload identity, let's look at exactly what changed from an SP deployment.
-
-### keyvault-reader (code change required)
-
-This app originally used `ClientSecretCredential` — a one-line code change was required.
-
-**Before (SP cluster — `app_sp.py`):**
-
-```python
-from azure.identity import ClientSecretCredential
-
-credential = ClientSecretCredential(
-    tenant_id=os.environ["AZURE_TENANT_ID"],
-    client_id=os.environ["AZURE_CLIENT_ID"],
-    client_secret=os.environ["AZURE_CLIENT_SECRET"],
-)
-```
-
-**After (MI cluster — `app.py`):**
-
-```python
-from azure.identity import DefaultAzureCredential
-
-credential = DefaultAzureCredential()
-```
-
-`DefaultAzureCredential` auto-detects the authentication method. On an MI cluster with workload identity, it uses the federated token injected by the webhook. On an SP cluster, it would fall back to environment variables — making it work in both environments.
-
-**K8s manifest changes:**
-
-| What | SP Cluster | MI Cluster |
-|------|-----------|-----------|
-| **Secret** | `azure-sp-credentials` with `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | **Removed** |
-| **ServiceAccount** | Default | `keyvault-reader-sa` with `azure.workload.identity/client-id` annotation |
-| **Pod label** | None | `azure.workload.identity/use: "true"` |
-| **envFrom** | `secretRef: azure-sp-credentials` | **Removed** |
-
-### blob-writer (no code change)
-
-This app already used `DefaultAzureCredential` — no code change was needed.
-
-**K8s manifest changes:**
-
-| What | SP Cluster | MI Cluster |
-|------|-----------|-----------|
-| **Secret** | `azure-sp-credentials` with `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` | **Removed** |
-| **ServiceAccount** | Default | `blob-writer-sa` with `azure.workload.identity/client-id` annotation |
-| **Pod label** | None | `azure.workload.identity/use: "true"` |
-| **envFrom** | `secretRef: azure-sp-credentials` | **Removed** |
-| **PVC** | `blob-writer-data` (1Gi, managed-csi) | Same — recreated on new cluster, data restored from Blob Storage |
-
-### PVC data migration
-
-For stateful applications, PVC data must be migrated separately since PVCs are cluster-scoped. In this demo, blob-writer's data is also stored in Azure Blob Storage, which provides a natural backup/restore path:
-
-1. **Verify data in Blob Storage** — data written by the SP cluster is already available in Azure Blob Storage (shared across clusters)
-2. **Recreate PVC on MI cluster** — the PVC is created fresh (same StorageClass, same size)
-3. **Restore local state** — the app rebuilds its local log from the next write operation
-
-For applications where the PVC is the only data store (no cloud backup), use one of these approaches:
-
-- **Azure Disk snapshot:** Create a snapshot of the old PVC's Azure Disk, then create a new PVC from the snapshot on the MI cluster
-- **rsync:** Use `oc rsync` to copy data between pods across clusters
-- **Application-level backup:** Use the application's own backup/restore mechanism (e.g., database dump/restore)
-
-## How Workload Identity Works Behind the Scenes
-
-When you add the ServiceAccount annotation and pod label, the workload identity webhook does the following at pod startup:
-
-1. **Injects environment variables** into the pod:
-   - `AZURE_CLIENT_ID` — the managed identity's client ID (from the ServiceAccount annotation)
-   - `AZURE_TENANT_ID` — the cluster's Azure tenant
-   - `AZURE_FEDERATED_TOKEN_FILE` — path to a projected volume containing a K8s JWT token
-   - `AZURE_AUTHORITY_HOST` — the Azure AD authority URL
-
-2. **Mounts a projected volume** containing a short-lived K8s service account token
-
-3. **At runtime**, `DefaultAzureCredential` detects these variables and performs an OIDC token exchange:
-   - Reads the K8s JWT from the projected volume
-   - Exchanges it with Azure AD for an Azure access token
-   - Uses the Azure access token to call Azure services (Key Vault, Blob Storage, etc.)
-
-No secrets are stored in the cluster. The K8s JWT is short-lived and automatically rotated. The Azure token expires within approximately one hour.
-
-You can verify the injected environment variables:
+You can confirm that no secrets are in the pod by inspecting the injected environment variables:
 
 ```bash
-# Check keyvault-reader pod
 oc exec -n keyvault-reader deploy/keyvault-reader -- env | grep AZURE_
 
 # Expected output (no AZURE_CLIENT_SECRET):
@@ -495,11 +600,11 @@ oc exec -n keyvault-reader deploy/keyvault-reader -- env | grep AZURE_
 
 1. **Code change is only needed when using explicit credential classes** like `ClientSecretCredential`. If your app already uses `DefaultAzureCredential`, no code change is required.
 
-2. **K8s manifest changes are the same for every app**: remove the Secret reference, add a ServiceAccount with the workload identity annotation, set `.spec.serviceAccountName`, and add the pod label.
+2. **K8s manifest changes are the same pattern for every app**: remove the Secret reference, add a ServiceAccount with the workload identity annotation, set `.spec.serviceAccountName`, and add the pod label.
 
 3. **The application container image is identical** on both SP and MI clusters. The difference is entirely in how credentials are provided to the pod.
 
-4. **PVC migration is independent of SP-to-MI** — it's a standard cluster migration concern. Use Azure Disk snapshots, `oc rsync`, or application-level backup/restore.
+4. **PVC configuration is not affected by SP-to-MI migration.** PVC recreation is a standard cluster-to-cluster migration concern, not specific to the identity model change. For apps where the PVC is a cache (like blob-writer), the PVC starts fresh. For apps where the PVC is the primary data store, use Azure Disk snapshots, `oc rsync`, or application-level backup/restore.
 
 5. **`DefaultAzureCredential` is the best practice** for any new Azure SDK code. It works transparently across SP clusters (using env vars), MI clusters (using workload identity), and local development (using Azure CLI credentials).
 
