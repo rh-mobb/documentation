@@ -66,30 +66,32 @@ export GRPC_HOSTNAME=grpc.$DOMAIN
 
 ## Install Red Hat OpenShift Service Mesh
 
-Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for proper gRPC handling. Service Mesh 3 uses the Sail Operator, which is based on upstream Istio and provides a simpler installation experience.
+Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for proper gRPC handling. Service Mesh 3 uses the `sailoperator.io` API (based on upstream Istio) and provides a simpler installation experience compared to Service Mesh 2.
 
-1. Install the Sail Operator
+1. Install the Red Hat OpenShift Service Mesh 3 Operator
 
    ```bash
    cat <<EOF | oc apply -f -
    apiVersion: operators.coreos.com/v1alpha1
    kind: Subscription
    metadata:
-     name: sailoperator
+     name: servicemeshoperator3
      namespace: openshift-operators
    spec:
      channel: stable
      installPlanApproval: Automatic
-     name: sailoperator
+     name: servicemeshoperator3
      source: redhat-operators
      sourceNamespace: openshift-marketplace
    EOF
    ```
 
-1. Wait for the Sail Operator to be ready
+1. Wait for the Service Mesh operator to be ready
 
    ```bash
-   oc wait --for=condition=Ready pod -l name=sail-operator -n openshift-operators --timeout=300s
+   echo "Waiting for Service Mesh 3 operator installation..."
+   oc wait --for=jsonpath='{.status.phase}'=Succeeded csv -l operators.coreos.com/servicemeshoperator3.openshift-operators -n openshift-operators --timeout=300s
+   oc wait --for=condition=Available deployment/servicemesh-operator3 -n openshift-operators --timeout=300s
    ```
 
 1. Create the Service Mesh control plane namespace
@@ -922,10 +924,10 @@ To remove all resources created in this guide:
    oc delete namespace istio-cni
    ```
 
-1. Uninstall Sail Operator (optional)
+1. Uninstall Service Mesh 3 Operator (optional)
 
    ```bash
-   oc delete subscription sailoperator -n openshift-operators
+   oc delete subscription servicemeshoperator3 -n openshift-operators
    ```
 
 ## Summary
