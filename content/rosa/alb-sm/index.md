@@ -117,8 +117,11 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 1. Wait for the control plane to be ready
 
    ```bash
-   oc wait --for=condition=Ready istio/default --timeout=900s
+   # Wait for Istio control plane (istiod) to be ready
+   oc wait --for=condition=Available deployment/istiod -n istio-system --timeout=900s
    ```
+   
+   If the pod is pending due to resource constraints, you may need to scale up your cluster or reduce resource requests.
 
 1. Deploy the ingress gateway
 
@@ -195,11 +198,23 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 1. Get the Istio ingress gateway NLB IP addresses
 
    ```bash
+   # Wait for LoadBalancer to provision
+   echo "Waiting for NLB to provision..."
+   until oc get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' | grep -q elb; do
+     echo "Still waiting for NLB..."
+     sleep 10
+   done
+   
    NLB_DNS=$(oc get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
    echo "Istio NLB DNS: $NLB_DNS"
    
-   # Get the IP addresses (these will be used as ALB targets)
-   NLB_IPS=$(dig +short $NLB_DNS)
+   # Wait for DNS to propagate and return IPs (can take 30-60 seconds)
+   echo "Waiting for NLB DNS to resolve..."
+   until NLB_IPS=$(dig +short $NLB_DNS | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$') && [ -n "$NLB_IPS" ]; do
+     echo "DNS not resolved yet, waiting..."
+     sleep 10
+   done
+   
    echo "Istio NLB IPs:"
    echo "$NLB_IPS"
    ```
