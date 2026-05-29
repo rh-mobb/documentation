@@ -63,7 +63,7 @@ There are many ways and methods to create certificates for VPN, the guide below 
 
 1. Edit certificate parameters
 
-   Uncomment and edit the copied template with your values
+   Copy pki/vars.example as pki/vars, uncomment and edit the copied template with your values
 
    ```bash
    vim pki/vars
