@@ -157,7 +157,7 @@ Include a prior-comments summary table in the Step 5 report.
 
 - Front matter: `date`, `title`, `tags`, `authors` all present and correct
 - `validated_version` used when appropriate; no redundant version alert callouts
-- No em dashes in content
+- No em dashes in Markdown prose or headings (em dashes inside Mermaid diagram labels are acceptable)
 - Internal links use `/experts/...` root-relative paths (not hardcoded hostnames or Netlify URLs)
 - Shortcodes used correctly (`{{< alert >}}`, `{{< notice >}}`, `{{< tabs >}}`, etc.) — prefer shortcodes over raw blockquotes/HTML for callouts
 - No changes to `themes/rhds` in a content-only PR
@@ -165,6 +165,12 @@ Include a prior-comments summary table in the Step 5 report.
 - `kubectl` → `oc` for OpenShift content
 - No EOL or deprecated container images (e.g. `centos:latest`)
 - `grep -E` instead of `egrep` (`egrep` is deprecated and removed on some systems)
+
+**If the PR touches `content/examples/`**, additionally check:
+- `draft: true` is present in the front matter of every page added or modified — this is required so examples are never published
+- No `tags` in the front matter — example pages are not indexed for user discovery
+- File path follows `content/examples/<topic>/index.md` convention
+- Em dashes are acceptable inside Mermaid diagram source labels but not in Markdown headings or prose
 
 ### Step 4 — Find exact line numbers for suggestions
 
@@ -319,3 +325,5 @@ Confirm the branch has been restored before reporting the review as done.
 - `kubectl` used instead of `oc`
 - Stale/EOL container images
 - Typos or stray characters in YAML/code examples (these break copy-paste)
+- Example page in `content/examples/` missing `draft: true` (page would be published without it)
+- Example page in `content/examples/` with `tags` set (tags pollute the taxonomy and are not useful for internal reference pages)

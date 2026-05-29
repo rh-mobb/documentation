@@ -43,6 +43,10 @@ If the PR is yours and you want to address reviewer comments, phrase it accordin
 
 Claude will fetch the prior review comments, check what's been addressed and what hasn't, assess the diff, apply fixes locally, and push them back to your branch.
 
+### Example pages
+
+The [`content/examples/`](./content/examples/) directory holds shortcode demos, diagram templates, and other formatting reference pages for content authors. These pages render in local preview (`make preview`) but are never published to the live site. See [CONTRIBUTING.md](./CONTRIBUTING.md#example-pages) for how to add one.
+
 ### Contributing
 
 For contributing to this repository, please follow the guidelines specified in the [contributing.md](./CONTRIBUTING.md)

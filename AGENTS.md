@@ -19,6 +19,7 @@ This repository is a **[Hugo](https://gohugo.io/)** static site using the **`rhd
 - **Chapter / section landing pages** use **`_index.md`** (often `archetype: chapter` and `weight` for menu order).
 - **Individual guides** use **`index.md`** inside a topic directory (for example `content/rosa/some-topic/index.md`).
 - **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** still mentions historical **`/content/docs/...`** paths; prefer the **current** `content/<section>/...` layout unless you are following an explicit maintainer instruction to use `docs/`.
+- **[`content/examples/`](./content/examples/)** is a special section whose `_index.md` cascades `draft: true` to all pages within it. Drafts are rendered by `make preview` (which passes `-D`) but excluded from production builds (`hugo --gc --minify`), so example pages are browsable locally but never published. Use this directory for shortcode demos, diagram templates, or formatting examples. Add new pages as `content/examples/<topic>/index.md`; no extra front matter is needed.
 
 ### Front matter (guides)
 
