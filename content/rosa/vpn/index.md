@@ -434,17 +434,11 @@ To remove the VPN infrastructure when no longer needed:
 1. Disassociate target networks from the VPN endpoint
 
    ```bash
-   ASSOCIATIONS=$(aws ec2 describe-client-vpn-target-networks \
-     --client-vpn-endpoint-id $VPN_CLIENT_ID \
+   aws ec2 describe-client-vpn-target-networks \
+     --client-vpn-endpoint-id "$VPN_CLIENT_ID" \
      --query 'ClientVpnTargetNetworks[*].AssociationId' \
-     --output text)
+     --output text | xargs -n 1 aws ec2 disassociate-client-vpn-target-network --client-vpn-endpoint-id "$VPN_CLIENT_ID" --association-id
    
-   for assoc in $ASSOCIATIONS; do
-     echo "Disassociating $assoc"
-     aws ec2 disassociate-client-vpn-target-network \
-       --client-vpn-endpoint-id $VPN_CLIENT_ID \
-       --association-id $assoc
-   done
    ```
 
 1. Wait for disassociation to complete
