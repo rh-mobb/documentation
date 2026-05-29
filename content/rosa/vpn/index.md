@@ -196,8 +196,10 @@ If you are connecting to a **private ROSA HCP cluster**, you must configure the 
 1. Get the VPC endpoint ID for the cluster API
 
    ```bash
+   export SUBNET_ID=$(rosa list machinepools -c $ROSA_CLUSTER_NAME -o json | jq -r '.[0].subnet')
+   export VPC_ID=$(aws ec2 describe-subnets --subnet-ids $SUBNET_ID --query 'Subnets[0].VpcId' --output text)
    VPC_ENDPOINT_ID=$(aws ec2 describe-vpc-endpoints \
-     --filters "Name=vpc-id,Values=$(rosa describe cluster -c $ROSA_CLUSTER_NAME -o json | jq -r '.network.vpc_id')" \
+     --filters "Name=vpc-id,Values=$(aws ec2 describe-subnets --subnet-ids $SUBNET_ID --query 'Subnets[0].VpcId' --output text)" \
      --query 'VpcEndpoints[?ServiceName!=`null`] | [?contains(ServiceName, `vpce-svc`)] | [0].VpcEndpointId' \
      --output text)
    ```
