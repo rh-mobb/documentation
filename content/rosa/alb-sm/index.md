@@ -101,6 +101,8 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    oc new-project istio-system
    oc new-project istio-cni
    ```
+   
+   **Note**: The `oc new-project` command creates a new namespace and automatically switches your context to it.
 
 1. Deploy IstioCNI (required for sidecar injection)
 
@@ -151,19 +153,13 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 
    ```bash
    cat <<EOF | oc apply -f -
-   apiVersion: v1
-   kind: ServiceAccount
-   metadata:
-     name: istio-ingressgateway
-     namespace: istio-system
-   ---
    apiVersion: apps/v1
    kind: Deployment
    metadata:
      name: istio-ingressgateway
      namespace: istio-system
    spec:
-     replicas: 2
+     replicas: 3
      selector:
        matchLabels:
          app: istio-ingressgateway
@@ -173,14 +169,16 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
          labels:
            app: istio-ingressgateway
            istio: ingressgateway
-           sidecar.istio.io/inject: "true"
+           istio.io/rev: default
          annotations:
            inject.istio.io/templates: gateway
        spec:
-         serviceAccountName: istio-ingressgateway
          containers:
          - name: istio-proxy
            image: auto
+           ports:
+           - containerPort: 8443
+             protocol: TCP
    ---
    apiVersion: v1
    kind: Service
@@ -196,24 +194,21 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
        app: istio-ingressgateway
        istio: ingressgateway
      ports:
-     - name: status-port
-       port: 15021
-       protocol: TCP
-       targetPort: 15021
-     - name: http2
-       port: 80
-       protocol: TCP
-       targetPort: 8080
      - name: https
        port: 443
        protocol: TCP
        targetPort: 8443
    EOF
    ```
+   
+   **Important Configuration Notes**:
+   - The `inject.istio.io/templates: gateway` annotation is **critical** - it creates a gateway proxy (standalone Envoy) instead of a sidecar proxy. Without this, pods will have 2/2 containers but won't function as an ingress gateway.
+   - The `istio.io/rev: default` label matches the Istio revision tag.
+   - No ServiceAccount is specified, so the deployment uses the `default` ServiceAccount in the namespace.
 
 1. Create RBAC for the ingress gateway to access TLS secrets
 
-   The ingress gateway ServiceAccount needs permission to read secrets for TLS certificates:
+   The ingress gateway pods use the `default` ServiceAccount and need permission to read secrets for TLS certificates:
 
    ```bash
    cat <<EOF | oc apply -f -
@@ -238,10 +233,12 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
      name: istio-ingressgateway-sds
    subjects:
    - kind: ServiceAccount
-     name: istio-ingressgateway
+     name: default
      namespace: istio-system
    EOF
    ```
+   
+   **Critical**: This RBAC configuration is essential. Without it, the ingress gateway pods cannot access the TLS certificates stored in Kubernetes secrets, causing connection resets and unhealthy ALB targets. The istiod logs will show errors like: `"attempted to access unauthorized certificates: default/istio-system is not authorized to read secrets"`
 
 1. Wait for the ingress gateway to be ready
 
@@ -286,8 +283,10 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 1. Enable automatic sidecar injection for the namespace
 
    ```bash
-   oc label namespace grpc-demo istio-injection=enabled
+   oc label namespace grpc-demo istio.io/rev=default
    ```
+   
+   **Note**: Service Mesh 3 uses revision-based injection with the label `istio.io/rev=default` instead of the legacy `istio-injection=enabled` label.
 
 1. Deploy the gRPC health checking server
 
@@ -301,7 +300,7 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
      name: grpc-server
      namespace: grpc-demo
    spec:
-     replicas: 2
+     replicas: 3
      selector:
        matchLabels:
          app: grpc-server
@@ -309,8 +308,6 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
        metadata:
          labels:
            app: grpc-server
-         annotations:
-           sidecar.istio.io/inject: "true"
        spec:
          containers:
          - name: grpc-server
@@ -320,6 +317,7 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
            ports:
            - containerPort: 5000
              name: grpc
+             protocol: TCP
    ---
    apiVersion: v1
    kind: Service
@@ -327,7 +325,6 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
      name: grpc-server
      namespace: grpc-demo
    spec:
-     type: ClusterIP
      selector:
        app: grpc-server
      ports:
@@ -337,6 +334,8 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
        protocol: TCP
    EOF
    ```
+   
+   **Note**: Since the namespace has the `istio.io/rev=default` label, pods will automatically get the Istio sidecar injected without needing the `sidecar.istio.io/inject: "true"` annotation.
 
 1. Verify the pods are running with Istio sidecars
 
@@ -364,28 +363,32 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 
    ```bash
    cat <<EOF | oc apply -f -
-   apiVersion: networking.istio.io/v1beta1
+   apiVersion: networking.istio.io/v1
    kind: Gateway
    metadata:
      name: grpc-gateway
      namespace: istio-system
    spec:
      selector:
-       istio: ingressgateway
+       app: istio-ingressgateway
      servers:
      - port:
-         number: 443
-         name: https-grpc
+         number: 8443
+         name: https
          protocol: HTTPS
-       hosts:
-       - "*"
        tls:
          mode: SIMPLE
          credentialName: istio-ingressgateway-certs
+       hosts:
+       - "$GRPC_HOSTNAME"
+       - "*"
    EOF
    ```
 
-   **Note**: Use `HTTPS` protocol, not `GRPC`. Istio's validation rejects `GRPC` protocol with TLS settings. The ALB handles gRPC protocol negotiation, and Envoy processes it as HTTP/2.
+   **Important Configuration Notes**:
+   - Port `8443` matches the ingress gateway container port (not the service port 443)
+   - The wildcard host `"*"` is required for ALB health checks which don't send SNI (Server Name Indication)
+   - Use `HTTPS` protocol, not `GRPC`. Istio's validation rejects `GRPC` protocol with TLS settings. The ALB handles gRPC protocol negotiation, and Envoy processes it as HTTP/2.
 
 1. Create VirtualServices for health checks and application traffic
 
@@ -393,47 +396,35 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
 
    ```bash
    cat <<EOF | oc apply -f -
-   apiVersion: networking.istio.io/v1beta1
+   apiVersion: networking.istio.io/v1
    kind: VirtualService
    metadata:
-     name: grpc-health-check
+     name: grpc-vs
      namespace: grpc-demo
    spec:
      hosts:
+     - "$GRPC_HOSTNAME"
      - "*"
      gateways:
      - istio-system/grpc-gateway
      http:
      - match:
        - uri:
-           exact: /grpc.health.v1.Health/Check
+           prefix: "/grpc.health.v1.Health"
        route:
        - destination:
            host: grpc-server.grpc-demo.svc.cluster.local
            port:
              number: 5000
-   ---
-   apiVersion: networking.istio.io/v1beta1
-   kind: VirtualService
-   metadata:
-     name: grpc-app
-     namespace: grpc-demo
-   spec:
-     hosts:
-     - "$GRPC_HOSTNAME"
-     gateways:
-     - istio-system/grpc-gateway
-     http:
-     - match:
-       - uri:
-           prefix: /
-       route:
+     - route:
        - destination:
            host: grpc-server.grpc-demo.svc.cluster.local
            port:
              number: 5000
    EOF
    ```
+   
+   **Important Configuration Note**: The wildcard host `"*"` is required in addition to `$GRPC_HOSTNAME` to handle ALB health check requests that don't include the Host header or SNI.
 
 ## Configure AWS Application Load Balancer
 
@@ -654,6 +645,9 @@ This is the critical step where we configure ALB with native gRPC support.
      --health-check-protocol HTTPS \
      --health-check-port traffic-port \
      --health-check-path /grpc.health.v1.Health/Check \
+     --health-check-interval-seconds 30 \
+     --healthy-threshold-count 2 \
+     --unhealthy-threshold-count 2 \
      --matcher GrpcCode=0-99 \
      --region $REGION \
      --query 'TargetGroups[0].TargetGroupArn' \
@@ -664,20 +658,27 @@ This is the critical step where we configure ALB with native gRPC support.
 
    **Why this works**: 
    - Using `--target-type ip` allows AWS to accept `GRPC` as the protocol version. If you use `--target-type alb` or target an NLB by ARN, AWS forces HTTP2 protocol, which causes protocol mismatch errors.
-   - The `GrpcCode=0-99` matcher accepts any valid gRPC status code. Using `GrpcCode=0` (only OK/SERVING) may cause health check failures if the backend returns other codes during startup or under certain conditions.
+   - The `GrpcCode=0-99` matcher accepts any valid gRPC status code (0-99). Using `GrpcCode=0` (only OK/SERVING) may cause health check failures if the backend returns other codes during startup or under certain conditions. The permissive matcher is recommended for production reliability.
 
 1. Register the Istio NLB IP addresses as targets
 
    ```bash
-   # Convert the NLB IPs to target format and register them
+   # Convert the NLB IPs to target format and register them as a single command
+   # Each IP needs to be a separate --targets argument
+   TARGETS=""
    for ip in $NLB_IPS; do
-     aws elbv2 register-targets \
-       --target-group-arn $TG_ARN \
-       --targets Id=$ip,Port=443 \
-       --region $REGION
-     echo "Registered target: $ip:443"
+     TARGETS="$TARGETS Id=$ip,Port=443"
    done
+   
+   aws elbv2 register-targets \
+     --target-group-arn $TG_ARN \
+     --targets $TARGETS \
+     --region $REGION
+   
+   echo "Registered NLB IPs as targets"
    ```
+   
+   **Note**: Register all IPs in a single command to avoid race conditions during target health checks.
 
 1. Create HTTPS listener on the ALB
 
@@ -828,25 +829,17 @@ nslookup $GRPC_HOSTNAME
 1. Test with grpcurl
 
    ```bash
-   grpcurl -v -insecure \
-     -import-path /tmp \
-     -proto health.proto \
-     -d '{}' \
-     $GRPC_HOSTNAME:443 \
-     grpc.health.v1.Health/Check
+   grpcurl -import-path /tmp -proto health.proto -d '{"service":""}' $GRPC_HOSTNAME:443 grpc.health.v1.Health/Check
    ```
 
    Expected output:
    ```
-   Response contents:
    {
      "status": "SERVING"
    }
-   
-   Response trailers received:
-   (empty)
-   Sent 1 request and received 1 response
    ```
+   
+   **Note**: The `-insecure` flag is not needed when using a valid ACM certificate. Use `-d '{"service":""}'` to pass an empty service name to the health check.
 
 ## Add AWS WAF (Optional)
 
@@ -938,13 +931,10 @@ Now that gRPC is working, you can add WAF protection:
 1. Test that gRPC still works with WAF enabled
 
    ```bash
-   grpcurl -v -insecure \
-     -import-path /tmp \
-     -proto health.proto \
-     -d '{}' \
-     $GRPC_HOSTNAME:443 \
-     grpc.health.v1.Health/Check
+   grpcurl -import-path /tmp -proto health.proto -d '{"service":""}' $GRPC_HOSTNAME:443 grpc.health.v1.Health/Check
    ```
+   
+   You should still receive `{"status": "SERVING"}`, confirming WAF is not blocking legitimate gRPC traffic.
 
 ## Verification Checklist
 
@@ -1250,6 +1240,32 @@ To remove all resources created in this guide:
    ```bash
    oc delete subscription servicemeshoperator3 -n openshift-operators
    ```
+
+## Critical Configuration Summary
+
+This deployment requires several specific configurations that are **not obvious** and are critical for success:
+
+### 1. Gateway Proxy Injection (Not Sidecar)
+The ingress gateway deployment **must** use the `inject.istio.io/templates: gateway` annotation. Without this, pods will have sidecar proxies (2/2 containers) instead of gateway proxies and will not function as an ingress gateway.
+
+### 2. RBAC for TLS Certificate Access
+The ingress gateway pods use the `default` ServiceAccount and require explicit RBAC permissions to read TLS secrets. Without the Role and RoleBinding:
+- istiod logs will show: `"attempted to access unauthorized certificates"`
+- TLS handshake will fail
+- Connection will reset
+- ALB targets will remain unhealthy
+
+### 3. Wildcard Host for Health Checks
+Both the Gateway and VirtualService must include the wildcard host `"*"` in addition to the specific hostname. ALB health checks do not send SNI (Server Name Indication) or Host headers, so without the wildcard, health checks fail even though the configuration looks correct.
+
+### 4. Port 8443 in Gateway Configuration
+The Gateway `port.number` must be `8443` (the container port) not `443` (the service port). Using `443` causes routing failures.
+
+### 5. GrpcCode=0-99 Health Check Matcher
+Use `GrpcCode=0-99` instead of `GrpcCode=0` for production reliability. The permissive matcher accepts any valid gRPC status code, preventing health check failures during startup or when backends return non-zero status codes under normal operation.
+
+### 6. WAF Association Timing
+After creating a WAF Web ACL, wait 30-60 seconds before associating it with the ALB. Immediate association may fail with `WAFUnavailableEntityException` due to AWS service synchronization delays.
 
 ## Summary
 
