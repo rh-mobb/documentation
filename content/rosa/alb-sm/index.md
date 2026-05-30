@@ -69,6 +69,8 @@ export GRPC_HOSTNAME=grpc.$DOMAIN
 
 Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for proper gRPC handling. Service Mesh 3 uses the `sailoperator.io` API (based on upstream Istio) and provides a simpler installation experience compared to Service Mesh 2.
 
+You can install the operator from **Software Catalog** (formerly known as **OperatorHub**) on console, or follow this section to install it using CLI.
+
 1. Install the Red Hat OpenShift Service Mesh 3 Operator
 
    ```bash
@@ -895,31 +897,31 @@ This is the critical step where we configure ALB with native gRPC support.
    
    **Note**: The `-insecure` flag is not needed when using a valid ACM certificate. Use `-d '{"service":""}'` to pass an empty service name to the health check.
 
-  For additional validation, run the command with `-v` to confirm that the response is handled as gRPC traffic through Envoy:
-
-  ```bash
-  grpcurl -v \
-    -import-path /tmp \
-    -proto health.proto \
-    -d '{"service":""}' \
-    "$GRPC_HOSTNAME:443" \
-    grpc.health.v1.Health/Check
-  ```
-
-  Expected indicators:
-
-  ```text
-  Response headers received:
-  content-type: application/grpc
-  server: istio-envoy
-
-  Response contents:
-  {
-    "status": "SERVING"
-  }
-  ```
-
-This confirms that traffic reaches the public ALB, is forwarded through the gRPC target group to the private Istio NLB IP targets, and is served by the Istio Envoy ingress gateway.
+   For additional validation, run the command with `-v` to confirm that the response is handled as gRPC traffic through Envoy:
+ 
+   ```bash
+   grpcurl -v \
+     -import-path /tmp \
+     -proto health.proto \
+     -d '{"service":""}' \
+     "$GRPC_HOSTNAME:443" \
+     grpc.health.v1.Health/Check
+   ```
+ 
+   Expected indicators:
+ 
+   ```text
+   Response headers received:
+   content-type: application/grpc
+   server: istio-envoy
+ 
+   Response contents:
+   {
+     "status": "SERVING"
+   }
+   ```
+ 
+   This confirms that traffic reaches the public ALB, is forwarded through the gRPC target group to the private Istio NLB IP targets, and is served by the Istio Envoy ingress gateway.
 
 ## Add AWS WAF (Optional)
 
@@ -1032,20 +1034,20 @@ Now that gRPC is working, you can add WAF protection:
       --output table
     ```
 
-  Expected output:
-
-  ```text
-  ------------------------------------
-  |       DescribeTargetHealth       |
-  +---------------+------+-----------+
-  |  10.10.46.176 |  443 |  healthy  |
-  |  10.10.31.253 |  443 |  healthy  |
-  |  10.10.9.236  |  443 |  healthy  |
-  +---------------+------+-----------+
-  
-  WebACL:
-  Name: grpc-waf
-  ```
+   Expected output:
+ 
+   ```text
+   ------------------------------------
+   |       DescribeTargetHealth       |
+   +---------------+------+-----------+
+   |  10.10.46.176 |  443 |  healthy  |
+   |  10.10.31.253 |  443 |  healthy  |
+   |  10.10.9.236  |  443 |  healthy  |
+   +---------------+------+-----------+
+   
+   WebACL:
+   Name: grpc-waf
+   ```
 
 ## Verification Checklist
 
@@ -1366,12 +1368,12 @@ To remove all resources created in this guide:
 
 1. Delete ACM certificate, if created by this guide
 
-  ```bash
-   aws acm delete-certificate \
-     --certificate-arn "$CERT_ARN" \
-     --region "$REGION"
-  ```
-
+   ```bash
+    aws acm delete-certificate \
+      --certificate-arn "$CERT_ARN" \
+      --region "$REGION"
+   ```
+ 
 1. Delete ACM validation CNAME record, if created by this guide
 
     ```bash
