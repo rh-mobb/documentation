@@ -27,7 +27,7 @@ This architecture is the optimal solution for gRPC on ROSA when WAF is required 
 
 **Production Ready**: All components are supported enterprise solutions - AWS ALB, Red Hat OpenShift Service Mesh, and ROSA.
 
-**End-to-End HTTP/2**: The architecture preserves HTTP/2 protocol characteristics required by gRPC, including trailers, bidirectional streaming, and proper content-type handling.
+**HTTP/2-aware gRPC path**: The architecture preserves the protocol behavior required by gRPC, including HTTP/2, trailers, bidirectional streaming, and proper content-type handling.
 
 ## Architecture Overview
 
@@ -255,21 +255,52 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
      echo "Still waiting for NLB..."
      sleep 10
    done
-   
+ 
    NLB_DNS=$(oc get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
    echo "Istio NLB DNS: $NLB_DNS"
-   
-   # Wait for DNS to propagate and return IPs (can take 30-60 seconds)
+ 
+   # Get the NLB ARN from the DNS name
+   NLB_ARN=$(aws elbv2 describe-load-balancers \
+     --region "$REGION" \
+     --query "LoadBalancers[?DNSName=='$NLB_DNS'].LoadBalancerArn | [0]" \
+     --output text)
+ 
+   echo "Istio NLB ARN: $NLB_ARN"
+ 
+   # Try DNS resolution first
    echo "Waiting for NLB DNS to resolve..."
-   until NLB_IPS=$(dig +short $NLB_DNS | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$') && [ -n "$NLB_IPS" ]; do
+   until NLB_IPS=($(dig +short "$NLB_DNS" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')) && [ "${#NLB_IPS[@]}" -gt 0 ]; do
      echo "DNS not resolved yet, waiting..."
      sleep 10
    done
-   
-   echo "Istio NLB IPs:"
-   echo "$NLB_IPS"
+ 
+   echo "Istio NLB IPs from DNS:"
+   printf '  %s\n' "${NLB_IPS[@]}"
    ```
-
+ 
+   **Note**: DNS resolution for an NLB may not always return every zonal NLB IP immediately. If the command above returns fewer IPs than expected for your Availability Zone count, use the NLB network interfaces as the source of truth:
+ 
+   ```bash
+   # Get the NLB name from the ARN
+   NLB_NAME=$(echo "$NLB_ARN" | awk -F'loadbalancer/' '{print $2}')
+ 
+   # Get the private IPs of the NLB network interfaces.
+   NLB_IPS=($(aws ec2 describe-network-interfaces \
+     --region "$REGION" \
+     --filters "Name=description,Values=ELB $NLB_NAME" \
+     --query 'NetworkInterfaces[*].PrivateIpAddress' \
+     --output text))
+ 
+   echo "NLB IPs from network interfaces:"
+   printf '  %s\n' "${NLB_IPS[@]}"
+ 
+   aws ec2 describe-network-interfaces \
+     --region "$REGION" \
+     --filters "Name=description,Values=ELB $NLB_NAME" \
+     --query 'NetworkInterfaces[*].{AZ:AvailabilityZone,Subnet:SubnetId,PrivateIP:PrivateIpAddress}' \
+     --output table
+   ```
+ 
    Save these IP addresses - you'll need them for the ALB target group configuration.
 
 ## Deploy a Sample gRPC Application
@@ -357,6 +388,8 @@ Red Hat OpenShift Service Mesh 3 provides the Envoy proxy layer needed for prope
    oc create secret tls istio-ingressgateway-certs --cert=/tmp/tls.crt --key=/tmp/tls.key -n istio-system
    ```
 
+   Note that this Kubernetes TLS secret is used by the Istio ingress gateway for target-side TLS. It does not replace the ACM certificate required by the public ALB HTTPS listener.
+
 1. Create the Istio Gateway
 
    **Important**: The Gateway must be created in the `istio-system` namespace (where the ingress gateway pods run) for the TLS configuration to be properly applied in Service Mesh 3.
@@ -434,202 +467,220 @@ This is the critical step where we configure ALB with native gRPC support.
 
    **Option A: Use an existing validated certificate** (faster)
    
-   ```bash
-   # List existing issued certificates
-   aws acm list-certificates --region $REGION --certificate-statuses ISSUED
-   
-   # Set the ARN of an existing certificate
-   export CERT_ARN=<your-existing-certificate-arn>
-   ```
+     ```bash
+     # List existing issued certificates
+     aws acm list-certificates --region $REGION --certificate-statuses ISSUED
+     
+     # Set the ARN of an existing certificate
+     export CERT_ARN=<your-existing-certificate-arn>
+     ```
 
    **Option B: Request a new certificate**
    
-   ```bash
-   # Request a new certificate
-   CERT_ARN=$(aws acm request-certificate \
-     --domain-name "*.$DOMAIN" \
-     --validation-method DNS \
-     --region $REGION \
-     --query CertificateArn \
-     --output text)
-   
-   echo "Certificate ARN: $CERT_ARN"
-   ```
+      ```bash
+      # Request a new certificate
+      CERT_ARN=$(aws acm request-certificate \
+        --domain-name "$GRPC_HOSTNAME" \
+        --validation-method DNS \
+        --region $REGION \
+        --query CertificateArn \
+        --output text)
+      
+      echo "Certificate ARN: $CERT_ARN"
+      ```
 
 1. Validate the certificate via DNS (only if you requested a new certificate)
 
    Get the DNS validation record:
    
-   ```bash
-   # Get validation CNAME record details
-   aws acm describe-certificate \
-     --certificate-arn $CERT_ARN \
-     --region $REGION \
-     --query 'Certificate.DomainValidationOptions[0].ResourceRecord.{Name:Name,Type:Type,Value:Value}' \
-     --output table
-   
-   # Store the validation record details
-   VALIDATION_NAME=$(aws acm describe-certificate \
-     --certificate-arn $CERT_ARN \
-     --region $REGION \
-     --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Name' \
-     --output text)
-   
-   VALIDATION_VALUE=$(aws acm describe-certificate \
-     --certificate-arn $CERT_ARN \
-     --region $REGION \
-     --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Value' \
-     --output text)
-   ```
+      ```bash
+      # Get validation CNAME record details
+      aws acm describe-certificate \
+        --certificate-arn $CERT_ARN \
+        --region $REGION \
+        --query 'Certificate.DomainValidationOptions[0].ResourceRecord.{Name:Name,Type:Type,Value:Value}' \
+        --output table
+      
+      # Store the validation record details
+      VALIDATION_NAME=$(aws acm describe-certificate \
+        --certificate-arn $CERT_ARN \
+        --region $REGION \
+        --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Name' \
+        --output text)
+      
+      VALIDATION_VALUE=$(aws acm describe-certificate \
+        --certificate-arn $CERT_ARN \
+        --region $REGION \
+        --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Value' \
+        --output text)
+      ```
 
    Add the CNAME record to Route 53:
+
+   **Note**: If `$DOMAIN` is a subdomain, you do not necessarily need a separate hosted zone for that exact subdomain. If DNS for the subdomain is managed in a parent Route 53 hosted zone, create the ACM validation CNAME in the parent hosted zone instead.
    
-   ```bash
-   # Get or create your hosted zone
-   HOSTED_ZONE_ID=$(aws route53 list-hosted-zones \
-     --query "HostedZones[?Name=='${DOMAIN}.'].Id" \
-     --output text | cut -d'/' -f3)
+   For example, if `GRPC_HOSTNAME=grpc.test.example.com` and the Route 53 hosted zone is `example.com`, use the `example.com` hosted zone to create the validation CNAME for `grpc.test.example.com`.
    
-   # If the hosted zone doesn't exist, create it
-   if [ -z "$HOSTED_ZONE_ID" ]; then
-     echo "Creating hosted zone for domain: $DOMAIN"
-     HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
-       --name $DOMAIN \
-       --caller-reference $(date +%s) \
-       --query 'HostedZone.Id' \
-       --output text | cut -d'/' -f3)
-     
-     # If this is a subdomain (e.g., myapp.example.com), you need to set up NS delegation
-     # Get the nameservers for the new zone
-     NAMESERVERS=$(aws route53 list-resource-record-sets \
-       --hosted-zone-id $HOSTED_ZONE_ID \
-       --query 'ResourceRecordSets[?Type==`NS`].ResourceRecords[].Value' \
-       --output text | tr '\t' '\n')
-     
-     echo "Hosted zone created. If this is a subdomain, add these NS records to the parent domain:"
-     echo "$NAMESERVERS"
-     echo ""
-     echo "Example: If your domain is 'myapp.example.com' and parent is 'example.com',"
-     echo "add NS records in the 'example.com' zone pointing to the above nameservers."
-     echo ""
-     # If you control the parent zone, automate NS delegation:
-     # PARENT_DOMAIN=$(echo $DOMAIN | sed 's/^[^.]*\.//')
-     # PARENT_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='${PARENT_DOMAIN}.'].Id" --output text | cut -d'/' -f3)
-     # if [ -n "$PARENT_ZONE_ID" ]; then
-     #   echo "Setting up NS delegation in parent zone..."
-     #   # Create NS delegation JSON and apply
-     # fi
-   fi
-   
-   echo "Hosted Zone ID: $HOSTED_ZONE_ID"
-   
-   # Create the validation CNAME record
-   cat <<EOF > /tmp/acm-validation.json
-   {
-     "Changes": [
-       {
-         "Action": "UPSERT",
-         "ResourceRecordSet": {
-           "Name": "$VALIDATION_NAME",
-           "Type": "CNAME",
-           "TTL": 300,
-           "ResourceRecords": [
-             {
-               "Value": "$VALIDATION_VALUE"
-             }
-           ]
-         }
-       }
-     ]
-   }
-   EOF
-   
-   aws route53 change-resource-record-sets \
-     --hosted-zone-id $HOSTED_ZONE_ID \
-     --change-batch file:///tmp/acm-validation.json
-   ```
+      ```bash
+      # Set this to the Route 53 hosted zone that manages your DNS.
+      # This may be the same as DOMAIN, or a parent domain such as example.com.
+
+      # Example:
+      # export DOMAIN=test.example.com
+      # export GRPC_HOSTNAME=grpc.$DOMAIN
+      # export ROUTE53_ZONE_DOMAIN=example.com
+      
+        ROUTE53_ZONE_DOMAIN=${ROUTE53_ZONE_DOMAIN:-$DOMAIN}
+
+        HOSTED_ZONE_ID=$(aws route53 list-hosted-zones \
+          --query "HostedZones[?Name=='${ROUTE53_ZONE_DOMAIN}.'].Id" \
+          --output text | cut -d'/' -f3)
+
+        echo "Using hosted zone: $ROUTE53_ZONE_DOMAIN ($HOSTED_ZONE_ID)"
+      
+      # If the hosted zone doesn't exist, create it
+      if [ -z "$HOSTED_ZONE_ID" ]; then
+        echo "Creating hosted zone for domain: $DOMAIN"
+        HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
+          --name $DOMAIN \
+          --caller-reference $(date +%s) \
+          --query 'HostedZone.Id' \
+          --output text | cut -d'/' -f3)
+        
+        # If this is a subdomain (e.g., myapp.example.com), you need to set up NS delegation
+        # Get the nameservers for the new zone
+        NAMESERVERS=$(aws route53 list-resource-record-sets \
+          --hosted-zone-id $HOSTED_ZONE_ID \
+          --query 'ResourceRecordSets[?Type==`NS`].ResourceRecords[].Value' \
+          --output text | tr '\t' '\n')
+        
+        echo "Hosted zone created. If this is a subdomain, add these NS records to the parent domain:"
+        echo "$NAMESERVERS"
+        echo ""
+        echo "Example: If your domain is 'myapp.example.com' and parent is 'example.com',"
+        echo "add NS records in the 'example.com' zone pointing to the above nameservers."
+        echo ""
+        # If you control the parent zone, automate NS delegation:
+        # PARENT_DOMAIN=$(echo $DOMAIN | sed 's/^[^.]*\.//')
+        # PARENT_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='${PARENT_DOMAIN}.'].Id" --output text | cut -d'/' -f3)
+        # if [ -n "$PARENT_ZONE_ID" ]; then
+        #   echo "Setting up NS delegation in parent zone..."
+        #   # Create NS delegation JSON and apply
+        # fi
+      fi
+      
+      echo "Hosted Zone ID: $HOSTED_ZONE_ID"
+      
+      # Create the validation CNAME record
+      cat <<EOF > /tmp/acm-validation.json
+      {
+        "Changes": [
+          {
+            "Action": "UPSERT",
+            "ResourceRecordSet": {
+              "Name": "$VALIDATION_NAME",
+              "Type": "CNAME",
+              "TTL": 300,
+              "ResourceRecords": [
+                {
+                  "Value": "$VALIDATION_VALUE"
+                }
+              ]
+            }
+          }
+        ]
+      }
+      EOF
+      
+      aws route53 change-resource-record-sets \
+        --hosted-zone-id $HOSTED_ZONE_ID \
+        --change-batch file:///tmp/acm-validation.json
+      ```
 
    Wait for certificate validation to complete:
    
    **Important**: If you created a new hosted zone for a subdomain, ensure NS delegation is set up in the parent domain before continuing. ACM cannot validate the certificate until the DNS records are resolvable.
    
-   ```bash
-   # Verify DNS resolution of the validation record
-   dig +short $VALIDATION_NAME CNAME
-   # Should return the validation value
-   
-   echo "Waiting for certificate validation (this can take 5-30 minutes)..."
-   aws acm wait certificate-validated \
-     --certificate-arn $CERT_ARN \
-     --region $REGION
-   
-   echo "Certificate validated!"
-   
-   # Verify status is ISSUED
-   aws acm describe-certificate \
-     --certificate-arn $CERT_ARN \
-     --region $REGION \
-     --query 'Certificate.Status' \
-     --output text
-   ```
+      ```bash
+      # Verify DNS resolution of the validation record
+      dig +short $VALIDATION_NAME CNAME
+      # Should return the validation value
+      
+      echo "Waiting for certificate validation (this can take 5-30 minutes)..."
+      aws acm wait certificate-validated \
+        --certificate-arn $CERT_ARN \
+        --region $REGION
+      
+      echo "Certificate validated!"
+      
+      # Verify status is ISSUED
+      aws acm describe-certificate \
+        --certificate-arn $CERT_ARN \
+        --region $REGION \
+        --query 'Certificate.Status' \
+        --output text
+      ```
    
    Expected output: `ISSUED`
 
 1. Create a security group for the ALB
 
-   ```bash
-   ALB_SG=$(aws ec2 create-security-group \
-     --group-name grpc-alb-sg \
-     --description "Security group for gRPC ALB" \
-     --vpc-id $VPC_ID \
-     --region $REGION \
-     --query 'GroupId' \
-     --output text)
-   
-   # Allow HTTPS from anywhere
-   aws ec2 authorize-security-group-ingress \
-     --group-id $ALB_SG \
-     --protocol tcp \
-     --port 443 \
-     --cidr 0.0.0.0/0 \
-     --region $REGION
-   ```
+      ```bash
+      ALB_SG=$(aws ec2 create-security-group \
+        --group-name grpc-alb-sg \
+        --description "Security group for gRPC ALB" \
+        --vpc-id $VPC_ID \
+        --region $REGION \
+        --query 'GroupId' \
+        --output text)
+      
+      # Allow HTTPS from anywhere
+      aws ec2 authorize-security-group-ingress \
+        --group-id $ALB_SG \
+        --protocol tcp \
+        --port 443 \
+        --cidr 0.0.0.0/0 \
+        --region $REGION
+      ```
 
 1. Create the Application Load Balancer
 
-   ```bash
-   # Get public subnet IDs (ensure at least 2 subnets in different AZs)
-   PUBLIC_SUBNETS=$(aws ec2 describe-subnets \
-     --filters "Name=vpc-id,Values=$VPC_ID" "Name=tag:Name,Values=*public*" \
-     --query 'Subnets[*].SubnetId' \
-     --output text \
-     --region $REGION)
+     ```bash
+     # Get public subnet IDs as an array.
+     # Ensure this returns at least 2 subnets in different Availability Zones.
+     PUBLIC_SUBNETS=($(aws ec2 describe-subnets \
+       --filters "Name=vpc-id,Values=$VPC_ID" "Name=tag:Name,Values=*public*" \
+       --query 'Subnets[*].SubnetId' \
+       --output text \
+       --region "$REGION"))
    
-   # Convert space-separated list to comma-separated for --subnets parameter
-   PUBLIC_SUBNET_IDS=$(echo $PUBLIC_SUBNETS | tr ' ' ',')
+     echo "Public subnets:"
+     printf '  %s\n' "${PUBLIC_SUBNETS[@]}"
    
-   ALB_ARN=$(aws elbv2 create-load-balancer \
-     --name grpc-alb \
-     --subnets $(echo $PUBLIC_SUBNETS) \
-     --security-groups $ALB_SG \
-     --scheme internet-facing \
-     --type application \
-     --ip-address-type ipv4 \
-     --region $REGION \
-     --query 'LoadBalancers[0].LoadBalancerArn' \
-     --output text)
+     # Create the Application Load Balancer
+     ALB_ARN=$(aws elbv2 create-load-balancer \
+       --name grpc-alb \
+       --subnets "${PUBLIC_SUBNETS[@]}" \
+       --security-groups "$ALB_SG" \
+       --scheme internet-facing \
+       --type application \
+       --ip-address-type ipv4 \
+       --region "$REGION" \
+       --query 'LoadBalancers[0].LoadBalancerArn' \
+       --output text)
    
-   echo "ALB ARN: $ALB_ARN"
+     echo "ALB ARN: $ALB_ARN"
    
-   # Get ALB DNS name
-   ALB_DNS=$(aws elbv2 describe-load-balancers \
-     --load-balancer-arns $ALB_ARN \
-     --query 'LoadBalancers[0].DNSName' \
-     --output text)
+     # Get ALB DNS name
+     ALB_DNS=$(aws elbv2 describe-load-balancers \
+       --load-balancer-arns "$ALB_ARN" \
+       --region "$REGION" \
+       --query 'LoadBalancers[0].DNSName' \
+       --output text)
    
-   echo "ALB DNS: $ALB_DNS"
-   ```
-
+     echo "ALB DNS: $ALB_DNS"
+     ```
+ 
 1. Create the gRPC target group with IP targets
 
    **This is the key configuration**: Use `--target-type ip` and `--protocol-version GRPC`:
@@ -662,23 +713,27 @@ This is the critical step where we configure ALB with native gRPC support.
 
 1. Register the Istio NLB IP addresses as targets
 
-   ```bash
-   # Convert the NLB IPs to target format and register them as a single command
-   # Each IP needs to be a separate --targets argument
-   TARGETS=""
-   for ip in $NLB_IPS; do
-     TARGETS="$TARGETS Id=$ip,Port=443"
-   done
+      ```bash
+      # Convert the NLB IPs to target format and register them as a single command.
+      # Each IP must be passed as a separate --targets argument.
+      TARGET_ARGS=()
+  
+      for ip in "${NLB_IPS[@]}"; do
+        TARGET_ARGS+=("Id=$ip,Port=443")
+      done
+  
+      echo "Registering targets:"
+      printf '  %s\n' "${TARGET_ARGS[@]}"
+  
+      aws elbv2 register-targets \
+        --target-group-arn "$TG_ARN" \
+        --targets "${TARGET_ARGS[@]}" \
+        --region "$REGION"
+  
+      echo "Registered NLB IPs as targets"
+      ```
    
-   aws elbv2 register-targets \
-     --target-group-arn $TG_ARN \
-     --targets $TARGETS \
-     --region $REGION
-   
-   echo "Registered NLB IPs as targets"
-   ```
-   
-   **Note**: Register all IPs in a single command to avoid race conditions during target health checks.
+   **Note**: Register all NLB IPs in a single command so the target group health state converges consistently. Passing each target as a separate array element also avoids shell word-splitting issues in zsh.
 
 1. Create HTTPS listener on the ALB
 
@@ -726,75 +781,74 @@ This is the critical step where we configure ALB with native gRPC support.
 
 1. Create or find the hosted zone for your domain
 
-   ```bash
-   # Check if hosted zone already exists
-   HOSTED_ZONE_ID=$(aws route53 list-hosted-zones \
-     --query "HostedZones[?Name=='${DOMAIN}.'].Id" \
-     --output text | cut -d'/' -f3)
-   
-   if [ -z "$HOSTED_ZONE_ID" ]; then
-     echo "Creating hosted zone for domain: $DOMAIN"
-     HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
-       --name $DOMAIN \
-       --caller-reference $(date +%s) \
-       --query 'HostedZone.Id' \
+     ```bash
+     # Check if hosted zone already exists
+     HOSTED_ZONE_ID=$(aws route53 list-hosted-zones \
+       --query "HostedZones[?Name=='${DOMAIN}.'].Id" \
        --output text | cut -d'/' -f3)
      
-     echo "Created hosted zone: $HOSTED_ZONE_ID"
-     
-     # Get the name servers for delegation
-     echo ""
-     echo "Name servers for this hosted zone:"
-     aws route53 get-hosted-zone \
-       --id $HOSTED_ZONE_ID \
-       --query 'DelegationSet.NameServers' \
-       --output table
-     
-     echo ""
-     echo "If this is a subdomain, you need to create NS records in the parent domain."
-     echo "Example: If your domain is 'test.example.com' and parent is 'example.com',"
-     echo "create NS records in 'example.com' pointing to the name servers above."
-   else
-     echo "Using existing hosted zone: $HOSTED_ZONE_ID for domain: $DOMAIN"
-   fi
-   ```
+      if [ -z "$HOSTED_ZONE_ID" ]; then
+        echo "Creating hosted zone for domain: $ROUTE53_ZONE_DOMAIN"
+        HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
+          --name "$ROUTE53_ZONE_DOMAIN" \
+          --caller-reference $(date +%s) \
+          --query 'HostedZone.Id' \
+          --output text | cut -d'/' -f3)
+       
+       echo "Created hosted zone: $HOSTED_ZONE_ID"
+       
+       # Get the name servers for delegation
+       echo ""
+       echo "Name servers for this hosted zone:"
+       aws route53 get-hosted-zone \
+         --id $HOSTED_ZONE_ID \
+         --query 'DelegationSet.NameServers' \
+         --output table
+       
+       echo ""
+       echo "If this is a subdomain, you need to create NS records in the parent domain."
+       echo "Example: If your domain is 'test.example.com' and parent is 'example.com',"
+       echo "create NS records in 'example.com' pointing to the name servers above."
+     else
+       echo "Using existing hosted zone: $HOSTED_ZONE_ID for domain: $DOMAIN"
+     fi
+     ```
 
 1. Create a DNS record pointing to your ALB
 
-   ```bash
-
-cat <<EOF > /tmp/dns-record.json
-{
-  "Changes": [
+    ```bash
+    cat <<EOF > /tmp/dns-record.json
     {
-      "Action": "UPSERT",
-      "ResourceRecordSet": {
-        "Name": "$GRPC_HOSTNAME",
-        "Type": "CNAME",
-        "TTL": 300,
-        "ResourceRecords": [
-          {
-            "Value": "$ALB_DNS"
+      "Changes": [
+        {
+          "Action": "UPSERT",
+          "ResourceRecordSet": {
+            "Name": "$GRPC_HOSTNAME",
+            "Type": "CNAME",
+            "TTL": 300,
+            "ResourceRecords": [
+              {
+                "Value": "$ALB_DNS"
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     }
-  ]
-}
-EOF
-
-aws route53 change-resource-record-sets \
-  --hosted-zone-id $HOSTED_ZONE_ID \
-  --change-batch file:///tmp/dns-record.json
-```
-
-Wait for DNS propagation:
-
-```bash
-sleep 30
-nslookup $GRPC_HOSTNAME
-```
-
+    EOF
+    
+    aws route53 change-resource-record-sets \
+      --hosted-zone-id $HOSTED_ZONE_ID \
+      --change-batch file:///tmp/dns-record.json
+    ```
+    
+    Wait for DNS propagation:
+    
+    ```bash
+    sleep 30
+    nslookup $GRPC_HOSTNAME
+    ```
+    
 ## Test gRPC Connectivity
 
 1. Create the gRPC health check proto definition
@@ -840,6 +894,32 @@ nslookup $GRPC_HOSTNAME
    ```
    
    **Note**: The `-insecure` flag is not needed when using a valid ACM certificate. Use `-d '{"service":""}'` to pass an empty service name to the health check.
+
+  For additional validation, run the command with `-v` to confirm that the response is handled as gRPC traffic through Envoy:
+
+  ```bash
+  grpcurl -v \
+    -import-path /tmp \
+    -proto health.proto \
+    -d '{"service":""}' \
+    "$GRPC_HOSTNAME:443" \
+    grpc.health.v1.Health/Check
+  ```
+
+  Expected indicators:
+
+  ```text
+  Response headers received:
+  content-type: application/grpc
+  server: istio-envoy
+
+  Response contents:
+  {
+    "status": "SERVING"
+  }
+  ```
+
+This confirms that traffic reaches the public ALB, is forwarded through the gRPC target group to the private Istio NLB IP targets, and is served by the Istio Envoy ingress gateway.
 
 ## Add AWS WAF (Optional)
 
@@ -936,6 +1016,37 @@ Now that gRPC is working, you can add WAF protection:
    
    You should still receive `{"status": "SERVING"}`, confirming WAF is not blocking legitimate gRPC traffic.
 
+   And run another validation test:
+
+    ```bash
+    aws elbv2 describe-target-health \
+      --target-group-arn "$TG_ARN" \
+      --region "$REGION" \
+      --query 'TargetHealthDescriptions[*].[Target.Id,Target.Port,TargetHealth.State]' \
+      --output table
+  
+    aws wafv2 get-web-acl-for-resource \
+      --resource-arn "$ALB_ARN" \
+      --region "$REGION" \
+      --query 'WebACL.{Name:Name,ARN:ARN}' \
+      --output table
+    ```
+
+  Expected output:
+
+  ```text
+  ------------------------------------
+  |       DescribeTargetHealth       |
+  +---------------+------+-----------+
+  |  10.10.46.176 |  443 |  healthy  |
+  |  10.10.31.253 |  443 |  healthy  |
+  |  10.10.9.236  |  443 |  healthy  |
+  +---------------+------+-----------+
+  
+  WebACL:
+  Name: grpc-waf
+  ```
+
 ## Verification Checklist
 
 Run this comprehensive verification script to confirm your deployment is working correctly:
@@ -966,7 +1077,7 @@ fi
 # 2. Test gRPC health check
 echo ""
 echo "Testing gRPC health check..."
-GRPC_RESPONSE=$(grpcurl -proto /tmp/health.proto -import-path /tmp -insecure \
+GRPC_RESPONSE=$(grpcurl -proto /tmp/health.proto -import-path /tmp \
   -d '{"service":""}' \
   ${GRPC_HOSTNAME:-$ALB_DNS}:443 \
   grpc.health.v1.Health/Check 2>&1)
@@ -982,7 +1093,7 @@ fi
 # 3. Check response headers
 echo ""
 echo "Verifying gRPC headers..."
-HEADERS=$(grpcurl -v -proto /tmp/health.proto -import-path /tmp -insecure \
+HEADERS=$(grpcurl -v -proto /tmp/health.proto -import-path /tmp \
   -d '{"service":""}' \
   ${GRPC_HOSTNAME:-$ALB_DNS}:443 \
   grpc.health.v1.Health/Check 2>&1)
@@ -1098,7 +1209,8 @@ ALB health checks follow the same path:
 
 ### Targets remain unhealthy
 
-**Check target group configuration:**
+**Check target group configuration:** 
+
 ```bash
 aws elbv2 describe-target-groups --target-group-arns $TG_ARN \
   --query 'TargetGroups[0].{ProtocolVersion:ProtocolVersion,HealthCheck:HealthCheckPath,Matcher:Matcher}'
@@ -1110,6 +1222,7 @@ Ensure:
 - `Matcher: {GrpcCode: "0-99"}`
 
 **Check Istio configuration:**
+
 ```bash
 # Verify Gateway has TLS certificate
 oc get secret istio-ingressgateway-certs -n istio-system
@@ -1124,6 +1237,7 @@ oc logs -n istio-system deployment/istiod --tail=50 | grep -i "unauthorized\|sec
 If you see errors like "attempted to access unauthorized certificates", ensure the RBAC Role and RoleBinding were created to allow the ingress gateway ServiceAccount to read secrets in the istio-system namespace.
 
 **Check connectivity:**
+
 ```bash
 # Test direct connection to NLB IP
 curl -k --http2 -v https://10.40.x.x:443/grpc.health.v1.Health/Check
@@ -1132,17 +1246,20 @@ curl -k --http2 -v https://10.40.x.x:443/grpc.health.v1.Health/Check
 ### gRPC calls timeout
 
 **Verify DNS resolution:**
+
 ```bash
 nslookup $GRPC_HOSTNAME
 ```
 
 **Check ALB security group allows traffic:**
+
 ```bash
 aws ec2 describe-security-groups --group-ids $ALB_SG \
   --query 'SecurityGroups[0].IpPermissions[?ToPort==`443`]'
 ```
 
 **Check Envoy logs:**
+
 ```bash
 oc logs -n istio-system -l istio=ingressgateway --tail=50
 ```
@@ -1157,6 +1274,7 @@ This indicates protocol mismatch. Verify:
 ### WAF blocking legitimate traffic
 
 Check WAF logs:
+
 ```bash
 aws wafv2 get-sampled-requests \
   --web-acl-arn $WAF_ARN \
@@ -1172,29 +1290,30 @@ Adjust WAF rules as needed for your traffic patterns.
 
 To remove all resources created in this guide:
 
-1. Disassociate WAF (if configured)
+1. Disassociate and delete WAF (if configured)
 
    ```bash
-   aws wafv2 disassociate-web-acl --resource-arn $ALB_ARN --region $REGION
-   aws wafv2 delete-web-acl --id $(echo $WAF_ARN | cut -d'/' -f4) --name grpc-waf --scope REGIONAL --lock-token $(aws wafv2 get-web-acl --id $(echo $WAF_ARN | cut -d'/' -f4) --name grpc-waf --scope REGIONAL --query 'LockToken' --output text)
-   ```
+    WAF_NAME=$(echo "$WAF_ARN" | awk -F'/' '{print $(NF-1)}')
+    WAF_ID=$(echo "$WAF_ARN" | awk -F'/' '{print $NF}')
 
-1. Delete ALB and target group
+    WAF_LOCK_TOKEN=$(aws wafv2 get-web-acl \
+      --name "$WAF_NAME" \
+      --id "$WAF_ID" \
+      --scope REGIONAL \
+      --region "$REGION" \
+      --query 'LockToken' \
+      --output text)
 
-   ```bash
-   aws elbv2 delete-listener --listener-arn $LISTENER_ARN
-   aws elbv2 delete-load-balancer --load-balancer-arn $ALB_ARN
-   
-   # Wait for ALB deletion
-   sleep 30
-   
-   aws elbv2 delete-target-group --target-group-arn $TG_ARN
-   ```
+    aws wafv2 disassociate-web-acl \
+      --resource-arn "$ALB_ARN" \
+      --region "$REGION"
 
-1. Delete security group
-
-   ```bash
-   aws ec2 delete-security-group --group-id $ALB_SG
+    aws wafv2 delete-web-acl \
+      --name "$WAF_NAME" \
+      --id "$WAF_ID" \
+      --scope REGIONAL \
+      --lock-token "$WAF_LOCK_TOKEN" \
+      --region "$REGION"
    ```
 
 1. Delete DNS record
@@ -1225,6 +1344,70 @@ To remove all resources created in this guide:
      --change-batch file:///tmp/dns-delete.json
    ```
 
+1. Delete ALB and target group
+
+   ```bash
+   aws elbv2 delete-listener \
+     --listener-arn "$LISTENER_ARN" \
+     --region "$REGION"
+
+   aws elbv2 delete-load-balancer \
+     --load-balancer-arn "$ALB_ARN" \
+     --region "$REGION"
+
+   aws elbv2 wait load-balancers-deleted \
+     --load-balancer-arns "$ALB_ARN" \
+     --region "$REGION"
+
+   aws elbv2 delete-target-group \
+     --target-group-arn "$TG_ARN" \
+     --region "$REGION"
+    ```
+
+1. Delete ACM certificate, if created by this guide
+
+  ```bash
+   aws acm delete-certificate \
+     --certificate-arn "$CERT_ARN" \
+     --region "$REGION"
+  ```
+
+1. Delete ACM validation CNAME record, if created by this guide
+
+    ```bash
+      cat <<EOF > /tmp/acm-validation-delete.json
+      {
+        "Changes": [
+          {
+            "Action": "DELETE",
+            "ResourceRecordSet": {
+              "Name": "$VALIDATION_NAME",
+              "Type": "CNAME",
+              "TTL": 300,
+              "ResourceRecords": [
+                {
+                  "Value": "$VALIDATION_VALUE"
+                }
+              ]
+            }
+          }
+        ]
+      }
+      EOF
+
+      aws route53 change-resource-record-sets \
+        --hosted-zone-id "$HOSTED_ZONE_ID" \
+        --change-batch file:///tmp/acm-validation-delete.json
+    ```
+
+    If Route 53 returns `InvalidChangeBatch` because the record was not found, the validation record was already removed or was created in a different hosted zone.
+
+1. Delete security group
+
+   ```bash
+   aws ec2 delete-security-group --group-id $ALB_SG
+   ```
+
 1. Delete OpenShift resources
 
    ```bash
@@ -1246,9 +1429,11 @@ To remove all resources created in this guide:
 This deployment requires several specific configurations that are **not obvious** and are critical for success:
 
 ### 1. Gateway Proxy Injection (Not Sidecar)
+
 The ingress gateway deployment **must** use the `inject.istio.io/templates: gateway` annotation. Without this, pods will have sidecar proxies (2/2 containers) instead of gateway proxies and will not function as an ingress gateway.
 
 ### 2. RBAC for TLS Certificate Access
+
 The ingress gateway pods use the `default` ServiceAccount and require explicit RBAC permissions to read TLS secrets. Without the Role and RoleBinding:
 - istiod logs will show: `"attempted to access unauthorized certificates"`
 - TLS handshake will fail
@@ -1256,15 +1441,19 @@ The ingress gateway pods use the `default` ServiceAccount and require explicit R
 - ALB targets will remain unhealthy
 
 ### 3. Wildcard Host for Health Checks
+
 Both the Gateway and VirtualService must include the wildcard host `"*"` in addition to the specific hostname. ALB health checks do not send SNI (Server Name Indication) or Host headers, so without the wildcard, health checks fail even though the configuration looks correct.
 
 ### 4. Port 8443 in Gateway Configuration
+
 The Gateway `port.number` must be `8443` (the container port) not `443` (the service port). Using `443` causes routing failures.
 
 ### 5. GrpcCode=0-99 Health Check Matcher
+
 Use `GrpcCode=0-99` instead of `GrpcCode=0` for production reliability. The permissive matcher accepts any valid gRPC status code, preventing health check failures during startup or when backends return non-zero status codes under normal operation.
 
 ### 6. WAF Association Timing
+
 After creating a WAF Web ACL, wait 30-60 seconds before associating it with the ALB. Immediate association may fail with `WAFUnavailableEntityException` due to AWS service synchronization delays.
 
 ## Summary
