@@ -1,6 +1,6 @@
 ---
 date: '2026-05-26'
-title: 'OpenShift MCP Server Deployment on ARO'
+title: 'OpenShift MCP Server Deployment'
 tags: ["ARO", "ROSA", "OSD"]
 authors:
   - Dharmeshkumar Bhamre
