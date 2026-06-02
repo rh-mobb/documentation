@@ -1,7 +1,7 @@
 ---
 date: '2026-05-26'
 title: 'OpenShift MCP Server Deployment on ARO'
-tags: ["ARO", "Miscellaneous"]
+tags: ["ARO", "ROSA", "OSD"]
 authors:
   - Dharmeshkumar Bhamre
 ---
@@ -34,7 +34,7 @@ Two separate security layers apply:
 
 | Layer | Purpose | How this guide configures it |
 | ----- | ------- | ------------------------------ |
-| **MCP HTTP endpoint** | Controls who can call `/mcp` | `require_oauth: true` — requests without a bearer token receive **401 Unauthorized** |
+| **MCP HTTP endpoint** | Controls who can call `/mcp` | `require_oauth: true`: requests without a bearer token receive **401 Unauthorized** |
 | **Kubernetes API** | Controls what MCP tools can read | `mcp-readonly` ClusterRole bound to your **user or group**; `cluster_auth_mode: passthrough` forwards the caller's token |
 
 **Do not expose a public route without authentication.** For initial testing, this guide uses **`oc port-forward`** so the MCP endpoint is not reachable from the internet. To expose the server externally, enable the chart's edge-terminated ingress only after auth is working, or add an OAuth proxy sidecar (out of scope here).
@@ -67,7 +67,7 @@ oc create serviceaccount kubernetes-mcp-server -n mcp-server
 
 ### Step 4: Create RBAC for MCP Users
 
-Create a ClusterRole with read-only permissions. Save **one** manifest as `mcp-readonly-clusterrole.yaml` (Options A and B share the same name—apply only one).
+Create a ClusterRole with read-only permissions. Save **one** manifest as `mcp-readonly-clusterrole.yaml` (Options A and B share the same name; apply only one).
 
 #### Option A: Full Read-Only RBAC (Recommended)
 
@@ -467,4 +467,4 @@ Store client secrets in a Kubernetes Secret and pass them at install time with `
 - [OpenShift MCP Server (GitHub)](https://github.com/openshift/openshift-mcp-server)
 - [Kubernetes MCP Server — configuration (OAuth)](https://github.com/containers/kubernetes-mcp-server/blob/main/docs/configuration.md)
 - [Kubernetes MCP Server — Entra ID setup](https://github.com/containers/kubernetes-mcp-server/blob/main/docs/ENTRA_ID_SETUP.md)
-- [Configure Azure AD as an ARO identity provider](https://cloud.redhat.com/experts/aro/idp/azuread-aro/)
+- [Configure Azure AD as an ARO identity provider](/experts/aro/idp/azuread-aro/)
