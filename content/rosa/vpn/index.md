@@ -6,7 +6,22 @@ authors:
   - Kevin Collins & Kumudu Herath
 ---
 
-When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private link configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configute an AWS Client VPN connection so you won't need to setup and configure Jump Boxes.
+> **✨ Automated Terraform Module Available**
+>
+> This entire VPN setup process has been automated with Terraform! For a faster, simpler deployment, use the **[terraform-rosa-vpn](https://github.com/rh-mobb/terraform-rosa-vpn)** module which automates:
+> - Certificate generation using easy-rsa
+> - AWS Certificate Manager import
+> - Client VPN endpoint creation and configuration
+> - OpenVPN client configuration file generation
+> - Full DNS mode configuration (no manual steps needed)
+>
+> Follow the instructions in the [terraform-rosa-vpn repository](https://github.com/rh-mobb/terraform-rosa-vpn) for a one-command deployment (`terraform apply`).
+>
+> The manual process below is still valid if you prefer step-by-step setup or need to customize the configuration.
+
+---
+
+When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private link configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configure an AWS Client VPN connection so you won't need to setup and configure Jump Boxes.
 
 ## Prerequisites
 
