@@ -106,6 +106,50 @@ authors:
 
 1. Submit PR
 
+## Example pages
+
+The `content/examples/` directory is for shortcode demos, diagram templates, and other formatting references that content authors can copy from. Pages here are **never published** — they render in local preview but are excluded from production builds.
+
+### When to add an example
+
+Add a page to `content/examples/` when you want to:
+
+- Demonstrate a shortcode or Hugo feature for other authors (for example, Mermaid diagrams, tabs, alerts)
+- Provide a copy-paste template for a common content pattern
+- Test a new theme capability before using it in real guides
+
+Do **not** use this section for actual documentation. If content is useful to readers, it belongs in a real section (`rosa/`, `aro/`, `misc/`, etc.).
+
+### How to add an example page
+
+1. Create a directory and `index.md` under `content/examples/`:
+
+   ```
+   content/examples/<topic>/index.md
+   ```
+
+2. Use this front matter — `draft: true` is required so the page is excluded from production builds:
+
+   ```yaml
+   ---
+   date: "YYYY-MM-DD"
+   title: "My example title"
+   draft: true
+   authors:
+     - Your Name
+   ---
+   ```
+
+   Do **not** add `tags` — example pages are not indexed for user discovery.
+
+3. Write your example content and run `make preview` to view it at:
+
+   ```
+   http://localhost:1313/experts/examples/<topic>/
+   ```
+
+4. Submit a PR as normal. The page will be visible in Netlify deploy previews (which pass `--buildDrafts`) but will not appear on the production site.
+
 ## Site search (local development)
 
 The black header bar includes [Pagefind](https://pagefind.app/) client-side search. Netlify runs `npm ci`, builds the site with Hugo, then runs `npx pagefind --site public/experts` so the index is published under `/experts/pagefind/` (see [`netlify.toml`](netlify.toml)).
