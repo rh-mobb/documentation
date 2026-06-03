@@ -6,20 +6,20 @@ authors:
   - Kevin Ye
 ---
 
-This is **Part 2** of a two-part series. [Part 1](index.md) covers what changes in authentication and how to plan your move. This article walks through a hands-on migration of two demo applications from an SP cluster to an MI cluster.
+This is **Part 2** of a two-part series. [Part 1](../) covers what changes in authentication and how to plan your move. This article walks through a hands-on migration of two demo applications from an SP cluster to an MI cluster.
 
 ## What This Demo Covers
 
 In Part 1, we outlined five migration phases and a scenario table showing what changes for different application types. This article puts that methodology into practice with two Python Flask applications that access Azure services:
 
-**keyvault-reader** — A stateless REST API that reads secrets from Azure Key Vault. It demonstrates the most common migration case: changing from `ClientSecretCredential` to `DefaultAzureCredential` (a one-line code change) and replacing the K8s Secret with a ServiceAccount annotation.
+**keyvault-reader**: A stateless REST API that reads secrets from Azure Key Vault. It demonstrates the most common migration case: changing from `ClientSecretCredential` to `DefaultAzureCredential` (a one-line code change) and replacing the K8s Secret with a ServiceAccount annotation.
 
-**blob-writer** — A stateless REST API that writes entries to Azure Blob Storage. It demonstrates that apps already using `DefaultAzureCredential` need no code change at all — only K8s manifest changes (replace the Secret with a ServiceAccount annotation).
+**blob-writer**: A stateless REST API that writes entries to Azure Blob Storage. It demonstrates that apps already using `DefaultAzureCredential` need no code change at all; only K8s manifest changes are needed (replace the Secret with a ServiceAccount annotation).
 
 | Demo App | Azure Service | SP Auth Method | Code Change? | Config Change? |
 |----------|--------------|----------------|-------------|---------------|
-| **keyvault-reader** (stateless) | Azure Key Vault | `ClientSecretCredential` with K8s Secret | **Yes** — one-line change to `DefaultAzureCredential` | **Yes** — replace Secret with ServiceAccount |
-| **blob-writer** (stateless) | Azure Blob Storage | `DefaultAzureCredential` with K8s Secret | **No** — SDK auto-detects workload identity | **Yes** — replace Secret with ServiceAccount |
+| **keyvault-reader** (stateless) | Azure Key Vault | `ClientSecretCredential` with K8s Secret | **Yes**: one-line change to `DefaultAzureCredential` | **Yes**: replace Secret with ServiceAccount |
+| **blob-writer** (stateless) | Azure Blob Storage | `DefaultAzureCredential` with K8s Secret | **No**: SDK auto-detects workload identity | **Yes**: replace Secret with ServiceAccount |
 
 ### Demo Environment
 
@@ -51,7 +51,7 @@ This walkthrough assumes you have an existing SP cluster with applications and a
 
 ## Prerequisites
 
-- An existing ARO **SP cluster** (optional — the SP state is described below for reference)
+- An existing ARO **SP cluster** (optional; the SP state is described below for reference)
 - An existing ARO **MI cluster** (see [Create an ARO cluster with managed identities](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster?pivots=aro-deploy-az-cli))
 - Azure CLI v2.84.0+ with `aro` extension
 - `oc` CLI
@@ -60,7 +60,7 @@ This walkthrough assumes you have an existing SP cluster with applications and a
 
 ## The SP Cluster: Starting State
 
-This section describes how the two demo applications are configured on an existing SP cluster. If you already have applications running on your SP cluster, the patterns here will look familiar — a K8s Secret holding Azure credentials, injected into pods via `envFrom`.
+This section describes how the two demo applications are configured on an existing SP cluster. If you already have applications running on your SP cluster, the patterns here will look familiar: a K8s Secret holding Azure credentials, injected into pods via `envFrom`.
 
 ### keyvault-reader on SP
 
@@ -122,7 +122,7 @@ curl -s https://$KV_URL/secret/demo-secret | jq .
 
 ### blob-writer on SP
 
-The app already uses `DefaultAzureCredential` (best practice). Azure credentials are still stored in a K8s Secret — `DefaultAzureCredential` detects the `AZURE_CLIENT_SECRET` environment variable and uses `ClientSecretCredential` under the hood.
+The app already uses `DefaultAzureCredential` (best practice). Azure credentials are still stored in a K8s Secret; `DefaultAzureCredential` detects the `AZURE_CLIENT_SECRET` environment variable and uses `ClientSecretCredential` under the hood.
 
 **Application code (`app.py`):**
 
@@ -175,7 +175,7 @@ curl -s https://$BLOB_URL/ | jq .
 
 ## The MI Cluster: Target State
 
-After migration, both apps run on the MI cluster using workload identity — no Azure secrets stored in the cluster. This section shows what changes for each app.
+After migration, both apps run on the MI cluster using workload identity; no Azure secrets are stored in the cluster. This section shows what changes for each app.
 
 ### keyvault-reader on MI
 
@@ -195,7 +195,7 @@ from azure.identity import DefaultAzureCredential
 credential = DefaultAzureCredential()
 ```
 
-`DefaultAzureCredential` auto-detects the authentication method. On an MI cluster with workload identity, it uses the federated token injected by the webhook. On an SP cluster, it falls back to environment variables — making it work in both environments.
+`DefaultAzureCredential` auto-detects the authentication method. On an MI cluster with workload identity, it uses the federated token injected by the webhook. On an SP cluster, it falls back to environment variables, making it work in both environments.
 
 **Manifest changes:**
 
@@ -386,7 +386,7 @@ az role assignment create \
 
 ### Step 3: Create Federated Credentials
 
-Federated credentials link each managed identity to a Kubernetes ServiceAccount. This is what enables secretless authentication — the workload identity webhook exchanges a K8s token for an Azure token automatically.
+Federated credentials link each managed identity to a Kubernetes ServiceAccount. This is what enables secretless authentication: the workload identity webhook exchanges a K8s token for an Azure token automatically.
 
 ```bash
 # Federated credential for keyvault-reader
@@ -602,7 +602,7 @@ demo-apps/
 
 ## References
 
-- [Part 1: Service Principal vs Managed Identity Explained](index.md)
+- [Part 1: Service Principal vs Managed Identity Explained](../)
 - [Use workload identity with an ARO cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-create-a-workloadidentitypool)
 - [Azure Workload Identity Federation](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation)
 - [DefaultAzureCredential documentation](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential)
