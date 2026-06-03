@@ -35,32 +35,7 @@ SP and MI handle both layers differently.
 
 A single service principal is shared by all eight cluster operators. The SP has broad Contributor access to the VNet and the entire managed resource group. The ARO platform injects the SP credentials into the cluster, and operators read the same client ID and client secret at runtime.
 
-{{< mermaid >}}
-sequenceDiagram
-    participant Admin as Admin / DevOps
-    participant EntraID as Microsoft Entra ID
-    participant ARO as ARO Platform
-    participant Operators as All 8 ARO Operators<br>(networking, storage,<br>ingress, DNS, etc.)
-    participant Azure as Azure APIs<br>(VMs, LBs, Disks, DNS)
-
-    rect rgb(255, 245, 238)
-    Note over Admin,ARO: Setup (during cluster creation)
-    Admin->>EntraID: 1. Create SP (or let az aro create do it)
-    EntraID-->>Admin: Client ID + Client Secret<br>(default 1 year, max 2 years)
-    Admin->>ARO: 2. Provide SP credentials to az aro create
-    ARO->>ARO: 3. Inject SP credentials into cluster
-    end
-
-    rect rgb(238, 245, 255)
-    Note over Operators,Azure: Runtime
-    Operators->>Operators: 4. All operators read SAME credential
-    Operators->>EntraID: 5. Authenticate with Client ID + Secret
-    EntraID-->>Operators: 6. Access token
-    Operators->>Azure: 7. API calls with BROAD Contributor permissions
-    end
-
-    Note over Operators: ⚠ One credential, shared by all operators<br>Contributor on VNet + entire managed RG
-{{< /mermaid >}}
+![SP cluster authentication flow](images/sp-cluster-auth.png)
 
 This model is simple and has been running ARO clusters reliably since the beginning. The key operational requirement is that the customer must rotate the client secret before it expires (default 1 year, maximum 2 years). Rotation is performed via `az aro update`, not by manually editing cluster secrets.
 
@@ -68,33 +43,7 @@ This model is simple and has been running ARO clusters reliably since the beginn
 
 Each of the eight cluster operators gets its own user-assigned managed identity with only the Azure permissions it needs. A ninth identity (the cluster identity) manages federated credentials for the other eight. No secrets are stored in the cluster.
 
-{{< mermaid >}}
-sequenceDiagram
-    participant Admin as Admin / DevOps
-    participant MIs as 9 User-Assigned<br>Managed Identities
-    participant EntraID as Microsoft Entra ID
-    participant CCO as Cloud Credential<br>Operator (CCO)
-    participant Operator as Individual ARO Operator<br>(e.g., ingress)
-    participant Azure as Azure APIs<br>(scoped resource only)
-
-    rect rgb(238, 255, 238)
-    Note over Admin,EntraID: Setup (one-time)
-    Admin->>MIs: 1. Create 9 managed identities
-    Admin->>MIs: 2. Assign scoped built-in roles<br>(e.g., Ingress Operator role on subnets only)
-    Admin->>EntraID: 3. Create federated credentials<br>(link each MI → operator ServiceAccount via OIDC issuer)
-    end
-
-    rect rgb(238, 245, 255)
-    Note over CCO,Azure: Runtime
-    CCO->>Operator: 4. Projected service account token<br>(short-lived K8s JWT, unique per operator, auto-rotated)
-    Operator->>EntraID: 5. OIDC token exchange<br>(K8s JWT → Azure token)
-    EntraID->>EntraID: 6. Validate JWT against cluster OIDC issuer
-    EntraID-->>Operator: 7. Scoped Azure access token
-    Operator->>Azure: 8. API calls with LEAST-PRIVILEGE permissions
-    end
-
-    Note over Operator: ✓ No secrets in cluster<br>Each operator: own identity, scoped role
-{{< /mermaid >}}
+![MI cluster authentication flow](images/mi-cluster-auth.png)
 
 If one operator's identity is compromised, the blast radius is limited to that operator's resources only. Other operators are unaffected.
 
@@ -106,38 +55,7 @@ The choice between SP and MI also determines how your application pods can authe
 
 **On an MI cluster**, the OIDC issuer is enabled. Your applications can use workload identity to authenticate without any secrets:
 
-{{< mermaid >}}
-sequenceDiagram
-    participant Admin as Admin / DevOps
-    participant MI as App Managed Identity<br>(e.g., keyvault-reader-identity)
-    participant EntraID as Microsoft Entra ID
-    participant Webhook as Workload Identity<br>Webhook
-    participant Pod as Your Application Pod
-    participant SDK as Azure SDK<br>(DefaultAzureCredential)
-    participant Azure as Azure Service<br>(Key Vault, Storage, SQL, etc.)
-
-    rect rgb(238, 255, 238)
-    Note over Admin,EntraID: Setup (one-time, per application)
-    Admin->>MI: 1. Create user-assigned managed identity
-    Admin->>MI: 2. Assign role scoped to specific resource<br>(e.g., Key Vault Secrets User on one vault)
-    Admin->>EntraID: 3. Create federated credential<br>(link MI → K8s ServiceAccount via OIDC issuer)
-    Note over Admin: 4. Annotate ServiceAccount:<br>azure.workload.identity/client-id<br>Label pod: azure.workload.identity/use: "true"
-    end
-
-    rect rgb(238, 245, 255)
-    Note over Webhook,Azure: Runtime (every pod start)
-    Webhook->>Pod: 5. Webhook injects into pod:<br>• AZURE_CLIENT_ID<br>• AZURE_TENANT_ID<br>• AZURE_FEDERATED_TOKEN_FILE<br>• AZURE_AUTHORITY_HOST<br>• Projected volume (short-lived K8s JWT)
-    Pod->>SDK: 6. App calls DefaultAzureCredential()
-    SDK->>SDK: 7. Reads K8s JWT from projected volume
-    SDK->>EntraID: 8. OIDC token exchange<br>(K8s JWT → Azure access token)
-    EntraID->>EntraID: 9. Validates JWT against cluster OIDC issuer
-    EntraID-->>SDK: 10. Azure access token (~1 hour)
-    SDK->>Azure: 11. API call with scoped token
-    Azure-->>Pod: 12. Response
-    end
-
-    Note over Pod: ✓ No secrets in pod or cluster<br>Token scoped to one identity, one resource
-{{< /mermaid >}}
+![Workload identity authentication flow](images/workload-identity-auth.png)
 
 This is the same pattern used by ROSA with IAM Roles for Service Accounts (IRSA) and OSD with Workload Identity on GCP. The Azure SDK's `DefaultAzureCredential` handles the token exchange automatically, so your application code does not need to know which authentication method is being used.
 
