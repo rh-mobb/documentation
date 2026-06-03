@@ -89,7 +89,7 @@ No. Service principal is fully supported for both existing and new ARO clusters.
 
 **4. Consistent with other OpenShift managed services.** ROSA on AWS already uses IAM Roles for Service Accounts (IRSA) and OSD on GCP uses Workload Identity. Both follow the same pattern of short-lived, OIDC-based credentials scoped per component. ARO's managed identity model brings the same approach to Azure. Organizations running multiple OpenShift managed services will find a consistent security model across clouds.
 
-**5. Required for ARO Hosted Control Plane.** ARO Hosted Control Plane (HCP) will require managed identity by default. Adopting MI now prepares your team and your workloads for this architecture.
+**5. Future-ready for ARO Hosted Control Plane.** ARO Hosted Control Plane (HCP) is expected to use managed identity as its default authentication model. Adopting MI now helps prepare your team and workloads for this upcoming architecture.
 
 **6. Tooling support.** The Azure Portal already automates MI setup: managed identities, role assignments, and federated credentials are created automatically when you deploy a new ARO cluster through the portal. The `az aro` CLI does not yet automate this, so CLI-based deployments currently require manual identity and role assignment setup. A simplified CLI experience is expected to be available soon.
 
