@@ -1,6 +1,7 @@
 ---
 date: '2023-05-24'
 title: Configure ARO to use Microsoft Entra ID Group Claims
+tags: ["IDP"]
 authors:
   - Michael McNeill
   - Ricardo Martins

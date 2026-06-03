@@ -1,10 +1,14 @@
 # UPDATED DOCUMENT: This article is out of date and should not be used. Please refer to the official documentation for [ROSA](https://docs.openshift.com/rosa/networking/ingress-operator.html#configuring-ingress-controller-tls) and [OSD](https://docs.openshift.com/dedicated/networking/ingress-operator.html#configuring-ingress-controller-tls). 
 
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-08-24'
 title: Configure ROSA/OSD to use custom TLS ciphers on the ingress controllers
 aliases: ['/experts/ingress/tls-cipher-customization']
-tags: ["ROSA", "AWS", "OSD"]
+tags: ["ROSA", "OSD", "Miscellaneous"]
 authors:
   - Michael McNeill
   - Connor Wooley

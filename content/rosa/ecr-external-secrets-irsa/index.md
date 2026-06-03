@@ -1,12 +1,11 @@
 ---
 date: '2026-03-04'
 title: Automating ECR Pull Secrets on ROSA Using the External Secrets Operator and STS
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Philipp Bergsmann
+validated_version: "4.20"
 ---
-
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 Amazon Elastic Container Registry (ECR) issues short-lived authorization tokens that expire after **12 hours**. On Red Hat OpenShift Service on AWS (ROSA), workloads that pull images from private ECR repositories need those tokens refreshed before they expire — otherwise pods fail to start with `ImagePullBackOff` errors.
 

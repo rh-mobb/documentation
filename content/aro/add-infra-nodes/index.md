@@ -1,14 +1,17 @@
 ---
 date: '2022-08-17'
 title: Adding infrastructure nodes to an ARO cluster
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
+validated_version: "4.20"
 ---
 
 This document shows how to set up infrastructure nodes in an ARO cluster and move infrastructure related workloads to them. This can help with larger clusters that have resource contention between user workloads and infrastructure workloads such as Prometheus.
 
-> **Important note:** Infrastructure nodes are billed at the same rates as your existing ARO worker nodes.
+> **Important note:** For nodes to be recognized as infrastructure nodes in ARO, follow the current Microsoft requirements for VM size, node count, and Azure VM tags. If these criteria are not met, nodes are treated as regular workers for billing.
+
+Microsoft reference: <https://learn.microsoft.com/en-us/azure/openshift/howto-infrastructure-nodes>
 
 You can find the original (and more detailed) document describing the process for a self-managed OpenShift Container Platform cluster [here](https://docs.openshift.com/container-platform/latest/machine_management/creating-infrastructure-machinesets.html#creating-infra-machines_creating-infrastructure-machinesets)
 
@@ -19,8 +22,7 @@ You can find the original (and more detailed) document describing the process fo
 
 ## Create Infra Nodes
 
-We'll use the MOBB Helm Chart for adding ARO `machinesets` which parameters for creating `infra` nodes, it looks up an existing `machineset` to collect cluster specific settings and then creates a new `machineset` specific for `infra` nodes with the same settings.
-The chart used to default to infra nodes up to version `0.2.0` from and including version 0.2.0 you need to specify the roles, labels and taints explicitly.
+We'll use the MOBB Helm chart to add ARO `machinesets` for `infra` nodes. It looks up an existing `machineset` to collect cluster-specific settings, then creates a new `machineset` for `infra` nodes with matching provider settings.
 
 1. Add the MOBB chart repository to your Helm
 
@@ -40,6 +42,7 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
 
     ```yaml
     machineRole: "infra"
+    vmSize: "Standard_E4s_v5"
 
     machineLabels:
       node-role.kubernetes.io/infra: ""
@@ -51,6 +54,11 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
     machineSetSpec:
       tags:
         node_role: infra
+
+    # Optional: override infra node count.
+    # Default behavior is 3 nodes total, with 1 node in each AZ.
+    # zoneCount: 3
+    # replicasPerZone: 1
     ```
 
     ```bash
@@ -141,7 +149,14 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
               key: "node-role.kubernetes.io/infra"
               operator: "Exists"
         prometheusOperator: {}
-        grafana:
+        metricsServer:
+          nodeSelector:
+            node-role.kubernetes.io/infra: ""
+          tolerations:
+            - effect: "NoSchedule"
+              key: "node-role.kubernetes.io/infra"
+              operator: "Exists"
+        monitoringPlugin:
           nodeSelector:
             node-role.kubernetes.io/infra: ""
           tolerations:
@@ -193,13 +208,12 @@ The chart used to default to infra nodes up to version `0.2.0` from and includin
     ```bash
     oc -n openshift-monitoring get pods -o wide
     ```
-
+    > sample output 
       ```
       NAME                                           READY   STATUS    RESTARTS   AGE     IP            NODE                                                    NOMINATED NODE   READINESS GATES
       alertmanager-main-0                            6/6     Running   0          2m14s   10.128.6.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-2-kljml   <none>           <none>
       alertmanager-main-1                            6/6     Running   0          2m46s   10.131.4.11   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
       cluster-monitoring-operator-5bbfd998c6-m9w62   2/2     Running   0          28h     10.128.0.23   cz-cluster-hsmtw-master-1                               <none>           <none>
-      grafana-599d4b948c-btlp2                       3/3     Running   0          2m48s   10.131.4.10   cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
       kube-state-metrics-574c5bfdd7-f7fjk            3/3     Running   0          2m49s   10.131.4.8    cz-cluster-hsmtw-infra-aro-machinesets-eastus-1-vr56r   <none>           <none>
       ...
       ...

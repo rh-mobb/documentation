@@ -2,7 +2,7 @@
 date: '2022-09-19'
 title: 'Azure Service Operator V1 in ARO'
 aliases: ['/experts/aro/azure-service-operator-v1/']
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
 ---

@@ -1,7 +1,7 @@
 ---
 date: '2021-09-21'
 title: Registering an ARO cluster to OpenShift Cluster Manager
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 ---
 # Registering an ARO cluster to OpenShift Cluster Manager 
 

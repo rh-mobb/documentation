@@ -1,14 +1,14 @@
 ---
 date: '2022-03-19'
 title: Adding an additional ingress controller to an ARO cluster
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
   - Stuart Kirk
   - Anton Nesterov
   - Connor Wooley
+validated_version: "4.20"
 ---
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 ## Prerequisites
 

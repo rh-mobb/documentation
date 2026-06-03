@@ -1,7 +1,7 @@
 ---
 date: '2021-07-27'
 title: OpenShift Logging
-tags: ["Observability", "OCP"]
+tags: ["Observability"]
 authors:
   - Aaron Aldrich
   - Connor Wooley

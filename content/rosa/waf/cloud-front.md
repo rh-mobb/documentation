@@ -1,8 +1,12 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2021-06-17'
 title: Using CloudFront + WAF
 aliases: ['/experts/aws/waf/cloud-front.md']
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Connor Wooley
 ---

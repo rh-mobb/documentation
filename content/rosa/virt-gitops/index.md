@@ -1,7 +1,7 @@
 ---
 date: '2024-05-20'
 title: Deploying and Managing Virtual Machines on ROSA with OpenShift GitOps
-tags: ["ROSA", "ocp-virt", "virtualization", "argo", "gitops"]
+tags: ["ROSA", "Virtualization", "GitOps"]
 authors:
   - Kevin Collins, Kumudu Herath, John Quigley
 ---

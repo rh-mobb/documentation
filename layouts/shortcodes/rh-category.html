@@ -1,0 +1,43 @@
+{{- /*
+  ROSA best-practice category tags (RHDS rh-tag + emoji). This file is the source of truth for
+  names, emoji, and rh-tag color; keep CSV and markdown category strings aligned with it.
+
+  Usage:
+    {{< rh-category "Security, Compliance" >}}   comma-separated subset (order preserved)
+    {{< rh-category "legend" >}}                  shorthand for the five canonical ROSA BP tags + aria-label; prefer an explicit comma list in published guides so the rendered set does not change if `legend` is extended later
+
+  In `content/rosa/best-practices-recommendations/index.md`, place category rows under **####** headings (not **##**).
+
+  Canonical rows (extend the if/else chain + legend string when adding a category):
+    Security      🔒   red
+    Compliance    📋   purple
+    Performance   ⚡   green
+    Resilience    🔄   orange
+    Availability  🕐   blue
+    (unknown)           gray, raw label text
+*/ -}}
+{{- $in := .Get 0 | default "" | strings.TrimSpace -}}
+{{- $raw := "" -}}
+{{- $aria := "" -}}
+{{- if eq (lower $in) "legend" -}}
+{{- $raw = "Security, Compliance, Performance, Resilience, Availability" -}}
+{{- $aria = "Category legend: Security, Compliance, Performance, Resilience, Availability" -}}
+{{- else -}}
+{{- $raw = $in -}}
+{{- end -}}
+{{- $parts := split $raw "," -}}
+<span{{- if ne $aria "" }} aria-label="{{ $aria }}"{{- end }} style="display:inline-flex;flex-wrap:wrap;gap:0.35rem;align-items:center;vertical-align:middle">
+{{- range $parts -}}
+{{- $n := strings.TrimSpace . -}}
+{{- if ne $n "" -}}
+{{- $k := lower $n -}}
+{{- if eq $k "security" -}}<rh-tag color="red" size="compact">🔒 Security</rh-tag>
+{{- else if eq $k "compliance" -}}<rh-tag color="purple" size="compact">📋 Compliance</rh-tag>
+{{- else if eq $k "performance" -}}<rh-tag color="green" size="compact">⚡ Performance</rh-tag>
+{{- else if eq $k "resilience" -}}<rh-tag color="orange" size="compact">🔄 Resilience</rh-tag>
+{{- else if eq $k "availability" -}}<rh-tag color="blue" size="compact">🕐 Availability</rh-tag>
+{{- else -}}<rh-tag color="gray" size="compact">{{ $n }}</rh-tag>
+{{- end -}}
+{{- end -}}
+{{- end -}}
+</span>

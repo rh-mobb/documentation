@@ -1,7 +1,7 @@
 ---
 date: '2025-03-31'
 title: Using local-zones in ROSA Classic
-tags: ["AWS", "ROSA", "local zones"]
+tags: ["ROSA", "ROSA Classic"]
 authors:
   - Daniel Penagos
   - David Gomez

@@ -1,7 +1,7 @@
 ---
 date: '2022-09-23'
 title: Configure ARO to use Microsoft Entra ID
-tags: ["Azure", "ARO"]
+tags: ["ARO", "IDP"]
 authors:
   - Michael McNeill
   - Sohaib Azed

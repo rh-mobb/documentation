@@ -1,7 +1,7 @@
 ---
 date: '2025-07-02'
 title: Accessing the ROSA HCP API Server from a Different AWS Account
-tags: ["AWS", "ROSA", "HCP"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Yuhki Hanada 
 ---

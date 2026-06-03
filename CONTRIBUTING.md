@@ -49,8 +49,9 @@ top of each article that you publish.
 
 * Date - The original date of content creation, in YYYY-MM-DD format
 * Title - This will be displayed page title
-* Tags - The tags associated with your page, they will display alphabetically atop of the page regardless of the order definied in the front amtter
+* Tags - The tags associated with your page; they display alphabetically atop the page regardless of the order defined in the front matter
 * Authors - Anyone who has edited this page
+* `validated_version` (optional) - OpenShift version string (for example `4.20`) that you have validated the guide against. When set, the site-wide expert disclaimer at the top of the page also states that the guide was validated on that OpenShift version and that operator CRD names, API versions, and console paths may differ on other versions. Do **not** duplicate that message with a separate info `alert` shortcode in the body; use this field instead. Omit the field if the guide has not been validated against a specific version.
 
 Example:
 
@@ -58,9 +59,22 @@ Example:
 ---
 date: '2022-08-17'
 title: Adding infrastructure nodes to an ARO cluster
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
+---
+```
+
+Example with a validated OpenShift version:
+
+```yaml
+---
+date: '2026-03-26'
+title: Red Hat OpenShift Service on AWS (ROSA) Quickstart
+tags: ["ROSA HCP", "Quickstarts"]
+authors:
+  - Example Author
+validated_version: "4.20"
 ---
 ```
 
@@ -78,7 +92,7 @@ authors:
 ---
 date: "2023-01-01"
 title: "Creating s3 buckets in ROSA using ACK"
-tags: ["rosa","s3", "ack"]
+tags: ["ROSA", "Terraform"]
 authors:
    - My Name
 ---
@@ -88,10 +102,59 @@ authors:
 
 1. Update `/content/docs/[Section]/_index.md` to include your new document.
 
-1. To verify your changes you can run `make preview` to preview the site locally at [http://localhost:1313/](http://localhost:1313/)
+1. To verify your changes you can run `make preview` to preview the site locally at [http://localhost:1313/experts/](http://localhost:1313/experts/)
 
 1. Submit PR
 
+## Example pages
+
+The `content/examples/` directory is for shortcode demos, diagram templates, and other formatting references that content authors can copy from. Pages here are **never published** — they render in local preview but are excluded from production builds.
+
+### When to add an example
+
+Add a page to `content/examples/` when you want to:
+
+- Demonstrate a shortcode or Hugo feature for other authors (for example, Mermaid diagrams, tabs, alerts)
+- Provide a copy-paste template for a common content pattern
+- Test a new theme capability before using it in real guides
+
+Do **not** use this section for actual documentation. If content is useful to readers, it belongs in a real section (`rosa/`, `aro/`, `misc/`, etc.).
+
+### How to add an example page
+
+1. Create a directory and `index.md` under `content/examples/`:
+
+   ```
+   content/examples/<topic>/index.md
+   ```
+
+2. Use this front matter — `draft: true` is required so the page is excluded from production builds:
+
+   ```yaml
+   ---
+   date: "YYYY-MM-DD"
+   title: "My example title"
+   draft: true
+   authors:
+     - Your Name
+   ---
+   ```
+
+   Do **not** add `tags` — example pages are not indexed for user discovery.
+
+3. Write your example content and run `make preview` to view it at:
+
+   ```
+   http://localhost:1313/experts/examples/<topic>/
+   ```
+
+4. Submit a PR as normal. The page will be visible in Netlify deploy previews (which pass `--buildDrafts`) but will not appear on the production site.
+
+## Site search (local development)
+
+The black header bar includes [Pagefind](https://pagefind.app/) client-side search. Netlify runs `npm ci`, builds the site with Hugo, then runs `npx pagefind --site public/experts` so the index is published under `/experts/pagefind/` (see [`netlify.toml`](netlify.toml)).
+
+For a local build where search works end-to-end, run `npm install` once, then `make preview-search`. That runs Hugo, indexes the output, and starts `hugo server`, which writes to `publishDir` (`public/experts` per [`config.toml`](config.toml)) so the Pagefind bundle under `public/experts/pagefind/` is served. Do not pass `--renderToMemory` (`-M`) to `hugo server` if you need search, or those assets will not be on disk. Using `make preview` alone does not create an index, so the search field appears but queries will not return results until you run `make search-index` (or the full `preview-search` flow).
 
 ### New Document and New Section
 
@@ -103,7 +166,7 @@ In order to create a landing page for your new section you will need to create a
 ---
 date: "2023-01-01"
 title: "DevSecFinOps"
-tags: ["devops", "finops", "devsecops"]
+tags: ["GitOps", "ROSA"]
 authors:
    - My Name
 ---
@@ -120,22 +183,36 @@ Note: you can add a `weight` field to override the default alphabetical sorting 
 
 ## Taxonomy
 
-The strategy here is to keep our taxonomy simple and helpful for traversing the site and finding docs relevant to a product or topic. Feel free as we expand our docs to create new tags by simply adding them to the front matter of your page. However please keep in mind simplicity.
+The strategy here is to keep our taxonomy simple and helpful for traversing the site and finding docs relevant to a product or topic. **Use tags from the list below** so pages appear on the right tag hubs and stay consistent. If you need a new tag, discuss with a maintainer before attempting to add it to a PR.
 
-### Current Tags
+Tag values are **case-sensitive** and must match exactly (including spaces in multi-word tags such as `ROSA HCP`).
+
+### Current tags
+
+These are the tag strings currently in use:
+
+* AAP
 * ACM
 * ACS
 * ARO
-* AWS
-* Azure
-* Cost
-* GCP
+* Best practices
+* DevSpaces
 * GitOps
-* GPU
+* GovCloud
+* IDP
+* Keycloak
+* Lightspeed
+* Maximo
+* OADP
 * Observability
-* OCP
+* OCM
+* ODF
 * OSD
-* PrivateLink
 * Quickstarts
+* RHOAI
 * ROSA
-* STS
+* ROSA Classic
+* ROSA HCP
+* Service Interconnect
+* Terraform
+* Virtualization

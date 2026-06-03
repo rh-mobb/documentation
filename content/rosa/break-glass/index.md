@@ -1,7 +1,7 @@
 ---
 date: '2023-10-05'
 title: ROSA Break Glass Troubleshooting
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA Classic"]
 authors:
   - Dustin Scott
 ---

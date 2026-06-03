@@ -1,8 +1,12 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2021-06-17'
 title: AWS ALB
 aliases: ['/experts/aws/waf/alb.md']
-tags: ["AWS", "ROSA", "OSD"]
+tags: ["ROSA", "OSD"]
 authors:
   - Connor Wooley
 ---

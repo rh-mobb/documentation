@@ -1,7 +1,7 @@
 ---
 date: '2025-02-28'
 title: Setting up Cross-Cluster PostgreSQL Replication with Skupper on ROSA and ARO
-tags: ["OpenShift", "ROSA", "ARO", "PostgreSQL", "Replication", "Skupper", "Service Interconnect"]
+tags: ["ROSA", "ARO", "Service Interconnect", "Miscellaneous"]
 aliases: ["/docs/misc/rosa-aro-service-interconnect"]
 authors:
   - Florian Jacquin

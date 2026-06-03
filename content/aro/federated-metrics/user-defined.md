@@ -1,7 +1,7 @@
 ---
 date: '2021-06-07'
 title: User Workload Monitoring on Azure Red Hat OpenShift
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 ---
 # User Workload Monitoring on Azure Red Hat OpenShift
 

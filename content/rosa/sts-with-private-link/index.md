@@ -1,7 +1,7 @@
 ---
 date: '2021-08-09'
 title: Creating a ROSA cluster with PrivateLink enabled (custom VPC) and STS
-tags: ["AWS", "ROSA", "STS", "PrivateLink"]
+tags: ["ROSA", "ROSA Classic"]
 authors:
   - Steve Mirman
   - Paul Czarkowski

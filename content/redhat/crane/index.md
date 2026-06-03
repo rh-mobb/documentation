@@ -2,7 +2,7 @@
 date: '2022-07-29'
 title: Migrate Kubernetes Applications with Konveyer Crane
 aliases: ['/experts/demos/crane/']
-tags: []
+tags: ["Miscellaneous"]
 authors:
   - Paul Czarkowski
   - JJ Asghar

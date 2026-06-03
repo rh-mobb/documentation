@@ -1,7 +1,7 @@
 ---
 date: '2022-07-25'
 title: Apply Azure Policy to Azure Red Hat Openshift ( ARO )
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Shaozhen Ding
   - Kevin Collins

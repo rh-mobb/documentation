@@ -1,0 +1,21 @@
+{{- /*
+  Tag taxonomy / term listings: same rh-tile pattern as the home catalog, with title + excerpt in the body slot.
+  Full-width tile grid; tag pages use four columns from 880px (see .tag-page-list > .tag-page-tiles).
+*/ -}}
+{{- if .Pages -}}
+  <div class="tag-page-tiles" role="list">
+    {{- range .Pages.ByDate.Reverse -}}
+      <div class="tag-page-tiles__cell" role="listitem">
+        <rh-tile compact link="public">
+          <h3 class="h5" slot="headline"><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h3>
+          {{- /* Default (unnamed) slot — rh-tile body slot has no name="body" in shadow DOM */ -}}
+          <div class="tag-page-tile__excerpt">
+            {{- partial "tags/list-excerpt.html" . -}}
+          </div>
+        </rh-tile>
+      </div>
+    {{- end -}}
+  </div>
+{{- else -}}
+  <p class="tag-page-tiles__empty">No pages in this list yet.</p>
+{{- end -}}

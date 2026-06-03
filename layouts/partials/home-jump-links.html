@@ -1,0 +1,21 @@
+{{- /*
+  Vertical RHDS jump links in the home right sidebar (desktop); hidden on small viewports.
+  https://ux.redhat.com/elements/jump-links/
+  Targets section h2 ids from home-tag-tiles (home-tag-heading-<slug>).
+*/ -}}
+{{- with site.Data.home_tag_catalog -}}
+  {{- $heading := site.Params.home_jump_links_heading | default "Browse by topic" -}}
+  {{- $labelId := "home-jump-links-label" -}}
+  <aside class="home-jump-links" aria-label="{{ $heading }}">
+    <h2 class="home-jump-links__heading" id="{{ $labelId }}">{{ $heading }}</h2>
+    <rh-jump-links orientation="vertical" aria-labelledby="{{ $labelId }}">
+      {{- range . -}}
+        {{- $slug := .slug -}}
+        {{- $term := site.GetPage (printf "/tags/%s" $slug) -}}
+        {{- if $term -}}
+          <rh-jump-link href="#home-tag-heading-{{ $slug }}">{{ .label }}</rh-jump-link>
+        {{- end -}}
+      {{- end -}}
+    </rh-jump-links>
+  </aside>
+{{- end -}}

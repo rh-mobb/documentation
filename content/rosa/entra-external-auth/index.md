@@ -1,7 +1,7 @@
 ---
 date: '2025-01-24'
 title: Configuring Microsoft Entra ID as an external authentication provider
-tags: ["AWS", "ROSA", "HCP"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Nerav Doshi
   - Kevin Collins

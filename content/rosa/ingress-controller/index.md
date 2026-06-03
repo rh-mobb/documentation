@@ -1,7 +1,7 @@
 ---
 date: '2023-12-18'
 title: Add an Ingress Controller to a ROSA Cluster and optionally with a custom domain. 
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
 ---

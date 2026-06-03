@@ -1,11 +1,12 @@
 ---
 date: '2022-06-28'
 title: Configure ARO with OpenShift Data Foundation
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Kevin Collins
   - Mohsen Houshmand Sarvestani
   - Dustin Scott
+validated_version: "4.20"
 ---
 
 > **NOTE**:
@@ -15,7 +16,7 @@ This guide demonstrates how to setup and configure self-managed OpenShift Data F
 
   * An Azure Red Hat OpenShift cluster ( verion 4.10+ )
   * [kubectl cli](https://kubernetes.io/releases/download/#kubectl)
-  * [oc cli](https://docs.openshift.com/container-platform/4.10/cli_reference/openshift_cli/getting-started-cli.html)
+  * [oc cli](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/cli_tools/openshift-cli-oc#cli-getting-started)
   * moreutils (sponge)
   * jq
 
@@ -126,7 +127,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
      name: ocs-operator
      namespace: openshift-storage
    spec:
-     channel: stable-4.16  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
+     channel: stable-4.20  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
      installPlanApproval: Automatic
      name: ocs-operator
      source: redhat-operators  # <-- Modify the name of the redhat-operators catalogsource if not default
@@ -142,7 +143,7 @@ Next, we will install OpenShift Data Foundation via an Operator.
      name: odf-operator
      namespace: openshift-storage
    spec:
-     channel: stable-4.16  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
+     channel: stable-4.20  # <-- Channel should be modified depending on the OCS version to be installed. Please ensure to maintain compatibility with OCP version
      installPlanApproval: Automatic
      name: odf-operator
      source: redhat-operators  # <-- Modify the name of the redhat-operators catalogsource if not default
@@ -184,7 +185,7 @@ refresh itself, as the console pods must restart to inherit this new configurati
        name: ocs-deviceset-managed-premium
        portable: true
        replica: 3
-     version: 4.16.0
+     version: 4.20 # <-- Channel should be modified 
    EOF
    ```
 
@@ -198,10 +199,10 @@ refresh itself, as the console pods must restart to inherit this new configurati
    verify that the operators below have succeeded.
    ```
    NAME                              DISPLAY                       VERSION   PHASE
-   mcg-operator.v4.16.9              NooBaa Operator               4.16.9    Succeeded
-   ocs-operator.v4.16.9              OpenShift Container Storage   4.16.9    Succeeded
-   odf-csi-addons-operator.v4.16.9   CSI Addons                    4.16.9    Succeeded
-   odf-operator.v4.16.9              OpenShift Data Foundation     4.16.9    Succeeded
+   mcg-operator.v4.20.9              NooBaa Operator               4.20.9    Succeeded
+   ocs-operator.v4.20.9              OpenShift Container Storage   4.20.9    Succeeded
+   odf-csi-addons-operator.v4.20.9   CSI Addons                    4.20.9    Succeeded
+   odf-operator.v4.20.9              OpenShift Data Foundation     4.20.9    Succeeded
    ```
 
 1. Check that Storage cluster is ready

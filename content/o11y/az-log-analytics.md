@@ -1,7 +1,7 @@
 ---
 date: '2021-07-27'
 title: Shipping logs to Azure Log Analytics
-tags: ["Observability", "Azure"]
+tags: ["Observability", "ARO"]
 authors:
   - Connor Wooley
 ---

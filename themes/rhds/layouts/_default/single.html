@@ -2,7 +2,8 @@
   {{- partial "breadcrumbs.html" . }}
 
   <article>
-    <h1>{{ .Title }}</h1>
+    {{/* Pagefind: max weight for page title vs body (https://pagefind.app/docs/weighting/) */}}
+    <h1 data-pagefind-weight="10">{{ .Title }}</h1>
 
     {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
     {{ $dateHuman := .Date | time.Format ":date_long" }}
@@ -32,7 +33,7 @@
       </dl>
       {{- partial "tags.html" . }}
     </div>
-    <section>
+    <section data-pagefind-weight="0.65">
       {{- partial "rhds/alert.html" . }}
       {{ .Content }}
     </section>

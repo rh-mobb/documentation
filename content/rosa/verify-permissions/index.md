@@ -1,10 +1,14 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-10-04'
 title: "Verify Permissions for ROSA STS Deployment"
 authors:
   - Tyler Stacey
   - Kumudu Herath
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA", "ROSA Classic"]
 ---
 
 To proceed with the deployment of a ROSA cluster, an account must support the required roles and permissions. AWS Service Control Policies (SCPs) cannot block the API calls made by the installer or operator roles.

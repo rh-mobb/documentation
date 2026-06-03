@@ -2,7 +2,7 @@
 date: '2021-08-18'
 title: Installing the Kubernetes Secret Store CSI on OpenShift
 alias: /experts/security/secrets-store-csi
-tags: ["ARO", "ROSA", "OSD", "OCP"]
+tags: ["ARO", "ROSA", "OSD", "Miscellaneous"]
 ---
 
 The Kubernetes Secret Store CSI is a storage driver that allows you to mount secrets from external secret management systems like HashiCorp Vault and AWS Secrets.

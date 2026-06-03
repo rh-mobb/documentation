@@ -1,7 +1,21 @@
+{{/* RHDS Alert: https://ux.redhat.com/elements/alert/ — optional named params: state, variant, header */}}
 {{ $_hugo_config := `{ "version": 1 }` }}
-<rh-alert variant="alternate" state="{{- if .IsNamedParams -}}
-{{- with .Get "state" -}}{{.}}{{- else -}}default{{- end -}}
+{{- $state := "neutral" -}}
+{{- if .IsNamedParams -}}
+  {{- with .Get "state" }}{{ $state = . }}{{ end -}}
 {{- else -}}
-	{{- with .Get 0 -}}{{.}}{{- else -}}default{{- end -}}
-{{- end -}} 
-">{{- .Inner -}}</rh-alert>
+  {{- with .Get 0 }}{{ $state = . }}{{ end -}}
+{{- end -}}
+{{- if eq $state "default" }}{{ $state = "neutral" }}{{ end -}}
+{{- if eq $state "note" }}{{ $state = "info" }}{{ end -}}
+{{- if eq $state "error" }}{{ $state = "danger" }}{{ end -}}
+{{- $variant := "alternate" -}}
+{{- if .IsNamedParams -}}
+  {{- with .Get "variant" }}{{ $variant = . }}{{ end -}}
+{{- end -}}
+<rh-alert state="{{ $state }}" variant="{{ $variant }}">
+{{- if and .IsNamedParams (.Get "header") -}}
+<h3 slot="header">{{ .Get "header" }}</h3>
+{{- end -}}
+{{- .Inner -}}
+</rh-alert>

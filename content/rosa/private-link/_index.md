@@ -1,7 +1,7 @@
 ---
 date: '2021-06-11'
 title: Creating a ROSA cluster with PrivateLink enabled
-tags: ["AWS", "ROSA", "PrivateLink"]
+tags: ["ROSA", "ROSA Classic"]
 ---
 ## Prerequisites
 

@@ -1,7 +1,7 @@
 ---
 date: '2021-10-29'
 title: Configuring IDP for ROSA, OSD and ARO
-tags: ["ROSA", "OSD", ARO", "Azure", "AWS" ]
+tags: ["ROSA", "OSD", "ARO"]
 skipMetadata: true
 ---
 

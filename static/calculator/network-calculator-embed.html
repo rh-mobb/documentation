@@ -99,9 +99,9 @@
                 return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             }
 
-            // Display results
+            // Display results (DOM APIs only — no innerHTML; values include user-entered CIDRs)
             function displayResults(result) {
-                resultsGrid.innerHTML = '';
+                resultsGrid.replaceChildren();
 
                 const resultItems = [
                     { label: 'Pod Network', value: result['pod-network'] },
@@ -120,13 +120,16 @@
                 ];
 
                 resultItems.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'result-item';
-                    div.innerHTML = `
-                        <label>${item.label}</label>
-                        <div class="value ${item.className || ''}">${item.value}</div>
-                    `;
-                    resultsGrid.appendChild(div);
+                    const row = document.createElement('div');
+                    row.className = 'result-item';
+                    const labelEl = document.createElement('label');
+                    labelEl.textContent = item.label;
+                    const valueEl = document.createElement('div');
+                    valueEl.className = 'value' + (item.className ? ' ' + item.className : '');
+                    valueEl.textContent = String(item.value);
+                    row.appendChild(labelEl);
+                    row.appendChild(valueEl);
+                    resultsGrid.appendChild(row);
                 });
 
                 resultJSON.textContent = JSON.stringify(result, null, 2);

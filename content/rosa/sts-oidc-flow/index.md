@@ -1,7 +1,7 @@
 ---
 date: '2022-10-01'
 title: "STS OIDC in ROSA : How it works!"
-tags: ["AWS", "ROSA", "STS"]
+tags: ["ROSA"]
 authors:
   - Connor Wooley
 ---

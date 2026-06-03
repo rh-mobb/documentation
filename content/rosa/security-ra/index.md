@@ -1,7 +1,7 @@
 ---
 date: '2022-09-30'
 title: Security Reference Architecture for ROSA
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Tyler Stacey
   - Connor Wooley

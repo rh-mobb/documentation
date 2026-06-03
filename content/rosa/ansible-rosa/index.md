@@ -1,7 +1,7 @@
 ---
 date: '2023-07-19'
 title: Deploying ROSA PrivateLink Cluster with Ansible
-tags: ["ROSA", "Ansible"]
+tags: ["ROSA", "AAP", "ROSA Classic"]
 authors:
   - Paul Czarkowski
   - Diana Sari

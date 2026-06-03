@@ -1,7 +1,7 @@
 ---
 date: '2022-10-11'
 title: Dynamic Certificates for ROSA Custom Domain
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Kevin Collins
 ---

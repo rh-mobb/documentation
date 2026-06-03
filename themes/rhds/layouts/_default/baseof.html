@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ or site.Language.LanguageCode site.Language.Lang }}" dir="{{ or site.Language.LanguageDirection `ltr` }}">
+<html id="top" lang="{{ or site.Language.LanguageCode site.Language.Lang }}" dir="{{ or site.Language.LanguageDirection `ltr` }}">
 <head>
   {{ partial "head.html" . }}
 </head>
@@ -7,9 +7,15 @@
   {{ partial "rhds/header.html" . }}
   {{ partial "rhds/nav.html" .}}
   {{ block "hero" . }}{{ end }}
-  <main>
+  {{/*
+    Pagefind: only pages with data-pagefind-body are indexed once any page uses it.
+    Omit: homepage, and all tag taxonomy/term pages (/tags/, /tags/foo/).
+  */}}
+  {{- $pagefindBody := and (not .IsHome) (not (and (or (eq .Kind "taxonomy") (eq .Kind "term")) (eq .Data.Plural "tags"))) -}}
+  <main{{ if $pagefindBody }} data-pagefind-body{{ end }}>
     {{ block "main" . }}{{ end }}
   </main>
+  <rh-back-to-top href="#top">Back to top</rh-back-to-top>
   {{ partial "collaborate.html" . }}
   {{ partial "rhds/footer.html" .}}
   {{ partial "eddl/page-load-completed.html" . }}

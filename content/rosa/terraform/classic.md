@@ -1,7 +1,7 @@
 ---
 date: '2024-05-20'
 title: Deploying a ROSA Classic cluster with Terraform
-tags: ["ROSA", "terraform"]
+tags: ["ROSA", "Terraform", "ROSA Classic"]
 authors:
   - Paul Czarkowski
 ---

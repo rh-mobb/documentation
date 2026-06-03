@@ -1,7 +1,7 @@
 ---
 date: '2024-07-26'
 title: Configure Network Policies and Egress Firewalls for a ROSA Cluster
-tags: ["OSD", "ROSA", "security","egressfirewall", "networkpolicy"]
+tags: ["OSD", "ROSA"]
 authors:
   - 'Paul Czarkowski'
 ---

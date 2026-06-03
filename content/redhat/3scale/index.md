@@ -2,7 +2,7 @@
 date: '2022-01-26'
 title: Deploying 3scale API Management to ROSA and OSD
 aliases: ['/experts/app-services/3scale']
-tags: ["ROSA", "OSD"]
+tags: ["ROSA", "OSD", "Miscellaneous"]
 authors:
   - Michael McNeill
   - Connor Wooley

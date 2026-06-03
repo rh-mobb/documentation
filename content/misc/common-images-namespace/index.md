@@ -1,7 +1,7 @@
 ---
 date: '2021-06-21'
 title: OpenShift - Sharing Common images
-tags: ["OCP"]
+tags: []
 authors:
   - Paul Czarkowski
   - Connor Wooley

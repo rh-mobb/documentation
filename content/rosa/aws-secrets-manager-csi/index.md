@@ -1,7 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2023-05-25'
 title: Using AWS Secrets Manager CSI on Red Hat OpenShift on AWS with STS
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Paul Czarkowski
   - Chris Kang

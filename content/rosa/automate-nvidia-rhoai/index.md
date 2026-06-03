@@ -1,7 +1,7 @@
 ---
 date: '2025-07-15'
 title: Deploy ROSA + Nvidia GPU + RHOAI with Automation
-tags: ["AWS", "ROSA", "GPU", "RHOAI"]
+tags: ["ROSA", "RHOAI", "ROSA HCP"]
 authors:
   - Kevin Collins
 ---

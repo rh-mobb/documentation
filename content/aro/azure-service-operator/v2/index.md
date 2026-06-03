@@ -2,7 +2,7 @@
 date: '2022-09-19'
 title: 'Azure Service Operator V2 in ARO'
 aliases: ['/experts/aro/azure-service-operator-v2/']
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Thatcher Hubbard
   - Paul Czarkowski

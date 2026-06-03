@@ -13,7 +13,6 @@ skipMetadata: true
 * [Cost Management for Cloud Services](./cost-management)
 * [Azure DevOps with Managed OpenShift](./azure-dev-ops-with-managed-openshift)
 * [Custom TLS Ciphers](./tls-cipher-customization)
-* [Jupyter Notebook](./jup)
 * [K8s Secret Store CSI](./secrets-store-csi)
 * [OADP](./oadp)
 * [Sharing Common Images](./common-images-namespace) 

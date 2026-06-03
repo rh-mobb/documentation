@@ -1,7 +1,7 @@
 ---
 date: '2022-05-31'
 title: Create STS Assume Role
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Shaozhen Ding 
 ---

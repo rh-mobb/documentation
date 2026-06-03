@@ -1,31 +1,7 @@
 {
-  "name": "cloud-experts",
-  "version": "1.0.0",
-  "description": "Red Hat Cloud Experts Documentation",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "wireit"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rh-mobb/documentation.git"
-  },
-  "contributors": [
-    "Michael McNeill <mmcneill@redhat.com>",
-    "Kyle Buchanan <kbuchana@redhat.com>",
-    "Steven Spriggs <sspriggs@redhat.com>"
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/rh-mobb/documentation/issues"
-  },
+  "name": "cloud-experts-documentation",
+  "private": true,
   "devDependencies": {
-    "wireit": "^0.14.9"
-  },
-  "wireit": {
-    "start": {
-      "command": "hugo server --appendPort -D -b //localhost/experts/"
-    }
+    "pagefind": "1.4.0"
   }
 }

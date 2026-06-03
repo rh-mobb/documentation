@@ -1,10 +1,11 @@
 ---
 date: '2024-09-11'
 title: Deploying and Running Ollama and Open WebUI in a ROSA Cluster with GPUs
-tags: ["AWS", "ROSA", "GPU", "Ollama", "OpenWebUI"]
+tags: ["ROSA", "Miscellaneous"]
 aliases: ["/docs/misc/ollama-openwebui"]
 authors:
   - Florian Jacquin
+validated_version: "4.21" 
 ---
 
 Red Hat OpenShift Service on AWS (ROSA) provides a managed OpenShift environment that can leverage AWS GPU instances. This guide will walk you through deploying Ollama and OpenWebUI on ROSA using instances with GPU for inferences.

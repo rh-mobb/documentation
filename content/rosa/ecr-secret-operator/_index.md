@@ -1,10 +1,14 @@
 ---
-date: '2022-05-31'
+date: '2026-03-23'
 title: ECR Secret Operator
-tags: ["AWS", "ROSA"]
+tags: ["ROSA"]
 authors:
   - Shaozhen Ding 
+  - Deepika Ranganathan
+validated_version: "4.20"
 ---
+
+
 
 Amazon Elastic Container Registry [Private Registry Authentication](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html) provides a temporary authorization token valid only for 12 hours. This operator refreshes automatically the Amazon ECR authorization token before it expires, reducing the overhead in managing the authentication flow.
 
@@ -61,7 +65,7 @@ ecr-docker-secret   kubernetes.io/dockerconfigjson   1      16h
 Link the secret to builder
 
 ```
-oc secrets link builder ecr-docker-secret
+oc secrets link builder ecr-docker-secret --for=pull,mount -n test-ecr-secret-operator
 ```
 
 Configure build config to point to your ECR Container repository
@@ -104,7 +108,7 @@ Build should succeed and push the image to the the private ECR Container reposit
 ### Create the ECR Secret Argo CD Helm Repo CRD
 
 * [OpenShift GitOps is installed](https://docs.openshift.com/container-platform/4.8/cicd/gitops/installing-openshift-gitops.html)
-* [Helm chart stored in ecr](https://docs.aws.amazon.com/AmazonECR/latest/userguide/push-oci-artifact.html)
+* [Helm chart](https://docs.aws.amazon.com/AmazonECR/latest/userguide/push-oci-artifact.html) stored in ecr test repo
 * Create the Helm Repo CRD
 
 ```bash

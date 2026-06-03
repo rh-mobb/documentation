@@ -1,7 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-04-12'
 title: Enable the Managed Upgrade Operator in ARO and schedule Upgrades
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Paul Czarkowski
   - Connor Wooley

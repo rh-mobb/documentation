@@ -1,7 +1,11 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2022-04-22'
 title: Creating a ROSA cluster in STS mode with custom KMS key
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA Classic"]
 authors:
   - Byron Miller
 ---

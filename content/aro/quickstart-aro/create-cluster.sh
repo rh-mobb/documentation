@@ -47,6 +47,9 @@ az aro create \
    --vnet "$AZR_CLUSTER-aro-vnet-$AZR_RESOURCE_LOCATION" \
    --master-subnet "$AZR_CLUSTER-aro-control-subnet-$AZR_RESOURCE_LOCATION" \
    --worker-subnet "$AZR_CLUSTER-aro-machine-subnet-$AZR_RESOURCE_LOCATION" \
+   --master-vm-size Standard_D8s_v5 \
+   --worker-vm-size Standard_D4s_v5 \
+   --worker-count 3 \
    --pull-secret @$AZR_PULL_SECRET #--sdn-type "OVNKubernetes"
 
 az aro show \

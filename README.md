@@ -21,6 +21,32 @@ You should be able to review PRs, preview branches, and even write new posts dir
 You should now have a github space ready for writing content or reviewing PRs.
 
 
+### Reviewing PRs with Claude Code
+
+If you have [Claude Code](https://claude.ai/code) installed, you can review pull requests directly from the terminal:
+
+```
+> review PR 123
+```
+
+Claude will check out the branch, spin up the local preview server, assess the diff against site standards, and post inline suggestions or comments to the PR. You can then follow up with:
+
+- `"approve and merge it"` — approve and squash merge once satisfied
+- `"go ahead and make the suggestion"` — apply a fix locally and push it to the branch
+- `"just comment on the PR"` — post feedback without touching the code
+
+If the PR is yours and you want to address reviewer comments, phrase it accordingly:
+
+```
+> PR 123 is mine, I want to address any comments/concerns
+```
+
+Claude will fetch the prior review comments, check what's been addressed and what hasn't, assess the diff, apply fixes locally, and push them back to your branch.
+
+### Example pages
+
+The [`content/examples/`](./content/examples/) directory holds shortcode demos, diagram templates, and other formatting reference pages for content authors. These pages render in local preview (`make preview`) but are never published to the live site. See [CONTRIBUTING.md](./CONTRIBUTING.md#example-pages) for how to add one.
+
 ### Contributing
 
 For contributing to this repository, please follow the guidelines specified in the [contributing.md](./CONTRIBUTING.md)

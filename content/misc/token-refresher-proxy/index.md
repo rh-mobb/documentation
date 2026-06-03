@@ -1,4 +1,8 @@
 ---
+build:
+  list: never
+  publishResources: false
+  render: never
 date: '2023-08-01'
 title: Patch token-refresher to use a cluster proxy
 tags: ["OSD", "ROSA"]
@@ -6,6 +10,8 @@ authors:
   - Andy Repton
   - Paul Czarkowski
 ---
+
+# Token-refresher has been removed from ROSA and OSD as a part of [SDE-3442](https://redhat.atlassian.net/browse/SDE-3442). This article remains available historically on GitHub. 
 
 Currently, if you deploy a ROSA or OSD cluster with a proxy, the token-refresher pod in the openshift-monitoring namespace will be in crashloopbackoff. There is an RFE open to resolve this, but until then this can affect the ability of the cluster to report telemetry and potentially update. This article provides a workaround on how to patch the token-refresher deployment until that RFE has been fixed using the patch-operator.
 

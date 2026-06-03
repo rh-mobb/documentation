@@ -1,15 +1,16 @@
 ---
 date: '2025-04-21'
 title: Adding a Private Ingress Controller and a Public ALB to a ROSA Cluster 
-tags: ["AWS", "ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
   - Paul Czarkowski
   - Diana Sari
   - Daniel Axelrod
+validated_version: "4.20"
 ---
 
-Starting with OpenShift 4.14, Red Hat OpenShift Service on AWS (ROSA) supports adding additional Ingress Controllers which can be used to configure a custom domain on a ROSA cluster. This guide shows how to leverage this feature to create a complete routing solution with both a private Ingress Controller (which creates an Network Load Balancer (NLB)) and a public Application Load Balancer (ALB) in front of it, providing a path from the internet to your applications.
+Red Hat OpenShift Service on AWS (ROSA) supports adding additional Ingress Controllers which can be used to configure a custom domain on a ROSA cluster. This guide shows how to leverage this feature to create a complete routing solution with both a private Ingress Controller (which creates an Network Load Balancer (NLB)) and a public Application Load Balancer (ALB) in front of it, providing a path from the internet to your applications.
 
 In essence, the routing flow will look like this: Internet -> ALB -> NLB -> Application. 
 
@@ -169,11 +170,15 @@ Next, under **Listeners and routing**, select `HTTPS` as protocol, and click **C
 <br />
 
 
-Click **Next** at the end of the page and this will lead you to the **Register targets** group. Now, enter the IP addresses of your NLB that you've retrieved previously. Once you added them, click **Include as pending below**. And at the **Review targets** section, you should see the health checks are in **Pending** state. Click **Create target group** to proceed.
+Click **Next** at the end of the page and this will lead you to the **Register targets** group. Now, enter the IP addresses of your NLB that you've retrieved previously. Once you added them, click **Include as pending below**. And at the **Review targets** section, you should see the health checks are in **Pending** state. Click **Next** to proceed. 
 
 ![tg_review](images/tg_review.png)
 <br />
 
+On the next screen, review your target group entries. Click **Create target group** to proceed.
+
+![tg_create](images/tg_create.png)
+<br />
 
 Next, go back to the ALB creation page, refresh the target group option, and select the target group you just created. 
 
