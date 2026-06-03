@@ -1,7 +1,7 @@
 ---
 date: '2026-05-25'
 title: 'ARO Service Principal to Managed Identity: Hands-On Migration Walkthrough'
-tags: ["ARO", "Azure"]
+tags: ["ARO"]
 authors:
   - Kevin Ye
 ---
@@ -428,6 +428,17 @@ KUBEADMIN_PASSWORD=$(az aro list-credentials \
 oc login $API_SERVER -u kubeadmin -p $KUBEADMIN_PASSWORD
 ```
 
+#### Get the demo application source
+
+The demo application source code lives alongside this guide in the [rh-mobb/documentation](https://github.com/rh-mobb/documentation) repository. Clone it and navigate to the demo apps directory:
+
+```bash
+git clone https://github.com/rh-mobb/documentation.git
+cd documentation/content/aro/aro-sp-mi
+```
+
+The rest of the build commands run from this directory.
+
 #### Deploy keyvault-reader
 
 ```bash
@@ -579,7 +590,7 @@ az group delete --name $RESOURCEGROUP --yes --no-wait
 
 ## Demo Application Source Code
 
-The complete source code for both demo applications is available in the `demo-apps/` directory:
+The complete source code for both demo applications is in the [rh-mobb/documentation](https://github.com/rh-mobb/documentation) repository under `content/aro/aro-sp-mi/demo-apps/`:
 
 ```
 demo-apps/
