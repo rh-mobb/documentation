@@ -6,7 +6,7 @@ authors:
   - Kevin Ye
 ---
 
-This is **Part 2** of a two-part series. [Part 1](../) covers what changes in authentication and how to plan your move. This article walks through a hands-on migration of two demo applications from an SP cluster to an MI cluster.
+This is **Part 2** of a two-part series. [Part 1](/experts/aro/aro-sp-mi/) covers what changes in authentication and how to plan your move. This article walks through a hands-on migration of two demo applications from an SP cluster to an MI cluster.
 
 ## What This Demo Covers
 
@@ -602,7 +602,7 @@ demo-apps/
 
 ## References
 
-- [Part 1: Service Principal vs Managed Identity Explained](../)
+- [Part 1: Service Principal vs Managed Identity Explained](/experts/aro/aro-sp-mi/)
 - [Use workload identity with an ARO cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-create-a-workloadidentitypool)
 - [Azure Workload Identity Federation](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation)
 - [DefaultAzureCredential documentation](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential)
