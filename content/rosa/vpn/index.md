@@ -1,9 +1,11 @@
 ---
 date: '2023-07-28'
 title: Setup a VPN Connection into a PrivateLink ROSA Cluster with OpenVPN
-tags: ["ROSA"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
-  - Kevin Collins & Kumudu Herath
+  - Kevin Collins
+  - Kumudu Herath
+validated_version: "4.21"
 ---
 
 > **✨ Automated Terraform Module Available**
