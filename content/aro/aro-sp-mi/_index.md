@@ -4,15 +4,16 @@ title: 'ARO Service Principal to Managed Identity: What Changes in Authenticatio
 tags: ["ARO"]
 authors:
   - Kevin Ye
+layout: single
 ---
 
-This is **Part 1** of a two-part series. This article covers what changes in authentication, why managed identity matters, and how to plan your move. [Part 2](migration-demo/) walks through a hands-on migration with two demo applications.
+This article covers what changes in authentication, why managed identity matters, and how to plan your move.
 
 ## TL;DR
 
 **What changed and what stays the same?** Service principal (SP) remains fully supported; there is no deprecation timeline, and existing SP clusters continue to work. What changes with managed identity (MI) is how authentication works at both layers. At the cluster layer, a single shared credential with broad Contributor permissions is replaced by nine scoped managed identities (one per operator plus a cluster identity that manages federated credentials for the others), each with only the permissions it needs, with no secrets stored in the cluster. At the application layer, MI clusters enable workload identity, which lets your application pods authenticate to Azure services like Key Vault, Storage, and SQL Database without managing any credentials. This capability is not available on SP clusters. From a security perspective, MI is the recommended approach for all new ARO clusters.
 
-**How do I move?** There is no in-place conversion: you deploy a new MI cluster alongside the existing one and migrate workloads using a blue-green approach. The migration effort depends on your workload complexity, not on the SP-to-MI change itself. Most applications need only Kubernetes manifest changes (replacing secret references with ServiceAccount annotations). This article (Part 1) covers what changes and why; [Part 2](migration-demo/) walks through a hands-on migration with two demo applications.
+**How do I move?** There is no in-place conversion: you deploy a new MI cluster alongside the existing one and migrate workloads using a blue-green approach. The migration effort depends on your workload complexity, not on the SP-to-MI change itself. Most applications need only Kubernetes manifest changes (replacing secret references with ServiceAccount annotations). This article covers what changes and why; for a hands-on walkthrough see the [demo repository](https://github.com/rh-mobb/example-aro-sp-to-miwi).
 
 ## Why We Wrote This
 
@@ -141,7 +142,7 @@ sequenceDiagram
 
 This is the same pattern used by ROSA with IAM Roles for Service Accounts (IRSA) and OSD with Workload Identity on GCP. The Azure SDK's `DefaultAzureCredential` handles the token exchange automatically; your application code does not need to know which authentication method is being used.
 
-{{% alert state="info" %}}**Workload identity is only available on MI clusters.** If your applications need secretless access to Azure services, managed identity is a prerequisite.{{% /alert %}}
+{{% alert state="info" %}}**Workload identity is only available on MI clusters.** If your applications need secretless access to Azure services, an MI cluster is a prerequisite.{{% /alert %}}
 
 ### Summary: What Changes at Each Layer
 
@@ -247,7 +248,14 @@ Older SDK versions will not auto-detect workload identity, even if the webhook i
 2. Remove the old service principal and its app registration from Entra ID
 3. Clean up the old resource group
 
-{{% alert state="info" %}}For a hands-on walkthrough with two demo applications (one that requires a code change with Key Vault and `ClientSecretCredential`, and one that requires only manifest changes with Blob Storage and `DefaultAzureCredential`), see [Part 2: Hands-On Migration Walkthrough](migration-demo/).{{% /alert %}}
+## Hands-On Demo
+
+The **[rh-mobb/example-aro-sp-to-miwi](https://github.com/rh-mobb/example-aro-sp-to-miwi)** repository contains two Python Flask demo applications and a step-by-step walkthrough for migrating them from an SP cluster to an MI cluster with workload identity:
+
+- **keyvault-reader** — reads secrets from Azure Key Vault using `ClientSecretCredential` on the SP cluster. Demonstrates the most common migration case: a one-line code change to `DefaultAzureCredential` plus replacing the K8s Secret with a ServiceAccount annotation.
+- **blob-writer** — writes to Azure Blob Storage using `DefaultAzureCredential` on both clusters. Demonstrates that apps already using `DefaultAzureCredential` need no code change at all — only the K8s manifest changes.
+
+The README walks through environment setup, creating managed identities and federated credentials, building and deploying both apps on the MI cluster, and validating that workload identity is working with no secrets in the pods.
 
 ## References
 
