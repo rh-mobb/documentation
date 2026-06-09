@@ -10,6 +10,7 @@ This repository is a **[Hugo](https://gohugo.io/)** static site using the **`rhd
 | Theme | `themes/rhds` (set in config and Make targets) |
 | Published subtree | `public/experts` (`publishDir` in `config.toml`; site `baseURL` ends with `/experts/`) |
 | Netlify Hugo version | See [`netlify.toml`](./netlify.toml) `HUGO_VERSION` (pin local Hugo to the same minor series when diagnosing CI-only failures) |
+| Node.js | 24 (see [`.nvmrc`](./.nvmrc); used for Pagefind via `npm ci` / `npx pagefind`) |
 | Local preview | `make preview` — see [`Makefile`](./Makefile) |
 | Preview + working search | `make preview-search` (builds + Pagefind index; do not use `hugo server -M` / `--renderToMemory` if search must work) |
 
