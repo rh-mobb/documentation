@@ -75,9 +75,3 @@
   </rh-footer-universal>
 </rh-footer>
 <div id="consent_blackbar" style="position: fixed;bottom: 0;width: 100%;z-index: 5;padding: 10px;"></div>
-{{- if .Store.Get "hasMermaid" }}
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
-</script>
-{{- end }}
