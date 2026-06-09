@@ -1,6 +1,6 @@
 ---
 date: '2023-07-28'
-title: Setup a VPN Connection into a Private ROSA Cluster with OpenVPN
+title: Setup a VPN Connection into a PrivateLink ROSA Cluster with OpenVPN
 tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
@@ -8,9 +8,22 @@ authors:
 validated_version: "4.21"
 ---
 
-Red Hat OpenShift on AWS (ROSA) clusters configured with private deployment provide enhanced security by restricting API and application endpoints to private network access only. However, this creates a challenge for cluster administrators and developers who need to access the cluster from outside the AWS VPC.
+> **✨ Automated Terraform Module Available**
+>
+> This entire VPN setup process has been automated with Terraform! For a faster, simpler deployment, use the **[terraform-rosa-vpn](https://github.com/rh-mobb/terraform-rosa-vpn)** module which automates:
+> - Certificate generation using easy-rsa
+> - AWS Certificate Manager import
+> - Client VPN endpoint creation and configuration
+> - OpenVPN client configuration file generation
+> - Full DNS mode configuration (no manual steps needed)
+>
+> Follow the instructions in the [terraform-rosa-vpn repository](https://github.com/rh-mobb/terraform-rosa-vpn) for a one-command deployment (`terraform apply`).
+>
+> The manual process below is still valid if you prefer step-by-step setup or need to customize the configuration.
 
-Traditional approaches require setting up and maintaining bastion hosts (jump boxes) or configuring complex VPC peering arrangements. This guide demonstrates a more streamlined alternative using AWS Client VPN, which provides secure, certificate-based access to your private ROSA cluster without the operational overhead of managing additional infrastructure. With this approach, you can connect directly to your cluster using standard VPN client software on your local machine.
+---
+
+When you configure a Red Hat OpenShift on AWS (ROSA) cluster with a private link configuration, you will need connectivity to this private network in order to access your cluster. This guide will show you how to configure an AWS Client VPN connection so you won't need to setup and configure Jump Boxes.
 
 ## Prerequisites
 
