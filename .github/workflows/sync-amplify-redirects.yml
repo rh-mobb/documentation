@@ -44,6 +44,28 @@ jobs:
       - name: Generate Hugo alias redirects
         run: hugo --gc --minify --theme rhds
 
+      - name: Validate GitHub Actions variables
+        run: |
+          missing=0
+          if [ -z "${{ vars.AWS_AMPLIFY_REDIRECTS_ROLE_ARN }}" ]; then
+            echo "::error::Set repository variable AWS_AMPLIFY_REDIRECTS_ROLE_ARN (terraform output -raw github_amplify_redirects_role_arn)"
+            missing=1
+          fi
+          if [ -z "${{ vars.AWS_REGION }}" ]; then
+            echo "::error::Set repository variable AWS_REGION (same region as Amplify app, e.g. us-east-2)"
+            missing=1
+          fi
+          if [ -z "${{ vars.AMPLIFY_APP_ID }}" ]; then
+            echo "::error::Set repository variable AMPLIFY_APP_ID (terraform output -raw amplify_app_id)"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::warning::OIDC trust in documentation-infra allows only refs/heads/main. This workflow must run on main (push or workflow_dispatch from main)."
+          fi
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
