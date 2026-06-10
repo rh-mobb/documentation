@@ -1192,3 +1192,27 @@ rh-navigation-secondary a[slot="logo"]:visited {
 rh-code-block {
   margin-block-end: var(--rh-space-2xl, 32px);
 }
+
+/* Mermaid diagrams ({{< mermaid >}} shortcode or ```mermaid fenced blocks) */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  max-width: 60rem;
+  width: 100%;
+  margin-block: var(--rh-space-xl, 24px);
+  overflow-x: auto;
+}
+
+.mermaid.align-left {
+  justify-content: flex-start;
+}
+
+.mermaid.align-right {
+  justify-content: flex-end;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}

@@ -1,0 +1,8 @@
+{{- if .Store.Get "hasMermaid" }}
+{{- $version := site.Params.mermaidVersion | default "11" }}
+{{- $theme := site.Params.mermaidTheme | default "neutral" }}
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@{{ $version }}/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: '{{ $theme }}' });
+</script>
+{{- end }}
