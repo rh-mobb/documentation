@@ -38,6 +38,7 @@ jobs:
           mkdir -p "${HOME}/.local/hugo"
           tar -C "${HOME}/.local/hugo" -xf "hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
           echo "${HOME}/.local/hugo" >> "$GITHUB_PATH"
+          export PATH="${HOME}/.local/hugo:${PATH}"
           hugo version
 
       - name: Generate Hugo alias redirects
