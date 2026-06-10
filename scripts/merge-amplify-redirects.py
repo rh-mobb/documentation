@@ -11,12 +11,25 @@ from pathlib import Path
 REDIRECT_LINE = re.compile(r"^(\S+)\s+(\S+)\s*$")
 
 
+def normalize_rule(rule: dict) -> dict:
+    """Amplify UpdateApp expects condition to be a string or omitted, not null."""
+    normalized = {
+        "source": rule["source"],
+        "status": rule["status"],
+        "target": rule["target"],
+    }
+    condition = rule.get("condition")
+    if condition:
+        normalized["condition"] = condition
+    return normalized
+
+
 def load_static_rules(path: Path) -> list[dict]:
     with path.open(encoding="utf-8") as handle:
         rules = json.load(handle)
     if not isinstance(rules, list):
         raise SystemExit(f"{path}: expected a JSON array")
-    return rules
+    return [normalize_rule(rule) for rule in rules]
 
 
 def load_hugo_rules(path: Path) -> list[dict]:
@@ -31,12 +44,13 @@ def load_hugo_rules(path: Path) -> list[dict]:
                 raise SystemExit(f"{path}: could not parse redirect line: {line.rstrip()}")
             source, target = match.groups()
             rules.append(
-                {
-                    "source": source,
-                    "status": "301",
-                    "target": target,
-                    "condition": None,
-                }
+                normalize_rule(
+                    {
+                        "source": source,
+                        "status": "301",
+                        "target": target,
+                    }
+                )
             )
     return rules
 
