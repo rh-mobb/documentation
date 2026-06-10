@@ -1,0 +1,254 @@
+[
+  {
+    "source": "/experts/rosa/rosa-gitops/",
+    "status": "404",
+    "target": "/",
+    "condition": null
+  },
+  {
+    "source": "/experts/misc/jup/",
+    "status": "404",
+    "target": "/",
+    "condition": null
+  },
+  {
+    "source": "/experts/misc/jup/buildnotebook/",
+    "status": "404",
+    "target": "/",
+    "condition": null
+  },
+  {
+    "source": "/experts/misc/jup/opendatahub-gpu/",
+    "status": "404",
+    "target": "/",
+    "condition": null
+  },
+  {
+    "source": "/experts/tags/private-link/",
+    "status": "301",
+    "target": "/experts/tags/privatelink/",
+    "condition": null
+  },
+  {
+    "source": "/experts/tags/openshift-virtualization/",
+    "status": "301",
+    "target": "/experts/tags/virtualization/",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/rosa-quickstart/",
+    "status": "301",
+    "target": "/experts/rosa/quickstart/",
+    "condition": null
+  },
+  {
+    "source": "/experts/osd/osd-quickstart/",
+    "status": "301",
+    "target": "/experts/osd/quickstart/",
+    "condition": null
+  },
+  {
+    "source": "/experts/quickstart-aro/",
+    "status": "301",
+    "target": "/experts/aro/quickstart/",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/prereq-list/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/prepare_your_environment/rosa-cloud-expert-prereq-checklist",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/verify-permissions/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/rosa-mobb-verify-permissions-sts-deployment",
+    "condition": null
+  },
+  {
+    "source": "/experts/misc/oadp/rosa-sts/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/cloud-experts-deploy-api-data-protection",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/waf/cloud-front/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-cloudfront-and-waf",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/aws-secrets-manager-csi/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-aws-secret-manager",
+    "condition": null
+  },
+  {
+    "source": "/experts/idp/group-claims/rosa/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-entra-id-idp",
+    "condition": null
+  },
+  {
+    "source": "/experts/idp/azuread/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-entra-id-idp",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/waf/alb/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/cloud-experts-using-alb-and-waf",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/ack/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/tutorials/using-aws-controllers-for-kubernetes-on-rosa",
+    "condition": null
+  },
+  {
+    "source": "/experts/aro/managed-upgrade-operator/",
+    "status": "301",
+    "target": "https://learn.microsoft.com/en-us/azure/openshift/howto-upgrade#schedule-individual-updates-using-the-managed-upgrade-operator",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/customizing-console-route/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws_classic_architecture/4/html/tutorials/cloud-experts-update-component-routes",
+    "condition": null
+  },
+  {
+    "source": "/experts/misc/tls-cipher-customization/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/networking_operators/configuring-ingress#configuring-ingress-controller-tls",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/hcp-private-api-access/",
+    "status": "301",
+    "target": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_clusters/rosa-hcp-aws-private-creating-cluster#rosa-hcp-aws-private-security-groups_rosa-hcp-aws-private-creating-cluster",
+    "condition": null
+  },
+  {
+    "source": "/experts/redhat/rhacs",
+    "status": "301",
+    "target": "/experts/redhat/acs/deployment/",
+    "condition": null
+  },
+  {
+    "source": "/experts/redhat/rhacs/",
+    "status": "301",
+    "target": "/experts/redhat/acs/deployment/",
+    "condition": null
+  },
+  {
+    "source": "/experts/rhoai",
+    "status": "301",
+    "target": "/experts/redhat/rhoai/",
+    "condition": null
+  },
+  {
+    "source": "/experts/rhoai/",
+    "status": "301",
+    "target": "/experts/redhat/rhoai/",
+    "condition": null
+  },
+  {
+    "source": "/experts/rhoai/<*>",
+    "status": "301",
+    "target": "/experts/redhat/rhoai/<*>",
+    "condition": null
+  },
+  {
+    "source": "/experts/gcp",
+    "status": "301",
+    "target": "/experts/osd/",
+    "condition": null
+  },
+  {
+    "source": "/experts/gcp/",
+    "status": "301",
+    "target": "/experts/osd/",
+    "condition": null
+  },
+  {
+    "source": "/experts/gcp/<*>",
+    "status": "301",
+    "target": "/experts/osd/<*>",
+    "condition": null
+  },
+  {
+    "source": "/experts/redhat/rhoai",
+    "status": "301",
+    "target": "/experts/tags/rhoai/",
+    "condition": null
+  },
+  {
+    "source": "/experts/redhat/rhoai/",
+    "status": "301",
+    "target": "/experts/tags/rhoai/",
+    "condition": null
+  },
+  {
+    "source": "/experts/redhat/acm",
+    "status": "301",
+    "target": "/experts/tags/acm/",
+    "condition": null
+  },
+  {
+    "source": "/experts/redhat/acm/",
+    "status": "301",
+    "target": "/experts/tags/acm/",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa",
+    "status": "301",
+    "target": "/experts/tags/rosa/",
+    "condition": null
+  },
+  {
+    "source": "/experts/rosa/",
+    "status": "301",
+    "target": "/experts/tags/rosa/",
+    "condition": null
+  },
+  {
+    "source": "/experts/aro",
+    "status": "301",
+    "target": "/experts/tags/aro/",
+    "condition": null
+  },
+  {
+    "source": "/experts/aro/",
+    "status": "301",
+    "target": "/experts/tags/aro/",
+    "condition": null
+  },
+  {
+    "source": "/experts/osd",
+    "status": "301",
+    "target": "/experts/tags/osd/",
+    "condition": null
+  },
+  {
+    "source": "/experts/osd/",
+    "status": "301",
+    "target": "/experts/tags/osd/",
+    "condition": null
+  },
+  {
+    "source": "/docs/<*>",
+    "status": "301",
+    "target": "/experts/<*>",
+    "condition": null
+  },
+  {
+    "source": "/",
+    "status": "301",
+    "target": "/experts/",
+    "condition": null
+  }
+]
