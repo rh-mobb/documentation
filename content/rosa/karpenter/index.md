@@ -10,7 +10,7 @@ validated_version: "4.22"
 
 Red Hat build of Karpenter (AutoNode) brings workload-aware, just-in-time node provisioning to Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes. Instead of managing static machine pools with pre-defined instance types, Karpenter evaluates the exact CPU, memory, and scheduling constraints of pending pods and provisions the optimal EC2 instance automatically — then consolidates underutilized nodes when they are no longer needed.
 
-This guide walks through enabling AutoNode on a ROSA HCP cluster, configuring a NodePool and EC2NodeClass, and running hands-on demos that demonstrate right-sizing, Spot optimization, and consolidation.
+This guide walks through enabling AutoNode on a ROSA HCP cluster, configuring a NodePool and EC2NodeClass, and exploring use cases including right-sizing, Spot optimization, and consolidation.
 
 ## Prerequisites
 
@@ -107,7 +107,7 @@ oc get pods -A | grep karpenter
 
 ROSA uses `OpenshiftEC2NodeClass` instead of the upstream `EC2NodeClass`. ROSA automatically manages subnet and security group selectors via `karpenter.sh/discovery` tags — no manual configuration is needed in the spec.
 
-> **Note:** If you deployed via `terraform-rosa` with `karpenter = true`, these resources are already applied. Skip to [Demo 1](#demo-1--basic-scale-up).
+> **Note:** If you deployed via `terraform-rosa` with `karpenter = true`, these resources are already applied. Skip to [Use Case 1](#use-case-1--basic-scale-up).
 
 Apply the `OpenshiftEC2NodeClass`:
 
@@ -179,7 +179,7 @@ nodepool.karpenter.sh/default           default     0       True    30s
 
 ## Create the Test Namespace
 
-All demo workloads run in a dedicated namespace:
+All workloads run in a dedicated namespace:
 
 ```bash
 oc new-project karpenter-test
@@ -187,29 +187,29 @@ oc new-project karpenter-test
 
 ---
 
-## Demo 1 — Basic Scale-Up
+## Use Case 1 — Basic Scale-Up
 
 Deploy a workload that exceeds current capacity and watch Karpenter provision a right-sized node automatically.
 
 ```bash
-# Check nodes before the demo
+# Check nodes before starting
 oc get nodes
 
 cat <<EOF | oc apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: karpenter-demo
+  name: karpenter-scaleup
   namespace: karpenter-test
 spec:
   replicas: 10
   selector:
     matchLabels:
-      app: karpenter-demo
+      app: karpenter-scaleup
   template:
     metadata:
       labels:
-        app: karpenter-demo
+        app: karpenter-scaleup
     spec:
       containers:
       - name: app
@@ -253,7 +253,7 @@ Karpenter evaluated the total pending resource requests (10 × 1 CPU / 1Gi) and 
 
 ---
 
-## Demo 2 — Instance Type Flexibility (Right-Sizing)
+## Use Case 2 — Instance Type Flexibility (Right-Sizing)
 
 Show how Karpenter selects different instance families for memory-heavy vs CPU-heavy workloads.
 
@@ -343,7 +343,7 @@ The memory workload lands on `r`-family instances; the CPU workload lands on `c`
 
 ---
 
-## Demo 3 — Spot Instance Optimization
+## Use Case 3 — Spot Instance Optimization
 
 Show cost savings through automatic Spot instance usage.
 
@@ -395,13 +395,13 @@ Spot instances can deliver 60–90% cost savings vs On-Demand. Karpenter monitor
 
 ---
 
-## Demo 4 — Consolidation (Scale Down)
+## Use Case 4 — Consolidation (Scale Down)
 
 Show Karpenter automatically reclaiming unused capacity.
 
 ```bash
 # Scale down all workloads
-oc scale deployment karpenter-demo --replicas=2 -n karpenter-test
+oc scale deployment karpenter-scaleup --replicas=2 -n karpenter-test
 oc scale deployment memory-intensive --replicas=1 -n karpenter-test
 oc scale deployment cpu-intensive --replicas=1 -n karpenter-test
 oc scale deployment spot-workload --replicas=2 -n karpenter-test
@@ -414,7 +414,7 @@ Within ~60 seconds Karpenter identifies underutilized nodes, cordons and drains 
 
 ---
 
-## Demo 5 — Coexistence with Machine Pools
+## Use Case 5 — Coexistence with Machine Pools
 
 Show how Karpenter-managed nodes and existing machine pool nodes run side by side.
 
@@ -493,7 +493,7 @@ This enables a gradual migration path — existing workloads stay on managed mac
 ## Cleanup
 
 ```bash
-# Delete all demo workloads
+# Delete all workloads
 oc delete namespace karpenter-test
 
 # Delete Karpenter resources (nodes will be terminated automatically)
