@@ -1,9 +1,10 @@
 ---
 date: '2026-06-11'
 title: Getting Started with Red Hat Build of Karpenter (AutoNode) on ROSA
-tags: ["ROSA", "ROSA HCP", "Karpenter", "AutoNode", "Cost Optimization"]
+tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
+  - Kumudu Herath
 validated_version: "4.22"
 ---
 
@@ -17,6 +18,15 @@ This guide walks through enabling AutoNode on a ROSA HCP cluster, configuring a 
 * `oc` CLI authenticated to the cluster
 * `rosa` CLI configured
 * AWS CLI configured
+
+## Set Environment Variables
+
+Set your cluster name once and reuse it throughout the guide:
+
+```bash
+export CLUSTER_NAME=<your-cluster-name>
+export AWS_REGION=us-east-1
+```
 
 ## Deploy a Karpenter-Enabled ROSA Cluster
 
@@ -71,7 +81,7 @@ Follow the [official Red Hat documentation](https://docs.redhat.com/en/documenta
 ## Verify AutoNode is Active
 
 ```bash
-rosa describe cluster -c <cluster-name> | grep -A3 "AutoNode"
+rosa describe cluster -c $CLUSTER_NAME | grep -A3 "AutoNode"
 ```
 
 Expected output:
@@ -410,7 +420,7 @@ Show how Karpenter-managed nodes and existing machine pool nodes run side by sid
 
 ```bash
 # View existing machine pools
-rosa list machinepools -c <cluster-name>
+rosa list machinepools -c $CLUSTER_NAME
 
 # Workload targeting Karpenter nodes (via the autonode label)
 cat <<EOF | oc apply -f -
