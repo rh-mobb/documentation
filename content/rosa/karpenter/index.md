@@ -541,12 +541,6 @@ oc get pods -n karpenter-test -o wide | grep machinepool-only
 oc get nodes -L autonode | grep -v "autonode"
 ```
 
-Check the Cluster Autoscaler logs to confirm it drove the scale-out:
-
-```bash
-oc logs -n openshift-machine-api deployment/cluster-autoscaler-default \
-  --tail=30 | grep -i "scale\|machinepool\|node"
-```
 
 Confirm the machine pool replica count increased:
 
@@ -579,13 +573,12 @@ Pods from `karpenter-only` will appear on nodes with `autonode=true`; pods from 
 # Delete all workloads
 oc delete namespace karpenter-test
 
-# Delete Karpenter resources (nodes will be terminated automatically)
-oc delete nodepool default
-oc delete openshiftec2nodeclass default
 
 # Verify Karpenter nodes are removed
 watch oc get nodes
 ```
+
+After the namespace is deleted, both provisioners will reclaim their nodes automatically. Karpenter terminates its nodes within ~30 seconds of the workloads being removed (based on the `consolidateAfter: 30s` setting in the NodePool). The Cluster Autoscaler will scale the machine pool back down to its minimum replica count within a few minutes once the nodes are no longer needed.
 
 ---
 
