@@ -439,8 +439,8 @@ MACHINE_POOL=$(rosa list machinepools -c $CLUSTER_NAME -o json | python3 -c "imp
 rosa edit machinepool $MACHINE_POOL \
   --cluster $CLUSTER_NAME \
   --enable-autoscaling \
-  --min-replicas 2 \
-  --max-replicas 6
+  --min-replicas 1 \
+  --max-replicas 3
 ```
 
 Verify autoscaling is enabled:
@@ -485,7 +485,7 @@ EOF
 
 ### Deploy a workload targeting machine pool nodes only
 
-Use node affinity to ensure a workload never schedules on Karpenter-managed nodes:
+Use node affinity to ensure the workload never schedules on Karpenter-managed nodes. The replica count and CPU request are sized to exceed the available capacity of the existing machine pool nodes, which forces the Cluster Autoscaler to provision additional machine pool nodes:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -495,7 +495,7 @@ metadata:
   name: machinepool-only
   namespace: karpenter-test
 spec:
-  replicas: 5
+  replicas: 15
   selector:
     matchLabels:
       app: machinepool-only
@@ -517,20 +517,57 @@ spec:
         command: ["sleep", "3600"]
         resources:
           requests:
-            cpu: "500m"
-            memory: "512Mi"
+            cpu: "2"
+            memory: "1Gi"
 EOF
 ```
 
-### Verify workload placement
+### Verify the Cluster Autoscaler scaled the machine pool
+
+Watch for new nodes and confirm they came from the machine pool (no `autonode` label) rather than Karpenter:
+
+```bash
+# Watch nodes join — machine pool nodes will NOT have an autonode label
+watch oc get nodes -L autonode,node.kubernetes.io/instance-type,karpenter.sh/capacity-type
+```
+
+Once new nodes appear, verify the pods scheduled correctly:
 
 ```bash
 # Show which nodes each workload landed on
-oc get pods -n karpenter-test -o wide | grep -E "karpenter-only|machinepool-only"
+oc get pods -n karpenter-test -o wide | grep machinepool-only
 
-# Confirm node labels
+# Confirm machine pool nodes have no autonode label
+oc get nodes -L autonode | grep -v "autonode"
+```
+
+Check the Cluster Autoscaler logs to confirm it drove the scale-out:
+
+```bash
+oc logs -n openshift-machine-api deployment/cluster-autoscaler-default \
+  --tail=30 | grep -i "scale\|machinepool\|node"
+```
+
+Confirm the machine pool replica count increased:
+
+```bash
+rosa describe machinepool $MACHINE_POOL -c $CLUSTER_NAME | grep -A5 "Autoscaling\|Replicas"
+```
+
+**What to observe:** Pods targeting machine pool nodes go `Pending` because existing nodes are full. The Cluster Autoscaler detects the unschedulable pods, scales the machine pool up, and the new nodes carry standard machine pool labels — no `autonode` label, no `karpenter.sh/nodepool` label. This confirms the two provisioners are operating independently on the same cluster.
+
+### Verify workload placement side by side
+
+```bash
 oc get nodes -L autonode,node.kubernetes.io/instance-type,karpenter.sh/capacity-type
 ```
+
+Expected result — two distinct groups of nodes:
+
+| Node | `autonode` | Instance Type | Capacity Type | Provisioner |
+|---|---|---|---|---|
+| `ip-10-x-x-x` | `true` | `c7i-flex.2xlarge` | `spot` | Karpenter |
+| `ip-10-x-x-x` | *(none)* | `m5.xlarge` | *(none)* | Cluster Autoscaler |
 
 Pods from `karpenter-only` will appear on nodes with `autonode=true`; pods from `machinepool-only` will appear on machine pool nodes with no `autonode` label.
 
