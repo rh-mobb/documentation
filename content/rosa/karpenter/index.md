@@ -195,6 +195,7 @@ Deploy a workload that exceeds current capacity and watch Karpenter provision a 
 # Check nodes before starting
 oc get nodes
 
+# Check nodes before starting
 cat <<EOF | oc apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -416,13 +417,43 @@ Within ~60 seconds Karpenter identifies underutilized nodes, cordons and drains 
 
 ## Use Case 5 — Coexistence with Machine Pools
 
-Show how Karpenter-managed nodes and existing machine pool nodes run side by side.
+
+
+Karpenter-managed nodes and existing ROSA machine pool nodes run side by side in the same cluster. You can use node selectors and affinity rules to direct specific workloads to either provisioner. This enables a gradual migration — existing workloads stay on managed machine pools while new workloads adopt Karpenter at your own pace.
+
+### View existing machine pools
 
 ```bash
-# View existing machine pools
 rosa list machinepools -c $CLUSTER_NAME
+```
 
-# Workload targeting Karpenter nodes (via the autonode label)
+### Optionally enable Cluster Autoscaler on a machine pool
+
+To compare Karpenter with traditional Cluster Autoscaler scaling, enable autoscaling on an existing machine pool:
+
+```bash
+# Get machine pool name
+MACHINE_POOL=$(rosa list machinepools -c $CLUSTER_NAME -o json | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
+
+# Enable autoscaling on the machine pool (min 2, max 6 replicas)
+rosa edit machinepool $MACHINE_POOL \
+  --cluster $CLUSTER_NAME \
+  --enable-autoscaling \
+  --min-replicas 2 \
+  --max-replicas 6
+```
+
+Verify autoscaling is enabled:
+
+```bash
+rosa describe machinepool $MACHINE_POOL -c $CLUSTER_NAME | grep -A3 "Autoscaling"
+```
+
+### Deploy a workload targeting Karpenter nodes
+
+Karpenter-provisioned nodes carry the `autonode: "true"` label from the NodePool template. Use a `nodeSelector` to direct workloads exclusively to these nodes:
+
+```bash
 cat <<EOF | oc apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -450,8 +481,13 @@ spec:
             cpu: "500m"
             memory: "512Mi"
 EOF
+```
 
-# Workload targeting existing machine pool nodes only
+### Deploy a workload targeting machine pool nodes only
+
+Use node affinity to ensure a workload never schedules on Karpenter-managed nodes:
+
+```bash
 cat <<EOF | oc apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -486,7 +522,17 @@ spec:
 EOF
 ```
 
-This enables a gradual migration path — existing workloads stay on managed machine pools while new workloads adopt Karpenter-managed nodes at your own pace.
+### Verify workload placement
+
+```bash
+# Show which nodes each workload landed on
+oc get pods -n karpenter-test -o wide | grep -E "karpenter-only|machinepool-only"
+
+# Confirm node labels
+oc get nodes -L autonode,node.kubernetes.io/instance-type,karpenter.sh/capacity-type
+```
+
+Pods from `karpenter-only` will appear on nodes with `autonode=true`; pods from `machinepool-only` will appear on machine pool nodes with no `autonode` label.
 
 ---
 
