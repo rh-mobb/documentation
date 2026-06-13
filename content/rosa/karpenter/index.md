@@ -1,7 +1,7 @@
 ---
 date: '2026-06-11'
 title: Getting Started with Red Hat Build of Karpenter (AutoNode) on ROSA
-tags: ["ROSA", "ROSA HCP"]
+tags: ["ROSA HCP"]
 authors:
   - Kevin Collins
   - Kumudu Herath
