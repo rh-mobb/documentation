@@ -3,8 +3,6 @@ version: 1
 env:
   variables:
     HUGO_VERSION: "0.157.0"
-    # Production canonical URL for Amplify main builds only. config.toml keeps the
-    # Netlify baseURL so Netlify can stay live during cutover.
     PRODUCTION_BASEURL: "https://cloud.redhat.com/experts/"
 
 frontend:

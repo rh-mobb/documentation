@@ -148,11 +148,11 @@ Do **not** use this section for actual documentation. If content is useful to re
    http://localhost:1313/experts/examples/<topic>/
    ```
 
-4. Submit a PR as normal. The page will be visible in Netlify deploy previews (which pass `--buildDrafts`) but will not appear on the production site.
+4. Submit a PR as normal. The page will be visible in Amplify deploy previews (which pass `--buildDrafts`) but will not appear on the production site.
 
 ## Site search (local development)
 
-The black header bar includes [Pagefind](https://pagefind.app/) client-side search. Netlify runs `npm ci`, builds the site with Hugo, then runs `npx pagefind --site public/experts` so the index is published under `/experts/pagefind/` (see [`netlify.toml`](netlify.toml)).
+The black header bar includes [Pagefind](https://pagefind.app/) client-side search. AWS Amplify runs `npm ci`, builds the site with Hugo, then runs `npx pagefind --site public/experts` so the index is published under `/experts/pagefind/` (see [`amplify.yml`](amplify.yml)).
 
 Use **Node.js 24** for local `npm install` / `npm ci` (see [`.nvmrc`](.nvmrc); run `nvm use` if you use nvm).
 

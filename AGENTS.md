@@ -1,6 +1,6 @@
 # Agent guide — MOBB / Red Hat Cloud Experts documentation
 
-This repository is a **[Hugo](https://gohugo.io/)** static site using the **`rhds`** theme, deployed on **Netlify** with **Pagefind** for client-side search. Agents should treat **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** as the human-facing contribution contract; this file adds automation-oriented defaults and repo-specific gotchas.
+This repository is a **[Hugo](https://gohugo.io/)** static site using the **`rhds`** theme, deployed on **AWS Amplify** with **Pagefind** for client-side search. Agents should treat **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** as the human-facing contribution contract; this file adds automation-oriented defaults and repo-specific gotchas.
 
 ## Quick facts
 
@@ -9,9 +9,8 @@ This repository is a **[Hugo](https://gohugo.io/)** static site using the **`rhd
 | Hugo config | [`config.toml`](./config.toml) |
 | Theme | `themes/rhds` (set in config and Make targets) |
 | Published subtree | `public/experts` (`publishDir` in `config.toml`; site `baseURL` ends with `/experts/`) |
-| Netlify Hugo version | See [`netlify.toml`](./netlify.toml) `HUGO_VERSION` (pin local Hugo to the same minor series when diagnosing CI-only failures) |
-| Amplify build spec | [`amplify.yml`](./amplify.yml) (Hugo `0.157.0`, Node 24, Pagefind). **`main`** uses `PRODUCTION_BASEURL` (`https://cloud.redhat.com/experts/`); previews/branches use `*.amplifyapp.com`. Netlify still reads `baseURL` from [`config.toml`](./config.toml) during parallel cutover. |
-| Amplify redirects | [`customRules.json`](./customRules.json) + Hugo [`_redirects`](./themes/rhds/layouts/_default/index.redir) aliases; merged and synced via [`.github/workflows/sync-amplify-redirects.yml`](./.github/workflows/sync-amplify-redirects.yml). IaC: [`rh-mobb/documentation-infra`](https://github.com/rh-mobb/documentation-infra) (Pattern C). |
+| Amplify build spec | [`amplify.yml`](./amplify.yml) (Hugo `0.157.0`, Node 24, Pagefind). **`main`** uses `PRODUCTION_BASEURL` (`https://cloud.redhat.com/experts/`); previews/branches use `*.amplifyapp.com`. |
+| Amplify redirects | [`customRules.json`](./customRules.json) + Hugo [`_redirects`](./themes/rhds/layouts/_default/index.redir) aliases; merged and synced via [`.github/workflows/sync-amplify-redirects.yml`](./.github/workflows/sync-amplify-redirects.yml). IaC: [`rh-mobb/documentation-infra`](https://github.com/rh-mobb/documentation-infra). |
 | Node.js | 24 (see [`.nvmrc`](./.nvmrc); used for Pagefind via `npm ci` / `npx pagefind`) |
 | Local preview | `make preview` — see [`Makefile`](./Makefile) |
 | Preview + working search | `make preview-search` (builds + Pagefind index; do not use `hugo server -M` / `--renderToMemory` if search must work) |
@@ -66,7 +65,7 @@ Draft content: `draft: true` in front matter; local preview uses `-D` in the Mak
 Static files are served from [`static/`](./static/). The site is published under the **`/experts/`** path prefix on every environment.
 
 - **Internal cross-links** (to other guides or chapter pages on this site): use **root-relative** paths starting with **`/experts/`** (for example `/experts/rosa/some-topic/`). Do not use fully qualified `https://...` URLs for same-site navigation; those pin a hostname, go stale across domains, and are harder to maintain.
-- **Netlify hosts**: `baseURL` in [`config.toml`](./config.toml) targets the Netlify hostname for Netlify builds. **Amplify production** (`main`) overrides this via `PRODUCTION_BASEURL` in [`amplify.yml`](./amplify.yml) so both hosts can run in parallel during cutover. Do not put Netlify or Amplify preview hostnames in content. Treat those URLs as infrastructure for testing only; root-relative `/experts/...` links work locally, on Netlify, and on any future host.
+- **Amplify production** (`main`) uses `PRODUCTION_BASEURL` in [`amplify.yml`](./amplify.yml). Do not put Amplify preview hostnames in content. Treat those URLs as infrastructure for testing only; root-relative `/experts/...` links work locally, on Amplify, and on any future host.
 - **Assets** under [`static/`](./static/): same idea; prefer `/experts/...` (or Hugo helpers that resolve under `baseURL`) so paths stay portable.
 
 When inline Markdown or shortcodes support it, Hugo `ref` / `relref` (or other theme-safe link helpers) are fine as long as the resolved URL stays under `/experts/` and does not hardcode a host.
@@ -96,7 +95,7 @@ Run these from the repository root after substantive edits:
 
 3. **Smoke-check** the browser for the specific pages touched (headers, TOC, shortcodes, code blocks).
 
-If CI or Netlify reports failures, compare local **Hugo version** to [`netlify.toml`](./netlify.toml) and align before debugging.
+If CI or Amplify reports failures, compare local **Hugo version** to [`amplify.yml`](./amplify.yml) and align before debugging.
 
 There is **no** project test runner in `package.json` beyond **Pagefind** as a dev dependency; `hugo` exit code and manual checks are the default quality gate unless maintainers add CI scripts later.
 
@@ -104,7 +103,7 @@ There is **no** project test runner in `package.json` beyond **Pagefind** as a d
 
 Amplify does **not** read `customRules.json` or Hugo `_redirects` from the build artifact. When `customRules.json`, content **`aliases:`**, or the sync scripts change on **`main`**, [`.github/workflows/sync-amplify-redirects.yml`](./.github/workflows/sync-amplify-redirects.yml) runs Hugo (with `disableAliases = true`), merges static rules from [`customRules.json`](./customRules.json) with alias rules from `public/experts/_redirects`, then assumes an IAM role via GitHub OIDC and runs [`scripts/sync-amplify-redirects.sh`](./scripts/sync-amplify-redirects.sh) (`aws amplify update-app`). Use **Actions → Sync Amplify redirects → Run workflow** for a one-off sync.
 
-**Infrastructure (Pattern C):** Amplify app, GitHub OIDC role, and `mobb.ninja` redirect stack are provisioned by Terraform in [`rh-mobb/documentation-infra`](https://github.com/rh-mobb/documentation-infra). Terraform bootstraps Amplify with a minimal `/` → `/experts/` rule and ignores `custom_rule` drift so this workflow owns the full rule set from [`customRules.json`](./customRules.json).
+**Infrastructure:** Amplify app, GitHub OIDC role, and `mobb.ninja` redirect stack are provisioned by Terraform in [`rh-mobb/documentation-infra`](https://github.com/rh-mobb/documentation-infra). Terraform bootstraps Amplify with a minimal `/` → `/experts/` rule and ignores `custom_rule` drift so this workflow owns the full rule set from [`customRules.json`](./customRules.json).
 
 ### GitHub repository variables
 
@@ -168,7 +167,7 @@ The Amplify **build service role** does not need `amplify:UpdateApp`.
 
 | Redirect source | On push to `main` |
 |-----------------|-------------------|
-| [`customRules.json`](./customRules.json) (static rules from `netlify.toml`) | Yes, merged in sync workflow |
+| [`customRules.json`](./customRules.json) | Yes, merged in sync workflow |
 | Hugo content `aliases:` (`disableAliases = true` → `public/experts/_redirects`) | Yes, merged in sync workflow after `hugo` build |
 | `mobb.ninja` | No; managed outside Amplify (Route 53 + CloudFront) |
 
@@ -188,7 +187,7 @@ Follow **[GitHub Flow](https://docs.github.com/en/get-started/using-github/githu
 - Branch from default branch; one focused topic per branch.
 - **`git commit -s`** (sign-off): CONTRIBUTING examples use **`-sm`** on commit; use the same for DCO/sign-off unless maintainers say otherwise.
 - Push to your fork and open a PR against **`rh-mobb/documentation`** if that is the upstream (see README/CONTRIBUTING remote examples).
-- PR description should state **what** changed and **why**, link related issues, and call out **content moves** or **redirect** needs (static redirects live in [`netlify.toml`](./netlify.toml) and [`customRules.json`](./customRules.json) for Amplify).
+- PR description should state **what** changed and **why**, link related issues, and call out **content moves** or **redirect** needs (static redirects live in [`customRules.json`](./customRules.json) for Amplify).
 - Avoid committing **build output** (`public/`), caches, or editor noise; rely on `.gitignore` and inspect `git status` before commit.
 
 ## Cross-repo references
@@ -223,4 +222,4 @@ Three related artifacts work as one editorial unit:
 ## When unsure
 
 - Prefer matching **existing guides** in the same section for tone, front matter, and heading style.
-- Ask a maintainer before **taxonomy**, **netlify redirect**, or **large structural** changes.
+- Ask a maintainer before **taxonomy**, **Amplify redirect**, or **large structural** changes.
