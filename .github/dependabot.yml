@@ -11,9 +11,6 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - npm
     commit-message:
       prefix: deps
       prefix-development: deps
@@ -25,9 +22,6 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - github-actions
     groups:
       github-actions:
         patterns:
