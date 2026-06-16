@@ -34,9 +34,9 @@ rm ./tmp/pr{NNN}-payload.json
 http://localhost:1313/experts/
 ```
 
-Netlify fallback (only if local preview is not possible):
+AWS Amplify fallback (only if local preview is not possible):
 ```
-https://deploy-preview-{PR_NUMBER}--rh-cloud-experts.netlify.app/experts/
+https://pr-{PR_NUMBER}.dqokbbp7eqr35.amplifyapp.com/experts/
 ```
 
 ---
@@ -56,7 +56,7 @@ Sort by `createdAt` ascending (oldest = top priority). Output per PR:
 - **Author:** @username
 - **Age:** X days (opened YYYY-MM-DD)
 - **PR:** https://github.com/rh-mobb/documentation/pull/NNN
-- **Preview:** https://deploy-preview-NNN--rh-cloud-experts.netlify.app/experts/
+- **Preview:** https://pr-NNN.dqokbbp7eqr35.amplifyapp.com/experts/
 - **Description:** <first 2 sentences of body, or title if empty>
 ```
 
@@ -113,15 +113,15 @@ If prior reviews or inline comments exist, note them — they drive the re-revie
 
 Start Hugo and navigate the browser to the changed article path. Derive the article URL from the changed file path (e.g. `content/aro/trident/index.md` → `http://localhost:1313/experts/aro/trident/`).
 
-First, verify the local Hugo version matches (or exceeds) the version pinned in `netlify.toml`:
+First, verify the local Hugo version matches (or exceeds) the version pinned in `amplify.yml`:
 
 ```bash
-REQUIRED=$(grep HUGO_VERSION netlify.toml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+REQUIRED=$(grep HUGO_VERSION amplify.yml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 INSTALLED=$(hugo version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 echo "Required: $REQUIRED  Installed: $INSTALLED"
 ```
 
-If the installed version is older than required, warn the user to upgrade Hugo to at least the version in `netlify.toml` before proceeding. If the version is sufficient, run:
+If the installed version is older than required, warn the user to upgrade Hugo to at least the version in `amplify.yml` before proceeding. If the version is sufficient, run:
 
 ```bash
 make preview
@@ -130,7 +130,7 @@ make preview
 If `make preview` fails, troubleshoot in this order:
 1. **Port conflict** — port 1313 may be in use: `hugo server --theme rhds --port 1314`
 2. **Theme missing** — run `git submodule update --init` then retry `make preview`
-3. **Build error** — run `hugo --theme rhds` (no server) to see the full error output; if the error looks version-related, tell the user to install the exact Hugo version specified in `netlify.toml`
+3. **Build error** — run `hugo --theme rhds` (no server) to see the full error output; if the error looks version-related, tell the user to install the exact Hugo version specified in `amplify.yml`
 
 Hugo serves at `http://localhost:1313/experts/` (or alternate port). If the browser MCP tool is available:
 
@@ -142,7 +142,7 @@ mcp__chrome-devtools__take_snapshot
 
 Look for: rendering errors, code block display, shortcode output (alerts, notices, tabs), navigation integrity, layout issues.
 
-If local preview is not possible at all, fall back to the Netlify preview URL.
+If local preview is not possible at all, fall back to the AWS Amplify preview URL.
 
 ### Step 3 — Code quality assessment
 
@@ -158,7 +158,7 @@ Include a prior-comments summary table in the Step 5 report.
 - Front matter: `date`, `title`, `tags`, `authors` all present and correct
 - `validated_version` used when appropriate; no redundant version alert callouts
 - No em dashes in Markdown prose or headings (em dashes inside Mermaid diagram labels are acceptable)
-- Internal links use `/experts/...` root-relative paths (not hardcoded hostnames or Netlify URLs)
+- Internal links use `/experts/...` root-relative paths (not hardcoded hostnames or Amplify URLs)
 - Shortcodes used correctly (`{{< alert >}}`, `{{< notice >}}`, `{{< tabs >}}`, etc.) — prefer shortcodes over raw blockquotes/HTML for callouts
 - No changes to `themes/rhds` in a content-only PR
 - Tag taxonomy follows CONTRIBUTING.md (no invented tags without coordination)
@@ -190,7 +190,7 @@ Present the full review report to the user using the output format below, then *
 ## PR #NNN — Title
 
 **Author:** @username | **Age:** X days | **+ADD / -DEL lines**
-**PR:** <link> | **Preview:** <local or netlify link used>
+**PR:** <link> | **Preview:** <local or Amplify link used>
 
 ### Description
 <PR body summary>
@@ -316,7 +316,7 @@ Confirm the branch has been restored before reporting the review as done.
 
 ## Common Issues to Flag
 
-- Hardcoded Netlify/hostname URLs in content (must be root-relative `/experts/...`)
+- Hardcoded Amplify/hostname URLs in content (must be root-relative `/experts/...`)
 - Em dashes in guide text
 - Missing or incorrect front matter fields
 - Invented tags not in established taxonomy

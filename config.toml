@@ -1,4 +1,4 @@
-baseURL = "https://rh-cloud-experts.netlify.app/experts/"
+baseURL = "https://main.dqokbbp7eqr35.amplifyapp.com/experts/"
 publishDir = "public/experts"
 languageCode = 'en-us'
 title = 'Red Hat Cloud Experts Documentation'
@@ -21,12 +21,12 @@ enableGitInfo = true
   home = [ "HTML", "RSS", "REDIR" ]
 
 [mediaTypes]
-  [mediaTypes."text/netlify"]
+  [mediaTypes."text/redirects"]
     delimiter = ""
 
 [outputFormats]
   [outputFormats.REDIR]
-    mediatype      = "text/netlify"
+    mediatype      = "text/redirects"
     baseName       = "_redirects"
     isPlainText    = true
     notAlternative = true
