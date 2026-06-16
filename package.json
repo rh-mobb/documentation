@@ -5,6 +5,6 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "pagefind": "1.4.0"
+    "pagefind": "1.5.2"
   }
 }
