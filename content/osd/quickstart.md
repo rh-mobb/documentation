@@ -140,7 +140,7 @@ The OCM (OpenShift Cluster Manager) CLI is used to create and manage OpenShift D
       --username=cluster-admin \
       --password=YourSecurePassword123!
 
-    ocm create user ${CLUSTER_NAME} \
+    ocm create user cluster-admin \
       --cluster=${CLUSTER_NAME} \
       --group=cluster-admins
     ```
