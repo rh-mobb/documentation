@@ -314,6 +314,13 @@
           <li><strong>Compute Optimized (C-family):</strong> c5, c6i, c7i instances. CPU-bound workloads, batch processing. Default rate: $0.043/vCPU·hr.</li>
           <li><strong>Burst vCPUs:</strong> Your autoscaling headroom: the difference between max and min replica counts across all machine pools. If you don't use autoscaling, leave this at 0.</li>
         </ul>
+        <p><strong>Burst utilization</strong> is the average share of the month that burst capacity is actually running. Autoscale headroom is rarely at max vCPU count around the clock.</p>
+        <ul>
+          <li><strong>From metrics:</strong> For each autoscaled machine pool, compare average node count to minimum and maximum over 30 days. Utilization ≈ (average − minimum) ÷ (maximum − minimum), expressed as a percentage. Weight by vCPU if pools differ in instance size.</li>
+          <li><strong>From max replica settings:</strong> Sum (max − min) vCPU across pools for burst headroom. Compare to time-series data or billing reports showing how often you approach max.</li>
+          <li><strong>Quick guesstimate:</strong> Daily peak-only traffic (e.g. business hours) is often 15–25%. Weekly batch spikes might be 5–10%. Sustained seasonal scale-out can be 40%+.</li>
+        </ul>
+        <p><strong>Apply AWS EC2 discount to burst</strong> is off by default. Autoscaled burst nodes are often on-demand and may not inherit the same reserved instance, Savings Plan, or EDP coverage as steady workers. Enable only when your burst EC2 usage receives the same discount as base capacity.</p>
         <div class="tip">Edit the <strong>$/vCPU·hr</strong> fields to match your region. Find actual rates at <strong>aws.amazon.com/ec2/pricing/on-demand</strong>. Search for your instance type and divide the hourly price by the vCPU count.</div>
         <p><strong>Avg vCPUs per node</strong> is used only to estimate node count for EBS storage. Match it to your dominant instance size: 8 vCPU for r5a.2xlarge or m5.2xlarge, 16 for r5a.4xlarge, etc.</p>
 
@@ -337,7 +344,8 @@
         <h3>Optimization Levers</h3>
         <ul>
           <li><strong>Classic → HCP Migration:</strong> Models moving all Classic clusters to Hosted Control Planes. Eliminates CP/Infra EC2 overhead per cluster and replaces it with the $182.50/mo HCP cluster fee, typically saving $900-$1,300/cluster/month depending on region.</li>
-          <li><strong>Karpenter (requires HCP):</strong> Available on ROSA HCP 4.22+. Models two sub-effects: (1) <em>bin-packing</em>: Karpenter reduces required node count ~10% vs the Classic cluster-autoscaler; (2) <em>Spot burst</em>: burst vCPUs run on Spot instances at ~70% EC2 discount instead of on-demand.</li>
+          <li><strong>Karpenter (requires HCP):</strong> Available on ROSA HCP 4.22+. Reduces required node count ~10% through better bin-packing vs the Classic cluster-autoscaler.</li>
+          <li><strong>Spot for burst:</strong> Models autoscale headroom running on Spot instances (~70% off on-demand EC2). Independent of Karpenter; enable when your burst pools tolerate Spot interruption.</li>
           <li><strong>ARM Graviton Target:</strong> Percentage of your Memory Optimized workloads to migrate to Graviton (r7g instances). Uses an E=1.25 performance multiplier, meaning 100 x86 vCPUs can be replaced by 80 ARM vCPUs for equivalent throughput. ARM instances cost ~20% less per vCPU than Intel r6i at equivalent regional pricing. Requires HCP.</li>
         </ul>
 
@@ -350,7 +358,8 @@
         <ul>
           <li>Rows for profiles with 0 vCPU are dimmed but still visible.</li>
           <li>The <strong>50% ARM</strong> badge on Memory Optimized means that percentage of those vCPUs will run on Graviton, with the E=1.25 multiplier applied to node count.</li>
-          <li>The <strong>Spot</strong> badge on Burst means Karpenter is routing burst capacity to Spot instances.</li>
+          <li>The <strong>Spot</strong> badge on Burst means the Spot for burst optimization lever is enabled.</li>
+          <li>Burst EC2 cost scales by <strong>utilization %</strong> (not 730 hr/mo at full headroom). The <strong>Apply AWS EC2 discount to burst</strong> checkbox is separate from steady-state EC2 discount.</li>
         </ul>
         <div class="tip">The <strong>Current (no optimizations)</strong> summary card uses your entered pricing with all levers off. The <strong>Optimized</strong> card applies whatever levers you have enabled. Toggle levers on and off to see the marginal impact of each one.</div>
       </div>
@@ -448,6 +457,17 @@
               <option value="compute">Compute</option>
             </select>
           </div>
+          <div v-if="cfg.burstVCPU > 0" style="margin-top:0.5rem;padding-left:0.1rem;">
+            <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:#555;cursor:pointer;margin-bottom:0.45rem;" :style="{ opacity: cfg.burstSpot ? 0.45 : 1 }">
+              <input type="checkbox" v-model="cfg.burstAwsDiscount" :disabled="cfg.burstSpot" style="accent-color:var(--ce-brand);cursor:pointer;">
+              Apply AWS EC2 discount to burst
+            </label>
+            <div class="profile-label">Burst utilization <small>Avg % of month burst capacity is running</small></div>
+            <div class="slider-wrap">
+              <input type="range" min="0" max="100" step="5" v-model.number="cfg.burstUsagePct">
+              <span class="slider-val">{{ cfg.burstUsagePct }}%</span>
+            </div>
+          </div>
         </div>
 
         <div class="num-field" style="margin-top:0.25rem;">
@@ -507,6 +527,16 @@
           </label>
         </div>
 
+        <div class="toggle-row">
+          <span class="toggle-label" :class="{ muted: cfg.burstVCPU === 0 }">
+            Spot for burst <span style="font-size:0.72rem;color:#999">(~70% off on-demand EC2)</span>
+          </span>
+          <label class="toggle" :class="{ disabled: cfg.burstVCPU === 0 }">
+            <input type="checkbox" v-model="cfg.burstSpot" :disabled="cfg.burstVCPU === 0">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+
         <div>
           <div style="font-size:0.82rem;font-weight:500;margin-bottom:0.3rem;" :style="{ opacity: hasHcp ? 1 : 0.4 }">
             ARM Graviton Target
@@ -524,8 +554,10 @@
           <div v-if="cfg.rosaContract === '3yr'"  >✓ 3-yr ROSA: $55.58/4-vCPU-block/mo</div>
           <div v-if="cfg.awsDiscountPct > 0">✓ EC2 discount: {{ cfg.awsDiscountPct }}% off on-demand</div>
           <div v-if="cfg.hcpMigrated">✓ HCP migration: CP/Infra eliminated, {{ hcpFeeLabel }}/cluster/mo</div>
-          <div v-if="cfg.karpenter && hasHcp">✓ Karpenter: 10% bin-packing, Spot burst (0.30× OD)</div>
+          <div v-if="cfg.karpenter && hasHcp">✓ Karpenter: 10% bin-packing savings</div>
+          <div v-if="cfg.burstSpot && cfg.burstVCPU > 0">✓ Spot burst: 0.30× on-demand EC2</div>
           <div v-if="cfg.armPct > 0 && hasHcp">✓ ARM: {{ cfg.armPct }}% Memory Opt → r7g (E=1.25)</div>
+          <div v-if="cfg.burstVCPU > 0">✓ Burst: {{ cfg.burstUsagePct }}% avg utilization{{ cfg.burstSpot ? '' : (cfg.burstAwsDiscount ? ', EC2 discount applied' : ', on-demand (no EC2 discount)') }}</div>
           <div v-if="!hasHcp && (cfg.armPct > 0 || cfg.karpenter)" class="status-warn">⚠ Karpenter and ARM require HCP clusters or Classic → HCP migration</div>
           <div v-if="classicCount === 0 && cfg.hcpClusters === 0 && totalVCPU === 0" class="status-warn">← Enter fleet details to calculate</div>
         </div>
@@ -583,9 +615,9 @@
               <tr v-if="fleet.burstEC2 > 0 || cfg.burstVCPU > 0" :class="{ 'row-zero': fleet.burstEC2 === 0 }">
                 <td>
                   EC2, Burst
-                  <span v-if="cfg.karpenter && hasHcp" class="badge badge-spot">Spot</span>
+                  <span v-if="cfg.burstSpot" class="badge badge-spot">Spot</span>
                 </td>
-                <td>{{ fleet.burstVCPU }} vCPU &times; {{ burstRateLabel }} &times; {{ burstMultLabel }}</td>
+                <td>{{ fleet.burstVCPU }} vCPU &times; {{ burstRateLabel }} &times; {{ burstMultLabel }} &times; {{ cfg.burstUsagePct }}% uptime</td>
                 <td>${{ fmt(fleet.burstEC2) }}</td>
                 <td>${{ fmtK(fleet.burstEC2 * 12) }}</td>
               </tr>
@@ -611,7 +643,7 @@
             <tfoot>
               <tr>
                 <td>Total</td>
-                <td>{{ fleet.totalVCPU }} steady vCPU + {{ fleet.burstVCPU }} burst</td>
+                <td>{{ fleet.totalVCPU }} steady vCPU + {{ fleet.burstVCPU }} burst @ {{ cfg.burstUsagePct }}%</td>
                 <td>${{ fmt(fleet.total) }}</td>
                 <td>${{ fmtK(fleet.total * 12) }}</td>
               </tr>
@@ -763,14 +795,16 @@ function calcFleet(cfg, rosaContract) {
   // Burst EC2
   const burstRateMap = { general: cfg.rateGeneral, memory: cfg.rateMemory, compute: cfg.rateCompute };
   const burstRate = burstRateMap[cfg.burstProfile] ?? cfg.rateMemory;
-  const burstMult = canKarp ? SPOT_MULT : ec2Mult;
-  const burstEC2  = burstVCPU * burstRate * burstMult * 730;
+  const burstUsage = Math.max(0, Math.min(100, cfg.burstUsagePct)) / 100;
+  const burstEc2Mult = cfg.burstSpot ? SPOT_MULT : (cfg.burstAwsDiscount ? ec2Mult : 1.0);
+  const burstEC2  = burstVCPU * burstRate * burstEc2Mult * 730 * burstUsage;
+  const effectiveBurstVCPU = Math.round(burstVCPU * burstUsage);
 
   // EBS
-  const ebs = totalNodes * EBS_NODE;
+  const ebs = steadyNodes * EBS_NODE + burstNodes * EBS_NODE * burstUsage;
 
-  // ROSA fee (fewer vCPUs if ARM used)
-  const totalRosaVCPU = rosaMemVCPU + genVCPU + cmpVCPU + burstVCPU;
+  // ROSA fee (fewer vCPUs if ARM used; burst billed at utilization-adjusted vCPU)
+  const totalRosaVCPU = rosaMemVCPU + genVCPU + cmpVCPU + effectiveBurstVCPU;
   const rosaFee = Math.ceil(totalRosaVCPU / 4) * rosaRate;
 
   // Cluster overhead
@@ -789,7 +823,7 @@ function calcFleet(cfg, rosaContract) {
     total: rosaFee + ec2Ebs + overhead,
     // Breakdown fields
     genEC2, memEC2, cmpEC2, burstEC2, ebs, classicOH, classicOHPerCluster, hcpFees,
-    genVCPU, memVCPU, cmpVCPU, burstVCPU,
+    genVCPU, memVCPU, cmpVCPU, burstVCPU, effectiveBurstVCPU,
     totalVCPU: totalSteady, totalRosaVCPU, totalNodes,
     classicClusterCount: cfg.hcpMigrated ? 0 : classicCount,
     hcpClusterCount,
@@ -811,8 +845,10 @@ createApp({
       generalVCPU:   2772,
       memoryVCPU:    0,
       computeVCPU:   0,
-      burstVCPU:     0,
-      burstProfile: 'memory',
+      burstVCPU:     400,
+      burstProfile: 'general',
+      burstAwsDiscount: false,
+      burstUsagePct: 20,
       avgVCPUPerNode: 8,
       // EC2 rates (on-demand $/vCPU/hr, us-east-1 defaults)
       rateGeneral: 0.048,
@@ -824,6 +860,7 @@ createApp({
       // Optimizations
       hcpMigrated: false,
       karpenter:   false,
+      burstSpot:   false,
       armPct:      0,
     });
 
@@ -837,13 +874,15 @@ createApp({
     watch(() => cfg.hcpClusters, v => { if (v === 0 && !cfg.hcpMigrated) { cfg.karpenter = false; cfg.armPct = 0; } });
     watch(classicCount, n => { if (n === 0) cfg.hcpMigrated = false; });
 
+    watch(() => cfg.burstVCPU, v => { if (v === 0) cfg.burstSpot = false; });
+
     const CONTRACT_EC2_DISCOUNT = { paygo: 0, '1yr': 40, '3yr': 60 };
     const syncEC2 = ref(true);
     watch(syncEC2, v => { if (v) cfg.awsDiscountPct = CONTRACT_EC2_DISCOUNT[cfg.rosaContract]; });
     watch(() => cfg.rosaContract, v => { if (syncEC2.value) cfg.awsDiscountPct = CONTRACT_EC2_DISCOUNT[v]; });
 
     // baseline = current contract + AWS discount, no optimizations
-    const baselineCfg  = computed(() => ({ ...cfg, hcpMigrated: false, karpenter: false, armPct: 0 }));
+    const baselineCfg  = computed(() => ({ ...cfg, hcpMigrated: false, karpenter: false, burstSpot: false, armPct: 0 }));
     const baseline     = computed(() => calcFleet(baselineCfg.value, cfg.rosaContract));
     const fleet        = computed(() => calcFleet(cfg, cfg.rosaContract));
 
@@ -855,7 +894,11 @@ createApp({
     const ec2MultLabel   = computed(() => cfg.awsDiscountPct > 0 ? `(1−${cfg.awsDiscountPct}%)` : '1.0×');
     const burstRateMap   = { general: () => cfg.rateGeneral, memory: () => cfg.rateMemory, compute: () => cfg.rateCompute };
     const burstRateLabel = computed(() => `$${(burstRateMap[cfg.burstProfile]?.() ?? cfg.rateMemory).toFixed(3)}`);
-    const burstMultLabel = computed(() => (cfg.karpenter && hasHcp.value) ? '0.30× (Spot)' : ec2MultLabel.value);
+    const burstMultLabel = computed(() => {
+      if (cfg.burstSpot) return '0.30× (Spot)';
+      if (cfg.burstAwsDiscount) return ec2MultLabel.value;
+      return '1.0× (OD)';
+    });
 
     // ── Chart ────────────────────────────────────────────────────────────────
     function buildChart() {
