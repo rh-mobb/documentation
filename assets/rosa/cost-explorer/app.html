@@ -1,0 +1,944 @@
+<!-- ROSA Cost Explorer - full-page app (source: assets/rosa/cost-explorer/app.html; served via layouts/_default/cost-explorer-app.html) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROSA Cost Explorer | Red Hat Cloud Experts</title>
+  <link rel="icon" href="/experts/favicon.ico">
+  <link rel="stylesheet" href="__MAIN_CSS__">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/elements/rh-footer/rh-footer-lightdom.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "@rhds/elements/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/elements/"
+      },
+      "scopes": {
+        "https://cdn.jsdelivr.net/": {
+          "@lit/context": "https://cdn.jsdelivr.net/npm/@lit/context@1.1.6/development/index.js",
+          "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.1/development/reactive-element.js",
+          "@lit/reactive-element/decorators/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.1/development/decorators/",
+          "@patternfly/pfe-core": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.4/core.js",
+          "@patternfly/pfe-core/": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.4/",
+          "@rhds/elements/lib/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/lib/",
+          "@rhds/icons": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js",
+          "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/",
+          "@rhds/tokens/css/": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/css/",
+          "@rhds/tokens/media.js": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/js/media.js",
+          "lit": "https://cdn.jsdelivr.net/npm/lit@3.3.1/index.js",
+          "lit-element/lit-element.js": "https://cdn.jsdelivr.net/npm/lit-element@4.2.1/development/lit-element.js",
+          "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/development/lit-html.js",
+          "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/development/",
+          "lit/": "https://cdn.jsdelivr.net/npm/lit@3.3.1/",
+          "tslib": "https://cdn.jsdelivr.net/npm/tslib@2.8.1/tslib.es6.mjs"
+        }
+      }
+    }
+  </script>
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.7.3/dist/es-module-shims.js" crossorigin="anonymous"></script>
+  <script type="module">
+    import '@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js';
+    import '@rhds/elements/rh-footer/rh-footer.js';
+    import '@rhds/elements/rh-cta/rh-cta.js';
+  </script>
+  <script src="https://unpkg.com/vue@3.5.38/dist/vue.global.prod.js"
+          integrity="sha384-KYk+4lWOhWTo/BrM+zKkwLtFsD6cs2ClFbaGiX5ozDVHPqF4nOqxVGiHvcyWsw8B"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"
+          integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ"
+          crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --ce-brand: var(--rh-color-brand-red-on-light, #ee0000);
+      --ce-success: var(--rh-color-status-success-on-light, #3e8635);
+      --ce-danger: var(--rh-color-status-danger-on-light, #c9190b);
+      --ce-blue: var(--rh-color-interactive-blue-darker, #0066cc);
+      --ce-surface: var(--rh-color-surface-lighter, #f2f2f2);
+      --ce-card: var(--rh-color-surface-lightest, #ffffff);
+      --ce-text: var(--rh-color-text-primary-on-light, #151515);
+      --ce-muted: var(--rh-color-text-secondary-on-light, #707070);
+      --ce-border: var(--rh-color-border-subtle-on-light, #c7c7c7);
+      --ce-radius: var(--rh-border-radius-default, 3px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif);
+      background: var(--ce-surface);
+      color: var(--ce-text);
+      min-height: 100vh;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .cost-explorer { padding-block-end: 3rem; }
+
+    /* Tool toolbar (below site chrome) */
+    .ce-toolbar {
+      background: var(--rh-color-gray-90, #151515);
+      color: var(--rh-color-text-primary-on-dark, #ffffff);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .ce-toolbar h1 {
+      font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', Helvetica, Arial, sans-serif);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+      max-width: none;
+    }
+    .ce-toolbar h1 span { color: var(--ce-brand); }
+    .header-sub { font-size: 0.875rem; color: var(--rh-color-text-secondary-on-dark, #c7c7c7); }
+    .header-meta { font-size: 0.875rem; color: var(--rh-color-text-secondary-on-dark, #8a8d90); margin-left: auto; }
+    .help-btn {
+      width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #555;
+      background: transparent; color: #aaa; font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: border-color 0.15s, color 0.15s; line-height: 1;
+    }
+    .help-btn:hover { border-color: var(--ce-brand); color: white; }
+
+    /* ── Help modal ──────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 2rem 1rem; overflow-y: auto;
+    }
+    .modal {
+      background: var(--ce-card); border-radius: var(--ce-radius); width: 100%; max-width: 680px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25); position: relative;
+      padding: 2rem 2rem 2rem;
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem; width: 30px; height: 30px;
+      border: none; background: #f0f0f0; border-radius: 50%; cursor: pointer;
+      font-size: 1rem; color: #555; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: #e0e0e0; color: #151515; }
+    .modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .modal .modal-lead { font-size: 0.82rem; color: #888; margin-bottom: 1.5rem; }
+    .modal h3 {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+      color: #888; margin: 1.4rem 0 0.6rem; padding-top: 1.2rem; border-top: 1px solid #ececec;
+    }
+    .modal h3:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    .modal p { font-size: 0.82rem; color: #444; line-height: 1.65; margin-bottom: 0.5rem; }
+    .modal ul { padding-left: 1.1rem; margin-bottom: 0.5rem; }
+    .modal li { font-size: 0.82rem; color: #444; line-height: 1.65; margin-bottom: 0.2rem; }
+    .modal strong { color: #151515; }
+    .modal .tip {
+      background: #f7f9ff; border-left: 3px solid var(--ce-blue); border-radius: 0 var(--ce-radius) var(--ce-radius) 0;
+      padding: 0.6rem 0.85rem; margin: 0.6rem 0; font-size: 0.8rem; color: #444; line-height: 1.6;
+    }
+    .modal .warn {
+      background: #fff8f0; border-left: 3px solid #f0ab00; border-radius: 0 5px 5px 0;
+      padding: 0.6rem 0.85rem; margin: 0.6rem 0; font-size: 0.8rem; color: #444; line-height: 1.6;
+    }
+    .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.18s; }
+    .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    .page { max-width: 1340px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
+    .main-grid { display: grid; grid-template-columns: 360px 1fr; gap: 1.25rem; margin-top: 1.25rem; align-items: start; }
+    @media (max-width: 960px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Cards ───────────────────────────────────────────── */
+    .card {
+      background: var(--ce-card);
+      border-radius: var(--ce-radius);
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--ce-border);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+    .section-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: #888; margin-bottom: 0.85rem; margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid #ececec; }
+    .section-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+    /* ── Summary strip ───────────────────────────────────── */
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .summary-card {
+      background: var(--ce-card);
+      border-radius: var(--ce-radius);
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--ce-border);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+    .s-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; }
+    .s-value { font-size: 2rem; font-weight: 800; margin-top: 0.15rem; line-height: 1; }
+    .s-sub { font-size: 0.78rem; color: #888; margin-top: 0.25rem; }
+    .saving { color: var(--ce-success); }
+    .cost-up { color: var(--ce-danger); }
+
+    /* ── Inputs ──────────────────────────────────────────── */
+    .num-field { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem; }
+    .num-field label { font-size: 0.8rem; color: #444; flex: 1; min-width: 0; }
+    .num-field label small { display: block; font-size: 0.7rem; color: #999; font-weight: 400; }
+    .num-input {
+      width: 80px; padding: 0.3rem 0.45rem; border: 1.5px solid #d0d0d0; border-radius: 5px;
+      font-size: 0.82rem; font-family: inherit; text-align: right; color: #151515;
+      flex-shrink: 0;
+    }
+    .num-input:focus { outline: none; border-color: var(--ce-brand); box-shadow: 0 0 0 2px rgba(238, 0, 0, 0.15); }
+    .num-input.wide { width: 100px; }
+    .num-input.narrow { width: 68px; }
+    .input-unit { font-size: 0.75rem; color: #888; white-space: nowrap; }
+
+    /* Profile rows */
+    .profile-row { margin-bottom: 0.75rem; }
+    .profile-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .profile-label small { font-weight: 400; color: #999; font-size: 0.72rem; }
+    .profile-inputs { display: flex; align-items: center; gap: 0.4rem; }
+    .profile-inputs .num-input { width: 90px; }
+    .rate-sep { color: #ccc; font-size: 0.75rem; }
+
+    /* Radio buttons */
+    .radio-row { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .radio-btn {
+      flex: 1; text-align: center; padding: 0.35rem 0.5rem;
+      border: 1.5px solid #d0d0d0; border-radius: 5px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 500;
+      transition: border-color 0.12s, background 0.12s, color 0.12s; user-select: none;
+    }
+    .radio-btn:hover:not(.active) { border-color: #aaa; }
+    .radio-btn.active { background: var(--ce-brand); color: white; border-color: var(--ce-brand); }
+
+    /* Discount slider */
+    .discount-block { margin-bottom: 0.5rem; }
+    .discount-slider-row { display: flex; align-items: center; gap: 0.75rem; }
+    .discount-slider-row input[type=range] { flex: 1; accent-color: var(--ce-brand); height: 4px; cursor: pointer; }
+    .discount-val { font-size: 0.85rem; font-weight: 700; min-width: 2.5rem; text-align: right; }
+    .discount-marks { display: flex; justify-content: space-between; font-size: 0.65rem; color: #bbb; margin-top: 0.15rem; }
+
+    /* Toggle */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+    .toggle-label { font-size: 0.82rem; color: #444; }
+    .toggle-label.muted { opacity: 0.4; }
+    .toggle { position: relative; width: 42px; height: 22px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track { position: absolute; inset: 0; background: #d0d0d0; border-radius: 22px; cursor: pointer; transition: background 0.2s; }
+    .toggle-track::after { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .toggle input:checked ~ .toggle-track { background: var(--ce-brand); }
+    .toggle input:checked ~ .toggle-track::after { transform: translateX(20px); }
+    .toggle.disabled .toggle-track { opacity: 0.35; cursor: not-allowed; }
+
+    /* ARM slider */
+    .slider-wrap { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.3rem; }
+    .slider-wrap input[type=range] { flex: 1; accent-color: var(--ce-brand); height: 4px; cursor: pointer; }
+    .slider-wrap input[type=range]:disabled { opacity: 0.35; cursor: not-allowed; }
+    .slider-val { min-width: 2.8rem; text-align: right; font-size: 0.85rem; font-weight: 700; }
+
+    /* Status notes */
+    .status-notes { font-size: 0.75rem; color: #555; line-height: 1.7; margin-top: 0.5rem; }
+    .status-warn { color: var(--ce-danger); }
+
+    /* ── Chart ───────────────────────────────────────────── */
+    .chart-wrap { position: relative; height: 300px; }
+
+    /* ── Breakdown table ─────────────────────────────────── */
+    .card-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+    .breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .breakdown-table th {
+      background: #f7f7f7; padding: 0.35rem 0.75rem;
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #888;
+      text-align: right; white-space: nowrap;
+    }
+    .breakdown-table th:first-child { text-align: left; }
+    .breakdown-table th:nth-child(2) { text-align: left; }
+    .breakdown-table td { padding: 0.4rem 0.75rem; text-align: right; border-bottom: 1px solid #f0f0f0; }
+    .breakdown-table td:first-child { text-align: left; font-weight: 500; }
+    .breakdown-table td:nth-child(2) { text-align: left; color: #888; font-size: 0.75rem; }
+    .breakdown-table tfoot td { padding: 0.4rem 0.75rem; text-align: right; font-weight: 700; background: #f7f7f7; border-top: 2px solid #e8e8e8; }
+    .breakdown-table tfoot td:first-child { text-align: left; }
+    .breakdown-table tfoot td:nth-child(2) { text-align: left; }
+    .row-zero { opacity: 0.35; }
+
+    .badge { display: inline-block; font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 3px; margin-left: 0.3rem; font-weight: 600; vertical-align: middle; }
+    .badge-arm { background: #e8f5e9; color: #2e7d32; }
+    .badge-spot { background: #fff3e0; color: #e65100; }
+
+    .note { font-size: 0.7rem; color: #aaa; margin-top: 0.75rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <a href="https://cloud.redhat.com/">
+      <img src="/experts/images/logo--on-dark.svg" width="169" height="40" alt="Red Hat logo">
+    </a>
+  </div>
+</header>
+<rh-navigation-secondary role="navigation">
+  <a href="/experts/" slot="logo" id="logo-id">Cloud Experts Documentation</a>
+  <ul slot="nav" aria-labelledby="logo-id">
+    <li>
+      <a href="/experts/tags/rosa/" slot="link">Red Hat OpenShift Service on AWS</a>
+    </li>
+  </ul>
+</rh-navigation-secondary>
+<main class="cost-explorer">
+<div id="app">
+
+  <div class="ce-toolbar">
+    <h1><span>ROSA</span> Cost Explorer</h1>
+    <span class="header-sub">Generic fleet estimator</span>
+    <button class="help-btn" @click="showHelp = true" title="How to use this tool">?</button>
+    <div class="header-meta">ROSA fees 2026-06 &bull; EC2 rates: enter per-profile below</div>
+  </div>
+
+  <!-- Help modal -->
+  <transition name="modal-fade">
+    <div v-if="showHelp" class="modal-backdrop" @click.self="showHelp = false">
+      <div class="modal">
+        <button class="modal-close" @click="showHelp = false">&#x2715;</button>
+        <h2>How to use the ROSA Cost Explorer</h2>
+        <p class="modal-lead">Enter your fleet details on the left to get a live cost estimate. All fields are optional; fill in what you know and adjust as you learn more.</p>
+
+        <h3>Fleet Configuration</h3>
+        <p>Count your clusters by type:</p>
+        <ul>
+          <li><strong>Classic, Single-AZ:</strong> Classic ROSA clusters deployed into one availability zone. Each carries ~$1,300/mo of control-plane and infra node overhead on-demand (3 CP + 2 Infra nodes).</li>
+          <li><strong>Classic, Multi-AZ:</strong> Classic clusters spread across 3 AZs. Overhead is ~$1,540/mo (3 CP + 3 Infra nodes). Most production clusters are multi-AZ.</li>
+          <li><strong>HCP clusters:</strong> Clusters already on Hosted Control Planes. These have no CP/Infra nodes; instead a flat $182.50/mo cluster fee. Enter only clusters that are <em>already</em> on HCP; use the Classic → HCP lever to model a future migration.</li>
+        </ul>
+        <div class="tip">Find your clusters in <strong>console.redhat.com → OpenShift → Clusters</strong> or run <code>ocm list clusters</code>. The cluster type (Classic vs HCP) is shown in the Type column.</div>
+
+        <h3>Workload: vCPU by Profile</h3>
+        <p>Enter your total <em>worker</em> vCPUs. Do not include control plane or infra nodes, which are captured in the overhead above.</p>
+        <ul>
+          <li><strong>General Purpose (M-family):</strong> m5, m6i, m7i instances. Good for mixed or web workloads. Default rate: $0.048/vCPU·hr (us-east-1 on-demand).</li>
+          <li><strong>Memory Optimized (R-family):</strong> r5, r5a, r6i, r7i instances. In-memory databases, caching, analytics. Default rate: $0.063/vCPU·hr.</li>
+          <li><strong>Compute Optimized (C-family):</strong> c5, c6i, c7i instances. CPU-bound workloads, batch processing. Default rate: $0.043/vCPU·hr.</li>
+          <li><strong>Burst vCPUs:</strong> Your autoscaling headroom: the difference between max and min replica counts across all machine pools. If you don't use autoscaling, leave this at 0.</li>
+        </ul>
+        <div class="tip">Edit the <strong>$/vCPU·hr</strong> fields to match your region. Find actual rates at <strong>aws.amazon.com/ec2/pricing/on-demand</strong>. Search for your instance type and divide the hourly price by the vCPU count.</div>
+        <p><strong>Avg vCPUs per node</strong> is used only to estimate node count for EBS storage. Match it to your dominant instance size: 8 vCPU for r5a.2xlarge or m5.2xlarge, 16 for r5a.4xlarge, etc.</p>
+
+        <h3>Current Pricing</h3>
+        <p><strong>ROSA Contract</strong> is your Red Hat subscription tier. This determines the per-4-vCPU block monthly fee:</p>
+        <ul>
+          <li>PAYGO: $125/block/mo (no commitment)</li>
+          <li>1-Year: $83.33/block/mo (annual subscription)</li>
+          <li>3-Year: $55.58/block/mo (3-year subscription)</li>
+        </ul>
+        <p>Check your contract in <strong>console.redhat.com → Subscriptions</strong> or ask your Red Hat account team.</p>
+        <p><strong>AWS EC2 Discount</strong> is your effective discount off on-demand EC2 pricing. Set this to reflect however you're buying EC2:</p>
+        <ul>
+          <li>0% (fully on-demand / PAYGO)</li>
+          <li>~40% (equivalent to 1-year EC2 reserved instances)</li>
+          <li>~60% (equivalent to 3-year EC2 reserved instances)</li>
+          <li>Custom % (your Enterprise Discount Program (EDP) or negotiated private pricing)</li>
+        </ul>
+        <div class="warn">The ROSA contract and the AWS EC2 discount are independent. You can have a 3-year ROSA subscription but buy EC2 on-demand, or vice versa.</div>
+
+        <h3>Optimization Levers</h3>
+        <ul>
+          <li><strong>Classic → HCP Migration:</strong> Models moving all Classic clusters to Hosted Control Planes. Eliminates CP/Infra EC2 overhead per cluster and replaces it with the $182.50/mo HCP cluster fee, typically saving $900-$1,300/cluster/month depending on region.</li>
+          <li><strong>Karpenter (requires HCP):</strong> Available on ROSA HCP 4.22+. Models two sub-effects: (1) <em>bin-packing</em>: Karpenter reduces required node count ~10% vs the Classic cluster-autoscaler; (2) <em>Spot burst</em>: burst vCPUs run on Spot instances at ~70% EC2 discount instead of on-demand.</li>
+          <li><strong>ARM Graviton Target:</strong> Percentage of your Memory Optimized workloads to migrate to Graviton (r7g instances). Uses an E=1.25 performance multiplier, meaning 100 x86 vCPUs can be replaced by 80 ARM vCPUs for equivalent throughput. ARM instances cost ~20% less per vCPU than Intel r6i at equivalent regional pricing. Requires HCP.</li>
+        </ul>
+
+        <h3>Reading the Chart</h3>
+        <p>The chart always shows all three ROSA contract tiers (PAYGO, 1-Year, 3-Year) simultaneously, with your configured AWS EC2 discount and optimization levers applied to all bars. The bar for your selected contract term is shown in full colour; the others are muted for comparison.</p>
+        <p>Hover over a bar to see the cost breakdown (ROSA fee, EC2+EBS, overhead) and total for that contract tier.</p>
+
+        <h3>Reading the Breakdown Table</h3>
+        <p>The breakdown shows the <em>optimized</em> configuration (with your levers applied). The Detail column shows the exact formula used; you can verify any line against your own rates.</p>
+        <ul>
+          <li>Rows for profiles with 0 vCPU are dimmed but still visible.</li>
+          <li>The <strong>50% ARM</strong> badge on Memory Optimized means that percentage of those vCPUs will run on Graviton, with the E=1.25 multiplier applied to node count.</li>
+          <li>The <strong>Spot</strong> badge on Burst means Karpenter is routing burst capacity to Spot instances.</li>
+        </ul>
+        <div class="tip">The <strong>Current (no optimizations)</strong> summary card uses your entered pricing with all levers off. The <strong>Optimized</strong> card applies whatever levers you have enabled. Toggle levers on and off to see the marginal impact of each one.</div>
+      </div>
+    </div>
+  </transition>
+
+  <div class="page">
+
+    <!-- Summary cards -->
+    <div class="summary">
+      <div class="summary-card">
+        <div class="s-label">Current (no optimizations)</div>
+        <div class="s-value">${{ fmt(baseline.total) }}</div>
+        <div class="s-sub">per month &bull; ${{ fmtM(baseline.total * 12) }}/yr</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">Optimized</div>
+        <div class="s-value">${{ fmt(fleet.total) }}</div>
+        <div class="s-sub">per month &bull; ${{ fmtM(fleet.total * 12) }}/yr</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">Monthly {{ delta >= 0 ? 'Savings' : 'Increase' }}</div>
+        <div class="s-value" :class="delta >= 0 ? 'saving' : 'cost-up'">
+          {{ delta >= 0 ? '-' : '+' }}${{ fmt(Math.abs(delta)) }}
+        </div>
+        <div class="s-sub" :class="delta >= 0 ? 'saving' : 'cost-up'">
+          {{ Math.abs(deltaPct).toFixed(1) }}% {{ delta >= 0 ? 'less' : 'more' }}
+          &bull; ${{ fmtM(Math.abs(delta) * 12) }}/yr
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+
+      <!-- ── Left: controls ──────────────────────────────── -->
+      <div class="card">
+
+        <!-- Fleet -->
+        <div class="section-title">Fleet Configuration</div>
+
+        <div class="num-field">
+          <label>Classic, Single-AZ clusters <small>3 CP + 2 Infra nodes (~$1,300/mo overhead)</small></label>
+          <input class="num-input narrow" type="number" v-model.number="cfg.singleAZClusters" min="0" step="1">
+        </div>
+        <div class="num-field">
+          <label>Classic, Multi-AZ clusters <small>3 CP + 3 Infra nodes (~$1,540/mo overhead)</small></label>
+          <input class="num-input narrow" type="number" v-model.number="cfg.multiAZClusters" min="0" step="1">
+        </div>
+        <div class="num-field">
+          <label>HCP clusters (already migrated) <small>{{ hcpFeeLabel }}/mo flat fee each</small></label>
+          <input class="num-input narrow" type="number" v-model.number="cfg.hcpClusters" min="0" step="1">
+        </div>
+
+        <!-- Workload -->
+        <div class="section-title">Workload: vCPU by Profile</div>
+
+        <div class="profile-row">
+          <div class="profile-label">General Purpose <small>M-family (m5, m6i, m7i…)</small></div>
+          <div class="profile-inputs">
+            <input class="num-input" type="number" v-model.number="cfg.generalVCPU" min="0" step="4" placeholder="0">
+            <span class="input-unit">vCPU&nbsp; @&nbsp; $</span>
+            <input class="num-input narrow" type="number" v-model.number="cfg.rateGeneral" min="0" step="0.001">
+            <span class="input-unit">/vCPU·hr</span>
+          </div>
+        </div>
+
+        <div class="profile-row">
+          <div class="profile-label">Memory Optimized <small>R-family (r5, r5a, r6i, r7i…)</small></div>
+          <div class="profile-inputs">
+            <input class="num-input" type="number" v-model.number="cfg.memoryVCPU" min="0" step="4" placeholder="0">
+            <span class="input-unit">vCPU&nbsp; @&nbsp; $</span>
+            <input class="num-input narrow" type="number" v-model.number="cfg.rateMemory" min="0" step="0.001">
+            <span class="input-unit">/vCPU·hr</span>
+          </div>
+        </div>
+
+        <div class="profile-row">
+          <div class="profile-label">Compute Optimized <small>C-family (c5, c6i, c7i…)</small></div>
+          <div class="profile-inputs">
+            <input class="num-input" type="number" v-model.number="cfg.computeVCPU" min="0" step="4" placeholder="0">
+            <span class="input-unit">vCPU&nbsp; @&nbsp; $</span>
+            <input class="num-input narrow" type="number" v-model.number="cfg.rateCompute" min="0" step="0.001">
+            <span class="input-unit">/vCPU·hr</span>
+          </div>
+        </div>
+
+        <div class="profile-row">
+          <div class="profile-label">Burst vCPUs <small>Peak above minimum (autoscale headroom)</small></div>
+          <div class="profile-inputs">
+            <input class="num-input" type="number" v-model.number="cfg.burstVCPU" min="0" step="4" placeholder="0">
+            <span class="input-unit">vCPU</span>
+            <select v-model="cfg.burstProfile" style="margin-left:0.5rem;font-size:0.78rem;border:1.5px solid #d0d0d0;border-radius:5px;padding:0.25rem 0.4rem;font-family:inherit;">
+              <option value="general">General</option>
+              <option value="memory">Memory</option>
+              <option value="compute">Compute</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="num-field" style="margin-top:0.25rem;">
+          <label>Avg vCPUs per node <small>Used to estimate node count for EBS</small></label>
+          <input class="num-input narrow" type="number" v-model.number="cfg.avgVCPUPerNode" min="1" step="1">
+        </div>
+
+        <!-- Pricing -->
+        <div class="section-title">Current Pricing</div>
+
+        <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">ROSA Contract</div>
+        <div class="radio-row">
+          <div class="radio-btn" :class="{ active: cfg.rosaContract === 'paygo' }" @click="cfg.rosaContract='paygo'">PAYGO</div>
+          <div class="radio-btn" :class="{ active: cfg.rosaContract === '1yr'   }" @click="cfg.rosaContract='1yr'">1-Year</div>
+          <div class="radio-btn" :class="{ active: cfg.rosaContract === '3yr'   }" @click="cfg.rosaContract='3yr'">3-Year</div>
+        </div>
+
+        <div class="discount-block">
+          <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;">
+            AWS EC2 Discount
+            <span style="font-weight:400;color:#888;font-size:0.75rem;">(EDP / reserved / negotiated)</span>
+            <label style="margin-left:auto;display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;font-weight:400;color:#555;cursor:pointer;white-space:nowrap;">
+              <input type="checkbox" v-model="syncEC2" style="accent-color:var(--ce-brand);cursor:pointer;">
+              Sync with contract
+            </label>
+          </div>
+          <div class="discount-slider-row">
+            <input type="range" min="0" max="70" step="5" v-model.number="cfg.awsDiscountPct" :disabled="syncEC2">
+            <span class="discount-val" :style="{ opacity: syncEC2 ? 0.6 : 1 }">{{ cfg.awsDiscountPct }}%</span>
+          </div>
+          <div class="discount-marks" :style="{ opacity: syncEC2 ? 0.45 : 1 }">
+            <span>0% (PAYGO)</span>
+            <span style="margin-left:28%">~40% (1yr)</span>
+            <span style="margin-left:9%">~60% (3yr)</span>
+            <span>70%</span>
+          </div>
+        </div>
+
+        <!-- Optimizations -->
+        <div class="section-title">Optimization Levers</div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Classic → HCP Migration</span>
+          <label class="toggle">
+            <input type="checkbox" v-model="cfg.hcpMigrated" :disabled="classicCount === 0">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span class="toggle-label" :class="{ muted: !hasHcp }">
+            Karpenter <span style="font-size:0.72rem;color:#999">(requires HCP)</span>
+          </span>
+          <label class="toggle" :class="{ disabled: !hasHcp }">
+            <input type="checkbox" v-model="cfg.karpenter" :disabled="!hasHcp">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+
+        <div>
+          <div style="font-size:0.82rem;font-weight:500;margin-bottom:0.3rem;" :style="{ opacity: hasHcp ? 1 : 0.4 }">
+            ARM Graviton Target
+            <span style="font-weight:400;color:#999;font-size:0.72rem">(Memory Opt, HCP only)</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="100" step="5" v-model.number="cfg.armPct" :disabled="!hasHcp">
+            <span class="slider-val" :style="{ opacity: hasHcp ? 1 : 0.4 }">{{ cfg.armPct }}%</span>
+          </div>
+        </div>
+
+        <div class="status-notes" style="margin-top:0.85rem;">
+          <div v-if="cfg.rosaContract === 'paygo'">⚠ PAYGO ROSA: $125/4-vCPU-block/mo</div>
+          <div v-if="cfg.rosaContract === '1yr'"  >✓ 1-yr ROSA: $83.33/4-vCPU-block/mo</div>
+          <div v-if="cfg.rosaContract === '3yr'"  >✓ 3-yr ROSA: $55.58/4-vCPU-block/mo</div>
+          <div v-if="cfg.awsDiscountPct > 0">✓ EC2 discount: {{ cfg.awsDiscountPct }}% off on-demand</div>
+          <div v-if="cfg.hcpMigrated">✓ HCP migration: CP/Infra eliminated, {{ hcpFeeLabel }}/cluster/mo</div>
+          <div v-if="cfg.karpenter && hasHcp">✓ Karpenter: 10% bin-packing, Spot burst (0.30× OD)</div>
+          <div v-if="cfg.armPct > 0 && hasHcp">✓ ARM: {{ cfg.armPct }}% Memory Opt → r7g (E=1.25)</div>
+          <div v-if="!hasHcp && (cfg.armPct > 0 || cfg.karpenter)" class="status-warn">⚠ Karpenter and ARM require HCP clusters or Classic → HCP migration</div>
+          <div v-if="classicCount === 0 && cfg.hcpClusters === 0 && totalVCPU === 0" class="status-warn">← Enter fleet details to calculate</div>
+        </div>
+
+      </div><!-- end left card -->
+
+      <!-- ── Right: chart + breakdown ────────────────────── -->
+      <div>
+
+        <div class="card">
+          <div class="chart-wrap">
+            <canvas ref="chartEl"></canvas>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:1.25rem;">
+          <div class="card-title">Cost Breakdown: Optimized Configuration</div>
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Detail</th>
+                <th>Monthly</th>
+                <th>Annual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr :class="{ 'row-zero': fleet.rosaFee === 0 }">
+                <td>ROSA Worker Fee</td>
+                <td>{{ fleet.totalRosaVCPU }} vCPU &times; {{ rosaRateLabel }}/4-block</td>
+                <td>${{ fmt(fleet.rosaFee) }}</td>
+                <td>${{ fmtK(fleet.rosaFee * 12) }}</td>
+              </tr>
+              <tr v-if="fleet.genEC2 > 0 || cfg.generalVCPU > 0" :class="{ 'row-zero': fleet.genEC2 === 0 }">
+                <td>EC2, General Purpose</td>
+                <td>{{ fleet.genVCPU }} vCPU &times; ${{ cfg.rateGeneral.toFixed(3) }} &times; {{ ec2MultLabel }}</td>
+                <td>${{ fmt(fleet.genEC2) }}</td>
+                <td>${{ fmtK(fleet.genEC2 * 12) }}</td>
+              </tr>
+              <tr v-if="fleet.memEC2 > 0 || cfg.memoryVCPU > 0" :class="{ 'row-zero': fleet.memEC2 === 0 }">
+                <td>
+                  EC2, Memory Optimized
+                  <span v-if="cfg.armPct > 0 && hasHcp" class="badge badge-arm">{{ cfg.armPct }}% ARM</span>
+                </td>
+                <td>{{ fleet.memVCPU }} vCPU @ blended rate</td>
+                <td>${{ fmt(fleet.memEC2) }}</td>
+                <td>${{ fmtK(fleet.memEC2 * 12) }}</td>
+              </tr>
+              <tr v-if="fleet.cmpEC2 > 0 || cfg.computeVCPU > 0" :class="{ 'row-zero': fleet.cmpEC2 === 0 }">
+                <td>EC2, Compute Optimized</td>
+                <td>{{ fleet.cmpVCPU }} vCPU &times; ${{ cfg.rateCompute.toFixed(3) }} &times; {{ ec2MultLabel }}</td>
+                <td>${{ fmt(fleet.cmpEC2) }}</td>
+                <td>${{ fmtK(fleet.cmpEC2 * 12) }}</td>
+              </tr>
+              <tr v-if="fleet.burstEC2 > 0 || cfg.burstVCPU > 0" :class="{ 'row-zero': fleet.burstEC2 === 0 }">
+                <td>
+                  EC2, Burst
+                  <span v-if="cfg.karpenter && hasHcp" class="badge badge-spot">Spot</span>
+                </td>
+                <td>{{ fleet.burstVCPU }} vCPU &times; {{ burstRateLabel }} &times; {{ burstMultLabel }}</td>
+                <td>${{ fmt(fleet.burstEC2) }}</td>
+                <td>${{ fmtK(fleet.burstEC2 * 12) }}</td>
+              </tr>
+              <tr :class="{ 'row-zero': fleet.ebs === 0 }">
+                <td>EBS Storage</td>
+                <td>{{ fleet.totalNodes }} nodes &times; $24/mo (300 GB gp3)</td>
+                <td>${{ fmt(fleet.ebs) }}</td>
+                <td>${{ fmtK(fleet.ebs * 12) }}</td>
+              </tr>
+              <tr v-if="fleet.classicOH > 0 || (!cfg.hcpMigrated && classicCount > 0)" :class="{ 'row-zero': fleet.classicOH === 0 }">
+                <td>Classic CP / Infra</td>
+                <td>{{ fleet.classicClusterCount }} clusters × ~${{ fmt(fleet.classicOHPerCluster) }}/cluster × {{ ec2MultLabel }}</td>
+                <td>${{ fmt(fleet.classicOH) }}</td>
+                <td>${{ fmtK(fleet.classicOH * 12) }}</td>
+              </tr>
+              <tr v-if="fleet.hcpFees > 0 || cfg.hcpClusters > 0 || cfg.hcpMigrated" :class="{ 'row-zero': fleet.hcpFees === 0 }">
+                <td>HCP Cluster Fees</td>
+                <td>{{ fleet.hcpClusterCount }} clusters &times; {{ hcpFeeLabel }}/mo</td>
+                <td>${{ fmt(fleet.hcpFees) }}</td>
+                <td>${{ fmtK(fleet.hcpFees * 12) }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td>{{ fleet.totalVCPU }} steady vCPU + {{ fleet.burstVCPU }} burst</td>
+                <td>${{ fmt(fleet.total) }}</td>
+                <td>${{ fmtK(fleet.total * 12) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="note">
+            EC2 rates entered above are on-demand; the configured AWS discount is applied. ROSA fee uses a separate contract tier (PAYGO / 1-yr / 3-yr).
+            ARM E=1.25 performance multiplier: 100 x86 vCPU → 80 ARM vCPU for equivalent throughput. Graviton rates: Memory Opt 80% of x86 rate, General Purpose 85%.
+            EBS: 300 GB gp3 × $0.08/GB-mo per node.
+            Classic overhead base rate (on-demand EC2): Single-AZ ~$1,300/mo, Multi-AZ ~$1,540/mo. Apply AWS EC2 Discount to reflect reserved or EDP pricing.
+          </div>
+        </div>
+
+      </div><!-- end right -->
+    </div><!-- end main-grid -->
+  </div><!-- end page -->
+</div><!-- end app -->
+</main>
+<rh-footer data-analytics-region="page-footer">
+  <a slot="logo" href="https://redhat.com/en" data-analytics-category="Footer" data-analytics-text="Logo">
+    <img alt="Red Hat logo" src="https://static.redhat.com/libs/redhat/brand-assets/2/corp/logo--on-dark.svg" loading="lazy">
+  </a>
+  <rh-footer-social-link slot="social-links" icon="linkedin"><a href="https://www.linkedin.com/company/red-hat" data-analytics-region="social-links-exit" data-analytics-category="Footer|social-links" data-analytics-text="LinkedIn">LinkedIn</a></rh-footer-social-link>
+  <rh-footer-social-link slot="social-links" icon="youtube"><a href="https://www.youtube.com/user/RedHatVideos" data-analytics-region="social-links-exit" data-analytics-category="Footer|social-links" data-analytics-text="YouTube">YouTube</a></rh-footer-social-link>
+  <rh-footer-social-link slot="social-links" icon="facebook"><a href="https://www.facebook.com/redhatinc" data-analytics-region="social-links-exit" data-analytics-category="Footer|social-links" data-analytics-text="Facebook">Facebook</a></rh-footer-social-link>
+  <rh-footer-social-link slot="social-links" icon="x"><a href="https://twitter.com/RedHat" data-analytics-region="social-links-exit" data-analytics-category="Footer|social-links" data-analytics-text="Twitter">Twitter</a></rh-footer-social-link>
+  <h3 slot="links" data-analytics-text="Products">Products</h3>
+  <ul slot="links">
+    <li><a href="https://redhat.com/en/technologies/linux-platforms/enterprise-linux" data-analytics-category="Footer|Products" data-analytics-text="Red Hat Enterprise Linux">Red Hat Enterprise Linux</a></li>
+    <li><a href="https://redhat.com/en/technologies/cloud-computing/openshift" data-analytics-category="Footer|Products" data-analytics-text="Red Hat OpenShift">Red Hat OpenShift</a></li>
+    <li><a href="https://redhat.com/en/technologies/management/ansible" data-analytics-category="Footer|Products" data-analytics-text="Red Hat Ansible Automation Platform">Red Hat Ansible Automation Platform</a></li>
+    <li><a href="https://redhat.com/en/technologies/cloud-computing/openshift/cloud-services" data-analytics-category="Footer|Products" data-analytics-text="Cloud services">Cloud services</a></li>
+    <li><a href="https://redhat.com/en/technologies/all-products" data-analytics-category="Footer|Products" data-analytics-text="See all products">See all products</a></li>
+  </ul>
+  <h3 slot="links" data-analytics-text="Tools">Tools</h3>
+  <ul slot="links">
+    <li><a href="https://sso.redhat.com" data-analytics-category="Footer|Tools" data-analytics-text="My account">My account</a></li>
+    <li><a href="https://redhat.com/en/services/training-and-certification" data-analytics-category="Footer|Tools" data-analytics-text="Training and certification">Training and certification</a></li>
+    <li><a href="https://access.redhat.com" data-analytics-category="Footer|Tools" data-analytics-text="Customer support">Customer support</a></li>
+    <li><a href="https://developers.redhat.com/" data-analytics-category="Footer|Tools" data-analytics-text="Developer resources">Developer resources</a></li>
+    <li><a href="https://learn.redhat.com/" data-analytics-category="Footer|Tools" data-analytics-text="Learning community">Learning community</a></li>
+    <li><a href="https://connect.redhat.com/" data-analytics-category="Footer|Tools" data-analytics-text="Partner resources">Partner resources</a></li>
+    <li><a href="https://redhat.com/en/resources" data-analytics-category="Footer|Tools" data-analytics-text="Resource library">Resource library</a></li>
+  </ul>
+  <h3 slot="links" data-analytics-text="Try buy sell">Try, buy &amp; sell</h3>
+  <ul slot="links">
+    <li><a href="https://redhat.com/en/products/trials" data-analytics-category="Footer|Try buy sell" data-analytics-text="Product trial center">Product trial center</a></li>
+    <li><a href="https://marketplace.redhat.com" data-analytics-category="Footer|Try buy sell" data-analytics-text="Red Hat Marketplace">Red Hat Marketplace</a></li>
+    <li><a href="https://catalog.redhat.com/" data-analytics-category="Footer|Tools" data-analytics-text="Red Hat Ecosystem Catalog">Red Hat Ecosystem Catalog</a></li>
+    <li><a href="http://redhat.force.com/finder/" data-analytics-category="Footer|Try buy sell" data-analytics-text="Find a partner">Find a partner</a></li>
+    <li><a href="https://www.redhat.com/en/store" data-analytics-category="Footer|Try buy sell" data-analytics-text="Red Hat Store">Red Hat Store</a></li>
+    <li><a href="https://cloud.redhat.com/" data-analytics-category="Footer|Tools" data-analytics-text="Console">Console</a></li>
+  </ul>
+  <h3 slot="links" data-analytics-text="Communicate">Communicate</h3>
+  <ul slot="links">
+    <li><a href="https://redhat.com/en/services/consulting-overview#contact-us" data-analytics-category="Footer|Communicate" data-analytics-text="Contact consulting">Contact consulting</a></li>
+    <li><a href="https://redhat.com/en/contact" data-analytics-category="Footer|Communicate" data-analytics-text="Contact sales">Contact sales</a></li>
+    <li><a href="https://redhat.com/en/services/training-and-certification/contact-us" data-analytics-category="Footer|Communicate" data-analytics-text="Contact training">Contact training</a></li>
+    <li><a href="https://redhat.com/en/about/social" data-analytics-category="Footer|Communicate" data-analytics-text="Social">Social</a></li>
+  </ul>
+  <rh-footer-block slot="main-secondary">
+    <h3 slot="header" data-analytics-text="About Red Hat">About Red Hat</h3>
+    <p>We're the world's leading provider of enterprise open source solutions, including Linux, cloud, container, and Kubernetes. We deliver hardened solutions that make it easier for enterprises to work across platforms and environments, from the core datacenter to the network edge.</p>
+  </rh-footer-block>
+  <rh-footer-block slot="main-secondary">
+    <h3 slot="header" data-analytics-text="Subscribe to our newsletter Red Hat Shares">Subscribe to our newsletter, Red Hat Shares</h3>
+    <rh-cta><a href="https://www.redhat.com/en/email-preferences?newsletter=RH-Shares&amp;intcmp=7016000000154xCAAQ" data-analytics-linktype="cta" data-analytics-category="Footer|About Red Hat" data-analytics-text="Sign up now">Sign up now</a></rh-cta>
+  </rh-footer-block>
+  <rh-footer-universal slot="universal">
+    <h3 slot="links-primary" data-analytics-text="Red Hat legal and privacy links" hidden="">Red Hat legal and privacy links</h3>
+    <ul slot="links-primary" data-analytics-region="page-footer-bottom-primary">
+      <li><a href="https://redhat.com/en/about/company" data-analytics-category="Footer|Corporate" data-analytics-text="About Red Hat">About Red Hat</a></li>
+      <li><a href="https://redhat.com/en/jobs" data-analytics-category="Footer|Corporate" data-analytics-text="Jobs">Jobs</a></li>
+      <li><a href="https://redhat.com/en/events" data-analytics-category="Footer|Corporate" data-analytics-text="Events">Events</a></li>
+      <li><a href="https://redhat.com/en/about/office-locations" data-analytics-category="Footer|Corporate" data-analytics-text="Locations">Locations</a></li>
+      <li><a href="https://redhat.com/en/contact" data-analytics-category="Footer|Corporate" data-analytics-text="Contact Red Hat">Contact Red Hat</a></li>
+      <li><a href="https://redhat.com/en/blog" data-analytics-category="Footer|Corporate" data-analytics-text="Red Hat Blog">Red Hat Blog</a></li>
+      <li><a href="https://redhat.com/en/about/our-culture/diversity-equity-inclusion" data-analytics-category="Footer|Corporate" data-analytics-text="Diversity equity and inclusion">Diversity, equity, and inclusion</a></li>
+      <li><a href="https://coolstuff.redhat.com/" data-analytics-category="Footer|Corporate" data-analytics-text="Cool Stuff Store">Cool Stuff Store</a></li>
+      <li><a href="https://www.redhat.com/en/summit" data-analytics-category="Footer|Corporate" data-analytics-text="Red Hat Summit">Red Hat Summit</a></li>
+    </ul>
+    <rh-footer-copyright slot="links-secondary">&copy; 2026 Red Hat</rh-footer-copyright>
+    <h3 slot="links-secondary" data-analytics-text="Red Hat legal and privacy links" hidden="">Red Hat legal and privacy links</h3>
+    <ul slot="links-secondary" data-analytics-region="page-footer-bottom-secondary">
+      <li><a href="https://redhat.com/en/about/privacy-policy" data-analytics-category="Footer|Red Hat legal and privacy links" data-analytics-text="Privacy statement">Privacy statement</a></li>
+      <li><a href="https://redhat.com/en/about/terms-use" data-analytics-category="Footer|Red Hat legal and privacy links" data-analytics-text="Terms of use">Terms of use</a></li>
+      <li><a href="https://redhat.com/en/about/all-policies-guidelines" data-analytics-category="Footer|Red Hat legal and privacy links" data-analytics-text="All policies and guidelines">All policies and guidelines</a></li>
+      <li><a href="https://redhat.com/en/about/digital-accessibility" data-analytics-category="Footer|Red Hat legal and privacy links" data-analytics-text="Digital accessibility">Digital accessibility</a></li>
+      <li><span id="teconsent"> </span></li>
+    </ul>
+  </rh-footer-universal>
+</rh-footer>
+<div id="consent_blackbar" style="position: fixed;bottom: 0;width: 100%;z-index: 5;padding: 10px;"></div>
+<script>
+const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const ROSA_RATE   = { paygo: 125.00, '1yr': 83.33, '3yr': 55.58 }; // per 4-vCPU block/mo
+const HCP_FEE     = 182.50;   // per HCP cluster/mo
+const EBS_NODE    = 24;        // 300 GB gp3 × $0.08/GB-mo
+const CLASSIC_OH_SINGLE = 1300;  // on-demand, us-east-1 (3×m5.2xlarge + 2×r5.xlarge + EBS)
+const CLASSIC_OH_MULTI  = 1540;  // on-demand, us-east-1 (3×m5.2xlarge + 3×r5.xlarge + EBS)
+const ARM_E       = 1.25;      // Graviton performance multiplier
+const SPOT_MULT   = 0.30;      // Spot ≈ 70% off on-demand
+
+function fleetHasHcp(cfg) {
+  return cfg.hcpClusters > 0 || cfg.hcpMigrated;
+}
+
+// ── Calc ─────────────────────────────────────────────────────────────────────
+function calcFleet(cfg, rosaContract) {
+  const ec2Mult = 1 - cfg.awsDiscountPct / 100;
+  const rosaRate = ROSA_RATE[rosaContract];
+  const onHcp   = fleetHasHcp(cfg);
+  const canKarp = cfg.karpenter && onHcp;
+  const binpack  = canKarp ? 0.90 : 1.0;
+
+  // Effective vCPUs after binpacking
+  const genVCPU  = Math.round(cfg.generalVCPU * binpack);
+  const memVCPU  = Math.round(cfg.memoryVCPU  * binpack);
+  const cmpVCPU  = Math.round(cfg.computeVCPU * binpack);
+  const burstVCPU = Math.round(cfg.burstVCPU  * binpack);
+  const totalSteady = genVCPU + memVCPU + cmpVCPU;
+
+  // Nodes for EBS
+  const vpn = Math.max(1, cfg.avgVCPUPerNode);
+  const steadyNodes = Math.round(totalSteady / vpn);
+  const burstNodes  = Math.round(burstVCPU  / vpn);
+  const totalNodes  = steadyNodes + burstNodes;
+
+  // ARM migration: memory-opt clusters only, HCP required
+  const armMemRate  = cfg.rateMemory  * 0.80; // r7g ≈ 20% cheaper/vCPU than r6i
+  let memEC2 = 0;
+  let rosaMemVCPU = memVCPU;
+  if (onHcp && cfg.armPct > 0 && memVCPU > 0) {
+    const toMig  = memVCPU * (cfg.armPct / 100);
+    const armV   = Math.round(toMig / ARM_E);
+    const x86V   = memVCPU - Math.round(toMig);
+    memEC2       = (armV * armMemRate + x86V * cfg.rateMemory) * ec2Mult * 730;
+    rosaMemVCPU  = armV + x86V;
+  } else {
+    memEC2 = memVCPU * cfg.rateMemory * ec2Mult * 730;
+  }
+
+  // EC2 costs
+  const genEC2  = genVCPU  * cfg.rateGeneral  * ec2Mult * 730;
+  const cmpEC2  = cmpVCPU  * cfg.rateCompute  * ec2Mult * 730;
+
+  // Burst EC2
+  const burstRateMap = { general: cfg.rateGeneral, memory: cfg.rateMemory, compute: cfg.rateCompute };
+  const burstRate = burstRateMap[cfg.burstProfile] ?? cfg.rateMemory;
+  const burstMult = canKarp ? SPOT_MULT : ec2Mult;
+  const burstEC2  = burstVCPU * burstRate * burstMult * 730;
+
+  // EBS
+  const ebs = totalNodes * EBS_NODE;
+
+  // ROSA fee (fewer vCPUs if ARM used)
+  const totalRosaVCPU = rosaMemVCPU + genVCPU + cmpVCPU + burstVCPU;
+  const rosaFee = Math.ceil(totalRosaVCPU / 4) * rosaRate;
+
+  // Cluster overhead
+  const classicCount = cfg.singleAZClusters + cfg.multiAZClusters;
+  const classicBase = cfg.singleAZClusters * CLASSIC_OH_SINGLE + cfg.multiAZClusters * CLASSIC_OH_MULTI;
+  const classicOH = cfg.hcpMigrated ? 0 : classicBase * ec2Mult;
+  const classicOHPerCluster = classicCount > 0 ? Math.round(classicBase / classicCount) : 0;
+  const hcpClusterCount = cfg.hcpClusters + (cfg.hcpMigrated ? classicCount : 0);
+  const hcpFees = hcpClusterCount * HCP_FEE;
+
+  const ec2Ebs = genEC2 + memEC2 + cmpEC2 + burstEC2 + ebs;
+  const overhead = classicOH + hcpFees;
+
+  return {
+    rosaFee, ec2Ebs, overhead,
+    total: rosaFee + ec2Ebs + overhead,
+    // Breakdown fields
+    genEC2, memEC2, cmpEC2, burstEC2, ebs, classicOH, classicOHPerCluster, hcpFees,
+    genVCPU, memVCPU, cmpVCPU, burstVCPU,
+    totalVCPU: totalSteady, totalRosaVCPU, totalNodes,
+    classicClusterCount: cfg.hcpMigrated ? 0 : classicCount,
+    hcpClusterCount,
+  };
+}
+
+// ── App ──────────────────────────────────────────────────────────────────────
+createApp({
+  setup() {
+    const chartEl = ref(null);
+    let chart = null;
+
+    const cfg = reactive({
+      // Fleet
+      singleAZClusters: 6,
+      multiAZClusters:  2,
+      hcpClusters:      0,
+      // Workload
+      generalVCPU:   2772,
+      memoryVCPU:    0,
+      computeVCPU:   0,
+      burstVCPU:     0,
+      burstProfile: 'memory',
+      avgVCPUPerNode: 8,
+      // EC2 rates (on-demand $/vCPU/hr, us-east-1 defaults)
+      rateGeneral: 0.048,
+      rateMemory:  0.063,
+      rateCompute: 0.043,
+      // Pricing
+      rosaContract:    '1yr',
+      awsDiscountPct:  40,
+      // Optimizations
+      hcpMigrated: false,
+      karpenter:   false,
+      armPct:      0,
+    });
+
+    const classicCount = computed(() => cfg.singleAZClusters + cfg.multiAZClusters);
+    const totalVCPU    = computed(() => cfg.generalVCPU + cfg.memoryVCPU + cfg.computeVCPU);
+    const hasHcp       = computed(() => fleetHasHcp(cfg));
+    const hcpFeeLabel  = `$${HCP_FEE.toFixed(2)}`;
+
+    // Guard: disable karpenter/ARM when fleet is not on HCP; clear migration when no Classic clusters
+    watch(() => cfg.hcpMigrated, v => { if (!v && cfg.hcpClusters === 0) { cfg.karpenter = false; cfg.armPct = 0; } });
+    watch(() => cfg.hcpClusters, v => { if (v === 0 && !cfg.hcpMigrated) { cfg.karpenter = false; cfg.armPct = 0; } });
+    watch(classicCount, n => { if (n === 0) cfg.hcpMigrated = false; });
+
+    const CONTRACT_EC2_DISCOUNT = { paygo: 0, '1yr': 40, '3yr': 60 };
+    const syncEC2 = ref(true);
+    watch(syncEC2, v => { if (v) cfg.awsDiscountPct = CONTRACT_EC2_DISCOUNT[cfg.rosaContract]; });
+    watch(() => cfg.rosaContract, v => { if (syncEC2.value) cfg.awsDiscountPct = CONTRACT_EC2_DISCOUNT[v]; });
+
+    // baseline = current contract + AWS discount, no optimizations
+    const baselineCfg  = computed(() => ({ ...cfg, hcpMigrated: false, karpenter: false, armPct: 0 }));
+    const baseline     = computed(() => calcFleet(baselineCfg.value, cfg.rosaContract));
+    const fleet        = computed(() => calcFleet(cfg, cfg.rosaContract));
+
+    const delta    = computed(() => baseline.value.total - fleet.value.total);
+    const deltaPct = computed(() => baseline.value.total > 0 ? (delta.value / baseline.value.total) * 100 : 0);
+
+    // Labels for breakdown table
+    const rosaRateLabel  = computed(() => `$${ROSA_RATE[cfg.rosaContract].toFixed(2)}`);
+    const ec2MultLabel   = computed(() => cfg.awsDiscountPct > 0 ? `(1−${cfg.awsDiscountPct}%)` : '1.0×');
+    const burstRateMap   = { general: () => cfg.rateGeneral, memory: () => cfg.rateMemory, compute: () => cfg.rateCompute };
+    const burstRateLabel = computed(() => `$${(burstRateMap[cfg.burstProfile]?.() ?? cfg.rateMemory).toFixed(3)}`);
+    const burstMultLabel = computed(() => (cfg.karpenter && hasHcp.value) ? '0.30× (Spot)' : ec2MultLabel.value);
+
+    // ── Chart ────────────────────────────────────────────────────────────────
+    function buildChart() {
+      if (!chartEl.value) return;
+
+      const TERMS  = ['paygo', '1yr', '3yr'];
+      const LABELS = ['PAYGO', '1-Year', '3-Year'];
+      // All bars apply the configured AWS EC2 discount; only the ROSA contract changes
+      const fleets = TERMS.map(t => calcFleet(cfg, t));
+      const selIdx = TERMS.indexOf(cfg.rosaContract);
+      const col = (full, muted, i) => i === selIdx ? full : muted;
+
+      if (chart) chart.destroy();
+      chart = new Chart(chartEl.value.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: LABELS,
+          datasets: [
+            {
+              label: 'ROSA Worker Fee',
+              data: fleets.map(f => f.rosaFee),
+              backgroundColor: fleets.map((_, i) => col('#ee0000', '#f5c6c6', i)),
+              borderRadius: 3,
+            },
+            {
+              label: 'EC2 + EBS',
+              data: fleets.map(f => f.ec2Ebs),
+              backgroundColor: fleets.map((_, i) => col('#0066cc', '#c0d8f5', i)),
+              borderRadius: 3,
+            },
+            {
+              label: 'Overhead (CP/Infra or HCP fee)',
+              data: fleets.map(f => f.overhead),
+              backgroundColor: fleets.map((_, i) => col('#8a8d90', '#e0e0e0', i)),
+              borderRadius: 3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16, usePointStyle: true } },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.dataset.label}: $${Math.round(ctx.parsed.y).toLocaleString()}/mo`,
+                afterBody: items => {
+                  const total = items.reduce((s, i) => s + i.parsed.y, 0);
+                  return ['', `  Total: $${Math.round(total).toLocaleString()}/mo`];
+                },
+              },
+            },
+          },
+          scales: {
+            x: { stacked: true, ticks: { font: { size: 12 } }, grid: { display: false } },
+            y: {
+              stacked: true,
+              ticks: { callback: v => '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v), font: { size: 11 } },
+              grid: { color: '#f0f0f0' },
+            },
+          },
+        },
+      });
+    }
+
+    onMounted(() => buildChart());
+    watch(cfg, () => buildChart(), { deep: true });
+
+    const showHelp = ref(false);
+
+    const fmt  = n => Math.round(n).toLocaleString();
+    const fmtK = n => { if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'; return Math.round(n / 1000) + 'K'; };
+    const fmtM = n => { if (Math.abs(n) >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M'; return '$' + Math.round(n / 1000) + 'K'; };
+
+    return {
+      cfg, fleet, baseline, delta, deltaPct, chartEl,
+      classicCount, totalVCPU, hasHcp, hcpFeeLabel,
+      rosaRateLabel, ec2MultLabel, burstRateLabel, burstMultLabel,
+      showHelp, syncEC2,
+      fmt, fmtK, fmtM,
+    };
+  },
+}).mount('#app');
+</script>
+</body>
+</html>

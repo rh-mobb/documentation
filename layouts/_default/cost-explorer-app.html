@@ -1,0 +1,17 @@
+{{/* Standalone layout: full-page ROSA Cost Explorer (no baseof chrome). */}}
+{{- $css := resources.Get "css/main.css" -}}
+{{- $cssHref := "/experts/css/main.css" -}}
+{{- if hugo.IsProduction -}}
+  {{- with $css | minify | fingerprint -}}
+    {{- $cssHref = .RelPermalink -}}
+  {{- end -}}
+{{- else -}}
+  {{- with $css -}}
+    {{- $cssHref = .RelPermalink -}}
+  {{- end -}}
+{{- end -}}
+{{- $app := resources.Get "rosa/cost-explorer/app.html" -}}
+{{- if not $app -}}
+  {{- errorf "ROSA Cost Explorer: assets/rosa/cost-explorer/app.html not found" -}}
+{{- end -}}
+{{ replace $app.Content "__MAIN_CSS__" $cssHref | safeHTML }}
