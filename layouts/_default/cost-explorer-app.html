@@ -1,4 +1,4 @@
-{{/* Standalone layout: full-page ROSA Cost Explorer (no baseof chrome). */}}
+{{/* Standalone layout: full-page ROSA Fleet Optimizer (no baseof chrome). */}}
 {{- $css := resources.Get "css/main.css" -}}
 {{- $cssHref := "/experts/css/main.css" -}}
 {{- if hugo.IsProduction -}}
@@ -12,6 +12,6 @@
 {{- end -}}
 {{- $app := resources.Get "rosa/cost-explorer/app.html" -}}
 {{- if not $app -}}
-  {{- errorf "ROSA Cost Explorer: assets/rosa/cost-explorer/app.html not found" -}}
+  {{- errorf "ROSA Fleet Optimizer: assets/rosa/cost-explorer/app.html not found" -}}
 {{- end -}}
 {{ replace $app.Content "__MAIN_CSS__" $cssHref | safeHTML }}

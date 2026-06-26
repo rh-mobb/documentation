@@ -1,10 +1,10 @@
-<!-- ROSA Cost Explorer - full-page app (source: assets/rosa/cost-explorer/app.html; served via layouts/_default/cost-explorer-app.html) -->
+<!-- ROSA Fleet Optimizer - full-page app (source: assets/rosa/cost-explorer/app.html; served via layouts/_default/cost-explorer-app.html) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ROSA Cost Explorer | Red Hat Cloud Experts</title>
+  <title>ROSA Fleet Optimizer | Red Hat Cloud Experts</title>
   <link rel="icon" href="/experts/favicon.ico">
   <link rel="stylesheet" href="__MAIN_CSS__">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
@@ -93,7 +93,6 @@
       max-width: none;
     }
     .ce-toolbar h1 span { color: var(--ce-brand); }
-    .header-sub { font-size: 0.875rem; color: var(--rh-color-text-secondary-on-dark, #c7c7c7); }
     .header-meta { font-size: 0.875rem; color: var(--rh-color-text-secondary-on-dark, #8a8d90); margin-left: auto; }
     .help-btn {
       width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #555;
@@ -158,7 +157,48 @@
     .section-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: #888; margin-bottom: 0.85rem; margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid #ececec; }
     .section-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
 
+    /* Collapsible settings sections */
+    .settings-section { border-top: 1px solid #ececec; }
+    .settings-section:first-child { border-top: none; }
+    .section-toggle {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      width: 100%; margin: 0; padding: 0.85rem 0 0.75rem;
+      border: none; background: transparent; cursor: pointer;
+      font: inherit; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.09em; color: #888; text-align: left;
+    }
+    .section-toggle:hover { color: var(--ce-text); }
+    .section-toggle:focus-visible { outline: 2px solid var(--ce-brand); outline-offset: 2px; border-radius: 2px; }
+    .section-chevron {
+      flex-shrink: 0;
+      display: inline-block;
+      width: 0.42rem;
+      height: 0.42rem;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      color: #aaa;
+      transform: rotate(-135deg);
+      transition: transform 0.15s ease, color 0.12s ease;
+    }
+    .section-toggle:hover .section-chevron { color: var(--ce-text); }
+    .section-chevron.collapsed { transform: rotate(45deg); }
+    .section-body { padding-bottom: 0.25rem; }
+    .settings-section:last-child .section-body { padding-bottom: 0; }
+
     /* ── Summary strip ───────────────────────────────────── */
+    .summary-actions {
+      display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .baseline-btn {
+      padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 600; font-family: inherit;
+      color: var(--ce-text); background: var(--ce-card); border: 1.5px solid var(--ce-border);
+      border-radius: var(--ce-radius); cursor: pointer;
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .baseline-btn:hover { border-color: var(--ce-brand); color: var(--ce-brand); }
+    .baseline-btn:focus-visible { outline: 2px solid var(--ce-brand); outline-offset: 2px; }
+    .baseline-hint { font-size: 0.75rem; color: var(--ce-muted); line-height: 1.4; }
     .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
     .summary-card {
       background: var(--ce-card);
@@ -174,9 +214,60 @@
     .cost-up { color: var(--ce-danger); }
 
     /* ── Inputs ──────────────────────────────────────────── */
-    .num-field { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem; }
+    .num-field { display: flex; align-items: flex-start; gap: 0.4rem; margin-bottom: 0.6rem; }
     .num-field label { font-size: 0.8rem; color: #444; flex: 1; min-width: 0; }
     .num-field label small { display: block; font-size: 0.7rem; color: #999; font-weight: 400; }
+    .num-field > .num-input { margin-top: 0.15rem; }
+    .field-head { flex: 1; min-width: 0; }
+    .field-head-row { display: flex; align-items: flex-start; gap: 0.3rem; }
+    .field-head-row > label,
+    .field-head-row > .field-head-title { flex: 1; min-width: 0; }
+    .field-head-title { font-size: 0.8rem; font-weight: 600; color: #444; }
+    .field-help { position: relative; display: inline-flex; flex-shrink: 0; vertical-align: top; }
+    .field-help-btn {
+      width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid #ccc;
+      background: transparent; color: #888; font-size: 0.62rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; line-height: 1; padding: 0; margin-top: 0.05rem;
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .field-help-btn:hover { border-color: var(--ce-brand); color: var(--ce-brand); }
+    .field-help-btn[aria-expanded="true"] { border-color: var(--ce-brand); color: var(--ce-brand); background: #fff5f5; }
+    .field-help-btn:focus-visible { outline: 2px solid var(--ce-brand); outline-offset: 1px; }
+    .field-help-popover {
+      position: fixed;
+      z-index: 400;
+      width: 240px;
+      max-width: calc(100vw - 16px);
+      padding: 0.55rem 0.7rem;
+      font-size: 0.72rem;
+      line-height: 1.55;
+      color: #444;
+      background: #fff;
+      border: 1px solid var(--ce-border);
+      border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+    }
+    .field-help-popover::before {
+      content: '';
+      position: absolute;
+      left: var(--fh-arrow-left, calc(100% - 14px));
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border: 1px solid var(--ce-border);
+      transform: rotate(45deg);
+    }
+    .field-help-popover:not(.above)::before {
+      top: -6px;
+      border-bottom: none;
+      border-right: none;
+    }
+    .field-help-popover.above::before {
+      bottom: -6px;
+      border-top: none;
+      border-left: none;
+    }
     .num-input {
       width: 80px; padding: 0.3rem 0.45rem; border: 1.5px solid #d0d0d0; border-radius: 5px;
       font-size: 0.82rem; font-family: inherit; text-align: right; color: #151515;
@@ -190,6 +281,8 @@
     /* Profile rows */
     .profile-row { margin-bottom: 0.75rem; }
     .profile-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .profile-label-row { display: flex; align-items: flex-start; gap: 0.3rem; margin-bottom: 0.3rem; }
+    .profile-label-row .profile-label { flex: 1; margin-bottom: 0; }
     .profile-label small { font-weight: 400; color: #999; font-size: 0.72rem; }
     .profile-inputs { display: flex; align-items: center; gap: 0.4rem; }
     .profile-inputs .num-input { width: 90px; }
@@ -214,10 +307,11 @@
     .discount-marks { display: flex; justify-content: space-between; font-size: 0.65rem; color: #bbb; margin-top: 0.15rem; }
 
     /* Toggle */
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+    .toggle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .toggle-label-wrap { flex: 1; min-width: 0; }
     .toggle-label { font-size: 0.82rem; color: #444; }
     .toggle-label.muted { opacity: 0.4; }
-    .toggle { position: relative; width: 42px; height: 22px; flex-shrink: 0; }
+    .toggle { position: relative; width: 42px; height: 22px; flex-shrink: 0; margin-top: 0.05rem; }
     .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
     .toggle-track { position: absolute; inset: 0; background: #d0d0d0; border-radius: 22px; cursor: pointer; transition: background 0.2s; }
     .toggle-track::after { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
@@ -283,8 +377,7 @@
 <div id="app">
 
   <div class="ce-toolbar">
-    <h1><span>ROSA</span> Cost Explorer</h1>
-    <span class="header-sub">Generic fleet estimator</span>
+    <h1><span>ROSA</span> Fleet Optimizer</h1>
     <button class="help-btn" @click="showHelp = true" title="How to use this tool">?</button>
     <div class="header-meta">ROSA fees 2026-06 &bull; EC2 rates: enter per-profile below</div>
   </div>
@@ -294,15 +387,15 @@
     <div v-if="showHelp" class="modal-backdrop" @click.self="showHelp = false">
       <div class="modal">
         <button class="modal-close" @click="showHelp = false">&#x2715;</button>
-        <h2>How to use the ROSA Cost Explorer</h2>
-        <p class="modal-lead">Enter your fleet details on the left to get a live cost estimate. All fields are optional; fill in what you know and adjust as you learn more.</p>
+        <h2>How to use the ROSA Fleet Optimizer</h2>
+        <p class="modal-lead">Use the collapsible sections on the left to enter fleet details and get a live cost estimate. Click the <strong>?</strong> beside any field for a tooltip. Values update the summary cards, chart, and breakdown table as you type. Pre-filled defaults are a starting example; replace them with your fleet.</p>
 
         <h3>Fleet Configuration</h3>
         <p>Count your clusters by type:</p>
         <ul>
           <li><strong>Classic, Single-AZ:</strong> Classic ROSA clusters deployed into one availability zone. Each carries ~$1,300/mo of control-plane and infra node overhead on-demand (3 CP + 2 Infra nodes).</li>
           <li><strong>Classic, Multi-AZ:</strong> Classic clusters spread across 3 AZs. Overhead is ~$1,540/mo (3 CP + 3 Infra nodes). Most production clusters are multi-AZ.</li>
-          <li><strong>HCP clusters:</strong> Clusters already on Hosted Control Planes. These have no CP/Infra nodes; instead a flat $182.50/mo cluster fee. Enter only clusters that are <em>already</em> on HCP; use the Classic → HCP lever to model a future migration.</li>
+          <li><strong>HCP clusters (already migrated):</strong> Clusters already on Hosted Control Planes. These have no CP/Infra nodes; instead a flat $182.50/mo cluster fee. Enter only clusters that are <em>already</em> on HCP; use the Classic → HCP Migration lever to model a future migration.</li>
         </ul>
         <div class="tip">Find your clusters in <strong>console.redhat.com → OpenShift → Clusters</strong> or run <code>ocm list clusters</code>. The cluster type (Classic vs HCP) is shown in the Type column.</div>
 
@@ -312,15 +405,14 @@
           <li><strong>General Purpose (M-family):</strong> m5, m6i, m7i instances. Good for mixed or web workloads. Default rate: $0.048/vCPU·hr (us-east-1 on-demand).</li>
           <li><strong>Memory Optimized (R-family):</strong> r5, r5a, r6i, r7i instances. In-memory databases, caching, analytics. Default rate: $0.063/vCPU·hr.</li>
           <li><strong>Compute Optimized (C-family):</strong> c5, c6i, c7i instances. CPU-bound workloads, batch processing. Default rate: $0.043/vCPU·hr.</li>
-          <li><strong>Burst vCPUs:</strong> Your autoscaling headroom: the difference between max and min replica counts across all machine pools. If you don't use autoscaling, leave this at 0.</li>
+          <li><strong>Burst vCPUs:</strong> Autoscaling headroom: the difference between max and min replica counts across machine pools. Pick a profile (General, Memory, or Compute) for the burst pool rate. If you don't use autoscaling, set this to 0.</li>
         </ul>
-        <p><strong>Burst utilization</strong> is the average share of the month that burst capacity is actually running. Autoscale headroom is rarely at max vCPU count around the clock.</p>
+        <p><strong>Burst utilization</strong> (shown when burst vCPUs &gt; 0) is the average share of the month that burst capacity is actually running. Default is 20%. Autoscale headroom is rarely at max vCPU count around the clock.</p>
         <ul>
           <li><strong>From metrics:</strong> For each autoscaled machine pool, compare average node count to minimum and maximum over 30 days. Utilization ≈ (average − minimum) ÷ (maximum − minimum), expressed as a percentage. Weight by vCPU if pools differ in instance size.</li>
           <li><strong>From max replica settings:</strong> Sum (max − min) vCPU across pools for burst headroom. Compare to time-series data or billing reports showing how often you approach max.</li>
           <li><strong>Quick guesstimate:</strong> Daily peak-only traffic (e.g. business hours) is often 15–25%. Weekly batch spikes might be 5–10%. Sustained seasonal scale-out can be 40%+.</li>
         </ul>
-        <p><strong>Apply AWS EC2 discount to burst</strong> is off by default. Autoscaled burst nodes are often on-demand and may not inherit the same reserved instance, Savings Plan, or EDP coverage as steady workers. Enable only when your burst EC2 usage receives the same discount as base capacity.</p>
         <div class="tip">Edit the <strong>$/vCPU·hr</strong> fields to match your region. Find actual rates at <strong>aws.amazon.com/ec2/pricing/on-demand</strong>. Search for your instance type and divide the hourly price by the vCPU count.</div>
         <p><strong>Avg vCPUs per node</strong> is used only to estimate node count for EBS storage. Match it to your dominant instance size: 8 vCPU for r5a.2xlarge or m5.2xlarge, 16 for r5a.4xlarge, etc.</p>
 
@@ -332,36 +424,48 @@
           <li>3-Year: $55.58/block/mo (3-year subscription)</li>
         </ul>
         <p>Check your contract in <strong>console.redhat.com → Subscriptions</strong> or ask your Red Hat account team.</p>
-        <p><strong>AWS EC2 Discount</strong> is your effective discount off on-demand EC2 pricing. Set this to reflect however you're buying EC2:</p>
+        <p><strong>AWS EC2 Discount</strong> is your effective discount off on-demand EC2 pricing for steady-state worker nodes and Classic CP/Infra overhead. Set this to reflect however you're buying EC2:</p>
         <ul>
           <li>0% (fully on-demand / PAYGO)</li>
           <li>~40% (equivalent to 1-year EC2 reserved instances)</li>
           <li>~60% (equivalent to 3-year EC2 reserved instances)</li>
           <li>Custom % (your Enterprise Discount Program (EDP) or negotiated private pricing)</li>
         </ul>
+        <p><strong>Sync with contract</strong> (on by default) sets the EC2 discount from your ROSA contract selection (0%, 40%, or 60%). Turn it off to set a custom discount independently.</p>
+        <p><strong>Apply AWS EC2 discount to burst</strong> appears below the EC2 discount slider when burst vCPUs &gt; 0. It is off by default. Autoscaled burst nodes are often on-demand and may not inherit the same reserved instance, Savings Plan, or EDP coverage as steady workers. Enable only when your burst EC2 usage receives the same discount as base capacity. This option is disabled when <strong>Spot for burst</strong> is enabled (Spot uses a fixed 0.30× on-demand multiplier instead).</p>
         <div class="warn">The ROSA contract and the AWS EC2 discount are independent. You can have a 3-year ROSA subscription but buy EC2 on-demand, or vice versa.</div>
 
         <h3>Optimization Levers</h3>
+        <p>Karpenter and ARM Graviton require at least one HCP cluster <em>or</em> Classic → HCP Migration enabled (modeling HCP-only fleets counts too).</p>
         <ul>
           <li><strong>Classic → HCP Migration:</strong> Models moving all Classic clusters to Hosted Control Planes. Eliminates CP/Infra EC2 overhead per cluster and replaces it with the $182.50/mo HCP cluster fee, typically saving $900-$1,300/cluster/month depending on region.</li>
-          <li><strong>Karpenter (requires HCP):</strong> Available on ROSA HCP 4.22+. Reduces required node count ~10% through better bin-packing vs the Classic cluster-autoscaler.</li>
-          <li><strong>Spot for burst:</strong> Models autoscale headroom running on Spot instances (~70% off on-demand EC2). Independent of Karpenter; enable when your burst pools tolerate Spot interruption.</li>
-          <li><strong>ARM Graviton Target:</strong> Percentage of your Memory Optimized workloads to migrate to Graviton (r7g instances). Uses an E=1.25 performance multiplier, meaning 100 x86 vCPUs can be replaced by 80 ARM vCPUs for equivalent throughput. ARM instances cost ~20% less per vCPU than Intel r6i at equivalent regional pricing. Requires HCP.</li>
+          <li><strong>Karpenter (requires HCP):</strong> Available on ROSA HCP 4.22+. Reduces required node count ~10% through better bin-packing vs the Classic cluster-autoscaler. Applies to steady and burst vCPU counts.</li>
+          <li><strong>Spot for burst:</strong> Models autoscale headroom on Spot instances (0.30× on-demand EC2, ~70% off). Independent of Karpenter; enable when burst pools tolerate Spot interruption. Overrides the burst EC2 discount checkbox.</li>
+          <li><strong>ARM Graviton Target:</strong> Percentage of Memory Optimized workloads to migrate to Graviton (r7g instances). Uses an E=1.25 performance multiplier, meaning 100 x86 vCPUs can be replaced by 80 ARM vCPUs for equivalent throughput. ARM instances cost ~20% less per vCPU than Intel r6i at equivalent regional pricing. Requires HCP.</li>
         </ul>
+
+        <h3>Summary Cards</h3>
+        <p>Three cards at the top compare scenarios:</p>
+        <ul>
+          <li><strong>Baseline:</strong> A saved snapshot of fleet, pricing, and levers. On first load it matches the starting defaults; click <strong>Set current as baseline</strong> any time to capture &ldquo;where we are now.&rdquo;</li>
+          <li><strong>Current estimate:</strong> Live total from your current settings.</li>
+          <li><strong>Monthly Savings / Increase:</strong> Difference between baseline and current (positive savings when current is lower).</li>
+        </ul>
+        <div class="tip">Model a change (toggle a lever, adjust vCPUs), then compare against baseline. Re-baseline after a migration or contract change to reset the reference point.</div>
 
         <h3>Reading the Chart</h3>
         <p>The chart always shows all three ROSA contract tiers (PAYGO, 1-Year, 3-Year) simultaneously, with your configured AWS EC2 discount and optimization levers applied to all bars. The bar for your selected contract term is shown in full colour; the others are muted for comparison.</p>
         <p>Hover over a bar to see the cost breakdown (ROSA fee, EC2+EBS, overhead) and total for that contract tier.</p>
 
         <h3>Reading the Breakdown Table</h3>
-        <p>The breakdown shows the <em>optimized</em> configuration (with your levers applied). The Detail column shows the exact formula used; you can verify any line against your own rates.</p>
+        <p>The breakdown reflects your <strong>current configuration</strong> (live settings, including levers). The Detail column shows the formula used; you can verify any line against your own rates.</p>
         <ul>
           <li>Rows for profiles with 0 vCPU are dimmed but still visible.</li>
           <li>The <strong>50% ARM</strong> badge on Memory Optimized means that percentage of those vCPUs will run on Graviton, with the E=1.25 multiplier applied to node count.</li>
-          <li>The <strong>Spot</strong> badge on Burst means the Spot for burst optimization lever is enabled.</li>
-          <li>Burst EC2 cost scales by <strong>utilization %</strong> (not 730 hr/mo at full headroom). The <strong>Apply AWS EC2 discount to burst</strong> checkbox is separate from steady-state EC2 discount.</li>
+          <li>The <strong>Spot</strong> badge on Burst means Spot for burst is enabled.</li>
+          <li>Burst EC2 cost scales by <strong>utilization %</strong> (not 730 hr/mo at full headroom). ROSA worker fees for burst use utilization-adjusted vCPU as well.</li>
+          <li>Classic CP/Infra overhead uses the same EC2 discount multiplier as worker nodes.</li>
         </ul>
-        <div class="tip">The <strong>Current (no optimizations)</strong> summary card uses your entered pricing with all levers off. The <strong>Optimized</strong> card applies whatever levers you have enabled. Toggle levers on and off to see the marginal impact of each one.</div>
       </div>
     </div>
   </transition>
@@ -369,14 +473,22 @@
   <div class="page">
 
     <!-- Summary cards -->
+    <div class="summary-actions">
+      <div style="display:flex;align-items:center;gap:0.35rem;">
+        <button type="button" class="baseline-btn" @click="setBaseline">Set current as baseline</button>
+        <fh-help id="baseline" :text="fieldHelp.baseline"></fh-help>
+      </div>
+      <span class="baseline-hint" v-if="baselineIsCurrent">Baseline matches current settings.</span>
+      <span class="baseline-hint" v-else>Compare current estimate against your saved baseline.</span>
+    </div>
     <div class="summary">
       <div class="summary-card">
-        <div class="s-label">Current (no optimizations)</div>
+        <div class="s-label">Baseline</div>
         <div class="s-value">${{ fmt(baseline.total) }}</div>
         <div class="s-sub">per month &bull; ${{ fmtM(baseline.total * 12) }}/yr</div>
       </div>
       <div class="summary-card">
-        <div class="s-label">Optimized</div>
+        <div class="s-label">Current estimate</div>
         <div class="s-value">${{ fmt(fleet.total) }}</div>
         <div class="s-sub">per month &bull; ${{ fmtM(fleet.total * 12) }}/yr</div>
       </div>
@@ -397,27 +509,56 @@
       <!-- ── Left: controls ──────────────────────────────── -->
       <div class="card">
 
-        <!-- Fleet -->
-        <div class="section-title">Fleet Configuration</div>
+        <div class="settings-section">
+          <button type="button" class="section-toggle" @click="sections.fleet = !sections.fleet" :aria-expanded="sections.fleet">
+            <span>Fleet Configuration</span>
+            <span class="section-chevron" :class="{ collapsed: !sections.fleet }" aria-hidden="true"></span>
+          </button>
+          <div v-show="sections.fleet" class="section-body">
 
         <div class="num-field">
-          <label>Classic, Single-AZ clusters <small>3 CP + 2 Infra nodes (~$1,300/mo overhead)</small></label>
+          <div class="field-head">
+            <div class="field-head-row">
+              <label>Classic, Single-AZ clusters <small>3 CP + 2 Infra nodes (~$1,300/mo overhead)</small></label>
+              <fh-help id="singleAZ" :text="fieldHelp.singleAZ"></fh-help>
+            </div>
+          </div>
           <input class="num-input narrow" type="number" v-model.number="cfg.singleAZClusters" min="0" step="1">
         </div>
         <div class="num-field">
-          <label>Classic, Multi-AZ clusters <small>3 CP + 3 Infra nodes (~$1,540/mo overhead)</small></label>
+          <div class="field-head">
+            <div class="field-head-row">
+              <label>Classic, Multi-AZ clusters <small>3 CP + 3 Infra nodes (~$1,540/mo overhead)</small></label>
+              <fh-help id="multiAZ" :text="fieldHelp.multiAZ"></fh-help>
+            </div>
+          </div>
           <input class="num-input narrow" type="number" v-model.number="cfg.multiAZClusters" min="0" step="1">
         </div>
         <div class="num-field">
-          <label>HCP clusters (already migrated) <small>{{ hcpFeeLabel }}/mo flat fee each</small></label>
+          <div class="field-head">
+            <div class="field-head-row">
+              <label>HCP clusters (already migrated) <small>{{ hcpFeeLabel }}/mo flat fee each</small></label>
+              <fh-help id="hcpClusters" :text="fieldHelp.hcpClusters"></fh-help>
+            </div>
+          </div>
           <input class="num-input narrow" type="number" v-model.number="cfg.hcpClusters" min="0" step="1">
         </div>
 
-        <!-- Workload -->
-        <div class="section-title">Workload: vCPU by Profile</div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <button type="button" class="section-toggle" @click="sections.workload = !sections.workload" :aria-expanded="sections.workload">
+            <span>Workload: vCPU by Profile</span>
+            <span class="section-chevron" :class="{ collapsed: !sections.workload }" aria-hidden="true"></span>
+          </button>
+          <div v-show="sections.workload" class="section-body">
 
         <div class="profile-row">
-          <div class="profile-label">General Purpose <small>M-family (m5, m6i, m7i…)</small></div>
+          <div class="profile-label-row">
+            <div class="profile-label">General Purpose <small>M-family (m5, m6i, m7i…)</small></div>
+            <fh-help id="general" :text="fieldHelp.general"></fh-help>
+            </div>
           <div class="profile-inputs">
             <input class="num-input" type="number" v-model.number="cfg.generalVCPU" min="0" step="4" placeholder="0">
             <span class="input-unit">vCPU&nbsp; @&nbsp; $</span>
@@ -427,7 +568,10 @@
         </div>
 
         <div class="profile-row">
-          <div class="profile-label">Memory Optimized <small>R-family (r5, r5a, r6i, r7i…)</small></div>
+          <div class="profile-label-row">
+            <div class="profile-label">Memory Optimized <small>R-family (r5, r5a, r6i, r7i…)</small></div>
+            <fh-help id="memory" :text="fieldHelp.memory"></fh-help>
+            </div>
           <div class="profile-inputs">
             <input class="num-input" type="number" v-model.number="cfg.memoryVCPU" min="0" step="4" placeholder="0">
             <span class="input-unit">vCPU&nbsp; @&nbsp; $</span>
@@ -437,7 +581,10 @@
         </div>
 
         <div class="profile-row">
-          <div class="profile-label">Compute Optimized <small>C-family (c5, c6i, c7i…)</small></div>
+          <div class="profile-label-row">
+            <div class="profile-label">Compute Optimized <small>C-family (c5, c6i, c7i…)</small></div>
+            <fh-help id="compute" :text="fieldHelp.compute"></fh-help>
+            </div>
           <div class="profile-inputs">
             <input class="num-input" type="number" v-model.number="cfg.computeVCPU" min="0" step="4" placeholder="0">
             <span class="input-unit">vCPU&nbsp; @&nbsp; $</span>
@@ -447,7 +594,10 @@
         </div>
 
         <div class="profile-row">
-          <div class="profile-label">Burst vCPUs <small>Peak above minimum (autoscale headroom)</small></div>
+          <div class="profile-label-row">
+            <div class="profile-label">Burst vCPUs <small>Peak above minimum (autoscale headroom)</small></div>
+            <fh-help id="burst" :text="fieldHelp.burst"></fh-help>
+            </div>
           <div class="profile-inputs">
             <input class="num-input" type="number" v-model.number="cfg.burstVCPU" min="0" step="4" placeholder="0">
             <span class="input-unit">vCPU</span>
@@ -458,11 +608,10 @@
             </select>
           </div>
           <div v-if="cfg.burstVCPU > 0" style="margin-top:0.5rem;padding-left:0.1rem;">
-            <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:#555;cursor:pointer;margin-bottom:0.45rem;" :style="{ opacity: cfg.burstSpot ? 0.45 : 1 }">
-              <input type="checkbox" v-model="cfg.burstAwsDiscount" :disabled="cfg.burstSpot" style="accent-color:var(--ce-brand);cursor:pointer;">
-              Apply AWS EC2 discount to burst
-            </label>
-            <div class="profile-label">Burst utilization <small>Avg % of month burst capacity is running</small></div>
+            <div class="profile-label-row">
+              <div class="profile-label">Burst utilization <small>Avg % of month burst capacity is running</small></div>
+              <fh-help id="burstUsage" :text="fieldHelp.burstUsage"></fh-help>
+            </div>
             <div class="slider-wrap">
               <input type="range" min="0" max="100" step="5" v-model.number="cfg.burstUsagePct">
               <span class="slider-val">{{ cfg.burstUsagePct }}%</span>
@@ -471,14 +620,29 @@
         </div>
 
         <div class="num-field" style="margin-top:0.25rem;">
-          <label>Avg vCPUs per node <small>Used to estimate node count for EBS</small></label>
+          <div class="field-head">
+            <div class="field-head-row">
+              <label>Avg vCPUs per node <small>Used to estimate node count for EBS</small></label>
+              <fh-help id="avgVCPU" :text="fieldHelp.avgVCPU"></fh-help>
+            </div>
+          </div>
           <input class="num-input narrow" type="number" v-model.number="cfg.avgVCPUPerNode" min="1" step="1">
         </div>
 
-        <!-- Pricing -->
-        <div class="section-title">Current Pricing</div>
+          </div>
+        </div>
 
-        <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">ROSA Contract</div>
+        <div class="settings-section">
+          <button type="button" class="section-toggle" @click="sections.pricing = !sections.pricing" :aria-expanded="sections.pricing">
+            <span>Current Pricing</span>
+            <span class="section-chevron" :class="{ collapsed: !sections.pricing }" aria-hidden="true"></span>
+          </button>
+          <div v-show="sections.pricing" class="section-body">
+
+        <div class="field-head-row" style="margin-bottom:0.4rem;">
+          <div class="field-head-title">ROSA Contract</div>
+          <fh-help id="rosaContract" :text="fieldHelp.rosaContract"></fh-help>
+            </div>
         <div class="radio-row">
           <div class="radio-btn" :class="{ active: cfg.rosaContract === 'paygo' }" @click="cfg.rosaContract='paygo'">PAYGO</div>
           <div class="radio-btn" :class="{ active: cfg.rosaContract === '1yr'   }" @click="cfg.rosaContract='1yr'">1-Year</div>
@@ -486,14 +650,17 @@
         </div>
 
         <div class="discount-block">
-          <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;">
-            AWS EC2 Discount
-            <span style="font-weight:400;color:#888;font-size:0.75rem;">(EDP / reserved / negotiated)</span>
-            <label style="margin-left:auto;display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;font-weight:400;color:#555;cursor:pointer;white-space:nowrap;">
+          <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.35rem;display:flex;align-items:flex-start;gap:0.5rem;">
+            <span style="flex:1;">AWS EC2 Discount <span style="font-weight:400;color:#888;font-size:0.75rem;">(EDP / reserved / negotiated)</span></span>
+            <fh-help id="awsDiscount" :text="fieldHelp.awsDiscount"></fh-help>
+            </div>
+          <div style="display:flex;align-items:center;gap:0.3rem;margin-bottom:0.35rem;">
+            <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;font-weight:400;color:#555;cursor:pointer;flex:1;">
               <input type="checkbox" v-model="syncEC2" style="accent-color:var(--ce-brand);cursor:pointer;">
               Sync with contract
             </label>
-          </div>
+            <fh-help id="syncEC2" :text="fieldHelp.syncEC2"></fh-help>
+            </div>
           <div class="discount-slider-row">
             <input type="range" min="0" max="70" step="5" v-model.number="cfg.awsDiscountPct" :disabled="syncEC2">
             <span class="discount-val" :style="{ opacity: syncEC2 ? 0.6 : 1 }">{{ cfg.awsDiscountPct }}%</span>
@@ -504,13 +671,30 @@
             <span style="margin-left:9%">~60% (3yr)</span>
             <span>70%</span>
           </div>
+          <label v-if="cfg.burstVCPU > 0" style="display:flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:#555;cursor:pointer;margin-top:0.65rem;" :style="{ opacity: cfg.burstSpot ? 0.45 : 1 }">
+            <input type="checkbox" v-model="cfg.burstAwsDiscount" :disabled="cfg.burstSpot" style="accent-color:var(--ce-brand);cursor:pointer;">
+            <span style="flex:1;">Apply AWS EC2 discount to burst</span>
+            <fh-help id="burstAwsDiscount" :text="fieldHelp.burstAwsDiscount"></fh-help>
+          </label>
+          </div>
+
+          </div>
         </div>
 
-        <!-- Optimizations -->
-        <div class="section-title">Optimization Levers</div>
+        <div class="settings-section">
+          <button type="button" class="section-toggle" @click="sections.optimization = !sections.optimization" :aria-expanded="sections.optimization">
+            <span>Optimization Levers</span>
+            <span class="section-chevron" :class="{ collapsed: !sections.optimization }" aria-hidden="true"></span>
+          </button>
+          <div v-show="sections.optimization" class="section-body">
 
         <div class="toggle-row">
-          <span class="toggle-label">Classic → HCP Migration</span>
+          <div class="toggle-label-wrap">
+            <div class="field-head-row">
+              <span class="toggle-label">Classic → HCP Migration</span>
+              <fh-help id="hcpMigrated" :text="fieldHelp.hcpMigrated"></fh-help>
+            </div>
+          </div>
           <label class="toggle">
             <input type="checkbox" v-model="cfg.hcpMigrated" :disabled="classicCount === 0">
             <div class="toggle-track"></div>
@@ -518,9 +702,14 @@
         </div>
 
         <div class="toggle-row">
-          <span class="toggle-label" :class="{ muted: !hasHcp }">
-            Karpenter <span style="font-size:0.72rem;color:#999">(requires HCP)</span>
-          </span>
+          <div class="toggle-label-wrap">
+            <div class="field-head-row">
+              <span class="toggle-label" :class="{ muted: !hasHcp }">
+                Karpenter <span style="font-size:0.72rem;color:#999">(requires HCP)</span>
+              </span>
+              <fh-help id="karpenter" :text="fieldHelp.karpenter"></fh-help>
+            </div>
+          </div>
           <label class="toggle" :class="{ disabled: !hasHcp }">
             <input type="checkbox" v-model="cfg.karpenter" :disabled="!hasHcp">
             <div class="toggle-track"></div>
@@ -528,9 +717,14 @@
         </div>
 
         <div class="toggle-row">
-          <span class="toggle-label" :class="{ muted: cfg.burstVCPU === 0 }">
-            Spot for burst <span style="font-size:0.72rem;color:#999">(~70% off on-demand EC2)</span>
-          </span>
+          <div class="toggle-label-wrap">
+            <div class="field-head-row">
+              <span class="toggle-label" :class="{ muted: cfg.burstVCPU === 0 }">
+                Spot for burst <span style="font-size:0.72rem;color:#999">(~70% off on-demand EC2)</span>
+              </span>
+              <fh-help id="burstSpot" :text="fieldHelp.burstSpot"></fh-help>
+            </div>
+          </div>
           <label class="toggle" :class="{ disabled: cfg.burstVCPU === 0 }">
             <input type="checkbox" v-model="cfg.burstSpot" :disabled="cfg.burstVCPU === 0">
             <div class="toggle-track"></div>
@@ -538,10 +732,13 @@
         </div>
 
         <div>
-          <div style="font-size:0.82rem;font-weight:500;margin-bottom:0.3rem;" :style="{ opacity: hasHcp ? 1 : 0.4 }">
-            ARM Graviton Target
-            <span style="font-weight:400;color:#999;font-size:0.72rem">(Memory Opt, HCP only)</span>
-          </div>
+          <div class="profile-label-row" :style="{ opacity: hasHcp ? 1 : 0.4 }">
+            <div style="font-size:0.82rem;font-weight:500;">
+              ARM Graviton Target
+              <span style="font-weight:400;color:#999;font-size:0.72rem">(Memory Opt, HCP only)</span>
+            </div>
+            <fh-help id="armPct" :text="fieldHelp.armPct"></fh-help>
+            </div>
           <div class="slider-wrap">
             <input type="range" min="0" max="100" step="5" v-model.number="cfg.armPct" :disabled="!hasHcp">
             <span class="slider-val" :style="{ opacity: hasHcp ? 1 : 0.4 }">{{ cfg.armPct }}%</span>
@@ -562,6 +759,9 @@
           <div v-if="classicCount === 0 && cfg.hcpClusters === 0 && totalVCPU === 0" class="status-warn">← Enter fleet details to calculate</div>
         </div>
 
+          </div>
+        </div>
+
       </div><!-- end left card -->
 
       <!-- ── Right: chart + breakdown ────────────────────── -->
@@ -574,7 +774,7 @@
         </div>
 
         <div class="card" style="margin-top:1.25rem;">
-          <div class="card-title">Cost Breakdown: Optimized Configuration</div>
+          <div class="card-title">Cost Breakdown: Current Configuration</div>
           <table class="breakdown-table">
             <thead>
               <tr>
@@ -738,7 +938,7 @@
 </rh-footer>
 <div id="consent_blackbar" style="position: fixed;bottom: 0;width: 100%;z-index: 5;padding: 10px;"></div>
 <script>
-const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
+const { createApp, ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, provide, inject } = Vue;
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const ROSA_RATE   = { paygo: 125.00, '1yr': 83.33, '3yr': 55.58 }; // per 4-vCPU block/mo
@@ -830,9 +1030,130 @@ function calcFleet(cfg, rosaContract) {
   };
 }
 
+function snapshotCfg(source) {
+  return JSON.parse(JSON.stringify(source));
+}
+
+const FIELD_HELP = {
+  baseline: 'Saves a snapshot of your current fleet, pricing, and levers as the Baseline card. Use it to compare "where we are now" against changes you model. Click again after a migration or contract change to reset the reference point.',
+  singleAZ: 'Classic ROSA clusters in a single availability zone. Each adds ~$1,300/mo on-demand for dedicated CP and Infra nodes (3 CP + 2 Infra).',
+  multiAZ: 'Classic ROSA clusters across three availability zones. Each adds ~$1,540/mo on-demand overhead (3 CP + 3 Infra). Most production fleets use Multi-AZ.',
+  hcpClusters: 'Clusters already on Hosted Control Planes (HCP). Each pays a flat $182.50/mo cluster fee with no CP/Infra EC2. Count only clusters already migrated; use Classic → HCP Migration to model clusters not yet moved.',
+  general: 'Total worker vCPUs on General Purpose (M-family) instances. Excludes control plane and infra nodes. Adjust $/vCPU·hr to match your region (instance hourly price ÷ vCPU count).',
+  memory: 'Total worker vCPUs on Memory Optimized (R-family) instances. Adjust $/vCPU·hr for your region. Used for in-memory databases, caching, and analytics.',
+  compute: 'Total worker vCPUs on Compute Optimized (C-family) instances. Adjust $/vCPU·hr for your region. Used for CPU-bound and batch workloads.',
+  burst: 'Autoscaling headroom in vCPU: sum of (max − min) vCPU across autoscaled machine pools. Pick General, Memory, or Compute for the burst rate. Set to 0 if you do not autoscale.',
+  burstUsage: 'Average percentage of the month that burst capacity is actually running. Autoscale max is rarely sustained around the clock. Use cluster metrics or start with ~20% for business-hours peaks.',
+  avgVCPU: 'Average vCPUs per worker node. Used only to estimate node count for EBS (300 GB gp3 per node). Match your dominant instance size (e.g. 8 for r5a.2xlarge).',
+  rosaContract: 'Red Hat ROSA subscription tier, billed per 4-vCPU block per month: PAYGO $125, 1-Year $83.33, 3-Year $55.58. Independent of how you purchase EC2.',
+  awsDiscount: 'Effective discount off on-demand EC2 for steady-state worker nodes and Classic CP/Infra overhead. Typical values: 0% on-demand, ~40% for 1-year RI equivalent, ~60% for 3-year.',
+  syncEC2: 'When enabled (default), sets the EC2 discount from your ROSA contract: 0% for PAYGO, 40% for 1-Year, 60% for 3-Year. Turn off to enter a custom discount.',
+  burstAwsDiscount: 'Apply the same EC2 discount to burst capacity. Off by default because burst nodes may not be covered by RIs or Savings Plans. Disabled when Spot for burst is on (Spot uses 0.30× on-demand instead).',
+  hcpMigrated: 'Models migrating all Classic clusters to HCP. Removes CP/Infra EC2 overhead and adds the $182.50/mo HCP cluster fee per cluster. Enables Karpenter and ARM when no HCP clusters exist yet.',
+  karpenter: 'ROSA HCP 4.22+ bin-packing via Karpenter. Reduces worker and burst vCPU counts by ~10%. Requires at least one HCP cluster or Classic → HCP Migration enabled.',
+  burstSpot: 'Run autoscale burst capacity on Spot at 0.30× on-demand EC2 (~70% off). Enable only if burst workloads tolerate interruption. Independent of Karpenter.',
+  armPct: 'Share of Memory Optimized vCPUs to run on Graviton (r7g). Uses E=1.25 performance multiplier and ~20% lower $/vCPU. Requires HCP. Affects EC2 and ROSA billing for the migrated share.',
+};
+
+const FhHelp = {
+  props: {
+    id: { type: String, required: true },
+    text: { type: String, required: true },
+  },
+  setup(props) {
+    const fieldHelpTip = inject('fieldHelpTip');
+    const toggleFieldHelp = inject('toggleFieldHelp');
+    const btnRef = ref(null);
+    const popoverStyle = ref({});
+    const popoverAbove = ref(false);
+
+    const open = computed(() => fieldHelpTip.value === props.id);
+
+    function positionPopover() {
+      const btn = btnRef.value;
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      const width = 240;
+      const margin = 8;
+      const estHeight = 120;
+      let left = rect.right - width;
+      left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+      let top = rect.bottom + margin;
+      let above = false;
+      if (top + estHeight > window.innerHeight - margin) {
+        top = rect.top - margin;
+        above = true;
+      }
+      const arrowLeft = Math.min(width - 14, Math.max(14, rect.left + rect.width / 2 - left - 5));
+      popoverAbove.value = above;
+      popoverStyle.value = {
+        top: above ? `${top}px` : `${top}px`,
+        left: `${left}px`,
+        width: `${width}px`,
+        transform: above ? 'translateY(-100%)' : 'none',
+        '--fh-arrow-left': `${arrowLeft}px`,
+      };
+    }
+
+    function onDocClick(e) {
+      if (btnRef.value?.contains(e.target)) return;
+      if (e.target.closest?.('.field-help-popover')) return;
+      if (fieldHelpTip.value === props.id) fieldHelpTip.value = null;
+    }
+    function onKeydown(e) {
+      if (e.key === 'Escape') fieldHelpTip.value = null;
+    }
+    function onReposition() {
+      if (open.value) positionPopover();
+    }
+
+    watch(open, (v) => {
+      if (v) {
+        nextTick(() => positionPopover());
+        setTimeout(() => document.addEventListener('click', onDocClick), 0);
+        document.addEventListener('keydown', onKeydown);
+        window.addEventListener('resize', onReposition);
+        window.addEventListener('scroll', onReposition, true);
+      } else {
+        document.removeEventListener('click', onDocClick);
+        document.removeEventListener('keydown', onKeydown);
+        window.removeEventListener('resize', onReposition);
+        window.removeEventListener('scroll', onReposition, true);
+      }
+    });
+
+    onBeforeUnmount(() => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKeydown);
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
+    });
+
+    return {
+      btnRef, open, popoverStyle, popoverAbove, toggleFieldHelp,
+      id: props.id, text: props.text,
+    };
+  },
+  template: `
+    <span class="field-help">
+      <button ref="btnRef" type="button" class="field-help-btn" @click.stop="toggleFieldHelp(id)" :aria-expanded="open" aria-label="Show help">?</button>
+      <teleport to="body">
+        <div v-if="open" class="field-help-popover" :class="{ above: popoverAbove }" :style="popoverStyle" role="tooltip">{{ text }}</div>
+      </teleport>
+    </span>
+  `,
+};
+
 // ── App ──────────────────────────────────────────────────────────────────────
-createApp({
+const app = createApp({
   setup() {
+    const fieldHelpTip = ref(null);
+    function toggleFieldHelp(id) {
+      fieldHelpTip.value = fieldHelpTip.value === id ? null : id;
+    }
+    provide('fieldHelpTip', fieldHelpTip);
+    provide('toggleFieldHelp', toggleFieldHelp);
+
     const chartEl = ref(null);
     let chart = null;
 
@@ -864,6 +1185,12 @@ createApp({
       armPct:      0,
     });
 
+    const baselineSnapshot = ref(snapshotCfg(cfg));
+
+    function setBaseline() {
+      baselineSnapshot.value = snapshotCfg(cfg);
+    }
+
     const classicCount = computed(() => cfg.singleAZClusters + cfg.multiAZClusters);
     const totalVCPU    = computed(() => cfg.generalVCPU + cfg.memoryVCPU + cfg.computeVCPU);
     const hasHcp       = computed(() => fleetHasHcp(cfg));
@@ -881,10 +1208,10 @@ createApp({
     watch(syncEC2, v => { if (v) cfg.awsDiscountPct = CONTRACT_EC2_DISCOUNT[cfg.rosaContract]; });
     watch(() => cfg.rosaContract, v => { if (syncEC2.value) cfg.awsDiscountPct = CONTRACT_EC2_DISCOUNT[v]; });
 
-    // baseline = current contract + AWS discount, no optimizations
-    const baselineCfg  = computed(() => ({ ...cfg, hcpMigrated: false, karpenter: false, burstSpot: false, armPct: 0 }));
-    const baseline     = computed(() => calcFleet(baselineCfg.value, cfg.rosaContract));
+    // Baseline = saved snapshot ("where we are now"); current = live cfg
+    const baseline     = computed(() => calcFleet(baselineSnapshot.value, baselineSnapshot.value.rosaContract));
     const fleet        = computed(() => calcFleet(cfg, cfg.rosaContract));
+    const baselineIsCurrent = computed(() => JSON.stringify(baselineSnapshot.value) === JSON.stringify(cfg));
 
     const delta    = computed(() => baseline.value.total - fleet.value.total);
     const deltaPct = computed(() => baseline.value.total > 0 ? (delta.value / baseline.value.total) * 100 : 0);
@@ -969,6 +1296,13 @@ createApp({
 
     const showHelp = ref(false);
 
+    const sections = reactive({
+      fleet: true,
+      workload: true,
+      pricing: true,
+      optimization: true,
+    });
+
     const fmt  = n => Math.round(n).toLocaleString();
     const fmtK = n => { if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'; return Math.round(n / 1000) + 'K'; };
     const fmtM = n => { if (Math.abs(n) >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M'; return '$' + Math.round(n / 1000) + 'K'; };
@@ -977,11 +1311,14 @@ createApp({
       cfg, fleet, baseline, delta, deltaPct, chartEl,
       classicCount, totalVCPU, hasHcp, hcpFeeLabel,
       rosaRateLabel, ec2MultLabel, burstRateLabel, burstMultLabel,
-      showHelp, syncEC2,
+      showHelp, syncEC2, sections, setBaseline, baselineIsCurrent,
+      fieldHelp: FIELD_HELP,
       fmt, fmtK, fmtM,
     };
   },
-}).mount('#app');
+});
+app.component('FhHelp', FhHelp);
+app.mount('#app');
 </script>
 </body>
 </html>
