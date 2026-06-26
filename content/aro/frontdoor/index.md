@@ -419,7 +419,7 @@ Add origin
 
 ### Create the Front Door Profile
 
-1. In the Azure Portal, search for **Front Door and CDN profiles**.
+1. In the Azure Portal, search for **Front Doors**.
 
 2. Select **Create**.
 
@@ -918,39 +918,73 @@ A timeout from the client does not necessarily mean the OpenShift Route is unava
 
 ## Clean Up
 
-Delete the Azure Front Door profile through the Portal, or use Azure CLI:
+Use the Azure Portal to remove the Azure Front Door resources created in this guide.
 
-```bash
-az afd profile delete \
-  --resource-group "$ARO_RESOURCE_GROUP" \
-  --profile-name "$AFD_PROFILE" \
-  --yes
+### Delete the Azure Front Door Profile
+
+1. In the Azure Portal, search for **Front Doors**.
+2. Open the Azure Front Door profile created for this guide.
+3. On the profile **Overview** page, select **Delete**.
+4. Click 'Yes' if prompted.
+5. Confirm the deletion.
+6. This may take some time. Wait for the Azure notification to report that the deletion completed successfully.
+
+Deleting the profile also removes the Front Door resources contained within it, including:
+
+```text
+Endpoint
+Route
+Origin group
+Origin
 ```
 
-Delete the Private Link Service:
+It does not delete the ARO cluster, the ARO internal load balancer, the Private Link Service, or the dedicated Private Link Service subnet.
 
-```bash
-az network private-link-service delete \
-  --resource-group "$ARO_RESOURCE_GROUP" \
-  --name "$PLS_NAME"
-```
+### Check the Private Link Service Connection
 
-Delete the dedicated subnet:
+After the Front Door profile is deleted:
 
-```bash
-az network vnet subnet delete \
-  --resource-group "$VNET_RESOURCE_GROUP" \
-  --vnet-name "$VNET_NAME" \
-  --name "$PLS_SUBNET_NAME"
-```
+1. In the Azure Portal, search for **Private Link services**.
+2. Open the Private Link Service created for this guide.
+3. Select **Private endpoint connections**.
+4. Confirm that the Azure Front Door managed private endpoint connection has been removed.
 
-Delete the test project:
+If a disconnected or stale connection remains, delete it only after confirming that the Front Door profile has been removed.
+
+### Delete the Private Link Service
+
+1. From the Private Link Service overview page, select **Delete**.
+2. Confirm the deletion.
+3. Wait for the deletion to complete.
+
+### Delete the Dedicated Private Link Service Subnet
+
+1. In the Azure Portal, open the virtual network used by the ARO cluster.
+2. Select **Subnets**.
+3. Select the dedicated subnet created for the Private Link Service.
+4. Select **Delete**.
+5. Confirm the deletion.
+
+Do not delete the ARO control-plane or worker subnets.
+
+### Delete the Test Application
+
+Delete the OpenShift test project:
 
 ```bash
 oc delete project afd-test
 ```
 
-Delete any DNS records created for this guide after they are no longer required.
+### Delete DNS Records
+
+Delete any DNS records created for the test application, including:
+
+```text
+CNAME record
+_dnsauth TXT record
+```
+
+Retain the DNS zone if it is used by other applications.
 
 ## Additional Resources
 
