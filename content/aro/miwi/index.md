@@ -56,8 +56,15 @@ Sign in and select the intended subscription:
 ```bash
 az login
 az account list --output table
-az account set --subscription "<subscription-name-or-id>"
-az account show --query '{name:name,id:id,tenantId:tenantId}' --output table
+```
+
+Choose the intended subscription name or ID from the output, then set it:
+
+```bash
+az account set --subscription "<actual-subscription-name-or-id>"
+az account show \
+  --query '{Name:name,Subscription:id,Tenant:tenantId}' \
+  --output table
 ```
 
 ## 1. Set variables
@@ -65,17 +72,19 @@ az account show --query '{name:name,id:id,tenantId:tenantId}' --output table
 Adjust these values for your environment:
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
 AZR_RESOURCE_LOCATION="westus2"
 AZR_RESOURCE_GROUP="aro-mi-rg"
+AZR_VNET_RESOURCE_GROUP="aro-mi-network-rg"
 AZR_CLUSTER="aro-mi"
 AZR_PULL_SECRET="$HOME/Downloads/pull-secret.txt"
 
 AZR_VNET="${AZR_CLUSTER}-vnet-${AZR_RESOURCE_LOCATION}"
 AZR_MASTER_SUBNET="${AZR_CLUSTER}-control-subnet-${AZR_RESOURCE_LOCATION}"
 AZR_WORKER_SUBNET="${AZR_CLUSTER}-machine-subnet-${AZR_RESOURCE_LOCATION}"
+
+AZR_MASTER_VM_SIZE="Standard_D8s_v5"
+AZR_WORKER_VM_SIZE="Standard_D4s_v5"
+AZR_WORKER_COUNT="3"
 
 AZR_CLUSTER_IDENTITY="${AZR_CLUSTER}-cluster"
 AZR_CCM_IDENTITY="${AZR_CLUSTER}-cloud-controller-manager"
@@ -93,13 +102,47 @@ test -f "$AZR_PULL_SECRET" || {
 }
 ```
 
-## 2. Register required Azure resource providers
+Review the values before creating resources:
+
+```bash
+printf '%-30s %s\n' \
+  "Location:" "$AZR_RESOURCE_LOCATION" \
+  "Cluster resource group:" "$AZR_RESOURCE_GROUP" \
+  "VNet resource group:" "$AZR_VNET_RESOURCE_GROUP" \
+  "Cluster name:" "$AZR_CLUSTER" \
+  "VNet name:" "$AZR_VNET" \
+  "Control plane subnet:" "$AZR_MASTER_SUBNET" \
+  "Worker subnet:" "$AZR_WORKER_SUBNET" \
+  "Control plane VM size:" "$AZR_MASTER_VM_SIZE" \
+  "Worker VM size:" "$AZR_WORKER_VM_SIZE" \
+  "Worker count:" "$AZR_WORKER_COUNT" \
+  "Pull secret:" "$AZR_PULL_SECRET"
+```
+
+Stop and correct the variable values before continuing if anything is unexpected.
+
+## 2. Automated deployment
+
+The included script performs the same deployment described in this guide.
+
+Export any variables you want to override, then download and run the script:
+
+```bash
+curl -O https://raw.githubusercontent.com/rh-mobb/documentation/main/content/aro/miwi/create-aro-miwi.sh
+chmod +x create-aro-miwi.sh
+./create-aro-miwi.sh
+```
+
+Review the script before running it, especially resource-group names, network ranges, and VM sizes.
+
+## 3. Register required Azure resource providers
 
 ```bash
 for provider in \
   Microsoft.RedHatOpenShift \
   Microsoft.Compute \
   Microsoft.Storage \
+  Microsoft.Network \
   Microsoft.Authorization
 do
   az provider register \
@@ -115,6 +158,7 @@ az provider list \
   --query "[?namespace=='Microsoft.RedHatOpenShift' ||
              namespace=='Microsoft.Compute' ||
              namespace=='Microsoft.Storage' ||
+             namespace=='Microsoft.Network' ||
              namespace=='Microsoft.Authorization'].{
                Provider:namespace,
                State:registrationState
@@ -122,9 +166,9 @@ az provider list \
   --output table
 ```
 
-All four providers should report `Registered`.
+All five providers should report `Registered`.
 
-## 3. Create the resource group and network
+## 4. Create the resource groups and network
 
 This example creates one `/22` VNet with two empty `/23` subnets:
 
@@ -133,25 +177,30 @@ az group create \
   --name "$AZR_RESOURCE_GROUP" \
   --location "$AZR_RESOURCE_LOCATION"
 
+az group create \
+  --name "$AZR_VNET_RESOURCE_GROUP" \
+  --location "$AZR_RESOURCE_LOCATION"
+
 az network vnet create \
-  --resource-group "$AZR_RESOURCE_GROUP" \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --name "$AZR_VNET" \
+  --location "$AZR_RESOURCE_LOCATION" \
   --address-prefixes 10.0.0.0/22
 
 az network vnet subnet create \
-  --resource-group "$AZR_RESOURCE_GROUP" \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet-name "$AZR_VNET" \
   --name "$AZR_MASTER_SUBNET" \
   --address-prefixes 10.0.0.0/23
 
 az network vnet subnet create \
-  --resource-group "$AZR_RESOURCE_GROUP" \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet-name "$AZR_VNET" \
   --name "$AZR_WORKER_SUBNET" \
   --address-prefixes 10.0.2.0/23
 ```
 
-## 4. Create the nine user-assigned managed identities
+## 5. Create the nine user-assigned managed identities
 
 ```bash
 for identity in \
@@ -182,24 +231,24 @@ az identity list \
 
 The result should contain nine identities.
 
-## 5. Capture resource IDs, scopes, and principal IDs
+## 6. Capture resource IDs, scopes, and principal IDs
 
 ```bash
 SUBSCRIPTION_ID="$(az account show --query id --output tsv)"
 
 VNET_ID="$(az network vnet show \
-  --resource-group "$AZR_RESOURCE_GROUP" \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --name "$AZR_VNET" \
   --query id --output tsv)"
 
 MASTER_SUBNET_ID="$(az network vnet subnet show \
-  --resource-group "$AZR_RESOURCE_GROUP" \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet-name "$AZR_VNET" \
   --name "$AZR_MASTER_SUBNET" \
   --query id --output tsv)"
 
 WORKER_SUBNET_ID="$(az network vnet subnet show \
-  --resource-group "$AZR_RESOURCE_GROUP" \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet-name "$AZR_VNET" \
   --name "$AZR_WORKER_SUBNET" \
   --query id --output tsv)"
@@ -252,11 +301,11 @@ printf '%-25s %s\n' \
   "Cluster principal:" "$AZR_CLUSTER_PRINCIPAL_ID"
 ```
 
-## 6. Create the required role assignments
+## 7. Create the required role assignments
 
 The commands below use the built-in role definition IDs documented for ARO managed-identity clusters.
 
-### 6.1 Allow the cluster identity to manage federated credentials
+### 7.1 Allow the cluster identity to manage federated credentials
 
 The cluster identity requires this assignment on each of the eight platform identities:
 
@@ -282,7 +331,7 @@ do
 done
 ```
 
-### 6.2 Assign subnet-scoped operator roles
+### 7.2 Assign subnet-scoped operator roles
 
 Cloud Controller Manager:
 
@@ -344,7 +393,7 @@ for scope in "$MASTER_SUBNET_ID" "$WORKER_SUBNET_ID"; do
 done
 ```
 
-### 6.3 Assign VNet-scoped operator roles
+### 7.3 Assign VNet-scoped operator roles
 
 Cloud Network Config:
 
@@ -379,7 +428,7 @@ az role assignment create \
   --only-show-errors
 ```
 
-### 6.4 Assign the Azure Red Hat OpenShift resource provider role
+### 7.4 Assign the Azure Red Hat OpenShift resource provider role
 
 ```bash
 ARO_RP_SP_OBJECT_ID="$(az ad sp list \
@@ -400,7 +449,7 @@ az role assignment create \
   --only-show-errors
 ```
 
-## 7. Verify role-assignment counts
+## 8. Verify role-assignment counts
 
 ```bash
 for IDENTITY_NAME in \
@@ -442,7 +491,7 @@ Expected minimums for this basic network layout:
 
 The Disk CSI Driver identity having zero direct Azure RBAC assignments at this stage is expected. The cluster identity still has its assignment over the Disk CSI Driver identity so that the required federated credential can be created.
 
-## 8. Check VM SKU availability and quota
+## 9. Check VM SKU availability and quota
 
 List the intended VM sizes and restrictions:
 
@@ -451,12 +500,14 @@ az vm list-skus \
   --location "$AZR_RESOURCE_LOCATION" \
   --size Standard_D \
   --all \
-  --query "[?name=='Standard_D8s_v5' || name=='Standard_D4s_v5'].{
+  --query "[?name=='$AZR_MASTER_VM_SIZE' || name=='$AZR_WORKER_VM_SIZE'].{
     Size:name,
     Restrictions:restrictions
   }" \
   --output json
 ```
+
+An empty `Restrictions` array means the VM size is available in the selected region. Any entries in `Restrictions` indicate that the SKU cannot be used under the shown conditions.
 
 Check DSv5-family usage:
 
@@ -473,7 +524,7 @@ az vm list-usage \
 
 ARO needs sufficient quota for the bootstrap, control-plane, and worker nodes during installation.
 
-## 9. Optionally select an OpenShift version
+## 10. Optionally select an OpenShift version
 
 List installable versions:
 
@@ -486,12 +537,12 @@ az aro get-versions \
 Set a version only when a specific release is required:
 
 ```bash
-AZR_VERSION="<supported-version>"
+ARO_VERSION="<supported-version>"
 ```
 
 Otherwise, omit `--version` and allow ARO to select its default supported version.
 
-## 10. Validate the configuration
+## 11. Validate the configuration
 
 Run ARO validation before cluster creation:
 
@@ -499,6 +550,7 @@ Run ARO validation before cluster creation:
 az aro validate \
   --resource-group "$AZR_RESOURCE_GROUP" \
   --name "$AZR_CLUSTER" \
+  --vnet-resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet "$AZR_VNET" \
   --master-subnet "$AZR_MASTER_SUBNET" \
   --worker-subnet "$AZR_WORKER_SUBNET" \
@@ -514,7 +566,11 @@ az aro validate \
   --assign-platform-workload-identity disk-csi-driver "$AZR_DISK_CSI_IDENTITY_ID"
 ```
 
-## 11. Create the cluster
+{{% alert state="info" %}}
+`az aro validate` produces no output when validation succeeds. Any validation failure is returned as an error.
+{{% /alert %}}
+
+## 12. Create the cluster
 
 Explicitly set VM sizes. This avoids an Azure CLI validation error where the worker VM size may be passed as an empty value:
 
@@ -522,11 +578,13 @@ Explicitly set VM sizes. This avoids an Azure CLI validation error where the wor
 az aro create \
   --resource-group "$AZR_RESOURCE_GROUP" \
   --name "$AZR_CLUSTER" \
+  --vnet-resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet "$AZR_VNET" \
   --master-subnet "$AZR_MASTER_SUBNET" \
   --worker-subnet "$AZR_WORKER_SUBNET" \
-  --master-vm-size "Standard_D8s_v5" \
-  --worker-vm-size "Standard_D4s_v5" \
+  --master-vm-size "$AZR_MASTER_VM_SIZE" \
+  --worker-vm-size "$AZR_WORKER_VM_SIZE" \
+  --worker-count "$AZR_WORKER_COUNT" \
   --pull-secret "@$AZR_PULL_SECRET" \
   --enable-managed-identity \
   --assign-cluster-identity "$AZR_CLUSTER_IDENTITY_ID" \
@@ -537,12 +595,17 @@ az aro create \
   --assign-platform-workload-identity machine-api "$AZR_MACHINE_API_IDENTITY_ID" \
   --assign-platform-workload-identity cloud-network-config "$AZR_NETWORK_IDENTITY_ID" \
   --assign-platform-workload-identity aro-operator "$AZR_OPERATOR_IDENTITY_ID" \
-  --assign-platform-workload-identity disk-csi-driver "$AZR_DISK_CSI_IDENTITY_ID"
+  --assign-platform-workload-identity disk-csi-driver "$AZR_DISK_CSI_IDENTITY_ID" \
+  --no-wait
 ```
 
-To submit the operation and monitor it separately, add `--no-wait`.
+The command above uses `--no-wait` so that cluster creation runs asynchronously. Monitor the deployment in the next section.
 
-## 12. Monitor deployment
+If you set `ARO_VERSION`, add `--version "$ARO_VERSION"` to the create command.
+
+## 13. Monitor deployment
+
+Check the current deployment status:
 
 ```bash
 az aro show \
@@ -557,6 +620,15 @@ az aro show \
   --output yaml
 ```
 
+To block until cluster creation finishes, run:
+
+```bash
+az aro wait \
+  --resource-group "$AZR_RESOURCE_GROUP" \
+  --name "$AZR_CLUSTER" \
+  --created
+```
+
 List the cluster:
 
 ```bash
@@ -565,7 +637,7 @@ az aro list \
   --output table
 ```
 
-## 13. Retrieve credentials and log in
+## 14. Retrieve credentials and log in
 
 After deployment succeeds:
 
@@ -611,11 +683,15 @@ The provided VM size '' is invalid for the 'worker' role.
 Resolution: specify both VM sizes explicitly:
 
 ```bash
---master-vm-size "Standard_D8s_v5" \
---worker-vm-size "Standard_D4s_v5"
+--master-vm-size "$AZR_MASTER_VM_SIZE" \
+--worker-vm-size "$AZR_WORKER_VM_SIZE"
 ```
 
 Confirm the SKUs are unrestricted in the target region before retrying.
+
+### Cluster creation needs more detail
+
+Add `--debug` to the `az aro create` command when you need verbose Azure CLI request and response details for troubleshooting.
 
 ### The shell closes or variables are lost
 
@@ -642,7 +718,9 @@ The account running these commands must be able to create role assignments at al
 
 ### Existing NSG, route table, or NAT gateway
 
-This guide assumes none is attached to the ARO subnets. When bringing those resources, add the operator role assignments required for each additional network resource before cluster creation.
+The required role assignments in this guide already cover the ARO virtual network and control plane and worker subnets.
+
+If you attach additional network resources, such as network security groups, route tables, NAT gateways, or additional subnets, assign the required operator roles to those resources before cluster creation.
 
 ## Cleanup
 
@@ -652,21 +730,27 @@ Delete the ARO cluster:
 az aro delete \
   --resource-group "$AZR_RESOURCE_GROUP" \
   --name "$AZR_CLUSTER" \
+  --delete-identities true \
   --yes
 ```
 
-Cluster deletion does not remove the user-assigned managed identities or every role assignment created for them.
+The `--delete-identities true` option deletes the managed identities associated with the cluster. It does not delete resource groups or network resources.
 
-For a disposable lab where the resource group contains nothing else, deleting the resource group is the simplest complete cleanup:
+For a disposable lab where the resource groups contain nothing else, deleting both resource groups is the simplest complete cleanup:
 
 ```bash
 az group delete \
   --name "$AZR_RESOURCE_GROUP" \
   --yes \
   --no-wait
+
+az group delete \
+  --name "$AZR_VNET_RESOURCE_GROUP" \
+  --yes \
+  --no-wait
 ```
 
-Do not delete a shared resource group.
+Do not delete shared resource groups.
 
 ## References
 
