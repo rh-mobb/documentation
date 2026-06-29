@@ -330,6 +330,24 @@
     .status-warn { color: var(--ce-danger); }
 
     /* ── Chart ───────────────────────────────────────────── */
+    .chart-header { margin-bottom: 0.85rem; }
+    .chart-header-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 0.35rem;
+    }
+    .chart-title-wrap { display: flex; align-items: center; gap: 0.35rem; }
+    .chart-title {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888;
+    }
+    .chart-subtitle { font-size: 0.72rem; color: #888; line-height: 1.45; margin: 0; max-width: 44rem; }
+    .chart-period-row { display: flex; gap: 0.35rem; flex-shrink: 0; }
+    .chart-period-btn {
+      padding: 0.28rem 0.55rem; border: 1.5px solid #d0d0d0; border-radius: 5px; cursor: pointer;
+      font-size: 0.75rem; font-weight: 600; font-family: inherit; color: #555; background: #fff;
+      transition: border-color 0.12s, background 0.12s, color 0.12s; user-select: none;
+    }
+    .chart-period-btn:hover:not(.active) { border-color: #aaa; }
+    .chart-period-btn.active { background: var(--ce-brand); color: #fff; border-color: var(--ce-brand); }
     .chart-wrap { position: relative; height: 300px; }
 
     /* ── Breakdown table ─────────────────────────────────── */
@@ -454,8 +472,9 @@
         <div class="tip">Model a change (toggle a lever, adjust vCPUs), then compare against baseline. Re-baseline after a migration or contract change to reset the reference point.</div>
 
         <h3>Reading the Chart</h3>
-        <p>The chart always shows all three ROSA contract tiers (PAYGO, 1-Year, 3-Year) simultaneously, with your configured AWS EC2 discount and optimization levers applied to all bars. The bar for your selected contract term is shown in full colour; the others are muted for comparison.</p>
-        <p>Hover over a bar to see the cost breakdown (ROSA fee, EC2+EBS, overhead) and total for that contract tier.</p>
+        <p>The chart compares the same fleet under three <strong>ROSA subscription terms</strong>: PAYGO (no commitment), 1-year, and 3-year. These labels describe how long you commit to the Red Hat ROSA subscription, not a one-time bill for that entire period.</p>
+        <p>By default, bar height is the <strong>monthly run rate</strong> (burn rate). Use the <strong>Monthly / Yearly</strong> toggle above the chart to switch the Y-axis to annual run rate (monthly &times; 12). EC2 and overhead use your configured AWS discount on every bar; only the ROSA per-vCPU rate changes with the term.</p>
+        <p>The bar for your selected contract in the left panel is full colour; the others are muted. Hover for ROSA fee, EC2+EBS, overhead, and total for that term.</p>
 
         <h3>Reading the Breakdown Table</h3>
         <p>The breakdown reflects your <strong>current configuration</strong> (live settings, including levers). The Detail column shows the formula used; you can verify any line against your own rates.</p>
@@ -768,6 +787,22 @@
       <div>
 
         <div class="card">
+          <div class="chart-header">
+            <div class="chart-header-row">
+              <div class="chart-title-wrap">
+                <div class="chart-title">ROSA subscription term comparison</div>
+                <fh-help id="chartPeriod" :text="fieldHelp.chartPeriod"></fh-help>
+              </div>
+              <div class="chart-period-row" role="group" aria-label="Chart display period">
+                <div class="chart-period-btn" :class="{ active: chartPeriod === 'monthly' }" @click="chartPeriod = 'monthly'">Monthly</div>
+                <div class="chart-period-btn" :class="{ active: chartPeriod === 'yearly' }" @click="chartPeriod = 'yearly'">Yearly</div>
+              </div>
+            </div>
+            <p class="chart-subtitle">
+              Each bar is the same fleet at a different ROSA subscription commitment.
+              Heights show <strong>{{ chartPeriod === 'monthly' ? 'monthly' : 'annual' }} run rate</strong>, not the lump sum for the full 1- or 3-year term.
+            </p>
+          </div>
           <div class="chart-wrap">
             <canvas ref="chartEl"></canvas>
           </div>
@@ -1053,6 +1088,7 @@ const FIELD_HELP = {
   karpenter: 'ROSA HCP 4.22+ bin-packing via Karpenter. Reduces worker and burst vCPU counts by ~10%. Requires at least one HCP cluster or Classic → HCP Migration enabled.',
   burstSpot: 'Run autoscale burst capacity on Spot at 0.30× on-demand EC2 (~70% off). Enable only if burst workloads tolerate interruption. Independent of Karpenter.',
   armPct: 'Share of Memory Optimized vCPUs to run on Graviton (r7g). Uses E=1.25 performance multiplier and ~20% lower $/vCPU. Requires HCP. Affects EC2 and ROSA billing for the migrated share.',
+  chartPeriod: 'Bars compare ROSA subscription terms (PAYGO vs 1-year vs 3-year commitment), not total dollars paid over the whole contract. Monthly shows burn rate per month; Yearly shows that rate times 12. EC2 and overhead stay the same across bars unless Sync with contract adjusts EC2 discount.',
 };
 
 const FhHelp = {
@@ -1228,11 +1264,23 @@ const app = createApp({
     });
 
     // ── Chart ────────────────────────────────────────────────────────────────
+    const chartPeriod = ref('monthly');
+
     function buildChart() {
       if (!chartEl.value) return;
 
       const TERMS  = ['paygo', '1yr', '3yr'];
-      const LABELS = ['PAYGO', '1-Year', '3-Year'];
+      const yearly = chartPeriod.value === 'yearly';
+      const mult = yearly ? 12 : 1;
+      const unit = yearly ? '$/year' : '$/month';
+      const LABELS = [
+        `PAYGO\n(no commit · ${unit})`,
+        `1-Year term\n(${unit})`,
+        `3-Year term\n(${unit})`,
+      ];
+      const suffix = yearly ? '/yr' : '/mo';
+      const yTitle = yearly ? 'Annual run rate (USD)' : 'Monthly run rate (USD)';
+
       // All bars apply the configured AWS EC2 discount; only the ROSA contract changes
       const fleets = TERMS.map(t => calcFleet(cfg, t));
       const selIdx = TERMS.indexOf(cfg.rosaContract);
@@ -1246,19 +1294,19 @@ const app = createApp({
           datasets: [
             {
               label: 'ROSA Worker Fee',
-              data: fleets.map(f => f.rosaFee),
+              data: fleets.map(f => f.rosaFee * mult),
               backgroundColor: fleets.map((_, i) => col('#ee0000', '#f5c6c6', i)),
               borderRadius: 3,
             },
             {
               label: 'EC2 + EBS',
-              data: fleets.map(f => f.ec2Ebs),
+              data: fleets.map(f => f.ec2Ebs * mult),
               backgroundColor: fleets.map((_, i) => col('#0066cc', '#c0d8f5', i)),
               borderRadius: 3,
             },
             {
               label: 'Overhead (CP/Infra or HCP fee)',
-              data: fleets.map(f => f.overhead),
+              data: fleets.map(f => f.overhead * mult),
               backgroundColor: fleets.map((_, i) => col('#8a8d90', '#e0e0e0', i)),
               borderRadius: 3,
             },
@@ -1271,18 +1319,19 @@ const app = createApp({
             legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16, usePointStyle: true } },
             tooltip: {
               callbacks: {
-                label: ctx => ` ${ctx.dataset.label}: $${Math.round(ctx.parsed.y).toLocaleString()}/mo`,
+                label: ctx => ` ${ctx.dataset.label}: $${Math.round(ctx.parsed.y).toLocaleString()}${suffix}`,
                 afterBody: items => {
                   const total = items.reduce((s, i) => s + i.parsed.y, 0);
-                  return ['', `  Total: $${Math.round(total).toLocaleString()}/mo`];
+                  return ['', `  Total: $${Math.round(total).toLocaleString()}${suffix}`];
                 },
               },
             },
           },
           scales: {
-            x: { stacked: true, ticks: { font: { size: 12 } }, grid: { display: false } },
+            x: { stacked: true, ticks: { font: { size: 11 } }, grid: { display: false } },
             y: {
               stacked: true,
+              title: { display: true, text: yTitle, font: { size: 11 }, color: '#888' },
               ticks: { callback: v => '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v), font: { size: 11 } },
               grid: { color: '#f0f0f0' },
             },
@@ -1293,6 +1342,7 @@ const app = createApp({
 
     onMounted(() => buildChart());
     watch(cfg, () => buildChart(), { deep: true });
+    watch(chartPeriod, () => buildChart());
 
     const showHelp = ref(false);
 
@@ -1311,7 +1361,7 @@ const app = createApp({
       cfg, fleet, baseline, delta, deltaPct, chartEl,
       classicCount, totalVCPU, hasHcp, hcpFeeLabel,
       rosaRateLabel, ec2MultLabel, burstRateLabel, burstMultLabel,
-      showHelp, syncEC2, sections, setBaseline, baselineIsCurrent,
+      showHelp, syncEC2, sections, setBaseline, baselineIsCurrent, chartPeriod,
       fieldHelp: FIELD_HELP,
       fmt, fmtK, fmtM,
     };
