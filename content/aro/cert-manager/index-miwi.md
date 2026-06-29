@@ -1,26 +1,27 @@
 ---
-date: '2022-06-19'
-title: ARO Custom domain with cert-manager and LetsEncrypt
-tags: ["ARO"]
+date: '2026-06-24'
+title: ARO MIWI Custom domain with cert-manager and LetsEncrypt
+tags: ["ARO", "cert-manager","managed identity", "miwi"]
 authors:
-  - Byron Miller
+  - Thatcher Hubbard
   - Daniel Axelrod
 ---
 
-ARO guide to deploying an ARO cluster with custom domain and automating certificate management with cert-manager and letsencrypt certificates to manage the `*.apps` and `api` endpoints.
+Guide to deploying `cert-manager` on an ARO cluster that's configured to use Azure Managed Identities to automate certificate management with cert-manager and Letsencrypt certificates to manage the `*.apps` and `api` endpoints.
 
 > [!NOTE]
-> This is for installing the operator on clusters that were built with the legacy Service Principal based ARO deployment method, **not** Managed Identity. The procedure for installing on ARO Managed Identity clusters can be found [here](./index-miwi.md).
+> This is for installing the operator on clusters that were built with Managed Identity support, **not** legacy Service Principal clusters. The procedure for installing on ARO legacy SP clusters can be found [here](./index.md).
 
 ## Prerequisites
 
 * az cli (already installed in Azure Cloud Shell)
 * oc cli
 * jq (already installed in Azure Cloud Shell)
-* OpenShift 4.10+
-* domain name to use (we will create zones for this domain name during this guide)
+* An ARO cluster that is on OCP version 4.18+ *and* has been configured to use a custom domain name (e.g., `aro-cluster-1.acme.com`)
 
 We'll go through this setup using the `bash` terminal on the Azure Cloud Shell. Be sure to always use the same terminal/session for all commands since we'll reference environment variables set or created through the steps.
+
+> When an ARO cluster is built with a custom domain name it generates and uses self-signed certificates for its initial configuration. As a result, your browser will probably refuse to connect and you will get a warning from `oc` when you login to the cluster.
 
 **Azure Cloud Shell - Bash**
 
@@ -30,132 +31,27 @@ We'll go through this setup using the `bash` terminal on the Azure Cloud Shell. 
 
     Follow the instructions in [Installing the OpenShift CLI on Linux](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html#installing-the-openshift-cli-on-linux) to install `oc` CLI.
 
-### Prepare Azure Account for Azure OpenShift
+## Create DNS Zone & Managed Identity
 
-1. Register resource providers
 
-   ```bash
-   az provider register -n Microsoft.RedHatOpenShift --wait
-   az provider register -n Microsoft.Compute --wait
-   az provider register -n Microsoft.Storage --wait
-   az provider register -n Microsoft.Authorization --wait
-   ```
-
-### Get Red Hat pull secret
-
-1. Log into cloud.redhat.com
-
-1. Browse to https://cloud.redhat.com/openshift/install/azure/aro-provisioned
-
-1. click **Copy pull secret** 
-
-1. Back in the Azure Cloud Shell, enter the following. Instead of `<paste_your_secret>`, paste your actual secret on that line. To do so, right-click and choose paste.
-
-    ```bash
-    cat >> ./pull-secret.txt << EOF
-    <paste_your_secret>
-    EOF
-    ```
-
-## Deploy Azure OpenShift
-
-### Variables and Resource Group
-
-Set some environment variables to use later, and create an Azure Resource Group.
-
-1. Set the following environment variables
-
-   > Change the values to suit your environment
-
-   ```bash
-   PULL_SECRET=./pull-secret.txt  # the path to pull-secret
-   LOCATION=southcentralus        # the location of your cluster
-   RESOURCEGROUP=aro-rg           # the name of the resource group where you want to create your cluster
-   CLUSTER=aro-cluster            # the name of your cluster
-   DOMAIN=lab.domain.com          # Domain or subdomain zone for cluster & cluster api
-   ```
-
-1. Create an Azure resource group
-
-   ```bash
-   az group create \
-   --name $RESOURCEGROUP \
-   --location $LOCATION
-   ```
-
-### Networking
-
-Create a virtual network with two empty subnets
-
-1. Create virtual network
-
-   ```bash
-   az network vnet create \
-      --resource-group $RESOURCEGROUP \
-      --name aro-vnet \
-      --address-prefixes 10.0.0.0/22
-   ```
-
-1. Create control plane subnet
-
-   ```bash
-   az network vnet subnet create \
-   --resource-group $RESOURCEGROUP \
-   --vnet-name aro-vnet \
-   --name master-subnet \
-   --address-prefixes 10.0.0.0/23 \
-   --service-endpoints Microsoft.ContainerRegistry
-   ```
-
-1. Create machine subnet
-
-   ```bash
-   az network vnet subnet create \
-   --resource-group $RESOURCEGROUP \
-   --vnet-name aro-vnet \
-   --name worker-subnet \
-   --address-prefixes 10.0.2.0/23 \
-   --service-endpoints Microsoft.ContainerRegistry
-   ```
-
-1. Disable network policies on the control plane subnet
-
-   > This is required for the service to be able to connect to and manage the cluster.
-
-   ```bash
-   az network vnet subnet update \
-   --name master-subnet \
-   --resource-group $RESOURCEGROUP \
-   --vnet-name aro-vnet \
-   --disable-private-link-service-network-policies true
-   ```
-
-1. Create the cluster
-
-   > This will take between 30 and 45 minutes.
-
-   ```bash
-   az aro create \
-   --resource-group $RESOURCEGROUP \
-   --name $CLUSTER \
-   --vnet aro-vnet \
-   --master-subnet master-subnet \
-   --worker-subnet worker-subnet \
-   --pull-secret $(cat $PULL_SECRET) \
-   --domain $DOMAIN
-   ```
-
-1. Wait until the ARO cluster is fully provisioned.
-
-## Create DNS Zones & Service Principal
-
-In order for cert-manager to work with AzureDNS, we need to create the zone and add a CAA record as well as create a Service Principal that we can use to manage records in this zone so CertManager can use DNS01 authentication for validating requests.
+In order for cert-manager to work with AzureDNS, we need to create the zone and add a CAA record as well as create a Managed Identity with a role that we can use to manage records in this zone so CertManager can use DNS01 authentication for validating requests.
 
 This zone should be a public zone since letsencrypt will need to be able to read records created here.
 
 >If you use a subdomain, please be sure to [create the NS records](https://docs.microsoft.com/en-us/azure/dns/delegate-subdomain) in your primary domain to the subdomain.
 
 For ease of management, we're using the same resource group for domain as we have the cluster in.
+
+1. Set your environment variables
+
+You will need the name of the Azure resource group that your DNS zone is in (and potentially, another if the DNS zone is in a *different* resource group than your cluster):
+
+   ```bash
+   RESOURCEGROUP=<cluster_resourcegroup_name>
+   DOMAIN=<dns_name_passed_at_cluster_build_time>
+   CLUSTER=<name_of_cluster_passed_at_build_time>
+   ```
+
 
 1. Create Zone
 
@@ -196,41 +92,32 @@ For ease of management, we're using the same resource group for domain as we hav
 
    > Note - You may have to create NS records in your root zone for a subdomain if you use a subdomain zone to point to the subdomains name servers.
 
-1. Set environment variables to build new service principal and credentials to allow cert-manager to create records in this zone.
-
-   >AZURE_CERT_MANAGER_NEW_SP_NAME = the name of the service principal to create that will manage the DNS zone automation for cert-manager.
+1. Set environment variables to build a new Managed Identity that cert-manager will use to interact with the DNS zone.
 
    ```bash
-   AZURE_CERT_MANAGER_NEW_SP_NAME=aro-dns-sp
-   LETSENCRYPTEMAIL=youremail@work.com
-   DNS_SP=$(az ad sp create-for-rbac --name $AZURE_CERT_MANAGER_NEW_SP_NAME --output json)
-   AZURE_CERT_MANAGER_SP_APP_ID=$(echo $DNS_SP | jq -r '.appId')
-   AZURE_CERT_MANAGER_SP_PASSWORD=$(echo $DNS_SP | jq -r '.password')
-   AZURE_TENANT_ID=$(echo $DNS_SP | jq -r '.tenant')
-   AZURE_SUBSCRIPTION_ID=$(az account show --output json | jq -r '.id')
+   CERT_MANAGER_NEW_IDENTITY_NAME="${CLUSTER}-cert-manager-id" 
+   LETSENCRYPTEMAIL=<your_email>
+   SUBSCRIPTION_ID=$(az account show -o tsv --query 'id')
+   CLUSTER_OIDC_ISSUER_URL=$(az aro show --name $CLUSTER --resource-group $RESOURCEGROUP --query "clusterProfile.oidcIssuer" -o json | jq -r)
+   CLUSTER_LOCATION=$(az aro show --name $CLUSTER -g $RESOURCEGROUP  --query 'location' --output tsv)
+   CM_ID_OUTPUT=$(az identity create --name "$CERT_MANAGER_NEW_IDENTITY_NAME" --resource-group "$RESOURCEGROUP" --location "$CLUSTER_LOCATION")
+   CLIENT_ID=$(echo $CM_ID_OUTPUT | jq -r '.clientId')
+   PRINCIPAL_ID=$(echo $CM_ID_OUTPUT | jq -r '.principalId')
+
+   az identity federated-credential create \
+     --name "${CERT_MANAGER_NEW_IDENTITY_NAME}-cred" \
+     --identity-name "${CERT_MANAGER_NEW_IDENTITY_NAME}" \
+     --resource-group "$RESOURCEGROUP" \
+     --issuer "$CLUSTER_OIDC_ISSUER_URL" \
+     --subject "system:serviceaccount:cert-manager:cert-manager" \
+     --audiences "api://AzureADTokenExchange"
    ```
 
-1. Restrict service principal - remove contributor role if it exists.
-
-   >Note: If you get the error message `No matched assignments were found to delete`, that's fine, and it is safe to proceed. We're going to grant the DNS Management Role to it next.
-
-   ```bash
-   az role assignment delete --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role Contributor
-   ```
-
-1. Grant DNS Zone Contributor to our Service Principal
-
-   We'll grant [DNS Zone Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#dns-zone-contributor) to our DNS Service principal.
-
-   ```bash
-   az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role befefa01-2a29-4197-83a8-272ff33ce314 --scope /subscriptions/$AZURE_SUBSCRIPTION_ID
-   ```
-
-1. Assign service principal to DNS zone
+1. Assign DNS Contributor to the Managed Identity with the DNS Zone as the scope:
 
    ```bash
    DNS_ID=$(az network dns zone show --name $DOMAIN --resource-group $RESOURCEGROUP --query "id" --output tsv)
-   az role assignment create --assignee $AZURE_CERT_MANAGER_SP_APP_ID --role "DNS Zone Contributor" --scope $DNS_ID
+   az role assignment create --assignee $PRINCIPAL_ID --role "DNS Zone Contributor" --scope $DNS_ID
    ```
 
 1. Get OpenShift console URL
@@ -329,63 +216,72 @@ We'll install cert-manager from operatorhub. If you experience any issues instal
 
 1. Wait for cert-manager operator to finish installing.
 
-   Our next steps can't complete until the operator has finished installing. We recommend that you log in to your cluster console with the URL and credentials you captured after you ran the az aro create and view the installed operators to see that everything is complete and successful.
+   Our next steps can't complete until the operator has finished installing. Since many browsers will not connect to the console with a self-signed certificate, this is best verified using the CLI:
 
-   ![View cert-manager Operator for Red Hat OpenShift](cert-manager-operator.png)
+    ```bash
+    oc describe subscription openshift-cert-manager-operator
+    ```
 
-## Configure cert-manager LetsEncrypt
+  This will print quite a lot of detail about the `Subscription` resource, but the key lines should be near the bottom of the output:
 
-We're going to set up cert-manager to use DNS verification for letsencrypt certificates. We'll need to generate a service principal that can update the DNS zone and create short term records needed to validate certificate requests and associate this service principal with the cluster issuer.
+   ```bash
+   ...
+     Installplan:
+    API Version:  operators.coreos.com/v1alpha1
+    Kind:         InstallPlan
+    Name:         install-h9jlk
+    Uuid:         62c9122f-d85b-421c-ade1-148d252123db
+  Last Updated:   2026-06-29T16:41:21Z
+  State:          AtLatestKnown
+  ...
+  ```
+
+## Configure cert-manager to use Managed Identity
+
+cert-manager has support for Azure Managed Identities, but there are a couple of additional commands necessary to enable it:
+
+ ```bash
+ oc project cert-manager
+ oc annotate sa cert-manager "azure.workload.identity/client-id=${CLIENT_ID}"
+ oc patch certmanager cluster --type=merge -p '{"spec":{"controllerConfig":{"overrideLabels": {"azure.workload.identity/use":"true"}}}}'
+ ```
+
+ This will cause the running `cert-manager` Pod to quickly restart and when it does it will have the necessary environment variables to use the Managed Identity created earlier.
 
 ### Configure Certificate Requestor
 
-1. Switch openshift-cert-manager project (namespace)
-
-   ```bash
-   oc project cert-manager
-   ```
-
-1. Create azuredns-config secret for storing service principal credentials to manage zone.
-
-   ```bash
-   oc create secret generic azuredns-config --from-literal=client-secret=$AZURE_CERT_MANAGER_SP_PASSWORD -n cert-manager
-   ```
-
 1. Create Cluster Issuer
 
-   ```yaml
-   cat <<EOF | oc apply -f -
-   apiVersion: cert-manager.io/v1
-   kind: ClusterIssuer
-   metadata:
-     name: letsencrypt-prod
-   spec:
-     acme:
-       server: https://acme-v02.api.letsencrypt.org/directory
-       email: $LETSENCRYPTEMAIL
-       # This key doesn't exist, cert-manager creates it
-       privateKeySecretRef:
-         name: prod-letsencrypt-issuer-account-key
-       solvers:
-       - dns01:
-           azureDNS:
-             clientID: $AZURE_CERT_MANAGER_SP_APP_ID
-             clientSecretSecretRef:
-               name: azuredns-config
-               key: client-secret
-             subscriptionID: $AZURE_SUBSCRIPTION_ID
-             tenantID: $AZURE_TENANT_ID
-             resourceGroupName: $RESOURCEGROUP
-             hostedZoneName: $DOMAIN
-             environment: AzurePublicCloud
-   EOF
-   ```
+  ```yaml
+  cat <<EOF | oc apply -f -
+  apiVersion: cert-manager.io/v1
+  kind: ClusterIssuer
+  metadata:
+    name: letsencrypt-prod
+  spec:
+    acme:
+      server: https://acme-v02.api.letsencrypt.org/directory
+      email: $LETSENCRYPTEMAIL
+      # This key doesn't exist, cert-manager creates it
+      privateKeySecretRef:
+        name: prod-letsencrypt-issuer-account-key
+      solvers:
+      - dns01:
+          azureDNS:
+            subscriptionID: $SUBSCRIPTION_ID
+            resourceGroupName: $RESOURCEGROUP
+            hostedZoneName: $DOMAIN
+            environment: AzurePublicCloud
+            managedIdentity:
+              clientID: $CLIENT_ID
+  EOF
+  ```
 
 1. Describe issuer
 
-   ```bash
-   oc describe clusterissuer letsencrypt-prod
-   ```
+ ```bash
+ oc describe clusterissuer letsencrypt-prod
+ ```
 
    You should see some output that the issuer is Registered/Ready
 
@@ -399,11 +295,7 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
     Type:                  Ready
    Events:                    <none>
    ```
-
-   Once the above command is complete, you should be able to log in to the OpenShift console, navigate to Installed Operators, click on the cert-manager Operator, make sure you're in the "openshift-cert-manager-operator" project, and click the ClusterIssuer tab. You should see a screen like this. Again, if you have an ssl error and use a chrome browser - type "thisisunsafe" to get in if you get an error its an invalid cert.
-
-   ![cluster issuer](cluster-issuer.png)
-
+   
 ### Create & Install API Certificate
 
 1. Switch openshift-config project
@@ -552,14 +444,11 @@ We're going to set up cert-manager to use DNS verification for letsencrypt certi
    EOF
    ```
 
-   This will generate our API and wildcard certificate requests.  We'll now create two jobs that will install these certificates.
-
 1. View certificate status
 
    ```bash
    oc describe certificate openshift-wildcard -n openshift-ingress
    ```
-
 
 1. Install Wildcard Certificate
 
@@ -661,27 +550,6 @@ This is a very [helpful guide in debugging certificates](https://cert-manager.io
 
 It will take a few minutes for the jobs to successfully complete.
 
-Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser and no more warnings about SSL on cli.
+Once the certificate requests are complete, you should no longer see a browser security warning and you should have a valid SSL lock in your browser and no more warnings about SSL when using the `oc` CLI.
 
 You may want to open an InPrivate/Private browser tab to visit the console/api via the URLs you previously listed so you can see the new SSL cert without having to expire your cache.
-
-## Delete Cluster
-
-Once you're done its a good idea to delete the cluster to ensure that you don't get a surprise bill.
-
-1. Delete the cluster
-
-    ```bash
-   az aro delete -y \
-      --resource-group $RESOURCEGROUP \
-      --name $CLUSTER
-    ```
-
-1. Delete the Azure resource group
-
-    > Only do this if there's nothing else in the resource group.
-
-    ```bash
-   az group delete -y \
-      --name $RESOURCEGROUP
-    ```
