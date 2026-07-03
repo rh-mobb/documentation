@@ -1,4 +1,5 @@
-{{/* Standalone layout: full-page ROSA Fleet Optimizer (no baseof chrome). */}}
+{{/* Standalone layout: full-page ROSA Fleet Optimizer (no baseof chrome).
+     Injects shared site partials so header, nav, footer, and cookie consent stay in sync with the rest of the site. */}}
 {{- $css := resources.Get "css/main.css" -}}
 {{- $cssHref := "/experts/css/main.css" -}}
 {{- if hugo.IsProduction -}}
@@ -10,8 +11,15 @@
     {{- $cssHref = .RelPermalink -}}
   {{- end -}}
 {{- end -}}
+{{- $tracking := partial "head/tracking.html" . -}}
 {{- $app := resources.Get "rosa/cost-explorer/app.html" -}}
 {{- if not $app -}}
   {{- errorf "ROSA Fleet Optimizer: assets/rosa/cost-explorer/app.html not found" -}}
 {{- end -}}
-{{ replace $app.Content "__MAIN_CSS__" $cssHref | safeHTML }}
+{{- $html := replace $app.Content "__MAIN_CSS__" $cssHref -}}
+{{- $html = replace $html "__TRACKING_HEAD__" $tracking -}}
+{{- $html = replace $html "__HEADER__" (partial "rhds/header.html" .) -}}
+{{- $html = replace $html "__NAV__" (partial "rhds/nav.html" .) -}}
+{{- $html = replace $html "__FOOTER__" (partial "rhds/footer.html" .) -}}
+{{- $html = replace $html "__PAGEFIND_INIT__" (partial "rhds/pagefind-init.html" .) -}}
+{{ $html | safeHTML }}
