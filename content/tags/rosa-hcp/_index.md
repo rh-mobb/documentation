@@ -14,4 +14,6 @@ hero_secondary:
   text: "Get started"
   url: "https://console.redhat.com/openshift/create/rosa/getstarted"
 hero_background: openshift
+home_featured_paths:
+  - rosa/cost-explorer
 ---

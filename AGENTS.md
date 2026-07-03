@@ -75,6 +75,120 @@ When inline Markdown or shortcodes support it, Hugo `ref` / `relref` (or other t
 - **Do not** change `themes/rhds` for content-only tasks.
 - Layout or theme edits affect every page; keep them minimal, reversible, and consistent with RHDS patterns (`rh-alert`, etc.).
 
+## Standalone app pages (`assets/` + custom layout)
+
+Use this pattern for **full-page interactive tools** (Vue apps, calculators, dashboards) that need complete control over HTML, CSS, and JS while still sharing site header, nav, footer, cookie consent, and Pagefind search with the rest of the docs.
+
+**Reference implementation:** [ROSA Fleet Optimizer](content/rosa/cost-explorer/index.md)
+
+| Piece | Path | Role |
+|-------|------|------|
+| Hugo content stub | `content/<section>/<name>/index.md` | Front matter only; sets `layout:` and metadata (`title`, `tags`, `authors`, etc.). Body is empty or omitted. |
+| App source (HTML) | `assets/<section>/<name>/app.html` | Full `<!DOCTYPE html>` document: page markup, inline styles, and scripts. Uses **placeholders** where Hugo injects shared chrome at build time. |
+| Layout | `layouts/_default/<layout-name>.html` | Loads the asset via `resources.Get`, replaces placeholders, outputs with `safeHTML` (bypasses `baseof`). |
+| Shared partials | `layouts/partials/rhds/` | Header, nav, footer, Pagefind init (do **not** copy these into `app.html`). |
+
+### Why `assets/` and not `content/` or `static/`?
+
+- **`content/`** is for Markdown guides processed by Goldmark. Large Vue/HTML apps do not belong in the body.
+- **`static/`** copies files verbatim with no Hugo templating; you cannot inject partials or fingerprint CSS.
+- **`assets/`** files are available to layouts via `resources.Get` and can be transformed (string replace, pipe to other resources) at build time.
+
+### Placeholders (contract between `app.html` and layout)
+
+The app HTML must include these literal tokens; the layout replaces them before publish:
+
+| Token | Injected by layout | Purpose |
+|-------|-------------------|---------|
+| `__TRACKING_HEAD__` | `partial "head/tracking.html"` | TrustArc / analytics scripts (cookie consent bootstrap). |
+| `__MAIN_CSS__` | Fingerprinted `resources.Get "css/main.css"` href | Site-wide RHDS styles (header search, nav, typography tokens). |
+| `__HEADER__` | `partial "rhds/header.html"` | Logo + Pagefind search mount (`#site-search`). |
+| `__NAV__` | `partial "rhds/nav.html"` | Sticky `rh-navigation-secondary` nav. |
+| `__FOOTER__` | `partial "rhds/footer.html"` | RHDS footer, `#teconsent`, and `#consent_blackbar`. |
+| `__PAGEFIND_INIT__` | `partial "rhds/pagefind-init.html"` | Pagefind UI init + header search drawer behavior. |
+
+Put `__TRACKING_HEAD__` in `<head>`. Put `__HEADER__` and `__NAV__` immediately after `<body>`. Put `__FOOTER__` and `__PAGEFIND_INIT__` after your app’s closing `</main>` (or equivalent), before app-specific scripts if those scripts must run after DOM chrome exists.
+
+**Do not** duplicate header, nav, footer, consent markup, or Pagefind init JS in `app.html`. When site chrome is fixed in partials, all standalone apps pick up the change on the next build.
+
+### Layout template (minimal pattern)
+
+Copy [`layouts/_default/cost-explorer-app.html`](./layouts/_default/cost-explorer-app.html) and adjust the asset path and error message:
+
+```go-html-template
+{{- $css := resources.Get "css/main.css" -}}
+{{- $cssHref := "/experts/css/main.css" -}}
+{{- if hugo.IsProduction -}}
+  {{- with $css | minify | fingerprint -}}
+    {{- $cssHref = .RelPermalink -}}
+  {{- end -}}
+{{- else -}}
+  {{- with $css -}}
+    {{- $cssHref = .RelPermalink -}}
+  {{- end -}}
+{{- end -}}
+{{- $tracking := partial "head/tracking.html" . -}}
+{{- $app := resources.Get "section/name/app.html" -}}
+{{- if not $app -}}
+  {{- errorf "My App: assets/section/name/app.html not found" -}}
+{{- end -}}
+{{- $html := replace $app.Content "__MAIN_CSS__" $cssHref -}}
+{{- $html = replace $html "__TRACKING_HEAD__" $tracking -}}
+{{- $html = replace $html "__HEADER__" (partial "rhds/header.html" .) -}}
+{{- $html = replace $html "__NAV__" (partial "rhds/nav.html" .) -}}
+{{- $html = replace $html "__FOOTER__" (partial "rhds/footer.html" .) -}}
+{{- $html = replace $html "__PAGEFIND_INIT__" (partial "rhds/pagefind-init.html" .) -}}
+{{ $html | safeHTML }}
+```
+
+Front matter in `content/.../index.md`:
+
+```yaml
+---
+title: "My Tool"
+description: "Short summary for listings and SEO."
+date: 2026-06-25
+tags: ["ROSA"]
+authors:
+  - Name
+layout: my-app   # matches layouts/_default/my-app.html
+---
+```
+
+Layout file name must match the `layout` front-matter value (`my-app` → `my-app.html`).
+
+### `app.html` checklist
+
+- Full HTML document with RHDS import map and module imports for web components you use (`rh-navigation-secondary`, `rh-footer`, etc.). See the Fleet Optimizer head for a working set.
+- Link `__MAIN_CSS__`, `/experts/pagefind/pagefind-ui.css`, and RHDS element lightdom CSS URLs for nav/footer.
+- Wrap tool UI in `<main class="…">` (class name is app-specific).
+- Same-site links and static assets use **`/experts/...`** root-relative paths.
+- Modals, popovers, and overlays: **`teleport` to `body`** (if using Vue) and use **`z-index` ≥ 1000** so they sit above the site header (`z-index: 200`) and cookie consent bar.
+- Prefer **native `<details>` / `<summary>`** over the theme `expand` shortcode (jQuery not loaded on these pages).
+- No em dashes in user-facing copy inside the app.
+
+### Pagefind and search indexing
+
+The injected header expects `#site-search`. Include `pagefind-ui.css` in `<head>` and `__PAGEFIND_INIT__` before your app scripts.
+
+Standalone app pages use a **custom layout**, not `baseof`, so they do **not** get `data-pagefind-body` on `<main>` unless you add it yourself. Most tools should stay **out of the search index**; do not add `data-pagefind-body` unless the page should appear in site search.
+
+### Verification
+
+After adding or changing a standalone app:
+
+```bash
+hugo --gc --minify --theme rhds
+```
+
+Confirm in `public/experts/<section>/<name>/index.html`:
+
+- No unreplaced `__HEADER__`-style tokens remain.
+- `#consent_blackbar`, `#teconsent`, and `site-header__search` are present.
+- Header search opens and respects viewport height (Pagefind drawer).
+
+Smoke-check in the browser: header, nav, footer, cookie consent, modals, and app functionality.
+
 ## Verification / testing (before claiming a change works)
 
 Run these from the repository root after substantive edits:
