@@ -7,13 +7,21 @@ authors:
 validated_version: "4.22"
 ---
 
-OpenShift Virtualization on Red Hat OpenShift Service on AWS (ROSA) supports predefined virtual machine instance types. Some of these instance types are designed for general-purpose workloads, while others are designed for overcommitted workloads.
+OpenShift Virtualization on Red Hat OpenShift Service on AWS (ROSA) supports predefined virtual machine instance types for different workload profiles. In this article, we compare General Purpose `U` series instance types with Overcommitted `O` series instance types and test how memory overcommit changes Kubernetes scheduling behavior.
 
-This article walks through a hands-on testing of memory overcommit behavior on ROSA with OpenShift Virtualization. The goal is to show what changes from a Kubernetes scheduling perspective, what the guest operating system sees, and what happens when the guest consumes more memory than its Kubernetes request.
+## CPU overcommit versus memory overcommit
+
+Before starting the lab, it is useful to distinguish CPU overcommit from memory overcommit.
+
+For the VM instance types used in this article, CPU is already shared. For example, both `u1.4xlarge` and `o1.4xlarge` expose 16 vCPUs to the guest, but the `virt-launcher` pod requests only `1600m` CPU from Kubernetes. This means guest vCPUs are not pinned 1:1 to physical CPUs by default.
+
+Memory overcommit is different. Memory is less forgiving than CPU because a node cannot safely time-slice physical memory the same way it time-slices CPU. The `O` series instance types explicitly configure memory overcommit by setting `overcommitPercent`. For example, `o1.medium` exposes 4 GiB of guest memory but requests approximately half of that memory from Kubernetes, plus virtualization overhead.
+
+This lab focuses on memory overcommit. We test what changes from a Kubernetes scheduling perspective, what the guest operating system sees, and what happens when the guest consumes more memory than its request.
 
 ## Environment
 
-This testing used the following environment:
+This lab used the following environment:
 
 | Component | Value |
 |---|---|
@@ -32,11 +40,11 @@ The `m5zn.metal` worker was used because OpenShift Virtualization requires bare-
 
 ## What we tested
 
-This lab validates three things:
+This lab tests three things:
 
-1. The difference between General Purpose `U` series and Overcommitted `O` series VM instance types.
+1. How `U` series and `O` series instance types differ in their Kubernetes memory requests.
 2. Whether multiple overcommitted VMs can schedule when total guest memory exceeds node allocatable memory.
-3. Whether the guest can consume more memory than the Kubernetes memory request.
+3. Whether a guest can consume more memory than its Kubernetes memory request.
 
 The key finding is:
 
