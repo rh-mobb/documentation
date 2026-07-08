@@ -259,6 +259,14 @@
     .s-sub { font-size: 0.78rem; color: #888; margin-top: 0.25rem; }
     .saving { color: var(--ce-success); }
     .cost-up { color: var(--ce-danger); }
+    .estimate-disclaimer {
+      flex: 1 1 16rem; min-width: 12rem; max-width: 36rem; margin-left: auto;
+      font-size: 0.72rem; color: #666; line-height: 1.45;
+    }
+    .legal-disclaimer {
+      margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--ce-border);
+      font-size: 0.68rem; color: #888; line-height: 1.6;
+    }
 
     /* ── Inputs ──────────────────────────────────────────── */
     .num-field { display: flex; align-items: flex-start; gap: 0.4rem; margin-bottom: 0.6rem; }
@@ -507,7 +515,7 @@ __NAV__
         </ul>
 
         <h3>Summary Cards</h3>
-        <p>Three cards at the top compare scenarios:</p>
+        <p>Three cards at the top compare scenarios. Amounts are planning estimates in USD, not a formal quote.</p>
         <ul>
           <li><strong>Baseline:</strong> A saved snapshot of fleet, pricing, and levers. After you finish configuring your current fleet, click <strong>Set current as baseline</strong> to capture &ldquo;where we are now&rdquo; before modeling changes.</li>
           <li><strong>Current estimate:</strong> Live total from your current settings.</li>
@@ -584,24 +592,25 @@ __NAV__
       </div>
       <button type="button" class="share-btn" @click="openShare">Share</button>
       <button type="button" class="reset-btn" :disabled="isAtDefaults" @click="resetToDefaults">Reset to defaults</button>
+      <p class="estimate-disclaimer">Planning estimates in USD only. Not a formal quote or billing guarantee.</p>
     </div>
     <div class="summary">
       <div class="summary-card">
         <div class="s-label">Baseline</div>
-        <div class="s-value">${{ fmt(baseline.total * (chartPeriod === 'yearly' ? 12 : 1)) }}</div>
+        <div class="s-value">{{ fmtUsd(baseline.total * (chartPeriod === 'yearly' ? 12 : 1)) }}</div>
         <div class="s-sub" v-if="chartPeriod === 'monthly'">per month &bull; {{ fmtM(baseline.total * 12) }}/yr</div>
         <div class="s-sub" v-else>per year &bull; ${{ fmt(baseline.total) }}/mo</div>
       </div>
       <div class="summary-card">
         <div class="s-label">Current estimate</div>
-        <div class="s-value">${{ fmt(fleet.total * (chartPeriod === 'yearly' ? 12 : 1)) }}</div>
+        <div class="s-value">{{ fmtUsd(fleet.total * (chartPeriod === 'yearly' ? 12 : 1)) }}</div>
         <div class="s-sub" v-if="chartPeriod === 'monthly'">per month &bull; {{ fmtM(fleet.total * 12) }}/yr</div>
         <div class="s-sub" v-else>per year &bull; ${{ fmt(fleet.total) }}/mo</div>
       </div>
       <div class="summary-card">
         <div class="s-label">{{ chartPeriod === 'yearly' ? 'Annual' : 'Monthly' }} {{ delta >= 0 ? 'Savings' : 'Increase' }}</div>
         <div class="s-value" :class="delta >= 0 ? 'saving' : 'cost-up'">
-          {{ delta >= 0 ? '-' : '+' }}${{ fmt(Math.abs(delta) * (chartPeriod === 'yearly' ? 12 : 1)) }}
+          {{ delta >= 0 ? '−' : '+' }}{{ fmtUsd(Math.abs(delta) * (chartPeriod === 'yearly' ? 12 : 1)) }}
         </div>
         <div class="s-sub" :class="delta >= 0 ? 'saving' : 'cost-up'">
           {{ Math.abs(deltaPct).toFixed(1) }}% {{ delta >= 0 ? 'less' : 'more' }}
@@ -1004,6 +1013,8 @@ __NAV__
 
       </div><!-- end right -->
     </div><!-- end main-grid -->
+
+    <p class="legal-disclaimer">The purpose of this document is to give you an indicative and non-binding pricing calculations for Cloud Services in order to enable you to build your requirements and your budget. This document does not and is not intended to contractually bind Red Hat, Inc. and its affiliates to the pricing or information to be included in the contract between you and the authorised partner of Red Hat which shall be separately agreed between you and the authorised partner of Red Hat and its affiliates. Red Hat and its affiliates do not make any representation or warranty, express or implied, as to the accuracy or completeness of this document. Red Hat and its affiliates shall not have any liability to any party that relies or uses this document or for any claims or liabilities due to any errors or omissions that resulted from this document. No party may rely on this document as creating any legal obligation of any kind on Red Hat and its affiliates.</p>
   </div><!-- end page -->
 </div><!-- end app -->
 </main>
@@ -1679,6 +1690,7 @@ const app = createApp({
     });
 
     const fmt  = n => Math.round(n).toLocaleString();
+    const fmtUsd = n => 'US$' + fmt(n);
     const fmtK = n => { if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'; return Math.round(n / 1000) + 'K'; };
     const fmtM = n => { if (Math.abs(n) >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M'; return '$' + Math.round(n / 1000) + 'K'; };
     const fmtChip = n => '−$' + fmt(n) + '/mo';
@@ -1692,7 +1704,7 @@ const app = createApp({
       resetToDefaults, isAtDefaults,
       syncEC2, sections, setBaseline, baselineIsCurrent, chartPeriod,
       fieldHelp: FIELD_HELP, leverSavings, ec2RatesAsOf: EC2_RATES_AS_OF,
-      fmt, fmtK, fmtM, fmtChip,
+      fmt, fmtUsd, fmtK, fmtM, fmtChip,
     };
   },
 });
