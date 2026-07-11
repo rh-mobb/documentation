@@ -1,7 +1,7 @@
 ---
 date: 2026-07-08
 title: Exploring Memory Overcommit with OpenShift Virtualization on ROSA
-tags: ["ROSA", "Virtualization"]
+tags: ["ROSA HCP", "Virtualization"]
 authors:
    - Diana Sari
 validated_version: "4.22"
