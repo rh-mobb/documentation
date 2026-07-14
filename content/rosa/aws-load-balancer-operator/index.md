@@ -178,7 +178,6 @@ Compared with default AWS In Tree Provider, this controller is actively develope
      name: aws-load-balancer-operator
      source: redhat-operators
      sourceNamespace: openshift-marketplace
-     startingCSV: aws-load-balancer-operator.v1.0.0
    EOF
    ```
 
