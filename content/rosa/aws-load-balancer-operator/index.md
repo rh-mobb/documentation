@@ -173,7 +173,7 @@ Compared with default AWS In Tree Provider, this controller is actively develope
      name: aws-load-balancer-operator
      namespace: aws-load-balancer-operator
    spec:
-     channel: stable-v1.0
+     channel: stable-v1
      installPlanApproval: Automatic
      name: aws-load-balancer-operator
      source: redhat-operators
