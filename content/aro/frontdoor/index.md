@@ -11,29 +11,14 @@ validated_version: "4.20"
 
 Azure Front Door Premium can expose applications running on an Azure Red Hat OpenShift (ARO) cluster while keeping the cluster ingress private. Azure Front Door receives public client traffic at the edge and reaches the ARO internal ingress load balancer through Azure Private Link.
 
-This guide configures the following traffic flow:
+This guide configures Azure Front Door Premium to reach the private ARO ingress load balancer through Azure Private Link:
 
-```text
-Internet client
-    |
-    v
-Azure Front Door Premium
-    |
-    v
-Azure Front Door managed private endpoint
-    |
-    v
-Azure Private Link Service
-    |
-    v
-ARO internal ingress load balancer
-    |
-    v
-OpenShift ingress router
-    |
-    v
-Application Route
-```
+<br />
+
+![flow](images/flow.png)
+<br />
+
+Azure Front Door receives public client traffic at the edge. The backend connection to ARO remains private through Private Link.
 
 {{< alert >}}
 Azure Front Door must send a `Host` header that matches an OpenShift Route. When the ARO ingress load balancer IP is used as the origin host name, set the Azure Front Door **origin host header** to the application Route hostname.
@@ -82,34 +67,70 @@ oc whoami
 
 Use the same terminal session throughout this guide because later commands reference previously defined environment variables.
 
-## Set Environment Variables
+## Set Required Inputs
 
-Set the ARO cluster, Azure resource group, application hostname, and Azure Front Door names:
+Set only the values that are specific to your environment.
 
 ```bash
-export ARO_CLUSTER="<aro-cluster-name>"
+# ARO cluster name
+export ARO_CLUSTER="<cluster-name>"
+
+# Resource group where the ARO cluster was created
 export ARO_RESOURCE_GROUP="<aro-resource-group>"
-export APP_FQDN="<application-hostname-you-control>"
 
+# Azure Front Door profile name to create
 export AFD_PROFILE="<front-door-profile-name>"
-export AFD_ENDPOINT="<globally-unique-front-door-endpoint-name>"
-export AFD_ORIGIN_GROUP="aro-origin-group"
-export AFD_ORIGIN="aro-ingress"
-export AFD_ROUTE="aro-route"
 
+# Azure Front Door endpoint name to create.
+# This must be globally unique because Azure creates a public azurefd.net hostname.
+export AFD_ENDPOINT="<globally-unique-front-door-endpoint-name>"
+
+# DNS zone that you control.
+# Example: aro.example.com
+export DOMAIN="<dns-zone>"
+
+# Public application hostname that users will access through Azure Front Door.
+# This hostname must be inside DOMAIN.
+# Example: hello.aro.example.com
+export APP_FQDN="<app-hostname>"
+
+# Azure Front Door custom domain object name.
+# This should be the application hostname with dots replaced by dashes.
+# Example: hello-aro-example-com
+export AFD_CUSTOM_DOMAIN_NAME="$(echo "$APP_FQDN" | tr '.' '-')"
+
+# Azure Private Link Service name to create
 export PLS_NAME="${ARO_CLUSTER}-frontdoor-pls"
+
+# Dedicated subnet for the Azure Private Link Service.
+# Choose an unused CIDR from the ARO virtual network address space.
 export PLS_SUBNET_NAME="frontdoor-pls-subnet"
 export PLS_SUBNET_PREFIX="<unused-subnet-cidr>"
+
+# Azure Front Door Origin group and name to create.
+export AFD_ORIGIN_GROUP="aro-origin-group"
+export AFD_ORIGIN="aro-ingress"
 ```
 
 Example:
 
 ```bash
-export APP_FQDN="hello.apps.example.com"
+export ARO_CLUSTER="ds-fd-test01"
+export ARO_RESOURCE_GROUP="ds-fd-test01-rg"
+export AFD_PROFILE="aro-frontdoor-test"
+export AFD_ENDPOINT="aro-fd-test-$RANDOM"
+export DOMAIN="aro.example.com"
+export APP_FQDN="hello.aro.example.com"
+export AFD_CUSTOM_DOMAIN_NAME="$(echo "$APP_FQDN" | tr '.' '-')"
+export PLS_SUBNET_NAME="frontdoor-pls-subnet"
 export PLS_SUBNET_PREFIX="10.0.8.0/27"
 ```
 
-Retrieve cluster and network information:
+The value of `APP_FQDN` is important because OpenShift uses hostname-based routing. Later in the guide, this same value is used as the OpenShift Route hostname and as the Azure Front Door origin host header.
+
+## Discover Cluster and Network Values
+
+The remaining values are discovered from Azure and OpenShift.
 
 ```bash
 export LOCATION=$(az aro show \
@@ -686,8 +707,6 @@ In Azure Portal, check the **Origin Health Percentage** metric for the Front Doo
 Create an Azure Front Door custom-domain object:
 
 ```bash
-export AFD_CUSTOM_DOMAIN_NAME=$(echo "$APP_FQDN" | tr '.' '-')
-
 az afd custom-domain create \
   --resource-group "$ARO_RESOURCE_GROUP" \
   --profile-name "$AFD_PROFILE" \
