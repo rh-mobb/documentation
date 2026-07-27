@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "generated_at": "2026-07-27T02:50:27.259Z",
+  "regions": [
+    {
+      "code": "us-east-1",
+      "zones": [
+        "us-east-1a",
+        "us-east-1b",
+        "us-east-1c"
+      ]
+    }
+  ]
+}

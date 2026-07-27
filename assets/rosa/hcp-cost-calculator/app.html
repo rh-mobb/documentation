@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  __TRACKING_HEAD__
+  <title>ROSA HCP Cost Calculator</title>
+  <link rel="icon" href="/experts/favicon.ico">
+  <link rel="stylesheet" href="__MAIN_CSS__">
+  <link rel="stylesheet" href="/experts/pagefind/pagefind-ui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/elements/rh-navigation-secondary/rh-navigation-secondary-lightdom.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/elements/rh-footer/rh-footer-lightdom.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "@rhds/elements/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/elements/"
+      },
+      "scopes": {
+        "https://cdn.jsdelivr.net/": {
+          "@lit/context": "https://cdn.jsdelivr.net/npm/@lit/context@1.1.6/development/index.js",
+          "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.1/development/reactive-element.js",
+          "@lit/reactive-element/decorators/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.1/development/decorators/",
+          "@patternfly/pfe-core": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.4/core.js",
+          "@patternfly/pfe-core/": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.4/",
+          "@rhds/elements/lib/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.4/lib/",
+          "@rhds/icons": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js",
+          "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/",
+          "@rhds/tokens/css/": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/css/",
+          "@rhds/tokens/media.js": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/js/media.js",
+          "lit": "https://cdn.jsdelivr.net/npm/lit@3.3.1/index.js",
+          "lit-element/lit-element.js": "https://cdn.jsdelivr.net/npm/lit-element@4.2.1/development/lit-element.js",
+          "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/development/lit-html.js",
+          "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3.3.1/development/",
+          "lit/": "https://cdn.jsdelivr.net/npm/lit@3.3.1/",
+          "tslib": "https://cdn.jsdelivr.net/npm/tslib@2.8.1/tslib.es6.mjs"
+        }
+      }
+    }
+  </script>
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.7.3/dist/es-module-shims.js" crossorigin="anonymous"></script>
+  <script type="module">
+    import "@rhds/elements/rh-navigation-secondary/rh-navigation-secondary.js";
+    import "@rhds/elements/rh-footer/rh-footer.js";
+    import "@rhds/elements/rh-cta/rh-cta.js";
+  </script>
+  <script src="https://unpkg.com/vue@3.5.38/dist/vue.global.prod.js"
+          integrity="sha384-KYk+4lWOhWTo/BrM+zKkwLtFsD6cs2ClFbaGiX5ozDVHPqF4nOqxVGiHvcyWsw8B"
+          crossorigin="anonymous"></script>
+  <style>
+    .hcp-calculator {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+
+    .hcp-calculator__set-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .hcp-calculator__set-actions {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hcp-calculator__mode-switch {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid #d2d2d2;
+      border-radius: 0.5rem;
+      background: #ffffff;
+    }
+
+    .hcp-calculator__mode-switch label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.92rem;
+    }
+
+    .hcp-calculator__basic-panel {
+      margin-top: 1rem;
+      border: 1px solid #d2d2d2;
+      border-radius: 0.5rem;
+      background: #ffffff;
+      padding: 0.9rem;
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .hcp-calculator__basic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.5rem;
+      align-items: end;
+    }
+
+    .hcp-calculator__basic-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .hcp-calculator__basic-result {
+      font-size: 0.9rem;
+      color: #4b4f55;
+    }
+
+    .hcp-calculator__is-hidden {
+      display: none !important;
+    }
+
+    .hcp-calculator__filters {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.5rem;
+      align-items: end;
+      background: #ffffff;
+      border: 1px solid #d2d2d2;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    .hcp-calculator__filter-field {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .hcp-calculator__filter-field label {
+      font-size: 0.78rem;
+      color: #6a6e73;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-weight: 600;
+    }
+
+    .hcp-calculator__filter-field input,
+    .hcp-calculator__filter-field select {
+      border: 1px solid #c7c7c7;
+      border-radius: 0.25rem;
+      padding: 0.25rem 0.4rem;
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
+    .hcp-calculator__filter-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 0.25rem;
+      font-size: 0.88rem;
+      color: #4b4f55;
+    }
+
+    .hcp-calculator__filter-summary {
+      margin-top: 0.4rem;
+      font-size: 0.82rem;
+      color: #6a6e73;
+    }
+
+    .hcp-calculator__button {
+      border: 1px solid #0066cc;
+      background: #ffffff;
+      color: #004080;
+      border-radius: 999px;
+      padding: 0.3rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+
+    .hcp-calculator__button:hover {
+      background: #ebf5ff;
+    }
+
+    .hcp-calculator__set-card {
+      border: 1px solid #d2d2d2;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #ffffff;
+    }
+
+    .hcp-calculator__set-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .hcp-calculator__set-controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .hcp-calculator__set-controls input {
+      min-width: 180px;
+      border: 1px solid #c7c7c7;
+      border-radius: 0.25rem;
+      padding: 0.25rem 0.4rem;
+      font-size: 0.9rem;
+    }
+
+    .hcp-calculator__set-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .hcp-calculator__muted {
+      color: #6a6e73;
+      font-size: 0.9rem;
+    }
+
+    .hcp-calculator__pool-grid {
+      margin-top: 0.6rem;
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .hcp-calculator__pool-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) minmax(90px, 1fr) 120px 120px minmax(180px, 1fr);
+      gap: 0.45rem;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .hcp-calculator__pool-row--header {
+      font-size: 0.78rem;
+      color: #6a6e73;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-weight: 600;
+      margin-bottom: 0.1rem;
+    }
+
+    .hcp-calculator__pool-row input {
+      width: 100%;
+      padding: 0.2rem 0.35rem;
+      border: 1px solid #c7c7c7;
+      border-radius: 0.25rem;
+      font-size: 0.9rem;
+    }
+
+    .hcp-calculator__pool-row select {
+      width: 100%;
+      padding: 0.2rem 0.35rem;
+      border: 1px solid #c7c7c7;
+      border-radius: 0.25rem;
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
+    .hcp-calculator__cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .hcp-calculator__card {
+      border: 1px solid #d2d2d2;
+      border-radius: 0.5rem;
+      background: #ffffff;
+      padding: 0.75rem 1rem;
+    }
+
+    .hcp-calculator__card-label {
+      color: #6a6e73;
+      font-size: 0.85rem;
+      margin: 0 0 0.25rem;
+    }
+
+    .hcp-calculator__card-value {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .hcp-calculator__table-wrap {
+      margin-top: 1rem;
+      overflow-x: auto;
+    }
+
+    .hcp-calculator__table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+    }
+
+    .hcp-calculator__table th,
+    .hcp-calculator__table td {
+      border: 1px solid #d2d2d2;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .hcp-calculator__issues {
+      margin: 1rem 0;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .hcp-calculator__issue-panel {
+      border: 1px solid #d2d2d2;
+      border-left-width: 0.4rem;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #ffffff;
+    }
+
+    .hcp-calculator__issue-panel--error {
+      border-left-color: #c9190b;
+    }
+
+    .hcp-calculator__issue-panel--warning {
+      border-left-color: #f0ab00;
+    }
+
+    .hcp-calculator__issue-panel h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+
+    .hcp-calculator__issue-panel ul {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+
+    .hcp-calculator__blocked-message {
+      color: #151515;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .hcp-calculator__estimate-disclaimer {
+      margin: 0.75rem 0 0;
+      font-size: 0.85rem;
+      color: #50555a;
+    }
+
+    .hcp-calculator__legal-disclaimer {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #d2d2d2;
+      font-size: 0.8rem;
+      color: #50555a;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  __HEADER__
+  __NAV__
+  <main class="hcp-calculator" id="hcp-calculator-root">
+    <h1>ROSA HCP Cost Calculator</h1>
+    <p class="hcp-calculator__muted">Initial estimate state and scenario totals</p>
+    <p class="hcp-calculator__muted">
+      Use <strong>Min</strong> as your expected steady-state node count. Set <strong>Max</strong> for burst capacity.
+    </p>
+    <p class="hcp-calculator__estimate-disclaimer">
+      Planning estimates only. Not a formal quote, commercial offer, contractual commitment, or billing guarantee.
+    </p>
+    <section class="hcp-calculator__mode-switch" aria-label="Calculator mode">
+      <strong>Mode</strong>
+      <label for="mode-basic">
+        <input id="mode-basic" type="radio" name="calculator-mode" value="basic" />
+        Basic
+      </label>
+      <label for="mode-expert">
+        <input id="mode-expert" type="radio" name="calculator-mode" value="expert" checked />
+        Expert
+      </label>
+    </section>
+    <section class="hcp-calculator__basic-panel hcp-calculator__is-hidden" id="basic-mode-panel">
+      <h2>Basic sizing</h2>
+      <p class="hcp-calculator__muted">Enter target vCPU, basic mode rounds up to the nearest standard m7i size and shows matching memory.</p>
+      <div class="hcp-calculator__basic-grid">
+        <div class="hcp-calculator__filter-field">
+          <label for="basic-vcpu-input">Target vCPU</label>
+          <input id="basic-vcpu-input" type="number" min="1" step="1" value="12" />
+        </div>
+        <div class="hcp-calculator__filter-field">
+          <label for="basic-rounded-vcpu">Rounded total vCPU</label>
+          <input id="basic-rounded-vcpu" type="text" readonly />
+        </div>
+        <div class="hcp-calculator__filter-field">
+          <label for="basic-matching-memory">Matching total memory (GiB)</label>
+          <input id="basic-matching-memory" type="text" readonly />
+        </div>
+      </div>
+      <div class="hcp-calculator__basic-actions">
+        <button type="button" class="hcp-calculator__button" id="basic-apply">Apply basic sizing</button>
+        <p class="hcp-calculator__basic-result" id="basic-mode-result">No basic sizing applied yet.</p>
+      </div>
+    </section>
+    <div class="hcp-calculator__set-actions" id="expert-set-actions">
+      <div class="hcp-calculator__filter-field">
+        <label for="region-select">Region</label>
+        <select id="region-select">
+          <option value="us-east-1" selected>us-east-1</option>
+        </select>
+      </div>
+      <button type="button" class="hcp-calculator__button" id="create-3az-set">Create 3-AZ set</button>
+      <button type="button" class="hcp-calculator__button" id="create-1az-set">Create 1-AZ set</button>
+    </div>
+    <section class="hcp-calculator__filters" id="expert-filters" aria-label="Instance type filters">
+      <div class="hcp-calculator__filter-field">
+        <label for="filter-arch">Architecture</label>
+        <select id="filter-arch">
+          <option value="any">Any</option>
+          <option value="graviton">Graviton (ARM)</option>
+          <option value="x86-intel" selected>x86 Intel</option>
+          <option value="x86-amd">x86 AMD</option>
+        </select>
+      </div>
+      <div class="hcp-calculator__filter-field">
+        <label for="filter-category">Category</label>
+        <select id="filter-category">
+          <option value="any">Any</option>
+          <option value="general-purpose" selected>General purpose</option>
+          <option value="compute-optimized">Compute optimized</option>
+          <option value="memory-optimized">Memory optimized</option>
+          <option value="gpu-accelerated">GPU / accelerated</option>
+        </select>
+      </div>
+      <div class="hcp-calculator__filter-field">
+        <label for="filter-family">Instance family</label>
+        <select id="filter-family">
+          <option value="m7i" selected>m7i</option>
+        </select>
+      </div>
+      <div class="hcp-calculator__filter-field">
+        <label for="filter-min-vcpu">Min vCPU</label>
+        <input id="filter-min-vcpu" type="number" min="0" step="1" placeholder="0" />
+      </div>
+      <div class="hcp-calculator__filter-field">
+        <label for="filter-min-memory">Min Memory (GiB)</label>
+        <input id="filter-min-memory" type="number" min="0" step="1" placeholder="0" />
+      </div>
+    </section>
+    <p class="hcp-calculator__filter-summary" id="instance-filter-summary"></p>
+    <ul class="hcp-calculator__set-list" id="initial-set-list"></ul>
+    <datalist id="instance-type-options"></datalist>
+    <section class="hcp-calculator__issues" aria-live="polite" aria-atomic="true">
+      <div id="validation-errors"></div>
+      <div id="validation-warnings"></div>
+    </section>
+
+    <section>
+      <h2>Scenario summary</h2>
+      <p class="hcp-calculator__muted">Machine pool cost summary using min steady-state nodes.</p>
+      <p class="hcp-calculator__muted">Red Hat worker fee assumes PAYGO ($125 per 4-vCPU block monthly).</p>
+      <div class="hcp-calculator__filter-field" style="max-width: 240px;">
+        <label for="summary-price-unit">Summary price unit</label>
+        <select id="summary-price-unit">
+          <option value="hourly">Hourly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly" selected>Yearly</option>
+        </select>
+      </div>
+      <div class="hcp-calculator__table-wrap">
+        <table class="hcp-calculator__table" aria-label="Machine pool cost summary">
+          <thead>
+            <tr>
+              <th scope="col">Pool</th>
+              <th scope="col">Instance type</th>
+              <th scope="col" id="machine-pool-ec2-header">EC2 cost</th>
+              <th scope="col" id="machine-pool-rh-header">Red Hat cost</th>
+              <th scope="col" id="machine-pool-total-header">Total cost</th>
+            </tr>
+          </thead>
+          <tbody id="machine-pool-summary-body"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colspan="2">HCP cluster fee</th>
+              <td>--</td>
+              <td id="machine-pool-cluster-fee"></td>
+              <td id="machine-pool-cluster-fee-total"></td>
+            </tr>
+            <tr>
+              <th scope="row" colspan="2">Total</th>
+              <td id="machine-pool-total-ec2"></td>
+              <td id="machine-pool-total-rh"></td>
+              <td id="machine-pool-total-cost"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="hcp-calculator__table-wrap">
+      <h2>Tier comparison</h2>
+      <table class="hcp-calculator__table" aria-label="Tier totals by scenario">
+        <thead>
+          <tr>
+            <th scope="col">Pricing tier</th>
+            <th scope="col" title="Set Min to your expected steady-state nodes">Min hourly</th>
+            <th scope="col">Max hourly</th>
+            <th scope="col" title="Set Min to your expected steady-state nodes">Min yearly</th>
+            <th scope="col">Max yearly</th>
+          </tr>
+        </thead>
+        <tbody id="tier-comparison-body"></tbody>
+      </table>
+    </section>
+    <p class="hcp-calculator__legal-disclaimer">
+      This ROSA HCP calculator provides indicative, non-binding estimates to support planning and budgeting. Results are not a quote, offer, or contractual commitment from Red Hat or its affiliates. Actual charges may vary based on provider pricing changes, account configuration, discounts, taxes, region and availability zone specifics, and runtime usage patterns. Validate final pricing through official commercial channels before procurement or budgeting decisions.
+    </p>
+  </main>
+  __FOOTER__
+  __PAGEFIND_INIT__
+  <script type="module">
+    import { createInitialEstimate, createDefaultSet, createSet } from "./js/state.mjs";
+    import { loadSnapshotData, getRegionPricing } from "./js/data-loader.mjs";
+    import { calculateScenarioTotals } from "./js/cost-engine.mjs";
+    import { validateEstimate } from "./js/validation.mjs";
+
+    const usdFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0
+    });
+    const usdHourlyFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    const HOURS_PER_MONTH = 730;
+    const MONTHS_PER_YEAR = 12;
+    const ROSA_VCPU_BLOCK_SIZE = 4;
+    const ROSA_PAYGO_RATE_MONTHLY = 125.0;
+    const HCP_CLUSTER_FEE_MONTHLY = 182.5;
+
+    let estimate = createInitialEstimate({
+      region: "us-east-1",
+      zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
+    });
+    let snapshotCache = null;
+    let calculatorMode = "expert";
+    const instanceFilters = {
+      architecture: "x86-intel",
+      category: "general-purpose",
+      family: "m7i",
+      minVcpu: 0,
+      minMemoryGiB: 0
+    };
+
+    function getAllowedAzs() {
+      const regionList = snapshotCache?.regions?.regions ?? [];
+      const selectedRegion = regionList.find((region) => region.code === estimate.region);
+      if (selectedRegion?.zones?.length) {
+        return selectedRegion.zones;
+      }
+      return ["us-east-1a", "us-east-1b", "us-east-1c"];
+    }
+
+    function renderRegionSelect() {
+      const select = document.getElementById("region-select");
+      if (!select) {
+        return;
+      }
+
+      const regionList = snapshotCache?.regions?.regions ?? [];
+      const regionCodes = regionList.map((region) => region.code).filter(Boolean);
+      const uniqueCodes = Array.from(new Set([...regionCodes, "us-east-1"]));
+      uniqueCodes.sort((a, b) => {
+        if (a === "us-east-1") {
+          return -1;
+        }
+        if (b === "us-east-1") {
+          return 1;
+        }
+        return a.localeCompare(b);
+      });
+
+      const currentRegion = estimate.region || "us-east-1";
+      select.innerHTML = uniqueCodes
+        .map((code) => `<option value="${code}" ${code === currentRegion ? "selected" : ""}>${code}</option>`)
+        .join("");
+    }
+
+    function remapSetsToRegionAzs(sets, allowedAzs) {
+      if (!Array.isArray(allowedAzs) || allowedAzs.length === 0) {
+        return sets;
+      }
+      return sets.map((set) => ({
+        ...set,
+        pools: (set.pools ?? []).map((pool, poolIndex) => ({
+          ...pool,
+          az: allowedAzs[poolIndex % allowedAzs.length]
+        }))
+      }));
+    }
+
+    function classifyCategory(instanceType = "") {
+      const prefix = instanceType.split(".")[0].toLowerCase();
+      if (/^(g|p|dl|trn|inf|vt)/.test(prefix)) {
+        return "gpu-accelerated";
+      }
+      if (/^(c|hpc)/.test(prefix)) {
+        return "compute-optimized";
+      }
+      if (/^(r|x|u|z)/.test(prefix)) {
+        return "memory-optimized";
+      }
+      return "general-purpose";
+    }
+
+    const FILTER_CATEGORY_ORDER = [
+      "general-purpose",
+      "compute-optimized",
+      "memory-optimized",
+      "gpu-accelerated"
+    ];
+    const FILTER_CATEGORY_LABELS = {
+      "general-purpose": "General purpose",
+      "compute-optimized": "Compute optimized",
+      "memory-optimized": "Memory optimized",
+      "gpu-accelerated": "GPU / accelerated"
+    };
+
+    function getFamily(instanceType = "") {
+      return (instanceType.split(".")[0] ?? "").toLowerCase();
+    }
+
+    function getArchitectureBucket(instance) {
+      const rawArchitecture = instance?.architecture ?? instance?.arch ?? null;
+      if (!rawArchitecture) {
+        return "unknown";
+      }
+
+      if (rawArchitecture === "arm64") {
+        return "graviton";
+      }
+      if (rawArchitecture !== "amd64") {
+        return rawArchitecture;
+      }
+
+      const family = getFamily(instance?.type ?? "");
+      return /a(d)?$/.test(family) ? "x86-amd" : "x86-intel";
+    }
+
+    function getPoolBaseName(set, setIndex) {
+      const baseName = (set?.poolBaseName ?? "").trim();
+      if (baseName) {
+        return baseName;
+      }
+      return setIndex === 0 ? "workers" : `pool-${setIndex + 1}`;
+    }
+
+    function getPoolDisplayName(set, setIndex, poolIndex) {
+      const baseName = getPoolBaseName(set, setIndex);
+      if ((set?.pools?.length ?? 0) > 1) {
+        return `${baseName}-${poolIndex + 1}`;
+      }
+      return baseName;
+    }
+
+    function getSupportedInstancesForRegion() {
+      const instances = snapshotCache?.catalog?.instances ?? [];
+      return instances.filter((instance) => {
+        const supportedRegions = instance?.supported_regions;
+        return !Array.isArray(supportedRegions) || supportedRegions.includes(estimate.region);
+      });
+    }
+
+    function getInstanceTypeOptions() {
+      const instances = getSupportedInstancesForRegion();
+      const familyFilter = instanceFilters.family !== "any" ? instanceFilters.family.toLowerCase() : "";
+      return instances
+        .filter((instance) => {
+          if (!instance?.type) {
+            return false;
+          }
+          const category = instance?.category ?? classifyCategory(instance.type);
+          if (instanceFilters.category !== "any" && category !== instanceFilters.category) {
+            return false;
+          }
+          if (
+            instanceFilters.architecture !== "any" &&
+            getArchitectureBucket(instance) !== instanceFilters.architecture
+          ) {
+            return false;
+          }
+          if (familyFilter && getFamily(instance.type) !== familyFilter) {
+            return false;
+          }
+          if (instanceFilters.minVcpu > 0 && Number(instance?.vcpus ?? 0) < instanceFilters.minVcpu) {
+            return false;
+          }
+          if (
+            instanceFilters.minMemoryGiB > 0 &&
+            Number(instance?.memory_gib ?? 0) < instanceFilters.minMemoryGiB
+          ) {
+            return false;
+          }
+          return true;
+        })
+        .map((instance) => instance.type)
+        .sort((a, b) => a.localeCompare(b));
+    }
+
+    function getFamilyOptionsByCategory() {
+      const optionsByCategory = new Map();
+      FILTER_CATEGORY_ORDER.forEach((category) => optionsByCategory.set(category, new Set()));
+
+      const instances = getSupportedInstancesForRegion();
+      for (const instance of instances) {
+        if (!instance?.type) {
+          continue;
+        }
+        const category = instance?.category ?? classifyCategory(instance.type);
+        if (!optionsByCategory.has(category)) {
+          optionsByCategory.set(category, new Set());
+        }
+        if (instanceFilters.category !== "any" && instanceFilters.category !== category) {
+          continue;
+        }
+        if (
+          instanceFilters.architecture !== "any" &&
+          getArchitectureBucket(instance) !== instanceFilters.architecture
+        ) {
+          continue;
+        }
+        optionsByCategory.get(category).add(getFamily(instance.type));
+      }
+
+      return optionsByCategory;
+    }
+
+    function renderFamilyFilterOptions() {
+      const familySelect = document.getElementById("filter-family");
+      if (!familySelect) {
+        return;
+      }
+
+      const previousValue = instanceFilters.family || "any";
+      const optionsByCategory = getFamilyOptionsByCategory();
+      const optionBlocks = ['<option value="any">Any family</option>'];
+
+      for (const category of FILTER_CATEGORY_ORDER) {
+        const families = Array.from(optionsByCategory.get(category) ?? []).sort((a, b) =>
+          a.localeCompare(b)
+        );
+        if (!families.length) {
+          continue;
+        }
+        const familyOptions = families
+          .map((family) => `<option value="${family}">${family}</option>`)
+          .join("");
+        optionBlocks.push(
+          `<optgroup label="${FILTER_CATEGORY_LABELS[category] ?? category}">${familyOptions}</optgroup>`
+        );
+      }
+
+      familySelect.innerHTML = optionBlocks.join("");
+
+      const familyExists =
+        previousValue === "any" ||
+        Array.from(optionsByCategory.values()).some((set) => set.has(previousValue));
+      const nextValue = familyExists ? previousValue : "any";
+      familySelect.value = nextValue;
+      instanceFilters.family = nextValue;
+    }
+
+    function renderInstanceTypeOptions() {
+      renderFamilyFilterOptions();
+      const datalist = document.getElementById("instance-type-options");
+      const totalSupported = getSupportedInstancesForRegion().length;
+      const options = getInstanceTypeOptions();
+      datalist.innerHTML = options.map((instanceType) => `<option value="${instanceType}"></option>`).join("");
+      const summary = document.getElementById("instance-filter-summary");
+      if (summary) {
+        summary.textContent = `Showing ${options.length} matching instance types (${totalSupported} supported in ${estimate.region}).`;
+      }
+    }
+
+    function readFilterStateFromUI() {
+      const arch = document.getElementById("filter-arch")?.value ?? "x86-intel";
+      const category = document.getElementById("filter-category")?.value ?? "general-purpose";
+      const family = document.getElementById("filter-family")?.value ?? "any";
+      const minVcpu = Number.parseInt(document.getElementById("filter-min-vcpu")?.value ?? "0", 10);
+      const minMemoryGiB = Number.parseInt(
+        document.getElementById("filter-min-memory")?.value ?? "0",
+        10
+      );
+
+      instanceFilters.architecture = arch;
+      instanceFilters.category = category;
+      instanceFilters.family = family.trim() || "any";
+      instanceFilters.minVcpu = Number.isFinite(minVcpu) ? Math.max(0, minVcpu) : 0;
+      instanceFilters.minMemoryGiB = Number.isFinite(minMemoryGiB) ? Math.max(0, minMemoryGiB) : 0;
+    }
+
+    function readModeStateFromUI() {
+      const selectedMode = document.querySelector('input[name="calculator-mode"]:checked')?.value;
+      calculatorMode = selectedMode === "basic" ? "basic" : "expert";
+    }
+
+    function renderModeVisibility() {
+      const basicPanel = document.getElementById("basic-mode-panel");
+      const expertSetActions = document.getElementById("expert-set-actions");
+      const expertFilters = document.getElementById("expert-filters");
+      const filterSummary = document.getElementById("instance-filter-summary");
+      const setList = document.getElementById("initial-set-list");
+      const isBasic = calculatorMode === "basic";
+
+      basicPanel?.classList.toggle("hcp-calculator__is-hidden", !isBasic);
+      expertSetActions?.classList.toggle("hcp-calculator__is-hidden", isBasic);
+      expertFilters?.classList.toggle("hcp-calculator__is-hidden", isBasic);
+      filterSummary?.classList.toggle("hcp-calculator__is-hidden", isBasic);
+      setList?.classList.toggle("hcp-calculator__is-hidden", isBasic);
+    }
+
+    async function resolveSnapshotContext() {
+      try {
+        const snapshots = await loadSnapshotData("/experts/rosa/hcp-cost-calculator/data");
+        snapshotCache = snapshots;
+        const regionPricing = getRegionPricing(snapshots.pricingByRegion, estimate.region);
+        return { snapshots, regionPricing };
+      } catch (error) {
+        console.error("Failed to load pricing snapshot, using fallback pricing.", error);
+        const snapshots = {
+          regions: {
+            regions: [
+              {
+                code: estimate.region,
+                zones: estimate.sets[0].pools.map((pool) => pool.az)
+              }
+            ]
+          },
+          catalog: {
+            instances: [{ type: "m7i.xlarge" }, { type: "m7g.xlarge" }]
+          },
+          manifest: {}
+        };
+        const regionPricing = {
+          region: estimate.region,
+          byInstanceType: {
+            "m7i.xlarge": {
+              onDemandMonthly: 100,
+              oneYearMonthly: 80,
+              threeYearMonthly: 60
+            },
+            "m7g.xlarge": {
+              onDemandMonthly: 82,
+              oneYearMonthly: 67,
+              threeYearMonthly: 49
+            }
+          }
+        };
+        snapshotCache = snapshots;
+        return { snapshots, regionPricing };
+      }
+    }
+
+    function getStandardM7iOptions(regionPricing) {
+      const supported = getSupportedInstancesForRegion();
+      const pricingByType = regionPricing?.byInstanceType ?? {};
+      return supported
+        .filter((instance) => {
+          if (!instance?.type) {
+            return false;
+          }
+          if (getFamily(instance.type) !== "m7i") {
+            return false;
+          }
+          const pricing = pricingByType[instance.type];
+          if (!pricing || !Number.isFinite(Number(pricing.oneYearMonthly))) {
+            return false;
+          }
+          return true;
+        })
+        .map((instance) => {
+          const vcpus = Number(instance?.vcpus ?? 0);
+          const memoryGiB = Number(instance?.memory_gib ?? 0);
+          if (!(vcpus > 0 && memoryGiB > 0)) {
+            return null;
+          }
+          return {
+            instanceType: instance.type,
+            vcpus,
+            memoryGiB,
+            oneYearMonthly: Number(pricingByType[instance.type].oneYearMonthly)
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+          if (a.vcpus !== b.vcpus) {
+            return a.vcpus - b.vcpus;
+          }
+          return a.oneYearMonthly - b.oneYearMonthly;
+        });
+    }
+
+    function splitNodesAcrossPools(totalNodes, poolCount) {
+      const base = Math.floor(totalNodes / poolCount);
+      const remainder = totalNodes % poolCount;
+      return Array.from({ length: poolCount }, (_, index) => base + (index < remainder ? 1 : 0));
+    }
+
+    function getBalancedNodePlan(requestedNodeCount, poolCount) {
+      const safePoolCount = Math.max(1, poolCount);
+      const balancedTotalNodes = Math.ceil(requestedNodeCount / safePoolCount) * safePoolCount;
+      const nodesPerPool = balancedTotalNodes / safePoolCount;
+      return { balancedTotalNodes, nodesPerPool };
+    }
+
+    function pickBasicModeCandidate(regionPricing) {
+      const requested = Number.parseInt(document.getElementById("basic-vcpu-input")?.value ?? "12", 10);
+      const requiredVcpu = Number.isFinite(requested) ? Math.max(1, requested) : 12;
+      const options = getStandardM7iOptions(regionPricing);
+      if (!options.length) {
+        return null;
+      }
+
+      const candidates = options
+        .map((option) => {
+          const nodeCount = Math.max(1, Math.ceil(requiredVcpu / option.vcpus));
+          return {
+            ...option,
+            nodeCount,
+            roundedTotalVcpu: option.vcpus * nodeCount,
+            roundedTotalMemoryGiB: option.memoryGiB * nodeCount,
+            oneYearMonthlyTotal: option.oneYearMonthly * nodeCount
+          };
+        })
+        .sort((a, b) => {
+          if (a.oneYearMonthlyTotal !== b.oneYearMonthlyTotal) {
+            return a.oneYearMonthlyTotal - b.oneYearMonthlyTotal;
+          }
+          if (a.roundedTotalVcpu !== b.roundedTotalVcpu) {
+            return a.roundedTotalVcpu - b.roundedTotalVcpu;
+          }
+          return a.nodeCount - b.nodeCount;
+        });
+
+      return {
+        ...candidates[0],
+        requestedVcpu: requiredVcpu
+      };
+    }
+
+    async function renderBasicSizingPreview() {
+      const roundedNode = document.getElementById("basic-rounded-vcpu");
+      const memoryNode = document.getElementById("basic-matching-memory");
+      const resultNode = document.getElementById("basic-mode-result");
+      const { regionPricing } = await resolveSnapshotContext();
+      const candidate = pickBasicModeCandidate(regionPricing);
+      const defaultSet = estimate.sets[0];
+      const poolCount = Math.max(1, defaultSet?.pools?.length ?? 3);
+
+      if (!candidate) {
+        if (roundedNode) {
+          roundedNode.value = "N/A";
+        }
+        if (memoryNode) {
+          memoryNode.value = "N/A";
+        }
+        if (resultNode) {
+          resultNode.textContent = "No standard m7i options found for this region snapshot.";
+        }
+        return null;
+      }
+
+      const { balancedTotalNodes, nodesPerPool } = getBalancedNodePlan(candidate.nodeCount, poolCount);
+      const roundedTotalVcpu = candidate.vcpus * balancedTotalNodes;
+      const roundedTotalMemoryGiB = candidate.memoryGiB * balancedTotalNodes;
+
+      if (roundedNode) {
+        roundedNode.value = `${roundedTotalVcpu}`;
+      }
+      if (memoryNode) {
+        memoryNode.value = `${roundedTotalMemoryGiB}`;
+      }
+      return {
+        ...candidate,
+        balancedTotalNodes,
+        nodesPerPool,
+        roundedTotalVcpu,
+        roundedTotalMemoryGiB
+      };
+    }
+
+    async function applyBasicSizing() {
+      const resultNode = document.getElementById("basic-mode-result");
+      const defaultSet = estimate.sets[0];
+      if (!defaultSet) {
+        if (resultNode) {
+          resultNode.textContent = "Default set is missing, unable to apply basic sizing.";
+        }
+        return;
+      }
+
+      const { regionPricing } = await resolveSnapshotContext();
+      renderInstanceTypeOptions();
+
+      const candidate = await renderBasicSizingPreview();
+      if (!candidate) {
+        return;
+      }
+
+      estimate = {
+        ...estimate,
+        sets: estimate.sets.map((set, setIndex) => {
+          if (setIndex !== 0) {
+            return set;
+          }
+          return {
+            ...set,
+            instanceType: candidate.instanceType,
+            pools: set.pools.map((pool) => {
+              const nodes = candidate.nodesPerPool;
+              return {
+                ...pool,
+                min: nodes,
+                max: nodes
+              };
+            })
+          };
+        })
+      };
+
+      if (resultNode) {
+        resultNode.textContent =
+          `Applied ${candidate.instanceType} with ${candidate.balancedTotalNodes} nodes ` +
+          `(${candidate.roundedTotalVcpu} total vCPU / ${candidate.roundedTotalMemoryGiB} total GiB).`;
+      }
+
+      calculatorMode = "expert";
+      const expertModeInput = document.getElementById("mode-expert");
+      if (expertModeInput) {
+        expertModeInput.checked = true;
+      }
+      renderModeVisibility();
+
+      renderSetList();
+      renderScenarioTotals();
+    }
+
+    function getCurrentZones() {
+      const zones = estimate.sets[0]?.pools?.map((pool) => pool.az) ?? [];
+      if (zones.length === 3) {
+        return zones;
+      }
+      return ["us-east-1a", "us-east-1b", "us-east-1c"];
+    }
+
+    function updatePoolValue(setId, az, field, rawValue) {
+      const parsed = Number.parseInt(rawValue, 10);
+      const nextValue = Number.isFinite(parsed) ? parsed : 0;
+      estimate = {
+        ...estimate,
+        sets: estimate.sets.map((set) => {
+          if (set.id !== setId) {
+            return set;
+          }
+          return {
+            ...set,
+            pools: set.pools.map((pool) =>
+              pool.az === az ? { ...pool, [field]: nextValue } : pool
+            )
+          };
+        })
+      };
+    }
+
+    function updateSetInstanceType(setId, instanceType) {
+      estimate = {
+        ...estimate,
+        sets: estimate.sets.map((set) =>
+          set.id === setId ? { ...set, instanceType } : set
+        )
+      };
+    }
+
+    function updateSetPoolBaseName(setId, poolBaseName) {
+      estimate = {
+        ...estimate,
+        sets: estimate.sets.map((set) =>
+          set.id === setId ? { ...set, poolBaseName } : set
+        )
+      };
+    }
+
+    function updatePoolAz(setId, sourceAz, targetAz) {
+      estimate = {
+        ...estimate,
+        sets: estimate.sets.map((set) => {
+          if (set.id !== setId) {
+            return set;
+          }
+          return {
+            ...set,
+            pools: set.pools.map((pool) =>
+              pool.az === sourceAz ? { ...pool, az: targetAz } : pool
+            )
+          };
+        })
+      };
+    }
+
+    function removeSet(setId) {
+      const defaultSetId = estimate.sets[0]?.id;
+      if (setId === defaultSetId) {
+        return;
+      }
+      estimate = {
+        ...estimate,
+        sets: estimate.sets.filter((set) => set.id !== setId)
+      };
+    }
+
+    function renderSetList() {
+      const setList = document.getElementById("initial-set-list");
+      const allowedAzs = getAllowedAzs();
+      const defaultSetId = estimate.sets[0]?.id;
+      setList.innerHTML = estimate.sets
+        .map((set, index) => {
+          const poolBaseName = getPoolBaseName(set, index);
+          const poolRows = set.pools
+            .map(
+              (pool, poolIndex) => `
+                <div class="hcp-calculator__pool-row">
+                  <span>${getPoolDisplayName(set, index, poolIndex)}</span>
+                  <select
+                    data-action="pool-az"
+                    data-set-id="${set.id}"
+                    data-source-az="${pool.az}"
+                    aria-label="${set.name} availability zone"
+                  >
+                    ${allowedAzs
+                      .map(
+                        (az) =>
+                          `<option value="${az}" ${az === pool.az ? "selected" : ""}>${az}</option>`
+                      )
+                      .join("")}
+                  </select>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="${pool.min}"
+                    data-action="pool-input"
+                    data-set-id="${set.id}"
+                    data-pool-az="${pool.az}"
+                    data-field="min"
+                    title="Set Min to your expected steady-state nodes"
+                    aria-label="${set.name} ${pool.az} minimum nodes (expected steady-state)"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="${pool.max}"
+                    data-action="pool-input"
+                    data-set-id="${set.id}"
+                    data-pool-az="${pool.az}"
+                    data-field="max"
+                    aria-label="${set.name} ${pool.az} maximum nodes"
+                  />
+                  <span class="hcp-calculator__muted" data-pool-capacity="${set.id}:${poolIndex}">
+                    vCPU/memory unavailable
+                  </span>
+                </div>
+              `
+            )
+            .join("");
+          return `
+            <li class="hcp-calculator__set-card">
+              <div class="hcp-calculator__set-header">
+                <p class="hcp-calculator__set-title"><strong>${set.name}</strong></p>
+                <div class="hcp-calculator__set-controls">
+                  <input
+                    type="text"
+                    value="${poolBaseName}"
+                    data-action="pool-base-name"
+                    data-set-id="${set.id}"
+                    aria-label="${set.name} machine pool base name"
+                    ${index === 0 ? "readonly" : ""}
+                  />
+                  <input
+                    type="text"
+                    list="instance-type-options"
+                    value="${set.instanceType}"
+                    data-action="instance-type"
+                    data-set-id="${set.id}"
+                    aria-label="${set.name} instance type"
+                  />
+                  <button
+                    type="button"
+                    class="hcp-calculator__button"
+                    data-action="delete-set"
+                    data-set-id="${set.id}"
+                    ${set.id === defaultSetId ? "disabled" : ""}
+                    aria-label="Delete ${set.name}"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+              <p class="hcp-calculator__muted">${index === 0 ? "Default set" : "Additional set"}</p>
+              <div class="hcp-calculator__pool-grid">
+                <div class="hcp-calculator__pool-row hcp-calculator__pool-row--header">
+                  <span>Pool</span>
+                  <span>AZ</span>
+                  <span title="Set Min to your expected steady-state nodes">Min (steady)</span>
+                  <span>Max</span>
+                  <span>vCPU / Memory</span>
+                </div>
+                ${poolRows}
+              </div>
+            </li>
+          `;
+        })
+        .join("");
+      renderPoolCapacityInline();
+    }
+
+    function formatUsd(amount) {
+      return usdFormatter.format(amount);
+    }
+
+    function formatUsdHourly(amount) {
+      return usdHourlyFormatter.format(amount);
+    }
+
+    function formatNumberRange(minValue, maxValue) {
+      const roundedMin = Math.round(minValue);
+      const roundedMax = Math.round(maxValue);
+      if (roundedMin === roundedMax) {
+        return `${roundedMin}`;
+      }
+      return `${roundedMin} to ${roundedMax}`;
+    }
+
+    function renderPoolCapacityInline() {
+      const catalogByType = new Map(
+        (snapshotCache?.catalog?.instances ?? [])
+          .filter((instance) => instance?.type)
+          .map((instance) => [instance.type, instance])
+      );
+
+      for (const set of estimate.sets ?? []) {
+        const instance = catalogByType.get(set.instanceType);
+        const perNodeVcpu = Number(instance?.vcpus ?? 0);
+        const perNodeMemory = Number(instance?.memory_gib ?? 0);
+        (set.pools ?? []).forEach((pool, poolIndex) => {
+          const target = document.querySelector(`[data-pool-capacity="${set.id}:${poolIndex}"]`);
+          if (!target) {
+            return;
+          }
+          if (!(perNodeVcpu > 0 && perNodeMemory > 0)) {
+            target.textContent = "vCPU/memory unavailable";
+            return;
+          }
+          const minNodes = Number(pool.min ?? 0);
+          const maxNodes = Number(pool.max ?? 0);
+          const minVcpu = minNodes * perNodeVcpu;
+          const maxVcpu = maxNodes * perNodeVcpu;
+          const minMemory = minNodes * perNodeMemory;
+          const maxMemory = maxNodes * perNodeMemory;
+          target.textContent =
+            `vCPU ${formatNumberRange(minVcpu, maxVcpu)}, ` +
+            `memory ${formatNumberRange(minMemory, maxMemory)} GiB`;
+        });
+      }
+    }
+
+    function renderMachinePoolSummary(regionPricing) {
+      const tbody = document.getElementById("machine-pool-summary-body");
+      const ec2Header = document.getElementById("machine-pool-ec2-header");
+      const rhHeader = document.getElementById("machine-pool-rh-header");
+      const totalHeader = document.getElementById("machine-pool-total-header");
+      const clusterFeeNode = document.getElementById("machine-pool-cluster-fee");
+      const clusterFeeTotalNode = document.getElementById("machine-pool-cluster-fee-total");
+      const totalEc2Node = document.getElementById("machine-pool-total-ec2");
+      const totalRhNode = document.getElementById("machine-pool-total-rh");
+      const totalCostNode = document.getElementById("machine-pool-total-cost");
+      const selectedUnit = document.getElementById("summary-price-unit")?.value ?? "hourly";
+      if (
+        !tbody ||
+        !ec2Header ||
+        !rhHeader ||
+        !totalHeader ||
+        !clusterFeeNode ||
+        !clusterFeeTotalNode ||
+        !totalEc2Node ||
+        !totalRhNode ||
+        !totalCostNode
+      ) {
+        return;
+      }
+
+      const pricingByType = regionPricing?.byInstanceType ?? {};
+      const catalogByType = new Map(
+        (snapshotCache?.catalog?.instances ?? [])
+          .filter((instance) => instance?.type)
+          .map((instance) => [instance.type, instance])
+      );
+
+      const poolRows = [];
+      for (let setIndex = 0; setIndex < (estimate.sets ?? []).length; setIndex += 1) {
+        const set = estimate.sets[setIndex];
+        for (let poolIndex = 0; poolIndex < (set.pools ?? []).length; poolIndex += 1) {
+          poolRows.push({
+            set,
+            setIndex,
+            pool: set.pools[poolIndex],
+            poolIndex
+          });
+        }
+      }
+
+      let totalEc2Monthly = 0;
+      let totalRhWorkerMonthly = 0;
+
+      const formatByUnit = (monthlyValue) => {
+        if (selectedUnit === "monthly") {
+          return formatUsd(monthlyValue);
+        }
+        if (selectedUnit === "yearly") {
+          return formatUsd(monthlyValue * MONTHS_PER_YEAR);
+        }
+        return formatUsdHourly(monthlyValue / HOURS_PER_MONTH);
+      };
+
+      const unitLabel = selectedUnit === "yearly" ? "Yearly" : selectedUnit === "monthly" ? "Monthly" : "Hourly";
+      ec2Header.textContent = `EC2 cost (${unitLabel})`;
+      rhHeader.textContent = `Red Hat cost (${unitLabel})`;
+      totalHeader.textContent = `Total cost (${unitLabel})`;
+
+      tbody.innerHTML = poolRows
+        .map(({ set, setIndex, pool, poolIndex }) => {
+          const poolName = getPoolDisplayName(set, setIndex, poolIndex);
+          const instance = catalogByType.get(set.instanceType);
+          const pricing = pricingByType[set.instanceType];
+          const nodes = Number(pool.min ?? 0);
+
+          if (!instance || !pricing) {
+            return `
+              <tr>
+                <th scope="row">${poolName}</th>
+                <td>${set.instanceType}</td>
+                <td>N/A</td>
+                <td>N/A</td>
+                <td>N/A</td>
+              </tr>
+            `;
+          }
+
+          const ec2Monthly = nodes * Number(pricing.onDemandMonthly ?? 0);
+          const poolVcpu = nodes * Number(instance.vcpus ?? 0);
+          const rhWorkerMonthly =
+            Math.ceil(poolVcpu / ROSA_VCPU_BLOCK_SIZE) * ROSA_PAYGO_RATE_MONTHLY;
+          const totalPoolMonthly = ec2Monthly + rhWorkerMonthly;
+
+          totalEc2Monthly += ec2Monthly;
+          totalRhWorkerMonthly += rhWorkerMonthly;
+
+          return `
+            <tr>
+              <th scope="row">${poolName}</th>
+              <td>${set.instanceType}</td>
+              <td>${formatByUnit(ec2Monthly)}</td>
+              <td>${formatByUnit(rhWorkerMonthly)}</td>
+              <td>${formatByUnit(totalPoolMonthly)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      const totalRhMonthly = totalRhWorkerMonthly + HCP_CLUSTER_FEE_MONTHLY;
+      const totalMonthly = totalEc2Monthly + totalRhMonthly;
+      totalEc2Node.textContent = formatByUnit(totalEc2Monthly);
+      totalRhNode.textContent = formatByUnit(totalRhMonthly);
+      clusterFeeNode.textContent = formatByUnit(HCP_CLUSTER_FEE_MONTHLY);
+      clusterFeeTotalNode.textContent = formatByUnit(HCP_CLUSTER_FEE_MONTHLY);
+      totalCostNode.textContent = formatByUnit(totalMonthly);
+    }
+
+    function renderTierTable(totals) {
+      const rows = [
+        { label: "On-Demand", values: totals.onDemand },
+        { label: "1-year", values: totals.oneYear },
+        { label: "3-year", values: totals.threeYear }
+      ];
+      const tableBody = document.getElementById("tier-comparison-body");
+      tableBody.innerHTML = rows
+        .map(
+          (row) => `
+          <tr>
+            <th scope="row">${row.label}</th>
+            <td>${formatUsdHourly(row.values.min / HOURS_PER_MONTH)}</td>
+            <td>${formatUsdHourly(row.values.max / HOURS_PER_MONTH)}</td>
+            <td>${formatUsd(row.values.min * MONTHS_PER_YEAR)}</td>
+            <td>${formatUsd(row.values.max * MONTHS_PER_YEAR)}</td>
+          </tr>
+        `
+        )
+        .join("");
+    }
+
+    function renderIssuePanel(targetId, title, issues, variantClass) {
+      const root = document.getElementById(targetId);
+      if (!issues.length) {
+        root.innerHTML = "";
+        return;
+      }
+      const list = issues.map((issue) => `<li>${issue.message}</li>`).join("");
+      root.innerHTML = `
+        <section class="hcp-calculator__issue-panel ${variantClass}">
+          <h2>${title}</h2>
+          <ul>${list}</ul>
+        </section>
+      `;
+    }
+
+    function renderBlockedResults() {
+      const summaryBody = document.getElementById("machine-pool-summary-body");
+      if (summaryBody) {
+        summaryBody.innerHTML = `
+        <tr>
+          <td colspan="5">Fix hard validation errors to view machine pool summary.</td>
+        </tr>
+      `;
+      }
+
+      const clusterFeeNode = document.getElementById("machine-pool-cluster-fee");
+      const clusterFeeTotalNode = document.getElementById("machine-pool-cluster-fee-total");
+      const totalEc2Node = document.getElementById("machine-pool-total-ec2");
+      const totalRhNode = document.getElementById("machine-pool-total-rh");
+      const totalCostNode = document.getElementById("machine-pool-total-cost");
+      if (clusterFeeNode) clusterFeeNode.textContent = "--";
+      if (clusterFeeTotalNode) clusterFeeTotalNode.textContent = "--";
+      if (totalEc2Node) totalEc2Node.textContent = "--";
+      if (totalRhNode) totalRhNode.textContent = "--";
+      if (totalCostNode) totalCostNode.textContent = "--";
+
+      const tableBody = document.getElementById("tier-comparison-body");
+      tableBody.innerHTML = `<tr><td colspan="5">Fix hard validation errors to view tier totals.</td></tr>`;
+    }
+
+    async function renderScenarioTotals() {
+      const { snapshots, regionPricing } = await resolveSnapshotContext();
+      renderRegionSelect();
+      renderInstanceTypeOptions();
+      renderPoolCapacityInline();
+
+      const selectedRegion = snapshots?.regions?.regions?.find(
+        (region) => region.code === estimate.region
+      );
+      const allowedAzs = selectedRegion?.zones ?? [];
+      const supportedTypes = (snapshots?.catalog?.instances ?? []).map((instance) => instance.type);
+      const validation = validateEstimate({
+        estimate,
+        allowedAzs,
+        supportedTypes,
+        snapshotGeneratedAt: snapshots?.manifest?.generated_at,
+        staleSnapshotDaysThreshold: 30,
+        burstSpreadThreshold: 30,
+        enableAzImbalanceWarning: true,
+        azImbalanceThreshold: 3
+      });
+
+      renderIssuePanel(
+        "validation-errors",
+        "Hard validation errors",
+        validation.errors,
+        "hcp-calculator__issue-panel--error"
+      );
+      renderIssuePanel(
+        "validation-warnings",
+        "Warnings",
+        validation.warnings,
+        "hcp-calculator__issue-panel--warning"
+      );
+
+      if (validation.errors.length > 0) {
+        renderBlockedResults();
+        return;
+      }
+
+      const totals = calculateScenarioTotals(estimate, regionPricing);
+      renderMachinePoolSummary(regionPricing);
+      renderTierTable(totals);
+    }
+
+    renderSetList();
+    readModeStateFromUI();
+    renderModeVisibility();
+    document.getElementById("create-3az-set").addEventListener("click", () => {
+      const setIndex = estimate.sets.length + 1;
+      const newSet = createDefaultSet({
+        name: `Set ${setIndex}`,
+        instanceType: "m7i.xlarge",
+        poolBaseName: `pool-${setIndex}`,
+        zones: getCurrentZones()
+      });
+      estimate = {
+        ...estimate,
+        sets: [...estimate.sets, newSet]
+      };
+      renderSetList();
+      renderScenarioTotals();
+    });
+    document.getElementById("create-1az-set").addEventListener("click", () => {
+      const setIndex = estimate.sets.length + 1;
+      const [primaryAz] = getAllowedAzs();
+      const newSet = createSet({
+        name: `Set ${setIndex}`,
+        instanceType: "m7i.xlarge",
+        poolBaseName: `pool-${setIndex}`,
+        zones: [primaryAz],
+        enforceThreeZones: false
+      });
+      estimate = {
+        ...estimate,
+        sets: [...estimate.sets, newSet]
+      };
+      renderSetList();
+      renderScenarioTotals();
+    });
+
+    document.getElementById("region-select").addEventListener("change", (event) => {
+      const nextRegion = event.target.value;
+      const regionList = snapshotCache?.regions?.regions ?? [];
+      const selectedRegion = regionList.find((region) => region.code === nextRegion);
+      const nextAzs = selectedRegion?.zones ?? [];
+      estimate = {
+        ...estimate,
+        region: nextRegion,
+        sets: remapSetsToRegionAzs(estimate.sets, nextAzs)
+      };
+      renderSetList();
+      renderScenarioTotals();
+      if (calculatorMode === "basic") {
+        renderBasicSizingPreview();
+      }
+    });
+
+    document.getElementById("initial-set-list").addEventListener("input", (event) => {
+      const input = event.target.closest('input[data-action="pool-input"]');
+      if (input) {
+        const setId = input.dataset.setId;
+        const az = input.dataset.poolAz;
+        const field = input.dataset.field;
+        updatePoolValue(setId, az, field, input.value);
+        renderScenarioTotals();
+        return;
+      }
+
+      const instanceInput = event.target.closest('input[data-action="instance-type"]');
+      if (!instanceInput) {
+        return;
+      }
+      const setId = instanceInput.dataset.setId;
+      updateSetInstanceType(setId, instanceInput.value.trim());
+      renderSetList();
+      renderScenarioTotals();
+    });
+
+    document.getElementById("initial-set-list").addEventListener("change", (event) => {
+      const poolNameInput = event.target.closest('input[data-action="pool-base-name"]');
+      if (poolNameInput) {
+        const setId = poolNameInput.dataset.setId;
+        const nextValue = poolNameInput.value.trim();
+        if (nextValue) {
+          updateSetPoolBaseName(setId, nextValue);
+          renderSetList();
+        }
+        return;
+      }
+
+      const azSelect = event.target.closest('select[data-action="pool-az"]');
+      if (!azSelect) {
+        return;
+      }
+      const setId = azSelect.dataset.setId;
+      const sourceAz = azSelect.dataset.sourceAz;
+      const targetAz = azSelect.value;
+      updatePoolAz(setId, sourceAz, targetAz);
+      renderSetList();
+      renderScenarioTotals();
+    });
+
+    document.getElementById("initial-set-list").addEventListener("click", (event) => {
+      const deleteButton = event.target.closest('button[data-action="delete-set"]');
+      if (!deleteButton || deleteButton.disabled) {
+        return;
+      }
+      removeSet(deleteButton.dataset.setId);
+      renderSetList();
+      renderScenarioTotals();
+    });
+
+    const filterRoot = document.querySelector(".hcp-calculator__filters");
+    if (filterRoot) {
+      filterRoot.addEventListener("input", () => {
+        readFilterStateFromUI();
+        renderInstanceTypeOptions();
+      });
+      filterRoot.addEventListener("change", () => {
+        readFilterStateFromUI();
+        renderInstanceTypeOptions();
+      });
+    }
+
+    document.querySelectorAll('input[name="calculator-mode"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        readModeStateFromUI();
+        renderModeVisibility();
+        if (calculatorMode === "basic") {
+          renderBasicSizingPreview();
+        }
+      });
+    });
+
+    document.getElementById("basic-apply").addEventListener("click", () => {
+      applyBasicSizing();
+    });
+
+    document.getElementById("basic-vcpu-input").addEventListener("input", () => {
+      if (calculatorMode === "basic") {
+        renderBasicSizingPreview();
+      }
+    });
+
+    document.getElementById("summary-price-unit").addEventListener("change", () => {
+      renderScenarioTotals();
+    });
+
+    renderScenarioTotals();
+    renderBasicSizingPreview();
+  </script>
+</body>
+</html>

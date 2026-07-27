@@ -16,6 +16,10 @@ preview-search: search-index
 publish:
 	hugo --minify --theme rhds
 
+.PHONY: refresh-hcp-pricing
+refresh-hcp-pricing:
+	node scripts/refresh-hcp-calculator-data.mjs
+
 .PHONY: preview.%
 preview.%:
 

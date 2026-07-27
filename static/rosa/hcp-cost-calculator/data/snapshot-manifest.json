@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "generated_at": "2026-07-27T02:50:27.259Z",
+  "runtime_base_path": "/experts/rosa/hcp-cost-calculator/data",
+  "regions": [
+    "us-east-1"
+  ],
+  "files": {
+    "regions": "regions.json",
+    "instance_catalog": "instance-catalog.json",
+    "pricing": {
+      "us-east-1": "pricing/us-east-1.json"
+    }
+  }
+}

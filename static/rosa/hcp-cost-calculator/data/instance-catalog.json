@@ -1,0 +1,5757 @@
+{
+  "version": 1,
+  "generated_at": "2026-07-27T02:50:27.259Z",
+  "instances": [
+    {
+      "type": "a1.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "a1.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "a1.metal",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "a1.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.18xlarge",
+      "architecture": "amd64",
+      "vcpus": 72,
+      "memory_gib": 144,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.9xlarge",
+      "architecture": "amd64",
+      "vcpus": 36,
+      "memory_gib": 72,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5ad.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5ad.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5ad.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5ad.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5ad.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5ad.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5ad.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.18xlarge",
+      "architecture": "amd64",
+      "vcpus": 72,
+      "memory_gib": 144,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.9xlarge",
+      "architecture": "amd64",
+      "vcpus": 36,
+      "memory_gib": 72,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5d.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5n.18xlarge",
+      "architecture": "amd64",
+      "vcpus": 72,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5n.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 21,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5n.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 42,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5n.9xlarge",
+      "architecture": "amd64",
+      "vcpus": 36,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5n.metal",
+      "architecture": "amd64",
+      "vcpus": 72,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c5n.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 10.5,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.metal",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6g.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gd.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gd.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gd.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gd.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gd.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gd.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gd.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gn.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gn.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gn.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gn.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gn.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6gn.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6i.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6id.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c6in.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.metal-48xl",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7g.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gd.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gd.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gd.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gd.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gd.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gd.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gd.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gn.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gn.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gn.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gn.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gn.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gn.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7gn.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i-flex.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i-flex.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i-flex.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i-flex.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i-flex.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i-flex.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.metal-24xl",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.metal-48xl",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c7i.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.24xlarge",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.48xlarge",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.metal-24xl",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.metal-48xl",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "c8g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "dl1.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4ad.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4ad.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4ad.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4ad.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4ad.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4dn.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4dn.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4dn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4dn.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4dn.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4dn.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g4dn.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5g.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g5g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "g6e.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "gr6.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "gr6.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "hpc7g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "hpc7g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "hpc7g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 488,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 61,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 122,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 244,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 30.5,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3en.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3en.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3en.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3en.3xlarge",
+      "architecture": "amd64",
+      "vcpus": 12,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3en.6xlarge",
+      "architecture": "amd64",
+      "vcpus": 24,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3en.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i3en.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "i4i.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "im4gn.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "im4gn.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "im4gn.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "im4gn.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "im4gn.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf1.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf1.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf1.6xlarge",
+      "architecture": "amd64",
+      "vcpus": 24,
+      "memory_gib": 48,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf1.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 8,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf2.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf2.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf2.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "inf2.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "is4gen.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 48,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "is4gen.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "is4gen.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "is4gen.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 24,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5ad.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5ad.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5ad.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5ad.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5ad.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5ad.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5ad.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5d.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5dn.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5n.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5zn.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5zn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5zn.3xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 48,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5zn.6xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5zn.metal",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m5zn.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.metal",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6g.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6gd.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6gd.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6gd.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6gd.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6gd.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6gd.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6gd.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6i.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6id.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6idn.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m6in.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.metal-48xl",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7g.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7gd.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7gd.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7gd.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7gd.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7gd.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7gd.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7gd.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i-flex.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i-flex.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i-flex.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i-flex.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.metal-24xl",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.metal-48xl",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m7i.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.24xlarge",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.48xlarge",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.metal-24xl",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.metal-48xl",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "m8g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "p3dn.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "p4d.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 1152,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "p4de.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 1152,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "p5.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 2048,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r4.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 488,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r4.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 61,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r4.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 122,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r4.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 244,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r4.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 30.5,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5ad.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5ad.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5ad.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5ad.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5ad.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5ad.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5ad.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5b.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5d.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5dn.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.metal",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r5n.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.metal",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6g.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6gd.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6gd.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6gd.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6gd.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6gd.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6gd.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6gd.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6i.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6id.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6idn.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r6in.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.48xlarge",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.metal-48xl",
+      "architecture": "amd64",
+      "vcpus": 192,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7g.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7gd.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7gd.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7gd.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7gd.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7gd.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7gd.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7gd.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.metal-24xl",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7i.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.metal-16xl",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.metal-32xl",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r7iz.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.24xlarge",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.48xlarge",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.metal-24xl",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.metal-48xl",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "r8g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "t3.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "t3.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "t3a.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "t3a.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "t4g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "t4g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 16,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "trn1.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "trn1.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "trn1n.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "u-3tb1.56xlarge",
+      "architecture": "amd64",
+      "vcpus": 224,
+      "memory_gib": 3072,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "u-6tb1.112xlarge",
+      "architecture": "amd64",
+      "vcpus": 448,
+      "memory_gib": 6144,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "u-6tb1.56xlarge",
+      "architecture": "amd64",
+      "vcpus": 224,
+      "memory_gib": 6144,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "u7i-12tb.224xlarge",
+      "architecture": "amd64",
+      "vcpus": 896,
+      "memory_gib": 12288,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "u7in-16tb.224xlarge",
+      "architecture": "amd64",
+      "vcpus": 896,
+      "memory_gib": 16384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "u7in-24tb.224xlarge",
+      "architecture": "amd64",
+      "vcpus": 896,
+      "memory_gib": 24576,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "u7in-32tb.224xlarge",
+      "architecture": "amd64",
+      "vcpus": 896,
+      "memory_gib": 32768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 976,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 1952,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1e.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 1952,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1e.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 244,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1e.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 3904,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1e.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 488,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1e.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 976,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x1e.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 122,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2gd.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2gd.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2gd.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2gd.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2gd.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2gd.metal",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2gd.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2idn.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2idn.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2idn.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 2048,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2idn.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 2048,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.16xlarge",
+      "architecture": "amd64",
+      "vcpus": 64,
+      "memory_gib": 2048,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.24xlarge",
+      "architecture": "amd64",
+      "vcpus": 96,
+      "memory_gib": 3072,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.32xlarge",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 4096,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.metal",
+      "architecture": "amd64",
+      "vcpus": 128,
+      "memory_gib": 4096,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iedn.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iezn.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iezn.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iezn.4xlarge",
+      "architecture": "amd64",
+      "vcpus": 16,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iezn.6xlarge",
+      "architecture": "amd64",
+      "vcpus": 24,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iezn.8xlarge",
+      "architecture": "amd64",
+      "vcpus": 32,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x2iezn.metal",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.12xlarge",
+      "architecture": "arm64",
+      "vcpus": 48,
+      "memory_gib": 768,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.16xlarge",
+      "architecture": "arm64",
+      "vcpus": 64,
+      "memory_gib": 1024,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.24xlarge",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.2xlarge",
+      "architecture": "arm64",
+      "vcpus": 8,
+      "memory_gib": 128,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.48xlarge",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 3072,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.4xlarge",
+      "architecture": "arm64",
+      "vcpus": 16,
+      "memory_gib": 256,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.8xlarge",
+      "architecture": "arm64",
+      "vcpus": 32,
+      "memory_gib": 512,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.metal-24xl",
+      "architecture": "arm64",
+      "vcpus": 96,
+      "memory_gib": 1536,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.metal-48xl",
+      "architecture": "arm64",
+      "vcpus": 192,
+      "memory_gib": 3072,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "x8g.xlarge",
+      "architecture": "arm64",
+      "vcpus": 4,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "z1d.12xlarge",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "z1d.2xlarge",
+      "architecture": "amd64",
+      "vcpus": 8,
+      "memory_gib": 64,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "z1d.3xlarge",
+      "architecture": "amd64",
+      "vcpus": 12,
+      "memory_gib": 96,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "z1d.6xlarge",
+      "architecture": "amd64",
+      "vcpus": 24,
+      "memory_gib": 192,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "z1d.metal",
+      "architecture": "amd64",
+      "vcpus": 48,
+      "memory_gib": 384,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    },
+    {
+      "type": "z1d.xlarge",
+      "architecture": "amd64",
+      "vcpus": 4,
+      "memory_gib": 32,
+      "supported_regions": [
+        "us-east-1"
+      ]
+    }
+  ]
+}
