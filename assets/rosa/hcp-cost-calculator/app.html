@@ -1546,6 +1546,15 @@
       shareCodeFromLocation
     } from "./js/share-state.mjs";
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
     const usdFormatter = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -1961,7 +1970,10 @@
 
       const currentRegion = estimate.region || "us-east-1";
       select.innerHTML = uniqueCodes
-        .map((code) => `<option value="${code}" ${code === currentRegion ? "selected" : ""}>${code}</option>`)
+        .map((code) => {
+          const safe = escapeHtml(code);
+          return `<option value="${safe}" ${code === currentRegion ? "selected" : ""}>${safe}</option>`;
+        })
         .join("");
     }
 
@@ -2118,33 +2130,41 @@
           const totalVcpu = perNodeVcpu > 0 ? perNodeVcpu * entry.count : "N/A";
           const totalMemory =
             perNodeMemory > 0 ? `${perNodeMemory * entry.count} GiB` : "N/A";
+          const safeType = escapeHtml(entry.instanceType);
+          const safeRegion = escapeHtml(entry.region);
+          const safeCategory = escapeHtml(
+            FILTER_CATEGORY_LABELS[classifyCategory(entry.instanceType)] ?? "General purpose"
+          );
+          const safeCount = escapeHtml(entry.count);
+          const safeTotalVcpu = escapeHtml(totalVcpu);
+          const safeTotalMemory = escapeHtml(totalMemory);
           return `
           <tr>
-            <th scope="row">${entry.instanceType}</th>
-            <td>${entry.region}</td>
+            <th scope="row">${safeType}</th>
+            <td>${safeRegion}</td>
             <td class="hcp-calculator__col-count">
               <input
                 id="basic-count-${index}"
                 type="number"
                 min="1"
                 step="1"
-                value="${entry.count}"
+                value="${safeCount}"
                 class="hcp-calculator__basic-table-input"
                 data-action="basic-count"
                 data-index="${index}"
-                aria-label="${entry.instanceType} total instances"
+                aria-label="${safeType} total instances"
               />
             </td>
-            <td>${FILTER_CATEGORY_LABELS[classifyCategory(entry.instanceType)] ?? "General purpose"}</td>
-            <td>${totalVcpu}</td>
-            <td>${totalMemory}</td>
+            <td>${safeCategory}</td>
+            <td>${safeTotalVcpu}</td>
+            <td>${safeTotalMemory}</td>
             <td>
               <button
                 type="button"
                 class="hcp-calculator__button"
                 data-action="basic-remove"
                 data-index="${index}"
-                aria-label="Remove ${entry.instanceType} from basic sizing"
+                aria-label="Remove ${safeType} from basic sizing"
               >
                 Remove
               </button>
@@ -2256,10 +2276,13 @@
           continue;
         }
         const familyOptions = families
-          .map((family) => `<option value="${family}">${family}</option>`)
+          .map((family) => {
+            const safe = escapeHtml(family);
+            return `<option value="${safe}">${safe}</option>`;
+          })
           .join("");
         optionBlocks.push(
-          `<optgroup label="${FILTER_CATEGORY_LABELS[category] ?? category}">${familyOptions}</optgroup>`
+          `<optgroup label="${escapeHtml(FILTER_CATEGORY_LABELS[category] ?? category)}">${familyOptions}</optgroup>`
         );
       }
 
@@ -2280,7 +2303,9 @@
       const datalist = document.getElementById("instance-type-options");
       const totalSupported = getSupportedInstancesForRegion().length;
       const options = getInstanceTypeOptions();
-      datalist.innerHTML = options.map((instanceType) => `<option value="${instanceType}"></option>`).join("");
+      datalist.innerHTML = options
+        .map((instanceType) => `<option value="${escapeHtml(instanceType)}"></option>`)
+        .join("");
       const summary = document.getElementById("instance-filter-summary");
       if (summary) {
         summary.textContent = `Showing ${options.length} matching instance types (${totalSupported} supported in ${estimate.region}).`;
@@ -2429,7 +2454,10 @@
       }
       const previous = select.value || estimate.sets[0]?.instanceType || "m7i.xlarge";
       select.innerHTML = supported
-        .map((type) => `<option value="${type}" ${type === previous ? "selected" : ""}>${type}</option>`)
+        .map((type) => {
+          const safe = escapeHtml(type);
+          return `<option value="${safe}" ${type === previous ? "selected" : ""}>${safe}</option>`;
+        })
         .join("");
       if (!supported.includes(select.value)) {
         const fallback = supported.includes(estimate.sets[0]?.instanceType)
@@ -2659,82 +2687,89 @@
       setList.innerHTML = estimate.sets
         .map((set, index) => {
           const poolBaseName = getPoolBaseName(set, index);
+          const safeSetId = escapeHtml(set.id);
+          const safeSetName = escapeHtml(set.name);
+          const safePoolBaseName = escapeHtml(poolBaseName);
+          const safeInstanceType = escapeHtml(set.instanceType);
           const poolRows = set.pools
-            .map(
-              (pool, poolIndex) => `
+            .map((pool, poolIndex) => {
+              const safeAz = escapeHtml(pool.az);
+              const safePoolName = escapeHtml(getPoolDisplayName(set, index, poolIndex));
+              const azOptions = allowedAzs
+                .map((az) => {
+                  const safeOptionAz = escapeHtml(az);
+                  return `<option value="${safeOptionAz}" ${az === pool.az ? "selected" : ""}>${safeOptionAz}</option>`;
+                })
+                .join("");
+              return `
                 <div class="hcp-calculator__pool-row">
-                  <span>${getPoolDisplayName(set, index, poolIndex)}</span>
+                  <span>${safePoolName}</span>
                   <select
                     data-action="pool-az"
-                    data-set-id="${set.id}"
-                    data-source-az="${pool.az}"
-                    aria-label="${set.name} availability zone"
+                    data-set-id="${safeSetId}"
+                    data-source-az="${safeAz}"
+                    aria-label="${safeSetName} availability zone"
                   >
-                    ${allowedAzs
-                      .map(
-                        (az) =>
-                          `<option value="${az}" ${az === pool.az ? "selected" : ""}>${az}</option>`
-                      )
-                      .join("")}
+                    ${azOptions}
                   </select>
                   <input
                     type="number"
                     min="0"
                     step="1"
-                    value="${pool.min}"
+                    value="${escapeHtml(pool.min)}"
                     data-action="pool-input"
-                    data-set-id="${set.id}"
-                    data-pool-az="${pool.az}"
+                    data-set-id="${safeSetId}"
+                    data-pool-az="${safeAz}"
                     data-field="min"
                     title="Set Min to your expected steady-state nodes"
-                    aria-label="${set.name} ${pool.az} minimum nodes (expected steady-state)"
+                    aria-label="${safeSetName} ${safeAz} minimum nodes (expected steady-state)"
                   />
                   <input
                     type="number"
                     min="0"
                     step="1"
-                    value="${pool.max}"
+                    value="${escapeHtml(pool.max)}"
                     data-action="pool-input"
-                    data-set-id="${set.id}"
-                    data-pool-az="${pool.az}"
+                    data-set-id="${safeSetId}"
+                    data-pool-az="${safeAz}"
                     data-field="max"
-                    aria-label="${set.name} ${pool.az} maximum nodes"
+                    aria-label="${safeSetName} ${safeAz} maximum nodes"
                   />
-                  <span class="hcp-calculator__muted" data-pool-capacity="${set.id}:${poolIndex}">
+                  <span class="hcp-calculator__muted" data-pool-capacity="${safeSetId}:${poolIndex}">
                     vCPU/memory unavailable
                   </span>
                 </div>
-              `
-            )
+              `;
+            })
             .join("");
           return `
             <li class="hcp-calculator__set-card">
               <div class="hcp-calculator__set-header">
-                <p class="hcp-calculator__set-title"><strong>${set.name}</strong></p>
+                <p class="hcp-calculator__set-title"><strong>${safeSetName}</strong></p>
                 <div class="hcp-calculator__set-controls">
                   <input
                     type="text"
-                    value="${poolBaseName}"
+                    value="${safePoolBaseName}"
                     data-action="pool-base-name"
-                    data-set-id="${set.id}"
-                    aria-label="${set.name} machine pool base name"
+                    data-set-id="${safeSetId}"
+                    aria-label="${safeSetName} machine pool base name"
                     ${index === 0 ? "readonly" : ""}
                   />
                   <input
                     type="text"
                     list="instance-type-options"
-                    value="${set.instanceType}"
+                    value="${safeInstanceType}"
                     data-action="instance-type"
-                    data-set-id="${set.id}"
-                    aria-label="${set.name} instance type"
+                    data-set-id="${safeSetId}"
+                    aria-label="${safeSetName} instance type"
                   />
                   <button
                     type="button"
                     class="hcp-calculator__button"
                     data-action="delete-set"
-                    data-set-id="${set.id}"
+                    data-set-id="${safeSetId}"
                     ${set.id === defaultSetId ? "disabled" : ""}
-                    aria-label="Delete ${set.name}"
+                    aria-label="Delete ${safeSetName}"
                   >
                     Delete
                   </button>
@@ -3005,15 +3040,21 @@
         .map((pool) => {
           const vcpuLabel = pool.vcpus == null ? "N/A" : `${pool.vcpus}`;
           const memoryLabel = pool.memoryGiB == null ? "N/A" : `${pool.memoryGiB} GiB`;
+          const safePool = escapeHtml(pool.pool);
+          const safeRegion = escapeHtml(pool.region);
+          const safeType = escapeHtml(pool.instanceType);
+          const safeCount = escapeHtml(pool.count);
+          const safeVcpu = escapeHtml(vcpuLabel);
+          const safeMemory = escapeHtml(memoryLabel);
           if (!pool.available) {
             return `
               <tr>
-                <th scope="row">${pool.pool}</th>
-                <td>${pool.region}</td>
-                <td>${pool.instanceType}</td>
-                <td class="hcp-calculator__col-count">${pool.count}</td>
-                <td>${vcpuLabel}</td>
-                <td>${memoryLabel}</td>
+                <th scope="row">${safePool}</th>
+                <td>${safeRegion}</td>
+                <td>${safeType}</td>
+                <td class="hcp-calculator__col-count">${safeCount}</td>
+                <td>${safeVcpu}</td>
+                <td>${safeMemory}</td>
                 <td>N/A</td>
                 <td>N/A</td>
                 <td>N/A</td>
@@ -3022,15 +3063,15 @@
           }
           return `
             <tr>
-              <th scope="row">${pool.pool}</th>
-              <td>${pool.region}</td>
-              <td>${pool.instanceType}</td>
-              <td class="hcp-calculator__col-count">${pool.count}</td>
-              <td>${vcpuLabel}</td>
-              <td>${memoryLabel}</td>
-              <td>${formatByUnit(pool.ec2Monthly, summary.unit)}</td>
-              <td>${formatByUnit(pool.rhWorkerMonthly, summary.unit)}</td>
-              <td>${formatByUnit(pool.totalPoolMonthly, summary.unit)}</td>
+              <th scope="row">${safePool}</th>
+              <td>${safeRegion}</td>
+              <td>${safeType}</td>
+              <td class="hcp-calculator__col-count">${safeCount}</td>
+              <td>${safeVcpu}</td>
+              <td>${safeMemory}</td>
+              <td>${escapeHtml(formatByUnit(pool.ec2Monthly, summary.unit))}</td>
+              <td>${escapeHtml(formatByUnit(pool.rhWorkerMonthly, summary.unit))}</td>
+              <td>${escapeHtml(formatByUnit(pool.totalPoolMonthly, summary.unit))}</td>
             </tr>
           `;
         })
@@ -3388,10 +3429,10 @@
         root.innerHTML = "";
         return;
       }
-      const list = issues.map((issue) => `<li>${issue.message}</li>`).join("");
+      const list = issues.map((issue) => `<li>${escapeHtml(issue.message)}</li>`).join("");
       root.innerHTML = `
-        <section class="hcp-calculator__issue-panel ${variantClass}">
-          <h2>${title}</h2>
+        <section class="hcp-calculator__issue-panel ${escapeHtml(variantClass)}">
+          <h2>${escapeHtml(title)}</h2>
           <ul>${list}</ul>
         </section>
       `;
@@ -3444,10 +3485,19 @@
             generatedDateLabel = generatedAt;
           }
         }
-        ec2SnapshotNote.innerHTML =
-          `EC2 costs are based on a pricing snapshot collected on ${generatedDateLabel}. ` +
-          `For official ROSA service pricing details, see ` +
-          `<a href="https://aws.amazon.com/rosa/pricing/" target="_blank" rel="noopener noreferrer">AWS ROSA pricing</a>.`;
+        ec2SnapshotNote.replaceChildren();
+        ec2SnapshotNote.append(
+          document.createTextNode(
+            `EC2 costs are based on a pricing snapshot collected on ${generatedDateLabel}. For official ROSA service pricing details, see `
+          )
+        );
+        const pricingLink = document.createElement("a");
+        pricingLink.href = "https://aws.amazon.com/rosa/pricing/";
+        pricingLink.target = "_blank";
+        pricingLink.rel = "noopener noreferrer";
+        pricingLink.textContent = "AWS ROSA pricing";
+        ec2SnapshotNote.append(pricingLink);
+        ec2SnapshotNote.append(document.createTextNode("."));
       }
 
       const allowedAzs = Array.from(
