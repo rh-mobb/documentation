@@ -47,6 +47,8 @@ test("buildScenarioCsv and parseScenarioCsv round-trip sizing and discounting", 
           region: "us-east-1",
           instanceType: "m7i.xlarge",
           count: 3,
+          vcpus: 12,
+          memoryGiB: 48,
           ec2CostUsd: 100.5,
           nodeFeeUsd: 50.25,
           totalCostUsd: 150.75
@@ -55,12 +57,16 @@ test("buildScenarioCsv and parseScenarioCsv round-trip sizing and discounting", 
       clusterFee: {
         label: "HCP cluster fee (2 clusters)",
         count: "",
+        vcpus: "",
+        memoryGiB: "",
         ec2CostUsd: 0,
         nodeFeeUsd: 365,
         totalCostUsd: 365
       },
       total: {
         count: 3,
+        vcpus: 12,
+        memoryGiB: 48,
         ec2CostUsd: 100.5,
         nodeFeeUsd: 415.25,
         totalCostUsd: 515.75
@@ -74,7 +80,7 @@ test("buildScenarioCsv and parseScenarioCsv round-trip sizing and discounting", 
   assert.match(csv, /SECTION,Discounting/);
   assert.match(csv, /SECTION,Summary/);
   assert.match(csv, /m7i\.2xlarge,eu-west-1,6/);
-  assert.match(csv, /pool,workers,us-east-1,m7i\.xlarge,3,100\.5/);
+  assert.match(csv, /pool,workers,us-east-1,m7i\.xlarge,3,12,48,100\.5/);
   assert.match(csv, /cluster_fee,HCP cluster fee \(2 clusters\)/);
 
   const parsed = parseScenarioCsv(csv);

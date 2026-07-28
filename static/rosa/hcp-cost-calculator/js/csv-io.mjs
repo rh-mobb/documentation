@@ -112,6 +112,8 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
     "region",
     "instance_type",
     "count",
+    "vcpus",
+    "memory_gib",
     "ec2_cost_usd",
     "node_fee_usd",
     "total_cost_usd"
@@ -123,6 +125,8 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
       pool.region,
       pool.instanceType,
       pool.count ?? "",
+      pool.vcpus ?? "",
+      pool.memoryGiB ?? "",
       pool.ec2CostUsd == null ? "" : roundMoney(pool.ec2CostUsd),
       pool.nodeFeeUsd == null ? "" : roundMoney(pool.nodeFeeUsd),
       pool.totalCostUsd == null ? "" : roundMoney(pool.totalCostUsd)
@@ -135,6 +139,8 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
     "",
     "",
     clusterFee.count ?? "",
+    clusterFee.vcpus ?? "",
+    clusterFee.memoryGiB ?? "",
     roundMoney(clusterFee.ec2CostUsd ?? 0),
     roundMoney(clusterFee.nodeFeeUsd ?? 0),
     roundMoney(clusterFee.totalCostUsd ?? 0)
@@ -146,6 +152,8 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
     "",
     "",
     total.count ?? "",
+    total.vcpus ?? "",
+    total.memoryGiB ?? "",
     roundMoney(total.ec2CostUsd ?? 0),
     roundMoney(total.nodeFeeUsd ?? 0),
     roundMoney(total.totalCostUsd ?? 0)
