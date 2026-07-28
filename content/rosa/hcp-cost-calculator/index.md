@@ -1,6 +1,6 @@
 ---
 title: "ROSA HCP Cost Calculator"
-description: "Estimate ROSA HCP machine pool costs across min and max scenarios."
+description: "Estimate ROSA HCP worker and cluster fees by instance type, region, and discount options."
 date: 2026-07-27
 tags: ["ROSA", "ROSA HCP"]
 authors:

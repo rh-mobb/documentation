@@ -15,5 +15,6 @@ hero_secondary:
   url: "https://console.redhat.com/openshift/create/rosa/getstarted"
 hero_background: openshift
 home_featured_paths:
+  - rosa/hcp-cost-calculator
   - rosa/cost-explorer
 ---
