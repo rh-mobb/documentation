@@ -104,6 +104,31 @@
       align-items: end;
     }
 
+    .hcp-calculator__basic-picker {
+      display: flex;
+      gap: 0.5rem;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .hcp-calculator__basic-meta {
+      display: flex;
+      gap: 0.5rem;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .hcp-calculator__basic-table-input {
+      width: 4.5rem;
+      max-width: 4.5rem;
+      box-sizing: border-box;
+    }
+
+    .hcp-calculator__table .hcp-calculator__col-count {
+      width: 1%;
+      white-space: nowrap;
+    }
+
     .hcp-calculator__basic-actions {
       display: flex;
       gap: 0.5rem;
@@ -361,6 +386,110 @@
       color: #50555a;
       line-height: 1.5;
     }
+
+    .hcp-calculator__step {
+      margin-top: 1rem;
+      border: 1px solid #d2d2d2;
+      border-radius: 0.5rem;
+      background: #ffffff;
+      padding: 0.5rem 0.8rem;
+    }
+
+    .hcp-calculator__step > summary {
+      cursor: pointer;
+      font-size: 1rem;
+      color: #151515;
+      font-weight: 600;
+      margin: 0.2rem 0;
+    }
+
+    .hcp-calculator__step-body {
+      margin-top: 0.75rem;
+    }
+
+    .hcp-calculator__step-section {
+      margin-top: 1rem;
+    }
+
+    .hcp-calculator__step-section:first-of-type {
+      margin-top: 0;
+    }
+
+    .hcp-calculator__substep {
+      margin-top: 1rem;
+      border: 1px solid #d2d2d2;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #fafafa;
+    }
+
+    .hcp-calculator__substep > summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #151515;
+    }
+
+    .hcp-calculator__program-list {
+      display: grid;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .hcp-calculator__program {
+      border: 1px solid #d2d2d2;
+      border-radius: 0.4rem;
+      background: #ffffff;
+      padding: 0.4rem 0.65rem;
+    }
+
+    .hcp-calculator__program > summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #151515;
+    }
+
+    .hcp-calculator__program-body {
+      margin-top: 0.6rem;
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .hcp-calculator__program-body p {
+      margin: 0;
+    }
+
+    .hcp-calculator__program-body ul {
+      margin: 0.35rem 0 0;
+      padding-left: 1.2rem;
+    }
+
+    .hcp-calculator__program-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #6a6e73;
+      margin-bottom: 0.2rem;
+    }
+
+    .hcp-calculator__io-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 0.75rem 0 1rem;
+    }
+
+    .hcp-calculator__io-status {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #6a6e73;
+    }
+
+    .hcp-calculator__io-status--error {
+      color: #c9190b;
+    }
   </style>
 </head>
 <body>
@@ -368,53 +497,238 @@
   __NAV__
   <main class="hcp-calculator" id="hcp-calculator-root">
     <h1>ROSA HCP Cost Calculator</h1>
-    <p class="hcp-calculator__muted">Initial estimate state and scenario totals</p>
-    <p class="hcp-calculator__muted">
-      Use <strong>Min</strong> as your expected steady-state node count. Set <strong>Max</strong> for burst capacity.
-    </p>
     <p class="hcp-calculator__estimate-disclaimer">
       Planning estimates only. Not a formal quote, commercial offer, contractual commitment, or billing guarantee.
     </p>
-    <section class="hcp-calculator__mode-switch" aria-label="Calculator mode">
-      <strong>Mode</strong>
-      <label for="mode-basic">
-        <input id="mode-basic" type="radio" name="calculator-mode" value="basic" />
-        Basic
-      </label>
-      <label for="mode-expert">
-        <input id="mode-expert" type="radio" name="calculator-mode" value="expert" checked />
-        Expert
-      </label>
-    </section>
-    <section class="hcp-calculator__basic-panel hcp-calculator__is-hidden" id="basic-mode-panel">
-      <h2>Basic sizing</h2>
-      <p class="hcp-calculator__muted">Enter target vCPU, basic mode rounds up to the nearest standard m7i size and shows matching memory.</p>
-      <div class="hcp-calculator__basic-grid">
-        <div class="hcp-calculator__filter-field">
-          <label for="basic-vcpu-input">Target vCPU</label>
-          <input id="basic-vcpu-input" type="number" min="1" step="1" value="12" />
-        </div>
-        <div class="hcp-calculator__filter-field">
-          <label for="basic-rounded-vcpu">Rounded total vCPU</label>
-          <input id="basic-rounded-vcpu" type="text" readonly />
-        </div>
-        <div class="hcp-calculator__filter-field">
-          <label for="basic-matching-memory">Matching total memory (GiB)</label>
-          <input id="basic-matching-memory" type="text" readonly />
-        </div>
+    <p class="hcp-calculator__muted">
+      Inspired by Will Garcia’s
+      <a href="https://rosa.wigarcia.com/" target="_blank" rel="noopener noreferrer">ROSA Calculator</a>.
+      Thank you, Will, for the original work and for sharing it with the community.
+    </p>
+    <details class="hcp-calculator__step" id="step-1-cluster-sizing" open>
+      <summary>Step 1 - Cluster sizing</summary>
+      <div class="hcp-calculator__step-body">
+        <section class="hcp-calculator__basic-panel hcp-calculator__is-hidden" id="basic-mode-panel">
+          <p class="hcp-calculator__muted">Add one or more instance types and total instance counts to build a single-AZ sizing estimate.</p>
+          <div class="hcp-calculator__basic-meta">
+            <div class="hcp-calculator__filter-field" style="max-width: 190px;">
+              <label for="cluster-count">Number of clusters</label>
+              <input id="cluster-count" type="number" min="1" step="1" value="1" />
+            </div>
+          </div>
+          <div class="hcp-calculator__basic-picker">
+            <div class="hcp-calculator__filter-field">
+              <label for="region-select">Region</label>
+              <select id="region-select">
+                <option value="us-east-1" selected>us-east-1</option>
+              </select>
+            </div>
+            <div class="hcp-calculator__filter-field">
+              <label for="basic-filter-arch">Architecture</label>
+              <select id="basic-filter-arch">
+                <option value="any">Any</option>
+                <option value="graviton">Graviton (ARM)</option>
+                <option value="x86-intel" selected>x86 Intel</option>
+                <option value="x86-amd">x86 AMD</option>
+              </select>
+            </div>
+            <div class="hcp-calculator__filter-field">
+              <label for="basic-filter-category">Category</label>
+              <select id="basic-filter-category">
+                <option value="any">Any</option>
+                <option value="general-purpose" selected>General purpose</option>
+                <option value="compute-optimized">Compute optimized</option>
+                <option value="memory-optimized">Memory optimized</option>
+                <option value="gpu-accelerated">GPU / accelerated</option>
+              </select>
+            </div>
+            <div class="hcp-calculator__filter-field">
+              <label for="basic-filter-family">Instance family</label>
+              <select id="basic-filter-family">
+                <option value="m7i" selected>m7i</option>
+              </select>
+            </div>
+            <div class="hcp-calculator__filter-field" style="min-width: 240px;">
+              <label for="basic-instance-type">Instance type</label>
+              <select id="basic-instance-type">
+                <option value="m7i.xlarge" selected>m7i.xlarge</option>
+              </select>
+            </div>
+            <button type="button" class="hcp-calculator__button" id="basic-add-instance">Add</button>
+          </div>
+          <div class="hcp-calculator__table-wrap">
+            <table class="hcp-calculator__table" aria-label="Basic mode instance mix">
+              <thead>
+                <tr>
+                  <th scope="col">Type</th>
+                  <th scope="col">Region</th>
+                  <th scope="col" class="hcp-calculator__col-count">Count</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">vCPUs</th>
+                  <th scope="col">Memory</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="basic-instance-list"></tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row" colspan="4">Totals</th>
+                  <td id="basic-rounded-vcpu">--</td>
+                  <td id="basic-matching-memory">--</td>
+                  <td>--</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="hcp-calculator__basic-actions">
+            <p class="hcp-calculator__basic-result" id="basic-mode-result">Changes apply automatically.</p>
+          </div>
+        </section>
       </div>
-      <div class="hcp-calculator__basic-actions">
-        <button type="button" class="hcp-calculator__button" id="basic-apply">Apply basic sizing</button>
-        <p class="hcp-calculator__basic-result" id="basic-mode-result">No basic sizing applied yet.</p>
+    </details>
+    <details class="hcp-calculator__step" id="step-2-discounting" open>
+      <summary>Step 2 - Discounting</summary>
+      <div class="hcp-calculator__step-body">
+        <div class="hcp-calculator__step-section">
+          <p><strong>Approx EC2 Savings Plan discount (%)</strong></p>
+          <p class="hcp-calculator__muted">Approximate EC2 Savings Plan discount is an estimate for planning and applies only to EC2 infrastructure costs.</p>
+          <div class="hcp-calculator__filter-field" style="max-width: 320px;">
+            <input
+              id="summary-ec2-discount-percent"
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              value="0"
+              aria-label="Approx EC2 Savings Plan discount (%)"
+            />
+          </div>
+        </div>
+        <div class="hcp-calculator__step-section">
+          <p><strong>Private Offer - Red Hat</strong></p>
+          <p class="hcp-calculator__muted">AWS Marketplace Private Offer for the ROSA Worker Node Fee Per 4 vCPU.</p>
+          <div class="hcp-calculator__filter-field" style="max-width: 360px;">
+            <select id="summary-rh-contract-tier" aria-label="Private Offer - Red Hat">
+              <option value="onDemand" selected>PAYGO</option>
+              <option value="oneYear">1-year (33% off PAYGO)</option>
+              <option value="threeYear">3-year (55% off PAYGO)</option>
+            </select>
+          </div>
+        </div>
+        <details class="hcp-calculator__substep">
+          <summary>Additional Programs ROSA is eligible for</summary>
+          <div class="hcp-calculator__program-list">
+            <details class="hcp-calculator__program">
+              <summary>AWS Marketplace Private Offers Discount</summary>
+              <div class="hcp-calculator__program-body">
+                <p><a href="https://docs.aws.amazon.com/marketplace/latest/buyerguide/buyer-private-offers.html" target="_blank" rel="noopener noreferrer">Open program page</a></p>
+                <div>
+                  <span class="hcp-calculator__program-label">Description</span>
+                  <p>The AWS Marketplace seller private offer feature enables you to receive product pricing and EULA terms from a seller that aren't publicly available. You negotiate pricing and terms with the seller, and the seller creates a private offer for the AWS account that you designate. You accept the private offer and start receiving the negotiated price and terms of use.</p>
+                </div>
+                <div>
+                  <span class="hcp-calculator__program-label">Eligibility</span>
+                  <p>Issued by Red Hat or AWS Partner eligible for <a href="https://aws.amazon.com/marketplace/features/cpprivateoffers" target="_blank" rel="noopener noreferrer">Channel Partner Private Offers (CPPO)</a></p>
+                </div>
+              </div>
+            </details>
+            <details class="hcp-calculator__program">
+              <summary>AWS and Red Hat PoC Credits Discount</summary>
+              <div class="hcp-calculator__program-body">
+                <div>
+                  <span class="hcp-calculator__program-label">Description</span>
+                  <p>Partner Opportunity Acceleration (POA) funding for POC and Migrations: cash reimbursement, AWS promotional credits.</p>
+                </div>
+                <div>
+                  <span class="hcp-calculator__program-label">Eligibility</span>
+                  <p>Contact <a href="mailto:aws-redhat-partnerteam@amazon.com"><strong>aws-redhat-partnerteam@amazon.com</strong></a></p>
+                </div>
+              </div>
+            </details>
+            <details class="hcp-calculator__program">
+              <summary>Discounts for existing Red Hat OpenShift and IBM customers</summary>
+              <div class="hcp-calculator__program-body">
+                <p><a href="https://aws.amazon.com/rosa/pricing/" target="_blank" rel="noopener noreferrer">Open program page</a></p>
+                <div>
+                  <span class="hcp-calculator__program-label">Description</span>
+                  <p>Customers migrating non-ROSA OpenShift workloads to ROSA are eligible for a 75% discount off the ROSA service fee 1-year contract rate over the remaining term of their non-ROSA OpenShift subscriptions.</p>
+                </div>
+                <div>
+                  <span class="hcp-calculator__program-label">Eligibility</span>
+                  <p>Contact <a href="mailto:aws-redhat-partnerteam@amazon.com"><strong>aws-redhat-partnerteam@amazon.com</strong></a></p>
+                </div>
+              </div>
+            </details>
+            <details class="hcp-calculator__program">
+              <summary>AWS Migration Acceleration Program (MAP)</summary>
+              <div class="hcp-calculator__program-body">
+                <p><a href="https://aws.amazon.com/migration-acceleration-program/" target="_blank" rel="noopener noreferrer">Open program page</a></p>
+                <div>
+                  <span class="hcp-calculator__program-label">Description</span>
+                  <p>Migration Acceleration Program (MAP) funds support you with migrations or modernizations of any size or workload to AWS, at each phase of the customer’s migration journey. Receive cash or AWS promotional credits to originate opportunities, accelerate customer migration or modernizations workloads to AWS and grow your Migration practices on AWS.</p>
+                </div>
+                <div>
+                  <span class="hcp-calculator__program-label">Eligibility</span>
+                  <p>Contact <a href="mailto:aws-redhat-partnerteam@amazon.com"><strong>aws-redhat-partnerteam@amazon.com</strong></a></p>
+                </div>
+              </div>
+            </details>
+            <details class="hcp-calculator__program">
+              <summary>AWS VMware Migration Accelerator</summary>
+              <div class="hcp-calculator__program-body">
+                <p><a href="https://aws.amazon.com/vmware/migrationaccelerator/" target="_blank" rel="noopener noreferrer">Open program page</a></p>
+                <div>
+                  <span class="hcp-calculator__program-label">Description</span>
+                  <p>Until December 31, 2024, VMware Cloud on AWS customers can earn AWS promotional credits for migrating virtual machines (VMs) to Amazon EC2.</p>
+                  <ul>
+                    <li>Migrate 80+ VMs in a month, get up to $400 credit per migrated VM</li>
+                    <li>Migrate 40 to 79 VMs in a month, get up to $200 credit per migrated VM</li>
+                  </ul>
+                </div>
+                <div>
+                  <span class="hcp-calculator__program-label">Eligibility</span>
+                  <p>To qualify, each migrated VM must run on AWS for at least 720 hours after migration. VMware Migration Accelerator incentives are not applicable to Amazon EC2 T2 and T3 instances.</p>
+                </div>
+              </div>
+            </details>
+            <details class="hcp-calculator__program">
+              <summary>AWS Windows Migration Accelerator</summary>
+              <div class="hcp-calculator__program-body">
+                <p><a href="https://aws.amazon.com/application-migration-service/windows/" target="_blank" rel="noopener noreferrer">Open program page</a></p>
+                <div>
+                  <span class="hcp-calculator__program-label">Description</span>
+                  <p>Save costs with AWS Promotional Credits when you accelerate migrations of Windows workloads to AWS. Until December 31, 2024, customers using Application Migration Service to migrate:</p>
+                  <ul>
+                    <li>At least 40 servers to AWS in one month, including a minimum of 15 Windows servers, may be eligible to receive a $200 AWS Promotional Credit per Windows server.</li>
+                    <li>If you migrate more than 80 servers, including at least 25 Windows servers, in a calendar month, we will increase the discount to $250 AWS Promotional Credit for each Windows server you migrate to AWS using AWS Application Migration Service.</li>
+                  </ul>
+                </div>
+                <div>
+                  <span class="hcp-calculator__program-label">Eligibility</span>
+                  <p>Contact <a href="mailto:WMA-MGN@amazon.com"><strong>WMA-MGN@amazon.com</strong></a></p>
+                </div>
+              </div>
+            </details>
+            <details class="hcp-calculator__program">
+              <summary>AWS Partner Network (APN) Innovation Sandbox Credits</summary>
+              <div class="hcp-calculator__program-body">
+                <p><a href="https://aws.amazon.com/partners/funding/" target="_blank" rel="noopener noreferrer">Open program page</a></p>
+                <div>
+                  <span class="hcp-calculator__program-label">Description</span>
+                  <p>Offset AWS usage costs incurred during solution development with AWS Promotional Credits as part of the Innovation Sandbox program. AWS Partners can integrate AWS services into offerings and launch solutions built on AWS, faster and more efficiently.</p>
+                </div>
+                <div>
+                  <span class="hcp-calculator__program-label">Eligibility</span>
+                  <p>Contact <a href="mailto:aws-redhat-partnerteam@amazon.com"><strong>aws-redhat-partnerteam@amazon.com</strong></a></p>
+                </div>
+              </div>
+            </details>
+          </div>
+          <p class="hcp-calculator__muted">Program eligibility and terms change over time, confirm with AWS and Red Hat before relying on these incentives.</p>
+        </details>
       </div>
-    </section>
+    </details>
     <div class="hcp-calculator__set-actions" id="expert-set-actions">
-      <div class="hcp-calculator__filter-field">
-        <label for="region-select">Region</label>
-        <select id="region-select">
-          <option value="us-east-1" selected>us-east-1</option>
-        </select>
-      </div>
       <button type="button" class="hcp-calculator__button" id="create-3az-set">Create 3-AZ set</button>
       <button type="button" class="hcp-calculator__button" id="create-1az-set">Create 1-AZ set</button>
     </div>
@@ -463,37 +777,53 @@
 
     <section>
       <h2>Scenario summary</h2>
+      <div class="hcp-calculator__io-actions">
+        <button type="button" class="hcp-calculator__button" id="export-scenario-csv">Export CSV</button>
+        <button type="button" class="hcp-calculator__button" id="import-scenario-csv">Import CSV</button>
+        <input id="import-scenario-csv-input" type="file" accept=".csv,text/csv" hidden />
+        <p class="hcp-calculator__io-status" id="scenario-csv-status" aria-live="polite"></p>
+      </div>
       <p class="hcp-calculator__muted">Machine pool cost summary using min steady-state nodes.</p>
-      <p class="hcp-calculator__muted">Red Hat worker fee assumes PAYGO ($125 per 4-vCPU block monthly).</p>
-      <div class="hcp-calculator__filter-field" style="max-width: 240px;">
-        <label for="summary-price-unit">Summary price unit</label>
-        <select id="summary-price-unit">
-          <option value="hourly">Hourly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly" selected>Yearly</option>
-        </select>
+      <p class="hcp-calculator__muted">All costs in this calculator are shown in USD.</p>
+      <p class="hcp-calculator__muted">Node Fee means Worker Node Fee Per 4 vCPU, modeled from hourly PAYGO with contract discounts of 33% (1-year) and 55% (3-year).</p>
+      <p class="hcp-calculator__muted">Supported regions and instance types follow the official Red Hat ROSA service definition: <a href="https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/introduction_to_rosa/policies-and-service-definition" target="_blank" rel="noopener noreferrer">Policies and service definition</a>.</p>
+      <p class="hcp-calculator__muted" id="ec2-snapshot-note">EC2 costs are based on a pricing snapshot from the last collection date in this repository. For official ROSA service pricing details, see <a href="https://aws.amazon.com/rosa/pricing/" target="_blank" rel="noopener noreferrer">AWS ROSA pricing</a>.</p>
+      <p class="hcp-calculator__muted">Excluded costs: EBS volumes, load balancers (NLB/ELB), data transfer, NAT gateways, and other AWS infrastructure charges outside worker node EC2 pricing.</p>
+      <div class="hcp-calculator__set-actions">
+        <div class="hcp-calculator__filter-field" style="max-width: 240px;">
+          <label for="summary-price-unit">Summary price unit</label>
+          <select id="summary-price-unit">
+            <option value="hourly">Hourly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly" selected>Yearly</option>
+          </select>
+        </div>
       </div>
       <div class="hcp-calculator__table-wrap">
         <table class="hcp-calculator__table" aria-label="Machine pool cost summary">
           <thead>
             <tr>
               <th scope="col">Pool</th>
+              <th scope="col">Region</th>
               <th scope="col">Instance type</th>
+              <th scope="col" class="hcp-calculator__col-count">Count</th>
               <th scope="col" id="machine-pool-ec2-header">EC2 cost</th>
-              <th scope="col" id="machine-pool-rh-header">Red Hat cost</th>
+              <th scope="col" id="machine-pool-rh-header">Node Fee</th>
               <th scope="col" id="machine-pool-total-header">Total cost</th>
             </tr>
           </thead>
           <tbody id="machine-pool-summary-body"></tbody>
           <tfoot>
             <tr>
-              <th scope="row" colspan="2">HCP cluster fee</th>
+              <th scope="row" colspan="3" id="machine-pool-cluster-fee-label">HCP cluster fee</th>
+              <td class="hcp-calculator__col-count"></td>
               <td>--</td>
               <td id="machine-pool-cluster-fee"></td>
               <td id="machine-pool-cluster-fee-total"></td>
             </tr>
             <tr>
-              <th scope="row" colspan="2">Total</th>
+              <th scope="row" colspan="3" id="machine-pool-total-row-label">Total</th>
+              <td class="hcp-calculator__col-count" id="machine-pool-total-count"></td>
               <td id="machine-pool-total-ec2"></td>
               <td id="machine-pool-total-rh"></td>
               <td id="machine-pool-total-cost"></td>
@@ -503,21 +833,6 @@
       </div>
     </section>
 
-    <section class="hcp-calculator__table-wrap">
-      <h2>Tier comparison</h2>
-      <table class="hcp-calculator__table" aria-label="Tier totals by scenario">
-        <thead>
-          <tr>
-            <th scope="col">Pricing tier</th>
-            <th scope="col" title="Set Min to your expected steady-state nodes">Min hourly</th>
-            <th scope="col">Max hourly</th>
-            <th scope="col" title="Set Min to your expected steady-state nodes">Min yearly</th>
-            <th scope="col">Max yearly</th>
-          </tr>
-        </thead>
-        <tbody id="tier-comparison-body"></tbody>
-      </table>
-    </section>
     <p class="hcp-calculator__legal-disclaimer">
       This ROSA HCP calculator provides indicative, non-binding estimates to support planning and budgeting. Results are not a quote, offer, or contractual commitment from Red Hat or its affiliates. Actual charges may vary based on provider pricing changes, account configuration, discounts, taxes, region and availability zone specifics, and runtime usage patterns. Validate final pricing through official commercial channels before procurement or budgeting decisions.
     </p>
@@ -526,9 +841,9 @@
   __PAGEFIND_INIT__
   <script type="module">
     import { createInitialEstimate, createDefaultSet, createSet } from "./js/state.mjs";
-    import { loadSnapshotData, getRegionPricing } from "./js/data-loader.mjs";
-    import { calculateScenarioTotals } from "./js/cost-engine.mjs";
+    import { loadSnapshotData } from "./js/data-loader.mjs";
     import { validateEstimate } from "./js/validation.mjs";
+    import { buildScenarioCsv, parseScenarioCsv } from "./js/csv-io.mjs";
 
     const usdFormatter = new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -543,16 +858,24 @@
     });
     const HOURS_PER_MONTH = 730;
     const MONTHS_PER_YEAR = 12;
+    const HOURS_PER_YEAR = HOURS_PER_MONTH * MONTHS_PER_YEAR;
     const ROSA_VCPU_BLOCK_SIZE = 4;
-    const ROSA_PAYGO_RATE_MONTHLY = 125.0;
-    const HCP_CLUSTER_FEE_MONTHLY = 182.5;
+    const ROSA_PAYGO_RATE_HOURLY = 1500 / HOURS_PER_YEAR;
+    const ROSA_ONE_YEAR_DISCOUNT = 0.33;
+    const ROSA_THREE_YEAR_DISCOUNT = 0.55;
+    const RH_WORKER_RATE_HOURLY_BY_TIER = {
+      onDemand: ROSA_PAYGO_RATE_HOURLY,
+      oneYear: ROSA_PAYGO_RATE_HOURLY * (1 - ROSA_ONE_YEAR_DISCOUNT),
+      threeYear: ROSA_PAYGO_RATE_HOURLY * (1 - ROSA_THREE_YEAR_DISCOUNT)
+    };
+    const HCP_CLUSTER_FEE_HOURLY = 0.25;
 
     let estimate = createInitialEstimate({
       region: "us-east-1",
       zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
     });
     let snapshotCache = null;
-    let calculatorMode = "expert";
+    let calculatorMode = "basic";
     const instanceFilters = {
       architecture: "x86-intel",
       category: "general-purpose",
@@ -560,14 +883,24 @@
       minVcpu: 0,
       minMemoryGiB: 0
     };
+    let basicSelections = [
+      { instanceType: estimate.sets[0]?.instanceType ?? "m7i.xlarge", region: estimate.region, count: 3 }
+    ];
 
     function getAllowedAzs() {
+      return getAllowedAzsForRegion(estimate.region);
+    }
+
+    function getAllowedAzsForRegion(regionCode) {
       const regionList = snapshotCache?.regions?.regions ?? [];
-      const selectedRegion = regionList.find((region) => region.code === estimate.region);
+      const selectedRegion = regionList.find((region) => region.code === regionCode);
       if (selectedRegion?.zones?.length) {
         return selectedRegion.zones;
       }
-      return ["us-east-1a", "us-east-1b", "us-east-1c"];
+      if (regionCode?.startsWith("us-east-1")) {
+        return ["us-east-1a", "us-east-1b", "us-east-1c"];
+      }
+      return [`${regionCode}a`];
     }
 
     function renderRegionSelect() {
@@ -680,6 +1013,125 @@
       });
     }
 
+    function getSupportedBasicInstanceTypesForRegion() {
+      return getSupportedInstancesForRegion()
+        .map((instance) => instance?.type)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b));
+    }
+
+    function getFilteredBasicInstanceTypes() {
+      return getInstanceTypeOptions();
+    }
+
+    function sanitizeBasicSelections() {
+      const validRegions = new Set(
+        (snapshotCache?.regions?.regions ?? [])
+          .map((region) => region?.code)
+          .filter((regionCode) => typeof regionCode === "string" && regionCode.length > 0)
+      );
+      const supportedByType = new Map(
+        (snapshotCache?.catalog?.instances ?? [])
+          .filter((instance) => instance?.type)
+          .map((instance) => [instance.type, new Set(instance?.supported_regions ?? [])])
+      );
+
+      basicSelections = (basicSelections ?? [])
+        .filter((entry) => {
+          if (!entry?.instanceType || !entry?.region) {
+            return false;
+          }
+          if (validRegions.size > 0 && !validRegions.has(entry.region)) {
+            return false;
+          }
+          const supportedRegions = supportedByType.get(entry.instanceType);
+          if (supportedRegions && supportedRegions.size > 0 && !supportedRegions.has(entry.region)) {
+            return false;
+          }
+          return true;
+        })
+        .map((entry) => ({
+          instanceType: entry.instanceType,
+          region: entry.region,
+          count: Math.max(1, Number.parseInt(entry.count, 10) || 1)
+        }));
+    }
+
+    function renderBasicSelectionList() {
+      const list = document.getElementById("basic-instance-list");
+      if (!list) {
+        return;
+      }
+
+      sanitizeBasicSelections();
+      const catalogByType = new Map(
+        (snapshotCache?.catalog?.instances ?? [])
+          .filter((instance) => instance?.type)
+          .map((instance) => [instance.type, instance])
+      );
+      if (!basicSelections.length) {
+        list.innerHTML = '<tr><td colspan="7">No instance types added. Select one and click Add.</td></tr>';
+        return;
+      }
+
+      list.innerHTML = basicSelections
+        .map(
+          (entry, index) => `
+          <tr>
+            <th scope="row">${entry.instanceType}</th>
+            <td>${entry.region}</td>
+            <td class="hcp-calculator__col-count">
+              <input
+                id="basic-count-${index}"
+                type="number"
+                min="1"
+                step="1"
+                value="${entry.count}"
+                class="hcp-calculator__basic-table-input"
+                data-action="basic-count"
+                data-index="${index}"
+                aria-label="${entry.instanceType} total instances"
+              />
+            </td>
+            <td>${FILTER_CATEGORY_LABELS[classifyCategory(entry.instanceType)] ?? "General purpose"}</td>
+            <td>${Number(catalogByType.get(entry.instanceType)?.vcpus ?? 0) || "N/A"}</td>
+            <td>${Number(catalogByType.get(entry.instanceType)?.memory_gib ?? 0) || "N/A"} GiB</td>
+            <td>
+              <button
+                type="button"
+                class="hcp-calculator__button"
+                data-action="basic-remove"
+                data-index="${index}"
+                aria-label="Remove ${entry.instanceType} from basic sizing"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+        `
+        )
+        .join("");
+    }
+
+    function addBasicInstanceSelection() {
+      const select = document.getElementById("basic-instance-type");
+      const selectedType = select?.value?.trim();
+      const selectedRegion = estimate.region;
+      if (!selectedType) {
+        return;
+      }
+
+      const existing = basicSelections.find(
+        (entry) => entry.instanceType === selectedType && entry.region === selectedRegion
+      );
+      if (existing) {
+        existing.count += 1;
+      } else {
+        basicSelections = [...basicSelections, { instanceType: selectedType, region: selectedRegion, count: 1 }];
+      }
+      renderBasicSelectionList();
+    }
+
     function getInstanceTypeOptions() {
       const instances = getSupportedInstancesForRegion();
       const familyFilter = instanceFilters.family !== "any" ? instanceFilters.family.toLowerCase() : "";
@@ -744,13 +1196,13 @@
       return optionsByCategory;
     }
 
-    function renderFamilyFilterOptions() {
-      const familySelect = document.getElementById("filter-family");
+    function renderFamilyFilterOptions(targetSelectId, preferredValue = instanceFilters.family || "any") {
+      const familySelect = document.getElementById(targetSelectId);
       if (!familySelect) {
-        return;
+        return preferredValue;
       }
 
-      const previousValue = instanceFilters.family || "any";
+      const previousValue = preferredValue || familySelect.value || "any";
       const optionsByCategory = getFamilyOptionsByCategory();
       const optionBlocks = ['<option value="any">Any family</option>'];
 
@@ -776,11 +1228,13 @@
         Array.from(optionsByCategory.values()).some((set) => set.has(previousValue));
       const nextValue = familyExists ? previousValue : "any";
       familySelect.value = nextValue;
-      instanceFilters.family = nextValue;
+      return nextValue;
     }
 
     function renderInstanceTypeOptions() {
-      renderFamilyFilterOptions();
+      const familyValue = renderFamilyFilterOptions("filter-family", instanceFilters.family);
+      instanceFilters.family = familyValue;
+      renderFamilyFilterOptions("basic-filter-family", instanceFilters.family);
       const datalist = document.getElementById("instance-type-options");
       const totalSupported = getSupportedInstancesForRegion().length;
       const options = getInstanceTypeOptions();
@@ -808,9 +1262,37 @@
       instanceFilters.minMemoryGiB = Number.isFinite(minMemoryGiB) ? Math.max(0, minMemoryGiB) : 0;
     }
 
+    function readBasicFilterStateFromUI() {
+      const arch = document.getElementById("basic-filter-arch")?.value ?? "x86-intel";
+      const category = document.getElementById("basic-filter-category")?.value ?? "general-purpose";
+      const family = document.getElementById("basic-filter-family")?.value ?? "any";
+
+      instanceFilters.architecture = arch;
+      instanceFilters.category = category;
+      instanceFilters.family = family.trim() || "any";
+      instanceFilters.minVcpu = 0;
+      instanceFilters.minMemoryGiB = 0;
+
+      const expertArch = document.getElementById("filter-arch");
+      const expertCategory = document.getElementById("filter-category");
+      const expertMinVcpu = document.getElementById("filter-min-vcpu");
+      const expertMinMemory = document.getElementById("filter-min-memory");
+      if (expertArch) {
+        expertArch.value = instanceFilters.architecture;
+      }
+      if (expertCategory) {
+        expertCategory.value = instanceFilters.category;
+      }
+      if (expertMinVcpu) {
+        expertMinVcpu.value = "0";
+      }
+      if (expertMinMemory) {
+        expertMinMemory.value = "0";
+      }
+    }
+
     function readModeStateFromUI() {
-      const selectedMode = document.querySelector('input[name="calculator-mode"]:checked')?.value;
-      calculatorMode = selectedMode === "basic" ? "basic" : "expert";
+      calculatorMode = "basic";
     }
 
     function renderModeVisibility() {
@@ -832,8 +1314,7 @@
       try {
         const snapshots = await loadSnapshotData("/experts/rosa/hcp-cost-calculator/data");
         snapshotCache = snapshots;
-        const regionPricing = getRegionPricing(snapshots.pricingByRegion, estimate.region);
-        return { snapshots, regionPricing };
+        return { snapshots };
       } catch (error) {
         console.error("Failed to load pricing snapshot, using fallback pricing.", error);
         const snapshots = {
@@ -846,155 +1327,153 @@
             ]
           },
           catalog: {
-            instances: [{ type: "m7i.xlarge" }, { type: "m7g.xlarge" }]
+            instances: [
+              { type: "m7i.xlarge", vcpus: 4, memory_gib: 16, supported_regions: [estimate.region] },
+              { type: "m7g.xlarge", vcpus: 4, memory_gib: 16, supported_regions: [estimate.region] }
+            ]
+          },
+          pricingByRegion: {
+            [estimate.region]: {
+              region: estimate.region,
+              byInstanceType: {
+                "m7i.xlarge": {
+                  onDemandMonthly: 100,
+                  oneYearMonthly: 80,
+                  threeYearMonthly: 60
+                },
+                "m7g.xlarge": {
+                  onDemandMonthly: 82,
+                  oneYearMonthly: 67,
+                  threeYearMonthly: 49
+                }
+              }
+            }
           },
           manifest: {}
         };
-        const regionPricing = {
-          region: estimate.region,
-          byInstanceType: {
-            "m7i.xlarge": {
-              onDemandMonthly: 100,
-              oneYearMonthly: 80,
-              threeYearMonthly: 60
-            },
-            "m7g.xlarge": {
-              onDemandMonthly: 82,
-              oneYearMonthly: 67,
-              threeYearMonthly: 49
-            }
-          }
-        };
         snapshotCache = snapshots;
-        return { snapshots, regionPricing };
+        return { snapshots };
       }
     }
 
-    function getStandardM7iOptions(regionPricing) {
-      const supported = getSupportedInstancesForRegion();
-      const pricingByType = regionPricing?.byInstanceType ?? {};
-      return supported
-        .filter((instance) => {
-          if (!instance?.type) {
-            return false;
-          }
-          if (getFamily(instance.type) !== "m7i") {
-            return false;
-          }
-          const pricing = pricingByType[instance.type];
-          if (!pricing || !Number.isFinite(Number(pricing.oneYearMonthly))) {
-            return false;
-          }
-          return true;
-        })
-        .map((instance) => {
-          const vcpus = Number(instance?.vcpus ?? 0);
-          const memoryGiB = Number(instance?.memory_gib ?? 0);
-          if (!(vcpus > 0 && memoryGiB > 0)) {
-            return null;
-          }
-          return {
-            instanceType: instance.type,
-            vcpus,
-            memoryGiB,
-            oneYearMonthly: Number(pricingByType[instance.type].oneYearMonthly)
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => {
-          if (a.vcpus !== b.vcpus) {
-            return a.vcpus - b.vcpus;
-          }
-          return a.oneYearMonthly - b.oneYearMonthly;
-        });
-    }
-
-    function splitNodesAcrossPools(totalNodes, poolCount) {
-      const base = Math.floor(totalNodes / poolCount);
-      const remainder = totalNodes % poolCount;
-      return Array.from({ length: poolCount }, (_, index) => base + (index < remainder ? 1 : 0));
-    }
-
-    function getBalancedNodePlan(requestedNodeCount, poolCount) {
-      const safePoolCount = Math.max(1, poolCount);
-      const balancedTotalNodes = Math.ceil(requestedNodeCount / safePoolCount) * safePoolCount;
-      const nodesPerPool = balancedTotalNodes / safePoolCount;
-      return { balancedTotalNodes, nodesPerPool };
-    }
-
-    function pickBasicModeCandidate(regionPricing) {
-      const requested = Number.parseInt(document.getElementById("basic-vcpu-input")?.value ?? "12", 10);
-      const requiredVcpu = Number.isFinite(requested) ? Math.max(1, requested) : 12;
-      const options = getStandardM7iOptions(regionPricing);
-      if (!options.length) {
-        return null;
+    function renderBasicInstanceTypeOptions() {
+      const select = document.getElementById("basic-instance-type");
+      const addButton = document.getElementById("basic-add-instance");
+      if (!select) {
+        return;
       }
 
-      const candidates = options
-        .map((option) => {
-          const nodeCount = Math.max(1, Math.ceil(requiredVcpu / option.vcpus));
-          return {
-            ...option,
-            nodeCount,
-            roundedTotalVcpu: option.vcpus * nodeCount,
-            roundedTotalMemoryGiB: option.memoryGiB * nodeCount,
-            oneYearMonthlyTotal: option.oneYearMonthly * nodeCount
-          };
-        })
-        .sort((a, b) => {
-          if (a.oneYearMonthlyTotal !== b.oneYearMonthlyTotal) {
-            return a.oneYearMonthlyTotal - b.oneYearMonthlyTotal;
-          }
-          if (a.roundedTotalVcpu !== b.roundedTotalVcpu) {
-            return a.roundedTotalVcpu - b.roundedTotalVcpu;
-          }
-          return a.nodeCount - b.nodeCount;
-        });
+      const basicArch = document.getElementById("basic-filter-arch");
+      const basicCategory = document.getElementById("basic-filter-category");
+      if (basicArch) {
+        basicArch.value = instanceFilters.architecture;
+      }
+      if (basicCategory) {
+        basicCategory.value = instanceFilters.category;
+      }
 
-      return {
-        ...candidates[0],
-        requestedVcpu: requiredVcpu
-      };
+      const supported = getFilteredBasicInstanceTypes();
+      if (!supported.length) {
+        select.innerHTML = '<option value="">No matching instances</option>';
+        select.value = "";
+        if (addButton) {
+          addButton.disabled = true;
+        }
+        return;
+      }
+
+      if (addButton) {
+        addButton.disabled = false;
+      }
+      const previous = select.value || estimate.sets[0]?.instanceType || "m7i.xlarge";
+      select.innerHTML = supported
+        .map((type) => `<option value="${type}" ${type === previous ? "selected" : ""}>${type}</option>`)
+        .join("");
+      if (!supported.includes(select.value)) {
+        const fallback = supported.includes(estimate.sets[0]?.instanceType)
+          ? estimate.sets[0].instanceType
+          : supported[0];
+        select.value = fallback;
+      }
+      sanitizeBasicSelections();
+      renderBasicSelectionList();
+    }
+
+    function pickBasicModeCandidates() {
+      sanitizeBasicSelections();
+      const catalogByType = new Map(
+        (snapshotCache?.catalog?.instances ?? [])
+          .filter((instance) => instance?.type)
+          .map((instance) => [instance.type, instance])
+      );
+
+      const candidates = [];
+      for (const selection of basicSelections) {
+        const instance = catalogByType.get(selection.instanceType);
+        if (!instance) {
+          return null;
+        }
+        const supportedRegions = new Set(instance?.supported_regions ?? []);
+        if (supportedRegions.size > 0 && !supportedRegions.has(selection.region)) {
+          return null;
+        }
+        const vcpus = Number(instance?.vcpus ?? 0);
+        const memoryGiB = Number(instance?.memory_gib ?? 0);
+        if (!(vcpus > 0 && memoryGiB > 0)) {
+          return null;
+        }
+        candidates.push({
+          instanceType: selection.instanceType,
+          region: selection.region,
+          nodeCount: selection.count,
+          vcpus,
+          memoryGiB
+        });
+      }
+      return candidates;
     }
 
     async function renderBasicSizingPreview() {
       const roundedNode = document.getElementById("basic-rounded-vcpu");
       const memoryNode = document.getElementById("basic-matching-memory");
       const resultNode = document.getElementById("basic-mode-result");
-      const { regionPricing } = await resolveSnapshotContext();
-      const candidate = pickBasicModeCandidate(regionPricing);
-      const defaultSet = estimate.sets[0];
-      const poolCount = Math.max(1, defaultSet?.pools?.length ?? 3);
+      await resolveSnapshotContext();
+      const candidates = pickBasicModeCandidates();
 
-      if (!candidate) {
+      if (!candidates || !candidates.length) {
         if (roundedNode) {
-          roundedNode.value = "N/A";
+          roundedNode.textContent = "N/A";
         }
         if (memoryNode) {
-          memoryNode.value = "N/A";
+          memoryNode.textContent = "N/A";
         }
         if (resultNode) {
-          resultNode.textContent = "No standard m7i options found for this region snapshot.";
+          resultNode.textContent = "No valid instance selections found for this region snapshot.";
         }
         return null;
       }
 
-      const { balancedTotalNodes, nodesPerPool } = getBalancedNodePlan(candidate.nodeCount, poolCount);
-      const roundedTotalVcpu = candidate.vcpus * balancedTotalNodes;
-      const roundedTotalMemoryGiB = candidate.memoryGiB * balancedTotalNodes;
+      const totalVcpu = candidates.reduce(
+        (sum, candidate) => sum + candidate.vcpus * candidate.nodeCount,
+        0
+      );
+      const totalMemoryGiB = candidates.reduce(
+        (sum, candidate) => sum + candidate.memoryGiB * candidate.nodeCount,
+        0
+      );
+      const totalNodes = candidates.reduce((sum, candidate) => sum + candidate.nodeCount, 0);
 
       if (roundedNode) {
-        roundedNode.value = `${roundedTotalVcpu}`;
+        roundedNode.textContent = `${totalVcpu}`;
       }
       if (memoryNode) {
-        memoryNode.value = `${roundedTotalMemoryGiB}`;
+        memoryNode.textContent = `${totalMemoryGiB} GiB`;
       }
       return {
-        ...candidate,
-        balancedTotalNodes,
-        nodesPerPool,
-        roundedTotalVcpu,
-        roundedTotalMemoryGiB
+        candidates,
+        totalNodes,
+        totalVcpu,
+        totalMemoryGiB
       };
     }
 
@@ -1008,47 +1487,51 @@
         return;
       }
 
-      const { regionPricing } = await resolveSnapshotContext();
+      await resolveSnapshotContext();
       renderInstanceTypeOptions();
+      renderBasicInstanceTypeOptions();
 
       const candidate = await renderBasicSizingPreview();
       if (!candidate) {
         return;
       }
 
+      const nextSets = candidate.candidates.map((entry, index) => {
+        const setNumber = index + 1;
+        const poolBaseName = index === 0 ? "workers" : `pool-${setNumber}`;
+        const name = index === 0 ? "Default Set" : `Set ${setNumber}`;
+        const [primaryAz] = getAllowedAzsForRegion(entry.region);
+        const effectiveAz = primaryAz || `${entry.region}a`;
+        const nextSet = createSet({
+          name,
+          instanceType: entry.instanceType,
+          poolBaseName,
+          zones: [effectiveAz],
+          enforceThreeZones: false
+        });
+        return {
+          ...nextSet,
+          region: entry.region,
+          pools: nextSet.pools.map((pool) => ({
+            ...pool,
+            min: entry.nodeCount,
+            max: entry.nodeCount
+          }))
+        };
+      });
       estimate = {
         ...estimate,
-        sets: estimate.sets.map((set, setIndex) => {
-          if (setIndex !== 0) {
-            return set;
-          }
-          return {
-            ...set,
-            instanceType: candidate.instanceType,
-            pools: set.pools.map((pool) => {
-              const nodes = candidate.nodesPerPool;
-              return {
-                ...pool,
-                min: nodes,
-                max: nodes
-              };
-            })
-          };
-        })
+        sets: nextSets
       };
 
       if (resultNode) {
+        const typeList = candidate.candidates
+          .map((entry) => `${entry.instanceType} (${entry.region})`)
+          .join(", ");
         resultNode.textContent =
-          `Applied ${candidate.instanceType} with ${candidate.balancedTotalNodes} nodes ` +
-          `(${candidate.roundedTotalVcpu} total vCPU / ${candidate.roundedTotalMemoryGiB} total GiB).`;
+          `Applied ${typeList} with ${candidate.totalNodes} total nodes ` +
+          `(${candidate.totalVcpu} total vCPU / ${candidate.totalMemoryGiB} total GiB).`;
       }
-
-      calculatorMode = "expert";
-      const expertModeInput = document.getElementById("mode-expert");
-      if (expertModeInput) {
-        expertModeInput.checked = true;
-      }
-      renderModeVisibility();
 
       renderSetList();
       renderScenarioTotals();
@@ -1250,6 +1733,32 @@
       return `${roundedMin} to ${roundedMax}`;
     }
 
+    function getClusterCount() {
+      const rawValue = Number.parseInt(document.getElementById("cluster-count")?.value ?? "1", 10);
+      return Number.isFinite(rawValue) ? Math.max(1, rawValue) : 1;
+    }
+
+    function getApproxEc2SavingsPlanDiscountPercent() {
+      const rawValue = Number.parseFloat(document.getElementById("summary-ec2-discount-percent")?.value ?? "0");
+      if (!Number.isFinite(rawValue)) {
+        return 0;
+      }
+      return Math.min(100, Math.max(0, rawValue));
+    }
+
+    function getSelectedEstimateRegions() {
+      return new Set(
+        (estimate.sets ?? [])
+          .map((set) => set?.region ?? estimate.region)
+          .filter((regionCode) => typeof regionCode === "string" && regionCode.length > 0)
+      );
+    }
+
+    function getRhWorkerMonthly(totalVcpu, tierKey) {
+      const hourlyRate = RH_WORKER_RATE_HOURLY_BY_TIER[tierKey] ?? RH_WORKER_RATE_HOURLY_BY_TIER.onDemand;
+      return Math.ceil(totalVcpu / ROSA_VCPU_BLOCK_SIZE) * hourlyRate * HOURS_PER_MONTH;
+    }
+
     function renderPoolCapacityInline() {
       const catalogByType = new Map(
         (snapshotCache?.catalog?.instances ?? [])
@@ -1283,24 +1792,145 @@
       }
     }
 
-    function renderMachinePoolSummary(regionPricing) {
+    function convertMonthlyToUnit(monthlyValue, selectedUnit) {
+      if (selectedUnit === "monthly") {
+        return monthlyValue;
+      }
+      if (selectedUnit === "yearly") {
+        return monthlyValue * MONTHS_PER_YEAR;
+      }
+      return monthlyValue / HOURS_PER_MONTH;
+    }
+
+    function formatByUnit(monthlyValue, selectedUnit) {
+      if (selectedUnit === "monthly") {
+        return formatUsd(monthlyValue);
+      }
+      if (selectedUnit === "yearly") {
+        return formatUsd(monthlyValue * MONTHS_PER_YEAR);
+      }
+      return formatUsdHourly(monthlyValue / HOURS_PER_MONTH);
+    }
+
+    function computeMachinePoolSummary() {
+      const selectedUnit = document.getElementById("summary-price-unit")?.value ?? "hourly";
+      const selectedRhTier = document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand";
+      const ec2DiscountFactor = 1 - getApproxEc2SavingsPlanDiscountPercent() / 100;
+      const clusterCount = getClusterCount();
+      const pricingByRegion = snapshotCache?.pricingByRegion ?? {};
+      const catalogByType = new Map(
+        (snapshotCache?.catalog?.instances ?? [])
+          .filter((instance) => instance?.type)
+          .map((instance) => [instance.type, instance])
+      );
+
+      let totalEc2Monthly = 0;
+      let totalRhWorkerMonthly = 0;
+      let totalCount = 0;
+      const pools = [];
+
+      for (let setIndex = 0; setIndex < (estimate.sets ?? []).length; setIndex += 1) {
+        const set = estimate.sets[setIndex];
+        for (let poolIndex = 0; poolIndex < (set.pools ?? []).length; poolIndex += 1) {
+          const pool = set.pools[poolIndex];
+          const poolName = getPoolDisplayName(set, setIndex, poolIndex);
+          const regionCode = set.region ?? estimate.region;
+          const instance = catalogByType.get(set.instanceType);
+          const pricing = pricingByRegion?.[regionCode]?.byInstanceType?.[set.instanceType];
+          const nodes = Number(pool.min ?? 0);
+          totalCount += Number.isFinite(nodes) ? nodes : 0;
+
+          if (!instance || !pricing) {
+            pools.push({
+              pool: poolName,
+              region: regionCode,
+              instanceType: set.instanceType,
+              count: nodes,
+              available: false,
+              ec2CostUsd: null,
+              nodeFeeUsd: null,
+              totalCostUsd: null
+            });
+            continue;
+          }
+
+          const ec2Monthly = nodes * Number(pricing.onDemandMonthly ?? 0) * ec2DiscountFactor;
+          const poolVcpu = nodes * Number(instance.vcpus ?? 0);
+          const rhWorkerMonthly = getRhWorkerMonthly(poolVcpu, selectedRhTier);
+          const totalPoolMonthly = ec2Monthly + rhWorkerMonthly;
+          totalEc2Monthly += ec2Monthly;
+          totalRhWorkerMonthly += rhWorkerMonthly;
+
+          pools.push({
+            pool: poolName,
+            region: regionCode,
+            instanceType: set.instanceType,
+            count: nodes,
+            available: true,
+            ec2CostUsd: convertMonthlyToUnit(ec2Monthly, selectedUnit),
+            nodeFeeUsd: convertMonthlyToUnit(rhWorkerMonthly, selectedUnit),
+            totalCostUsd: convertMonthlyToUnit(totalPoolMonthly, selectedUnit),
+            ec2Monthly,
+            rhWorkerMonthly,
+            totalPoolMonthly
+          });
+        }
+      }
+
+      const clusterFeeMonthly = HCP_CLUSTER_FEE_HOURLY * HOURS_PER_MONTH * clusterCount;
+      const totalRhMonthly = totalRhWorkerMonthly + clusterFeeMonthly;
+      const totalMonthly = totalEc2Monthly + totalRhMonthly;
+      const clusterFeeLabel =
+        clusterCount > 1 ? `HCP cluster fee (${clusterCount} clusters)` : "HCP cluster fee";
+
+      return {
+        unit: selectedUnit,
+        unitLabel: selectedUnit === "yearly" ? "Yearly" : selectedUnit === "monthly" ? "Monthly" : "Hourly",
+        clusterCount,
+        pools,
+        clusterFee: {
+          label: clusterFeeLabel,
+          count: "",
+          ec2CostUsd: convertMonthlyToUnit(0, selectedUnit),
+          nodeFeeUsd: convertMonthlyToUnit(clusterFeeMonthly, selectedUnit),
+          totalCostUsd: convertMonthlyToUnit(clusterFeeMonthly, selectedUnit),
+          monthly: clusterFeeMonthly
+        },
+        total: {
+          count: totalCount,
+          ec2CostUsd: convertMonthlyToUnit(totalEc2Monthly, selectedUnit),
+          nodeFeeUsd: convertMonthlyToUnit(totalRhMonthly, selectedUnit),
+          totalCostUsd: convertMonthlyToUnit(totalMonthly, selectedUnit),
+          ec2Monthly: totalEc2Monthly,
+          rhMonthly: totalRhMonthly,
+          monthly: totalMonthly
+        }
+      };
+    }
+
+    function renderMachinePoolSummary() {
       const tbody = document.getElementById("machine-pool-summary-body");
       const ec2Header = document.getElementById("machine-pool-ec2-header");
       const rhHeader = document.getElementById("machine-pool-rh-header");
       const totalHeader = document.getElementById("machine-pool-total-header");
+      const clusterFeeLabel = document.getElementById("machine-pool-cluster-fee-label");
       const clusterFeeNode = document.getElementById("machine-pool-cluster-fee");
       const clusterFeeTotalNode = document.getElementById("machine-pool-cluster-fee-total");
+      const totalRowLabel = document.getElementById("machine-pool-total-row-label");
+      const totalCountNode = document.getElementById("machine-pool-total-count");
       const totalEc2Node = document.getElementById("machine-pool-total-ec2");
       const totalRhNode = document.getElementById("machine-pool-total-rh");
       const totalCostNode = document.getElementById("machine-pool-total-cost");
-      const selectedUnit = document.getElementById("summary-price-unit")?.value ?? "hourly";
       if (
         !tbody ||
         !ec2Header ||
         !rhHeader ||
         !totalHeader ||
+        !clusterFeeLabel ||
         !clusterFeeNode ||
         !clusterFeeTotalNode ||
+        !totalRowLabel ||
+        !totalCountNode ||
         !totalEc2Node ||
         !totalRhNode ||
         !totalCostNode
@@ -1308,113 +1938,158 @@
         return;
       }
 
-      const pricingByType = regionPricing?.byInstanceType ?? {};
-      const catalogByType = new Map(
-        (snapshotCache?.catalog?.instances ?? [])
-          .filter((instance) => instance?.type)
-          .map((instance) => [instance.type, instance])
-      );
+      const summary = computeMachinePoolSummary();
+      ec2Header.textContent = "EC2 cost";
+      rhHeader.textContent = "Node Fee";
+      totalHeader.textContent = "Total cost";
+      totalRowLabel.textContent = `Total (${summary.unitLabel})`;
+      clusterFeeLabel.textContent = summary.clusterFee.label;
 
-      const poolRows = [];
-      for (let setIndex = 0; setIndex < (estimate.sets ?? []).length; setIndex += 1) {
-        const set = estimate.sets[setIndex];
-        for (let poolIndex = 0; poolIndex < (set.pools ?? []).length; poolIndex += 1) {
-          poolRows.push({
-            set,
-            setIndex,
-            pool: set.pools[poolIndex],
-            poolIndex
-          });
-        }
-      }
-
-      let totalEc2Monthly = 0;
-      let totalRhWorkerMonthly = 0;
-
-      const formatByUnit = (monthlyValue) => {
-        if (selectedUnit === "monthly") {
-          return formatUsd(monthlyValue);
-        }
-        if (selectedUnit === "yearly") {
-          return formatUsd(monthlyValue * MONTHS_PER_YEAR);
-        }
-        return formatUsdHourly(monthlyValue / HOURS_PER_MONTH);
-      };
-
-      const unitLabel = selectedUnit === "yearly" ? "Yearly" : selectedUnit === "monthly" ? "Monthly" : "Hourly";
-      ec2Header.textContent = `EC2 cost (${unitLabel})`;
-      rhHeader.textContent = `Red Hat cost (${unitLabel})`;
-      totalHeader.textContent = `Total cost (${unitLabel})`;
-
-      tbody.innerHTML = poolRows
-        .map(({ set, setIndex, pool, poolIndex }) => {
-          const poolName = getPoolDisplayName(set, setIndex, poolIndex);
-          const instance = catalogByType.get(set.instanceType);
-          const pricing = pricingByType[set.instanceType];
-          const nodes = Number(pool.min ?? 0);
-
-          if (!instance || !pricing) {
+      tbody.innerHTML = summary.pools
+        .map((pool) => {
+          if (!pool.available) {
             return `
               <tr>
-                <th scope="row">${poolName}</th>
-                <td>${set.instanceType}</td>
+                <th scope="row">${pool.pool}</th>
+                <td>${pool.region}</td>
+                <td>${pool.instanceType}</td>
+                <td class="hcp-calculator__col-count">${pool.count}</td>
                 <td>N/A</td>
                 <td>N/A</td>
                 <td>N/A</td>
               </tr>
             `;
           }
-
-          const ec2Monthly = nodes * Number(pricing.onDemandMonthly ?? 0);
-          const poolVcpu = nodes * Number(instance.vcpus ?? 0);
-          const rhWorkerMonthly =
-            Math.ceil(poolVcpu / ROSA_VCPU_BLOCK_SIZE) * ROSA_PAYGO_RATE_MONTHLY;
-          const totalPoolMonthly = ec2Monthly + rhWorkerMonthly;
-
-          totalEc2Monthly += ec2Monthly;
-          totalRhWorkerMonthly += rhWorkerMonthly;
-
           return `
             <tr>
-              <th scope="row">${poolName}</th>
-              <td>${set.instanceType}</td>
-              <td>${formatByUnit(ec2Monthly)}</td>
-              <td>${formatByUnit(rhWorkerMonthly)}</td>
-              <td>${formatByUnit(totalPoolMonthly)}</td>
+              <th scope="row">${pool.pool}</th>
+              <td>${pool.region}</td>
+              <td>${pool.instanceType}</td>
+              <td class="hcp-calculator__col-count">${pool.count}</td>
+              <td>${formatByUnit(pool.ec2Monthly, summary.unit)}</td>
+              <td>${formatByUnit(pool.rhWorkerMonthly, summary.unit)}</td>
+              <td>${formatByUnit(pool.totalPoolMonthly, summary.unit)}</td>
             </tr>
           `;
         })
         .join("");
 
-      const totalRhMonthly = totalRhWorkerMonthly + HCP_CLUSTER_FEE_MONTHLY;
-      const totalMonthly = totalEc2Monthly + totalRhMonthly;
-      totalEc2Node.textContent = formatByUnit(totalEc2Monthly);
-      totalRhNode.textContent = formatByUnit(totalRhMonthly);
-      clusterFeeNode.textContent = formatByUnit(HCP_CLUSTER_FEE_MONTHLY);
-      clusterFeeTotalNode.textContent = formatByUnit(HCP_CLUSTER_FEE_MONTHLY);
-      totalCostNode.textContent = formatByUnit(totalMonthly);
+      totalCountNode.textContent = `${summary.total.count}`;
+      totalEc2Node.textContent = formatByUnit(summary.total.ec2Monthly, summary.unit);
+      totalRhNode.textContent = formatByUnit(summary.total.rhMonthly, summary.unit);
+      clusterFeeNode.textContent = formatByUnit(summary.clusterFee.monthly, summary.unit);
+      clusterFeeTotalNode.textContent = formatByUnit(summary.clusterFee.monthly, summary.unit);
+      totalCostNode.textContent = formatByUnit(summary.total.monthly, summary.unit);
     }
 
-    function renderTierTable(totals) {
-      const rows = [
-        { label: "On-Demand", values: totals.onDemand },
-        { label: "1-year", values: totals.oneYear },
-        { label: "3-year", values: totals.threeYear }
-      ];
-      const tableBody = document.getElementById("tier-comparison-body");
-      tableBody.innerHTML = rows
-        .map(
-          (row) => `
-          <tr>
-            <th scope="row">${row.label}</th>
-            <td>${formatUsdHourly(row.values.min / HOURS_PER_MONTH)}</td>
-            <td>${formatUsdHourly(row.values.max / HOURS_PER_MONTH)}</td>
-            <td>${formatUsd(row.values.min * MONTHS_PER_YEAR)}</td>
-            <td>${formatUsd(row.values.max * MONTHS_PER_YEAR)}</td>
-          </tr>
-        `
-        )
-        .join("");
+    function setScenarioCsvStatus(message, isError = false) {
+      const status = document.getElementById("scenario-csv-status");
+      if (!status) {
+        return;
+      }
+      status.textContent = message;
+      status.classList.toggle("hcp-calculator__io-status--error", Boolean(isError));
+    }
+
+    function downloadTextFile(filename, text, mimeType) {
+      const blob = new Blob([text], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function getSizingInstancesForExport() {
+      if ((basicSelections ?? []).length) {
+        return basicSelections.map((selection) => ({
+          instanceType: selection.instanceType,
+          region: selection.region,
+          count: selection.count
+        }));
+      }
+      return (estimate.sets ?? []).map((set) => ({
+        instanceType: set.instanceType,
+        region: set.region ?? estimate.region,
+        count: (set.pools ?? []).reduce((sum, pool) => sum + Number(pool.min ?? 0), 0)
+      }));
+    }
+
+    function exportScenarioCsv() {
+      try {
+        const summary = computeMachinePoolSummary();
+        const csv = buildScenarioCsv({
+          sizing: {
+            clusterCount: getClusterCount(),
+            instances: getSizingInstancesForExport()
+          },
+          discounting: {
+            ec2SavingsPlanDiscountPercent: getApproxEc2SavingsPlanDiscountPercent(),
+            rhContractTier: document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand",
+            summaryPriceUnit: document.getElementById("summary-price-unit")?.value ?? "yearly"
+          },
+          summary: {
+            unit: summary.unit,
+            pools: summary.pools.map((pool) => ({
+              pool: pool.pool,
+              region: pool.region,
+              instanceType: pool.instanceType,
+              count: pool.count,
+              ec2CostUsd: pool.ec2CostUsd,
+              nodeFeeUsd: pool.nodeFeeUsd,
+              totalCostUsd: pool.totalCostUsd
+            })),
+            clusterFee: summary.clusterFee,
+            total: summary.total
+          }
+        });
+        const stamp = new Date().toISOString().slice(0, 10);
+        downloadTextFile(`rosa-hcp-calculator-${stamp}.csv`, csv, "text/csv;charset=utf-8");
+        setScenarioCsvStatus("Exported scenario CSV.");
+      } catch (error) {
+        console.error(error);
+        setScenarioCsvStatus(error?.message ?? "Failed to export CSV.", true);
+      }
+    }
+
+    async function importScenarioCsvText(text) {
+      const parsed = parseScenarioCsv(text);
+      const clusterCountInput = document.getElementById("cluster-count");
+      const ec2DiscountInput = document.getElementById("summary-ec2-discount-percent");
+      const rhTierSelect = document.getElementById("summary-rh-contract-tier");
+      const priceUnitSelect = document.getElementById("summary-price-unit");
+
+      if (clusterCountInput) {
+        clusterCountInput.value = `${parsed.sizing.clusterCount}`;
+      }
+      if (ec2DiscountInput) {
+        ec2DiscountInput.value = `${parsed.discounting.ec2SavingsPlanDiscountPercent}`;
+      }
+      if (rhTierSelect) {
+        rhTierSelect.value = parsed.discounting.rhContractTier;
+      }
+      if (priceUnitSelect) {
+        priceUnitSelect.value = parsed.discounting.summaryPriceUnit;
+      }
+
+      basicSelections = parsed.sizing.instances.map((instance) => ({
+        instanceType: instance.instanceType,
+        region: instance.region,
+        count: instance.count
+      }));
+      estimate = {
+        ...estimate,
+        region: basicSelections[0]?.region ?? estimate.region
+      };
+
+      renderBasicSelectionList();
+      await applyBasicSizing();
+      setScenarioCsvStatus(
+        `Imported ${basicSelections.length} instance row(s) and discount settings. Summary recalculated.`
+      );
     }
 
     function renderIssuePanel(targetId, title, issues, variantClass) {
@@ -1437,36 +2112,57 @@
       if (summaryBody) {
         summaryBody.innerHTML = `
         <tr>
-          <td colspan="5">Fix hard validation errors to view machine pool summary.</td>
+          <td colspan="7">Fix hard validation errors to view machine pool summary.</td>
         </tr>
       `;
       }
 
       const clusterFeeNode = document.getElementById("machine-pool-cluster-fee");
       const clusterFeeTotalNode = document.getElementById("machine-pool-cluster-fee-total");
+      const totalCountNode = document.getElementById("machine-pool-total-count");
       const totalEc2Node = document.getElementById("machine-pool-total-ec2");
       const totalRhNode = document.getElementById("machine-pool-total-rh");
       const totalCostNode = document.getElementById("machine-pool-total-cost");
       if (clusterFeeNode) clusterFeeNode.textContent = "--";
       if (clusterFeeTotalNode) clusterFeeTotalNode.textContent = "--";
+      if (totalCountNode) totalCountNode.textContent = "--";
       if (totalEc2Node) totalEc2Node.textContent = "--";
       if (totalRhNode) totalRhNode.textContent = "--";
       if (totalCostNode) totalCostNode.textContent = "--";
 
-      const tableBody = document.getElementById("tier-comparison-body");
-      tableBody.innerHTML = `<tr><td colspan="5">Fix hard validation errors to view tier totals.</td></tr>`;
     }
 
     async function renderScenarioTotals() {
-      const { snapshots, regionPricing } = await resolveSnapshotContext();
+      const { snapshots } = await resolveSnapshotContext();
       renderRegionSelect();
       renderInstanceTypeOptions();
+      renderBasicInstanceTypeOptions();
       renderPoolCapacityInline();
+      const ec2SnapshotNote = document.getElementById("ec2-snapshot-note");
+      if (ec2SnapshotNote) {
+        const generatedAt = snapshots?.manifest?.generated_at;
+        let generatedDateLabel = "unknown date";
+        if (generatedAt) {
+          const parsedDate = new Date(generatedAt);
+          if (!Number.isNaN(parsedDate.getTime())) {
+            generatedDateLabel = parsedDate.toISOString().slice(0, 10);
+          } else if (typeof generatedAt === "string") {
+            generatedDateLabel = generatedAt;
+          }
+        }
+        ec2SnapshotNote.innerHTML =
+          `EC2 costs are based on a pricing snapshot collected on ${generatedDateLabel}. ` +
+          `For official ROSA service pricing details, see ` +
+          `<a href="https://aws.amazon.com/rosa/pricing/" target="_blank" rel="noopener noreferrer">AWS ROSA pricing</a>.`;
+      }
 
-      const selectedRegion = snapshots?.regions?.regions?.find(
-        (region) => region.code === estimate.region
+      const allowedAzs = Array.from(
+        new Set(
+          (snapshots?.regions?.regions ?? [])
+            .flatMap((region) => region?.zones ?? [])
+            .filter((zone) => typeof zone === "string" && zone.length > 0)
+        )
       );
-      const allowedAzs = selectedRegion?.zones ?? [];
       const supportedTypes = (snapshots?.catalog?.instances ?? []).map((instance) => instance.type);
       const validation = validateEstimate({
         estimate,
@@ -1478,6 +2174,17 @@
         enableAzImbalanceWarning: true,
         azImbalanceThreshold: 3
       });
+
+      const selectedRegions = getSelectedEstimateRegions();
+      const clusterCount = getClusterCount();
+      if (selectedRegions.size > clusterCount) {
+        validation.warnings.push({
+          code: "cluster-count-below-region-count",
+          message:
+            `Number of clusters (${clusterCount}) is lower than selected regions (${selectedRegions.size}). ` +
+            "Use at least one cluster per region."
+        });
+      }
 
       renderIssuePanel(
         "validation-errors",
@@ -1497,9 +2204,7 @@
         return;
       }
 
-      const totals = calculateScenarioTotals(estimate, regionPricing);
-      renderMachinePoolSummary(regionPricing);
-      renderTierTable(totals);
+      renderMachinePoolSummary();
     }
 
     renderSetList();
@@ -1540,19 +2245,19 @@
 
     document.getElementById("region-select").addEventListener("change", (event) => {
       const nextRegion = event.target.value;
-      const regionList = snapshotCache?.regions?.regions ?? [];
-      const selectedRegion = regionList.find((region) => region.code === nextRegion);
-      const nextAzs = selectedRegion?.zones ?? [];
       estimate = {
         ...estimate,
-        region: nextRegion,
-        sets: remapSetsToRegionAzs(estimate.sets, nextAzs)
+        region: nextRegion
       };
-      renderSetList();
+      renderInstanceTypeOptions();
+      renderBasicInstanceTypeOptions();
+      renderBasicSizingPreview();
+    });
+
+    document.getElementById("cluster-count").addEventListener("change", (event) => {
+      const parsed = Number.parseInt(event.target.value ?? "1", 10);
+      event.target.value = Number.isFinite(parsed) ? `${Math.max(1, parsed)}` : "1";
       renderScenarioTotals();
-      if (calculatorMode === "basic") {
-        renderBasicSizingPreview();
-      }
     });
 
     document.getElementById("initial-set-list").addEventListener("input", (event) => {
@@ -1615,30 +2320,89 @@
       filterRoot.addEventListener("input", () => {
         readFilterStateFromUI();
         renderInstanceTypeOptions();
-      });
-      filterRoot.addEventListener("change", () => {
-        readFilterStateFromUI();
-        renderInstanceTypeOptions();
-      });
-    }
-
-    document.querySelectorAll('input[name="calculator-mode"]').forEach((input) => {
-      input.addEventListener("change", () => {
-        readModeStateFromUI();
-        renderModeVisibility();
+        renderBasicInstanceTypeOptions();
         if (calculatorMode === "basic") {
           renderBasicSizingPreview();
         }
       });
+      filterRoot.addEventListener("change", () => {
+        readFilterStateFromUI();
+        renderInstanceTypeOptions();
+        renderBasicInstanceTypeOptions();
+        if (calculatorMode === "basic") {
+          renderBasicSizingPreview();
+        }
+      });
+    }
+
+    document.getElementById("basic-add-instance").addEventListener("click", async () => {
+      addBasicInstanceSelection();
+      if (calculatorMode === "basic") {
+        await applyBasicSizing();
+      }
     });
 
-    document.getElementById("basic-apply").addEventListener("click", () => {
-      applyBasicSizing();
-    });
-
-    document.getElementById("basic-vcpu-input").addEventListener("input", () => {
+    document.getElementById("basic-instance-type").addEventListener("change", () => {
       if (calculatorMode === "basic") {
         renderBasicSizingPreview();
+      }
+    });
+
+    const basicFilterRoot = document.getElementById("basic-mode-panel");
+    if (basicFilterRoot) {
+      basicFilterRoot.addEventListener("change", async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        if (
+          target.id !== "basic-filter-arch" &&
+          target.id !== "basic-filter-category" &&
+          target.id !== "basic-filter-family"
+        ) {
+          return;
+        }
+        readBasicFilterStateFromUI();
+        renderInstanceTypeOptions();
+        renderBasicInstanceTypeOptions();
+        if (calculatorMode === "basic") {
+          await applyBasicSizing();
+        }
+      });
+    }
+
+    document.getElementById("basic-instance-list").addEventListener("change", async (event) => {
+      const qtyInput = event.target.closest('input[data-action="basic-count"]');
+      if (!qtyInput) {
+        return;
+      }
+      const index = Number.parseInt(qtyInput.dataset.index ?? "", 10);
+      if (!Number.isFinite(index) || !basicSelections[index]) {
+        return;
+      }
+      const nextCount = Math.max(1, Number.parseInt(qtyInput.value, 10) || 1);
+      basicSelections[index] = {
+        ...basicSelections[index],
+        count: nextCount
+      };
+      if (calculatorMode === "basic") {
+        await applyBasicSizing();
+      }
+    });
+
+    document.getElementById("basic-instance-list").addEventListener("click", async (event) => {
+      const removeButton = event.target.closest('button[data-action="basic-remove"]');
+      if (!removeButton) {
+        return;
+      }
+      const index = Number.parseInt(removeButton.dataset.index ?? "", 10);
+      if (!Number.isFinite(index)) {
+        return;
+      }
+      basicSelections = basicSelections.filter((_, selectionIndex) => selectionIndex !== index);
+      renderBasicSelectionList();
+      if (calculatorMode === "basic") {
+        await applyBasicSizing();
       }
     });
 
@@ -1646,8 +2410,43 @@
       renderScenarioTotals();
     });
 
+    document.getElementById("summary-rh-contract-tier").addEventListener("change", () => {
+      renderScenarioTotals();
+    });
+
+    document.getElementById("summary-ec2-discount-percent").addEventListener("change", (event) => {
+      const rawValue = Number.parseFloat(event.target.value ?? "0");
+      const clamped = Number.isFinite(rawValue) ? Math.min(100, Math.max(0, rawValue)) : 0;
+      event.target.value = `${clamped}`;
+      renderScenarioTotals();
+    });
+
+    document.getElementById("export-scenario-csv").addEventListener("click", () => {
+      exportScenarioCsv();
+    });
+
+    const importCsvInput = document.getElementById("import-scenario-csv-input");
+    document.getElementById("import-scenario-csv").addEventListener("click", () => {
+      importCsvInput?.click();
+    });
+    importCsvInput?.addEventListener("change", async (event) => {
+      const file = event.target?.files?.[0];
+      if (!file) {
+        return;
+      }
+      try {
+        const text = await file.text();
+        await importScenarioCsvText(text);
+      } catch (error) {
+        console.error(error);
+        setScenarioCsvStatus(error?.message ?? "Failed to import CSV.", true);
+      } finally {
+        event.target.value = "";
+      }
+    });
+
     renderScenarioTotals();
-    renderBasicSizingPreview();
+    applyBasicSizing();
   </script>
 </body>
 </html>

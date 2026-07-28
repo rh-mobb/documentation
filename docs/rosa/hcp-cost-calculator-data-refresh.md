@@ -27,7 +27,18 @@ node scripts/refresh-hcp-calculator-data.mjs
 
 ## What the refresh script validates
 
-The script fails fast when snapshot integrity checks fail:
+The script fetches source data and fails fast when integrity checks fail.
+
+Sources used by refresh:
+
+- ROSA CLI:
+  - `rosa list regions -o json` (supported regions)
+  - `rosa list instance-types -o json` (supported instance types, architecture, vCPU, memory)
+- Red Hat ROSA service definition page (canonical reference link captured in metadata):
+  - https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/introduction_to_rosa/policies-and-service-definition
+- `rosa.wigarcia.com` region metadata and EC2 pricing snapshots (for AZ lists and region pricing files)
+
+Integrity checks:
 
 - Pricing records reference an instance type that is missing from `instance-catalog.json`
 - Pricing payloads are missing required tier fields:
@@ -37,6 +48,18 @@ The script fails fast when snapshot integrity checks fail:
 - Region pricing JSON is missing or has invalid region/schema shape
 
 If validation succeeds, the script updates `generated_at` timestamps and rewrites `snapshot-manifest.json` with an updated generated timestamp and region file mapping.
+
+The generated dataset also records source URLs in:
+
+- `snapshot-manifest.json` (`sources`)
+- `regions.json` (`source`)
+- `instance-catalog.json` (`source`)
+
+### Region coverage behavior
+
+- The refresh attempts all enabled HCP-supported regions returned by ROSA CLI.
+- Runtime snapshots include regions where pricing feeds are available.
+- If a supported region is missing pricing feed data, refresh reports that region as skipped.
 
 ## Common validation failures
 

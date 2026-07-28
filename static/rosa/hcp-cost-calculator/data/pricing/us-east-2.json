@@ -1,13 +1,8 @@
 {
   "version": 1,
   "generated_at": "2026-07-27T23:54:24.045Z",
-  "region": "us-east-1",
+  "region": "us-east-2",
   "byInstanceType": {
-    "dl1.24xlarge": {
-      "onDemandMonthly": 9569.5992,
-      "oneYearMonthly": 5626.916667,
-      "threeYearMonthly": 10794.5
-    },
     "g4ad.16xlarge": {
       "onDemandMonthly": 2531.64,
       "oneYearMonthly": 1488.583333,
@@ -102,36 +97,6 @@
       "onDemandMonthly": 1787.04,
       "oneYearMonthly": 1050.75,
       "threeYearMonthly": 2015.75
-    },
-    "g5g.16xlarge": {
-      "onDemandMonthly": 2003.12,
-      "oneYearMonthly": 1177.833333,
-      "threeYearMonthly": 2259.5
-    },
-    "g5g.2xlarge": {
-      "onDemandMonthly": 405.88,
-      "oneYearMonthly": 238.666667,
-      "threeYearMonthly": 457.833333
-    },
-    "g5g.4xlarge": {
-      "onDemandMonthly": 604.44,
-      "oneYearMonthly": 355.416667,
-      "threeYearMonthly": 681.833333
-    },
-    "g5g.8xlarge": {
-      "onDemandMonthly": 1001.56,
-      "oneYearMonthly": 588.916667,
-      "threeYearMonthly": 1129.75
-    },
-    "g5g.metal": {
-      "onDemandMonthly": 2003.12,
-      "oneYearMonthly": 1177.833333,
-      "threeYearMonthly": 2259.5
-    },
-    "g5g.xlarge": {
-      "onDemandMonthly": 306.6,
-      "oneYearMonthly": 180.25,
-      "threeYearMonthly": 345.833333
     },
     "g5.xlarge": {
       "onDemandMonthly": 734.38,
@@ -268,25 +233,15 @@
       "oneYearMonthly": 325.416667,
       "threeYearMonthly": 624.333333
     },
-    "p3dn.24xlarge": {
-      "onDemandMonthly": 22784.76,
-      "oneYearMonthly": 13091.5,
-      "threeYearMonthly": 19854.166667
-    },
-    "p4d.24xlarge": {
-      "onDemandMonthly": 16029.07866,
-      "oneYearMonthly": 9484.916667,
-      "threeYearMonthly": 17868.333333
-    },
-    "p4de.24xlarge": {
-      "onDemandMonthly": 20036.3465,
-      "oneYearMonthly": 11856.166667,
-      "threeYearMonthly": 22335.416667
-    },
     "p5.48xlarge": {
       "onDemandMonthly": 40179.2,
       "oneYearMonthly": 40179.2,
       "threeYearMonthly": 45322.166667
+    },
+    "p5.4xlarge": {
+      "onDemandMonthly": 5022.4,
+      "oneYearMonthly": 5022.4,
+      "threeYearMonthly": 5665.25
     },
     "trn1.2xlarge": {
       "onDemandMonthly": 980.9375,
@@ -341,7 +296,7 @@
     "c5.18xlarge": {
       "onDemandMonthly": 2233.8,
       "oneYearMonthly": 1313.5,
-      "threeYearMonthly": 2444.166667
+      "threeYearMonthly": 2417.666667
     },
     "c5.24xlarge": {
       "onDemandMonthly": 2978.4,
@@ -351,17 +306,17 @@
     "c5.2xlarge": {
       "onDemandMonthly": 248.2,
       "oneYearMonthly": 145.916667,
-      "threeYearMonthly": 271.583333
+      "threeYearMonthly": 268.666667
     },
     "c5.4xlarge": {
       "onDemandMonthly": 496.4,
       "oneYearMonthly": 291.916667,
-      "threeYearMonthly": 543.166667
+      "threeYearMonthly": 537.25
     },
     "c5.9xlarge": {
       "onDemandMonthly": 1116.9,
       "oneYearMonthly": 656.75,
-      "threeYearMonthly": 1222.083333
+      "threeYearMonthly": 1208.833333
     },
     "c5a.12xlarge": {
       "onDemandMonthly": 1349.04,
@@ -406,7 +361,7 @@
     "c5d.18xlarge": {
       "onDemandMonthly": 2522.88,
       "oneYearMonthly": 1483.416667,
-      "threeYearMonthly": 2766.25
+      "threeYearMonthly": 2734.5
     },
     "c5d.24xlarge": {
       "onDemandMonthly": 3363.84,
@@ -416,17 +371,17 @@
     "c5d.2xlarge": {
       "onDemandMonthly": 280.32,
       "oneYearMonthly": 164.833333,
-      "threeYearMonthly": 307.333333
+      "threeYearMonthly": 303.833333
     },
     "c5d.4xlarge": {
       "onDemandMonthly": 560.64,
       "oneYearMonthly": 329.666667,
-      "threeYearMonthly": 614.75
+      "threeYearMonthly": 607.666667
     },
     "c5d.9xlarge": {
       "onDemandMonthly": 1261.44,
       "oneYearMonthly": 741.75,
-      "threeYearMonthly": 1383.083333
+      "threeYearMonthly": 1367.25
     },
     "c5d.metal": {
       "onDemandMonthly": 3363.84,
@@ -436,7 +391,7 @@
     "c5d.xlarge": {
       "onDemandMonthly": 140.16,
       "oneYearMonthly": 82.416667,
-      "threeYearMonthly": 153.666667
+      "threeYearMonthly": 151.916667
     },
     "c5.metal": {
       "onDemandMonthly": 2978.4,
@@ -451,7 +406,7 @@
     "c5.xlarge": {
       "onDemandMonthly": 124.1,
       "oneYearMonthly": 73,
-      "threeYearMonthly": 135.75
+      "threeYearMonthly": 134.333333
     },
     "c6a.12xlarge": {
       "onDemandMonthly": 1340.28,
@@ -784,29 +739,29 @@
       "threeYearMonthly": 172.25
     },
     "c7g.12xlarge": {
-      "onDemandMonthly": 1270.2,
-      "oneYearMonthly": 781.25,
-      "threeYearMonthly": 1457.5
+      "onDemandMonthly": 1265.966,
+      "oneYearMonthly": 781.666667,
+      "threeYearMonthly": 1455.333333
     },
     "c7g.16xlarge": {
-      "onDemandMonthly": 1693.6,
-      "oneYearMonthly": 1041.583333,
-      "threeYearMonthly": 1943.333333
+      "onDemandMonthly": 1687.979,
+      "oneYearMonthly": 1042.166667,
+      "threeYearMonthly": 1940.416667
     },
     "c7g.2xlarge": {
-      "onDemandMonthly": 211.7,
-      "oneYearMonthly": 130.166667,
-      "threeYearMonthly": 242.916667
+      "onDemandMonthly": 210.97,
+      "oneYearMonthly": 130.25,
+      "threeYearMonthly": 242.583333
     },
     "c7g.4xlarge": {
-      "onDemandMonthly": 423.4,
-      "oneYearMonthly": 260.416667,
-      "threeYearMonthly": 485.833333
+      "onDemandMonthly": 422.013,
+      "oneYearMonthly": 260.583333,
+      "threeYearMonthly": 485.083333
     },
     "c7g.8xlarge": {
-      "onDemandMonthly": 846.8,
-      "oneYearMonthly": 520.833333,
-      "threeYearMonthly": 971.666667
+      "onDemandMonthly": 844.026,
+      "oneYearMonthly": 521.083333,
+      "threeYearMonthly": 970.25
     },
     "c7gd.12xlarge": {
       "onDemandMonthly": 1589.429,
@@ -844,49 +799,49 @@
       "threeYearMonthly": 144.5
     },
     "c7g.metal": {
-      "onDemandMonthly": 1693.6,
-      "oneYearMonthly": 1041.583333,
-      "threeYearMonthly": 1943.333333
+      "onDemandMonthly": 1687.979,
+      "oneYearMonthly": 1042.166667,
+      "threeYearMonthly": 1940.416667
     },
     "c7gn.12xlarge": {
       "onDemandMonthly": 2186.496,
       "oneYearMonthly": 1285.666667,
-      "threeYearMonthly": 2071.75
+      "threeYearMonthly": 2073.583333
     },
     "c7gn.16xlarge": {
       "onDemandMonthly": 2915.328,
       "oneYearMonthly": 1714.25,
-      "threeYearMonthly": 2762.333333
+      "threeYearMonthly": 2764.833333
     },
     "c7gn.2xlarge": {
       "onDemandMonthly": 364.416,
       "oneYearMonthly": 214.25,
-      "threeYearMonthly": 345.25
+      "threeYearMonthly": 345.583333
     },
     "c7gn.4xlarge": {
       "onDemandMonthly": 728.832,
       "oneYearMonthly": 428.583333,
-      "threeYearMonthly": 690.583333
+      "threeYearMonthly": 691.166667
     },
     "c7gn.8xlarge": {
       "onDemandMonthly": 1457.664,
       "oneYearMonthly": 857.083333,
-      "threeYearMonthly": 1381.166667
+      "threeYearMonthly": 1382.416667
     },
     "c7gn.metal": {
       "onDemandMonthly": 2915.328,
       "oneYearMonthly": 1714.25,
-      "threeYearMonthly": 2762.333333
+      "threeYearMonthly": 2764.833333
     },
     "c7gn.xlarge": {
       "onDemandMonthly": 182.208,
       "oneYearMonthly": 107.166667,
-      "threeYearMonthly": 172.666667
+      "threeYearMonthly": 172.833333
     },
     "c7g.xlarge": {
-      "onDemandMonthly": 105.85,
-      "oneYearMonthly": 65.083333,
-      "threeYearMonthly": 121.416667
+      "onDemandMonthly": 105.485,
+      "oneYearMonthly": 65.166667,
+      "threeYearMonthly": 121.25
     },
     "c7i.12xlarge": {
       "onDemandMonthly": 1563.66,
@@ -969,69 +924,79 @@
       "threeYearMonthly": 149.833333
     },
     "c8g.12xlarge": {
-      "onDemandMonthly": 1397.3952,
-      "oneYearMonthly": 859.416667,
-      "threeYearMonthly": 1603.416667
+      "onDemandMonthly": 1392.4896,
+      "oneYearMonthly": 859.75,
+      "threeYearMonthly": 1600.75
     },
     "c8g.16xlarge": {
-      "onDemandMonthly": 1863.1936,
-      "oneYearMonthly": 1145.916667,
-      "threeYearMonthly": 2137.916667
+      "onDemandMonthly": 1856.6528,
+      "oneYearMonthly": 1146.333333,
+      "threeYearMonthly": 2134.333333
     },
     "c8g.24xlarge": {
-      "onDemandMonthly": 2794.7904,
-      "oneYearMonthly": 1718.916667,
-      "threeYearMonthly": 3206.916667
+      "onDemandMonthly": 2784.9792,
+      "oneYearMonthly": 1719.416667,
+      "threeYearMonthly": 3201.5
     },
     "c8g.2xlarge": {
-      "onDemandMonthly": 232.8992,
+      "onDemandMonthly": 232.0816,
       "oneYearMonthly": 143.25,
-      "threeYearMonthly": 267.25
+      "threeYearMonthly": 266.833333
     },
     "c8g.48xlarge": {
-      "onDemandMonthly": 5589.5808,
-      "oneYearMonthly": 3437.75,
-      "threeYearMonthly": 6413.75
+      "onDemandMonthly": 5569.9584,
+      "oneYearMonthly": 3438.916667,
+      "threeYearMonthly": 6403
     },
     "c8g.4xlarge": {
-      "onDemandMonthly": 465.7984,
-      "oneYearMonthly": 286.5,
-      "threeYearMonthly": 534.5
+      "onDemandMonthly": 464.1632,
+      "oneYearMonthly": 286.583333,
+      "threeYearMonthly": 533.583333
     },
     "c8g.8xlarge": {
-      "onDemandMonthly": 931.5968,
-      "oneYearMonthly": 573,
-      "threeYearMonthly": 1069
+      "onDemandMonthly": 928.3264,
+      "oneYearMonthly": 573.166667,
+      "threeYearMonthly": 1067.166667
     },
     "c8g.metal-24xl": {
-      "onDemandMonthly": 2794.7904,
-      "oneYearMonthly": 1718.916667,
-      "threeYearMonthly": 3206.916667
+      "onDemandMonthly": 2784.9792,
+      "oneYearMonthly": 1719.416667,
+      "threeYearMonthly": 3201.5
     },
     "c8g.metal-48xl": {
-      "onDemandMonthly": 5589.5808,
-      "oneYearMonthly": 3437.75,
-      "threeYearMonthly": 6413.75
+      "onDemandMonthly": 5569.9584,
+      "oneYearMonthly": 3438.916667,
+      "threeYearMonthly": 6403
     },
     "c8g.xlarge": {
-      "onDemandMonthly": 116.4496,
-      "oneYearMonthly": 71.583333,
-      "threeYearMonthly": 133.583333
+      "onDemandMonthly": 116.0408,
+      "oneYearMonthly": 71.666667,
+      "threeYearMonthly": 133.416667
     },
-    "hpc7g.16xlarge": {
-      "onDemandMonthly": 1228.736,
-      "oneYearMonthly": 903.083333,
-      "threeYearMonthly": 2217.583333
+    "hpc6id.32xlarge": {
+      "onDemandMonthly": 4161,
+      "oneYearMonthly": 2609.75,
+      "threeYearMonthly": 5372.916667
     },
-    "hpc7g.4xlarge": {
-      "onDemandMonthly": 1228.736,
-      "oneYearMonthly": 903.083333,
-      "threeYearMonthly": 2217.583333
+    "hpc7a.12xlarge": {
+      "onDemandMonthly": 5256,
+      "oneYearMonthly": 3863.166667,
+      "threeYearMonthly": 7411
     },
-    "hpc7g.8xlarge": {
-      "onDemandMonthly": 1228.736,
-      "oneYearMonthly": 903.083333,
-      "threeYearMonthly": 2217.583333
+    "hpc7a.24xlarge": {
+      "onDemandMonthly": 5256,
+      "oneYearMonthly": 3863.166667,
+      "threeYearMonthly": 7411
+    },
+    "hpc7a.48xlarge": {
+      "onDemandMonthly": 5256,
+      "oneYearMonthly": 3863.166667,
+      "threeYearMonthly": 7411
+    },
+    "hpc7a.96xlarge": {
+      "onDemandMonthly": 5256,
+      "oneYearMonthly": 3863.166667,
+      "threeYearMonthly": 7411
     },
     "m5zn.12xlarge": {
       "onDemandMonthly": 2893.793,
@@ -2451,47 +2416,47 @@
     "r7iz.12xlarge": {
       "onDemandMonthly": 3258.72,
       "oneYearMonthly": 1916.166667,
-      "threeYearMonthly": 3510.416667
+      "threeYearMonthly": 3508.833333
     },
     "r7iz.16xlarge": {
       "onDemandMonthly": 4344.96,
       "oneYearMonthly": 2554.833333,
-      "threeYearMonthly": 4680.583333
+      "threeYearMonthly": 4678.5
     },
     "r7iz.2xlarge": {
       "onDemandMonthly": 543.12,
       "oneYearMonthly": 319.333333,
-      "threeYearMonthly": 585.083333
+      "threeYearMonthly": 584.833333
     },
     "r7iz.32xlarge": {
       "onDemandMonthly": 8689.92,
       "oneYearMonthly": 5109.666667,
-      "threeYearMonthly": 9361.166667
+      "threeYearMonthly": 9357
     },
     "r7iz.4xlarge": {
       "onDemandMonthly": 1086.24,
       "oneYearMonthly": 638.75,
-      "threeYearMonthly": 1170.166667
+      "threeYearMonthly": 1169.583333
     },
     "r7iz.8xlarge": {
       "onDemandMonthly": 2172.48,
       "oneYearMonthly": 1277.416667,
-      "threeYearMonthly": 2340.25
+      "threeYearMonthly": 2339.25
     },
     "r7iz.metal-16xl": {
       "onDemandMonthly": 4344.96,
       "oneYearMonthly": 2554.833333,
-      "threeYearMonthly": 4680.583333
+      "threeYearMonthly": 4678.5
     },
     "r7iz.metal-32xl": {
       "onDemandMonthly": 8689.92,
       "oneYearMonthly": 5109.666667,
-      "threeYearMonthly": 9361.166667
+      "threeYearMonthly": 9357
     },
     "r7iz.xlarge": {
       "onDemandMonthly": 271.56,
       "oneYearMonthly": 159.666667,
-      "threeYearMonthly": 292.5
+      "threeYearMonthly": 292.416667
     },
     "r8g.12xlarge": {
       "onDemandMonthly": 2064.2064,
@@ -2563,20 +2528,10 @@
       "oneYearMonthly": 52736.833333,
       "threeYearMonthly": 77039.75
     },
-    "u7in-16tb.224xlarge": {
-      "onDemandMonthly": 131747.1734,
-      "oneYearMonthly": 75776,
-      "threeYearMonthly": 110529.25
-    },
     "u7in-24tb.224xlarge": {
       "onDemandMonthly": 197633.8344,
       "oneYearMonthly": 113671.5,
       "threeYearMonthly": 165804.916667
-    },
-    "u7in-32tb.224xlarge": {
-      "onDemandMonthly": 263520.4735,
-      "oneYearMonthly": 151567,
-      "threeYearMonthly": 221080.5
     },
     "x1.16xlarge": {
       "onDemandMonthly": 4868.37,
@@ -2713,36 +2668,6 @@
       "oneYearMonthly": 349.5,
       "threeYearMonthly": 509.666667
     },
-    "x2iezn.12xlarge": {
-      "onDemandMonthly": 7305.84,
-      "oneYearMonthly": 4198,
-      "threeYearMonthly": 6126.416667
-    },
-    "x2iezn.2xlarge": {
-      "onDemandMonthly": 1217.64,
-      "oneYearMonthly": 699.666667,
-      "threeYearMonthly": 1021.083333
-    },
-    "x2iezn.4xlarge": {
-      "onDemandMonthly": 2435.28,
-      "oneYearMonthly": 1399.333333,
-      "threeYearMonthly": 2042.166667
-    },
-    "x2iezn.6xlarge": {
-      "onDemandMonthly": 3652.92,
-      "oneYearMonthly": 2099,
-      "threeYearMonthly": 3063.166667
-    },
-    "x2iezn.8xlarge": {
-      "onDemandMonthly": 4870.56,
-      "oneYearMonthly": 2798.666667,
-      "threeYearMonthly": 4084.25
-    },
-    "x2iezn.metal": {
-      "onDemandMonthly": 7305.84,
-      "oneYearMonthly": 4198,
-      "threeYearMonthly": 6126.416667
-    },
     "x8g.12xlarge": {
       "onDemandMonthly": 3423.408,
       "oneYearMonthly": 1969,
@@ -2796,32 +2721,32 @@
     "z1d.12xlarge": {
       "onDemandMonthly": 3258.72,
       "oneYearMonthly": 1916.166667,
-      "threeYearMonthly": 3510.416667
+      "threeYearMonthly": 3508.833333
     },
     "z1d.2xlarge": {
       "onDemandMonthly": 543.12,
       "oneYearMonthly": 319.333333,
-      "threeYearMonthly": 585.083333
+      "threeYearMonthly": 584.833333
     },
     "z1d.3xlarge": {
       "onDemandMonthly": 814.68,
       "oneYearMonthly": 479,
-      "threeYearMonthly": 877.583333
+      "threeYearMonthly": 877.25
     },
     "z1d.6xlarge": {
       "onDemandMonthly": 1629.36,
       "oneYearMonthly": 958.083333,
-      "threeYearMonthly": 1755.25
+      "threeYearMonthly": 1754.416667
     },
     "z1d.metal": {
       "onDemandMonthly": 3258.72,
       "oneYearMonthly": 1916.166667,
-      "threeYearMonthly": 3510.416667
+      "threeYearMonthly": 3508.833333
     },
     "z1d.xlarge": {
       "onDemandMonthly": 271.56,
       "oneYearMonthly": 159.666667,
-      "threeYearMonthly": 292.5
+      "threeYearMonthly": 292.416667
     },
     "c5n.18xlarge": {
       "onDemandMonthly": 2838.24,

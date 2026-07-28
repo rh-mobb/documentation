@@ -1,15 +1,60 @@
 {
   "version": 1,
-  "generated_at": "2026-07-27T02:50:27.259Z",
+  "generated_at": "2026-07-27T23:54:24.045Z",
   "runtime_base_path": "/experts/rosa/hcp-cost-calculator/data",
+  "sources": {
+    "supported_regions_and_instances": "https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/introduction_to_rosa/policies-and-service-definition",
+    "rosa_regions_command": "rosa list regions -o json",
+    "rosa_instance_types_command": "rosa list instance-types -o json",
+    "regions_feed": "https://rosa.wigarcia.com/data/regions.json",
+    "pricing_feed_template": "https://rosa.wigarcia.com/prices/{region}-ec2.json"
+  },
   "regions": [
-    "us-east-1"
+    "us-east-1",
+    "ap-east-1",
+    "ap-northeast-1",
+    "ap-northeast-2",
+    "ap-northeast-3",
+    "ap-south-1",
+    "ap-south-2",
+    "ap-southeast-1",
+    "ap-southeast-2",
+    "ap-southeast-3",
+    "ap-southeast-4",
+    "ca-central-1",
+    "eu-central-1",
+    "eu-north-1",
+    "eu-west-1",
+    "eu-west-2",
+    "eu-west-3",
+    "sa-east-1",
+    "us-east-2",
+    "us-west-2"
   ],
   "files": {
     "regions": "regions.json",
     "instance_catalog": "instance-catalog.json",
     "pricing": {
-      "us-east-1": "pricing/us-east-1.json"
+      "us-east-1": "pricing/us-east-1.json",
+      "ap-east-1": "pricing/ap-east-1.json",
+      "ap-northeast-1": "pricing/ap-northeast-1.json",
+      "ap-northeast-2": "pricing/ap-northeast-2.json",
+      "ap-northeast-3": "pricing/ap-northeast-3.json",
+      "ap-south-1": "pricing/ap-south-1.json",
+      "ap-south-2": "pricing/ap-south-2.json",
+      "ap-southeast-1": "pricing/ap-southeast-1.json",
+      "ap-southeast-2": "pricing/ap-southeast-2.json",
+      "ap-southeast-3": "pricing/ap-southeast-3.json",
+      "ap-southeast-4": "pricing/ap-southeast-4.json",
+      "ca-central-1": "pricing/ca-central-1.json",
+      "eu-central-1": "pricing/eu-central-1.json",
+      "eu-north-1": "pricing/eu-north-1.json",
+      "eu-west-1": "pricing/eu-west-1.json",
+      "eu-west-2": "pricing/eu-west-2.json",
+      "eu-west-3": "pricing/eu-west-3.json",
+      "sa-east-1": "pricing/sa-east-1.json",
+      "us-east-2": "pricing/us-east-2.json",
+      "us-west-2": "pricing/us-west-2.json"
     }
   }
 }

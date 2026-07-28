@@ -1,0 +1,3027 @@
+{
+  "version": 1,
+  "generated_at": "2026-07-27T23:54:24.045Z",
+  "region": "eu-central-1",
+  "byInstanceType": {
+    "g4ad.16xlarge": {
+      "onDemandMonthly": 3165.28,
+      "oneYearMonthly": 2016.083333,
+      "threeYearMonthly": 4688.75
+    },
+    "g4ad.2xlarge": {
+      "onDemandMonthly": 493.9326,
+      "oneYearMonthly": 314.583333,
+      "threeYearMonthly": 731.666667
+    },
+    "g4ad.4xlarge": {
+      "onDemandMonthly": 791.32,
+      "oneYearMonthly": 504,
+      "threeYearMonthly": 1172.166667
+    },
+    "g4ad.8xlarge": {
+      "onDemandMonthly": 1582.64,
+      "oneYearMonthly": 1008.083333,
+      "threeYearMonthly": 2344.416667
+    },
+    "g4ad.xlarge": {
+      "onDemandMonthly": 345.4871,
+      "oneYearMonthly": 220.083333,
+      "threeYearMonthly": 511.75
+    },
+    "g4dn.12xlarge": {
+      "onDemandMonthly": 3569.7,
+      "oneYearMonthly": 2273.916667,
+      "threeYearMonthly": 4529.916667
+    },
+    "g4dn.16xlarge": {
+      "onDemandMonthly": 3971.2,
+      "oneYearMonthly": 2529.666667,
+      "threeYearMonthly": 5039.416667
+    },
+    "g4dn.2xlarge": {
+      "onDemandMonthly": 686.2,
+      "oneYearMonthly": 437.083333,
+      "threeYearMonthly": 870.75
+    },
+    "g4dn.4xlarge": {
+      "onDemandMonthly": 1098.65,
+      "oneYearMonthly": 699.833333,
+      "threeYearMonthly": 1394.166667
+    },
+    "g4dn.8xlarge": {
+      "onDemandMonthly": 1985.6,
+      "oneYearMonthly": 1264.833333,
+      "threeYearMonthly": 2519.75
+    },
+    "g4dn.metal": {
+      "onDemandMonthly": 7139.4,
+      "oneYearMonthly": 4547.833333,
+      "threeYearMonthly": 9059.916667
+    },
+    "g4dn.xlarge": {
+      "onDemandMonthly": 480.34,
+      "oneYearMonthly": 305.75,
+      "threeYearMonthly": 609.083333
+    },
+    "g5.12xlarge": {
+      "onDemandMonthly": 5177.7586,
+      "oneYearMonthly": 3044.5,
+      "threeYearMonthly": 5840.5
+    },
+    "g5.16xlarge": {
+      "onDemandMonthly": 3739.0892,
+      "oneYearMonthly": 2198.583333,
+      "threeYearMonthly": 4217.666667
+    },
+    "g5.24xlarge": {
+      "onDemandMonthly": 7434.3565,
+      "oneYearMonthly": 4371.416667,
+      "threeYearMonthly": 8385.916667
+    },
+    "g5.2xlarge": {
+      "onDemandMonthly": 1106.388,
+      "oneYearMonthly": 650.583333,
+      "threeYearMonthly": 1248
+    },
+    "g5.48xlarge": {
+      "onDemandMonthly": 14868.713,
+      "oneYearMonthly": 8742.833333,
+      "threeYearMonthly": 16771.916667
+    },
+    "g5.4xlarge": {
+      "onDemandMonthly": 1482.4913,
+      "oneYearMonthly": 871.666667,
+      "threeYearMonthly": 1672.25
+    },
+    "g5.8xlarge": {
+      "onDemandMonthly": 2234.6906,
+      "oneYearMonthly": 1314,
+      "threeYearMonthly": 2520.75
+    },
+    "g5g.16xlarge": {
+      "onDemandMonthly": 2505.798,
+      "oneYearMonthly": 1595.166667,
+      "threeYearMonthly": 3183.75
+    },
+    "g5g.2xlarge": {
+      "onDemandMonthly": 507.715,
+      "oneYearMonthly": 323.25,
+      "threeYearMonthly": 645.083333
+    },
+    "g5g.4xlarge": {
+      "onDemandMonthly": 756.134,
+      "oneYearMonthly": 481.333333,
+      "threeYearMonthly": 960.666667
+    },
+    "g5g.8xlarge": {
+      "onDemandMonthly": 1252.899,
+      "oneYearMonthly": 797.583333,
+      "threeYearMonthly": 1591.916667
+    },
+    "g5g.metal": {
+      "onDemandMonthly": 2505.798,
+      "oneYearMonthly": 1595.166667,
+      "threeYearMonthly": 3183.75
+    },
+    "g5g.xlarge": {
+      "onDemandMonthly": 383.542,
+      "oneYearMonthly": 244.166667,
+      "threeYearMonthly": 487.333333
+    },
+    "g5.xlarge": {
+      "onDemandMonthly": 918.34,
+      "oneYearMonthly": 540,
+      "threeYearMonthly": 1035.916667
+    },
+    "g6.12xlarge": {
+      "onDemandMonthly": 4200.6317,
+      "oneYearMonthly": 2552.333333,
+      "threeYearMonthly": 5034.416667
+    },
+    "g6.16xlarge": {
+      "onDemandMonthly": 3100.8137,
+      "oneYearMonthly": 1884.083333,
+      "threeYearMonthly": 3716.333333
+    },
+    "g6.24xlarge": {
+      "onDemandMonthly": 6093.5436,
+      "oneYearMonthly": 3702.416667,
+      "threeYearMonthly": 7303.083333
+    },
+    "g6.2xlarge": {
+      "onDemandMonthly": 892.4177,
+      "oneYearMonthly": 542.25,
+      "threeYearMonthly": 1069.583333
+    },
+    "g6.48xlarge": {
+      "onDemandMonthly": 12187.0872,
+      "oneYearMonthly": 7404.833333,
+      "threeYearMonthly": 14606.25
+    },
+    "g6.4xlarge": {
+      "onDemandMonthly": 1207.9018,
+      "oneYearMonthly": 733.916667,
+      "threeYearMonthly": 1447.666667
+    },
+    "g6.8xlarge": {
+      "onDemandMonthly": 1838.87,
+      "oneYearMonthly": 1117.333333,
+      "threeYearMonthly": 2203.916667
+    },
+    "g6e.12xlarge": {
+      "onDemandMonthly": 9577.6146,
+      "oneYearMonthly": 5631.666667,
+      "threeYearMonthly": 10803.583333
+    },
+    "g6e.16xlarge": {
+      "onDemandMonthly": 6916.4142,
+      "oneYearMonthly": 4066.833333,
+      "threeYearMonthly": 7801.75
+    },
+    "g6e.24xlarge": {
+      "onDemandMonthly": 13751.7838,
+      "oneYearMonthly": 8086.083333,
+      "threeYearMonthly": 15512
+    },
+    "g6e.2xlarge": {
+      "onDemandMonthly": 2046.555,
+      "oneYearMonthly": 1203.416667,
+      "threeYearMonthly": 2308.5
+    },
+    "g6e.48xlarge": {
+      "onDemandMonthly": 27503.5676,
+      "oneYearMonthly": 16172.083333,
+      "threeYearMonthly": 31024
+    },
+    "g6e.4xlarge": {
+      "onDemandMonthly": 2742.2523,
+      "oneYearMonthly": 1612.416667,
+      "threeYearMonthly": 3093.25
+    },
+    "g6e.8xlarge": {
+      "onDemandMonthly": 4133.6396,
+      "oneYearMonthly": 2430.583333,
+      "threeYearMonthly": 4662.75
+    },
+    "g6e.xlarge": {
+      "onDemandMonthly": 1698.71,
+      "oneYearMonthly": 998.833333,
+      "threeYearMonthly": 1916.166667
+    },
+    "g6.xlarge": {
+      "onDemandMonthly": 734.672,
+      "oneYearMonthly": 446.416667,
+      "threeYearMonthly": 880.5
+    },
+    "gr6.4xlarge": {
+      "onDemandMonthly": 1405.104,
+      "oneYearMonthly": 853.75,
+      "threeYearMonthly": 1684
+    },
+    "gr6.8xlarge": {
+      "onDemandMonthly": 2233.2671,
+      "oneYearMonthly": 1356.916667,
+      "threeYearMonthly": 2676.583333
+    },
+    "inf1.24xlarge": {
+      "onDemandMonthly": 4308.46,
+      "oneYearMonthly": 2533.25,
+      "threeYearMonthly": 5406.416667
+    },
+    "inf1.2xlarge": {
+      "onDemandMonthly": 330.69,
+      "oneYearMonthly": 194.25,
+      "threeYearMonthly": 414.5
+    },
+    "inf1.6xlarge": {
+      "onDemandMonthly": 1076.75,
+      "oneYearMonthly": 633.333333,
+      "threeYearMonthly": 1351.583333
+    },
+    "inf1.xlarge": {
+      "onDemandMonthly": 208.05,
+      "oneYearMonthly": 122.416667,
+      "threeYearMonthly": 261.25
+    },
+    "inf2.24xlarge": {
+      "onDemandMonthly": 7107.2435,
+      "oneYearMonthly": 4179.083333,
+      "threeYearMonthly": 8551.416667
+    },
+    "inf2.48xlarge": {
+      "onDemandMonthly": 14214.487,
+      "oneYearMonthly": 8358.083333,
+      "threeYearMonthly": 17102.833333
+    },
+    "inf2.8xlarge": {
+      "onDemandMonthly": 2154.8067,
+      "oneYearMonthly": 1267,
+      "threeYearMonthly": 2592.666667
+    },
+    "inf2.xlarge": {
+      "onDemandMonthly": 830.229,
+      "oneYearMonthly": 488.166667,
+      "threeYearMonthly": 998.916667
+    },
+    "p4d.24xlarge": {
+      "onDemandMonthly": 20026.0754,
+      "oneYearMonthly": 11850.083333,
+      "threeYearMonthly": 22323.916667
+    },
+    "p4de.24xlarge": {
+      "onDemandMonthly": 25032.5906,
+      "oneYearMonthly": 14812.583333,
+      "threeYearMonthly": 27904.916667
+    },
+    "t3.2xlarge": {
+      "onDemandMonthly": 280.32,
+      "oneYearMonthly": 164.833333,
+      "threeYearMonthly": 316.166667
+    },
+    "t3a.2xlarge": {
+      "onDemandMonthly": 252.288,
+      "oneYearMonthly": 148.333333,
+      "threeYearMonthly": 284.583333
+    },
+    "t3a.xlarge": {
+      "onDemandMonthly": 126.144,
+      "oneYearMonthly": 74.166667,
+      "threeYearMonthly": 142.25
+    },
+    "t3.xlarge": {
+      "onDemandMonthly": 140.16,
+      "oneYearMonthly": 82.416667,
+      "threeYearMonthly": 158.083333
+    },
+    "t4g.2xlarge": {
+      "onDemandMonthly": 224.256,
+      "oneYearMonthly": 131.833333,
+      "threeYearMonthly": 252.833333
+    },
+    "t4g.xlarge": {
+      "onDemandMonthly": 112.128,
+      "oneYearMonthly": 65.916667,
+      "threeYearMonthly": 126.416667
+    },
+    "c5.12xlarge": {
+      "onDemandMonthly": 1699.44,
+      "oneYearMonthly": 999.25,
+      "threeYearMonthly": 1917
+    },
+    "c5.18xlarge": {
+      "onDemandMonthly": 2549.16,
+      "oneYearMonthly": 1498.916667,
+      "threeYearMonthly": 2875.416667
+    },
+    "c5.24xlarge": {
+      "onDemandMonthly": 3398.88,
+      "oneYearMonthly": 1998.5,
+      "threeYearMonthly": 3833.916667
+    },
+    "c5.2xlarge": {
+      "onDemandMonthly": 283.24,
+      "oneYearMonthly": 166.583333,
+      "threeYearMonthly": 319.5
+    },
+    "c5.4xlarge": {
+      "onDemandMonthly": 566.48,
+      "oneYearMonthly": 333.083333,
+      "threeYearMonthly": 639
+    },
+    "c5.9xlarge": {
+      "onDemandMonthly": 1274.58,
+      "oneYearMonthly": 749.416667,
+      "threeYearMonthly": 1437.75
+    },
+    "c5a.12xlarge": {
+      "onDemandMonthly": 1524.24,
+      "oneYearMonthly": 896.25,
+      "threeYearMonthly": 1719.333333
+    },
+    "c5a.16xlarge": {
+      "onDemandMonthly": 2032.32,
+      "oneYearMonthly": 1195,
+      "threeYearMonthly": 2292.416667
+    },
+    "c5a.24xlarge": {
+      "onDemandMonthly": 3048.48,
+      "oneYearMonthly": 1792.5,
+      "threeYearMonthly": 3438.666667
+    },
+    "c5a.2xlarge": {
+      "onDemandMonthly": 254.04,
+      "oneYearMonthly": 149.416667,
+      "threeYearMonthly": 286.583333
+    },
+    "c5a.4xlarge": {
+      "onDemandMonthly": 508.08,
+      "oneYearMonthly": 298.75,
+      "threeYearMonthly": 573.083333
+    },
+    "c5a.8xlarge": {
+      "onDemandMonthly": 1016.16,
+      "oneYearMonthly": 597.5,
+      "threeYearMonthly": 1146.25
+    },
+    "c5a.xlarge": {
+      "onDemandMonthly": 127.02,
+      "oneYearMonthly": 74.666667,
+      "threeYearMonthly": 143.25
+    },
+    "c5d.12xlarge": {
+      "onDemandMonthly": 1944.72,
+      "oneYearMonthly": 1143.5,
+      "threeYearMonthly": 2193.666667
+    },
+    "c5d.18xlarge": {
+      "onDemandMonthly": 2917.08,
+      "oneYearMonthly": 1715.25,
+      "threeYearMonthly": 3290.5
+    },
+    "c5d.24xlarge": {
+      "onDemandMonthly": 3889.44,
+      "oneYearMonthly": 2287,
+      "threeYearMonthly": 4387.25
+    },
+    "c5d.2xlarge": {
+      "onDemandMonthly": 324.12,
+      "oneYearMonthly": 190.583333,
+      "threeYearMonthly": 365.583333
+    },
+    "c5d.4xlarge": {
+      "onDemandMonthly": 648.24,
+      "oneYearMonthly": 381.166667,
+      "threeYearMonthly": 731.25
+    },
+    "c5d.9xlarge": {
+      "onDemandMonthly": 1458.54,
+      "oneYearMonthly": 857.583333,
+      "threeYearMonthly": 1645.25
+    },
+    "c5d.metal": {
+      "onDemandMonthly": 3889.44,
+      "oneYearMonthly": 2287,
+      "threeYearMonthly": 4387.25
+    },
+    "c5d.xlarge": {
+      "onDemandMonthly": 162.06,
+      "oneYearMonthly": 95.25,
+      "threeYearMonthly": 182.833333
+    },
+    "c5.metal": {
+      "onDemandMonthly": 3398.88,
+      "oneYearMonthly": 1998.5,
+      "threeYearMonthly": 3833.916667
+    },
+    "c5n.metal": {
+      "onDemandMonthly": 3232.44,
+      "oneYearMonthly": 1900.666667,
+      "threeYearMonthly": 3626.166667
+    },
+    "c5.xlarge": {
+      "onDemandMonthly": 141.62,
+      "oneYearMonthly": 83.25,
+      "threeYearMonthly": 159.75
+    },
+    "c6a.12xlarge": {
+      "onDemandMonthly": 1529.496,
+      "oneYearMonthly": 941.083333,
+      "threeYearMonthly": 1811.5
+    },
+    "c6a.16xlarge": {
+      "onDemandMonthly": 2039.328,
+      "oneYearMonthly": 1254.75,
+      "threeYearMonthly": 2415.416667
+    },
+    "c6a.24xlarge": {
+      "onDemandMonthly": 3058.992,
+      "oneYearMonthly": 1882.166667,
+      "threeYearMonthly": 3623.083333
+    },
+    "c6a.2xlarge": {
+      "onDemandMonthly": 254.916,
+      "oneYearMonthly": 156.833333,
+      "threeYearMonthly": 301.916667
+    },
+    "c6a.32xlarge": {
+      "onDemandMonthly": 4078.656,
+      "oneYearMonthly": 2509.5,
+      "threeYearMonthly": 4830.75
+    },
+    "c6a.48xlarge": {
+      "onDemandMonthly": 6117.984,
+      "oneYearMonthly": 3764.25,
+      "threeYearMonthly": 7246.166667
+    },
+    "c6a.4xlarge": {
+      "onDemandMonthly": 509.832,
+      "oneYearMonthly": 313.666667,
+      "threeYearMonthly": 603.833333
+    },
+    "c6a.8xlarge": {
+      "onDemandMonthly": 1019.664,
+      "oneYearMonthly": 627.416667,
+      "threeYearMonthly": 1207.666667
+    },
+    "c6a.metal": {
+      "onDemandMonthly": 6117.984,
+      "oneYearMonthly": 3764.25,
+      "threeYearMonthly": 7246.166667
+    },
+    "c6a.xlarge": {
+      "onDemandMonthly": 127.458,
+      "oneYearMonthly": 78.416667,
+      "threeYearMonthly": 151
+    },
+    "c6g.12xlarge": {
+      "onDemandMonthly": 1359.552,
+      "oneYearMonthly": 799.416667,
+      "threeYearMonthly": 1533.583333
+    },
+    "c6g.16xlarge": {
+      "onDemandMonthly": 1812.736,
+      "oneYearMonthly": 1065.916667,
+      "threeYearMonthly": 2044.75
+    },
+    "c6g.2xlarge": {
+      "onDemandMonthly": 226.592,
+      "oneYearMonthly": 133.25,
+      "threeYearMonthly": 255.583333
+    },
+    "c6g.4xlarge": {
+      "onDemandMonthly": 453.184,
+      "oneYearMonthly": 266.5,
+      "threeYearMonthly": 511.166667
+    },
+    "c6g.8xlarge": {
+      "onDemandMonthly": 906.368,
+      "oneYearMonthly": 532.916667,
+      "threeYearMonthly": 1022.416667
+    },
+    "c6gd.12xlarge": {
+      "onDemandMonthly": 1559.28,
+      "oneYearMonthly": 910,
+      "threeYearMonthly": 1778.666667
+    },
+    "c6gd.16xlarge": {
+      "onDemandMonthly": 2079.04,
+      "oneYearMonthly": 1213.333333,
+      "threeYearMonthly": 2371.5
+    },
+    "c6gd.2xlarge": {
+      "onDemandMonthly": 259.88,
+      "oneYearMonthly": 151.666667,
+      "threeYearMonthly": 296.416667
+    },
+    "c6gd.4xlarge": {
+      "onDemandMonthly": 519.76,
+      "oneYearMonthly": 303.333333,
+      "threeYearMonthly": 592.916667
+    },
+    "c6gd.8xlarge": {
+      "onDemandMonthly": 1039.52,
+      "oneYearMonthly": 606.666667,
+      "threeYearMonthly": 1185.75
+    },
+    "c6gd.metal": {
+      "onDemandMonthly": 2079.04,
+      "oneYearMonthly": 1213.333333,
+      "threeYearMonthly": 2371.5
+    },
+    "c6gd.xlarge": {
+      "onDemandMonthly": 129.94,
+      "oneYearMonthly": 75.833333,
+      "threeYearMonthly": 148.25
+    },
+    "c6g.metal": {
+      "onDemandMonthly": 1812.736,
+      "oneYearMonthly": 1065.916667,
+      "threeYearMonthly": 2044.75
+    },
+    "c6gn.12xlarge": {
+      "onDemandMonthly": 1727.472,
+      "oneYearMonthly": 1014,
+      "threeYearMonthly": 2299.75
+    },
+    "c6gn.16xlarge": {
+      "onDemandMonthly": 2303.296,
+      "oneYearMonthly": 1352.083333,
+      "threeYearMonthly": 3066.333333
+    },
+    "c6gn.2xlarge": {
+      "onDemandMonthly": 287.912,
+      "oneYearMonthly": 169,
+      "threeYearMonthly": 383.25
+    },
+    "c6gn.4xlarge": {
+      "onDemandMonthly": 575.824,
+      "oneYearMonthly": 338,
+      "threeYearMonthly": 766.583333
+    },
+    "c6gn.8xlarge": {
+      "onDemandMonthly": 1151.648,
+      "oneYearMonthly": 676,
+      "threeYearMonthly": 1533.166667
+    },
+    "c6gn.xlarge": {
+      "onDemandMonthly": 143.956,
+      "oneYearMonthly": 84.5,
+      "threeYearMonthly": 191.666667
+    },
+    "c6g.xlarge": {
+      "onDemandMonthly": 113.296,
+      "oneYearMonthly": 66.583333,
+      "threeYearMonthly": 127.833333
+    },
+    "c6i.12xlarge": {
+      "onDemandMonthly": 1699.44,
+      "oneYearMonthly": 1045.666667,
+      "threeYearMonthly": 2012.833333
+    },
+    "c6i.16xlarge": {
+      "onDemandMonthly": 2265.92,
+      "oneYearMonthly": 1394.166667,
+      "threeYearMonthly": 2683.75
+    },
+    "c6i.24xlarge": {
+      "onDemandMonthly": 3398.88,
+      "oneYearMonthly": 2091.25,
+      "threeYearMonthly": 4025.666667
+    },
+    "c6i.2xlarge": {
+      "onDemandMonthly": 283.24,
+      "oneYearMonthly": 174.25,
+      "threeYearMonthly": 335.5
+    },
+    "c6i.32xlarge": {
+      "onDemandMonthly": 4531.84,
+      "oneYearMonthly": 2788.333333,
+      "threeYearMonthly": 5367.5
+    },
+    "c6i.4xlarge": {
+      "onDemandMonthly": 566.48,
+      "oneYearMonthly": 348.583333,
+      "threeYearMonthly": 670.916667
+    },
+    "c6i.8xlarge": {
+      "onDemandMonthly": 1132.96,
+      "oneYearMonthly": 697.083333,
+      "threeYearMonthly": 1341.916667
+    },
+    "c6id.12xlarge": {
+      "onDemandMonthly": 2041.956,
+      "oneYearMonthly": 1200.666667,
+      "threeYearMonthly": 2303.333333
+    },
+    "c6id.16xlarge": {
+      "onDemandMonthly": 2722.608,
+      "oneYearMonthly": 1600.916667,
+      "threeYearMonthly": 3071.083333
+    },
+    "c6id.24xlarge": {
+      "onDemandMonthly": 4083.912,
+      "oneYearMonthly": 2401.333333,
+      "threeYearMonthly": 4606.666667
+    },
+    "c6id.2xlarge": {
+      "onDemandMonthly": 340.326,
+      "oneYearMonthly": 200.083333,
+      "threeYearMonthly": 383.916667
+    },
+    "c6id.32xlarge": {
+      "onDemandMonthly": 5445.216,
+      "oneYearMonthly": 3201.75,
+      "threeYearMonthly": 6142.166667
+    },
+    "c6id.4xlarge": {
+      "onDemandMonthly": 680.652,
+      "oneYearMonthly": 400.25,
+      "threeYearMonthly": 767.75
+    },
+    "c6id.8xlarge": {
+      "onDemandMonthly": 1361.304,
+      "oneYearMonthly": 800.416667,
+      "threeYearMonthly": 1535.583333
+    },
+    "c6id.metal": {
+      "onDemandMonthly": 5445.216,
+      "oneYearMonthly": 3201.75,
+      "threeYearMonthly": 6142.166667
+    },
+    "c6id.xlarge": {
+      "onDemandMonthly": 170.163,
+      "oneYearMonthly": 100.083333,
+      "threeYearMonthly": 191.916667
+    },
+    "c6i.metal": {
+      "onDemandMonthly": 4531.84,
+      "oneYearMonthly": 2788.333333,
+      "threeYearMonthly": 5367.5
+    },
+    "c6in.12xlarge": {
+      "onDemandMonthly": 2262.708,
+      "oneYearMonthly": 1330.5,
+      "threeYearMonthly": 2538.333333
+    },
+    "c6in.16xlarge": {
+      "onDemandMonthly": 3016.944,
+      "oneYearMonthly": 1774,
+      "threeYearMonthly": 3384.416667
+    },
+    "c6in.24xlarge": {
+      "onDemandMonthly": 4525.416,
+      "oneYearMonthly": 2660.916667,
+      "threeYearMonthly": 5076.583333
+    },
+    "c6in.2xlarge": {
+      "onDemandMonthly": 377.118,
+      "oneYearMonthly": 221.75,
+      "threeYearMonthly": 423.083333
+    },
+    "c6in.32xlarge": {
+      "onDemandMonthly": 6033.888,
+      "oneYearMonthly": 3547.916667,
+      "threeYearMonthly": 6768.75
+    },
+    "c6in.4xlarge": {
+      "onDemandMonthly": 754.236,
+      "oneYearMonthly": 443.5,
+      "threeYearMonthly": 846.083333
+    },
+    "c6in.8xlarge": {
+      "onDemandMonthly": 1508.472,
+      "oneYearMonthly": 887,
+      "threeYearMonthly": 1692.166667
+    },
+    "c6in.xlarge": {
+      "onDemandMonthly": 188.559,
+      "oneYearMonthly": 110.833333,
+      "threeYearMonthly": 211.5
+    },
+    "c6i.xlarge": {
+      "onDemandMonthly": 141.62,
+      "oneYearMonthly": 87.166667,
+      "threeYearMonthly": 167.75
+    },
+    "c7a.12xlarge": {
+      "onDemandMonthly": 2052.1176,
+      "oneYearMonthly": 1262.666667,
+      "threeYearMonthly": 2430.5
+    },
+    "c7a.16xlarge": {
+      "onDemandMonthly": 2736.1568,
+      "oneYearMonthly": 1683.5,
+      "threeYearMonthly": 3240.666667
+    },
+    "c7a.24xlarge": {
+      "onDemandMonthly": 4104.2352,
+      "oneYearMonthly": 2525.25,
+      "threeYearMonthly": 4861.083333
+    },
+    "c7a.2xlarge": {
+      "onDemandMonthly": 342.0196,
+      "oneYearMonthly": 210.416667,
+      "threeYearMonthly": 405.083333
+    },
+    "c7a.32xlarge": {
+      "onDemandMonthly": 5472.3136,
+      "oneYearMonthly": 3367,
+      "threeYearMonthly": 6481.416667
+    },
+    "c7a.48xlarge": {
+      "onDemandMonthly": 8208.4704,
+      "oneYearMonthly": 5050.5,
+      "threeYearMonthly": 9722.083333
+    },
+    "c7a.4xlarge": {
+      "onDemandMonthly": 684.0392,
+      "oneYearMonthly": 420.916667,
+      "threeYearMonthly": 810.166667
+    },
+    "c7a.8xlarge": {
+      "onDemandMonthly": 1368.0784,
+      "oneYearMonthly": 841.75,
+      "threeYearMonthly": 1620.333333
+    },
+    "c7a.metal-48xl": {
+      "onDemandMonthly": 8208.4704,
+      "oneYearMonthly": 5050.5,
+      "threeYearMonthly": 9722.083333
+    },
+    "c7a.xlarge": {
+      "onDemandMonthly": 171.0098,
+      "oneYearMonthly": 105.25,
+      "threeYearMonthly": 202.583333
+    },
+    "c7g.12xlarge": {
+      "onDemandMonthly": 1444.524,
+      "oneYearMonthly": 888.75,
+      "threeYearMonthly": 1710.916667
+    },
+    "c7g.16xlarge": {
+      "onDemandMonthly": 1926.032,
+      "oneYearMonthly": 1185.083333,
+      "threeYearMonthly": 2281.166667
+    },
+    "c7g.2xlarge": {
+      "onDemandMonthly": 240.754,
+      "oneYearMonthly": 148.166667,
+      "threeYearMonthly": 285.166667
+    },
+    "c7g.4xlarge": {
+      "onDemandMonthly": 481.508,
+      "oneYearMonthly": 296.25,
+      "threeYearMonthly": 570.333333
+    },
+    "c7g.8xlarge": {
+      "onDemandMonthly": 963.016,
+      "oneYearMonthly": 592.5,
+      "threeYearMonthly": 1140.583333
+    },
+    "c7gd.12xlarge": {
+      "onDemandMonthly": 1837.848,
+      "oneYearMonthly": 1080.666667,
+      "threeYearMonthly": 2073.083333
+    },
+    "c7gd.16xlarge": {
+      "onDemandMonthly": 2450.464,
+      "oneYearMonthly": 1440.833333,
+      "threeYearMonthly": 2764.083333
+    },
+    "c7gd.2xlarge": {
+      "onDemandMonthly": 306.308,
+      "oneYearMonthly": 180.083333,
+      "threeYearMonthly": 345.5
+    },
+    "c7gd.4xlarge": {
+      "onDemandMonthly": 612.616,
+      "oneYearMonthly": 360.25,
+      "threeYearMonthly": 691
+    },
+    "c7gd.8xlarge": {
+      "onDemandMonthly": 1225.232,
+      "oneYearMonthly": 720.416667,
+      "threeYearMonthly": 1382.083333
+    },
+    "c7gd.metal": {
+      "onDemandMonthly": 2450.464,
+      "oneYearMonthly": 1440.833333,
+      "threeYearMonthly": 2764.083333
+    },
+    "c7gd.xlarge": {
+      "onDemandMonthly": 153.154,
+      "oneYearMonthly": 90.083333,
+      "threeYearMonthly": 172.75
+    },
+    "c7g.metal": {
+      "onDemandMonthly": 1926.032,
+      "oneYearMonthly": 1185.083333,
+      "threeYearMonthly": 2281.166667
+    },
+    "c7g.xlarge": {
+      "onDemandMonthly": 120.377,
+      "oneYearMonthly": 74.083333,
+      "threeYearMonthly": 142.583333
+    },
+    "c7i.12xlarge": {
+      "onDemandMonthly": 1784.412,
+      "oneYearMonthly": 1097.916667,
+      "threeYearMonthly": 2113.416667
+    },
+    "c7i.16xlarge": {
+      "onDemandMonthly": 2379.216,
+      "oneYearMonthly": 1463.916667,
+      "threeYearMonthly": 2817.916667
+    },
+    "c7i.24xlarge": {
+      "onDemandMonthly": 3568.824,
+      "oneYearMonthly": 2195.833333,
+      "threeYearMonthly": 4226.916667
+    },
+    "c7i.2xlarge": {
+      "onDemandMonthly": 297.402,
+      "oneYearMonthly": 183,
+      "threeYearMonthly": 352.25
+    },
+    "c7i.48xlarge": {
+      "onDemandMonthly": 7137.648,
+      "oneYearMonthly": 4391.666667,
+      "threeYearMonthly": 8453.833333
+    },
+    "c7i.4xlarge": {
+      "onDemandMonthly": 594.804,
+      "oneYearMonthly": 366,
+      "threeYearMonthly": 704.5
+    },
+    "c7i.8xlarge": {
+      "onDemandMonthly": 1189.608,
+      "oneYearMonthly": 731.916667,
+      "threeYearMonthly": 1409
+    },
+    "c7i-flex.12xlarge": {
+      "onDemandMonthly": 1695.1914,
+      "oneYearMonthly": 1043.083333,
+      "threeYearMonthly": 2007.916667
+    },
+    "c7i-flex.16xlarge": {
+      "onDemandMonthly": 2260.2552,
+      "oneYearMonthly": 1390.75,
+      "threeYearMonthly": 2677.166667
+    },
+    "c7i-flex.2xlarge": {
+      "onDemandMonthly": 282.5319,
+      "oneYearMonthly": 173.833333,
+      "threeYearMonthly": 334.666667
+    },
+    "c7i-flex.4xlarge": {
+      "onDemandMonthly": 565.0638,
+      "oneYearMonthly": 347.666667,
+      "threeYearMonthly": 669.333333
+    },
+    "c7i-flex.8xlarge": {
+      "onDemandMonthly": 1130.1276,
+      "oneYearMonthly": 695.416667,
+      "threeYearMonthly": 1338.583333
+    },
+    "c7i-flex.xlarge": {
+      "onDemandMonthly": 141.2696,
+      "oneYearMonthly": 86.916667,
+      "threeYearMonthly": 167.333333
+    },
+    "c7i.metal-24xl": {
+      "onDemandMonthly": 3568.824,
+      "oneYearMonthly": 2195.833333,
+      "threeYearMonthly": 4226.916667
+    },
+    "c7i.metal-48xl": {
+      "onDemandMonthly": 7137.648,
+      "oneYearMonthly": 4391.666667,
+      "threeYearMonthly": 8453.833333
+    },
+    "c7i.xlarge": {
+      "onDemandMonthly": 148.701,
+      "oneYearMonthly": 91.5,
+      "threeYearMonthly": 176.083333
+    },
+    "c8g.12xlarge": {
+      "onDemandMonthly": 1589.064,
+      "oneYearMonthly": 977.75,
+      "threeYearMonthly": 1882.083333
+    },
+    "c8g.16xlarge": {
+      "onDemandMonthly": 2118.752,
+      "oneYearMonthly": 1303.583333,
+      "threeYearMonthly": 2509.416667
+    },
+    "c8g.24xlarge": {
+      "onDemandMonthly": 3178.128,
+      "oneYearMonthly": 1955.416667,
+      "threeYearMonthly": 3764.166667
+    },
+    "c8g.2xlarge": {
+      "onDemandMonthly": 264.844,
+      "oneYearMonthly": 162.916667,
+      "threeYearMonthly": 313.666667
+    },
+    "c8g.48xlarge": {
+      "onDemandMonthly": 6356.256,
+      "oneYearMonthly": 3910.833333,
+      "threeYearMonthly": 7528.333333
+    },
+    "c8g.4xlarge": {
+      "onDemandMonthly": 529.688,
+      "oneYearMonthly": 325.916667,
+      "threeYearMonthly": 627.333333
+    },
+    "c8g.8xlarge": {
+      "onDemandMonthly": 1059.376,
+      "oneYearMonthly": 651.833333,
+      "threeYearMonthly": 1254.75
+    },
+    "c8g.metal-24xl": {
+      "onDemandMonthly": 3178.128,
+      "oneYearMonthly": 1955.416667,
+      "threeYearMonthly": 3764.166667
+    },
+    "c8g.metal-48xl": {
+      "onDemandMonthly": 6356.256,
+      "oneYearMonthly": 3910.833333,
+      "threeYearMonthly": 7528.333333
+    },
+    "c8g.xlarge": {
+      "onDemandMonthly": 132.422,
+      "oneYearMonthly": 81.5,
+      "threeYearMonthly": 156.833333
+    },
+    "m5zn.12xlarge": {
+      "onDemandMonthly": 3466.478,
+      "oneYearMonthly": 2029.666667,
+      "threeYearMonthly": 3931.166667
+    },
+    "m5zn.2xlarge": {
+      "onDemandMonthly": 577.722,
+      "oneYearMonthly": 338.25,
+      "threeYearMonthly": 655.166667
+    },
+    "m5zn.3xlarge": {
+      "onDemandMonthly": 866.656,
+      "oneYearMonthly": 507.416667,
+      "threeYearMonthly": 982.75
+    },
+    "m5zn.6xlarge": {
+      "onDemandMonthly": 1733.239,
+      "oneYearMonthly": 1014.833333,
+      "threeYearMonthly": 1965.583333
+    },
+    "m5zn.xlarge": {
+      "onDemandMonthly": 288.861,
+      "oneYearMonthly": 169.166667,
+      "threeYearMonthly": 327.583333
+    },
+    "a1.2xlarge": {
+      "onDemandMonthly": 169.944,
+      "oneYearMonthly": 99.916667,
+      "threeYearMonthly": 191.666667
+    },
+    "a1.4xlarge": {
+      "onDemandMonthly": 339.888,
+      "oneYearMonthly": 199.833333,
+      "threeYearMonthly": 383.416667
+    },
+    "a1.metal": {
+      "onDemandMonthly": 340.18,
+      "oneYearMonthly": 199.833333,
+      "threeYearMonthly": 383.416667
+    },
+    "a1.xlarge": {
+      "onDemandMonthly": 84.972,
+      "oneYearMonthly": 50,
+      "threeYearMonthly": 95.833333
+    },
+    "m5.12xlarge": {
+      "onDemandMonthly": 2014.8,
+      "oneYearMonthly": 1184.666667,
+      "threeYearMonthly": 2272.666667
+    },
+    "m5.16xlarge": {
+      "onDemandMonthly": 2686.4,
+      "oneYearMonthly": 1579.583333,
+      "threeYearMonthly": 3030.25
+    },
+    "m5.24xlarge": {
+      "onDemandMonthly": 4029.6,
+      "oneYearMonthly": 2369.416667,
+      "threeYearMonthly": 4545.416667
+    },
+    "m5.2xlarge": {
+      "onDemandMonthly": 335.8,
+      "oneYearMonthly": 197.416667,
+      "threeYearMonthly": 378.75
+    },
+    "m5.4xlarge": {
+      "onDemandMonthly": 671.6,
+      "oneYearMonthly": 394.916667,
+      "threeYearMonthly": 757.583333
+    },
+    "m5.8xlarge": {
+      "onDemandMonthly": 1343.2,
+      "oneYearMonthly": 789.833333,
+      "threeYearMonthly": 1515.166667
+    },
+    "m5a.12xlarge": {
+      "onDemandMonthly": 1822.08,
+      "oneYearMonthly": 1071.416667,
+      "threeYearMonthly": 2055.333333
+    },
+    "m5a.16xlarge": {
+      "onDemandMonthly": 2429.44,
+      "oneYearMonthly": 1428.5,
+      "threeYearMonthly": 2740.416667
+    },
+    "m5a.24xlarge": {
+      "onDemandMonthly": 3644.16,
+      "oneYearMonthly": 2142.75,
+      "threeYearMonthly": 4110.583333
+    },
+    "m5a.2xlarge": {
+      "onDemandMonthly": 303.68,
+      "oneYearMonthly": 178.583333,
+      "threeYearMonthly": 342.583333
+    },
+    "m5a.4xlarge": {
+      "onDemandMonthly": 607.36,
+      "oneYearMonthly": 357.166667,
+      "threeYearMonthly": 685.083333
+    },
+    "m5a.8xlarge": {
+      "onDemandMonthly": 1214.72,
+      "oneYearMonthly": 714.25,
+      "threeYearMonthly": 1370.166667
+    },
+    "m5a.xlarge": {
+      "onDemandMonthly": 151.84,
+      "oneYearMonthly": 89.25,
+      "threeYearMonthly": 171.25
+    },
+    "m5d.metal": {
+      "onDemandMonthly": 4765.44,
+      "oneYearMonthly": 2802.083333,
+      "threeYearMonthly": 5375.416667
+    },
+    "m5dn.metal": {
+      "onDemandMonthly": 5676.48,
+      "oneYearMonthly": 3337.75,
+      "threeYearMonthly": 6403.083333
+    },
+    "m5.metal": {
+      "onDemandMonthly": 4029.6,
+      "oneYearMonthly": 2369.416667,
+      "threeYearMonthly": 4545.416667
+    },
+    "m5n.metal": {
+      "onDemandMonthly": 4940.64,
+      "oneYearMonthly": 2905.083333,
+      "threeYearMonthly": 5573.083333
+    },
+    "m5.xlarge": {
+      "onDemandMonthly": 167.9,
+      "oneYearMonthly": 98.75,
+      "threeYearMonthly": 189.416667
+    },
+    "m5zn.metal": {
+      "onDemandMonthly": 3466.478,
+      "oneYearMonthly": 2029.666667,
+      "threeYearMonthly": 3931.166667
+    },
+    "m6a.12xlarge": {
+      "onDemandMonthly": 1813.32,
+      "oneYearMonthly": 1119.583333,
+      "threeYearMonthly": 2147.666667
+    },
+    "m6a.16xlarge": {
+      "onDemandMonthly": 2417.76,
+      "oneYearMonthly": 1492.75,
+      "threeYearMonthly": 2863.583333
+    },
+    "m6a.24xlarge": {
+      "onDemandMonthly": 3626.64,
+      "oneYearMonthly": 2239.083333,
+      "threeYearMonthly": 4295.416667
+    },
+    "m6a.2xlarge": {
+      "onDemandMonthly": 302.22,
+      "oneYearMonthly": 186.583333,
+      "threeYearMonthly": 357.916667
+    },
+    "m6a.32xlarge": {
+      "onDemandMonthly": 4835.52,
+      "oneYearMonthly": 2985.416667,
+      "threeYearMonthly": 5727.166667
+    },
+    "m6a.48xlarge": {
+      "onDemandMonthly": 7253.28,
+      "oneYearMonthly": 4478.166667,
+      "threeYearMonthly": 8590.75
+    },
+    "m6a.4xlarge": {
+      "onDemandMonthly": 604.44,
+      "oneYearMonthly": 373.166667,
+      "threeYearMonthly": 715.916667
+    },
+    "m6a.8xlarge": {
+      "onDemandMonthly": 1208.88,
+      "oneYearMonthly": 746.333333,
+      "threeYearMonthly": 1431.833333
+    },
+    "m6a.metal": {
+      "onDemandMonthly": 7253.28,
+      "oneYearMonthly": 4478.166667,
+      "threeYearMonthly": 8590.75
+    },
+    "m6a.xlarge": {
+      "onDemandMonthly": 151.11,
+      "oneYearMonthly": 93.333333,
+      "threeYearMonthly": 179
+    },
+    "m6g.12xlarge": {
+      "onDemandMonthly": 1611.84,
+      "oneYearMonthly": 944.25,
+      "threeYearMonthly": 1827.666667
+    },
+    "m6g.16xlarge": {
+      "onDemandMonthly": 2149.12,
+      "oneYearMonthly": 1259.083333,
+      "threeYearMonthly": 2436.916667
+    },
+    "m6g.2xlarge": {
+      "onDemandMonthly": 268.64,
+      "oneYearMonthly": 157.416667,
+      "threeYearMonthly": 304.583333
+    },
+    "m6g.4xlarge": {
+      "onDemandMonthly": 537.28,
+      "oneYearMonthly": 314.75,
+      "threeYearMonthly": 609.25
+    },
+    "m6g.8xlarge": {
+      "onDemandMonthly": 1074.56,
+      "oneYearMonthly": 629.5,
+      "threeYearMonthly": 1218.5
+    },
+    "m6gd.12xlarge": {
+      "onDemandMonthly": 1909.68,
+      "oneYearMonthly": 1116,
+      "threeYearMonthly": 2174.083333
+    },
+    "m6gd.16xlarge": {
+      "onDemandMonthly": 2546.24,
+      "oneYearMonthly": 1487.916667,
+      "threeYearMonthly": 2898.75
+    },
+    "m6gd.2xlarge": {
+      "onDemandMonthly": 318.28,
+      "oneYearMonthly": 186,
+      "threeYearMonthly": 362.333333
+    },
+    "m6gd.4xlarge": {
+      "onDemandMonthly": 636.56,
+      "oneYearMonthly": 372,
+      "threeYearMonthly": 724.666667
+    },
+    "m6gd.8xlarge": {
+      "onDemandMonthly": 1273.12,
+      "oneYearMonthly": 744,
+      "threeYearMonthly": 1449.333333
+    },
+    "m6gd.metal": {
+      "onDemandMonthly": 2546.24,
+      "oneYearMonthly": 1487.916667,
+      "threeYearMonthly": 2898.75
+    },
+    "m6gd.xlarge": {
+      "onDemandMonthly": 159.14,
+      "oneYearMonthly": 93,
+      "threeYearMonthly": 181.166667
+    },
+    "m6g.metal": {
+      "onDemandMonthly": 2149.12,
+      "oneYearMonthly": 1259.083333,
+      "threeYearMonthly": 2436.916667
+    },
+    "m6g.xlarge": {
+      "onDemandMonthly": 134.32,
+      "oneYearMonthly": 78.666667,
+      "threeYearMonthly": 152.333333
+    },
+    "m6i.12xlarge": {
+      "onDemandMonthly": 2014.8,
+      "oneYearMonthly": 1243.916667,
+      "threeYearMonthly": 2386.333333
+    },
+    "m6i.16xlarge": {
+      "onDemandMonthly": 2686.4,
+      "oneYearMonthly": 1658.583333,
+      "threeYearMonthly": 3181.75
+    },
+    "m6i.24xlarge": {
+      "onDemandMonthly": 4029.6,
+      "oneYearMonthly": 2487.916667,
+      "threeYearMonthly": 4772.666667
+    },
+    "m6i.2xlarge": {
+      "onDemandMonthly": 335.8,
+      "oneYearMonthly": 207.333333,
+      "threeYearMonthly": 397.75
+    },
+    "m6i.32xlarge": {
+      "onDemandMonthly": 5372.8,
+      "oneYearMonthly": 3317.166667,
+      "threeYearMonthly": 6363.583333
+    },
+    "m6i.4xlarge": {
+      "onDemandMonthly": 671.6,
+      "oneYearMonthly": 414.666667,
+      "threeYearMonthly": 795.416667
+    },
+    "m6i.8xlarge": {
+      "onDemandMonthly": 1343.2,
+      "oneYearMonthly": 829.333333,
+      "threeYearMonthly": 1590.916667
+    },
+    "m6id.12xlarge": {
+      "onDemandMonthly": 2501.856,
+      "oneYearMonthly": 1471.083333,
+      "threeYearMonthly": 2822.083333
+    },
+    "m6id.16xlarge": {
+      "onDemandMonthly": 3335.808,
+      "oneYearMonthly": 1961.416667,
+      "threeYearMonthly": 3762.75
+    },
+    "m6id.24xlarge": {
+      "onDemandMonthly": 5003.712,
+      "oneYearMonthly": 2942.166667,
+      "threeYearMonthly": 5644.166667
+    },
+    "m6id.2xlarge": {
+      "onDemandMonthly": 416.976,
+      "oneYearMonthly": 245.166667,
+      "threeYearMonthly": 470.333333
+    },
+    "m6id.32xlarge": {
+      "onDemandMonthly": 6671.616,
+      "oneYearMonthly": 3922.916667,
+      "threeYearMonthly": 7525.583333
+    },
+    "m6id.4xlarge": {
+      "onDemandMonthly": 833.952,
+      "oneYearMonthly": 490.333333,
+      "threeYearMonthly": 940.666667
+    },
+    "m6id.8xlarge": {
+      "onDemandMonthly": 1667.904,
+      "oneYearMonthly": 980.75,
+      "threeYearMonthly": 1881.416667
+    },
+    "m6id.metal": {
+      "onDemandMonthly": 6671.616,
+      "oneYearMonthly": 3922.916667,
+      "threeYearMonthly": 7525.583333
+    },
+    "m6idn.12xlarge": {
+      "onDemandMonthly": 3320.7408,
+      "oneYearMonthly": 1952.583333,
+      "threeYearMonthly": 3745.833333
+    },
+    "m6idn.16xlarge": {
+      "onDemandMonthly": 4427.6544,
+      "oneYearMonthly": 2603.5,
+      "threeYearMonthly": 4994.416667
+    },
+    "m6idn.24xlarge": {
+      "onDemandMonthly": 6641.4816,
+      "oneYearMonthly": 3905.166667,
+      "threeYearMonthly": 7491.583333
+    },
+    "m6idn.2xlarge": {
+      "onDemandMonthly": 553.4568,
+      "oneYearMonthly": 325.416667,
+      "threeYearMonthly": 624.333333
+    },
+    "m6idn.32xlarge": {
+      "onDemandMonthly": 8855.3088,
+      "oneYearMonthly": 5206.916667,
+      "threeYearMonthly": 9988.75
+    },
+    "m6idn.4xlarge": {
+      "onDemandMonthly": 1106.9136,
+      "oneYearMonthly": 650.833333,
+      "threeYearMonthly": 1248.583333
+    },
+    "m6idn.8xlarge": {
+      "onDemandMonthly": 2213.8272,
+      "oneYearMonthly": 1301.75,
+      "threeYearMonthly": 2497.166667
+    },
+    "m6idn.xlarge": {
+      "onDemandMonthly": 276.7284,
+      "oneYearMonthly": 162.75,
+      "threeYearMonthly": 312.166667
+    },
+    "m6id.xlarge": {
+      "onDemandMonthly": 208.488,
+      "oneYearMonthly": 122.583333,
+      "threeYearMonthly": 235.166667
+    },
+    "m6i.metal": {
+      "onDemandMonthly": 5372.8,
+      "oneYearMonthly": 3317.166667,
+      "threeYearMonthly": 6363.583333
+    },
+    "m6in.12xlarge": {
+      "onDemandMonthly": 2890.2744,
+      "oneYearMonthly": 1699.5,
+      "threeYearMonthly": 3260.25
+    },
+    "m6in.16xlarge": {
+      "onDemandMonthly": 3853.6992,
+      "oneYearMonthly": 2266,
+      "threeYearMonthly": 4347
+    },
+    "m6in.24xlarge": {
+      "onDemandMonthly": 5780.5488,
+      "oneYearMonthly": 3399,
+      "threeYearMonthly": 6520.5
+    },
+    "m6in.2xlarge": {
+      "onDemandMonthly": 481.7124,
+      "oneYearMonthly": 283.25,
+      "threeYearMonthly": 543.333333
+    },
+    "m6in.32xlarge": {
+      "onDemandMonthly": 7707.3984,
+      "oneYearMonthly": 4531.916667,
+      "threeYearMonthly": 8693.916667
+    },
+    "m6in.4xlarge": {
+      "onDemandMonthly": 963.4248,
+      "oneYearMonthly": 566.5,
+      "threeYearMonthly": 1086.75
+    },
+    "m6in.8xlarge": {
+      "onDemandMonthly": 1926.8496,
+      "oneYearMonthly": 1133,
+      "threeYearMonthly": 2173.5
+    },
+    "m6in.xlarge": {
+      "onDemandMonthly": 240.8562,
+      "oneYearMonthly": 141.583333,
+      "threeYearMonthly": 271.666667
+    },
+    "m6i.xlarge": {
+      "onDemandMonthly": 167.9,
+      "oneYearMonthly": 103.666667,
+      "threeYearMonthly": 198.833333
+    },
+    "m7a.12xlarge": {
+      "onDemandMonthly": 2432.8272,
+      "oneYearMonthly": 1502,
+      "threeYearMonthly": 2881.416667
+    },
+    "m7a.16xlarge": {
+      "onDemandMonthly": 3243.7696,
+      "oneYearMonthly": 2002.666667,
+      "threeYearMonthly": 3841.916667
+    },
+    "m7a.24xlarge": {
+      "onDemandMonthly": 4865.6544,
+      "oneYearMonthly": 3004.083333,
+      "threeYearMonthly": 5762.916667
+    },
+    "m7a.2xlarge": {
+      "onDemandMonthly": 405.4712,
+      "oneYearMonthly": 250.333333,
+      "threeYearMonthly": 480.25
+    },
+    "m7a.32xlarge": {
+      "onDemandMonthly": 6487.5392,
+      "oneYearMonthly": 4005.416667,
+      "threeYearMonthly": 7683.833333
+    },
+    "m7a.48xlarge": {
+      "onDemandMonthly": 9731.3088,
+      "oneYearMonthly": 6008.083333,
+      "threeYearMonthly": 11525.75
+    },
+    "m7a.4xlarge": {
+      "onDemandMonthly": 810.9424,
+      "oneYearMonthly": 500.666667,
+      "threeYearMonthly": 960.5
+    },
+    "m7a.8xlarge": {
+      "onDemandMonthly": 1621.8848,
+      "oneYearMonthly": 1001.333333,
+      "threeYearMonthly": 1921
+    },
+    "m7a.metal-48xl": {
+      "onDemandMonthly": 9731.3088,
+      "oneYearMonthly": 6008.083333,
+      "threeYearMonthly": 11525.75
+    },
+    "m7a.xlarge": {
+      "onDemandMonthly": 202.7356,
+      "oneYearMonthly": 125.166667,
+      "threeYearMonthly": 240.083333
+    },
+    "m7g.12xlarge": {
+      "onDemandMonthly": 1712.726,
+      "oneYearMonthly": 1057.416667,
+      "threeYearMonthly": 2028.583333
+    },
+    "m7g.16xlarge": {
+      "onDemandMonthly": 2283.659,
+      "oneYearMonthly": 1409.916667,
+      "threeYearMonthly": 2704.75
+    },
+    "m7g.2xlarge": {
+      "onDemandMonthly": 285.43,
+      "oneYearMonthly": 176.25,
+      "threeYearMonthly": 338.083333
+    },
+    "m7g.4xlarge": {
+      "onDemandMonthly": 570.933,
+      "oneYearMonthly": 352.5,
+      "threeYearMonthly": 676.166667
+    },
+    "m7g.8xlarge": {
+      "onDemandMonthly": 1141.866,
+      "oneYearMonthly": 705,
+      "threeYearMonthly": 1352.416667
+    },
+    "m7gd.12xlarge": {
+      "onDemandMonthly": 2251.685,
+      "oneYearMonthly": 1324,
+      "threeYearMonthly": 2539.916667
+    },
+    "m7gd.16xlarge": {
+      "onDemandMonthly": 3002.198,
+      "oneYearMonthly": 1765.333333,
+      "threeYearMonthly": 3386.5
+    },
+    "m7gd.2xlarge": {
+      "onDemandMonthly": 375.293,
+      "oneYearMonthly": 220.666667,
+      "threeYearMonthly": 423.333333
+    },
+    "m7gd.4xlarge": {
+      "onDemandMonthly": 750.586,
+      "oneYearMonthly": 441.333333,
+      "threeYearMonthly": 846.666667
+    },
+    "m7gd.8xlarge": {
+      "onDemandMonthly": 1501.099,
+      "oneYearMonthly": 882.666667,
+      "threeYearMonthly": 1693.25
+    },
+    "m7gd.metal": {
+      "onDemandMonthly": 3002.198,
+      "oneYearMonthly": 1765.333333,
+      "threeYearMonthly": 3386.5
+    },
+    "m7gd.xlarge": {
+      "onDemandMonthly": 187.61,
+      "oneYearMonthly": 110.333333,
+      "threeYearMonthly": 211.666667
+    },
+    "m7g.metal": {
+      "onDemandMonthly": 2283.659,
+      "oneYearMonthly": 1409.916667,
+      "threeYearMonthly": 2704.75
+    },
+    "m7g.xlarge": {
+      "onDemandMonthly": 142.715,
+      "oneYearMonthly": 88.083333,
+      "threeYearMonthly": 169.083333
+    },
+    "m7i.12xlarge": {
+      "onDemandMonthly": 2115.54,
+      "oneYearMonthly": 1306.166667,
+      "threeYearMonthly": 2505.666667
+    },
+    "m7i.16xlarge": {
+      "onDemandMonthly": 2820.72,
+      "oneYearMonthly": 1741.5,
+      "threeYearMonthly": 3340.833333
+    },
+    "m7i.24xlarge": {
+      "onDemandMonthly": 4231.08,
+      "oneYearMonthly": 2612.25,
+      "threeYearMonthly": 5011.25
+    },
+    "m7i.2xlarge": {
+      "onDemandMonthly": 352.59,
+      "oneYearMonthly": 217.666667,
+      "threeYearMonthly": 417.583333
+    },
+    "m7i.48xlarge": {
+      "onDemandMonthly": 8462.16,
+      "oneYearMonthly": 5224.5,
+      "threeYearMonthly": 10022.583333
+    },
+    "m7i.4xlarge": {
+      "onDemandMonthly": 705.18,
+      "oneYearMonthly": 435.416667,
+      "threeYearMonthly": 835.25
+    },
+    "m7i.8xlarge": {
+      "onDemandMonthly": 1410.36,
+      "oneYearMonthly": 870.75,
+      "threeYearMonthly": 1670.416667
+    },
+    "m7i-flex.2xlarge": {
+      "onDemandMonthly": 334.9532,
+      "oneYearMonthly": 206.833333,
+      "threeYearMonthly": 396.666667
+    },
+    "m7i-flex.4xlarge": {
+      "onDemandMonthly": 669.9064,
+      "oneYearMonthly": 413.583333,
+      "threeYearMonthly": 793.333333
+    },
+    "m7i-flex.8xlarge": {
+      "onDemandMonthly": 1339.8128,
+      "oneYearMonthly": 827.166667,
+      "threeYearMonthly": 1586.75
+    },
+    "m7i-flex.xlarge": {
+      "onDemandMonthly": 167.4766,
+      "oneYearMonthly": 103.416667,
+      "threeYearMonthly": 198.333333
+    },
+    "m7i.metal-24xl": {
+      "onDemandMonthly": 4231.08,
+      "oneYearMonthly": 2612.25,
+      "threeYearMonthly": 5011.25
+    },
+    "m7i.metal-48xl": {
+      "onDemandMonthly": 8462.16,
+      "oneYearMonthly": 5224.5,
+      "threeYearMonthly": 10022.583333
+    },
+    "m7i.xlarge": {
+      "onDemandMonthly": 176.295,
+      "oneYearMonthly": 108.833333,
+      "threeYearMonthly": 208.833333
+    },
+    "m8g.12xlarge": {
+      "onDemandMonthly": 1884.1008,
+      "oneYearMonthly": 1163.25,
+      "threeYearMonthly": 2231.5
+    },
+    "m8g.16xlarge": {
+      "onDemandMonthly": 2512.1344,
+      "oneYearMonthly": 1551,
+      "threeYearMonthly": 2975.333333
+    },
+    "m8g.24xlarge": {
+      "onDemandMonthly": 3768.2016,
+      "oneYearMonthly": 2326.5,
+      "threeYearMonthly": 4463.083333
+    },
+    "m8g.2xlarge": {
+      "onDemandMonthly": 314.0168,
+      "oneYearMonthly": 193.833333,
+      "threeYearMonthly": 371.916667
+    },
+    "m8g.48xlarge": {
+      "onDemandMonthly": 7536.4032,
+      "oneYearMonthly": 4653,
+      "threeYearMonthly": 8926.083333
+    },
+    "m8g.4xlarge": {
+      "onDemandMonthly": 628.0336,
+      "oneYearMonthly": 387.75,
+      "threeYearMonthly": 743.833333
+    },
+    "m8g.8xlarge": {
+      "onDemandMonthly": 1256.0672,
+      "oneYearMonthly": 775.5,
+      "threeYearMonthly": 1487.666667
+    },
+    "m8g.metal-24xl": {
+      "onDemandMonthly": 3768.2016,
+      "oneYearMonthly": 2326.5,
+      "threeYearMonthly": 4463.083333
+    },
+    "m8g.metal-48xl": {
+      "onDemandMonthly": 7536.4032,
+      "oneYearMonthly": 4653,
+      "threeYearMonthly": 8926.083333
+    },
+    "m8g.xlarge": {
+      "onDemandMonthly": 157.0084,
+      "oneYearMonthly": 96.916667,
+      "threeYearMonthly": 186
+    },
+    "r4.16xlarge": {
+      "onDemandMonthly": 3738.768,
+      "oneYearMonthly": 2198.416667,
+      "threeYearMonthly": 4217.333333
+    },
+    "r4.2xlarge": {
+      "onDemandMonthly": 467.346,
+      "oneYearMonthly": 274.833333,
+      "threeYearMonthly": 527.166667
+    },
+    "r4.4xlarge": {
+      "onDemandMonthly": 934.692,
+      "oneYearMonthly": 549.583333,
+      "threeYearMonthly": 1054.333333
+    },
+    "r4.8xlarge": {
+      "onDemandMonthly": 1869.384,
+      "oneYearMonthly": 1099.166667,
+      "threeYearMonthly": 2108.666667
+    },
+    "r4.xlarge": {
+      "onDemandMonthly": 233.673,
+      "oneYearMonthly": 137.416667,
+      "threeYearMonthly": 263.583333
+    },
+    "r5.12xlarge": {
+      "onDemandMonthly": 2663.04,
+      "oneYearMonthly": 1565.833333,
+      "threeYearMonthly": 3003.916667
+    },
+    "r5.16xlarge": {
+      "onDemandMonthly": 3550.72,
+      "oneYearMonthly": 2087.833333,
+      "threeYearMonthly": 4005.25
+    },
+    "r5.24xlarge": {
+      "onDemandMonthly": 5326.08,
+      "oneYearMonthly": 3131.75,
+      "threeYearMonthly": 6007.833333
+    },
+    "r5.2xlarge": {
+      "onDemandMonthly": 443.84,
+      "oneYearMonthly": 261,
+      "threeYearMonthly": 500.666667
+    },
+    "r5.4xlarge": {
+      "onDemandMonthly": 887.68,
+      "oneYearMonthly": 521.916667,
+      "threeYearMonthly": 1001.333333
+    },
+    "r5.8xlarge": {
+      "onDemandMonthly": 1775.36,
+      "oneYearMonthly": 1043.916667,
+      "threeYearMonthly": 2002.583333
+    },
+    "r5a.12xlarge": {
+      "onDemandMonthly": 2400.24,
+      "oneYearMonthly": 1409,
+      "threeYearMonthly": 2707.5
+    },
+    "r5a.16xlarge": {
+      "onDemandMonthly": 3200.32,
+      "oneYearMonthly": 1878.666667,
+      "threeYearMonthly": 3610
+    },
+    "r5a.24xlarge": {
+      "onDemandMonthly": 4800.48,
+      "oneYearMonthly": 2818,
+      "threeYearMonthly": 5414.916667
+    },
+    "r5a.2xlarge": {
+      "onDemandMonthly": 400.04,
+      "oneYearMonthly": 234.833333,
+      "threeYearMonthly": 451.25
+    },
+    "r5a.4xlarge": {
+      "onDemandMonthly": 800.08,
+      "oneYearMonthly": 469.666667,
+      "threeYearMonthly": 902.5
+    },
+    "r5a.8xlarge": {
+      "onDemandMonthly": 1600.16,
+      "oneYearMonthly": 939.333333,
+      "threeYearMonthly": 1805
+    },
+    "r5ad.12xlarge": {
+      "onDemandMonthly": 2768.16,
+      "oneYearMonthly": 1627.666667,
+      "threeYearMonthly": 3122.5
+    },
+    "r5ad.16xlarge": {
+      "onDemandMonthly": 3690.88,
+      "oneYearMonthly": 2170.25,
+      "threeYearMonthly": 4163.333333
+    },
+    "r5ad.24xlarge": {
+      "onDemandMonthly": 5536.32,
+      "oneYearMonthly": 3255.333333,
+      "threeYearMonthly": 6245
+    },
+    "r5ad.2xlarge": {
+      "onDemandMonthly": 461.36,
+      "oneYearMonthly": 271.25,
+      "threeYearMonthly": 520.416667
+    },
+    "r5ad.4xlarge": {
+      "onDemandMonthly": 922.72,
+      "oneYearMonthly": 542.583333,
+      "threeYearMonthly": 1040.833333
+    },
+    "r5ad.8xlarge": {
+      "onDemandMonthly": 1845.44,
+      "oneYearMonthly": 1085.083333,
+      "threeYearMonthly": 2081.666667
+    },
+    "r5ad.xlarge": {
+      "onDemandMonthly": 230.68,
+      "oneYearMonthly": 135.666667,
+      "threeYearMonthly": 260.166667
+    },
+    "r5a.xlarge": {
+      "onDemandMonthly": 200.02,
+      "oneYearMonthly": 117.416667,
+      "threeYearMonthly": 225.583333
+    },
+    "r5b.12xlarge": {
+      "onDemandMonthly": 3118.56,
+      "oneYearMonthly": 1833.75,
+      "threeYearMonthly": 3359.416667
+    },
+    "r5b.16xlarge": {
+      "onDemandMonthly": 4158.08,
+      "oneYearMonthly": 2444.916667,
+      "threeYearMonthly": 4479.25
+    },
+    "r5b.24xlarge": {
+      "onDemandMonthly": 6237.12,
+      "oneYearMonthly": 3667.416667,
+      "threeYearMonthly": 6718.916667
+    },
+    "r5b.2xlarge": {
+      "onDemandMonthly": 519.76,
+      "oneYearMonthly": 305.583333,
+      "threeYearMonthly": 559.916667
+    },
+    "r5b.4xlarge": {
+      "onDemandMonthly": 1039.52,
+      "oneYearMonthly": 611.25,
+      "threeYearMonthly": 1119.833333
+    },
+    "r5b.8xlarge": {
+      "onDemandMonthly": 2079.04,
+      "oneYearMonthly": 1222.5,
+      "threeYearMonthly": 2239.666667
+    },
+    "r5b.metal": {
+      "onDemandMonthly": 6237.12,
+      "oneYearMonthly": 3667.416667,
+      "threeYearMonthly": 6718.916667
+    },
+    "r5b.xlarge": {
+      "onDemandMonthly": 259.88,
+      "oneYearMonthly": 152.833333,
+      "threeYearMonthly": 279.916667
+    },
+    "r5d.12xlarge": {
+      "onDemandMonthly": 3030.96,
+      "oneYearMonthly": 1782.166667,
+      "threeYearMonthly": 3418.916667
+    },
+    "r5d.16xlarge": {
+      "onDemandMonthly": 4041.28,
+      "oneYearMonthly": 2376.25,
+      "threeYearMonthly": 4558.583333
+    },
+    "r5d.24xlarge": {
+      "onDemandMonthly": 6061.92,
+      "oneYearMonthly": 3564.416667,
+      "threeYearMonthly": 6837.833333
+    },
+    "r5d.2xlarge": {
+      "onDemandMonthly": 505.16,
+      "oneYearMonthly": 297,
+      "threeYearMonthly": 569.833333
+    },
+    "r5d.4xlarge": {
+      "onDemandMonthly": 1010.32,
+      "oneYearMonthly": 594.083333,
+      "threeYearMonthly": 1139.666667
+    },
+    "r5d.8xlarge": {
+      "onDemandMonthly": 2020.64,
+      "oneYearMonthly": 1188.166667,
+      "threeYearMonthly": 2279.25
+    },
+    "r5d.metal": {
+      "onDemandMonthly": 6061.92,
+      "oneYearMonthly": 3564.416667,
+      "threeYearMonthly": 6837.833333
+    },
+    "r5dn.12xlarge": {
+      "onDemandMonthly": 3486.48,
+      "oneYearMonthly": 2050.083333,
+      "threeYearMonthly": 3795.083333
+    },
+    "r5dn.16xlarge": {
+      "onDemandMonthly": 4648.64,
+      "oneYearMonthly": 2733.416667,
+      "threeYearMonthly": 5060.166667
+    },
+    "r5dn.24xlarge": {
+      "onDemandMonthly": 6972.96,
+      "oneYearMonthly": 4100.083333,
+      "threeYearMonthly": 7590.166667
+    },
+    "r5dn.2xlarge": {
+      "onDemandMonthly": 581.08,
+      "oneYearMonthly": 341.666667,
+      "threeYearMonthly": 632.5
+    },
+    "r5dn.4xlarge": {
+      "onDemandMonthly": 1162.16,
+      "oneYearMonthly": 683.333333,
+      "threeYearMonthly": 1265
+    },
+    "r5dn.8xlarge": {
+      "onDemandMonthly": 2324.32,
+      "oneYearMonthly": 1366.666667,
+      "threeYearMonthly": 2530.083333
+    },
+    "r5dn.metal": {
+      "onDemandMonthly": 6972.96,
+      "oneYearMonthly": 4100.083333,
+      "threeYearMonthly": 7590.166667
+    },
+    "r5dn.xlarge": {
+      "onDemandMonthly": 290.54,
+      "oneYearMonthly": 170.833333,
+      "threeYearMonthly": 316.25
+    },
+    "r5d.xlarge": {
+      "onDemandMonthly": 252.58,
+      "oneYearMonthly": 148.5,
+      "threeYearMonthly": 284.916667
+    },
+    "r5.metal": {
+      "onDemandMonthly": 5326.08,
+      "oneYearMonthly": 3131.75,
+      "threeYearMonthly": 6007.833333
+    },
+    "r5n.12xlarge": {
+      "onDemandMonthly": 3118.56,
+      "oneYearMonthly": 1833.75,
+      "threeYearMonthly": 3359.416667
+    },
+    "r5n.16xlarge": {
+      "onDemandMonthly": 4158.08,
+      "oneYearMonthly": 2444.916667,
+      "threeYearMonthly": 4479.25
+    },
+    "r5n.24xlarge": {
+      "onDemandMonthly": 6237.12,
+      "oneYearMonthly": 3667.416667,
+      "threeYearMonthly": 6718.916667
+    },
+    "r5n.2xlarge": {
+      "onDemandMonthly": 519.76,
+      "oneYearMonthly": 305.583333,
+      "threeYearMonthly": 559.916667
+    },
+    "r5n.4xlarge": {
+      "onDemandMonthly": 1039.52,
+      "oneYearMonthly": 611.25,
+      "threeYearMonthly": 1119.833333
+    },
+    "r5n.8xlarge": {
+      "onDemandMonthly": 2079.04,
+      "oneYearMonthly": 1222.5,
+      "threeYearMonthly": 2239.666667
+    },
+    "r5n.metal": {
+      "onDemandMonthly": 6237.12,
+      "oneYearMonthly": 3667.416667,
+      "threeYearMonthly": 6718.916667
+    },
+    "r5n.xlarge": {
+      "onDemandMonthly": 259.88,
+      "oneYearMonthly": 152.833333,
+      "threeYearMonthly": 279.916667
+    },
+    "r5.xlarge": {
+      "onDemandMonthly": 221.92,
+      "oneYearMonthly": 130.5,
+      "threeYearMonthly": 250.333333
+    },
+    "r6a.12xlarge": {
+      "onDemandMonthly": 2396.736,
+      "oneYearMonthly": 1479.75,
+      "threeYearMonthly": 2838.666667
+    },
+    "r6a.16xlarge": {
+      "onDemandMonthly": 3195.648,
+      "oneYearMonthly": 1973,
+      "threeYearMonthly": 3784.916667
+    },
+    "r6a.24xlarge": {
+      "onDemandMonthly": 4793.472,
+      "oneYearMonthly": 2959.5,
+      "threeYearMonthly": 5677.416667
+    },
+    "r6a.2xlarge": {
+      "onDemandMonthly": 399.456,
+      "oneYearMonthly": 246.583333,
+      "threeYearMonthly": 473.083333
+    },
+    "r6a.32xlarge": {
+      "onDemandMonthly": 6391.296,
+      "oneYearMonthly": 3946,
+      "threeYearMonthly": 7569.833333
+    },
+    "r6a.48xlarge": {
+      "onDemandMonthly": 9586.944,
+      "oneYearMonthly": 5919,
+      "threeYearMonthly": 11354.75
+    },
+    "r6a.4xlarge": {
+      "onDemandMonthly": 798.912,
+      "oneYearMonthly": 493.25,
+      "threeYearMonthly": 946.25
+    },
+    "r6a.8xlarge": {
+      "onDemandMonthly": 1597.824,
+      "oneYearMonthly": 986.5,
+      "threeYearMonthly": 1892.5
+    },
+    "r6a.metal": {
+      "onDemandMonthly": 9586.944,
+      "oneYearMonthly": 5919,
+      "threeYearMonthly": 11354.75
+    },
+    "r6a.xlarge": {
+      "onDemandMonthly": 199.728,
+      "oneYearMonthly": 123.333333,
+      "threeYearMonthly": 236.583333
+    },
+    "r6g.12xlarge": {
+      "onDemandMonthly": 2130.432,
+      "oneYearMonthly": 1252.666667,
+      "threeYearMonthly": 2403.166667
+    },
+    "r6g.16xlarge": {
+      "onDemandMonthly": 2840.576,
+      "oneYearMonthly": 1670.25,
+      "threeYearMonthly": 3204.166667
+    },
+    "r6g.2xlarge": {
+      "onDemandMonthly": 355.072,
+      "oneYearMonthly": 208.75,
+      "threeYearMonthly": 400.5
+    },
+    "r6g.4xlarge": {
+      "onDemandMonthly": 710.144,
+      "oneYearMonthly": 417.583333,
+      "threeYearMonthly": 801.083333
+    },
+    "r6g.8xlarge": {
+      "onDemandMonthly": 1420.288,
+      "oneYearMonthly": 835.166667,
+      "threeYearMonthly": 1602.083333
+    },
+    "r6gd.12xlarge": {
+      "onDemandMonthly": 2417.76,
+      "oneYearMonthly": 1425,
+      "threeYearMonthly": 2717.666667
+    },
+    "r6gd.16xlarge": {
+      "onDemandMonthly": 3223.68,
+      "oneYearMonthly": 1899.916667,
+      "threeYearMonthly": 3623.583333
+    },
+    "r6gd.2xlarge": {
+      "onDemandMonthly": 402.96,
+      "oneYearMonthly": 237.5,
+      "threeYearMonthly": 452.916667
+    },
+    "r6gd.4xlarge": {
+      "onDemandMonthly": 805.92,
+      "oneYearMonthly": 475,
+      "threeYearMonthly": 905.916667
+    },
+    "r6gd.8xlarge": {
+      "onDemandMonthly": 1611.84,
+      "oneYearMonthly": 950,
+      "threeYearMonthly": 1811.833333
+    },
+    "r6gd.metal": {
+      "onDemandMonthly": 3223.68,
+      "oneYearMonthly": 1899.916667,
+      "threeYearMonthly": 3623.583333
+    },
+    "r6gd.xlarge": {
+      "onDemandMonthly": 201.48,
+      "oneYearMonthly": 118.75,
+      "threeYearMonthly": 226.5
+    },
+    "r6g.metal": {
+      "onDemandMonthly": 2840.576,
+      "oneYearMonthly": 1670.25,
+      "threeYearMonthly": 3204.166667
+    },
+    "r6g.xlarge": {
+      "onDemandMonthly": 177.536,
+      "oneYearMonthly": 104.416667,
+      "threeYearMonthly": 200.25
+    },
+    "r6i.12xlarge": {
+      "onDemandMonthly": 2663.04,
+      "oneYearMonthly": 1644.166667,
+      "threeYearMonthly": 3154.083333
+    },
+    "r6i.16xlarge": {
+      "onDemandMonthly": 3550.72,
+      "oneYearMonthly": 2192.25,
+      "threeYearMonthly": 4205.5
+    },
+    "r6i.24xlarge": {
+      "onDemandMonthly": 5326.08,
+      "oneYearMonthly": 3288.333333,
+      "threeYearMonthly": 6308.25
+    },
+    "r6i.2xlarge": {
+      "onDemandMonthly": 443.84,
+      "oneYearMonthly": 274,
+      "threeYearMonthly": 525.666667
+    },
+    "r6i.32xlarge": {
+      "onDemandMonthly": 7101.44,
+      "oneYearMonthly": 4384.416667,
+      "threeYearMonthly": 8410.916667
+    },
+    "r6i.4xlarge": {
+      "onDemandMonthly": 887.68,
+      "oneYearMonthly": 548.083333,
+      "threeYearMonthly": 1051.333333
+    },
+    "r6i.8xlarge": {
+      "onDemandMonthly": 1775.36,
+      "oneYearMonthly": 1096.083333,
+      "threeYearMonthly": 2102.75
+    },
+    "r6id.12xlarge": {
+      "onDemandMonthly": 3182.508,
+      "oneYearMonthly": 1871.333333,
+      "threeYearMonthly": 3589.833333
+    },
+    "r6id.16xlarge": {
+      "onDemandMonthly": 4243.344,
+      "oneYearMonthly": 2495.083333,
+      "threeYearMonthly": 4786.5
+    },
+    "r6id.24xlarge": {
+      "onDemandMonthly": 6365.016,
+      "oneYearMonthly": 3742.666667,
+      "threeYearMonthly": 7179.75
+    },
+    "r6id.2xlarge": {
+      "onDemandMonthly": 530.418,
+      "oneYearMonthly": 311.916667,
+      "threeYearMonthly": 598.333333
+    },
+    "r6id.32xlarge": {
+      "onDemandMonthly": 8486.688,
+      "oneYearMonthly": 4990.166667,
+      "threeYearMonthly": 9573
+    },
+    "r6id.4xlarge": {
+      "onDemandMonthly": 1060.836,
+      "oneYearMonthly": 623.75,
+      "threeYearMonthly": 1196.583333
+    },
+    "r6id.8xlarge": {
+      "onDemandMonthly": 2121.672,
+      "oneYearMonthly": 1247.583333,
+      "threeYearMonthly": 2393.25
+    },
+    "r6id.metal": {
+      "onDemandMonthly": 8486.688,
+      "oneYearMonthly": 4990.166667,
+      "threeYearMonthly": 9573
+    },
+    "r6idn.12xlarge": {
+      "onDemandMonthly": 4079.1816,
+      "oneYearMonthly": 2398.583333,
+      "threeYearMonthly": 4439.083333
+    },
+    "r6idn.16xlarge": {
+      "onDemandMonthly": 5438.9088,
+      "oneYearMonthly": 3198.083333,
+      "threeYearMonthly": 5918.833333
+    },
+    "r6idn.24xlarge": {
+      "onDemandMonthly": 8158.3632,
+      "oneYearMonthly": 4797.083333,
+      "threeYearMonthly": 8878.25
+    },
+    "r6idn.2xlarge": {
+      "onDemandMonthly": 679.8636,
+      "oneYearMonthly": 399.75,
+      "threeYearMonthly": 739.833333
+    },
+    "r6idn.32xlarge": {
+      "onDemandMonthly": 10877.8176,
+      "oneYearMonthly": 6396.166667,
+      "threeYearMonthly": 11837.666667
+    },
+    "r6idn.4xlarge": {
+      "onDemandMonthly": 1359.7272,
+      "oneYearMonthly": 799.5,
+      "threeYearMonthly": 1479.666667
+    },
+    "r6idn.8xlarge": {
+      "onDemandMonthly": 2719.4544,
+      "oneYearMonthly": 1599,
+      "threeYearMonthly": 2959.416667
+    },
+    "r6idn.xlarge": {
+      "onDemandMonthly": 339.9318,
+      "oneYearMonthly": 199.916667,
+      "threeYearMonthly": 369.916667
+    },
+    "r6id.xlarge": {
+      "onDemandMonthly": 265.209,
+      "oneYearMonthly": 155.916667,
+      "threeYearMonthly": 299.166667
+    },
+    "r6i.metal": {
+      "onDemandMonthly": 7101.44,
+      "oneYearMonthly": 4384.416667,
+      "threeYearMonthly": 8410.916667
+    },
+    "r6in.12xlarge": {
+      "onDemandMonthly": 3648.7152,
+      "oneYearMonthly": 2145.416667,
+      "threeYearMonthly": 3930.583333
+    },
+    "r6in.16xlarge": {
+      "onDemandMonthly": 4864.9536,
+      "oneYearMonthly": 2860.583333,
+      "threeYearMonthly": 5240.75
+    },
+    "r6in.24xlarge": {
+      "onDemandMonthly": 7297.4304,
+      "oneYearMonthly": 4290.916667,
+      "threeYearMonthly": 7861.083333
+    },
+    "r6in.2xlarge": {
+      "onDemandMonthly": 608.1192,
+      "oneYearMonthly": 357.583333,
+      "threeYearMonthly": 655.083333
+    },
+    "r6in.32xlarge": {
+      "onDemandMonthly": 9729.9072,
+      "oneYearMonthly": 5721.166667,
+      "threeYearMonthly": 10481.416667
+    },
+    "r6in.4xlarge": {
+      "onDemandMonthly": 1216.2384,
+      "oneYearMonthly": 715.166667,
+      "threeYearMonthly": 1310.166667
+    },
+    "r6in.8xlarge": {
+      "onDemandMonthly": 2432.4768,
+      "oneYearMonthly": 1430.333333,
+      "threeYearMonthly": 2620.333333
+    },
+    "r6in.xlarge": {
+      "onDemandMonthly": 304.0596,
+      "oneYearMonthly": 178.75,
+      "threeYearMonthly": 327.583333
+    },
+    "r6i.xlarge": {
+      "onDemandMonthly": 221.92,
+      "oneYearMonthly": 137,
+      "threeYearMonthly": 262.833333
+    },
+    "r7a.12xlarge": {
+      "onDemandMonthly": 3215.6208,
+      "oneYearMonthly": 1985.333333,
+      "threeYearMonthly": 3808.583333
+    },
+    "r7a.16xlarge": {
+      "onDemandMonthly": 4287.4944,
+      "oneYearMonthly": 2647.083333,
+      "threeYearMonthly": 5078.083333
+    },
+    "r7a.24xlarge": {
+      "onDemandMonthly": 6431.2416,
+      "oneYearMonthly": 3970.666667,
+      "threeYearMonthly": 7617.166667
+    },
+    "r7a.2xlarge": {
+      "onDemandMonthly": 535.9368,
+      "oneYearMonthly": 330.916667,
+      "threeYearMonthly": 634.75
+    },
+    "r7a.32xlarge": {
+      "onDemandMonthly": 8574.9888,
+      "oneYearMonthly": 5294.166667,
+      "threeYearMonthly": 10156.25
+    },
+    "r7a.48xlarge": {
+      "onDemandMonthly": 12862.4832,
+      "oneYearMonthly": 7941.333333,
+      "threeYearMonthly": 15234.333333
+    },
+    "r7a.4xlarge": {
+      "onDemandMonthly": 1071.8736,
+      "oneYearMonthly": 661.75,
+      "threeYearMonthly": 1269.5
+    },
+    "r7a.8xlarge": {
+      "onDemandMonthly": 2143.7472,
+      "oneYearMonthly": 1323.583333,
+      "threeYearMonthly": 2539.083333
+    },
+    "r7a.metal-48xl": {
+      "onDemandMonthly": 12862.4832,
+      "oneYearMonthly": 7941.333333,
+      "threeYearMonthly": 15234.333333
+    },
+    "r7a.xlarge": {
+      "onDemandMonthly": 267.9684,
+      "oneYearMonthly": 165.416667,
+      "threeYearMonthly": 317.416667
+    },
+    "r7g.12xlarge": {
+      "onDemandMonthly": 2263.584,
+      "oneYearMonthly": 1397.5,
+      "threeYearMonthly": 2681
+    },
+    "r7g.16xlarge": {
+      "onDemandMonthly": 3018.112,
+      "oneYearMonthly": 1863.416667,
+      "threeYearMonthly": 3574.666667
+    },
+    "r7g.2xlarge": {
+      "onDemandMonthly": 377.264,
+      "oneYearMonthly": 232.916667,
+      "threeYearMonthly": 446.833333
+    },
+    "r7g.4xlarge": {
+      "onDemandMonthly": 754.528,
+      "oneYearMonthly": 465.833333,
+      "threeYearMonthly": 893.666667
+    },
+    "r7g.8xlarge": {
+      "onDemandMonthly": 1509.056,
+      "oneYearMonthly": 931.666667,
+      "threeYearMonthly": 1787.333333
+    },
+    "r7gd.12xlarge": {
+      "onDemandMonthly": 2864.228,
+      "oneYearMonthly": 1684.166667,
+      "threeYearMonthly": 3230.916667
+    },
+    "r7gd.16xlarge": {
+      "onDemandMonthly": 3818.995,
+      "oneYearMonthly": 2245.583333,
+      "threeYearMonthly": 4307.833333
+    },
+    "r7gd.2xlarge": {
+      "onDemandMonthly": 477.347,
+      "oneYearMonthly": 280.666667,
+      "threeYearMonthly": 538.5
+    },
+    "r7gd.4xlarge": {
+      "onDemandMonthly": 954.767,
+      "oneYearMonthly": 561.416667,
+      "threeYearMonthly": 1077
+    },
+    "r7gd.8xlarge": {
+      "onDemandMonthly": 1909.534,
+      "oneYearMonthly": 1122.75,
+      "threeYearMonthly": 2153.916667
+    },
+    "r7gd.metal": {
+      "onDemandMonthly": 3818.995,
+      "oneYearMonthly": 2245.583333,
+      "threeYearMonthly": 4307.833333
+    },
+    "r7gd.xlarge": {
+      "onDemandMonthly": 238.71,
+      "oneYearMonthly": 140.333333,
+      "threeYearMonthly": 269.25
+    },
+    "r7g.metal": {
+      "onDemandMonthly": 3018.112,
+      "oneYearMonthly": 1863.416667,
+      "threeYearMonthly": 3574.666667
+    },
+    "r7g.xlarge": {
+      "onDemandMonthly": 188.632,
+      "oneYearMonthly": 116.5,
+      "threeYearMonthly": 223.416667
+    },
+    "r7i.12xlarge": {
+      "onDemandMonthly": 2796.192,
+      "oneYearMonthly": 1726.333333,
+      "threeYearMonthly": 3311.833333
+    },
+    "r7i.16xlarge": {
+      "onDemandMonthly": 3728.256,
+      "oneYearMonthly": 2301.833333,
+      "threeYearMonthly": 4415.75
+    },
+    "r7i.24xlarge": {
+      "onDemandMonthly": 5592.384,
+      "oneYearMonthly": 3452.75,
+      "threeYearMonthly": 6623.583333
+    },
+    "r7i.2xlarge": {
+      "onDemandMonthly": 466.032,
+      "oneYearMonthly": 287.75,
+      "threeYearMonthly": 552
+    },
+    "r7i.4xlarge": {
+      "onDemandMonthly": 932.064,
+      "oneYearMonthly": 575.416667,
+      "threeYearMonthly": 1103.916667
+    },
+    "r7i.8xlarge": {
+      "onDemandMonthly": 1864.128,
+      "oneYearMonthly": 1150.916667,
+      "threeYearMonthly": 2207.833333
+    },
+    "r7i.metal-24xl": {
+      "onDemandMonthly": 5592.384,
+      "oneYearMonthly": 3452.75,
+      "threeYearMonthly": 6623.583333
+    },
+    "r7i.xlarge": {
+      "onDemandMonthly": 233.016,
+      "oneYearMonthly": 143.833333,
+      "threeYearMonthly": 276
+    },
+    "r7iz.12xlarge": {
+      "onDemandMonthly": 3942,
+      "oneYearMonthly": 2317.916667,
+      "threeYearMonthly": 4347.75
+    },
+    "r7iz.16xlarge": {
+      "onDemandMonthly": 5256,
+      "oneYearMonthly": 3090.5,
+      "threeYearMonthly": 5797
+    },
+    "r7iz.2xlarge": {
+      "onDemandMonthly": 657,
+      "oneYearMonthly": 386.333333,
+      "threeYearMonthly": 724.666667
+    },
+    "r7iz.32xlarge": {
+      "onDemandMonthly": 10512,
+      "oneYearMonthly": 6181.083333,
+      "threeYearMonthly": 11594
+    },
+    "r7iz.4xlarge": {
+      "onDemandMonthly": 1314,
+      "oneYearMonthly": 772.666667,
+      "threeYearMonthly": 1449.25
+    },
+    "r7iz.8xlarge": {
+      "onDemandMonthly": 2628,
+      "oneYearMonthly": 1545.25,
+      "threeYearMonthly": 2898.5
+    },
+    "r7iz.metal-16xl": {
+      "onDemandMonthly": 5256,
+      "oneYearMonthly": 3090.5,
+      "threeYearMonthly": 5797
+    },
+    "r7iz.metal-32xl": {
+      "onDemandMonthly": 10512,
+      "oneYearMonthly": 6181.083333,
+      "threeYearMonthly": 11594
+    },
+    "r7iz.xlarge": {
+      "onDemandMonthly": 328.5,
+      "oneYearMonthly": 193.166667,
+      "threeYearMonthly": 362.333333
+    },
+    "r8g.12xlarge": {
+      "onDemandMonthly": 2489.9424,
+      "oneYearMonthly": 1537.25,
+      "threeYearMonthly": 2949.083333
+    },
+    "r8g.16xlarge": {
+      "onDemandMonthly": 3319.9232,
+      "oneYearMonthly": 2049.75,
+      "threeYearMonthly": 3932.083333
+    },
+    "r8g.24xlarge": {
+      "onDemandMonthly": 4979.8848,
+      "oneYearMonthly": 3074.583333,
+      "threeYearMonthly": 5898.166667
+    },
+    "r8g.2xlarge": {
+      "onDemandMonthly": 414.9904,
+      "oneYearMonthly": 256.25,
+      "threeYearMonthly": 491.5
+    },
+    "r8g.48xlarge": {
+      "onDemandMonthly": 9959.7696,
+      "oneYearMonthly": 6149.166667,
+      "threeYearMonthly": 11796.333333
+    },
+    "r8g.4xlarge": {
+      "onDemandMonthly": 829.9808,
+      "oneYearMonthly": 512.416667,
+      "threeYearMonthly": 983
+    },
+    "r8g.8xlarge": {
+      "onDemandMonthly": 1659.9616,
+      "oneYearMonthly": 1024.833333,
+      "threeYearMonthly": 1966.083333
+    },
+    "r8g.metal-24xl": {
+      "onDemandMonthly": 4979.8848,
+      "oneYearMonthly": 3074.583333,
+      "threeYearMonthly": 5898.166667
+    },
+    "r8g.metal-48xl": {
+      "onDemandMonthly": 9959.7696,
+      "oneYearMonthly": 6149.166667,
+      "threeYearMonthly": 11796.333333
+    },
+    "r8g.xlarge": {
+      "onDemandMonthly": 207.4952,
+      "oneYearMonthly": 128.083333,
+      "threeYearMonthly": 245.75
+    },
+    "u-3tb1.56xlarge": {
+      "onDemandMonthly": 24041.455,
+      "oneYearMonthly": 13827.75,
+      "threeYearMonthly": 20169.583333
+    },
+    "u-6tb1.112xlarge": {
+      "onDemandMonthly": 48082.91,
+      "oneYearMonthly": 27655.5,
+      "threeYearMonthly": 40339.166667
+    },
+    "u-6tb1.56xlarge": {
+      "onDemandMonthly": 40865.108,
+      "oneYearMonthly": 23504.083333,
+      "threeYearMonthly": 34283.75
+    },
+    "u7i-12tb.224xlarge": {
+      "onDemandMonthly": 110593.2407,
+      "oneYearMonthly": 63619.833333,
+      "threeYearMonthly": 92938.166667
+    },
+    "u7in-16tb.224xlarge": {
+      "onDemandMonthly": 158933.0961,
+      "oneYearMonthly": 91412.25,
+      "threeYearMonthly": 133336.916667
+    },
+    "u7in-24tb.224xlarge": {
+      "onDemandMonthly": 238418.438,
+      "oneYearMonthly": 137129.25,
+      "threeYearMonthly": 200021.166667
+    },
+    "x1.16xlarge": {
+      "onDemandMonthly": 6816.01,
+      "oneYearMonthly": 3920.416667,
+      "threeYearMonthly": 5720.833333
+    },
+    "x1.32xlarge": {
+      "onDemandMonthly": 13632.02,
+      "oneYearMonthly": 7839.833333,
+      "threeYearMonthly": 11441.666667
+    },
+    "x1e.16xlarge": {
+      "onDemandMonthly": 13630.56,
+      "oneYearMonthly": 7839.75,
+      "threeYearMonthly": 11441.666667
+    },
+    "x1e.2xlarge": {
+      "onDemandMonthly": 1703.82,
+      "oneYearMonthly": 980,
+      "threeYearMonthly": 1430.25
+    },
+    "x1e.32xlarge": {
+      "onDemandMonthly": 27261.12,
+      "oneYearMonthly": 15679.416667,
+      "threeYearMonthly": 22883.416667
+    },
+    "x1e.4xlarge": {
+      "onDemandMonthly": 3407.64,
+      "oneYearMonthly": 1959.916667,
+      "threeYearMonthly": 2860.416667
+    },
+    "x1e.8xlarge": {
+      "onDemandMonthly": 6815.28,
+      "oneYearMonthly": 3919.833333,
+      "threeYearMonthly": 5720.833333
+    },
+    "x1e.xlarge": {
+      "onDemandMonthly": 851.91,
+      "oneYearMonthly": 490,
+      "threeYearMonthly": 715.083333
+    },
+    "x2idn.16xlarge": {
+      "onDemandMonthly": 6816.01,
+      "oneYearMonthly": 3914.333333,
+      "threeYearMonthly": 5708.666667
+    },
+    "x2idn.24xlarge": {
+      "onDemandMonthly": 10224.015,
+      "oneYearMonthly": 5871.416667,
+      "threeYearMonthly": 8563
+    },
+    "x2idn.32xlarge": {
+      "onDemandMonthly": 13632.02,
+      "oneYearMonthly": 7828.583333,
+      "threeYearMonthly": 11417.333333
+    },
+    "x2idn.metal": {
+      "onDemandMonthly": 13632.02,
+      "oneYearMonthly": 7828.583333,
+      "threeYearMonthly": 11417.333333
+    },
+    "x2iedn.16xlarge": {
+      "onDemandMonthly": 13632.02,
+      "oneYearMonthly": 7828.583333,
+      "threeYearMonthly": 11417.333333
+    },
+    "x2iedn.24xlarge": {
+      "onDemandMonthly": 20448.03,
+      "oneYearMonthly": 11742.916667,
+      "threeYearMonthly": 17126.083333
+    },
+    "x2iedn.2xlarge": {
+      "onDemandMonthly": 1704.0025,
+      "oneYearMonthly": 978.583333,
+      "threeYearMonthly": 1427.166667
+    },
+    "x2iedn.32xlarge": {
+      "onDemandMonthly": 27264.04,
+      "oneYearMonthly": 15657.166667,
+      "threeYearMonthly": 22834.75
+    },
+    "x2iedn.4xlarge": {
+      "onDemandMonthly": 3408.005,
+      "oneYearMonthly": 1957.166667,
+      "threeYearMonthly": 2854.333333
+    },
+    "x2iedn.8xlarge": {
+      "onDemandMonthly": 6816.01,
+      "oneYearMonthly": 3914.333333,
+      "threeYearMonthly": 5708.666667
+    },
+    "x2iedn.metal": {
+      "onDemandMonthly": 27264.04,
+      "oneYearMonthly": 15657.166667,
+      "threeYearMonthly": 22834.75
+    },
+    "x2iedn.xlarge": {
+      "onDemandMonthly": 852.0049,
+      "oneYearMonthly": 489.25,
+      "threeYearMonthly": 713.583333
+    },
+    "x8g.12xlarge": {
+      "onDemandMonthly": 4784.712,
+      "oneYearMonthly": 2747.75,
+      "threeYearMonthly": 4257.833333
+    },
+    "x8g.16xlarge": {
+      "onDemandMonthly": 6379.616,
+      "oneYearMonthly": 3663.666667,
+      "threeYearMonthly": 5677.083333
+    },
+    "x8g.24xlarge": {
+      "onDemandMonthly": 9569.424,
+      "oneYearMonthly": 5495.5,
+      "threeYearMonthly": 8515.666667
+    },
+    "x8g.2xlarge": {
+      "onDemandMonthly": 797.452,
+      "oneYearMonthly": 458,
+      "threeYearMonthly": 709.666667
+    },
+    "x8g.48xlarge": {
+      "onDemandMonthly": 19138.848,
+      "oneYearMonthly": 10991.083333,
+      "threeYearMonthly": 17031.25
+    },
+    "x8g.4xlarge": {
+      "onDemandMonthly": 1594.904,
+      "oneYearMonthly": 915.916667,
+      "threeYearMonthly": 1419.25
+    },
+    "x8g.8xlarge": {
+      "onDemandMonthly": 3189.808,
+      "oneYearMonthly": 1831.833333,
+      "threeYearMonthly": 2838.583333
+    },
+    "x8g.metal-24xl": {
+      "onDemandMonthly": 9569.424,
+      "oneYearMonthly": 5495.5,
+      "threeYearMonthly": 8515.666667
+    },
+    "x8g.metal-48xl": {
+      "onDemandMonthly": 19138.848,
+      "oneYearMonthly": 10991.083333,
+      "threeYearMonthly": 17031.25
+    },
+    "x8g.xlarge": {
+      "onDemandMonthly": 398.726,
+      "oneYearMonthly": 229,
+      "threeYearMonthly": 354.833333
+    },
+    "z1d.12xlarge": {
+      "onDemandMonthly": 3942,
+      "oneYearMonthly": 2317.916667,
+      "threeYearMonthly": 4347.75
+    },
+    "z1d.2xlarge": {
+      "onDemandMonthly": 657,
+      "oneYearMonthly": 386.333333,
+      "threeYearMonthly": 724.666667
+    },
+    "z1d.3xlarge": {
+      "onDemandMonthly": 985.5,
+      "oneYearMonthly": 579.5,
+      "threeYearMonthly": 1086.916667
+    },
+    "z1d.6xlarge": {
+      "onDemandMonthly": 1971,
+      "oneYearMonthly": 1158.916667,
+      "threeYearMonthly": 2173.916667
+    },
+    "z1d.metal": {
+      "onDemandMonthly": 3942,
+      "oneYearMonthly": 2317.916667,
+      "threeYearMonthly": 4347.75
+    },
+    "z1d.xlarge": {
+      "onDemandMonthly": 328.5,
+      "oneYearMonthly": 193.166667,
+      "threeYearMonthly": 362.333333
+    },
+    "c5n.18xlarge": {
+      "onDemandMonthly": 3232.44,
+      "oneYearMonthly": 1900.666667,
+      "threeYearMonthly": 3626.166667
+    },
+    "c5n.2xlarge": {
+      "onDemandMonthly": 359.16,
+      "oneYearMonthly": 211.166667,
+      "threeYearMonthly": 402.916667
+    },
+    "c5n.4xlarge": {
+      "onDemandMonthly": 718.32,
+      "oneYearMonthly": 422.333333,
+      "threeYearMonthly": 805.833333
+    },
+    "c5n.9xlarge": {
+      "onDemandMonthly": 1616.22,
+      "oneYearMonthly": 950.333333,
+      "threeYearMonthly": 1813.083333
+    },
+    "c5n.xlarge": {
+      "onDemandMonthly": 179.58,
+      "oneYearMonthly": 105.583333,
+      "threeYearMonthly": 201.416667
+    },
+    "m5dn.12xlarge": {
+      "onDemandMonthly": 2838.24,
+      "oneYearMonthly": 1668.916667,
+      "threeYearMonthly": 3201.5
+    },
+    "m5dn.16xlarge": {
+      "onDemandMonthly": 3784.32,
+      "oneYearMonthly": 2225.166667,
+      "threeYearMonthly": 4268.75
+    },
+    "m5dn.24xlarge": {
+      "onDemandMonthly": 5676.48,
+      "oneYearMonthly": 3337.75,
+      "threeYearMonthly": 6403.083333
+    },
+    "m5dn.2xlarge": {
+      "onDemandMonthly": 473.04,
+      "oneYearMonthly": 278.166667,
+      "threeYearMonthly": 533.583333
+    },
+    "m5dn.4xlarge": {
+      "onDemandMonthly": 946.08,
+      "oneYearMonthly": 556.333333,
+      "threeYearMonthly": 1067.166667
+    },
+    "m5dn.8xlarge": {
+      "onDemandMonthly": 1892.16,
+      "oneYearMonthly": 1112.583333,
+      "threeYearMonthly": 2134.333333
+    },
+    "m5dn.xlarge": {
+      "onDemandMonthly": 236.52,
+      "oneYearMonthly": 139.083333,
+      "threeYearMonthly": 266.833333
+    },
+    "m5n.12xlarge": {
+      "onDemandMonthly": 2470.32,
+      "oneYearMonthly": 1452.583333,
+      "threeYearMonthly": 2786.5
+    },
+    "m5n.16xlarge": {
+      "onDemandMonthly": 3293.76,
+      "oneYearMonthly": 1936.75,
+      "threeYearMonthly": 3715.333333
+    },
+    "m5n.24xlarge": {
+      "onDemandMonthly": 4940.64,
+      "oneYearMonthly": 2905.083333,
+      "threeYearMonthly": 5573.083333
+    },
+    "m5n.2xlarge": {
+      "onDemandMonthly": 411.72,
+      "oneYearMonthly": 242.083333,
+      "threeYearMonthly": 464.416667
+    },
+    "m5n.4xlarge": {
+      "onDemandMonthly": 823.44,
+      "oneYearMonthly": 484.166667,
+      "threeYearMonthly": 928.833333
+    },
+    "m5n.8xlarge": {
+      "onDemandMonthly": 1646.88,
+      "oneYearMonthly": 968.333333,
+      "threeYearMonthly": 1857.666667
+    },
+    "m5n.xlarge": {
+      "onDemandMonthly": 205.86,
+      "oneYearMonthly": 121.083333,
+      "threeYearMonthly": 232.25
+    },
+    "c5ad.12xlarge": {
+      "onDemandMonthly": 1752,
+      "oneYearMonthly": 1030.166667,
+      "threeYearMonthly": 1976.25
+    },
+    "c5ad.16xlarge": {
+      "onDemandMonthly": 2336,
+      "oneYearMonthly": 1373.583333,
+      "threeYearMonthly": 2635
+    },
+    "c5ad.24xlarge": {
+      "onDemandMonthly": 3504,
+      "oneYearMonthly": 2060.333333,
+      "threeYearMonthly": 3952.5
+    },
+    "c5ad.2xlarge": {
+      "onDemandMonthly": 292,
+      "oneYearMonthly": 171.666667,
+      "threeYearMonthly": 329.416667
+    },
+    "c5ad.4xlarge": {
+      "onDemandMonthly": 584,
+      "oneYearMonthly": 343.416667,
+      "threeYearMonthly": 658.75
+    },
+    "c5ad.8xlarge": {
+      "onDemandMonthly": 1168,
+      "oneYearMonthly": 686.75,
+      "threeYearMonthly": 1317.5
+    },
+    "c5ad.xlarge": {
+      "onDemandMonthly": 146,
+      "oneYearMonthly": 85.833333,
+      "threeYearMonthly": 164.666667
+    },
+    "i3.16xlarge": {
+      "onDemandMonthly": 4344.96,
+      "oneYearMonthly": 2767.75,
+      "threeYearMonthly": 5513.75
+    },
+    "i3.2xlarge": {
+      "onDemandMonthly": 543.12,
+      "oneYearMonthly": 346,
+      "threeYearMonthly": 689.25
+    },
+    "i3.4xlarge": {
+      "onDemandMonthly": 1086.24,
+      "oneYearMonthly": 691.916667,
+      "threeYearMonthly": 1378.416667
+    },
+    "i3.8xlarge": {
+      "onDemandMonthly": 2172.48,
+      "oneYearMonthly": 1383.833333,
+      "threeYearMonthly": 2756.916667
+    },
+    "i3en.12xlarge": {
+      "onDemandMonthly": 4730.4,
+      "oneYearMonthly": 3014.416667,
+      "threeYearMonthly": 5391.916667
+    },
+    "i3en.24xlarge": {
+      "onDemandMonthly": 9460.8,
+      "oneYearMonthly": 6028.75,
+      "threeYearMonthly": 10783.833333
+    },
+    "i3en.2xlarge": {
+      "onDemandMonthly": 788.4,
+      "oneYearMonthly": 502.416667,
+      "threeYearMonthly": 898.666667
+    },
+    "i3en.3xlarge": {
+      "onDemandMonthly": 1182.6,
+      "oneYearMonthly": 753.583333,
+      "threeYearMonthly": 1348
+    },
+    "i3en.6xlarge": {
+      "onDemandMonthly": 2365.2,
+      "oneYearMonthly": 1507.166667,
+      "threeYearMonthly": 2696
+    },
+    "i3en.metal": {
+      "onDemandMonthly": 9460.8,
+      "oneYearMonthly": 6028.75,
+      "threeYearMonthly": 10783.833333
+    },
+    "i3en.xlarge": {
+      "onDemandMonthly": 394.2,
+      "oneYearMonthly": 251.166667,
+      "threeYearMonthly": 449.333333
+    },
+    "i3.xlarge": {
+      "onDemandMonthly": 271.56,
+      "oneYearMonthly": 173,
+      "threeYearMonthly": 344.583333
+    },
+    "i4i.12xlarge": {
+      "onDemandMonthly": 3584.3,
+      "oneYearMonthly": 2180.5,
+      "threeYearMonthly": 4349.833333
+    },
+    "i4i.16xlarge": {
+      "onDemandMonthly": 4779.31,
+      "oneYearMonthly": 2907.333333,
+      "threeYearMonthly": 5799.833333
+    },
+    "i4i.24xlarge": {
+      "onDemandMonthly": 7169.184,
+      "oneYearMonthly": 4361,
+      "threeYearMonthly": 8699.75
+    },
+    "i4i.2xlarge": {
+      "onDemandMonthly": 597.14,
+      "oneYearMonthly": 363.416667,
+      "threeYearMonthly": 725
+    },
+    "i4i.32xlarge": {
+      "onDemandMonthly": 9558.912,
+      "oneYearMonthly": 5814.666667,
+      "threeYearMonthly": 11599.666667
+    },
+    "i4i.4xlarge": {
+      "onDemandMonthly": 1195.01,
+      "oneYearMonthly": 726.833333,
+      "threeYearMonthly": 1449.916667
+    },
+    "i4i.8xlarge": {
+      "onDemandMonthly": 2390.02,
+      "oneYearMonthly": 1453.666667,
+      "threeYearMonthly": 2899.916667
+    },
+    "i4i.metal": {
+      "onDemandMonthly": 9558.62,
+      "oneYearMonthly": 5814.666667,
+      "threeYearMonthly": 11599.666667
+    },
+    "i4i.xlarge": {
+      "onDemandMonthly": 298.57,
+      "oneYearMonthly": 181.666667,
+      "threeYearMonthly": 362.5
+    },
+    "im4gn.16xlarge": {
+      "onDemandMonthly": 5066.2219,
+      "oneYearMonthly": 3045.75,
+      "threeYearMonthly": 6076
+    },
+    "im4gn.2xlarge": {
+      "onDemandMonthly": 633.275,
+      "oneYearMonthly": 380.75,
+      "threeYearMonthly": 759.5
+    },
+    "im4gn.4xlarge": {
+      "onDemandMonthly": 1266.5573,
+      "oneYearMonthly": 761.416667,
+      "threeYearMonthly": 1519
+    },
+    "im4gn.8xlarge": {
+      "onDemandMonthly": 2533.1146,
+      "oneYearMonthly": 1522.916667,
+      "threeYearMonthly": 3038
+    },
+    "im4gn.xlarge": {
+      "onDemandMonthly": 316.6375,
+      "oneYearMonthly": 190.333333,
+      "threeYearMonthly": 379.75
+    },
+    "is4gen.2xlarge": {
+      "onDemandMonthly": 1005.21,
+      "oneYearMonthly": 641.416667,
+      "threeYearMonthly": 1144.416667
+    },
+    "is4gen.4xlarge": {
+      "onDemandMonthly": 2010.42,
+      "oneYearMonthly": 1282.833333,
+      "threeYearMonthly": 2288.75
+    },
+    "is4gen.8xlarge": {
+      "onDemandMonthly": 4020.84,
+      "oneYearMonthly": 2565.666667,
+      "threeYearMonthly": 4577.5
+    },
+    "is4gen.xlarge": {
+      "onDemandMonthly": 502.605,
+      "oneYearMonthly": 320.666667,
+      "threeYearMonthly": 572.166667
+    },
+    "m5ad.12xlarge": {
+      "onDemandMonthly": 2190,
+      "oneYearMonthly": 1287.75,
+      "threeYearMonthly": 2470.333333
+    },
+    "m5ad.16xlarge": {
+      "onDemandMonthly": 2920,
+      "oneYearMonthly": 1717,
+      "threeYearMonthly": 3293.75
+    },
+    "m5ad.24xlarge": {
+      "onDemandMonthly": 4380,
+      "oneYearMonthly": 2575.416667,
+      "threeYearMonthly": 4940.666667
+    },
+    "m5ad.2xlarge": {
+      "onDemandMonthly": 365,
+      "oneYearMonthly": 214.583333,
+      "threeYearMonthly": 411.75
+    },
+    "m5ad.4xlarge": {
+      "onDemandMonthly": 730,
+      "oneYearMonthly": 429.25,
+      "threeYearMonthly": 823.416667
+    },
+    "m5ad.8xlarge": {
+      "onDemandMonthly": 1460,
+      "oneYearMonthly": 858.5,
+      "threeYearMonthly": 1646.916667
+    },
+    "m5ad.xlarge": {
+      "onDemandMonthly": 182.5,
+      "oneYearMonthly": 107.333333,
+      "threeYearMonthly": 205.833333
+    },
+    "m5d.12xlarge": {
+      "onDemandMonthly": 2382.72,
+      "oneYearMonthly": 1401,
+      "threeYearMonthly": 2687.666667
+    },
+    "m5d.16xlarge": {
+      "onDemandMonthly": 3176.96,
+      "oneYearMonthly": 1868.083333,
+      "threeYearMonthly": 3583.583333
+    },
+    "m5d.24xlarge": {
+      "onDemandMonthly": 4765.44,
+      "oneYearMonthly": 2802.083333,
+      "threeYearMonthly": 5375.416667
+    },
+    "m5d.2xlarge": {
+      "onDemandMonthly": 397.12,
+      "oneYearMonthly": 233.5,
+      "threeYearMonthly": 447.916667
+    },
+    "m5d.4xlarge": {
+      "onDemandMonthly": 794.24,
+      "oneYearMonthly": 467,
+      "threeYearMonthly": 895.916667
+    },
+    "m5d.8xlarge": {
+      "onDemandMonthly": 1588.48,
+      "oneYearMonthly": 934,
+      "threeYearMonthly": 1791.833333
+    },
+    "m5d.xlarge": {
+      "onDemandMonthly": 198.56,
+      "oneYearMonthly": 116.75,
+      "threeYearMonthly": 224
+    }
+  }
+}

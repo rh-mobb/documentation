@@ -20,13 +20,41 @@ export async function loadSnapshotData(baseUrl) {
 
   const pricingEntries = await Promise.all(
     regionCodes.map(async (regionCode) => {
-      const payload = await loadJson(`${normalizedBaseUrl}/pricing/${regionCode}.json`);
-      return [regionCode, payload];
+      try {
+        const payload = await loadJson(`${normalizedBaseUrl}/pricing/${regionCode}.json`);
+        return [regionCode, payload];
+      } catch (error) {
+        console.warn(`Skipping pricing for region ${regionCode}: ${error.message}`);
+        return null;
+      }
     })
   );
 
-  const pricingByRegion = Object.fromEntries(pricingEntries);
-  return { regions, catalog, pricingByRegion, manifest };
+  const pricingByRegion = Object.fromEntries(pricingEntries.filter(Boolean));
+  const availableRegionCodes = new Set(Object.keys(pricingByRegion));
+  if (availableRegionCodes.size === 0) {
+    throw new Error("No region pricing files could be loaded.");
+  }
+
+  const filteredRegionsList = Array.isArray(regions?.regions)
+    ? regions.regions.filter((region) => availableRegionCodes.has(region?.code))
+    : [];
+  const filteredManifestRegions = Array.isArray(manifest?.regions)
+    ? manifest.regions.filter((regionCode) => availableRegionCodes.has(regionCode))
+    : [];
+
+  return {
+    regions: {
+      ...regions,
+      regions: filteredRegionsList
+    },
+    catalog,
+    pricingByRegion,
+    manifest: {
+      ...manifest,
+      regions: filteredManifestRegions
+    }
+  };
 }
 
 export function getRegionPricing(pricingByRegion, regionCode) {

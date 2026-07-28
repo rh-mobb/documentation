@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generated_at": "2026-07-27T23:54:24.045Z",
-  "region": "us-east-1",
+  "region": "us-west-2",
   "byInstanceType": {
     "dl1.24xlarge": {
       "onDemandMonthly": 9569.5992,
@@ -274,7 +274,7 @@
       "threeYearMonthly": 19854.166667
     },
     "p4d.24xlarge": {
-      "onDemandMonthly": 16029.07866,
+      "onDemandMonthly": 16029.0772,
       "oneYearMonthly": 9484.916667,
       "threeYearMonthly": 17868.333333
     },
@@ -287,6 +287,11 @@
       "onDemandMonthly": 40179.2,
       "oneYearMonthly": 40179.2,
       "threeYearMonthly": 45322.166667
+    },
+    "p5.4xlarge": {
+      "onDemandMonthly": 5022.4,
+      "oneYearMonthly": 5022.4,
+      "threeYearMonthly": 5665.25
     },
     "trn1.2xlarge": {
       "onDemandMonthly": 980.9375,
@@ -926,12 +931,12 @@
     "c7i-flex.12xlarge": {
       "onDemandMonthly": 1485.477,
       "oneYearMonthly": 917.166667,
-      "threeYearMonthly": 1707.416667
+      "threeYearMonthly": 1707.5
     },
     "c7i-flex.16xlarge": {
       "onDemandMonthly": 1980.636,
-      "oneYearMonthly": 1222.833333,
-      "threeYearMonthly": 2276.583333
+      "oneYearMonthly": 1222.916667,
+      "threeYearMonthly": 2276.75
     },
     "c7i-flex.2xlarge": {
       "onDemandMonthly": 247.5795,
@@ -951,7 +956,7 @@
     "c7i-flex.xlarge": {
       "onDemandMonthly": 123.7934,
       "oneYearMonthly": 76.416667,
-      "threeYearMonthly": 142.25
+      "threeYearMonthly": 142.333333
     },
     "c7i.metal-24xl": {
       "onDemandMonthly": 3127.32,
@@ -1017,21 +1022,6 @@
       "onDemandMonthly": 116.4496,
       "oneYearMonthly": 71.583333,
       "threeYearMonthly": 133.583333
-    },
-    "hpc7g.16xlarge": {
-      "onDemandMonthly": 1228.736,
-      "oneYearMonthly": 903.083333,
-      "threeYearMonthly": 2217.583333
-    },
-    "hpc7g.4xlarge": {
-      "onDemandMonthly": 1228.736,
-      "oneYearMonthly": 903.083333,
-      "threeYearMonthly": 2217.583333
-    },
-    "hpc7g.8xlarge": {
-      "onDemandMonthly": 1228.736,
-      "oneYearMonthly": 903.083333,
-      "threeYearMonthly": 2217.583333
     },
     "m5zn.12xlarge": {
       "onDemandMonthly": 2893.793,
