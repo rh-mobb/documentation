@@ -10,7 +10,7 @@ Deploying Pega Platform on a managed OpenShift environment like Red Hat OpenShif
 
 This guide walks you through deploying Pega Platform on ROSA step by step, covering everything from preparing your container images to accessing the Pega web interface. The accompanying [Git repository](https://github.com/roller1187/pega-rosa) contains all the configuration files you need to get started.
 
-> This deployment was tested on ROSA 4.15.45, using a bastion host running RHEL 8.6.
+> This deployment was tested on ROSA GovCloud 4.18, using a bastion host running RHEL 8.6.
 
 ## Prerequisites
 
