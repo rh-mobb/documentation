@@ -400,6 +400,20 @@ oc get csv -n redhat-ods-operator | grep servicemesh
 
 **Note:** Service Mesh v3 is automatically installed when you install OpenShift AI operator. Do NOT create a `ServiceMeshControlPlane` manually - OpenShift AI creates it automatically.
 
+**Troubleshooting:** If Service Mesh CSV shows "Failed" status with error "OwnNamespace InstallModeType not supported":
+```bash
+# Check the error
+oc get csv -n redhat-ods-operator -l operators.coreos.com/servicemeshoperator.redhat-ods-operator -o jsonpath='{.items[0].status.conditions[?(@.type=="InstallSucceeded")].message}'
+
+# This is a known auto-install configuration issue. The Service Mesh operator will typically
+# self-recover or can be manually resolved by deleting and allowing it to reinstall:
+oc delete csv -n redhat-ods-operator -l operators.coreos.com/servicemeshoperator.redhat-ods-operator
+
+# Wait 30-60 seconds for OpenShift AI to automatically reinstall it
+sleep 60
+oc get csv -n redhat-ods-operator | grep servicemesh
+```
+
 #### 3.4. Install Red Hat Cert-Manager Operator
 
 **🔵 Required for:** Path B, Path C (certificate management for Training Operator, Kueue, JobSet)
