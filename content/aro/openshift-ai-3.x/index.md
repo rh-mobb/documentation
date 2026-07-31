@@ -11,9 +11,7 @@ authors:
 
 ---
 
-# Installing Red Hat OpenShift AI 3.x on Azure Red Hat OpenShift
-
-# AI
+# Installing Red Hat OpenShift AI 3.x on Azure Red Hat OpenShift AI
 
 ## Overview
 
