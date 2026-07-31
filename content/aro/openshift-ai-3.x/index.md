@@ -4,7 +4,7 @@ title: Installing Red Hat OpenShift AI 3.x on Azure Red Hat OpenShift
 tags: ["ARO", "Azure", "AI", "ML", "GPU", "OpenShift AI", "RHOAI"]
 authors:
   - Kumudu Herath
-  - Paul Czarkowski
+  - Kevin Collins
 ---
 
 **Planning a POC?** Review the [ARO POC Guide for OpenShift AI](https://github.com/rh-mobb/poc-guides/blob/main/aro/04-special-considerations/04b-AI.md) for scenario planning, infrastructure sizing, and success criteria before starting installation.
