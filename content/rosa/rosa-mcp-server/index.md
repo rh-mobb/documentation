@@ -385,7 +385,7 @@ The OpenShift MCP Server provides an OCI Helm chart for deployment. The chart cr
     ```json
     {
       "mcpServers": {
-        "kubernetes": {
+        "openshift": {
           "url": "https://kubernetes-mcp-server.apps.rosa.${CLUSTER_NAME}.${CLUSTER_DOMAIN}/sse"
         }
       }
@@ -402,7 +402,7 @@ The OpenShift MCP Server provides an OCI Helm chart for deployment. The chart cr
     claude mcp list
     ```
 
-    You should see the `kubernetes` server listed with tools for pods, deployments, logs, events, metrics, and Helm operations.
+    You should see the `openshift` server listed with tools for pods, deployments, logs, events, metrics, and Helm operations.
 
 {{% alert state="info" %}}**Local alternative:** For local development without deploying to the cluster, you can also run `npx kubernetes-mcp-server@latest` with your kubeconfig. See the [OpenShift MCP Server repository](https://github.com/openshift/openshift-mcp-server) for details.{{% /alert %}}
 
@@ -470,7 +470,7 @@ Think of it this way: **Lightspeed puts Claude inside the console; MCP servers p
 
 1. Remove Claude Code MCP configuration
 
-    Remove the `rosa-hcp` and `kubernetes` entries from `.claude/settings.local.json`.
+    Remove the `rosa-hcp` and `openshift` entries from `.claude/settings.local.json`.
 
 ## Additional Resources
 
