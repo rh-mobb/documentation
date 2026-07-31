@@ -92,11 +92,13 @@ The server supports three authentication methods, checked in priority order:
 
 ## Set Environment Variables
 
-Set the cluster name used throughout this guide:
+Set the variables used throughout this guide:
 
 ```bash
 export CLUSTER_NAME=<your-cluster-name>
+export CLUSTER_DOMAIN=$(rosa describe cluster -c ${CLUSTER_NAME} -o json | jq -r '.dns.base_domain')
 echo "Cluster: ${CLUSTER_NAME}"
+echo "Domain:  ${CLUSTER_DOMAIN}"
 ```
 
 ### Local vs. Cluster Deployment
@@ -117,7 +119,7 @@ The project includes an OpenShift template for production deployment. This creat
 1. Log in to your cluster
 
     ```bash
-    oc login --server=https://api.${CLUSTER_NAME}.<domain>:443
+    oc login --server=https://api.${CLUSTER_NAME}.${CLUSTER_DOMAIN}:443
     ```
 
 1. Create a project for the MCP server
@@ -130,7 +132,7 @@ The project includes an OpenShift template for production deployment. This creat
 
     ```bash
     oc process -f openshift/template.yaml \
-      -p MCP_HOST=rosa-mcp-server.apps.rosa.${CLUSTER_NAME}.<domain> \
+      -p MCP_HOST=rosa-mcp-server.apps.rosa.${CLUSTER_NAME}.${CLUSTER_DOMAIN} \
       | oc apply -f -
     ```
 
@@ -186,7 +188,7 @@ Claude Code can connect to the deployed ROSA MCP Server, enabling you to manage 
     {
       "mcpServers": {
         "rosa-hcp": {
-          "url": "https://rosa-mcp-server.apps.rosa.<cluster-name>.<domain>/sse",
+          "url": "https://rosa-mcp-server.apps.rosa.${CLUSTER_NAME}.${CLUSTER_DOMAIN}/sse",
           "headers": {
             "X-OCM-CLIENT-ID": "<your-client-id>",
             "X-OCM-CLIENT-SECRET": "<your-client-secret>"
@@ -202,7 +204,7 @@ Claude Code can connect to the deployed ROSA MCP Server, enabling you to manage 
     {
       "mcpServers": {
         "rosa-hcp": {
-          "url": "https://rosa-mcp-server.apps.rosa.<cluster-name>.<domain>/sse",
+          "url": "https://rosa-mcp-server.apps.rosa.${CLUSTER_NAME}.${CLUSTER_DOMAIN}/sse",
           "headers": {
             "X-OCM-OFFLINE-TOKEN": "<your-ocm-offline-token>"
           }
@@ -211,7 +213,7 @@ Claude Code can connect to the deployed ROSA MCP Server, enabling you to manage 
     }
     ```
 
-    Replace the URL with the actual Route URL from step 1.
+    Replace `${CLUSTER_NAME}` and `${CLUSTER_DOMAIN}` with the values from the environment variables set earlier.
 
     {{% alert state="warning" %}}The `settings.local.json` file contains your OCM credentials. This file is gitignored by default and should never be committed to version control.{{% /alert %}}
 
@@ -340,14 +342,14 @@ The OpenShift MCP Server provides an OCI Helm chart for deployment. The chart cr
     helm upgrade -i kubernetes-mcp-server \
       oci://ghcr.io/containers/charts/kubernetes-mcp-server \
       -n mcp-server-k8s \
-      --set ingress.host=kubernetes-mcp-server.apps.rosa.${CLUSTER_NAME}.<domain> \
+      --set ingress.host=kubernetes-mcp-server.apps.rosa.${CLUSTER_NAME}.${CLUSTER_DOMAIN} \
       --set openshift=true \
       --set rbac.extraClusterRoleBindings[0].name=use-view-role \
       --set rbac.extraClusterRoleBindings[0].roleRef.name=view \
       --set rbac.extraClusterRoleBindings[0].roleRef.external=true
     ```
 
-    Replace `<domain>` with your cluster's base domain (e.g., `qftf.p3.openshiftapps.com`).
+    The `${CLUSTER_DOMAIN}` variable was set in the environment variables step above.
 
     {{% alert state="info" %}}This deployment uses the built-in `view` ClusterRole, which grants **read-only** access to most cluster resources. For write access (e.g., scaling deployments, managing Helm releases), bind to the `edit` or `admin` ClusterRole instead. You can also add `--set readOnly=true` for defense-in-depth at the application level.{{% /alert %}}
 
@@ -384,7 +386,7 @@ The OpenShift MCP Server provides an OCI Helm chart for deployment. The chart cr
     {
       "mcpServers": {
         "kubernetes": {
-          "url": "https://kubernetes-mcp-server.apps.rosa.<cluster-name>.<domain>/sse"
+          "url": "https://kubernetes-mcp-server.apps.rosa.${CLUSTER_NAME}.${CLUSTER_DOMAIN}/sse"
         }
       }
     }
