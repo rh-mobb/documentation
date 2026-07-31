@@ -7,13 +7,13 @@ authors:
   - Kumudu Herath
 ---
 
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.20**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
+{{% alert state="info" %}}This guide has been validated on **OpenShift 4.22**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 OpenShift Lightspeed is an AI-powered assistant that helps developers and administrators interact with OpenShift using natural language. This guide walks you through integrating OpenShift Lightspeed with AWS Bedrock on Red Hat OpenShift Service on AWS (ROSA).
 
 ## Prerequisites
 
-* ROSA Cluster (4.20+)
+* ROSA Cluster (4.22+)
 * AWS CLI configured with appropriate credentials
 * `oc` CLI logged in as cluster-admin
 * `rosa` CLI
@@ -91,11 +91,19 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
     export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
     export CLUSTER_NAME=<your-cluster-name>
     export AWS_REGION=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .region.id)
-    export BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20250219-v2:0
+    export BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-5
     export OIDC_ENDPOINT=$(rosa describe cluster -c ${CLUSTER_NAME} --output json | jq -r .aws.sts.oidc_endpoint_url | sed 's|^https://||')
     export LIGHTSPEED_NAMESPACE=openshift-lightspeed
     export SERVICE_ACCOUNT_NAME=lightspeed-service-account
     ```
+
+    {{% alert state="warning" %}}**Inference Profiles Required for Newer Models**: Newer Bedrock models (e.g., Claude Sonnet 5) cannot be invoked directly by model ID — you must use a **cross-region inference profile ID** such as `us.anthropic.claude-sonnet-5`. Using the direct model ID (e.g., `anthropic.claude-sonnet-5`) will result in a `ValidationException`. You can list available inference profiles with:
+    ```bash
+    aws bedrock list-inference-profiles --region ${AWS_REGION} \
+      --query "inferenceProfileSummaries[?contains(inferenceProfileId, 'anthropic')].{id: inferenceProfileId, name: inferenceProfileName}" \
+      --output table
+    ```
+    {{% /alert %}}
 
 1. Create IAM policy for Bedrock access
 
@@ -342,7 +350,7 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
     @app.route('/v1/chat/completions', methods=['POST'])
     def chat_completions():
         data = request.json
-        model = data.get('model', os.environ.get('BEDROCK_MODEL_ID'))
+        model = os.environ.get('BEDROCK_MODEL_ID', data.get('model'))
         messages = data.get('messages', [])
         stream = data.get('stream', False)
 
@@ -590,26 +598,23 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
     oc get olsconfig cluster -o yaml
     ```
 
-1. Verify there are no validation errors
+1. Check the OLSConfig status conditions
 
     ```bash
-    oc get olsconfig cluster -o jsonpath='{.status.conditions[?(@.type=="Valid")]}' | jq .
+    oc get olsconfig cluster -o jsonpath='{.status.conditions}' | jq .
     ```
 
-1. Check the OLSConfig status
+    A healthy OLSConfig should show all three conditions as `True`:
+    - `ConsolePluginReady: True`
+    - `CacheReady: True`
+    - `ApiReady: True`
 
-    ```bash
-    oc describe olsconfig cluster
-    ```
-
-    Look for events and status conditions. A healthy OLSConfig should show:
-    - `Valid: True`
-    - No error messages in the events
+    {{% alert state="info" %}}The `ApiReady` condition may show `Progressing` initially while the Lightspeed app server starts up and performs its first health check against the Bedrock proxy. This can take 1-2 minutes.{{% /alert %}}
 
 1. Check the operator logs for reconciliation issues
 
     ```bash
-    oc logs -n openshift-lightspeed-operator deployment/lightspeed-operator-controller-manager --tail=100
+    oc logs -n ${LIGHTSPEED_NAMESPACE} deployment/lightspeed-operator-controller-manager --tail=100
     ```
 
 ## Verify the Installation
@@ -720,6 +725,30 @@ aws iam list-attached-role-policies \
   --role-name ${CLUSTER_NAME}-lightspeed-bedrock
 ```
 
+### Inference Profile ValidationException
+
+If the bedrock-proxy logs show:
+```
+ValidationException: Invocation of model ID anthropic.claude-sonnet-5 with on-demand throughput isn't supported.
+Retry your request with the ID or ARN of an inference profile that contains this model.
+```
+
+This means you are using a direct model ID instead of an inference profile ID. Newer Claude models on Bedrock require a cross-region inference profile. Fix by updating `BEDROCK_MODEL_ID` to the inference profile ID (e.g., `us.anthropic.claude-sonnet-5` instead of `anthropic.claude-sonnet-5`):
+
+```bash
+oc set env deployment/bedrock-proxy -n ${LIGHTSPEED_NAMESPACE} \
+  BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-5
+```
+
+Then update the OLSConfig model name and defaultModel to match:
+
+```bash
+oc patch olsconfig cluster --type='json' -p='[
+  {"op": "replace", "path": "/spec/llm/providers/0/models/0/name", "value": "us.anthropic.claude-sonnet-5"},
+  {"op": "replace", "path": "/spec/ols/defaultModel", "value": "us.anthropic.claude-sonnet-5"}
+]'
+```
+
 ### Model Access Issues
 
 Verify model access in Bedrock:
@@ -751,7 +780,7 @@ To remove OpenShift Lightspeed and associated resources:
 1. Delete the operator subscription
 
     ```bash
-    oc delete subscription openshift-lightspeed -n openshift-operators
+    oc delete subscription lightspeed-operator -n ${LIGHTSPEED_NAMESPACE}
     ```
 
 1. Delete the namespace
