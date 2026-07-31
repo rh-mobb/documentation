@@ -33,38 +33,6 @@ Red Hat OpenShift AI provides a comprehensive platform for developing, training,
 
 **New to OpenShift AI?** Choose your deployment path based on your needs:
 
-### Decision Tree
-
-```
-                    OpenShift AI on ARO
-                            │
-                            ▼
-              ┌─────────────────────────┐
-              │ Do you need GPU support?│
-              └─────────────────────────┘
-                    │             │
-              ┌─────┘             └─────┐
-              NO                        YES
-              │                           │
-              ▼                           ▼
-    ┌──────────────────┐        ┌──────────────────┐
-    │Need Model Serving│        │ Full Deployment  │
-    │or Pipelines?     │        │ (Path C)         │
-    └──────────────────┘        │ • GPU Workers    │
-         │         │             │ • Training       │
-    ┌────┘         └────┐        │ • ⏱️ 120 min     │
-    NO                 YES       └──────────────────┘
-    │                   │
-    ▼                   ▼
-┌─────────────┐   ┌─────────────┐
-│   Minimal   │   │  Standard   │
-│  (Path A)   │   │  (Path B)   │
-│ • Dashboard │   │ • KServe    │
-│ • Notebooks │   │ • Pipelines │
-│ • ⏱️ 30 min  │   │ • ⏱️ 60 min  │
-└─────────────┘   └─────────────┘
-```
-
 ### 📋 Deployment Paths Overview
 
 | Path | Time | Workers | Monthly Cost* | What You Get | Best For |
@@ -178,65 +146,18 @@ This table shows which operators are required for each OpenShift AI component:
 ### Minimal vs Full Installation
 
 **Minimal Installation (Dashboard + Workbenches only):**
-```
-Required Operators:
-  ✓ Red Hat OpenShift AI Operator
-  ✓ Red Hat OpenShift Service Mesh Operator (auto-installed)
-
-Components Enabled:
-  - Dashboard
-  - Workbenches
-```
+- Required: OpenShift AI Operator, Service Mesh Operator (auto-installed)
+- Components: Dashboard, Workbenches
 
 **Standard Installation (Model Serving + Pipelines):**
-```
-Required Operators:
-  ✓ Red Hat OpenShift AI Operator
-  ✓ Red Hat OpenShift Service Mesh Operator (auto-installed)
-  ✓ Red Hat OpenShift Serverless Operator
-  ✓ Red Hat OpenShift Pipelines Operator
-  ✓ S3-compatible storage (Azure Blob/MinIO/AWS S3)
-
-Components Enabled:
-  - Dashboard
-  - Workbenches
-  - Data Science Pipelines
-  - KServe (Model Serving)
-  - Model Registry
-```
+- Required: OpenShift AI, Service Mesh (auto), Serverless, Pipelines, S3-compatible storage
+- Components: Dashboard, Workbenches, Data Science Pipelines, KServe, Model Registry
 
 **Full Installation (All Features + Training):**
-```
-Required Operators:
-  ✓ Red Hat OpenShift AI Operator
-  ✓ Red Hat OpenShift Service Mesh Operator (auto-installed)
-  ✓ Red Hat OpenShift Serverless Operator
-  ✓ Red Hat OpenShift Pipelines Operator
-  ✓ Red Hat Cert-Manager Operator
-  ✓ Kueue Operator
-  ✓ JobSet Operator
-  ✓ S3-compatible storage (Azure Blob/MinIO/AWS S3)
-
-Recommended (Advanced Features):
-  ✓ Leader Worker Set Operator (distributed inference)
-  ✓ Custom Metrics Autoscaler (autoscaling)
-  ✓ MariaDB Operator (TrustyAI database mode)
-
-Optional (GPU Workloads):
-  ✓ Node Feature Discovery Operator
-  ✓ NVIDIA GPU Operator
-
-Components Enabled:
-  - Dashboard
-  - Workbenches
-  - Data Science Pipelines
-  - KServe (Model Serving)
-  - Training Operator (with distributed training)
-  - Ray (distributed compute)
-  - Kueue (job queuing)
-  - Model Registry
-  - TrustyAI
-```
+- Required: All Standard operators + Cert-Manager, Kueue, JobSet, S3 storage
+- Recommended: Leader Worker Set, Custom Metrics Autoscaler, MariaDB (for TrustyAI)
+- Optional (GPU): Node Feature Discovery, NVIDIA GPU Operator
+- Components: All Standard + Training Operator, Ray, Kueue, TrustyAI
 
 **References:**
 - [Installing the Single-Model Serving Platform](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.22/html/installing_and_uninstalling_openshift_ai_self-managed/installing-the-single-model-serving-platform_component-install) - Service Mesh and Serverless configuration
@@ -255,47 +176,13 @@ Standard ARO clusters with internet egress can install OpenShift AI directly fro
 - Production workloads with internet access
 - Azure commercial cloud deployments
 
-### Egress-Restricted Deployment (ARO Egress Lockdown)
+### Egress-Restricted Deployment
 
-ARO provides an **egress lockdown** feature that proxies calls to required Azure and Red Hat domains through the ARO service using Azure private endpoints. This enables clusters with restricted egress (including zero public IPs) to function without direct internet access.
+ARO supports egress lockdown for private clusters with zero public IPs. OpenShift AI is compatible with this configuration.
 
-**How Egress Lockdown Works:**
-- Proxies traffic to required domains (management.azure.com, Red Hat registries) through ARO service
-- Uses Azure private endpoints within the cluster resource group
-- Doesn't require customer internet access for ARO services to function
-- Requires Server Name Indication (SNI) extension to TLS for customer workloads
-- Enabled by default for new ARO clusters
+**For detailed egress lockdown configuration:** See [ARO Egress Lockdown Overview](https://learn.microsoft.com/en-us/azure/openshift/concepts-egress-lockdown)
 
-**Verify Egress Lockdown Status:**
-```bash
-oc get cluster.aro.openshift.io cluster -o go-template='{{ if .spec.gatewayDomains }}{{ "Egress Lockdown Feature Enabled" }}{{ else }}{{ "Egress Lockdown Feature Disabled" }}{{ end }}{{ "\n" }}'
-```
-
-**Use Cases:**
-- Azure Government (MAG) deployments
-- Private clusters with UserDefinedRouting egress
-- Compliance requirements restricting internet access
-- Defense, government, healthcare, financial services sectors
-
-**Reference:** [ARO Egress Lockdown Overview](https://learn.microsoft.com/en-us/azure/openshift/concepts-egress-lockdown)
-
-### Disconnected/Air-Gapped Deployment Considerations
-
-**⚠️ Important Limitation for ARO:**
-
-ARO is a jointly managed service operated by Microsoft and Red Hat, which requires connectivity to management infrastructure for cluster operations, monitoring, and support. While ARO supports **egress lockdown** to eliminate direct internet access from cluster nodes, it cannot operate in a fully disconnected/air-gapped environment.
-
-**For truly air-gapped OpenShift AI deployments:**
-- Use **self-managed OpenShift Container Platform (OCP)** on Azure VMs
-- Deploy mirror registry for container images
-- Use oc-mirror plugin to mirror operator catalogs and images
-- Follow Red Hat's disconnected installation procedures
-
-**Key Distinction:**
-- **ARO with Egress Lockdown**: Private cluster, zero public IPs, proxied access to required services ✅
-- **Fully Air-Gapped ARO**: Not supported due to managed service architecture ❌
-
-**Reference:** [How to operate OpenShift in air-gapped environments](https://developers.redhat.com/articles/2026/03/19/how-operate-openshift-air-gapped-environments)
+**Note:** Fully air-gapped ARO is not supported. For air-gapped OpenShift AI, use self-managed OpenShift Container Platform on Azure VMs. See [Operating OpenShift in air-gapped environments](https://developers.redhat.com/articles/2026/03/19/how-operate-openshift-air-gapped-environments)
 
 ### Foundation: Installation Steps
 
