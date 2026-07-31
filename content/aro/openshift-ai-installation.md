@@ -314,8 +314,8 @@ oc version
 # Verify storage classes
 oc get storageclass
 
-# Check worker node capacity
-oc describe nodes | grep -A 5 "Allocatable"
+# Check worker node capacity (formatted table with memory in GB)
+oc get nodes -o custom-columns='NAME:.metadata.name,STATUS:.status.conditions[-1].type,CPU:.status.capacity.cpu,MEMORY:.status.capacity.memory' | awk 'NR==1{printf "%-55s %-10s %-6s%s\n",$1,$2,"vCPUs","MEMORY(GB)"}NR>1{mem=$4; gsub(/Ki/,"",mem); printf "%-55s %-10s %-6s %.0f GB\n",$1,$2,$3,mem/1024/1024}'
 
 # Expected: At least 2 workers with 8+ vCPUs, 32+ GiB RAM each
 ```
@@ -354,12 +354,23 @@ spec:
 EOF
 
 # Approve InstallPlan (manual control)
-sleep 10  # Wait for InstallPlan to be created
-INSTALL_PLAN=$(oc get installplan -n redhat-ods-operator -o jsonpath='{.items[?(@.spec.approved==false)].metadata.name}')
-if [ -n "$INSTALL_PLAN" ]; then
-  oc patch installplan $INSTALL_PLAN -n redhat-ods-operator --type merge --patch '{"spec":{"approved":true}}'
-else
-  echo "No pending InstallPlan found (may already be approved)"
+# Wait for InstallPlan to be created (may take 10-30 seconds)
+echo "Waiting for InstallPlan to be created..."
+for i in {1..30}; do
+  INSTALL_PLAN=$(oc get installplan -n redhat-ods-operator -o jsonpath='{.items[?(@.spec.approved==false)].metadata.name}' 2>/dev/null | head -1)
+  if [ -n "$INSTALL_PLAN" ]; then
+    echo "Found InstallPlan: $INSTALL_PLAN"
+    oc patch installplan $INSTALL_PLAN -n redhat-ods-operator --type merge --patch '{"spec":{"approved":true}}'
+    echo "InstallPlan approved"
+    break
+  fi
+  echo "Waiting... ($i/30)"
+  sleep 10
+done
+
+if [ -z "$INSTALL_PLAN" ]; then
+  echo "Warning: No pending InstallPlan found after 5 minutes. Check if it was auto-approved or if there's an error."
+  oc get installplan -n redhat-ods-operator
 fi
 
 # Verify operator installation
@@ -447,11 +458,7 @@ else
   echo "No pending InstallPlan found (may already be approved)"
 fi
 
-# Wait for operator installation
-sleep 10
-oc wait --for=condition=Ready csv -l operators.coreos.com/serverless-operator.openshift-serverless -n openshift-serverless --timeout=600s
-
-# Verify installation
+# Verify installation (operator installs quickly)
 oc get csv -n openshift-serverless
 oc get pods -n openshift-serverless
 ```
@@ -488,11 +495,7 @@ else
   echo "No pending InstallPlan found (may already be approved)"
 fi
 
-# Wait for operator installation
-sleep 10
-oc wait --for=condition=Ready csv -l operators.coreos.com/openshift-pipelines-operator-rh.openshift-operators -n openshift-operators --timeout=600s
-
-# Verify installation
+# Verify installation (operator installs quickly)
 oc get csv -n openshift-operators | grep pipelines
 oc get pods -n openshift-pipelines
 ```
@@ -555,11 +558,7 @@ else
   echo "No pending InstallPlan found (may already be approved)"
 fi
 
-# Wait for operator installation
-sleep 10
-oc wait --for=condition=Ready csv -l operators.coreos.com/openshift-cert-manager-operator.cert-manager-operator -n cert-manager-operator --timeout=600s
-
-# Verify installation
+# Verify installation (operator installs quickly)
 oc get csv -n cert-manager-operator
 oc get pods -n cert-manager
 ```
@@ -609,11 +608,7 @@ else
   echo "No pending InstallPlan found (may already be approved)"
 fi
 
-# Wait for operator installation
-sleep 10
-oc wait --for=condition=Ready csv -l operators.coreos.com/kueue-operator.openshift-kueue-operator -n openshift-kueue-operator --timeout=600s
-
-# Verify installation
+# Verify installation (operator installs quickly)
 oc get csv -n openshift-kueue-operator
 oc get pods -n openshift-kueue-system
 ```
@@ -665,11 +660,7 @@ else
   echo "No pending InstallPlan found (may already be approved)"
 fi
 
-# Wait for operator installation
-sleep 10
-oc wait --for=condition=Ready csv -l operators.coreos.com/jobset-operator.openshift-jobset-operator -n openshift-jobset-operator --timeout=600s
-
-# Verify installation
+# Verify installation (operator installs quickly)
 oc get csv -n openshift-jobset-operator
 oc get pods -n openshift-jobset-system
 ```
@@ -988,7 +979,7 @@ check_operator() {
   echo -n "Checking $name in $namespace... "
   if oc get csv -n $namespace -l $csv_label &>/dev/null; then
     local phase=$(oc get csv -n $namespace -l $csv_label -o jsonpath='{.items[0].status.phase}' 2>/dev/null)
-    if [ "$phase" == "Succeeded" ]; then
+    if [ "$phase" = "Succeeded" ]; then
       echo "✅ Running ($phase)"
       return 0
     else
@@ -1008,7 +999,7 @@ check_operator "Serverless" "openshift-serverless" "operators.coreos.com/serverl
 check_operator "Pipelines" "openshift-operators" "operators.coreos.com/openshift-pipelines-operator-rh.openshift-operators"
 check_operator "Cert-Manager" "cert-manager-operator" "operators.coreos.com/openshift-cert-manager-operator.cert-manager-operator"
 check_operator "Kueue" "openshift-kueue-operator" "operators.coreos.com/kueue-operator.openshift-kueue-operator"
-check_operator "JobSet" "openshift-jobset-operator" "operators.coreos.com/jobset-operator.openshift-jobset-operator"
+check_operator "JobSet" "openshift-jobset-operator" "operators.coreos.com/job-set.openshift-jobset-operator"
 
 # Optional operators
 echo ""
@@ -1204,6 +1195,10 @@ spec:
     kueue:
       managementState: Removed
 EOF
+
+# Wait for DataScienceCluster to be ready (this may take 5-10 minutes)
+echo "Waiting for DataScienceCluster to be ready..."
+oc wait --for=condition=Ready datasciencecluster/default-dsc --timeout=600s
 ```
 
 **Step 4: Validate Installation**
@@ -1352,6 +1347,10 @@ spec:
     modelmeshserving:
       managementState: Removed
 EOF
+
+# Wait for DataScienceCluster to be ready (this may take 5-10 minutes)
+echo "Waiting for DataScienceCluster to be ready..."
+oc wait --for=condition=Ready datasciencecluster/default-dsc --timeout=600s
 ```
 
 **Step 6: Validate Full Installation**
