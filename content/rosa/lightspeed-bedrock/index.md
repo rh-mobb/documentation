@@ -117,7 +117,20 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
           "Effect": "Allow",
           "Action": [
             "bedrock:InvokeModel",
-            "bedrock:InvokeModelWithResponseStream"
+            "bedrock:InvokeModelWithResponseStream",
+            "bedrock:GetFoundationModel",
+            "bedrock:ListFoundationModels",
+            "bedrock:GetInferenceProfile",
+            "bedrock:ListInferenceProfiles"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Sid": "MarketplaceModelAccess",
+          "Effect": "Allow",
+          "Action": [
+            "aws-marketplace:ViewSubscriptions",
+            "aws-marketplace:Subscribe"
           ],
           "Resource": "*"
         }
