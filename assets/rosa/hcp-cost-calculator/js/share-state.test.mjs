@@ -12,6 +12,7 @@ import {
 
 test("encodeShareState and decodeShareState round-trip scenario fields", () => {
   const scenario = {
+    mode: "basic",
     clusterCount: 2,
     ec2SavingsPlanDiscountPercent: 12.5,
     rhContractTier: "oneYear",
@@ -27,6 +28,48 @@ test("encodeShareState and decodeShareState round-trip scenario fields", () => {
   assert.ok(code.length > 20);
 
   const decoded = decodeShareState(code);
+  assert.deepEqual(decoded, scenario);
+});
+
+test("legacy share codes without mode default to basic", () => {
+  const legacy = {
+    v: 1,
+    t: "hcp",
+    c: {
+      cc: 1,
+      ed: 0,
+      rt: "onDemand",
+      pu: "yearly",
+      i: [["m7i.xlarge", "us-east-1", 3]]
+    }
+  };
+  const code = btoa(JSON.stringify(legacy))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  const decoded = decodeShareState(code);
+  assert.equal(decoded.mode, "basic");
+  assert.equal(decoded.instances[0].count, 3);
+});
+
+test("encodeShareState and decodeShareState round-trip expert clusters", () => {
+  const scenario = {
+    mode: "expert",
+    ec2SavingsPlanDiscountPercent: 10,
+    rhContractTier: "threeYear",
+    summaryPriceUnit: "yearly",
+    clusters: [
+      {
+        name: "Prod",
+        region: "us-east-1",
+        pools: [
+          { name: "workers-a", instanceType: "m7i.xlarge", az: "us-east-1a", count: 2 },
+          { name: "workers-b", instanceType: "m7i.xlarge", az: "us-east-1b", count: 2 }
+        ]
+      }
+    ]
+  };
+  const decoded = decodeShareState(encodeShareState(scenario));
   assert.deepEqual(decoded, scenario);
 });
 

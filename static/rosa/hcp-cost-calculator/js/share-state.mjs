@@ -3,6 +3,7 @@ export const SHARE_VERSION = 1;
 
 const VALID_RH_TIERS = new Set(["onDemand", "oneYear", "threeYear"]);
 const VALID_UNITS = new Set(["hourly", "monthly", "yearly"]);
+const VALID_MODES = new Set(["basic", "expert"]);
 
 export function toBase64Url(obj) {
   const json = JSON.stringify(obj);
@@ -27,15 +28,67 @@ export function fromBase64Url(str) {
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
+function packDiscounts(scenario) {
+  return {
+    ed: Number(scenario?.ec2SavingsPlanDiscountPercent ?? 0),
+    rt: scenario?.rhContractTier ?? "onDemand",
+    pu: scenario?.summaryPriceUnit ?? "yearly"
+  };
+}
+
+function unpackDiscounts(packed) {
+  let ec2SavingsPlanDiscountPercent = Number(packed.ed ?? 0);
+  if (!Number.isFinite(ec2SavingsPlanDiscountPercent)) {
+    ec2SavingsPlanDiscountPercent = 0;
+  }
+  ec2SavingsPlanDiscountPercent = Math.min(100, Math.max(0, ec2SavingsPlanDiscountPercent));
+  return {
+    ec2SavingsPlanDiscountPercent,
+    rhContractTier: VALID_RH_TIERS.has(packed.rt) ? packed.rt : "onDemand",
+    summaryPriceUnit: VALID_UNITS.has(packed.pu) ? packed.pu : "yearly"
+  };
+}
+
 /**
  * @param {object} scenario
- * @param {number} scenario.clusterCount
+ * @param {"basic"|"expert"} [scenario.mode]
+ * @param {number} [scenario.clusterCount]
  * @param {number} scenario.ec2SavingsPlanDiscountPercent
  * @param {string} scenario.rhContractTier
  * @param {string} scenario.summaryPriceUnit
- * @param {Array<{instanceType:string, region:string, count:number}>} scenario.instances
+ * @param {Array<{instanceType:string, region:string, count:number}>} [scenario.instances]
+ * @param {Array<{name:string, region:string, pools:Array<{name:string, instanceType:string, az:string, count:number}>}>} [scenario.clusters]
  */
 export function encodeShareState(scenario) {
+  const mode = VALID_MODES.has(scenario?.mode) ? scenario.mode : "basic";
+  const discounts = packDiscounts(scenario);
+
+  if (mode === "expert") {
+    const clusters = (scenario?.clusters ?? [])
+      .map((cluster) => {
+        const pools = (cluster.pools ?? [])
+          .map((pool) => [
+            String(pool.name ?? "workers").trim(),
+            String(pool.instanceType ?? "").trim(),
+            String(pool.az ?? "").trim(),
+            Math.max(0, Number.parseInt(pool.count, 10) || 0)
+          ])
+          .filter((row) => row[1] && row[2]);
+        return [String(cluster.name ?? "Cluster").trim(), String(cluster.region ?? "").trim(), pools];
+      })
+      .filter((row) => row[1]);
+
+    return toBase64Url({
+      v: SHARE_VERSION,
+      t: SHARE_FORMAT,
+      c: {
+        m: "expert",
+        ...discounts,
+        cl: clusters
+      }
+    });
+  }
+
   const instances = (scenario?.instances ?? [])
     .map((entry) => [
       String(entry.instanceType ?? "").trim(),
@@ -48,10 +101,9 @@ export function encodeShareState(scenario) {
     v: SHARE_VERSION,
     t: SHARE_FORMAT,
     c: {
+      m: "basic",
       cc: Math.max(1, Number.parseInt(scenario?.clusterCount, 10) || 1),
-      ed: Number(scenario?.ec2SavingsPlanDiscountPercent ?? 0),
-      rt: scenario?.rhContractTier ?? "onDemand",
-      pu: scenario?.summaryPriceUnit ?? "yearly",
+      ...discounts,
       i: instances
     }
   });
@@ -64,19 +116,50 @@ export function decodeShareState(code) {
   }
 
   const packed = payload.c;
+  const mode = VALID_MODES.has(packed.m) ? packed.m : "basic";
+  const discounts = unpackDiscounts(packed);
+
+  if (mode === "expert") {
+    const clusters = [];
+    for (const row of packed.cl ?? []) {
+      if (!Array.isArray(row) || row.length < 3) {
+        continue;
+      }
+      const name = String(row[0] ?? "Cluster").trim() || "Cluster";
+      const region = String(row[1] ?? "").trim();
+      if (!region) {
+        continue;
+      }
+      const pools = [];
+      for (const poolRow of row[2] ?? []) {
+        if (!Array.isArray(poolRow) || poolRow.length < 4) {
+          continue;
+        }
+        const poolName = String(poolRow[0] ?? "workers").trim() || "workers";
+        const instanceType = String(poolRow[1] ?? "").trim();
+        const az = String(poolRow[2] ?? "").trim();
+        const count = Number.parseInt(poolRow[3], 10);
+        if (!instanceType || !az || !Number.isFinite(count) || count < 0) {
+          continue;
+        }
+        pools.push({ name: poolName, instanceType, az, count });
+      }
+      clusters.push({ name, region, pools });
+    }
+    if (!clusters.length) {
+      throw new Error("Share code has no valid expert clusters.");
+    }
+    return {
+      mode: "expert",
+      ...discounts,
+      clusters
+    };
+  }
+
   let clusterCount = Number.parseInt(packed.cc, 10);
   if (!Number.isFinite(clusterCount) || clusterCount < 1) {
     clusterCount = 1;
   }
-
-  let ec2SavingsPlanDiscountPercent = Number(packed.ed ?? 0);
-  if (!Number.isFinite(ec2SavingsPlanDiscountPercent)) {
-    ec2SavingsPlanDiscountPercent = 0;
-  }
-  ec2SavingsPlanDiscountPercent = Math.min(100, Math.max(0, ec2SavingsPlanDiscountPercent));
-
-  const rhContractTier = VALID_RH_TIERS.has(packed.rt) ? packed.rt : "onDemand";
-  const summaryPriceUnit = VALID_UNITS.has(packed.pu) ? packed.pu : "yearly";
 
   const instances = [];
   for (const row of packed.i ?? []) {
@@ -97,10 +180,9 @@ export function decodeShareState(code) {
   }
 
   return {
+    mode: "basic",
     clusterCount,
-    ec2SavingsPlanDiscountPercent,
-    rhContractTier,
-    summaryPriceUnit,
+    ...discounts,
     instances
   };
 }

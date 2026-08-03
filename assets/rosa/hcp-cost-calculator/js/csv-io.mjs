@@ -80,23 +80,43 @@ function roundMoney(value) {
  * @param {object} input.summary.total
  * @param {string} [input.exportedAt]
  */
-export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
+export function buildScenarioCsv({ sizing, discounting, summary, exportedAt, mode = "basic" }) {
   const lines = [];
   const push = (fields) => lines.push(fields.map(escapeCsvField).join(","));
+  const activeMode = mode === "expert" ? "expert" : "basic";
 
   push(["SECTION", "Meta"]);
   push(["format", CSV_FORMAT]);
   push(["format_version", CSV_FORMAT_VERSION]);
+  push(["mode", activeMode]);
   push(["exported_at", exportedAt ?? new Date().toISOString()]);
   lines.push("");
 
-  push(["SECTION", "Cluster sizing"]);
-  push(["cluster_count", sizing?.clusterCount ?? 1]);
-  push(["instance_type", "region", "count"]);
-  for (const instance of sizing?.instances ?? []) {
-    push([instance.instanceType, instance.region, instance.count]);
+  if (activeMode === "expert") {
+    push(["SECTION", "Expert sizing"]);
+    push(["cluster_name", "region", "pool_name", "instance_type", "az", "count"]);
+    for (const cluster of sizing?.clusters ?? []) {
+      for (const pool of cluster.pools ?? []) {
+        push([
+          cluster.name,
+          cluster.region,
+          pool.name,
+          pool.instanceType,
+          pool.az,
+          pool.count
+        ]);
+      }
+    }
+    lines.push("");
+  } else {
+    push(["SECTION", "Cluster sizing"]);
+    push(["cluster_count", sizing?.clusterCount ?? 1]);
+    push(["instance_type", "region", "count"]);
+    for (const instance of sizing?.instances ?? []) {
+      push([instance.instanceType, instance.region, instance.count]);
+    }
+    lines.push("");
   }
-  lines.push("");
 
   push(["SECTION", "Discounting"]);
   push(["ec2_savings_plan_discount_percent", discounting?.ec2SavingsPlanDiscountPercent ?? 0]);
@@ -108,6 +128,7 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
   push(["unit", summary?.unit ?? discounting?.summaryPriceUnit ?? "yearly"]);
   push([
     "row_type",
+    "cluster",
     "pool",
     "region",
     "instance_type",
@@ -121,6 +142,7 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
   for (const pool of summary?.pools ?? []) {
     push([
       "pool",
+      pool.cluster ?? "",
       pool.pool,
       pool.region,
       pool.instanceType,
@@ -135,6 +157,7 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
   const clusterFee = summary?.clusterFee ?? {};
   push([
     "cluster_fee",
+    "",
     clusterFee.label ?? "HCP cluster fee",
     "",
     "",
@@ -148,6 +171,7 @@ export function buildScenarioCsv({ sizing, discounting, summary, exportedAt }) {
   const total = summary?.total ?? {};
   push([
     "total",
+    "",
     "Total",
     "",
     "",
@@ -199,6 +223,84 @@ export function parseScenarioCsv(text) {
   if (formatRow && formatRow[1] !== CSV_FORMAT) {
     throw new Error(`Unsupported CSV format: ${formatRow[1]}`);
   }
+  const modeRow = metaRows.find((row) => row[0] === "mode");
+  const mode = modeRow?.[1] === "expert" ? "expert" : "basic";
+
+  const discountRows = sections.get("discounting") ?? [];
+  const discountMap = new Map(
+    discountRows
+      .filter((row) => row[0])
+      .map((row) => [String(row[0]).trim(), String(row[1] ?? "").trim()])
+  );
+
+  let ec2SavingsPlanDiscountPercent = Number.parseFloat(
+    discountMap.get("ec2_savings_plan_discount_percent") ?? "0"
+  );
+  if (!Number.isFinite(ec2SavingsPlanDiscountPercent)) {
+    ec2SavingsPlanDiscountPercent = 0;
+  }
+  ec2SavingsPlanDiscountPercent = Math.min(100, Math.max(0, ec2SavingsPlanDiscountPercent));
+
+  let rhContractTier = discountMap.get("rh_contract_tier") ?? "onDemand";
+  if (!VALID_RH_TIERS.has(rhContractTier)) {
+    throw new Error(`Unsupported rh_contract_tier: ${rhContractTier}`);
+  }
+
+  let summaryPriceUnit = discountMap.get("summary_price_unit") ?? "yearly";
+  if (!VALID_UNITS.has(summaryPriceUnit)) {
+    throw new Error(`Unsupported summary_price_unit: ${summaryPriceUnit}`);
+  }
+
+  if (mode === "expert") {
+    const expertRows = sections.get("expert sizing") ?? [];
+    if (!expertRows.length) {
+      throw new Error('Missing "Expert sizing" section.');
+    }
+    const clustersByKey = new Map();
+    let inTable = false;
+    for (const row of expertRows) {
+      if (
+        String(row[0] ?? "").trim() === "cluster_name" &&
+        String(row[1] ?? "").trim() === "region"
+      ) {
+        inTable = true;
+        continue;
+      }
+      if (!inTable) {
+        continue;
+      }
+      const clusterName = String(row[0] ?? "").trim() || "Cluster";
+      const region = String(row[1] ?? "").trim();
+      const poolName = String(row[2] ?? "").trim() || "workers";
+      const instanceType = String(row[3] ?? "").trim();
+      const az = String(row[4] ?? "").trim();
+      const count = Number.parseInt(row[5], 10);
+      if (!region || !instanceType || !az || !Number.isFinite(count) || count < 0) {
+        continue;
+      }
+      const key = `${clusterName}::${region}`;
+      if (!clustersByKey.has(key)) {
+        clustersByKey.set(key, { name: clusterName, region, pools: [] });
+      }
+      clustersByKey.get(key).pools.push({ name: poolName, instanceType, az, count });
+    }
+    const clusters = Array.from(clustersByKey.values()).filter((cluster) => cluster.pools.length);
+    if (!clusters.length) {
+      throw new Error("Expert sizing section has no valid pool rows.");
+    }
+    return {
+      format: formatRow?.[1] ?? CSV_FORMAT,
+      formatVersion:
+        metaRows.find((row) => row[0] === "format_version")?.[1] ?? CSV_FORMAT_VERSION,
+      mode: "expert",
+      sizing: { clusters },
+      discounting: {
+        ec2SavingsPlanDiscountPercent,
+        rhContractTier,
+        summaryPriceUnit
+      }
+    };
+  }
 
   const sizingRows = sections.get("cluster sizing") ?? [];
   if (!sizingRows.length) {
@@ -237,35 +339,11 @@ export function parseScenarioCsv(text) {
     throw new Error("Cluster sizing section has no valid instance rows.");
   }
 
-  const discountRows = sections.get("discounting") ?? [];
-  const discountMap = new Map(
-    discountRows
-      .filter((row) => row[0])
-      .map((row) => [String(row[0]).trim(), String(row[1] ?? "").trim()])
-  );
-
-  let ec2SavingsPlanDiscountPercent = Number.parseFloat(
-    discountMap.get("ec2_savings_plan_discount_percent") ?? "0"
-  );
-  if (!Number.isFinite(ec2SavingsPlanDiscountPercent)) {
-    ec2SavingsPlanDiscountPercent = 0;
-  }
-  ec2SavingsPlanDiscountPercent = Math.min(100, Math.max(0, ec2SavingsPlanDiscountPercent));
-
-  let rhContractTier = discountMap.get("rh_contract_tier") ?? "onDemand";
-  if (!VALID_RH_TIERS.has(rhContractTier)) {
-    throw new Error(`Unsupported rh_contract_tier: ${rhContractTier}`);
-  }
-
-  let summaryPriceUnit = discountMap.get("summary_price_unit") ?? "yearly";
-  if (!VALID_UNITS.has(summaryPriceUnit)) {
-    throw new Error(`Unsupported summary_price_unit: ${summaryPriceUnit}`);
-  }
-
   return {
     format: formatRow?.[1] ?? CSV_FORMAT,
     formatVersion:
       metaRows.find((row) => row[0] === "format_version")?.[1] ?? CSV_FORMAT_VERSION,
+    mode: "basic",
     sizing: {
       clusterCount,
       instances

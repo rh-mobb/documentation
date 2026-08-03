@@ -152,9 +152,9 @@
     }
 
     .hcp-calculator__mode-switch {
-      margin-top: 1rem;
+      margin: 0 0 1rem;
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       flex-wrap: wrap;
       align-items: center;
       padding: 0.75rem 1rem;
@@ -164,11 +164,113 @@
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     }
 
+    .hcp-calculator__mode-switch legend {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      color: var(--hcp-muted);
+      padding: 0 0.25rem;
+    }
+
     .hcp-calculator__mode-switch label {
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
       font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .hcp-calculator__mode-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 1rem;
+    }
+
+    .hcp-calculator__mode-toolbar .hcp-calculator__mode-switch {
+      margin: 0;
+      flex: 1 1 auto;
+    }
+
+    .hcp-calculator__cluster-list {
+      list-style: none;
+      margin: 0.75rem 0 0;
+      padding: 0;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .hcp-calculator__cluster-card {
+      position: relative;
+      border: 1px solid var(--hcp-border);
+      border-radius: var(--hcp-radius);
+      background: var(--hcp-card);
+      padding: 0.9rem 1rem;
+    }
+
+    .hcp-calculator__cluster-remove {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.55rem;
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid var(--hcp-border);
+      border-radius: var(--hcp-radius);
+      background: #fff;
+      color: var(--hcp-muted);
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .hcp-calculator__cluster-remove:hover:not(:disabled) {
+      color: var(--hcp-danger);
+      border-color: var(--hcp-danger);
+    }
+
+    .hcp-calculator__cluster-remove:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .hcp-calculator__cluster-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: end;
+      margin: 0 2rem 0.75rem 0;
+    }
+
+    .hcp-calculator__cluster-header .hcp-calculator__filter-field {
+      min-width: 160px;
+    }
+
+    .hcp-calculator__cluster-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: end;
+      margin-bottom: 0.85rem;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid #ececec;
+      border-radius: var(--hcp-radius);
+      background: #fafafa;
+    }
+
+    .hcp-calculator__cluster-picker .hcp-calculator__filter-field {
+      min-width: 140px;
+    }
+
+    .hcp-calculator__cluster-picker .hcp-calculator__check-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 2.1rem;
+      font-size: 0.88rem;
+      padding-bottom: 0.15rem;
     }
 
     .hcp-calculator__basic-panel {
@@ -977,7 +1079,26 @@
     <details class="hcp-calculator__step" id="step-1-cluster-sizing" open>
       <summary>Step 1 - Cluster sizing</summary>
       <div class="hcp-calculator__step-body">
-        <section class="hcp-calculator__basic-panel hcp-calculator__is-hidden" id="basic-mode-panel">
+        <div class="hcp-calculator__mode-toolbar">
+          <fieldset class="hcp-calculator__mode-switch" id="calculator-mode-switch">
+            <legend>Sizing mode</legend>
+            <label>
+              <input type="radio" name="calculator-mode" value="basic" checked />
+              Basic
+            </label>
+            <label>
+              <input type="radio" name="calculator-mode" value="expert" />
+              Expert
+            </label>
+            <p class="hcp-calculator__muted" style="margin: 0; flex: 1 1 100%;">
+              Basic and Expert keep separate sizing data. This browser remembers your last mode and clusters (local storage).
+            </p>
+          </fieldset>
+          <button type="button" class="hcp-calculator__button" id="reset-calculator-data">
+            Reset saved data
+          </button>
+        </div>
+        <section class="hcp-calculator__basic-panel" id="basic-mode-panel">
           <p class="hcp-calculator__muted">Add one or more instance types and total instance counts to build a single-AZ sizing estimate.</p>
           <div class="hcp-calculator__basic-meta">
             <div class="hcp-calculator__filter-field" style="max-width: 220px;">
@@ -1087,6 +1208,18 @@
           <div class="hcp-calculator__basic-actions">
             <p class="hcp-calculator__basic-result" id="basic-mode-result">Changes apply automatically.</p>
           </div>
+        </section>
+
+        <section class="hcp-calculator__basic-panel hcp-calculator__is-hidden" id="expert-mode-panel">
+          <p class="hcp-calculator__muted">
+            Model each ROSA HCP cluster and its machine pools. Use each cluster’s filters to choose an instance type, then Create pool(s). The HCP cluster fee is charged once per cluster.
+          </p>
+          <div class="hcp-calculator__set-actions">
+            <button type="button" class="hcp-calculator__button hcp-calculator__button--primary" id="expert-add-cluster">
+              Add cluster
+            </button>
+          </div>
+          <ul class="hcp-calculator__cluster-list" id="expert-cluster-list" aria-label="Expert mode clusters"></ul>
         </section>
       </div>
     </details>
@@ -1245,48 +1378,6 @@
         </details>
       </div>
     </details>
-    <div class="hcp-calculator__set-actions" id="expert-set-actions">
-      <button type="button" class="hcp-calculator__button" id="create-3az-set">Create 3-AZ set</button>
-      <button type="button" class="hcp-calculator__button" id="create-1az-set">Create 1-AZ set</button>
-    </div>
-    <section class="hcp-calculator__filters" id="expert-filters" aria-label="Instance type filters">
-      <div class="hcp-calculator__filter-field">
-        <label for="filter-arch">Architecture</label>
-        <select id="filter-arch">
-          <option value="any">Any</option>
-          <option value="graviton">Graviton (ARM)</option>
-          <option value="x86-intel" selected>x86 Intel</option>
-          <option value="x86-amd">x86 AMD</option>
-        </select>
-      </div>
-      <div class="hcp-calculator__filter-field">
-        <label for="filter-category">Category</label>
-        <select id="filter-category">
-          <option value="any">Any</option>
-          <option value="general-purpose" selected>General purpose</option>
-          <option value="compute-optimized">Compute optimized</option>
-          <option value="memory-optimized">Memory optimized</option>
-          <option value="gpu-accelerated">GPU / accelerated</option>
-        </select>
-      </div>
-      <div class="hcp-calculator__filter-field">
-        <label for="filter-family">Instance family</label>
-        <select id="filter-family">
-          <option value="m7i" selected>m7i</option>
-        </select>
-      </div>
-      <div class="hcp-calculator__filter-field">
-        <label for="filter-min-vcpu">Min vCPU</label>
-        <input id="filter-min-vcpu" type="number" min="0" step="1" placeholder="0" />
-      </div>
-      <div class="hcp-calculator__filter-field">
-        <label for="filter-min-memory">Min Memory (GiB)</label>
-        <input id="filter-min-memory" type="number" min="0" step="1" placeholder="0" />
-      </div>
-    </section>
-    <p class="hcp-calculator__filter-summary" id="instance-filter-summary"></p>
-    <ul class="hcp-calculator__set-list" id="initial-set-list"></ul>
-    <datalist id="instance-type-options"></datalist>
     <section class="hcp-calculator__issues" aria-live="polite" aria-atomic="true">
       <div id="validation-errors"></div>
       <div id="validation-warnings"></div>
@@ -1358,6 +1449,7 @@
         <table class="hcp-calculator__table" aria-label="Machine pool cost summary">
           <thead>
             <tr>
+              <th scope="col" id="machine-pool-cluster-header" hidden>Cluster</th>
               <th scope="col">Pool</th>
               <th scope="col">Region</th>
               <th scope="col">Instance type</th>
@@ -1382,7 +1474,7 @@
           <tbody id="machine-pool-summary-body"></tbody>
           <tfoot>
             <tr>
-              <th scope="row" colspan="3">
+              <th scope="row" colspan="3" id="machine-pool-cluster-fee-label-cell">
                 <span class="hcp-calculator__label-with-help">
                   <span id="machine-pool-cluster-fee-label">HCP cluster fee</span>
                   <span class="hcp-calculator__help">
@@ -1461,9 +1553,11 @@
         <h3>Step 1 - Cluster sizing</h3>
         <p>Add one or more instance types and node counts. Each row is a single-AZ worker pool for a region.</p>
         <ul>
-          <li><strong>Number of clusters:</strong> How many ROSA HCP clusters this scenario covers. The HCP cluster fee scales with this count.</li>
-          <li><strong>Region and filters:</strong> Choose region, architecture, category, and family to narrow the instance list, then Add a type.</li>
-          <li><strong>Count:</strong> Exact worker node count for that type in that region. Changes apply automatically.</li>
+          <li><strong>Basic mode:</strong> Flat instance rows plus a cluster count. The HCP cluster fee scales with that count.</li>
+          <li><strong>Expert mode:</strong> Named clusters, each with machine pools (instance type, AZ, count). The HCP cluster fee is one fee per cluster. Basic and Expert keep separate sizing data.</li>
+          <li><strong>Remembered locally:</strong> This browser stores your last mode, Basic rows, Expert clusters, and Step 2 discounts. Use <strong>Reset saved data</strong> to clear that and restore defaults. Share links still override on open.</li>
+          <li><strong>Region and filters (Basic):</strong> Choose region, architecture, category, and family to narrow the instance list, then Add a type.</li>
+          <li><strong>Count:</strong> Exact worker node count for that pool. Changes apply automatically.</li>
         </ul>
         <div class="hcp-calculator__modal-tip">
           Use at least one cluster per selected region. Mixed regions are supported as separate rows.
@@ -1578,7 +1672,15 @@
   __FOOTER__
   __PAGEFIND_INIT__
   <script type="module">
-    import { createInitialEstimate, createDefaultSet, createSet } from "./js/state.mjs";
+    import {
+      createInitialBasicState,
+      createInitialExpertState,
+      createDefaultClusterFilters,
+      createExpertCluster,
+      createExpertPool,
+      projectBasicSelectionsToEstimate,
+      projectExpertStateToEstimate
+    } from "./js/state.mjs";
     import { loadSnapshotData } from "./js/data-loader.mjs";
     import { validateEstimate } from "./js/validation.mjs";
     import { buildScenarioCsv, parseScenarioCsv } from "./js/csv-io.mjs";
@@ -1590,6 +1692,12 @@
       extractShareCode,
       shareCodeFromLocation
     } from "./js/share-state.mjs";
+    import {
+      buildDraftPayload,
+      clearDraft,
+      loadDraft,
+      saveDraft
+    } from "./js/draft-storage.mjs";
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -1966,7 +2074,13 @@
       });
     }
 
-    let estimate = createInitialEstimate({
+    let basicState = createInitialBasicState({
+      region: "us-east-1",
+      instanceType: "m7i.xlarge",
+      count: 3,
+      clusterCount: 1
+    });
+    let expertState = createInitialExpertState({
       region: "us-east-1",
       zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
     });
@@ -1979,9 +2093,34 @@
       minVcpu: 0,
       minMemoryGiB: 0
     };
-    let basicSelections = [
-      { instanceType: estimate.sets[0]?.instanceType ?? "m7i.xlarge", region: estimate.region, count: 3 }
-    ];
+    // Compatibility aliases used by basic UI helpers
+    let basicSelections = basicState.selections;
+    let estimate = projectBasicSelectionsToEstimate(basicSelections, basicState.region);
+
+    function syncBasicAlias() {
+      basicSelections = basicState.selections;
+      basicState.selections = basicSelections;
+    }
+
+    function getActiveClusterCount() {
+      if (calculatorMode === "expert") {
+        return Math.max(1, expertState.clusters?.length ?? 1);
+      }
+      const rawValue = Number.parseInt(document.getElementById("cluster-count")?.value ?? `${basicState.clusterCount}`, 10);
+      return Number.isFinite(rawValue) ? Math.max(1, rawValue) : Math.max(1, basicState.clusterCount ?? 1);
+    }
+
+    function getActiveEstimate() {
+      if (calculatorMode === "expert") {
+        return projectExpertStateToEstimate(expertState);
+      }
+      syncBasicAlias();
+      return projectBasicSelectionsToEstimate(basicState.selections, basicState.region || "us-east-1");
+    }
+
+    function refreshEstimateAlias() {
+      estimate = getActiveEstimate();
+    }
 
     function getAllowedAzs() {
       return getAllowedAzsForRegion(estimate.region);
@@ -2018,7 +2157,7 @@
         return a.localeCompare(b);
       });
 
-      const currentRegion = estimate.region || "us-east-1";
+      const currentRegion = (calculatorMode === "basic" ? basicState.region : expertState.clusters?.[0]?.region) || "us-east-1";
       select.innerHTML = uniqueCodes
         .map((code) => {
           const safe = escapeHtml(code);
@@ -2104,11 +2243,12 @@
       return baseName;
     }
 
-    function getSupportedInstancesForRegion() {
+    function getSupportedInstancesForRegion(regionCode) {
+      const region = regionCode || basicState.region || estimate.region || "us-east-1";
       const instances = snapshotCache?.catalog?.instances ?? [];
       return instances.filter((instance) => {
         const supportedRegions = instance?.supported_regions;
-        return !Array.isArray(supportedRegions) || supportedRegions.includes(estimate.region);
+        return !Array.isArray(supportedRegions) || supportedRegions.includes(region);
       });
     }
 
@@ -2228,7 +2368,8 @@
     function addBasicInstanceSelection() {
       const select = document.getElementById("basic-instance-type");
       const selectedType = select?.value?.trim();
-      const selectedRegion = estimate.region;
+      const selectedRegion =
+        document.getElementById("region-select")?.value || basicState.region || "us-east-1";
       if (!selectedType) {
         return;
       }
@@ -2241,36 +2382,52 @@
       } else {
         basicSelections = [...basicSelections, { instanceType: selectedType, region: selectedRegion, count: 1 }];
       }
+      basicState.region = selectedRegion;
+      basicState.selections = basicSelections;
       renderBasicSelectionList();
     }
 
-    function getInstanceTypeOptions() {
-      const instances = getSupportedInstancesForRegion();
-      const familyFilter = instanceFilters.family !== "any" ? instanceFilters.family.toLowerCase() : "";
+    function getActiveFilterRegion() {
+      if (calculatorMode === "expert") {
+        return expertState.clusters?.[0]?.region || "us-east-1";
+      }
+      return (
+        document.getElementById("region-select")?.value ||
+        basicState.region ||
+        "us-east-1"
+      );
+    }
+
+    function getInstanceTypeOptions(
+      regionCode = getActiveFilterRegion(),
+      filters = instanceFilters
+    ) {
+      const instances = getSupportedInstancesForRegion(regionCode);
+      const familyFilter = filters.family !== "any" ? String(filters.family ?? "").toLowerCase() : "";
       return instances
         .filter((instance) => {
           if (!instance?.type) {
             return false;
           }
           const category = instance?.category ?? classifyCategory(instance.type);
-          if (instanceFilters.category !== "any" && category !== instanceFilters.category) {
+          if (filters.category !== "any" && category !== filters.category) {
             return false;
           }
           if (
-            instanceFilters.architecture !== "any" &&
-            getArchitectureBucket(instance) !== instanceFilters.architecture
+            filters.architecture !== "any" &&
+            getArchitectureBucket(instance) !== filters.architecture
           ) {
             return false;
           }
           if (familyFilter && getFamily(instance.type) !== familyFilter) {
             return false;
           }
-          if (instanceFilters.minVcpu > 0 && Number(instance?.vcpus ?? 0) < instanceFilters.minVcpu) {
+          if (filters.minVcpu > 0 && Number(instance?.vcpus ?? 0) < filters.minVcpu) {
             return false;
           }
           if (
-            instanceFilters.minMemoryGiB > 0 &&
-            Number(instance?.memory_gib ?? 0) < instanceFilters.minMemoryGiB
+            filters.minMemoryGiB > 0 &&
+            Number(instance?.memory_gib ?? 0) < filters.minMemoryGiB
           ) {
             return false;
           }
@@ -2280,11 +2437,14 @@
         .sort((a, b) => a.localeCompare(b));
     }
 
-    function getFamilyOptionsByCategory() {
+    function getFamilyOptionsByCategory(
+      regionCode = getActiveFilterRegion(),
+      filters = instanceFilters
+    ) {
       const optionsByCategory = new Map();
       FILTER_CATEGORY_ORDER.forEach((category) => optionsByCategory.set(category, new Set()));
 
-      const instances = getSupportedInstancesForRegion();
+      const instances = getSupportedInstancesForRegion(regionCode);
       for (const instance of instances) {
         if (!instance?.type) {
           continue;
@@ -2293,12 +2453,12 @@
         if (!optionsByCategory.has(category)) {
           optionsByCategory.set(category, new Set());
         }
-        if (instanceFilters.category !== "any" && instanceFilters.category !== category) {
+        if (filters.category !== "any" && filters.category !== category) {
           continue;
         }
         if (
-          instanceFilters.architecture !== "any" &&
-          getArchitectureBucket(instance) !== instanceFilters.architecture
+          filters.architecture !== "any" &&
+          getArchitectureBucket(instance) !== filters.architecture
         ) {
           continue;
         }
@@ -2308,14 +2468,9 @@
       return optionsByCategory;
     }
 
-    function renderFamilyFilterOptions(targetSelectId, preferredValue = instanceFilters.family || "any") {
-      const familySelect = document.getElementById(targetSelectId);
-      if (!familySelect) {
-        return preferredValue;
-      }
-
-      const previousValue = preferredValue || familySelect.value || "any";
-      const optionsByCategory = getFamilyOptionsByCategory();
+    function buildFamilyFilterOptionsHtml(regionCode, filters, preferredValue = "any") {
+      const previousValue = preferredValue || "any";
+      const optionsByCategory = getFamilyOptionsByCategory(regionCode, filters);
       const optionBlocks = ['<option value="any">Any family</option>'];
 
       for (const category of FILTER_CATEGORY_ORDER) {
@@ -2336,47 +2491,56 @@
         );
       }
 
-      familySelect.innerHTML = optionBlocks.join("");
-
       const familyExists =
         previousValue === "any" ||
         Array.from(optionsByCategory.values()).some((set) => set.has(previousValue));
       const nextValue = familyExists ? previousValue : "any";
-      familySelect.value = nextValue;
-      return nextValue;
+      return { html: optionBlocks.join(""), value: nextValue };
     }
 
-    function renderInstanceTypeOptions() {
-      const familyValue = renderFamilyFilterOptions("filter-family", instanceFilters.family);
-      instanceFilters.family = familyValue;
-      renderFamilyFilterOptions("basic-filter-family", instanceFilters.family);
-      const datalist = document.getElementById("instance-type-options");
-      const totalSupported = getSupportedInstancesForRegion().length;
-      const options = getInstanceTypeOptions();
-      datalist.innerHTML = options
-        .map((instanceType) => `<option value="${escapeHtml(instanceType)}"></option>`)
-        .join("");
-      const summary = document.getElementById("instance-filter-summary");
-      if (summary) {
-        summary.textContent = `Showing ${options.length} matching instance types (${totalSupported} supported in ${estimate.region}).`;
+    function renderFamilyFilterOptions(
+      targetSelectId,
+      preferredValue = instanceFilters.family || "any",
+      regionCode = getActiveFilterRegion()
+    ) {
+      const familySelect = document.getElementById(targetSelectId);
+      if (!familySelect) {
+        return preferredValue;
+      }
+
+      const { html, value } = buildFamilyFilterOptionsHtml(regionCode, instanceFilters, preferredValue);
+      familySelect.innerHTML = html;
+      familySelect.value = value;
+      return value;
+    }
+
+    function syncInstanceFilterControls() {
+      const pairs = [
+        ["basic-filter-arch", "architecture"],
+        ["basic-filter-category", "category"]
+      ];
+      for (const [id, key] of pairs) {
+        const node = document.getElementById(id);
+        if (node) {
+          node.value = instanceFilters[key];
+        }
       }
     }
 
-    function readFilterStateFromUI() {
-      const arch = document.getElementById("filter-arch")?.value ?? "x86-intel";
-      const category = document.getElementById("filter-category")?.value ?? "general-purpose";
-      const family = document.getElementById("filter-family")?.value ?? "any";
-      const minVcpu = Number.parseInt(document.getElementById("filter-min-vcpu")?.value ?? "0", 10);
-      const minMemoryGiB = Number.parseInt(
-        document.getElementById("filter-min-memory")?.value ?? "0",
-        10
+    function renderInstanceTypeOptions() {
+      const regionForList =
+        document.getElementById("region-select")?.value ||
+        basicState.region ||
+        "us-east-1";
+      const basicFamily = renderFamilyFilterOptions(
+        "basic-filter-family",
+        instanceFilters.family,
+        regionForList
       );
-
-      instanceFilters.architecture = arch;
-      instanceFilters.category = category;
-      instanceFilters.family = family.trim() || "any";
-      instanceFilters.minVcpu = Number.isFinite(minVcpu) ? Math.max(0, minVcpu) : 0;
-      instanceFilters.minMemoryGiB = Number.isFinite(minMemoryGiB) ? Math.max(0, minMemoryGiB) : 0;
+      if (basicFamily) {
+        instanceFilters.family = basicFamily;
+      }
+      syncInstanceFilterControls();
     }
 
     function readBasicFilterStateFromUI() {
@@ -2389,42 +2553,440 @@
       instanceFilters.family = family.trim() || "any";
       instanceFilters.minVcpu = 0;
       instanceFilters.minMemoryGiB = 0;
+      syncInstanceFilterControls();
+    }
 
-      const expertArch = document.getElementById("filter-arch");
-      const expertCategory = document.getElementById("filter-category");
-      const expertMinVcpu = document.getElementById("filter-min-vcpu");
-      const expertMinMemory = document.getElementById("filter-min-memory");
-      if (expertArch) {
-        expertArch.value = instanceFilters.architecture;
+    function normalizeClusterFilters(cluster) {
+      const seed = createDefaultClusterFilters({
+        ...(cluster?.filters ?? {}),
+        instanceType:
+          cluster?.filters?.instanceType ||
+          cluster?.pools?.[0]?.instanceType ||
+          "m7i.xlarge",
+        family:
+          cluster?.filters?.family ||
+          getFamily(cluster?.filters?.instanceType || cluster?.pools?.[0]?.instanceType || "m7i.xlarge")
+      });
+      const familyResult = buildFamilyFilterOptionsHtml(cluster.region, seed, seed.family);
+      seed.family = familyResult.value;
+      const options = getInstanceTypeOptions(cluster.region, seed);
+      if (!options.includes(seed.instanceType)) {
+        seed.instanceType = options[0] || seed.instanceType;
       }
-      if (expertCategory) {
-        expertCategory.value = instanceFilters.category;
+      return seed;
+    }
+
+    function buildInstanceTypeOptionsHtml(regionCode, filters, selectedType) {
+      const options = getInstanceTypeOptions(regionCode, filters);
+      if (!options.length) {
+        return {
+          html: '<option value="">No matching types</option>',
+          value: ""
+        };
       }
-      if (expertMinVcpu) {
-        expertMinVcpu.value = "0";
-      }
-      if (expertMinMemory) {
-        expertMinMemory.value = "0";
-      }
+      const value = options.includes(selectedType) ? selectedType : options[0];
+      return {
+        html: options
+          .map((type) => {
+            const safe = escapeHtml(type);
+            return `<option value="${safe}" ${type === value ? "selected" : ""}>${safe}</option>`;
+          })
+          .join(""),
+        value
+      };
+    }
+
+    function renderFilterSelectOptions(selected, entries) {
+      return entries
+        .map(([value, label]) => {
+          const safeValue = escapeHtml(value);
+          const safeLabel = escapeHtml(label);
+          return `<option value="${safeValue}" ${value === selected ? "selected" : ""}>${safeLabel}</option>`;
+        })
+        .join("");
     }
 
     function readModeStateFromUI() {
-      calculatorMode = "basic";
+      const selected = document.querySelector('input[name="calculator-mode"]:checked');
+      calculatorMode = selected?.value === "expert" ? "expert" : "basic";
+    }
+
+    function setCalculatorMode(mode, { render = true } = {}) {
+      calculatorMode = mode === "expert" ? "expert" : "basic";
+      for (const input of document.querySelectorAll('input[name="calculator-mode"]')) {
+        input.checked = input.value === calculatorMode;
+      }
+      renderModeVisibility();
+      refreshEstimateAlias();
+      if (render) {
+        syncInstanceFilterControls();
+        renderInstanceTypeOptions();
+        if (calculatorMode === "expert") {
+          renderExpertClusterList();
+        } else {
+          renderBasicInstanceTypeOptions();
+          renderBasicSelectionList();
+          renderBasicSizingPreview();
+        }
+        renderScenarioTotals();
+      }
     }
 
     function renderModeVisibility() {
       const basicPanel = document.getElementById("basic-mode-panel");
-      const expertSetActions = document.getElementById("expert-set-actions");
-      const expertFilters = document.getElementById("expert-filters");
-      const filterSummary = document.getElementById("instance-filter-summary");
-      const setList = document.getElementById("initial-set-list");
+      const expertPanel = document.getElementById("expert-mode-panel");
       const isBasic = calculatorMode === "basic";
-
       basicPanel?.classList.toggle("hcp-calculator__is-hidden", !isBasic);
-      expertSetActions?.classList.toggle("hcp-calculator__is-hidden", isBasic);
-      expertFilters?.classList.toggle("hcp-calculator__is-hidden", isBasic);
-      filterSummary?.classList.toggle("hcp-calculator__is-hidden", isBasic);
-      setList?.classList.toggle("hcp-calculator__is-hidden", isBasic);
+      expertPanel?.classList.toggle("hcp-calculator__is-hidden", isBasic);
+    }
+
+
+    function renderRegionOptionsHtml(selectedRegion) {
+      const regionList = snapshotCache?.regions?.regions ?? [];
+      const regionCodes = Array.from(new Set([...(regionList.map((r) => r.code).filter(Boolean)), "us-east-1"]));
+      regionCodes.sort((a, b) => (a === "us-east-1" ? -1 : b === "us-east-1" ? 1 : a.localeCompare(b)));
+      return regionCodes
+        .map((code) => {
+          const safe = escapeHtml(code);
+          return `<option value="${safe}" ${code === selectedRegion ? "selected" : ""}>${safe}</option>`;
+        })
+        .join("");
+    }
+
+    function renderAzOptionsHtml(regionCode, selectedAz) {
+      const azs = getAllowedAzsForRegion(regionCode);
+      const values = azs.length ? azs : [`${regionCode}a`];
+      return values
+        .map((az) => {
+          const safe = escapeHtml(az);
+          return `<option value="${safe}" ${az === selectedAz ? "selected" : ""}>${safe}</option>`;
+        })
+        .join("");
+    }
+
+    function renderExpertClusterList() {
+      const list = document.getElementById("expert-cluster-list");
+      if (!list) {
+        return;
+      }
+
+      if (!(expertState.clusters ?? []).length) {
+        list.innerHTML = "<li class=\"hcp-calculator__muted\">No clusters yet. Click Add cluster.</li>";
+        return;
+      }
+
+      expertState = {
+        ...expertState,
+        clusters: expertState.clusters.map((cluster) => ({
+          ...cluster,
+          filters: normalizeClusterFilters(cluster)
+        }))
+      };
+
+      list.innerHTML = expertState.clusters
+        .map((cluster, clusterIndex) => {
+          const safeClusterId = escapeHtml(cluster.id);
+          const safeName = escapeHtml(cluster.name);
+          const filters = cluster.filters;
+          const familyOptions = buildFamilyFilterOptionsHtml(
+            cluster.region,
+            filters,
+            filters.family
+          );
+          const instanceOptions = buildInstanceTypeOptionsHtml(
+            cluster.region,
+            { ...filters, family: familyOptions.value },
+            filters.instanceType
+          );
+          const datalistId = `instance-type-options-${safeClusterId}`;
+          const regionTypes = getSupportedInstancesForRegion(cluster.region)
+            .map((instance) => instance?.type)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b));
+
+          const poolRows = (cluster.pools ?? [])
+            .map((pool) => {
+              const safePoolId = escapeHtml(pool.id);
+              return `
+                <tr>
+                  <td>
+                    <input
+                      type="text"
+                      value="${escapeHtml(pool.name)}"
+                      data-expert-action="pool-name"
+                      data-cluster-id="${safeClusterId}"
+                      data-pool-id="${safePoolId}"
+                      aria-label="Pool name"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      list="${datalistId}"
+                      value="${escapeHtml(pool.instanceType)}"
+                      data-expert-action="pool-instance-type"
+                      data-cluster-id="${safeClusterId}"
+                      data-pool-id="${safePoolId}"
+                      aria-label="Instance type"
+                    />
+                  </td>
+                  <td>
+                    <select
+                      data-expert-action="pool-az"
+                      data-cluster-id="${safeClusterId}"
+                      data-pool-id="${safePoolId}"
+                      aria-label="Availability zone"
+                    >
+                      ${renderAzOptionsHtml(cluster.region, pool.az)}
+                    </select>
+                  </td>
+                  <td class="hcp-calculator__col-count">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value="${escapeHtml(pool.count)}"
+                      data-expert-action="pool-count"
+                      data-cluster-id="${safeClusterId}"
+                      data-pool-id="${safePoolId}"
+                      aria-label="Node count"
+                    />
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="hcp-calculator__button"
+                      data-expert-action="remove-pool"
+                      data-cluster-id="${safeClusterId}"
+                      data-pool-id="${safePoolId}"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              `;
+            })
+            .join("");
+
+          return `
+            <li class="hcp-calculator__cluster-card" data-cluster-id="${safeClusterId}">
+              <button
+                type="button"
+                class="hcp-calculator__cluster-remove"
+                data-expert-action="remove-cluster"
+                data-cluster-id="${safeClusterId}"
+                aria-label="Remove ${safeName}"
+                ${expertState.clusters.length <= 1 ? "disabled" : ""}
+              >
+                ×
+              </button>
+              <div class="hcp-calculator__cluster-header">
+                <div class="hcp-calculator__filter-field">
+                  <label>Cluster name</label>
+                  <input
+                    type="text"
+                    value="${safeName}"
+                    data-expert-action="cluster-name"
+                    data-cluster-id="${safeClusterId}"
+                  />
+                </div>
+                <div class="hcp-calculator__filter-field">
+                  <label>Region</label>
+                  <select data-expert-action="cluster-region" data-cluster-id="${safeClusterId}">
+                    ${renderRegionOptionsHtml(cluster.region)}
+                  </select>
+                </div>
+              </div>
+              <div class="hcp-calculator__cluster-picker" aria-label="Create machine pool for ${safeName}">
+                <div class="hcp-calculator__filter-field">
+                  <label>Architecture</label>
+                  <select data-expert-action="filter-arch" data-cluster-id="${safeClusterId}">
+                    ${renderFilterSelectOptions(filters.architecture, [
+                      ["any", "Any"],
+                      ["graviton", "Graviton (ARM)"],
+                      ["x86-intel", "x86 Intel"],
+                      ["x86-amd", "x86 AMD"]
+                    ])}
+                  </select>
+                </div>
+                <div class="hcp-calculator__filter-field">
+                  <label>Category</label>
+                  <select data-expert-action="filter-category" data-cluster-id="${safeClusterId}">
+                    ${renderFilterSelectOptions(filters.category, [
+                      ["any", "Any"],
+                      ["general-purpose", "General purpose"],
+                      ["compute-optimized", "Compute optimized"],
+                      ["memory-optimized", "Memory optimized"],
+                      ["gpu-accelerated", "GPU / accelerated"]
+                    ])}
+                  </select>
+                </div>
+                <div class="hcp-calculator__filter-field">
+                  <label>Instance family</label>
+                  <select data-expert-action="filter-family" data-cluster-id="${safeClusterId}">
+                    ${familyOptions.html}
+                  </select>
+                </div>
+                <div class="hcp-calculator__filter-field">
+                  <label>Instance type</label>
+                  <select data-expert-action="filter-instance-type" data-cluster-id="${safeClusterId}">
+                    ${instanceOptions.html}
+                  </select>
+                </div>
+                <label class="hcp-calculator__check-field">
+                  <input
+                    type="checkbox"
+                    data-expert-action="filter-three-az"
+                    data-cluster-id="${safeClusterId}"
+                    ${filters.threeAz ? "checked" : ""}
+                  />
+                  <span>3-AZ pool</span>
+                </label>
+                <button
+                  type="button"
+                  class="hcp-calculator__button hcp-calculator__button--primary"
+                  data-expert-action="create-pools"
+                  data-cluster-id="${safeClusterId}"
+                  ${instanceOptions.value ? "" : "disabled"}
+                >
+                  Create
+                </button>
+              </div>
+              <datalist id="${datalistId}">
+                ${regionTypes
+                  .map((type) => `<option value="${escapeHtml(type)}"></option>`)
+                  .join("")}
+              </datalist>
+              <div class="hcp-calculator__table-wrap">
+                <table class="hcp-calculator__table" aria-label="${safeName} machine pools">
+                  <thead>
+                    <tr>
+                      <th scope="col">Pool</th>
+                      <th scope="col">Instance type</th>
+                      <th scope="col">AZ</th>
+                      <th scope="col" class="hcp-calculator__col-count">Count</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${poolRows || '<tr><td colspan="5">No pools</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+              <p class="hcp-calculator__muted">Cluster ${clusterIndex + 1} of ${expertState.clusters.length}</p>
+            </li>
+          `;
+        })
+        .join("");
+
+      for (const cluster of expertState.clusters) {
+        const familySelect = list.querySelector(
+          `select[data-expert-action="filter-family"][data-cluster-id="${CSS.escape(cluster.id)}"]`
+        );
+        if (familySelect) {
+          familySelect.value = cluster.filters.family;
+        }
+      }
+    }
+
+    function findExpertCluster(clusterId) {
+      return expertState.clusters.find((cluster) => cluster.id === clusterId);
+    }
+
+    function findExpertPool(clusterId, poolId) {
+      const cluster = findExpertCluster(clusterId);
+      if (!cluster) {
+        return { cluster: null, pool: null };
+      }
+      return {
+        cluster,
+        pool: (cluster.pools ?? []).find((pool) => pool.id === poolId) ?? null
+      };
+    }
+
+    function addExpertCluster() {
+      const index = expertState.clusters.length + 1;
+      const region = expertState.clusters[0]?.region ?? "us-east-1";
+      expertState = {
+        ...expertState,
+        clusters: [
+          ...expertState.clusters,
+          createExpertCluster({
+            name: `Cluster ${index}`,
+            region,
+            pools: []
+          })
+        ]
+      };
+      renderExpertClusterList();
+      renderScenarioTotals();
+    }
+
+    function updateExpertClusterFilters(clusterId, patch) {
+      expertState = {
+        ...expertState,
+        clusters: expertState.clusters.map((cluster) => {
+          if (cluster.id !== clusterId) {
+            return cluster;
+          }
+          const next = {
+            ...cluster,
+            filters: createDefaultClusterFilters({
+              ...cluster.filters,
+              ...patch
+            })
+          };
+          next.filters = normalizeClusterFilters(next);
+          return next;
+        })
+      };
+      renderExpertClusterList();
+      schedulePersistDraft();
+    }
+
+    function addExpertPool(clusterId, { threeAz } = {}) {
+      const cluster = findExpertCluster(clusterId);
+      if (!cluster) {
+        return;
+      }
+      const filters = normalizeClusterFilters(cluster);
+      const azs = getAllowedAzsForRegion(cluster.region);
+      const baseType = filters.instanceType || cluster.pools[0]?.instanceType || "m7i.xlarge";
+      const useThreeAz = typeof threeAz === "boolean" ? threeAz : Boolean(filters.threeAz);
+      const nextPools = [...(cluster.pools ?? [])];
+      if (useThreeAz) {
+        const zones = (azs.length ? azs : [`${cluster.region}a`, `${cluster.region}b`, `${cluster.region}c`]).slice(0, 3);
+        zones.forEach((az, index) => {
+          nextPools.push(
+            createExpertPool({
+              name: `workers-${az.slice(-1) || index + 1}`,
+              instanceType: baseType,
+              az,
+              count: 1
+            })
+          );
+        });
+      } else {
+        const az = azs[nextPools.length % Math.max(azs.length, 1)] || `${cluster.region}a`;
+        nextPools.push(
+          createExpertPool({
+            name: `pool-${nextPools.length + 1}`,
+            instanceType: baseType,
+            az,
+            count: 1
+          })
+        );
+      }
+      expertState = {
+        ...expertState,
+        clusters: expertState.clusters.map((entry) =>
+          entry.id === clusterId
+            ? { ...entry, filters, pools: nextPools }
+            : entry
+        )
+      };
+      renderExpertClusterList();
+      renderScenarioTotals();
     }
 
     async function resolveSnapshotContext() {
@@ -2599,62 +3161,33 @@
 
     async function applyBasicSizing() {
       const resultNode = document.getElementById("basic-mode-result");
-      const defaultSet = estimate.sets[0];
-      if (!defaultSet) {
-        if (resultNode) {
-          resultNode.textContent = "Default set is missing, unable to apply basic sizing.";
-        }
-        return;
-      }
+      basicState.selections = basicSelections;
+      basicState.region = document.getElementById("region-select")?.value || basicState.region || "us-east-1";
+      const countRaw = Number.parseInt(document.getElementById("cluster-count")?.value ?? "1", 10);
+      basicState.clusterCount = Number.isFinite(countRaw) ? Math.max(1, countRaw) : 1;
 
       await resolveSnapshotContext();
       renderInstanceTypeOptions();
       renderBasicInstanceTypeOptions();
 
       const candidate = await renderBasicSizingPreview();
+      refreshEstimateAlias();
       if (!candidate) {
         return;
       }
-
-      const nextSets = candidate.candidates.map((entry, index) => {
-        const setNumber = index + 1;
-        const poolBaseName = index === 0 ? "workers" : `pool-${setNumber}`;
-        const name = index === 0 ? "Default Set" : `Set ${setNumber}`;
-        const [primaryAz] = getAllowedAzsForRegion(entry.region);
-        const effectiveAz = primaryAz || `${entry.region}a`;
-        const nextSet = createSet({
-          name,
-          instanceType: entry.instanceType,
-          poolBaseName,
-          zones: [effectiveAz],
-          enforceThreeZones: false
-        });
-        return {
-          ...nextSet,
-          region: entry.region,
-          pools: nextSet.pools.map((pool) => ({
-            ...pool,
-            min: entry.nodeCount,
-            max: entry.nodeCount
-          }))
-        };
-      });
-      estimate = {
-        ...estimate,
-        sets: nextSets
-      };
 
       if (resultNode) {
         const typeList = candidate.candidates
           .map((entry) => `${entry.instanceType} (${entry.region})`)
           .join(", ");
         resultNode.textContent =
-          `Applied ${typeList} with ${candidate.totalNodes} total nodes ` +
+          `${typeList}: ${candidate.totalNodes} total nodes ` +
           `(${candidate.totalVcpu} total vCPU / ${candidate.totalMemoryGiB} total GiB).`;
       }
 
-      renderSetList();
-      renderScenarioTotals();
+      if (calculatorMode === "basic") {
+        renderScenarioTotals();
+      }
     }
 
     function getCurrentZones() {
@@ -2731,116 +3264,9 @@
     }
 
     function renderSetList() {
-      const setList = document.getElementById("initial-set-list");
-      const allowedAzs = getAllowedAzs();
-      const defaultSetId = estimate.sets[0]?.id;
-      setList.innerHTML = estimate.sets
-        .map((set, index) => {
-          const poolBaseName = getPoolBaseName(set, index);
-          const safeSetId = escapeHtml(set.id);
-          const safeSetName = escapeHtml(set.name);
-          const safePoolBaseName = escapeHtml(poolBaseName);
-          const safeInstanceType = escapeHtml(set.instanceType);
-          const poolRows = set.pools
-            .map((pool, poolIndex) => {
-              const safeAz = escapeHtml(pool.az);
-              const safePoolName = escapeHtml(getPoolDisplayName(set, index, poolIndex));
-              const azOptions = allowedAzs
-                .map((az) => {
-                  const safeOptionAz = escapeHtml(az);
-                  return `<option value="${safeOptionAz}" ${az === pool.az ? "selected" : ""}>${safeOptionAz}</option>`;
-                })
-                .join("");
-              return `
-                <div class="hcp-calculator__pool-row">
-                  <span>${safePoolName}</span>
-                  <select
-                    data-action="pool-az"
-                    data-set-id="${safeSetId}"
-                    data-source-az="${safeAz}"
-                    aria-label="${safeSetName} availability zone"
-                  >
-                    ${azOptions}
-                  </select>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value="${escapeHtml(pool.min)}"
-                    data-action="pool-input"
-                    data-set-id="${safeSetId}"
-                    data-pool-az="${safeAz}"
-                    data-field="min"
-                    title="Set Min to your expected steady-state nodes"
-                    aria-label="${safeSetName} ${safeAz} minimum nodes (expected steady-state)"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value="${escapeHtml(pool.max)}"
-                    data-action="pool-input"
-                    data-set-id="${safeSetId}"
-                    data-pool-az="${safeAz}"
-                    data-field="max"
-                    aria-label="${safeSetName} ${safeAz} maximum nodes"
-                  />
-                  <span class="hcp-calculator__muted" data-pool-capacity="${safeSetId}:${poolIndex}">
-                    vCPU/memory unavailable
-                  </span>
-                </div>
-              `;
-            })
-            .join("");
-          return `
-            <li class="hcp-calculator__set-card">
-              <div class="hcp-calculator__set-header">
-                <p class="hcp-calculator__set-title"><strong>${safeSetName}</strong></p>
-                <div class="hcp-calculator__set-controls">
-                  <input
-                    type="text"
-                    value="${safePoolBaseName}"
-                    data-action="pool-base-name"
-                    data-set-id="${safeSetId}"
-                    aria-label="${safeSetName} machine pool base name"
-                    ${index === 0 ? "readonly" : ""}
-                  />
-                  <input
-                    type="text"
-                    list="instance-type-options"
-                    value="${safeInstanceType}"
-                    data-action="instance-type"
-                    data-set-id="${safeSetId}"
-                    aria-label="${safeSetName} instance type"
-                  />
-                  <button
-                    type="button"
-                    class="hcp-calculator__button"
-                    data-action="delete-set"
-                    data-set-id="${safeSetId}"
-                    ${set.id === defaultSetId ? "disabled" : ""}
-                    aria-label="Delete ${safeSetName}"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <p class="hcp-calculator__muted">${index === 0 ? "Default set" : "Additional set"}</p>
-              <div class="hcp-calculator__pool-grid">
-                <div class="hcp-calculator__pool-row hcp-calculator__pool-row--header">
-                  <span>Pool</span>
-                  <span>AZ</span>
-                  <span title="Set Min to your expected steady-state nodes">Min (steady)</span>
-                  <span>Max</span>
-                  <span>vCPU / Memory</span>
-                </div>
-                ${poolRows}
-              </div>
-            </li>
-          `;
-        })
-        .join("");
-      renderPoolCapacityInline();
+      if (calculatorMode === "expert") {
+        renderExpertClusterList();
+      }
     }
 
     function formatUsd(amount) {
@@ -2861,8 +3287,7 @@
     }
 
     function getClusterCount() {
-      const rawValue = Number.parseInt(document.getElementById("cluster-count")?.value ?? "1", 10);
-      return Number.isFinite(rawValue) ? Math.max(1, rawValue) : 1;
+      return getActiveClusterCount();
     }
 
     function getApproxEc2SavingsPlanDiscountPercent() {
@@ -2940,6 +3365,7 @@
     }
 
     function computeMachinePoolSummary() {
+      refreshEstimateAlias();
       const selectedUnit = document.getElementById("summary-price-unit")?.value ?? "hourly";
       const selectedRhTier = document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand";
       const ec2DiscountFactor = 1 - getApproxEc2SavingsPlanDiscountPercent() / 100;
@@ -2984,8 +3410,14 @@
             totalMemoryGiB += poolMemoryGiB;
           }
 
+          const clusterName =
+            typeof set.clusterName === "string" && set.clusterName.trim()
+              ? set.clusterName.trim()
+              : "";
+
           if (!instance || !pricing) {
             pools.push({
+              cluster: clusterName,
               pool: poolName,
               region: regionCode,
               instanceType: set.instanceType,
@@ -3010,6 +3442,7 @@
           }
 
           pools.push({
+            cluster: clusterName,
             pool: poolName,
             region: regionCode,
             instanceType: set.instanceType,
@@ -3118,6 +3551,18 @@
       }
 
       const summary = computeMachinePoolSummary();
+      const showClusterColumn =
+        calculatorMode === "expert" || summary.pools.some((pool) => Boolean(pool.cluster));
+      const labelColspan = showClusterColumn ? 4 : 3;
+      const clusterHeader = document.getElementById("machine-pool-cluster-header");
+      const clusterFeeLabelCell = document.getElementById("machine-pool-cluster-fee-label-cell");
+      if (clusterHeader) {
+        clusterHeader.hidden = !showClusterColumn;
+      }
+      if (clusterFeeLabelCell) {
+        clusterFeeLabelCell.colSpan = labelColspan;
+      }
+      totalRowLabel.colSpan = labelColspan;
       totalRowLabel.textContent = `Total (${summary.unitLabel})`;
       clusterFeeLabel.textContent = summary.clusterFee.label;
 
@@ -3125,7 +3570,9 @@
         .map((pool) => {
           const vcpuLabel = pool.vcpus == null ? "N/A" : `${pool.vcpus}`;
           const memoryLabel = pool.memoryGiB == null ? "N/A" : `${pool.memoryGiB} GiB`;
-          const safePool = escapeHtml(pool.pool);
+          const clusterCell = showClusterColumn
+            ? `<th scope="row">${escapeHtml(pool.cluster || "-")}</th><td>${escapeHtml(pool.pool)}</td>`
+            : `<th scope="row">${escapeHtml(pool.pool)}</th>`;
           const safeRegion = escapeHtml(pool.region);
           const safeType = escapeHtml(pool.instanceType);
           const safeCount = escapeHtml(pool.count);
@@ -3134,7 +3581,7 @@
           if (!pool.available) {
             return `
               <tr>
-                <th scope="row">${safePool}</th>
+                ${clusterCell}
                 <td>${safeRegion}</td>
                 <td>${safeType}</td>
                 <td class="hcp-calculator__col-count">${safeCount}</td>
@@ -3148,7 +3595,7 @@
           }
           return `
             <tr>
-              <th scope="row">${safePool}</th>
+              ${clusterCell}
               <td>${safeRegion}</td>
               <td>${safeType}</td>
               <td class="hcp-calculator__col-count">${safeCount}</td>
@@ -3230,34 +3677,234 @@
       URL.revokeObjectURL(url);
     }
 
-    function getSizingInstancesForExport() {
-      if ((basicSelections ?? []).length) {
-        return basicSelections.map((selection) => ({
-          instanceType: selection.instanceType,
-          region: selection.region,
-          count: selection.count
-        }));
+    function applyDiscountUi({
+      ec2SavingsPlanDiscountPercent,
+      rhContractTier,
+      summaryPriceUnit
+    }) {
+      const ec2DiscountInput = document.getElementById("summary-ec2-discount-percent");
+      const rhTierSelect = document.getElementById("summary-rh-contract-tier");
+      const priceUnitSelect = document.getElementById("summary-price-unit");
+      if (ec2DiscountInput) {
+        ec2DiscountInput.value = `${ec2SavingsPlanDiscountPercent}`;
       }
-      return (estimate.sets ?? []).map((set) => ({
-        instanceType: set.instanceType,
-        region: set.region ?? estimate.region,
-        count: (set.pools ?? []).reduce((sum, pool) => sum + Number(pool.min ?? 0), 0)
-      }));
+      if (rhTierSelect) {
+        rhTierSelect.value = rhContractTier;
+      }
+      if (priceUnitSelect) {
+        priceUnitSelect.value = summaryPriceUnit;
+      }
+    }
+
+    let draftPersistEnabled = false;
+    let draftPersistTimer = null;
+
+    function collectDraftPayload() {
+      const clusterCountRaw = Number.parseInt(
+        document.getElementById("cluster-count")?.value ?? `${basicState.clusterCount ?? 1}`,
+        10
+      );
+      return buildDraftPayload({
+        mode: calculatorMode,
+        basicState: {
+          clusterCount: Number.isFinite(clusterCountRaw)
+            ? Math.max(1, clusterCountRaw)
+            : Math.max(1, basicState.clusterCount ?? 1),
+          region:
+            document.getElementById("region-select")?.value ||
+            basicState.region ||
+            "us-east-1",
+          selections: basicState.selections
+        },
+        expertState,
+        discounting: {
+          ec2SavingsPlanDiscountPercent: getApproxEc2SavingsPlanDiscountPercent(),
+          rhContractTier: document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand",
+          summaryPriceUnit: document.getElementById("summary-price-unit")?.value ?? "yearly"
+        },
+        instanceFilters
+      });
+    }
+
+    function persistDraftNow() {
+      if (!draftPersistEnabled) {
+        return;
+      }
+      saveDraft(collectDraftPayload());
+    }
+
+    function schedulePersistDraft() {
+      if (!draftPersistEnabled) {
+        return;
+      }
+      if (draftPersistTimer) {
+        clearTimeout(draftPersistTimer);
+      }
+      draftPersistTimer = setTimeout(() => {
+        draftPersistTimer = null;
+        persistDraftNow();
+      }, 250);
+    }
+
+    function syncBasicUiFromState() {
+      const regionSelect = document.getElementById("region-select");
+      if (regionSelect && basicState.region) {
+        regionSelect.value = basicState.region;
+      }
+      const clusterCountInput = document.getElementById("cluster-count");
+      if (clusterCountInput) {
+        clusterCountInput.value = `${basicState.clusterCount ?? 1}`;
+      }
+      syncBasicAlias();
+      renderBasicSelectionList();
+    }
+
+    async function applyDraftScenario(draft) {
+      if (!draft) {
+        return false;
+      }
+      applyDiscountUi({
+        ec2SavingsPlanDiscountPercent: draft.discounting?.ec2SavingsPlanDiscountPercent ?? 0,
+        rhContractTier: draft.discounting?.rhContractTier ?? "onDemand",
+        summaryPriceUnit: draft.discounting?.summaryPriceUnit ?? "yearly"
+      });
+
+      if (draft.instanceFilters) {
+        instanceFilters.architecture = draft.instanceFilters.architecture || instanceFilters.architecture;
+        instanceFilters.category = draft.instanceFilters.category || instanceFilters.category;
+        instanceFilters.family = draft.instanceFilters.family || instanceFilters.family;
+      }
+
+      if (draft.basic?.selections?.length) {
+        basicState = {
+          clusterCount: draft.basic.clusterCount ?? 1,
+          region: draft.basic.region || "us-east-1",
+          selections: draft.basic.selections.map((selection) => ({
+            instanceType: selection.instanceType,
+            region: selection.region,
+            count: selection.count
+          }))
+        };
+      }
+      syncBasicUiFromState();
+
+      if (draft.expert?.clusters?.length) {
+        expertState = {
+          clusters: draft.expert.clusters.map((cluster) =>
+            createExpertCluster({
+              name: cluster.name,
+              region: cluster.region,
+              filters: cluster.filters,
+              pools: (cluster.pools ?? []).map((pool) => ({
+                name: pool.name,
+                instanceType: pool.instanceType,
+                az: pool.az,
+                count: pool.count
+              }))
+            })
+          )
+        };
+      }
+
+      setCalculatorMode(draft.mode === "expert" ? "expert" : "basic", { render: false });
+      if (calculatorMode === "expert") {
+        renderExpertClusterList();
+        refreshEstimateAlias();
+        await renderScenarioTotals();
+      } else {
+        await applyBasicSizing();
+      }
+      return true;
+    }
+
+    async function resetCalculatorData() {
+      const confirmed = window.confirm(
+        "Reset Basic and Expert sizing to defaults and clear data saved in this browser?"
+      );
+      if (!confirmed) {
+        return;
+      }
+      draftPersistEnabled = false;
+      if (draftPersistTimer) {
+        clearTimeout(draftPersistTimer);
+        draftPersistTimer = null;
+      }
+      clearDraft();
+      if (window.location.hash.startsWith("#s=")) {
+        history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+      }
+
+      basicState = createInitialBasicState({
+        region: "us-east-1",
+        instanceType: "m7i.xlarge",
+        count: 3,
+        clusterCount: 1
+      });
+      expertState = createInitialExpertState({
+        region: "us-east-1",
+        zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
+      });
+      instanceFilters.architecture = "x86-intel";
+      instanceFilters.category = "general-purpose";
+      instanceFilters.family = "m7i";
+      instanceFilters.minVcpu = 0;
+      instanceFilters.minMemoryGiB = 0;
+      applyDiscountUi({
+        ec2SavingsPlanDiscountPercent: 0,
+        rhContractTier: "onDemand",
+        summaryPriceUnit: "yearly"
+      });
+      const modeToKeep = calculatorMode === "expert" ? "expert" : "basic";
+      syncBasicUiFromState();
+      setCalculatorMode(modeToKeep, { render: false });
+      renderInstanceTypeOptions();
+      renderBasicInstanceTypeOptions();
+      renderExpertClusterList();
+      if (modeToKeep === "expert") {
+        refreshEstimateAlias();
+        await renderScenarioTotals();
+      } else {
+        await applyBasicSizing();
+      }
+      setScenarioCsvStatus("Cleared saved browser data and restored defaults.");
+      draftPersistEnabled = true;
+      persistDraftNow();
     }
 
     function exportScenarioCsv() {
       try {
         const summary = computeMachinePoolSummary();
+        const discounting = {
+          ec2SavingsPlanDiscountPercent: getApproxEc2SavingsPlanDiscountPercent(),
+          rhContractTier: document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand",
+          summaryPriceUnit: document.getElementById("summary-price-unit")?.value ?? "yearly"
+        };
+        const sizing =
+          calculatorMode === "expert"
+            ? {
+                clusters: expertState.clusters.map((cluster) => ({
+                  name: cluster.name,
+                  region: cluster.region,
+                  pools: (cluster.pools ?? []).map((pool) => ({
+                    name: pool.name,
+                    instanceType: pool.instanceType,
+                    az: pool.az,
+                    count: pool.count
+                  }))
+                }))
+              }
+            : {
+                clusterCount: getClusterCount(),
+                instances: (basicState.selections ?? []).map((selection) => ({
+                  instanceType: selection.instanceType,
+                  region: selection.region,
+                  count: selection.count
+                }))
+              };
         const csv = buildScenarioCsv({
-          sizing: {
-            clusterCount: getClusterCount(),
-            instances: getSizingInstancesForExport()
-          },
-          discounting: {
-            ec2SavingsPlanDiscountPercent: getApproxEc2SavingsPlanDiscountPercent(),
-            rhContractTier: document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand",
-            summaryPriceUnit: document.getElementById("summary-price-unit")?.value ?? "yearly"
-          },
+          mode: calculatorMode,
+          sizing,
+          discounting,
           summary: {
             unit: summary.unit,
             pools: summary.pools.map((pool) => ({
@@ -3277,7 +3924,7 @@
         });
         const stamp = new Date().toISOString().slice(0, 10);
         downloadTextFile(`rosa-hcp-calculator-${stamp}.csv`, csv, "text/csv;charset=utf-8");
-        setScenarioCsvStatus("Exported scenario CSV.");
+        setScenarioCsvStatus(`Exported ${calculatorMode} scenario CSV.`);
       } catch (error) {
         console.error(error);
         setScenarioCsvStatus(error?.message ?? "Failed to export CSV.", true);
@@ -3286,13 +3933,14 @@
 
     function openInCostExplorer() {
       try {
+        refreshEstimateAlias();
         const catalogByType = new Map(
           (snapshotCache?.catalog?.instances ?? [])
             .filter((instance) => instance?.type)
             .map((instance) => [instance.type, instance])
         );
         const cfg = buildCostExplorerConfig({
-          estimate,
+          estimate: getActiveEstimate(),
           clusterCount: getClusterCount(),
           rhContractTier: document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand",
           ec2DiscountPercent: getApproxEc2SavingsPlanDiscountPercent(),
@@ -3315,48 +3963,82 @@
       }
     }
 
-    async function applyScenarioSettings({
+    async function applyBasicScenarioSettings({
       clusterCount,
       ec2SavingsPlanDiscountPercent,
       rhContractTier,
       summaryPriceUnit,
       instances
     }) {
+      applyDiscountUi({ ec2SavingsPlanDiscountPercent, rhContractTier, summaryPriceUnit });
       const clusterCountInput = document.getElementById("cluster-count");
-      const ec2DiscountInput = document.getElementById("summary-ec2-discount-percent");
-      const rhTierSelect = document.getElementById("summary-rh-contract-tier");
-      const priceUnitSelect = document.getElementById("summary-price-unit");
-
       if (clusterCountInput) {
         clusterCountInput.value = `${clusterCount}`;
       }
-      if (ec2DiscountInput) {
-        ec2DiscountInput.value = `${ec2SavingsPlanDiscountPercent}`;
-      }
-      if (rhTierSelect) {
-        rhTierSelect.value = rhContractTier;
-      }
-      if (priceUnitSelect) {
-        priceUnitSelect.value = summaryPriceUnit;
-      }
-
-      basicSelections = instances.map((instance) => ({
-        instanceType: instance.instanceType,
-        region: instance.region,
-        count: instance.count
-      }));
-      estimate = {
-        ...estimate,
-        region: basicSelections[0]?.region ?? estimate.region
+      basicState = {
+        clusterCount,
+        region: instances[0]?.region ?? basicState.region ?? "us-east-1",
+        selections: instances.map((instance) => ({
+          instanceType: instance.instanceType,
+          region: instance.region,
+          count: instance.count
+        }))
       };
-
+      basicSelections = basicState.selections;
+      const regionSelect = document.getElementById("region-select");
+      if (regionSelect && basicState.region) {
+        regionSelect.value = basicState.region;
+      }
+      setCalculatorMode("basic", { render: false });
       renderBasicSelectionList();
       await applyBasicSizing();
     }
 
+    async function applyExpertScenarioSettings({
+      clusters,
+      ec2SavingsPlanDiscountPercent,
+      rhContractTier,
+      summaryPriceUnit
+    }) {
+      applyDiscountUi({ ec2SavingsPlanDiscountPercent, rhContractTier, summaryPriceUnit });
+      expertState = {
+        clusters: (clusters ?? []).map((cluster) =>
+          createExpertCluster({
+            name: cluster.name,
+            region: cluster.region,
+            pools: (cluster.pools ?? []).map((pool) => ({
+              name: pool.name,
+              instanceType: pool.instanceType,
+              az: pool.az,
+              count: pool.count
+            }))
+          })
+        )
+      };
+      if (!expertState.clusters.length) {
+        expertState = createInitialExpertState({ region: "us-east-1", zones: ["us-east-1a"] });
+      }
+      setCalculatorMode("expert", { render: false });
+      renderExpertClusterList();
+      refreshEstimateAlias();
+      await renderScenarioTotals();
+    }
+
     async function importScenarioCsvText(text) {
       const parsed = parseScenarioCsv(text);
-      await applyScenarioSettings({
+      if (parsed.mode === "expert") {
+        await applyExpertScenarioSettings({
+          clusters: parsed.sizing.clusters,
+          ec2SavingsPlanDiscountPercent: parsed.discounting.ec2SavingsPlanDiscountPercent,
+          rhContractTier: parsed.discounting.rhContractTier,
+          summaryPriceUnit: parsed.discounting.summaryPriceUnit
+        });
+        setScenarioCsvStatus(
+          `Imported expert scenario with ${expertState.clusters.length} cluster(s). Summary recalculated.`
+        );
+        return;
+      }
+      await applyBasicScenarioSettings({
         clusterCount: parsed.sizing.clusterCount,
         ec2SavingsPlanDiscountPercent: parsed.discounting.ec2SavingsPlanDiscountPercent,
         rhContractTier: parsed.discounting.rhContractTier,
@@ -3369,12 +4051,36 @@
     }
 
     function getScenarioForShare() {
-      return {
-        clusterCount: getClusterCount(),
+      const discounts = {
         ec2SavingsPlanDiscountPercent: getApproxEc2SavingsPlanDiscountPercent(),
         rhContractTier: document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand",
-        summaryPriceUnit: document.getElementById("summary-price-unit")?.value ?? "yearly",
-        instances: getSizingInstancesForExport()
+        summaryPriceUnit: document.getElementById("summary-price-unit")?.value ?? "yearly"
+      };
+      if (calculatorMode === "expert") {
+        return {
+          mode: "expert",
+          ...discounts,
+          clusters: expertState.clusters.map((cluster) => ({
+            name: cluster.name,
+            region: cluster.region,
+            pools: (cluster.pools ?? []).map((pool) => ({
+              name: pool.name,
+              instanceType: pool.instanceType,
+              az: pool.az,
+              count: pool.count
+            }))
+          }))
+        };
+      }
+      return {
+        mode: "basic",
+        clusterCount: getClusterCount(),
+        ...discounts,
+        instances: (basicState.selections ?? []).map((selection) => ({
+          instanceType: selection.instanceType,
+          region: selection.region,
+          count: selection.count
+        }))
       };
     }
 
@@ -3448,7 +4154,22 @@
         throw new Error("Paste a share link or code first.");
       }
       const scenario = decodeShareState(code);
-      await applyScenarioSettings(scenario);
+      if (scenario.mode === "expert") {
+        await applyExpertScenarioSettings({
+          clusters: scenario.clusters,
+          ec2SavingsPlanDiscountPercent: scenario.ec2SavingsPlanDiscountPercent,
+          rhContractTier: scenario.rhContractTier,
+          summaryPriceUnit: scenario.summaryPriceUnit
+        });
+      } else {
+        await applyBasicScenarioSettings({
+          clusterCount: scenario.clusterCount,
+          ec2SavingsPlanDiscountPercent: scenario.ec2SavingsPlanDiscountPercent,
+          rhContractTier: scenario.rhContractTier,
+          summaryPriceUnit: scenario.summaryPriceUnit,
+          instances: scenario.instances
+        });
+      }
       if (updateHash) {
         const nextHash = `#s=${encodeShareState(scenario)}`;
         if (window.location.hash !== nextHash) {
@@ -3464,10 +4185,12 @@
         return;
       }
       try {
-        await loadSharedScenarioFromCode(code, { updateHash: false });
-        setScenarioCsvStatus(
-          `Loaded shared scenario with ${basicSelections.length} instance row(s). Open Step 3 to view results.`
-        );
+        const scenario = await loadSharedScenarioFromCode(code, { updateHash: false });
+        const detail =
+          scenario.mode === "expert"
+            ? `${scenario.clusters.length} cluster(s)`
+            : `${scenario.instances.length} instance row(s)`;
+        setScenarioCsvStatus(`Loaded shared ${scenario.mode} scenario with ${detail}. Open Step 3 to view results.`);
       } catch (error) {
         console.error(error);
         setScenarioCsvStatus(error?.message ?? "Failed to load shared scenario from URL.", true);
@@ -3528,10 +4251,12 @@
         try {
           const scenario = await loadSharedScenarioFromCode(importText);
           setShareImportError("");
-          setShareStatus(`Loaded ${scenario.instances.length} instance row(s).`);
-          setScenarioCsvStatus(
-            `Loaded shared scenario with ${scenario.instances.length} instance row(s). Summary recalculated.`
-          );
+          const detail =
+            scenario.mode === "expert"
+              ? `${scenario.clusters.length} cluster(s)`
+              : `${scenario.instances.length} instance row(s)`;
+          setShareStatus(`Loaded ${scenario.mode} scenario (${detail}).`);
+          setScenarioCsvStatus(`Loaded shared ${scenario.mode} scenario with ${detail}. Summary recalculated.`);
           refreshShareModalLink();
         } catch (error) {
           console.error(error);
@@ -3563,9 +4288,10 @@
     function renderBlockedResults() {
       const summaryBody = document.getElementById("machine-pool-summary-body");
       if (summaryBody) {
+        const colspan = calculatorMode === "expert" ? 10 : 9;
         summaryBody.innerHTML = `
         <tr>
-          <td colspan="9">Fix hard validation errors to view machine pool summary.</td>
+          <td colspan="${colspan}">Fix hard validation errors to view machine pool summary.</td>
         </tr>
       `;
       }
@@ -3601,10 +4327,13 @@
     }
 
     async function renderScenarioTotals() {
+      refreshEstimateAlias();
       const { snapshots } = await resolveSnapshotContext();
       renderRegionSelect();
       renderInstanceTypeOptions();
-      renderBasicInstanceTypeOptions();
+      if (calculatorMode === "basic") {
+        renderBasicInstanceTypeOptions();
+      }
       renderPoolCapacityInline();
       const ec2SnapshotNote = document.getElementById("ec2-snapshot-note");
       if (ec2SnapshotNote) {
@@ -3678,142 +4407,216 @@
 
       if (validation.errors.length > 0) {
         renderBlockedResults();
+        schedulePersistDraft();
         return;
       }
 
       renderMachinePoolSummary();
+      schedulePersistDraft();
     }
 
-    renderSetList();
     readModeStateFromUI();
     renderModeVisibility();
-    document.getElementById("create-3az-set").addEventListener("click", () => {
-      const setIndex = estimate.sets.length + 1;
-      const newSet = createDefaultSet({
-        name: `Set ${setIndex}`,
-        instanceType: "m7i.xlarge",
-        poolBaseName: `pool-${setIndex}`,
-        zones: getCurrentZones()
+    refreshEstimateAlias();
+    if (calculatorMode === "expert") {
+      renderExpertClusterList();
+    }
+
+    for (const input of document.querySelectorAll('input[name="calculator-mode"]')) {
+      input.addEventListener("change", () => {
+        setCalculatorMode(input.value);
       });
-      estimate = {
-        ...estimate,
-        sets: [...estimate.sets, newSet]
-      };
-      renderSetList();
-      renderScenarioTotals();
-    });
-    document.getElementById("create-1az-set").addEventListener("click", () => {
-      const setIndex = estimate.sets.length + 1;
-      const [primaryAz] = getAllowedAzs();
-      const newSet = createSet({
-        name: `Set ${setIndex}`,
-        instanceType: "m7i.xlarge",
-        poolBaseName: `pool-${setIndex}`,
-        zones: [primaryAz],
-        enforceThreeZones: false
-      });
-      estimate = {
-        ...estimate,
-        sets: [...estimate.sets, newSet]
-      };
-      renderSetList();
-      renderScenarioTotals();
+    }
+
+    document.getElementById("expert-add-cluster")?.addEventListener("click", () => {
+      addExpertCluster();
     });
 
-    document.getElementById("region-select").addEventListener("change", (event) => {
-      const nextRegion = event.target.value;
-      estimate = {
-        ...estimate,
-        region: nextRegion
-      };
-      renderInstanceTypeOptions();
-      renderBasicInstanceTypeOptions();
-      renderBasicSizingPreview();
-    });
+    document.getElementById("expert-cluster-list")?.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const action = target.dataset.expertAction;
+      const clusterId = target.dataset.clusterId;
+      const poolId = target.dataset.poolId;
+      if (!action || !clusterId) {
+        return;
+      }
 
-    document.getElementById("cluster-count").addEventListener("change", (event) => {
-      const parsed = Number.parseInt(event.target.value ?? "1", 10);
-      event.target.value = Number.isFinite(parsed) ? `${Math.max(1, parsed)}` : "1";
-      renderScenarioTotals();
-    });
-
-    document.getElementById("initial-set-list").addEventListener("input", (event) => {
-      const input = event.target.closest('input[data-action="pool-input"]');
-      if (input) {
-        const setId = input.dataset.setId;
-        const az = input.dataset.poolAz;
-        const field = input.dataset.field;
-        updatePoolValue(setId, az, field, input.value);
+      if (action === "cluster-name") {
+        const nextName = target.value.trim() || "Cluster";
+        expertState = {
+          ...expertState,
+          clusters: expertState.clusters.map((cluster) =>
+            cluster.id === clusterId ? { ...cluster, name: nextName } : cluster
+          )
+        };
         renderScenarioTotals();
         return;
       }
 
-      const instanceInput = event.target.closest('input[data-action="instance-type"]');
-      if (!instanceInput) {
+      if (action === "cluster-region") {
+        const nextRegion = target.value;
+        const azs = getAllowedAzsForRegion(nextRegion);
+        expertState = {
+          ...expertState,
+          clusters: expertState.clusters.map((cluster) => {
+            if (cluster.id !== clusterId) {
+              return cluster;
+            }
+            const next = {
+              ...cluster,
+              region: nextRegion,
+              pools: (cluster.pools ?? []).map((pool, index) => ({
+                ...pool,
+                az: azs[index % Math.max(azs.length, 1)] || `${nextRegion}a`
+              }))
+            };
+            next.filters = normalizeClusterFilters(next);
+            return next;
+          })
+        };
+        renderExpertClusterList();
+        renderScenarioTotals();
         return;
       }
-      const setId = instanceInput.dataset.setId;
-      updateSetInstanceType(setId, instanceInput.value.trim());
-      renderSetList();
-      renderScenarioTotals();
+
+      if (action === "filter-arch") {
+        updateExpertClusterFilters(clusterId, { architecture: target.value });
+        return;
+      }
+      if (action === "filter-category") {
+        updateExpertClusterFilters(clusterId, { category: target.value });
+        return;
+      }
+      if (action === "filter-family") {
+        updateExpertClusterFilters(clusterId, { family: target.value });
+        return;
+      }
+      if (action === "filter-instance-type") {
+        updateExpertClusterFilters(clusterId, { instanceType: target.value });
+        return;
+      }
+      if (action === "filter-three-az") {
+        const checked = target instanceof HTMLInputElement ? target.checked : false;
+        expertState = {
+          ...expertState,
+          clusters: expertState.clusters.map((cluster) =>
+            cluster.id === clusterId
+              ? {
+                  ...cluster,
+                  filters: createDefaultClusterFilters({
+                    ...cluster.filters,
+                    threeAz: checked
+                  })
+                }
+              : cluster
+          )
+        };
+        schedulePersistDraft();
+        return;
+      }
+
+      if (action === "pool-name" || action === "pool-instance-type" || action === "pool-az" || action === "pool-count") {
+        expertState = {
+          ...expertState,
+          clusters: expertState.clusters.map((cluster) => {
+            if (cluster.id !== clusterId) {
+              return cluster;
+            }
+            return {
+              ...cluster,
+              pools: (cluster.pools ?? []).map((pool) => {
+                if (pool.id !== poolId) {
+                  return pool;
+                }
+                if (action === "pool-name") {
+                  return { ...pool, name: target.value.trim() || "workers" };
+                }
+                if (action === "pool-instance-type") {
+                  return { ...pool, instanceType: target.value.trim() || pool.instanceType };
+                }
+                if (action === "pool-az") {
+                  return { ...pool, az: target.value };
+                }
+                const count = Math.max(0, Number.parseInt(target.value, 10) || 0);
+                return { ...pool, count };
+              })
+            };
+          })
+        };
+        if (action === "pool-count" || action === "pool-instance-type" || action === "pool-az") {
+          renderScenarioTotals();
+        }
+      }
     });
 
-    document.getElementById("initial-set-list").addEventListener("change", (event) => {
-      const poolNameInput = event.target.closest('input[data-action="pool-base-name"]');
-      if (poolNameInput) {
-        const setId = poolNameInput.dataset.setId;
-        const nextValue = poolNameInput.value.trim();
-        if (nextValue) {
-          updateSetPoolBaseName(setId, nextValue);
-          renderSetList();
+    document.getElementById("expert-cluster-list")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-expert-action]");
+      if (!(button instanceof HTMLElement) || button.tagName !== "BUTTON") {
+        return;
+      }
+      const action = button.dataset.expertAction;
+      const clusterId = button.dataset.clusterId;
+      const poolId = button.dataset.poolId;
+      if (!action || !clusterId) {
+        return;
+      }
+      if (action === "create-pools") {
+        addExpertPool(clusterId);
+        return;
+      }
+      if (action === "remove-cluster") {
+        if (expertState.clusters.length <= 1) {
+          return;
         }
+        expertState = {
+          ...expertState,
+          clusters: expertState.clusters.filter((cluster) => cluster.id !== clusterId)
+        };
+        renderExpertClusterList();
+        renderScenarioTotals();
         return;
       }
-
-      const azSelect = event.target.closest('select[data-action="pool-az"]');
-      if (!azSelect) {
-        return;
+      if (action === "remove-pool") {
+        expertState = {
+          ...expertState,
+          clusters: expertState.clusters.map((cluster) => {
+            if (cluster.id !== clusterId) {
+              return cluster;
+            }
+            const pools = (cluster.pools ?? []).filter((pool) => pool.id !== poolId);
+            return { ...cluster, pools };
+          })
+        };
+        renderExpertClusterList();
+        renderScenarioTotals();
       }
-      const setId = azSelect.dataset.setId;
-      const sourceAz = azSelect.dataset.sourceAz;
-      const targetAz = azSelect.value;
-      updatePoolAz(setId, sourceAz, targetAz);
-      renderSetList();
-      renderScenarioTotals();
     });
 
-    document.getElementById("initial-set-list").addEventListener("click", (event) => {
-      const deleteButton = event.target.closest('button[data-action="delete-set"]');
-      if (!deleteButton || deleteButton.disabled) {
-        return;
+    document.getElementById("region-select").addEventListener("change", (event) => {
+      const nextRegion = event.target.value;
+      basicState.region = nextRegion;
+      renderInstanceTypeOptions();
+      renderBasicInstanceTypeOptions();
+      renderBasicSizingPreview();
+      if (calculatorMode === "basic") {
+        applyBasicSizing();
       }
-      removeSet(deleteButton.dataset.setId);
-      renderSetList();
-      renderScenarioTotals();
     });
 
-    const filterRoot = document.querySelector(".hcp-calculator__filters");
-    if (filterRoot) {
-      filterRoot.addEventListener("input", () => {
-        readFilterStateFromUI();
-        renderInstanceTypeOptions();
-        renderBasicInstanceTypeOptions();
-        if (calculatorMode === "basic") {
-          renderBasicSizingPreview();
-        }
-      });
-      filterRoot.addEventListener("change", () => {
-        readFilterStateFromUI();
-        renderInstanceTypeOptions();
-        renderBasicInstanceTypeOptions();
-        if (calculatorMode === "basic") {
-          renderBasicSizingPreview();
-        }
-      });
-    }
+    document.getElementById("cluster-count").addEventListener("change", (event) => {
+      const parsed = Number.parseInt(event.target.value ?? "1", 10);
+      const next = Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
+      event.target.value = `${next}`;
+      basicState.clusterCount = next;
+      renderScenarioTotals();
+    });
 
     document.getElementById("basic-add-instance").addEventListener("click", async () => {
       addBasicInstanceSelection();
+      basicState.selections = basicSelections;
       if (calculatorMode === "basic") {
         await applyBasicSizing();
       }
@@ -3862,6 +4665,7 @@
         ...basicSelections[index],
         count: nextCount
       };
+      basicState.selections = basicSelections;
       if (calculatorMode === "basic") {
         await applyBasicSizing();
       }
@@ -3877,6 +4681,7 @@
         return;
       }
       basicSelections = basicSelections.filter((_, selectionIndex) => selectionIndex !== index);
+      basicState.selections = basicSelections;
       renderBasicSelectionList();
       if (calculatorMode === "basic") {
         await applyBasicSizing();
@@ -3926,12 +4731,49 @@
       }
     });
 
+    document.getElementById("reset-calculator-data")?.addEventListener("click", () => {
+      resetCalculatorData().catch((error) => {
+        console.error(error);
+        setScenarioCsvStatus(error?.message ?? "Failed to reset calculator data.", true);
+      });
+    });
+
+    window.addEventListener("beforeunload", () => {
+      persistDraftNow();
+    });
+
     initFieldHelp();
     initHelpModal();
     initResultsDisclaimerGate();
     initShareModal();
-    renderScenarioTotals();
-    applyBasicSizing().then(() => loadShareFromLocation());
+
+    async function bootstrapCalculatorSession() {
+      await resolveSnapshotContext();
+      renderRegionSelect();
+      const sharedCode = shareCodeFromLocation();
+      if (sharedCode) {
+        await loadShareFromLocation();
+      } else {
+        const draft = loadDraft();
+        if (draft) {
+          await applyDraftScenario(draft);
+          setScenarioCsvStatus(
+            `Restored your last ${draft.mode} scenario from this browser. Use Reset saved data to clear it.`
+          );
+        } else {
+          await applyBasicSizing();
+          await renderScenarioTotals();
+        }
+      }
+      draftPersistEnabled = true;
+      persistDraftNow();
+    }
+
+    bootstrapCalculatorSession().catch((error) => {
+      console.error(error);
+      draftPersistEnabled = true;
+      setScenarioCsvStatus(error?.message ?? "Failed to initialize calculator session.", true);
+    });
   </script>
 </body>
 </html>

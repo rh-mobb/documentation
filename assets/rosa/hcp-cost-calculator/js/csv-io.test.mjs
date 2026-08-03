@@ -43,6 +43,7 @@ test("buildScenarioCsv and parseScenarioCsv round-trip sizing and discounting", 
       unit: "monthly",
       pools: [
         {
+          cluster: "Cluster 1",
           pool: "workers",
           region: "us-east-1",
           instanceType: "m7i.xlarge",
@@ -80,8 +81,8 @@ test("buildScenarioCsv and parseScenarioCsv round-trip sizing and discounting", 
   assert.match(csv, /SECTION,Discounting/);
   assert.match(csv, /SECTION,Summary/);
   assert.match(csv, /m7i\.2xlarge,eu-west-1,6/);
-  assert.match(csv, /pool,workers,us-east-1,m7i\.xlarge,3,12,48,100\.5/);
-  assert.match(csv, /cluster_fee,HCP cluster fee \(2 clusters\)/);
+  assert.match(csv, /pool,Cluster 1,workers,us-east-1,m7i\.xlarge,3,12,48,100\.5/);
+  assert.match(csv, /cluster_fee,,HCP cluster fee \(2 clusters\)/);
 
   const parsed = parseScenarioCsv(csv);
   assert.deepEqual(parsed.sizing, {
