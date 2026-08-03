@@ -4,16 +4,17 @@ title: Routing OpenShift Component Routes through a custom domain with Google Cl
 tags: ["OSD"]
 authors:
   - Kevin Collins
-validated_version: "4.21"
+  - Kumudu Herath
+validated_version: "4.10"
 ---
 
-This guide extends [Using Google Cloud Armor with a Secondary IngressController on OpenShift Dedicated (GCP)](/experts/osd/ingress-ca/) to securly route the OpenShift console, downloads, and OAuth endpoints through Cloud Armor. By the end of this guide, users will access the OpenShift web console, downloads server, and OAuth authentication through the Cloud Armor-protected HTTPS Load Balancer.
+This guide extends [Using Google Cloud Armor with a Secondary IngressController on OpenShift Dedicated (GCP)](/experts/osd/ingress-ca/) to securely route the OpenShift console, downloads, and OAuth endpoints through Cloud Armor. By the end of this guide, users will access the OpenShift web console, downloads server, and OAuth authentication through the Cloud Armor-protected HTTPS Load Balancer.
 
 ## Prerequisites
 
 Complete the [Cloud Armor with Secondary IngressController guide](/experts/osd/ingress-ca/) through at least **Step 14** (Test the Configuration). You should have:
 
-* A working Cloud Armor HTTPS Load Balancer with a secondary privarte `cloudarmor` IngressController
+* A working Cloud Armor HTTPS Load Balancer with a secondary private `cloudarmor` IngressController
 * The `hello` test application responding through Cloud Armor
 * DNS configured for `*.${INGRESS_NAME}.${DOMAIN}` pointing to the Cloud Armor static IP
 * A wildcard TLS certificate for `*.${INGRESS_NAME}.${DOMAIN}`
@@ -51,12 +52,12 @@ ocm get /api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/ingresses | \
   jq -r '.items[] | "\(.id) \(.default)"'
 ```
 
-The default ingress (marked `true`) is the one you need. Set it:
+The default ingress (marked `true`) is the one you need. For example, `v3p7`. Set it:
 
 ```bash
-export DEFAULT_INGRESS_ID="<your-default-ingress-id>"
+export DEFAULT_INGRESS_ID="v3p7"
 
-echo "Default Ingress ID " + ${DEFAULT_INGRESS_ID}
+echo "Default Ingress ID: ${DEFAULT_INGRESS_ID}"
 ```
 
 ## 3. Create TLS Secrets for Component Routes
@@ -84,7 +85,7 @@ oc get secrets -n openshift-config | grep -E "console-tls|downloads-tls|oauth-tl
 Use `ocm edit ingress` to set custom hostnames and TLS secrets for the console, downloads, and OAuth component routes. All three components must be specified in a single command:
 
 ```bash
-ocm edit ingress ${DEFAULT_INGRESS_ID} -c ${CLUSTER_NAME} \
+ocm edit ingress ${DEFAULT_INGRESS_ID} -c ${OCM_CLUSTER_ID} \
   --component-routes \
   'console: hostname=console.'"${INGRESS_NAME}.${DOMAIN}"';tlsSecretRef=console-tls,downloads: hostname=downloads.'"${INGRESS_NAME}.${DOMAIN}"';tlsSecretRef=downloads-tls,oauth: hostname=oauth.'"${INGRESS_NAME}.${DOMAIN}"';tlsSecretRef=oauth-tls'
 ```
@@ -122,7 +123,7 @@ The solution is a **reencrypt** route. The reencrypt route terminates TLS at the
 Extract the service-serving-signer CA:
 
 ```bash
-oc get cm service-ca-bundle -n openshift-authentication \
+oc get cm v4-0-config-system-service-ca -n openshift-authentication \
   -o jsonpath='{.data.service-ca\.crt}' > ${SCRATCH_DIR}/service-ca-bundle.pem
 ```
 
@@ -167,11 +168,15 @@ curl -s -o /dev/null -w "OAuth: %{http_code}\n" \
   https://oauth.${INGRESS_NAME}.${DOMAIN}/healthz
 ```
 
-Open the console in a browser:
+Open the console in an **incognito/private browser window**:
 
 ```
 https://console.<INGRESS_NAME>.<DOMAIN>
 ```
+
+{{< alert state="warning" >}}
+If you previously accessed the default OpenShift console, your browser may have cached the old OAuth redirect URL (`oauth-openshift.apps...`). Use an incognito/private window or clear your browser cache to avoid being redirected to the wrong OAuth endpoint.
+{{< /alert >}}
 
 Clicking **Log in** should redirect to the OAuth endpoint at `oauth.<INGRESS_NAME>.<DOMAIN>`, authenticate, and return you to the console.
 
@@ -188,7 +193,7 @@ oc label route console-custom -n openshift-console type-
 oc label route downloads-custom -n openshift-console type-
 
 # Remove component routes configuration
-ocm edit ingress ${DEFAULT_INGRESS_ID} -c ${CLUSTER_NAME} \
+ocm edit ingress ${DEFAULT_INGRESS_ID} -c ${OCM_CLUSTER_ID} \
   --component-routes ''
 
 # Remove TLS secrets
