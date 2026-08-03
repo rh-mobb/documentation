@@ -488,6 +488,30 @@
       font-weight: 600;
     }
 
+    .hcp-calculator__tier-compare {
+      margin-top: 1.25rem;
+    }
+
+    .hcp-calculator__tier-compare h3 {
+      margin: 0 0 0.35rem;
+      font-size: 1rem;
+    }
+
+    .hcp-calculator__table tr.hcp-calculator__tier-row--selected th,
+    .hcp-calculator__table tr.hcp-calculator__tier-row--selected td {
+      background: var(--rh-color-blue-10, #e7f1fa);
+      font-weight: 600;
+      box-shadow: inset 3px 0 0 var(--hcp-blue);
+    }
+
+    .hcp-calculator__tier-delta--save {
+      color: var(--hcp-success);
+    }
+
+    .hcp-calculator__tier-delta--more {
+      color: var(--hcp-danger);
+    }
+
     .hcp-calculator__issues {
       margin: 1rem 0;
       display: grid;
@@ -1385,6 +1409,26 @@
           </tfoot>
         </table>
       </div>
+      <div class="hcp-calculator__tier-compare" id="private-offer-tier-compare">
+        <h3>Private Offer comparison</h3>
+        <p class="hcp-calculator__muted">
+          Private Offer affects the Worker Node Fee only. EC2 and HCP cluster fee stay the same across rows.
+          The highlighted row matches your Step 2 selection.
+        </p>
+        <div class="hcp-calculator__table-wrap">
+          <table class="hcp-calculator__table" aria-label="Private Offer tier comparison">
+            <thead>
+              <tr>
+                <th scope="col">Private Offer</th>
+                <th scope="col">Node Fee</th>
+                <th scope="col">Scenario total</th>
+                <th scope="col">vs selected</th>
+              </tr>
+            </thead>
+            <tbody id="private-offer-tier-body"></tbody>
+          </table>
+        </div>
+      </div>
       </div>
     </details>
 
@@ -1436,6 +1480,7 @@
         <p>The first time you expand Results, accept the non-binding estimate disclaimer (remembered in a cookie).</p>
         <ul>
           <li><strong>Summary table:</strong> Per-pool EC2, Node Fee, and totals, plus HCP cluster fee.</li>
+          <li><strong>Private Offer comparison:</strong> PAYGO / 1-year / 3-year scenario totals with the selected tier highlighted and cost differences for the others.</li>
           <li><strong>Summary price unit:</strong> Switch hourly, monthly (730 hours), or yearly.</li>
           <li><strong>Export / Import CSV:</strong> Save or reload sizing, discounts, and a summary snapshot.</li>
           <li><strong>Share:</strong> Copy a link or code so someone else can reload the same scenario.</li>
@@ -1578,6 +1623,11 @@
       oneYear: ROSA_PAYGO_RATE_HOURLY * (1 - ROSA_ONE_YEAR_DISCOUNT),
       threeYear: ROSA_PAYGO_RATE_HOURLY * (1 - ROSA_THREE_YEAR_DISCOUNT)
     };
+    const RH_PRIVATE_OFFER_TIERS = [
+      { key: "onDemand", label: "PAYGO" },
+      { key: "oneYear", label: "1-year (33% off PAYGO)" },
+      { key: "threeYear", label: "3-year (55% off PAYGO)" }
+    ];
     const HCP_CLUSTER_FEE_HOURLY = 0.25;
 
     const FIELD_HELP = {
@@ -2903,6 +2953,11 @@
 
       let totalEc2Monthly = 0;
       let totalRhWorkerMonthly = 0;
+      const rhWorkerMonthlyByTier = {
+        onDemand: 0,
+        oneYear: 0,
+        threeYear: 0
+      };
       let totalCount = 0;
       let totalVcpu = 0;
       let totalMemoryGiB = 0;
@@ -2950,6 +3005,9 @@
           const totalPoolMonthly = ec2Monthly + rhWorkerMonthly;
           totalEc2Monthly += ec2Monthly;
           totalRhWorkerMonthly += rhWorkerMonthly;
+          for (const tier of RH_PRIVATE_OFFER_TIERS) {
+            rhWorkerMonthlyByTier[tier.key] += getRhWorkerMonthly(poolVcpu ?? 0, tier.key);
+          }
 
           pools.push({
             pool: poolName,
@@ -2974,11 +3032,27 @@
       const totalMonthly = totalEc2Monthly + totalRhMonthly;
       const clusterFeeLabel =
         clusterCount > 1 ? `HCP cluster fee (${clusterCount} clusters)` : "HCP cluster fee";
+      const selectedTierTotalMonthly =
+        totalEc2Monthly + clusterFeeMonthly + (rhWorkerMonthlyByTier[selectedRhTier] ?? totalRhWorkerMonthly);
+      const privateOfferTiers = RH_PRIVATE_OFFER_TIERS.map((tier) => {
+        const nodeFeeMonthly = rhWorkerMonthlyByTier[tier.key] ?? 0;
+        const tierTotalMonthly = totalEc2Monthly + clusterFeeMonthly + nodeFeeMonthly;
+        return {
+          key: tier.key,
+          label: tier.label,
+          selected: tier.key === selectedRhTier,
+          nodeFeeMonthly,
+          totalMonthly: tierTotalMonthly,
+          deltaMonthly: tierTotalMonthly - selectedTierTotalMonthly
+        };
+      });
 
       return {
         unit: selectedUnit,
         unitLabel: selectedUnit === "yearly" ? "Yearly" : selectedUnit === "monthly" ? "Monthly" : "Hourly",
         clusterCount,
+        selectedRhTier,
+        privateOfferTiers,
         pools,
         clusterFee: {
           label: clusterFeeLabel,
@@ -3002,6 +3076,17 @@
           monthly: totalMonthly
         }
       };
+    }
+
+    function formatTierDelta(monthlyDelta, selectedUnit) {
+      if (!Number.isFinite(monthlyDelta) || Math.abs(monthlyDelta) < 0.005) {
+        return { text: "Selected", className: "" };
+      }
+      const amount = formatByUnit(Math.abs(monthlyDelta), selectedUnit);
+      if (monthlyDelta < 0) {
+        return { text: `Saves ${amount}`, className: "hcp-calculator__tier-delta--save" };
+      }
+      return { text: `Costs ${amount} more`, className: "hcp-calculator__tier-delta--more" };
     }
 
     function renderMachinePoolSummary() {
@@ -3085,6 +3170,43 @@
       clusterFeeNode.textContent = formatByUnit(summary.clusterFee.monthly, summary.unit);
       clusterFeeTotalNode.textContent = formatByUnit(summary.clusterFee.monthly, summary.unit);
       totalCostNode.textContent = formatByUnit(summary.total.monthly, summary.unit);
+      renderPrivateOfferTierComparison(summary);
+    }
+
+    function renderPrivateOfferTierComparison(summary) {
+      const tbody = document.getElementById("private-offer-tier-body");
+      const section = document.getElementById("private-offer-tier-compare");
+      if (!tbody) {
+        return;
+      }
+      const tiers = summary?.privateOfferTiers ?? [];
+      if (!tiers.length) {
+        tbody.innerHTML = "";
+        if (section) {
+          section.hidden = true;
+        }
+        return;
+      }
+      if (section) {
+        section.hidden = false;
+      }
+      tbody.innerHTML = tiers
+        .map((tier) => {
+          const delta = tier.selected
+            ? { text: "Selected", className: "" }
+            : formatTierDelta(tier.deltaMonthly, summary.unit);
+          const rowClass = tier.selected ? " class=\"hcp-calculator__tier-row--selected\"" : "";
+          const deltaClass = delta.className ? ` class="${delta.className}"` : "";
+          return `
+            <tr${rowClass}>
+              <th scope="row">${escapeHtml(tier.label)}</th>
+              <td>${escapeHtml(formatByUnit(tier.nodeFeeMonthly, summary.unit))}</td>
+              <td>${escapeHtml(formatByUnit(tier.totalMonthly, summary.unit))}</td>
+              <td${deltaClass}>${escapeHtml(delta.text)}</td>
+            </tr>
+          `;
+        })
+        .join("");
     }
 
     function setScenarioCsvStatus(message, isError = false) {
@@ -3456,6 +3578,8 @@
       const totalEc2Node = document.getElementById("machine-pool-total-ec2");
       const totalRhNode = document.getElementById("machine-pool-total-rh");
       const totalCostNode = document.getElementById("machine-pool-total-cost");
+      const tierBody = document.getElementById("private-offer-tier-body");
+      const tierSection = document.getElementById("private-offer-tier-compare");
       if (clusterFeeNode) clusterFeeNode.textContent = "--";
       if (clusterFeeTotalNode) clusterFeeTotalNode.textContent = "--";
       if (totalCountNode) totalCountNode.textContent = "--";
@@ -3464,7 +3588,16 @@
       if (totalEc2Node) totalEc2Node.textContent = "--";
       if (totalRhNode) totalRhNode.textContent = "--";
       if (totalCostNode) totalCostNode.textContent = "--";
-
+      if (tierBody) {
+        tierBody.innerHTML = `
+          <tr>
+            <td colspan="4">Fix hard validation errors to compare Private Offer tiers.</td>
+          </tr>
+        `;
+      }
+      if (tierSection) {
+        tierSection.hidden = false;
+      }
     }
 
     async function renderScenarioTotals() {
