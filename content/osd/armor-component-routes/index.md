@@ -5,7 +5,7 @@ tags: ["OSD"]
 authors:
   - Kevin Collins
   - Kumudu Herath
-validated_version: "4.10"
+validated_version: "4.20"
 ---
 
 This guide extends [Using Google Cloud Armor with a Secondary IngressController on OpenShift Dedicated (GCP)](/experts/osd/ingress-ca/) to securely route the OpenShift console, downloads, and OAuth endpoints through Cloud Armor. By the end of this guide, users will access the OpenShift web console, downloads server, and OAuth authentication through the Cloud Armor-protected HTTPS Load Balancer.
