@@ -4,6 +4,7 @@ title: Using OpenShift Lightspeed with ARO
 tags: ["ARO", "Lightspeed"]
 authors:
   - Daniel Penagos
+validated_version: "4.20"
 ---
 
 This guide walks through setting up OpenShift Lightspeed backed by Azure AI Foundry services for the LLM.
