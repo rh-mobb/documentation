@@ -193,8 +193,16 @@ oc label route console-custom -n openshift-console type-
 oc label route downloads-custom -n openshift-console type-
 
 # Remove component routes configuration
-ocm edit ingress ${DEFAULT_INGRESS_ID} -c ${OCM_CLUSTER_ID} \
-  --component-routes ''
+cat > /tmp/ocm_patch.json << 'EOF'
+{
+  "component_routes": {
+    "console": {"hostname": "", "tls_secret_ref": ""},
+    "downloads": {"hostname": "", "tls_secret_ref": ""},
+    "oauth": {"hostname": "", "tls_secret_ref": ""}
+  }
+}
+EOF
+ocm patch /api/clusters_mgmt/v1/clusters/${OCM_CLUSTER_ID}/ingresses/${DEFAULT_INGRESS_ID} --body /tmp/ocm_patch.json
 
 # Remove TLS secrets
 for COMPONENT in console downloads oauth
