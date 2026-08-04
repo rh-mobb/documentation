@@ -15,7 +15,7 @@ This guide extends [Using Google Cloud Armor with a Secondary IngressController 
 Complete the [Cloud Armor with Secondary IngressController guide](/experts/osd/ingress-ca/) through at least **Step 14** (Test the Configuration). You should have:
 
 * A working Cloud Armor HTTPS Load Balancer with a secondary private `cloudarmor` IngressController
-* The `hello` test application responding through Cloud Armor
+* The backend service showing `HEALTHY` (`gcloud compute backend-services get-health`)
 * DNS configured for `*.${INGRESS_NAME}.${DOMAIN}` pointing to the Cloud Armor static IP
 * A wildcard TLS certificate for `*.${INGRESS_NAME}.${DOMAIN}`
 
@@ -167,8 +167,7 @@ curl -s -o /dev/null -w "Downloads: %{http_code}\n" \
 curl -s -o /dev/null -w "OAuth: %{http_code}\n" \
   https://oauth.${INGRESS_NAME}.${DOMAIN}/healthz
 ```
-
-Open the console in an **incognito/private browser window**:
+Wait roughly 10 minutes for everything to sync, then open the console in an **incognito/private browser window**:
 
 ```
 https://console.<INGRESS_NAME>.<DOMAIN>
