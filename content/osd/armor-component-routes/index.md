@@ -167,8 +167,7 @@ curl -s -o /dev/null -w "Downloads: %{http_code}\n" \
 curl -s -o /dev/null -w "OAuth: %{http_code}\n" \
   https://oauth.${INGRESS_NAME}.${DOMAIN}/healthz
 ```
-
-Open the console in an **incognito/private browser window**:
+Wait roughly 10 minutes for everything to sync, then open the console in an **incognito/private browser window**:
 
 ```
 https://console.<INGRESS_NAME>.<DOMAIN>

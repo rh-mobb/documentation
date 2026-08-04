@@ -448,8 +448,7 @@ The output should show `healthState: HEALTHY`. If the backend shows `UNHEALTHY`,
 Test the end-to-end path from the internet through Cloud Armor to the IngressController:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" \
-  https://test.${INGRESS_NAME}.${DOMAIN}
+curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 ```
 
 You should see `503`. This confirms the full path is working — Cloud Armor accepted the request, forwarded it through the backend service to the Internal NLB, and the OpenShift router responded. The 503 is expected because no routes exist yet for this hostname.
