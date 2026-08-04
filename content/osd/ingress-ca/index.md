@@ -175,13 +175,11 @@ done
 
 ## 5. Create Health Check
 
-Create an HTTPS health check that probes the IngressController through the Internal NLB:
+Create a TCP health check that verifies the IngressController router is accepting connections:
 
 ```bash
-gcloud compute health-checks create https ${CLUSTER_NAME}-armor-hc \
+gcloud compute health-checks create tcp ${CLUSTER_NAME}-armor-hc \
   --port=443 \
-  --request-path="/" \
-  --host="hello.${INGRESS_NAME}.${DOMAIN}" \
   --check-interval=10s \
   --timeout=5s \
   --unhealthy-threshold=3 \
@@ -189,7 +187,7 @@ gcloud compute health-checks create https ${CLUSTER_NAME}-armor-hc \
   --description="Health check for ${INGRESS_NAME} ingress controller"
 ```
 
-**Note:** The health check uses port 443 (HTTPS) with a Host header (`hello.${INGRESS_NAME}.${DOMAIN}`) because the IngressController requires a valid hostname that matches a route. Without a matching Host header, the router returns an error page and the health check fails. The backend will show as UNHEALTHY until you deploy the test application in Section 14, which creates a route matching this hostname.
+**Note:** The TCP health check verifies that the OpenShift router is accepting connections on port 443. Unlike an HTTPS health check, it does not require a deployed application or a route with a matching hostname — the backend becomes healthy as soon as the router pods are running.
 
 ## 6. Create Backend Service
 
@@ -434,36 +432,31 @@ Verify DNS propagation:
 
 ```bash
 # Should return the STATIC_IP
-dig +short hello.$INGRESS_NAME.$DOMAIN
+dig +short test.$INGRESS_NAME.$DOMAIN
 ```
 
 ## 14. Test the Configuration
 
-Create a test application:
+Verify the backend is healthy by checking that the TCP health check is passing:
 
 ```bash
-# Create a new project
-oc new-project cloudarmor-test
-
-# Create a test application
-oc new-app --docker-image=docker.io/openshift/hello-openshift
-
-# Create a route with the cloudarmor label
-oc create route edge hello-cloudarmor \
-  --service=hello-openshift \
-  --hostname=hello.${INGRESS_NAME}.${DOMAIN}
-
-# Label the route so it uses the cloudarmor ingress
-oc label route hello-cloudarmor type=cloudarmor
+gcloud compute backend-services get-health ${CLUSTER_NAME}-armor-backend --global
 ```
 
-Test access to the application:
+The output should show `healthState: HEALTHY`. If the backend shows `UNHEALTHY`, wait a minute for the health check to detect the router pods.
+
+Test the end-to-end path from the internet through Cloud Armor to the IngressController:
 
 ```bash
-curl https://hello.$INGRESS_NAME.$DOMAIN
+curl -s -o /dev/null -w "%{http_code}\n" \
+  https://test.${INGRESS_NAME}.${DOMAIN}
 ```
 
-You should see: `Hello OpenShift!`
+You should see `503`. This confirms the full path is working — Cloud Armor accepted the request, forwarded it through the backend service to the Internal NLB, and the OpenShift router responded. The 503 is expected because no routes exist yet for this hostname.
+
+{{< alert state="info" >}}
+A `503` from the router means the end-to-end path is healthy. Once you create routes labeled `type=cloudarmor`, requests to those hostnames will return `200`.
+{{< /alert >}}
 
 ## 15. Verify Cloud Armor is Working
 
@@ -472,13 +465,11 @@ You should see: `Hello OpenShift!`
 If you configured the geo-restriction rule (allowing only US/CA), test from a different location or use a VPN:
 
 ```bash
-# From an allowed location (US/CA)
-curl https://hello.$INGRESS_NAME.$DOMAIN
-# Should return: Hello OpenShift!
+# From an allowed location (US/CA) — expect 503 (allowed through, no matching route)
+curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 
-# From a blocked location (not US/CA)
-curl https://hello.$INGRESS_NAME.$DOMAIN
-# Should return: HTTP 403 Forbidden
+# From a blocked location (not US/CA) — expect 403
+curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 ```
 
 ### Test IP Blocking
@@ -501,9 +492,8 @@ gcloud compute security-policies rules create 500 \
 echo "Waiting 60 seconds for rule to propagate..."
 sleep 60
 
-# Test access (should be blocked)
-curl https://hello.$INGRESS_NAME.$DOMAIN
-# Should return: HTTP 403 Forbidden
+# Test access — expect 403 (blocked by Cloud Armor)
+curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 
 # Remove the test rule
 gcloud compute security-policies rules delete 500 \
@@ -529,7 +519,7 @@ View all recent security policy logs:
 # Generate some allowed traffic
 for i in {1..5}
 do
-  curl https://hello.$INGRESS_NAME.$DOMAIN
+  curl -s -o /dev/null https://test.$INGRESS_NAME.$DOMAIN
 done
 
 # Wait a few seconds for logs to be ingested
@@ -577,11 +567,11 @@ Test the rate limiting by sending rapid requests:
 # Send 120 requests rapidly to trigger the rate limit
 for i in {1..120}
 do
-  curl -s -o /dev/null -w "%{http_code}\n" https://hello.$INGRESS_NAME.$DOMAIN
+  curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
   sleep 0.1
 done
 
-# After ~100 requests, you should start seeing 429 (Too Many Requests) responses
+# First ~100 requests return 503 (allowed through), then you should see 429 (rate limited)
 ```
 
 Remove the rate limit rule:
@@ -613,15 +603,13 @@ sleep 60
 Test SQL injection protection:
 
 ```bash
-# Attempt a SQL injection pattern (URL-encoded: 1' OR '1'='1)
-echo "Testing SQL injection pattern (should be blocked):"
-curl "https://hello.$INGRESS_NAME.$DOMAIN/?id=1%27%20OR%20%271%27=%271"
-echo ""
+# Attempt a SQL injection pattern — expect 403 (blocked by Cloud Armor)
+curl -s -o /dev/null -w "SQLi: %{http_code}\n" \
+  "https://test.$INGRESS_NAME.$DOMAIN/?id=1%27%20OR%20%271%27=%271"
 
-# Normal request (should work)
-echo "Testing normal request (should succeed):"
-curl "https://hello.$INGRESS_NAME.$DOMAIN/"
-echo ""
+# Normal request — expect 503 (allowed through, no matching route)
+curl -s -o /dev/null -w "Normal: %{http_code}\n" \
+  "https://test.$INGRESS_NAME.$DOMAIN/"
 ```
 
 Remove the SQL injection rule:
@@ -653,15 +641,13 @@ sleep 60
 Test XSS protection:
 
 ```bash
-# Attempt an XSS pattern (URL-encoded: <script>alert('xss')</script>)
-echo "Testing XSS pattern (should be blocked):"
-curl "https://hello.$INGRESS_NAME.$DOMAIN/?name=%3Cscript%3Ealert%28%27xss%27%29%3C/script%3E"
-echo ""
+# Attempt an XSS pattern — expect 403 (blocked by Cloud Armor)
+curl -s -o /dev/null -w "XSS: %{http_code}\n" \
+  "https://test.$INGRESS_NAME.$DOMAIN/?name=%3Cscript%3Ealert%28%27xss%27%29%3C/script%3E"
 
-# Normal request (should work)
-echo "Testing normal request (should succeed):"
-curl "https://hello.$INGRESS_NAME.$DOMAIN/"
-echo ""
+# Normal request — expect 503 (allowed through, no matching route)
+curl -s -o /dev/null -w "Normal: %{http_code}\n" \
+  "https://test.$INGRESS_NAME.$DOMAIN/"
 ```
 
 Remove the XSS protection rule:
@@ -695,7 +681,7 @@ gcloud compute backend-services delete ${CLUSTER_NAME}-armor-backend --global --
 gcloud compute security-policies delete ${CLUSTER_NAME}-armor-policy --quiet
 
 # Delete health check
-gcloud compute health-checks delete ${CLUSTER_NAME}-armor-hc --quiet
+gcloud compute health-checks delete ${CLUSTER_NAME}-armor-hc --quiet --global
 
 # Delete Network Endpoint Groups
 ZONES=$(oc get pods -n openshift-ingress \
@@ -713,9 +699,6 @@ done
 
 # Delete static IP
 gcloud compute addresses delete ${CLUSTER_NAME}-armor-ip --global --quiet
-
-# Delete test application
-oc delete project cloudarmor-test
 
 # Delete secondary ingress controller
 oc delete ingresscontroller ${INGRESS_NAME} -n openshift-ingress-operator
