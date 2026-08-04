@@ -1727,7 +1727,7 @@
         </ul>
 
         <h3>Step 3 - Results</h3>
-        <p>The first time you expand Results, accept the non-binding estimate disclaimer (remembered in a cookie).</p>
+        <p>The first time you expand Results or Platform Comparison and TCO, accept the non-binding estimate disclaimer (remembered in a cookie).</p>
         <ul>
           <li><strong>Summary table:</strong> Per-pool EC2, Node Fee, and totals, plus HCP cluster fee.</li>
           <li><strong>Private Offer comparison:</strong> PAYGO / 1-year / 3-year scenario totals with the selected tier highlighted and cost differences for the others.</li>
@@ -1746,6 +1746,7 @@
           Compare ROSA HCP and EKS Auto Mode as two AWS first-party options with different focus:
           turnkey OpenShift application platform vs managed Kubernetes container scheduler.
           Same Step 1 worker mix; Step 2 EC2 discounts are ignored in this view.
+          Expanding this step uses the same non-binding estimate disclaimer as Results.
         </p>
         <ul>
           <li><strong>1-year base compare:</strong> Same workers, ROSA Worker Node Fee at 1-year Private Offer (33% off PAYGO), HCP cluster fee and EC2 at list, EKS $0.10/hr control plane, ~12% Auto Mode fee, and AWS Business Support at 10%. Locked to yearly amounts. Platform ops labor is reserved for the 3-year TCO.</li>
@@ -2197,58 +2198,80 @@
     }
 
     function initResultsDisclaimerGate() {
-      const step3 = document.getElementById("step-3-results");
-      const summary = step3?.querySelector(":scope > summary");
+      const gatedSteps = [
+        document.getElementById("step-3-results"),
+        document.getElementById("step-4-compare")
+      ].filter(Boolean);
       const acceptButton = document.getElementById("results-disclaimer-accept");
       const cancelButton = document.getElementById("results-disclaimer-cancel");
       const modal = document.getElementById("results-disclaimer-modal");
-      if (!step3 || !summary || !acceptButton || !cancelButton || !modal) {
+      if (!gatedSteps.length || !acceptButton || !cancelButton || !modal) {
         return;
       }
 
       resultsDisclaimerAccepted = hasAcceptedResultsDisclaimer();
+      let pendingStep = null;
 
-      summary.addEventListener("click", (event) => {
-        if (resultsDisclaimerAccepted) {
-          return;
+      function closeGatedSteps() {
+        for (const step of gatedSteps) {
+          step.open = false;
         }
-        if (step3.open) {
-          return;
-        }
-        event.preventDefault();
-        showResultsDisclaimerModal();
-      });
+        pendingStep = null;
+      }
 
-      step3.addEventListener("toggle", () => {
-        if (step3.open && !resultsDisclaimerAccepted) {
-          step3.open = false;
+      for (const step of gatedSteps) {
+        const summary = step.querySelector(":scope > summary");
+        if (!summary) {
+          continue;
+        }
+        summary.addEventListener("click", (event) => {
+          if (resultsDisclaimerAccepted) {
+            return;
+          }
+          if (step.open) {
+            return;
+          }
+          event.preventDefault();
+          pendingStep = step;
           showResultsDisclaimerModal();
-        }
-      });
+        });
+
+        step.addEventListener("toggle", () => {
+          if (step.open && !resultsDisclaimerAccepted) {
+            step.open = false;
+            pendingStep = step;
+            showResultsDisclaimerModal();
+          }
+        });
+      }
 
       acceptButton.addEventListener("click", () => {
         resultsDisclaimerAccepted = true;
         persistResultsDisclaimerAcceptance();
         hideResultsDisclaimerModal();
-        step3.open = true;
+        const stepToOpen = pendingStep ?? gatedSteps[0];
+        pendingStep = null;
+        if (stepToOpen) {
+          stepToOpen.open = true;
+        }
       });
 
       cancelButton.addEventListener("click", () => {
         hideResultsDisclaimerModal();
-        step3.open = false;
+        closeGatedSteps();
       });
 
       modal.addEventListener("click", (event) => {
         if (event.target === modal) {
           hideResultsDisclaimerModal();
-          step3.open = false;
+          closeGatedSteps();
         }
       });
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && !modal.hidden) {
           hideResultsDisclaimerModal();
-          step3.open = false;
+          closeGatedSteps();
         }
       });
     }
@@ -4223,7 +4246,11 @@
           continue;
         }
         let open = typeof next[id] === "boolean" ? next[id] : DEFAULT_STEP_OPEN[id];
-        if (id === "step-3-results" && open && !resultsDisclaimerAccepted) {
+        if (
+          (id === "step-3-results" || id === "step-4-compare") &&
+          open &&
+          !resultsDisclaimerAccepted
+        ) {
           open = false;
         }
         el.open = open;
