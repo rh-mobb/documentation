@@ -473,6 +473,24 @@
       color: var(--hcp-blue);
     }
 
+    .hcp-calculator__footnote-ref {
+      color: var(--hcp-blue);
+      font-weight: 600;
+      text-decoration: none;
+      margin-left: 0.1rem;
+    }
+
+    .hcp-calculator__footnote-ref:hover,
+    .hcp-calculator__footnote-ref:focus-visible {
+      text-decoration: underline;
+    }
+
+    .hcp-calculator__footnote-mark {
+      color: var(--rh-color-text-primary, #151515);
+      font-weight: 700;
+      margin-right: 0.35rem;
+    }
+
     .hcp-calculator__pool-grid {
       margin-top: 0.6rem;
       display: grid;
@@ -872,6 +890,34 @@
 
     .hcp-calculator__table th .hcp-calculator__help {
       margin-left: 0.25rem;
+    }
+
+    .hcp-calculator__table--capabilities {
+      table-layout: fixed;
+    }
+
+    .hcp-calculator__table--capabilities th,
+    .hcp-calculator__table--capabilities td {
+      white-space: normal;
+      vertical-align: top;
+    }
+
+    .hcp-calculator__table--capabilities .hcp-calculator__cap-name {
+      width: 18%;
+    }
+
+    .hcp-calculator__table--capabilities .hcp-calculator__cap-status {
+      width: 12%;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .hcp-calculator__table--capabilities .hcp-calculator__cap-note {
+      width: 58%;
+      color: var(--hcp-muted);
+      font-size: 0.82rem;
     }
 
     .hcp-calculator__modal-backdrop {
@@ -1524,6 +1570,116 @@
       </div>
     </details>
 
+    <details class="hcp-calculator__step" id="step-4-compare">
+      <summary>Step 4 - Platform Comparison and TCO</summary>
+      <div class="hcp-calculator__step-body">
+        <p>
+          ROSA HCP and EKS Auto Mode are both AWS first-party services (jointly delivered with Red Hat for ROSA).
+          They are not a Red Hat vs AWS contest. They optimize for different jobs:
+          ROSA HCP is a turnkey application platform (OpenShift with built-in developer and ops capabilities),
+          while EKS Auto Mode is a managed Kubernetes container scheduler where you assemble more of the surrounding platform yourself.
+        </p>
+        <p class="hcp-calculator__muted">
+          The tables below compare planning costs for the same Step 1 worker mix. The 1-year view is service and infrastructure oriented;
+          the capabilities matrix and 3-year TCO show where the product focus differences show up in tooling and operations.
+        </p>
+        <p class="hcp-calculator__muted">
+          Assumptions: ROSA Worker Node Fee uses the standard 1-year Private Offer (33% off PAYGO). HCP cluster fee and EC2 stay at list (no standard published % off the cluster fee; EC2 discounts vary by AWS account). EKS Auto Mode management fee is about 12% of worker On-Demand EC2. EKS includes AWS Business Support at 10% of modeled EKS AWS spend (list-price proxy). ROSA Red Hat Premium Support is included (no dollar line). EKS extended Kubernetes support ($0.60/hr) is not in this table; it is an additional potential cost if you stay past the 14-month standard window (see lifecycle and 3-year TCO).
+        </p>
+        <div class="hcp-calculator__table-wrap">
+          <table class="hcp-calculator__table" aria-label="Platform cost comparison">
+            <thead>
+              <tr>
+                <th scope="col">Cost component</th>
+                <th scope="col" id="compare-col-rosa">ROSA HCP (1-year)</th>
+                <th scope="col" id="compare-col-eks">EKS Auto Mode (1-year)</th>
+              </tr>
+            </thead>
+            <tbody id="platform-compare-body"></tbody>
+          </table>
+        </div>
+        <p class="hcp-calculator__muted" id="platform-compare-hidden-costs">
+          <span class="hcp-calculator__footnote-mark">1.</span>
+          This 1-year base view still understates EKS. Hidden and deferred costs (common platform components, platform ops labor by cluster-count tier, extended Kubernetes support at $0.60/hr, more frequent upgrades, and multi-year control-plane mix)
+          <a href="#platform-three-year-tco">show up in the 3-year TCO</a> below, with capability gaps called out in the matrix.
+        </p>
+
+        <h3 style="margin-top: 1.25rem;">Capabilities</h3>
+        <p class="hcp-calculator__muted">
+          ✓ included/supported · ✗ not included · ? partial, add-on, or BYO. Narrative only; not modeled in the cost table.
+        </p>
+        <div class="hcp-calculator__table-wrap">
+          <table class="hcp-calculator__table hcp-calculator__table--capabilities" aria-label="Platform capabilities comparison">
+            <thead>
+              <tr>
+                <th scope="col" class="hcp-calculator__cap-name">Capability</th>
+                <th scope="col" class="hcp-calculator__cap-status">ROSA</th>
+                <th scope="col" class="hcp-calculator__cap-status">EKS</th>
+                <th scope="col" class="hcp-calculator__cap-note">Difference</th>
+              </tr>
+            </thead>
+            <tbody id="platform-capabilities-body"></tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 1.25rem;">Version support lifecycle</h3>
+        <p class="hcp-calculator__muted">
+          Non-cost distinction: how long you can stay on a minor version before upgrades or higher fees. ROSA EUS Term 1 (Long-Life Additional Term 1) is included with Premium-class ROSA for even OpenShift minors.
+        </p>
+        <div class="hcp-calculator__table-wrap">
+          <table class="hcp-calculator__table" aria-label="Platform version support lifecycle comparison">
+            <thead>
+              <tr>
+                <th scope="col">Topic</th>
+                <th scope="col">ROSA HCP</th>
+                <th scope="col">EKS Auto Mode</th>
+              </tr>
+            </thead>
+            <tbody id="platform-lifecycle-body"></tbody>
+          </table>
+        </div>
+
+        <h3 id="platform-three-year-tco" style="margin-top: 1.25rem;">3-year TCO</h3>
+        <p class="hcp-calculator__muted">
+          36-month total. ROSA Worker Node Fee uses the standard 3-year Private Offer (55% off PAYGO); HCP cluster fee and EC2 stay at list (Premium / EUS Term 1 included; Term 2/3 not modeled).
+          EKS control plane is modeled as 14 months standard ($0.10/hr), 12 months extended ($0.60/hr), then 10 months standard after upgrade.
+          Worker EC2, Auto Mode (~12%), and AWS Business Support (10%) run for all 36 months.
+          Platform components and platform ops labor are included here only (not in the 1-year table);
+          see <a href="#platform-components-footnote">note 2</a> and <a href="#platform-ops-labor-footnote">note 3</a>.
+        </p>
+        <div class="hcp-calculator__table-wrap">
+          <table class="hcp-calculator__table" aria-label="Three year platform TCO comparison">
+            <thead>
+              <tr>
+                <th scope="col">3-year component</th>
+                <th scope="col">ROSA HCP (3-year)</th>
+                <th scope="col">EKS Auto Mode (3-year)</th>
+              </tr>
+            </thead>
+            <tbody id="platform-three-year-body"></tbody>
+          </table>
+        </div>
+        <p class="hcp-calculator__muted" id="platform-components-footnote">
+          <span class="hcp-calculator__footnote-mark">2.</span>
+          Common platform components only: a conservative EKS planning proxy for monitoring, logging, and GitOps/CI-class services
+          ($3,600/yr base + $600/yr per extra cluster, capped at $10,800/yr). ROSA shows Included for the OpenShift-provided equivalents.
+          Registry storage is treated as a wash. This deliberately excludes heavier enterprise add-ons such as service mesh, Red Hat hardened images,
+          and runtime support; if those are in scope on ROSA, similar commercially supported products would need to be added on EKS and would raise the EKS total further.
+        </p>
+        <p class="hcp-calculator__muted" id="platform-ops-labor-footnote">
+          <span class="hcp-calculator__footnote-mark">3.</span>
+          Platform ops FTEs are planning estimates stepped by Step 1 cluster count
+          (1 → 1/2, 2–5 → 1.5/3, 6–15 → 2.5/5, 16–40 → 4/8, 41+ → 5/10 ROSA/EKS)
+          at $225,000 fully loaded per FTE per year. Not editable, and not a customer-specific headcount or salary model.
+          Staffing ranges are informed by Forrester TEI analyses of OpenShift operations
+          (for example,
+          <a href="https://www.redhat.com/rhdc/managed-files/cl-economic-impact-of-cloud-services-analyst-material-1037123-202402-en.pdf" target="_blank" rel="noopener noreferrer">The Total Economic Impact of Red Hat OpenShift Cloud Services</a>),
+          which models about two FTEs for ongoing OpenShift cloud-services administration on the composite organization
+          and about 50% improvement in operational efficiency versus prior self-managed infrastructure toil.
+        </p>
+      </div>
+    </details>
+
     <p class="hcp-calculator__legal-disclaimer">
       This ROSA HCP calculator provides indicative, non-binding estimates to support planning and budgeting. Results are not a quote, offer, or contractual commitment from Red Hat or its affiliates. Actual charges may vary based on provider pricing changes, account configuration, discounts, taxes, region and availability zone specifics, and runtime usage patterns. Validate final pricing through official commercial channels before procurement or budgeting decisions.
     </p>
@@ -1555,7 +1711,7 @@
         <ul>
           <li><strong>Basic mode:</strong> Flat instance rows plus a cluster count. The HCP cluster fee scales with that count.</li>
           <li><strong>Expert mode:</strong> Named clusters, each with machine pools (instance type, AZ, count). The HCP cluster fee is one fee per cluster. Basic and Expert keep separate sizing data.</li>
-          <li><strong>Remembered locally:</strong> This browser stores your last mode, Basic rows, Expert clusters, and Step 2 discounts. Use <strong>Reset saved data</strong> to clear that and restore defaults. Share links still override on open.</li>
+          <li><strong>Remembered locally:</strong> This browser stores your last mode, Basic rows, Expert clusters, Step 2 discounts, and which steps are expanded or collapsed. Use <strong>Reset saved data</strong> to clear that and restore defaults. Share links still override on open.</li>
           <li><strong>Region and filters (Basic):</strong> Choose region, architecture, category, and family to narrow the instance list, then Add a type.</li>
           <li><strong>Count:</strong> Exact worker node count for that pool. Changes apply automatically.</li>
         </ul>
@@ -1584,6 +1740,19 @@
           This calculator excludes EBS, load balancers, data transfer, NAT gateways, and other non-worker EC2 charges.
           Fleet Optimizer adds estimated EBS (~$24/node/mo), so totals there are usually higher.
         </div>
+
+        <h3>Step 4 - Platform Comparison and TCO</h3>
+        <p>
+          Compare ROSA HCP and EKS Auto Mode as two AWS first-party options with different focus:
+          turnkey OpenShift application platform vs managed Kubernetes container scheduler.
+          Same Step 1 worker mix; Step 2 EC2 discounts are ignored in this view.
+        </p>
+        <ul>
+          <li><strong>1-year base compare:</strong> Same workers, ROSA Worker Node Fee at 1-year Private Offer (33% off PAYGO), HCP cluster fee and EC2 at list, EKS $0.10/hr control plane, ~12% Auto Mode fee, and AWS Business Support at 10%. Locked to yearly amounts. Platform ops labor is reserved for the 3-year TCO.</li>
+          <li><strong>Capabilities:</strong> Compact ✓ / ✗ / ? matrix including GitOps, Observability, Service Mesh, Dev Spaces, Image builds, Production support, Hardened base images, Developer console, and Cluster IdP / SSO.</li>
+          <li><strong>Version support:</strong> Separate lifecycle table. ROSA includes EUS Term 1 (~24 months on even OpenShift minors). EKS standard is 14 months at $0.10/hr; staying longer may add extended support at $0.60/hr (potential extra cost, not toggled in the base table).</li>
+          <li><strong>3-year TCO:</strong> 36-month total with ROSA Worker Node Fee at 3-year Private Offer (55% off PAYGO). EKS control plane blends 14 months standard + 12 months extended + 10 months standard after upgrade. Includes a conservative EKS common platform-components line (monitoring/logging/GitOps) and platform ops labor stepped by cluster count.</li>
+        </ul>
 
         <h3>What the fees mean</h3>
         <ul>
@@ -1693,11 +1862,21 @@
       shareCodeFromLocation
     } from "./js/share-state.mjs";
     import {
+      CALCULATOR_STEP_IDS,
+      DEFAULT_STEP_OPEN,
       buildDraftPayload,
       clearDraft,
       loadDraft,
       saveDraft
     } from "./js/draft-storage.mjs";
+    import {
+      DEFAULT_AWS_BUSINESS_SUPPORT_PERCENT,
+      PLATFORM_CAPABILITY_ROWS,
+      PLATFORM_LIFECYCLE_ROWS,
+      buildPlatformCompare,
+      capabilityStatusMeta,
+      deltaVsRosa
+    } from "./js/platform-compare.mjs";
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -3522,6 +3701,333 @@
       return { text: `Costs ${amount} more`, className: "hcp-calculator__tier-delta--more" };
     }
 
+    function getCompareWorkersFromEstimate() {
+      const workers = [];
+      for (const set of estimate.sets ?? []) {
+        const count = (set.pools ?? []).reduce((sum, pool) => sum + (Number(pool.min) || 0), 0);
+        workers.push({
+          instanceType: set.instanceType,
+          region: set.region ?? estimate.region ?? "us-east-1",
+          count
+        });
+      }
+      return workers;
+    }
+
+    function getCompareClusterRegions() {
+      if (calculatorMode === "expert") {
+        const regions = (expertState.clusters ?? []).map((cluster) => cluster.region || "us-east-1");
+        return regions.length ? regions : ["us-east-1"];
+      }
+      const region =
+        document.getElementById("region-select")?.value || basicState.region || "us-east-1";
+      return Array.from({ length: getClusterCount() }, () => region);
+    }
+
+    function priceUnitSuffix(unit) {
+      if (unit === "hourly") {
+        return "/hr";
+      }
+      if (unit === "monthly") {
+        return "/mo";
+      }
+      return "/yr";
+    }
+
+    function syncPriceUnitSelects(unit, { sourceId } = {}) {
+      const next =
+        unit === "hourly" || unit === "monthly" || unit === "yearly" ? unit : "yearly";
+      const summary = document.getElementById("summary-price-unit");
+      if (summary && sourceId !== "summary-price-unit") {
+        summary.value = next;
+      }
+      return next;
+    }
+
+    function formatCompareCell(monthlyValue, unit) {
+      if (typeof monthlyValue === "string") {
+        return monthlyValue;
+      }
+      if (monthlyValue === null || monthlyValue === undefined || !Number.isFinite(monthlyValue)) {
+        return "-";
+      }
+      return `${formatByUnit(monthlyValue, unit)}${priceUnitSuffix(unit)}`;
+    }
+
+    function formatCompareDelta(monthlyDelta, percent, unit) {
+      if (monthlyDelta == null) {
+        return "N/A";
+      }
+      if (Math.abs(monthlyDelta) < 0.005) {
+        return "Same as ROSA";
+      }
+      const amount = `${formatByUnit(Math.abs(monthlyDelta), unit)}${priceUnitSuffix(unit)}`;
+      const percentLabel = Number.isFinite(percent) ? ` (${percent > 0 ? "+" : ""}${percent.toFixed(1)}%)` : "";
+      if (monthlyDelta < 0) {
+        return `${amount} less${percentLabel}`;
+      }
+      return `${amount} more${percentLabel}`;
+    }
+
+    function renderPlatformLifecycleTable() {
+      const lifecycleBody = document.getElementById("platform-lifecycle-body");
+      if (!lifecycleBody) {
+        return;
+      }
+      lifecycleBody.innerHTML = PLATFORM_LIFECYCLE_ROWS.map(
+        (row) => `
+          <tr>
+            <th scope="row">${escapeHtml(row.label)}</th>
+            <td>${escapeHtml(row.rosa)}</td>
+            <td>${escapeHtml(row.eks)}</td>
+          </tr>
+        `
+      ).join("");
+    }
+
+    function renderCapabilityStatusCell(status) {
+      const meta = capabilityStatusMeta(status);
+      return `<td class="hcp-calculator__cap-status"><span title="${escapeHtml(meta.label)}" aria-label="${escapeHtml(meta.label)}">${escapeHtml(meta.symbol)}</span></td>`;
+    }
+
+    function renderPlatformCapabilitiesTable() {
+      const capabilitiesBody = document.getElementById("platform-capabilities-body");
+      if (!capabilitiesBody) {
+        return;
+      }
+      capabilitiesBody.innerHTML = PLATFORM_CAPABILITY_ROWS.map(
+        (row) => `
+          <tr>
+            <th scope="row" class="hcp-calculator__cap-name">${escapeHtml(row.label)}</th>
+            ${renderCapabilityStatusCell(row.rosaStatus)}
+            ${renderCapabilityStatusCell(row.eksStatus)}
+            <td class="hcp-calculator__cap-note">${escapeHtml(row.note)}</td>
+          </tr>
+        `
+      ).join("");
+    }
+
+    function formatThreeYearCell(threeYearValue) {
+      if (typeof threeYearValue === "string") {
+        return threeYearValue;
+      }
+      if (threeYearValue === null || threeYearValue === undefined || !Number.isFinite(threeYearValue)) {
+        return "-";
+      }
+      return `${formatUsd(threeYearValue)}/3yr`;
+    }
+
+    function formatThreeYearDelta(absoluteThreeYear, percent) {
+      if (absoluteThreeYear == null || !Number.isFinite(absoluteThreeYear)) {
+        return "N/A";
+      }
+      if (Math.abs(absoluteThreeYear) < 0.5) {
+        return "Same as ROSA";
+      }
+      const amount = `${formatUsd(Math.abs(absoluteThreeYear))}/3yr`;
+      const percentLabel = Number.isFinite(percent)
+        ? ` (${percent > 0 ? "+" : ""}${percent.toFixed(1)}%)`
+        : "";
+      if (absoluteThreeYear < 0) {
+        return `${amount} less${percentLabel}`;
+      }
+      return `${amount} more${percentLabel}`;
+    }
+
+    function renderThreeYearTco(threeYear) {
+      const tbody = document.getElementById("platform-three-year-body");
+      if (!tbody) {
+        return;
+      }
+      if (!threeYear?.rosa?.totalThreeYear || !threeYear?.eks?.totalThreeYear) {
+        tbody.innerHTML =
+          '<tr><td colspan="3">Add worker sizing in Step 1 to view 3-year TCO.</td></tr>';
+        return;
+      }
+
+      const rows = [
+        {
+          label: "Worker EC2",
+          rosa: threeYear.rosa.workerEc2ThreeYear,
+          eks: threeYear.eks.workerEc2ThreeYear
+        },
+        {
+          label: "Platform control-plane fee (EKS: 14 mo std + 12 mo ext + 10 mo std)",
+          rosa: threeYear.rosa.platformFeeThreeYear,
+          eks: threeYear.eks.platformFeeThreeYear
+        },
+        {
+          label: `Worker Node Fee (3-year Private Offer ${Math.round((threeYear.rosa.softwarePrivateOfferDiscount ?? 0.55) * 100)}% off)`,
+          rosa: threeYear.rosa.softwareThreeYear,
+          eks: null
+        },
+        {
+          label: "EKS Auto Mode management fee",
+          rosa: null,
+          eks: threeYear.eks.autoModeFeeThreeYear
+        },
+        {
+          label: "Production support (AWS Business 10%)",
+          rosa: "Included (Premium)",
+          eks: threeYear.eks.awsSupportThreeYear
+        },
+        {
+          label: "Platform components (common: monitoring, logging, GitOps/CI)",
+          rosa: "Included",
+          eks: threeYear.eks.platformComponentsThreeYear,
+          labelFootnote: {
+            href: "#platform-components-footnote",
+            mark: "2",
+            ariaLabel: "Note 2: common platform components only; excludes mesh, hardened images, runtimes"
+          }
+        },
+        {
+          label: `Platform ops labor (${threeYear.platformOps.clusterCount} cluster${threeYear.platformOps.clusterCount === 1 ? "" : "s"}: ${threeYear.platformOps.rosaFte} vs ${threeYear.platformOps.eksFte} FTE @ $${Math.round(threeYear.platformOps.usdPerFteYear / 1000)}k/yr)`,
+          rosa: threeYear.rosa.platformOpsThreeYear,
+          eks: threeYear.eks.platformOpsThreeYear,
+          labelFootnote: {
+            href: "#platform-ops-labor-footnote",
+            mark: "3",
+            ariaLabel: "Note 3: platform ops FTEs are planning estimates by cluster count"
+          }
+        },
+        {
+          label: "3-year total",
+          rosa: threeYear.rosa.totalThreeYear,
+          eks: threeYear.eks.totalThreeYear
+        }
+      ];
+
+      const bodyHtml = rows
+        .map((row) => {
+          const labelFootnote = row.labelFootnote
+            ? ` <a class="hcp-calculator__footnote-ref" href="${escapeHtml(row.labelFootnote.href)}" aria-label="${escapeHtml(row.labelFootnote.ariaLabel)}"><sup>${escapeHtml(row.labelFootnote.mark)}</sup></a>`
+            : "";
+          return `
+            <tr>
+              <th scope="row">${escapeHtml(row.label)}${labelFootnote}</th>
+              <td>${escapeHtml(formatThreeYearCell(row.rosa))}</td>
+              <td>${escapeHtml(formatThreeYearCell(row.eks))}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      const vsRow = `
+        <tr>
+          <th scope="row">vs ROSA (3-year)</th>
+          <td>Baseline</td>
+          <td>${escapeHtml(
+            formatThreeYearDelta(threeYear.delta.absoluteThreeYear, threeYear.delta.percent)
+          )}</td>
+        </tr>
+      `;
+      tbody.innerHTML = `${bodyHtml}${vsRow}`;
+    }
+
+    function renderPlatformCompare() {
+      const tbody = document.getElementById("platform-compare-body");
+      if (!tbody) {
+        return;
+      }
+      const selectedUnit = "yearly";
+      const rosaCol = document.getElementById("compare-col-rosa");
+      const eksCol = document.getElementById("compare-col-eks");
+      if (rosaCol) {
+        rosaCol.textContent = "ROSA HCP (1-year)";
+      }
+      if (eksCol) {
+        eksCol.textContent = "EKS Auto Mode (1-year)";
+      }
+      const catalogByType = new Map(
+        (snapshotCache?.catalog?.instances ?? [])
+          .filter((instance) => instance?.type)
+          .map((instance) => [instance.type, instance])
+      );
+      const compare = buildPlatformCompare({
+        workers: getCompareWorkersFromEstimate(),
+        clusterCount: getClusterCount(),
+        pricingByRegion: snapshotCache?.pricingByRegion ?? {},
+        catalogByType
+      });
+      renderPlatformLifecycleTable();
+      renderPlatformCapabilitiesTable();
+
+      if (!compare.rosa.available && !(estimate.sets ?? []).length) {
+        tbody.innerHTML =
+          '<tr><td colspan="3">Add worker sizing in Step 1 to compare platforms.</td></tr>';
+        renderThreeYearTco(null);
+        return;
+      }
+      if (!compare.rosa.available) {
+        tbody.innerHTML =
+          '<tr><td colspan="3">Pricing or catalog data is incomplete for the current worker mix. Fix Step 1 selections to compare platforms.</td></tr>';
+        renderThreeYearTco(null);
+        return;
+      }
+
+      const eksTotalMonthly = compare.eks.totalMonthly;
+      const eksDelta = deltaVsRosa(eksTotalMonthly, compare.rosa.totalMonthly);
+
+      const rows = [
+        {
+          label: "Worker EC2",
+          rosa: compare.rosa.workerEc2Monthly,
+          eks: compare.eks.workerEc2Monthly
+        },
+        {
+          label: "Platform control-plane fee",
+          rosa: compare.rosa.platformFeeMonthly,
+          eks: compare.eks.platformFeeMonthly
+        },
+        {
+          label: `Worker Node Fee (1-year Private Offer ${Math.round((compare.rosa.softwarePrivateOfferDiscount ?? 0.33) * 100)}% off)`,
+          rosa: compare.rosa.softwareMonthly,
+          eks: null
+        },
+        {
+          label: "EKS Auto Mode management fee",
+          rosa: null,
+          eks: compare.eks.autoModeFeeMonthly
+        },
+        {
+          label: `Production support (AWS Business ${DEFAULT_AWS_BUSINESS_SUPPORT_PERCENT}%)`,
+          rosa: "Included (Premium)",
+          eks: compare.eks.awsSupportMonthly
+        },
+        {
+          label: "1-year total",
+          rosa: compare.rosa.totalMonthly,
+          eks: eksTotalMonthly,
+          strong: true
+        }
+      ];
+
+      const bodyHtml = rows
+        .map((row) => {
+          return `
+            <tr>
+              <th scope="row">${escapeHtml(row.label)}</th>
+              <td>${escapeHtml(formatCompareCell(row.rosa, selectedUnit))}</td>
+              <td>${escapeHtml(formatCompareCell(row.eks, selectedUnit))}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      const vsFootnote = ` <a class="hcp-calculator__footnote-ref" href="#platform-compare-hidden-costs" aria-label="Note 1: 1-year view understates EKS; see callout below"><sup>1</sup></a>`;
+      const vsRow = `
+        <tr>
+          <th scope="row">vs ROSA (1-year)</th>
+          <td>Baseline</td>
+          <td>${escapeHtml(formatCompareDelta(eksDelta.absoluteMonthly, eksDelta.percent, selectedUnit))}${vsFootnote}</td>
+        </tr>
+      `;
+
+      tbody.innerHTML = `${bodyHtml}${vsRow}`;
+      renderThreeYearTco(compare.threeYear);
+    }
+
     function renderMachinePoolSummary() {
       const tbody = document.getElementById("machine-pool-summary-body");
       const clusterFeeLabel = document.getElementById("machine-pool-cluster-fee-label");
@@ -3618,6 +4124,7 @@
       clusterFeeTotalNode.textContent = formatByUnit(summary.clusterFee.monthly, summary.unit);
       totalCostNode.textContent = formatByUnit(summary.total.monthly, summary.unit);
       renderPrivateOfferTierComparison(summary);
+      renderPlatformCompare();
     }
 
     function renderPrivateOfferTierComparison(summary) {
@@ -3694,10 +4201,42 @@
       if (priceUnitSelect) {
         priceUnitSelect.value = summaryPriceUnit;
       }
+      syncPriceUnitSelects(summaryPriceUnit);
     }
 
     let draftPersistEnabled = false;
     let draftPersistTimer = null;
+
+    function getStepOpenState() {
+      const stepOpen = {};
+      for (const id of CALCULATOR_STEP_IDS) {
+        stepOpen[id] = Boolean(document.getElementById(id)?.open);
+      }
+      return stepOpen;
+    }
+
+    function applyStepOpenState(stepOpen) {
+      const next = stepOpen && typeof stepOpen === "object" ? stepOpen : DEFAULT_STEP_OPEN;
+      for (const id of CALCULATOR_STEP_IDS) {
+        const el = document.getElementById(id);
+        if (!el) {
+          continue;
+        }
+        let open = typeof next[id] === "boolean" ? next[id] : DEFAULT_STEP_OPEN[id];
+        if (id === "step-3-results" && open && !resultsDisclaimerAccepted) {
+          open = false;
+        }
+        el.open = open;
+      }
+    }
+
+    function initStepOpenPersistence() {
+      for (const id of CALCULATOR_STEP_IDS) {
+        document.getElementById(id)?.addEventListener("toggle", () => {
+          schedulePersistDraft();
+        });
+      }
+    }
 
     function collectDraftPayload() {
       const clusterCountRaw = Number.parseInt(
@@ -3722,7 +4261,8 @@
           rhContractTier: document.getElementById("summary-rh-contract-tier")?.value ?? "onDemand",
           summaryPriceUnit: document.getElementById("summary-price-unit")?.value ?? "yearly"
         },
-        instanceFilters
+        instanceFilters,
+        stepOpen: getStepOpenState()
       });
     }
 
@@ -3774,7 +4314,6 @@
         instanceFilters.category = draft.instanceFilters.category || instanceFilters.category;
         instanceFilters.family = draft.instanceFilters.family || instanceFilters.family;
       }
-
       if (draft.basic?.selections?.length) {
         basicState = {
           clusterCount: draft.basic.clusterCount ?? 1,
@@ -3814,6 +4353,7 @@
       } else {
         await applyBasicSizing();
       }
+      applyStepOpenState(draft.stepOpen);
       return true;
     }
 
@@ -3854,6 +4394,7 @@
         rhContractTier: "onDemand",
         summaryPriceUnit: "yearly"
       });
+      applyStepOpenState(DEFAULT_STEP_OPEN);
       const modeToKeep = calculatorMode === "expert" ? "expert" : "basic";
       syncBasicUiFromState();
       setCalculatorMode(modeToKeep, { render: false });
@@ -4295,6 +4836,14 @@
         </tr>
       `;
       }
+      const compareBody = document.getElementById("platform-compare-body");
+      if (compareBody) {
+        compareBody.innerHTML =
+          '<tr><td colspan="3">Fix hard validation errors in Step 1 to compare platforms.</td></tr>';
+      }
+      renderPlatformLifecycleTable();
+      renderPlatformCapabilitiesTable();
+      renderThreeYearTco(null);
 
       const clusterFeeNode = document.getElementById("machine-pool-cluster-fee");
       const clusterFeeTotalNode = document.getElementById("machine-pool-cluster-fee-total");
@@ -4688,8 +5237,10 @@
       }
     });
 
-    document.getElementById("summary-price-unit").addEventListener("change", () => {
+    document.getElementById("summary-price-unit").addEventListener("change", (event) => {
+      syncPriceUnitSelects(event.target.value, { sourceId: "summary-price-unit" });
       renderScenarioTotals();
+      schedulePersistDraft();
     });
 
     document.getElementById("summary-rh-contract-tier").addEventListener("change", () => {
@@ -4745,6 +5296,7 @@
     initFieldHelp();
     initHelpModal();
     initResultsDisclaimerGate();
+    initStepOpenPersistence();
     initShareModal();
 
     async function bootstrapCalculatorSession() {

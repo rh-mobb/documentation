@@ -1,6 +1,34 @@
 export const DRAFT_STORAGE_KEY = "rosa_hcp_calc_draft_v1";
 export const DRAFT_VERSION = 1;
 
+/** Step `<details>` ids remembered across refresh. */
+export const CALCULATOR_STEP_IDS = [
+  "step-1-cluster-sizing",
+  "step-2-discounting",
+  "step-3-results",
+  "step-4-compare"
+];
+
+export const DEFAULT_STEP_OPEN = {
+  "step-1-cluster-sizing": true,
+  "step-2-discounting": false,
+  "step-3-results": false,
+  "step-4-compare": false
+};
+
+export function sanitizeStepOpen(stepOpen) {
+  const next = { ...DEFAULT_STEP_OPEN };
+  if (!stepOpen || typeof stepOpen !== "object") {
+    return next;
+  }
+  for (const id of CALCULATOR_STEP_IDS) {
+    if (typeof stepOpen[id] === "boolean") {
+      next[id] = stepOpen[id];
+    }
+  }
+  return next;
+}
+
 function asPositiveInt(value, fallback = 1) {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? Math.max(1, parsed) : fallback;
@@ -85,7 +113,8 @@ export function buildDraftPayload({
   basicState,
   expertState,
   discounting = {},
-  instanceFilters = null
+  instanceFilters = null,
+  stepOpen = null
 } = {}) {
   const selections = (basicState?.selections ?? []).map(sanitizeSelection).filter(Boolean);
   const clusters = (expertState?.clusters ?? []).map(sanitizeCluster).filter(Boolean);
@@ -110,6 +139,7 @@ export function buildDraftPayload({
         : "onDemand",
       summaryPriceUnit: discounting.summaryPriceUnit === "monthly" ? "monthly" : "yearly"
     },
+    stepOpen: sanitizeStepOpen(stepOpen),
     instanceFilters: instanceFilters
       ? {
           architecture: String(instanceFilters.architecture ?? "x86-intel"),
@@ -140,7 +170,8 @@ export function parseDraftPayload(raw) {
     basicState: data.basic,
     expertState: data.expert,
     discounting: data.discounting,
-    instanceFilters: data.instanceFilters
+    instanceFilters: data.instanceFilters,
+    stepOpen: data.stepOpen
   });
   if (!payload.basic.selections.length && !payload.expert.clusters.length) {
     return null;

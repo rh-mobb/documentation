@@ -1,7 +1,7 @@
 # ROSA HCP Calculator: Step 4 platform compare
 
 Date: 2026-08-03  
-Status: Approved for implementation  
+Status: Superseded for self-managed column by `2026-08-03-rosa-hcp-calculator-step4-capabilities-design.md` (ROSA vs EKS + capabilities)  
 Related: `2026-07-27-rosa-hcp-calculator-design.md`, `2026-08-03-rosa-hcp-calculator-expert-mode-design.md`, PR #970
 
 ## Decision
@@ -130,12 +130,24 @@ Help modal: add a short Step 4 subsection.
 
 Nice-to-have: append a `SECTION,Platform compare` block on export. Not required to ship Step 4 UI.
 
+## Version support lifecycle (non-cost table)
+
+Always show a second table under the cost compare:
+
+| Topic | ROSA HCP | Self-managed | EKS Auto Mode |
+|-------|----------|--------------|---------------|
+| Included version window | ~24 months on even OpenShift minors (Full + Maintenance + **EUS Term 1 / Long-Life Additional Term 1**, included with Premium-class ROSA) | ~18 months + EUS Term 1 with Premium OCP | **14 months** standard at `$0.10/hr` |
+| Stay longer | Optional EUS Term 2 / Term 3 | Optional EUS Term 2 / Term 3 | +12 months extended at **`$0.60/hr`** |
+
+Optional checkbox: **EKS on extended Kubernetes support ($0.60/hr)** switches the EKS platform control-plane fee in the cost table and updates lifecycle copy. Persisted in local draft.
+
 ## Open assumptions (documented in UI)
 
 - OCP default `$15,000` / core-pair / year is a planning placeholder; users must edit to match their list/quote
 - EKS Auto Mode 12% is an approximation of published examples, not a contractual rate card
 - Self-managed control+infra sizing is a fixed planning assumption, not a sizing recommendation
 - Comparisons exclude the same non-worker AWS costs already excluded in Step 3
+- AWS Support plans (Business/Enterprise) are still not modeled as a dollar line item
 
 ## Approval record
 
