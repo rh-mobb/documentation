@@ -162,7 +162,8 @@ test("capability rows use status marks and a short note", () => {
       "production-support",
       "hardened-images",
       "developer-console",
-      "cluster-idp"
+      "cluster-idp",
+      "stateful-batch"
     ]
   );
   for (const row of PLATFORM_CAPABILITY_ROWS) {

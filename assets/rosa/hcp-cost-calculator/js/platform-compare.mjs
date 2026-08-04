@@ -164,6 +164,13 @@ export const PLATFORM_CAPABILITY_ROWS = [
     rosaStatus: "yes",
     eksStatus: "partial",
     note: "ROSA in-product OAuth/OIDC/LDAP IdPs; EKS IAM Access Entries plus Cognito/Identity Center/Dex/Okta."
+  },
+  {
+    id: "stateful-batch",
+    label: "Stateful apps / long batch",
+    rosaStatus: "yes",
+    eksStatus: "partial",
+    note: "EKS Auto Mode max node life is 21 days; sticky local state and long batch jobs need churn-tolerant design."
   }
 ];
 

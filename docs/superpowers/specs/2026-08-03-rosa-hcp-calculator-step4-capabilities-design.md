@@ -48,6 +48,7 @@ Status marks: **✓** included/supported · **✗** not included · **?** partia
 | **Hardened base images** | ✓ | ✗ | Red Hat UBI / Hardened Images with OpenShift vs Chainguard or DIY on EKS |
 | **Developer console** | ✓ | ✗ | OpenShift web console vs kubectl/AWS console or DIY developer portal on EKS |
 | **Cluster IdP / SSO** | ✓ | ? | ROSA cluster OAuth + in-product IdPs; EKS IAM Access Entries + bolted-on Cognito/Identity Center/Dex/Okta |
+| **Stateful apps / long batch** | ✓ | ? | EKS Auto Mode ≤21-day node lifetime forces churn-tolerant design for sticky state and long jobs |
 
 Wash items (ingress, managed worker OS) stay out.
 
