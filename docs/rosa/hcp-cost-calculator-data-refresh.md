@@ -42,9 +42,9 @@ Integrity checks:
 
 - Pricing records reference an instance type that is missing from `instance-catalog.json`
 - Pricing payloads are missing required tier fields:
-  - `onDemandMonthly`
-  - `oneYearMonthly`
-  - `threeYearMonthly`
+  - `onDemandMonthly` (from on-demand hourly × 730)
+  - `oneYearMonthly` (1-year reserved all/partial upfront total ÷ 12)
+  - `threeYearMonthly` (3-year reserved all/partial upfront total ÷ 36)
 - Region pricing JSON is missing or has invalid region/schema shape
 
 If validation succeeds, the script updates `generated_at` timestamps and rewrites `snapshot-manifest.json` with an updated generated timestamp and region file mapping.

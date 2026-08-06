@@ -331,6 +331,19 @@
       display: none !important;
     }
 
+    /* Visually hidden but indexed by Pagefind (injected from content body). */
+    .hcp-calculator__search-index {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .hcp-calculator__filters {
       margin-top: 1rem;
       display: grid;
@@ -1096,6 +1109,7 @@
 <body>
   __HEADER__
   __NAV__
+  __SEARCH_INDEX__
   <main class="hcp-calculator" id="hcp-calculator-root">
     <div class="hcp-calculator__toolbar">
       <h1><span>ROSA</span> HCP Cost Calculator</h1>
@@ -2798,6 +2812,34 @@
       };
     }
 
+    /** Same-family size options for an existing pool row (matches create-picker family scoping). */
+    function buildSameFamilyInstanceOptionsHtml(regionCode, selectedType) {
+      const family = getFamily(selectedType);
+      const options = getSupportedInstancesForRegion(regionCode)
+        .map((instance) => instance?.type)
+        .filter((type) => type && getFamily(type) === family)
+        .sort((a, b) => a.localeCompare(b));
+      if (!options.length && selectedType) {
+        options.push(selectedType);
+      }
+      if (!options.length) {
+        return {
+          html: '<option value="">No matching types</option>',
+          value: ""
+        };
+      }
+      const value = options.includes(selectedType) ? selectedType : options[0];
+      return {
+        html: options
+          .map((type) => {
+            const safe = escapeHtml(type);
+            return `<option value="${safe}" ${type === value ? "selected" : ""}>${safe}</option>`;
+          })
+          .join(""),
+        value
+      };
+    }
+
     function renderFilterSelectOptions(selected, entries) {
       return entries
         .map(([value, label]) => {
@@ -2900,15 +2942,14 @@
             { ...filters, family: familyOptions.value },
             filters.instanceType
           );
-          const datalistId = `instance-type-options-${safeClusterId}`;
-          const regionTypes = getSupportedInstancesForRegion(cluster.region)
-            .map((instance) => instance?.type)
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
 
           const poolRows = (cluster.pools ?? [])
             .map((pool) => {
               const safePoolId = escapeHtml(pool.id);
+              const poolInstanceOptions = buildSameFamilyInstanceOptionsHtml(
+                cluster.region,
+                pool.instanceType
+              );
               return `
                 <tr>
                   <td>
@@ -2922,15 +2963,14 @@
                     />
                   </td>
                   <td>
-                    <input
-                      type="text"
-                      list="${datalistId}"
-                      value="${escapeHtml(pool.instanceType)}"
+                    <select
                       data-expert-action="pool-instance-type"
                       data-cluster-id="${safeClusterId}"
                       data-pool-id="${safePoolId}"
                       aria-label="Instance type"
-                    />
+                    >
+                      ${poolInstanceOptions.html}
+                    </select>
                   </td>
                   <td>
                     <select
@@ -3054,11 +3094,6 @@
                   Create
                 </button>
               </div>
-              <datalist id="${datalistId}">
-                ${regionTypes
-                  .map((type) => `<option value="${escapeHtml(type)}"></option>`)
-                  .join("")}
-              </datalist>
               <div class="hcp-calculator__table-wrap">
                 <table class="hcp-calculator__table" aria-label="${safeName} machine pools">
                   <thead>

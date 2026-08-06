@@ -7,3 +7,5 @@ authors:
   - Paul Czarkowski
 layout: hcp-cost-calculator-app
 ---
+
+Estimate ROSA HCP costs with the ROSA cost calculator. Compare ROSA HCP pricing, worker node fees, and cluster fees by instance type and region to estimate ROSA costs for planning.

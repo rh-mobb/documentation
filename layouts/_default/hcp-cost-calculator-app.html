@@ -22,4 +22,7 @@
 {{- $html = replace $html "__NAV__" (partial "rhds/nav.html" .) -}}
 {{- $html = replace $html "__FOOTER__" (partial "rhds/footer.html" .) -}}
 {{- $html = replace $html "__PAGEFIND_INIT__" (partial "rhds/pagefind-init.html" .) -}}
+{{- /* Indexable stub from content body so Pagefind can discover this standalone app page. */ -}}
+{{- $searchIndex := printf `<section class="hcp-calculator__search-index" data-pagefind-body>%s</section>` .Content -}}
+{{- $html = replace $html "__SEARCH_INDEX__" $searchIndex -}}
 {{ $html | safeHTML }}

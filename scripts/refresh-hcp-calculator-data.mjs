@@ -75,14 +75,24 @@ function parseNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function computeMonthlyTier(pricingRow, preferredAnnualField, fallbackAnnualField) {
-  const annualPreferred = parseNumber(pricingRow[preferredAnnualField]);
-  if (annualPreferred && annualPreferred > 0) {
-    return annualPreferred / 12;
+/**
+ * Convert an all-upfront / partial-upfront reserved term total into a monthly rate.
+ * @param {number} termMonths 12 for 1-year fields, 36 for 3-year fields
+ */
+function computeMonthlyTier(
+  pricingRow,
+  preferredAnnualField,
+  fallbackAnnualField,
+  termMonths = 12
+) {
+  const months = termMonths > 0 ? termMonths : 12;
+  const termPreferred = parseNumber(pricingRow[preferredAnnualField]);
+  if (termPreferred && termPreferred > 0) {
+    return termPreferred / months;
   }
-  const annualFallback = parseNumber(pricingRow[fallbackAnnualField]);
-  if (annualFallback && annualFallback > 0) {
-    return annualFallback / 12;
+  const termFallback = parseNumber(pricingRow[fallbackAnnualField]);
+  if (termFallback && termFallback > 0) {
+    return termFallback / months;
   }
   const onDemandHourly = parseNumber(pricingRow.priceOnDemand);
   if (onDemandHourly && onDemandHourly > 0) {
@@ -106,12 +116,14 @@ function buildPricingByInstanceType(pricingRows, supportedInstanceTypes) {
     const oneYearMonthly = computeMonthlyTier(
       pricingRow,
       "reservedAllUpfront1yr",
-      "reservedPartialUpfront1yr"
+      "reservedPartialUpfront1yr",
+      12
     );
     const threeYearMonthly = computeMonthlyTier(
       pricingRow,
       "reservedAllUpfront3yr",
-      "reservedPartialUpfront3yr"
+      "reservedPartialUpfront3yr",
+      36
     );
     if (!(oneYearMonthly > 0 && threeYearMonthly > 0)) {
       continue;
