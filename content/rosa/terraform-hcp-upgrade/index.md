@@ -29,7 +29,7 @@ This article follows the supported Terraform path:
 | Additional machine pools | Pools you declared in Terraform after create | `rhcs_hcp_machine_pool` (module `machine-pool`) | Change each pool's `version` (or shared variable), apply after CP |
 | Default machine pools | Installer-created pools (HCP: usually `workers-0`, `workers-1`, ... per AZ) | Not managed until you import them | Import into `rhcs_hcp_machine_pool`, then set `version` |
 
-Pools may lag the control plane by up to two minor (y-stream) versions. 
+Pools may lag the control plane by up to two minor (y-stream) versions.
 
 ## Before you upgrade
 
