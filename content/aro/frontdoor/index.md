@@ -4,13 +4,15 @@ title: Azure Front Door with ARO ( Azure Red Hat OpenShift )
 tags: ["ARO"]
 authors:
   - Kevin Collins
-  - Ricardo Martins
+  - Diana Sari
 ---
-Securing exposing an Internet facing application with a private ARO Cluster.
+Securely expose an Internet facing application on a private ARO Cluster using Azure Front Door.
 
 When you create a cluster on ARO you have several options in making the cluster public or private.  With a public cluster you are allowing Internet traffic to the api and *.apps endpoints.  With a private cluster you can make either or both the api and .apps endpoints private.
 
-How can you allow Internet access to an application running on your private cluster where the .apps endpoint is private?  This document will guide you through using Azure Frontdoor to expose your applications to the Internet.  There are several advantages of this approach, namely your cluster and all the resources in your Azure account can remain private, providing you an extra layer of security.  Azure FrontDoor operates at the edge so we are controlling traffic before it even gets into your Azure account.  On top of that, Azure FrontDoor also offers WAF and DDoS protection, certificate management and SSL Offloading just to name a few benefits.
+How can you allow Internet access to an application running on your private cluster where the .apps endpoint is private?  This document will guide you through using Azure Front Door to expose your applications to the Internet.  There are several advantages of this approach, namely your cluster and all the resources in your Azure account can remain private, providing you an extra layer of security.  Azure Front Door operates at the edge so we are controlling traffic before it even gets into your Azure account.  On top of that, Azure Front Door also offers WAF and DDoS protection, certificate management and SSL offloading just to name a few benefits.
+
+This guide uses SNI (Server Name Indication) so that Azure Front Door sends the correct hostname to the OpenShift router, allowing the router to match the request to the correct route.
 
 *Adopted from [ARO Reference Architecture](https://github.com/UmarMohamedUsman/aro-reference-architecture)*
 
@@ -20,14 +22,8 @@ How can you allow Internet access to an application running on your private clus
 * oc cli
 * a custom domain
 * a DNS zone that you can easily modify
-<br>
 
-To build and deploy the application
-* [maven cli](https://maven.apache.org/install.html)
-* [quarkus cli](https://quarkus.io/guides/cli-tooling)
-* [OpenJDK Java 8](https://www.azul.com/downloads/?package=jdk)
-
-Make sure to use the same terminal session while going through guide for all commands as we will reference envrionment variables set or created through the guide.
+Make sure to use the same terminal session while going through this guide for all commands as we will reference environment variables set or created throughout the guide.
 
 ## Get Started
 
@@ -36,29 +32,29 @@ Make sure to use the same terminal session while going through guide for all com
     Follow this guide to [Create a private ARO cluster](/experts/aro/private-cluster)
     or simply run this [bash script](../private-cluster/create-cluster.sh)
 
-## Set Evironment Variables
+## Set Environment Variables
 
 1. Manually set environment variables
 
-   ```
+   ```bash
    AROCLUSTER=<cluster name>
 
    ARORG=<resource group for the cluster>
 
    AFD_NAME=<name you want to use for the front door instance>
 
-   DOMAIN='e.g. aro.kmobb.com'  This is the domain that you will be adding to Azure DNS to manage.
+   DOMAIN='e.g. aro.kmobb.com'
 
-   ARO_APP_FQDN='e.g. minesweeper.aro.kmobb.com'
-   (note - we will be deploying an application called minesweeper to test front door.  Select a domain you would like to use for the application.  For example minesweeper.aro.kmobb.com ... where aro.kmobb.com is the domain you manage and have DNS access to.)
+   ARO_APP_FQDN='e.g. hello.aro.kmobb.com'
 
-   AFD_MINE_CUSTOM_DOMAIN_NAME='minesweeper-aro-kmobb-com'
-   (note - this should be your domain name without and .'s for example minesweeper-aro-kmobb-com)
-
-   PRIVATEENDPOINTSUBNET_PREFIX= subnet in the VNET you cluster is in.  If you following the example above to create a custer where you virtual network is 10.0.0.0/20 then you can use '10.0.6.0/24'
-
-   PRIVATEENDPOINTSUBNET_NAME='PrivateEndpoint-subnet'
+   AFD_CUSTOM_DOMAIN_NAME='hello-aro-kmobb-com'
    ```
+
+   > `DOMAIN` is the domain you will be adding to Azure DNS to manage.
+   >
+   > `ARO_APP_FQDN` is the FQDN you want for your application, e.g. `hello.aro.kmobb.com`.
+   >
+   > `AFD_CUSTOM_DOMAIN_NAME` is your FQDN with dots replaced by dashes, e.g. `hello-aro-kmobb-com`.
 
 1. Set environment variables with Bash
 
@@ -151,12 +147,11 @@ After we have the cluster up and running, we need to create a private link servi
 
 1. Create a Front Door Origin with the above Origin Group that will point to the ARO Internal Loadbalancer
 
+   The `--origin-host-header` is critical for SNI — it tells Front Door to send your application's hostname in the Host header and TLS SNI extension when connecting to the origin. Without this, Front Door sends the IP address as the Host header and the OpenShift router cannot match the request to the correct route.
+
    ```bash
    az afd origin create \
-   --enable-private-link true \
-   --private-link-resource $privatelink_id \
-   --private-link-location $LOCATION \
-   --private-link-request-message 'Private link service from AFD' \
+   --shared-private-link-resource "{\"private-link\":{\"id\":\"$privatelink_id\"},\"private-link-location\":\"$LOCATION\",\"request-message\":\"Private link service from AFD\"}" \
    --weight 1000 \
    --priority 1 \
    --http-port 80 \
@@ -164,6 +159,7 @@ After we have the cluster up and running, we need to create a private link servi
    --origin-group-name 'afdorigin' \
    --enabled-state Enabled \
    --host-name $LBCONFIG_IP \
+   --origin-host-header $ARO_APP_FQDN \
    --origin-name 'afdorigin' \
    --profile-name $AFD_NAME \
    --resource-group $ARORG
@@ -184,11 +180,16 @@ After we have the cluster up and running, we need to create a private link servi
    ```bash
    az afd custom-domain create \
    --certificate-type ManagedCertificate \
-   --custom-domain-name $AFD_MINE_CUSTOM_DOMAIN_NAME \
+   --custom-domain-name $AFD_CUSTOM_DOMAIN_NAME \
    --host-name $ARO_APP_FQDN \
    --minimum-tls-version TLS12 \
    --profile-name $AFD_NAME \
    --resource-group $ARORG
+
+   custom_domain_id=$(az afd custom-domain show -g $ARORG \
+   --profile-name $AFD_NAME \
+   --custom-domain-name $AFD_CUSTOM_DOMAIN_NAME \
+   --query 'id' -o tsv)
    ```
 
 1. Create an Azure Front Door endpoint for your custom domain
@@ -197,24 +198,26 @@ After we have the cluster up and running, we need to create a private link servi
    az afd endpoint create \
    --resource-group $ARORG \
    --enabled-state Enabled \
-   --endpoint-name 'aro-mine-'$UNIQUEID \
+   --endpoint-name 'aro-hello-'$UNIQUEID \
    --profile-name $AFD_NAME
    ```
 
 1. Add an Azure Front Door route for your custom domain
 
+   The `--forwarding-protocol HttpsOnly` ensures Front Door connects to the origin over HTTPS, which is required for SNI — the OpenShift router uses the TLS SNI extension to match incoming requests to the correct route.
+
    ```bash
    az afd route create \
-   --endpoint-name 'aro-mine-'$UNIQUEID \
-   --forwarding-protocol HttpOnly \
-   --https-redirect Disabled \
+   --endpoint-name 'aro-hello-'$UNIQUEID \
+   --forwarding-protocol HttpsOnly \
+   --https-redirect Enabled \
    --origin-group 'afdorigin' \
    --profile-name $AFD_NAME \
    --resource-group $ARORG \
-   --route-name 'aro-mine-route' \
-   --supported-protocols Http Https \
-   --patterns-to-match '/*' \
-   --custom-domains $AFD_MINE_CUSTOM_DOMAIN_NAME
+   --route-name 'aro-hello-route' \
+   --supported-protocols "[Http,Https]" \
+   --patterns-to-match "[/*]" \
+   --formatted-custom-domains "[{id:$custom_domain_id}]"
    ```
 
 1. Update DNS
@@ -225,31 +228,36 @@ After we have the cluster up and running, we need to create a private link servi
    afdToken=$(az afd custom-domain show \
    --resource-group $ARORG \
    --profile-name $AFD_NAME \
-   --custom-domain-name $AFD_MINE_CUSTOM_DOMAIN_NAME \
-   --query "validationProperties.validationToken"
+   --custom-domain-name $AFD_CUSTOM_DOMAIN_NAME \
+   --query "validationProperties.validationToken" \
    -o tsv)
    ```
 
 1. Create a DNS Zone
 
    ```bash
-    az network dns zone create -g $ARORG -n $DOMAIN
+   az network dns zone create -g $ARORG -n $DOMAIN
    ```
 
-    >You will need to configure your nameservers to point to azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar.
+   > You will need to configure your nameservers to point to Azure. The output of running this zone create will show you the nameservers for this record that you will need to set up within your domain registrar.
 
    Create a new text record in your DNS server
 
    ```bash
-    az network dns record-set txt add-record -g $ARORG -z $DOMAIN -n _dnsauth.$(echo $ARO_APP_FQDN | sed 's/\..*//') --value $afdToken --record-set-name _dnsauth.$(echo $ARO_APP_FQDN | sed 's/\..*//')
+   az network dns record-set txt add-record \
+   -g $ARORG -z $DOMAIN \
+   -n _dnsauth.$(echo $ARO_APP_FQDN | sed 's/\..*//') \
+   --value $afdToken \
+   --record-set-name _dnsauth.$(echo $ARO_APP_FQDN | sed 's/\..*//')
    ```
 
 1. Check if the domain has been validated:
-   >Note this can take several hours
-   Your FQDN will not resolve until Front Door validates your domain.
+
+   > Note: this can take several hours. Your FQDN will not resolve until Front Door validates your domain.
 
    ```bash
-   az afd custom-domain list -g $ARORG --profile-name $AFD_NAME --query "[? contains(hostName, '$ARO_APP_FQDN')].domainValidationState"
+   az afd custom-domain list -g $ARORG --profile-name $AFD_NAME \
+   --query "[? contains(hostName, '$ARO_APP_FQDN')].domainValidationState"
    ```
 
 1. Add a CNAME record to DNS
@@ -257,123 +265,25 @@ After we have the cluster up and running, we need to create a private link servi
    Get the Azure Front Door endpoint:
 
    ```bash
-   afdEndpoint=$(az afd endpoint show -g $ARORG --profile-name $AFD_NAME --endpoint-name aro-mine-$UNIQUEID --query "hostName" -o tsv)
+   afdEndpoint=$(az afd endpoint show -g $ARORG --profile-name $AFD_NAME \
+   --endpoint-name aro-hello-$UNIQUEID --query "hostName" -o tsv)
    ```
 
-   Create a cname record for the application
+   Create a CNAME record for the application
 
    ```bash
    az network dns record-set cname set-record -g $ARORG -z $DOMAIN \
-    -n $(echo $ARO_APP_FQDN | sed 's/\..*//') -z $DOMAIN -c $afdEndpoint
+   -n $(echo $ARO_APP_FQDN | sed 's/\..*//') -z $DOMAIN -c $afdEndpoint
    ```
-## Deploy an application
-Now the fun part, let's deploy an application!
-We will be deploying a Java based application called [microsweeper](https://github.com/redhat-mw-demos/microsweeper-quarkus/tree/ARO).  This is an application that runs on OpenShift and uses a PostgreSQL database to store scores.  With ARO being a first class service on Azure, we will create an Azure Database for PostgreSQL service and connect it to our cluster with a private endpoint.
+## Deploy an Application
 
-1. Create a Azure Database for PostgreSQL servers service
+Now let's deploy a simple application to verify the Front Door configuration.
 
-   ```bash
-   az postgres server create --name microsweeper-database --resource-group $ARORG --location $LOCATION --admin-user quarkus --admin-password r3dh4t1! --sku-name GP_Gen5_2
+1. Log into your OpenShift cluster
 
-   POSTGRES_ID=$(az postgres server show -n microsweeper-database -g $ARORG --query 'id' -o tsv)
-   ```
-
-
-1. Create a private endpoint connection for the database
-
-   ```bash
-   az network vnet subnet create \
-   --resource-group $ARORG \
-   --vnet-name $VNET_NAME \
-   --name $PRIVATEENDPOINTSUBNET_NAME \
-   --address-prefixes $PRIVATEENDPOINTSUBNET_PREFIX \
-   --disable-private-endpoint-network-policies true
-
-   az network private-endpoint create \
-   --name 'postgresPvtEndpoint' \
-   --resource-group $ARORG \
-   --vnet-name $VNET_NAME \
-   --subnet $PRIVATEENDPOINTSUBNET_NAME \
-   --private-connection-resource-id $POSTGRES_ID \
-   --group-id 'postgresqlServer' \
-   --connection-name 'postgresdbConnection'
-   ```
-1. Create and configure a private DNS Zone for the Postgres database
-
-   ```bash
-   az network private-dns zone create \
-   --resource-group $ARORG \
-   --name 'privatelink.postgres.database.azure.com'
-
-   az network private-dns link vnet create \
-   --resource-group $ARORG \
-   --zone-name 'privatelink.postgres.database.azure.com' \
-   --name 'PostgresDNSLink' \
-   --virtual-network $VNET_NAME \
-   --registration-enabled false
-
-   az network private-endpoint dns-zone-group create \
-   --resource-group $ARORG \
-   --name 'PostgresDb-ZoneGroup' \
-   --endpoint-name 'postgresPvtEndpoint' \
-   --private-dns-zone 'privatelink.postgres.database.azure.com' \
-   --zone-name 'postgresqlServer'
-
-   NETWORK_INTERFACE_ID=$(az network private-endpoint show --name postgresPvtEndpoint --resource-group $ARORG --query 'networkInterfaces[0].id' -o tsv)
-
-   POSTGRES_IP=$(az resource show --ids $NETWORK_INTERFACE_ID --api-version 2019-04-01 --query 'properties.ipConfigurations[0].properties.privateIPAddress' -o tsv)
-
-   az network private-dns record-set a create --name $UNIQUEID-microsweeper-database --zone-name privatelink.postgres.database.azure.com --resource-group $ARORG
-
-   az network private-dns record-set a add-record --record-set-name $UNIQUEID-microsweeper-database --zone-name privatelink.postgres.database.azure.com --resource-group $ARORG -a $POSTGRES_IP
-   ```
-
-1. Create a postgres database that will contain scores for the minesweeper application
-
-   ```bash
-   az postgres db create \
-   --resource-group $ARORG \
-   --name score \
-   --server-name microsweeper-database
-   ```
-
-## Deploy the [minesweeper application](https://github.com/rh-mobb/aro-workshop-app.git)
-
-1. Clone the git repository
-
-   ```bash
-   git clone https://github.com/rh-mobb/aro-workshop-app.git
-   ```
-
-1. change to the root directory
-
-   ```bash
-   cd aro-workshop-app
-   ```
-
-1. Ensure Java 1.8 is set at your Java version
-
-   ```bash
-   mvn --version
-   ```
-
-   Look for Java version - 1.8XXXX
-   if not set to Java 1.8 you will need to set your JAVA_HOME variable to Java 1.8 you have installed.  To find your java versions run:
-
-   ```bash
-   java -version
-   ```
-
-   then export your JAVA_HOME variable
-
-   ```bash
-   export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_332`
-   ```
-
-1. Log into your openshift cluster
    > Before you deploy your application, you will need to be connected to a private network that has access to the cluster.
 
-   A great way to establish this connectity is with a VPN connection.  Follow this [guide](../vpn/) to setup a VPN connection with your Azure account.
+   A great way to establish this connectivity is with a VPN connection.  Follow this [guide](../vpn/) to setup a VPN connection with your Azure account.
 
    ```bash
    kubeadmin_password=$(az aro list-credentials --name $AROCLUSTER --resource-group $ARORG --query kubeadminPassword --output tsv)
@@ -383,110 +293,119 @@ We will be deploying a Java based application called [microsweeper](https://gith
    oc login $apiServer -u kubeadmin -p $kubeadmin_password
    ```
 
-1. Create a new OpenShift Project
+1. Create a new OpenShift project and deploy the hello-openshift application
 
    ```bash
-   oc new-project minesweeper
+   oc new-project hello-openshift
+
+   oc new-app --image=quay.io/openshift/origin-hello-openshift --name=hello-openshift
    ```
 
-1. add the openshift extension to quarkus
+1. Create a TLS edge-terminated route for your custom domain
 
-   ```bash
-   quarkus ext add openshift
-   ```
-
-1. Edit microsweeper-quarkus/src/main/resources/application.properties
-
-   Make sure your file looks like the one below, changing the IP address on line 3 to the private ip address of your postgres instance.
-
-   To find your Postgres private IP address run the following commands:
-
-   ```bash
-   NETWORK_INTERFACE_ID=$(az network private-endpoint show --name postgresPvtEndpoint --resource-group $ARORG --query 'networkInterfaces[0].id' -o tsv)
-
-   az resource show --ids $NETWORK_INTERFACE_ID --api-version 2019-04-01 --query 'properties.ipConfigurations[0].properties.privateIPAddress' -o tsv
-   ```
-
-   Sample microsweeper-quarkus/src/main/resources/application.properties
-
-   ```
-   # Database configurations
-   %prod.quarkus.datasource.db-kind=postgresql
-   %prod.quarkus.datasource.jdbc.url=jdbc:postgresql://10.1.6.9:5432/score
-   %prod.quarkus.datasource.jdbc.driver=org.postgresql.Driver
-   %prod.quarkus.datasource.username=quarkus@microsweeper-database
-   %prod.quarkus.datasource.password=r3dh4t1!
-   %prod.quarkus.hibernate-orm.database.generation=drop-and-create
-   %prod.quarkus.hibernate-orm.database.generation=update
-
-   # OpenShift configurations
-   %prod.quarkus.kubernetes-client.trust-certs=true
-   %prod.quarkus.kubernetes.deploy=true
-   %prod.quarkus.kubernetes.deployment-target=openshift
-   %prod.quarkus.openshift.build-strategy=docker
-   ```
-
-1. Build and deploy the quarkus application to OpenShift
-
-   ```bash
-   quarkus build --no-tests
-   ```
-
-1. Create a route to your custom domain
-   <B>Change the snippet below replacing your hostname for the host:</B>
+   The route must use TLS edge termination so the OpenShift router terminates TLS and can use SNI to match the incoming hostname from Front Door to the correct route.
 
    ```bash
    cat << EOF | oc apply -f -
    apiVersion: route.openshift.io/v1
    kind: Route
    metadata:
-     labels:
-       app.kubernetes.io/name: microsweeper-appservice
-       app.kubernetes.io/version: 1.0.0-SNAPSHOT
-       app.openshift.io/runtime: quarkus
-     name: microsweeper-appservice
-     namespace: minesweeper
+     name: hello-openshift
+     namespace: hello-openshift
    spec:
-     host: minesweeper.aro.kmobb.com
+     host: $ARO_APP_FQDN
+     tls:
+       termination: edge
+       insecureEdgeTerminationPolicy: Redirect
      to:
        kind: Service
-       name: microsweeper-appservice
+       name: hello-openshift
        weight: 100
-       targetPort:
-         port: 8080
+     port:
+       targetPort: 8080-tcp
      wildcardPolicy: None
    EOF
    ```
 
-1. Check the dns settings of your application.
-   > notice that the application URL is routed through Azure Front Door at the edge.  The only way this application that is running on your cluster can be access is through Azure Front Door which is connected to your cluster through a private endpoint.
+1. Check the DNS settings of your application
+
+   > Notice that the application URL is routed through Azure Front Door at the edge.  The only way this application running on your cluster can be accessed is through Azure Front Door which is connected to your cluster through a private endpoint.
 
    ```bash
    nslookup $ARO_APP_FQDN
    ```
 
-   sample output:
+   Sample output:
 
    ```
-   Server:		2600:1700:850:d220::1
-   Address:	2600:1700:850:d220::1#53
-
    Non-authoritative answer:
-   minesweeper.aro.kmobb.com	canonical name = aro-mine-13947-dxh0ahd7fzfyexgx.z01.azurefd.net.
-   aro-mine-13947-dxh0ahd7fzfyexgx.z01.azurefd.net	canonical name = star-azurefd-prod.trafficmanager.net.
+   hello.aro.kmobb.com	canonical name = aro-hello-13947-dxh0ahd7fzfyexgx.z01.azurefd.net.
+   aro-hello-13947-dxh0ahd7fzfyexgx.z01.azurefd.net	canonical name = star-azurefd-prod.trafficmanager.net.
    star-azurefd-prod.trafficmanager.net	canonical name = dual.part-0013.t-0009.t-msedge.net.
    dual.part-0013.t-0009.t-msedge.net	canonical name = part-0013.t-0009.t-msedge.net.
    Name:	part-0013.t-0009.t-msedge.net
    Address: 13.107.213.41
-   Name:	part-0013.t-0009.t-msedge.net
-   Address: 13.107.246.41
    ```
 
-## Test the application
-Point your broswer to your domain!!
-![Minesweeper application](images/minesweeper.png)
+## Test the Application
 
-## Clean up
+Point your browser to your custom domain (e.g. `https://hello.aro.kmobb.com`). You should see "Hello OpenShift!".
+
+## Verify SNI is Working
+
+To prove that SNI is the mechanism allowing the OpenShift router to match the request, temporarily remove the `--origin-host-header` from the origin. Without it, Front Door sends the internal load balancer's IP address as the hostname, and the router cannot match it to any route.
+
+1. Remove the origin-host-header
+
+   ```bash
+   az afd origin update \
+   --origin-name 'afdorigin' \
+   --origin-group-name 'afdorigin' \
+   --profile-name $AFD_NAME \
+   --resource-group $ARORG \
+   --origin-host-header ''
+   ```
+
+1. Test the application — it should fail
+
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}" https://$ARO_APP_FQDN
+   ```
+
+   You should receive a `503` (Service Unavailable) because the OpenShift router cannot match the incoming request to any route when the Host header is an IP address instead of your application's FQDN.
+
+1. Restore the origin-host-header
+
+   ```bash
+   az afd origin update \
+   --origin-name 'afdorigin' \
+   --origin-group-name 'afdorigin' \
+   --profile-name $AFD_NAME \
+   --resource-group $ARORG \
+   --origin-host-header $ARO_APP_FQDN
+   ```
+
+1. Test again — it should work
+
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}" https://$ARO_APP_FQDN
+   ```
+
+   You should receive a `200` confirming that SNI is what allows the OpenShift router to correctly route traffic from Azure Front Door to your application.
+
+## How SNI Works in This Configuration
+
+The SNI flow through Azure Front Door to your private ARO cluster works as follows:
+
+1. **Client → Front Door**: The client connects to Azure Front Door using your custom domain (e.g. `hello.aro.kmobb.com`). Front Door terminates TLS and manages the certificate via its managed certificate.
+2. **Front Door → Origin (Private Link)**: Front Door opens a new HTTPS connection to the origin (the ARO internal load balancer) over the private link. Because `--origin-host-header` is set to your application's FQDN, Front Door sends that hostname in both the TLS SNI extension and the HTTP Host header.
+3. **OpenShift Router**: The OpenShift router receives the connection, reads the SNI hostname, and matches it to the correct route — your `hello-openshift` route with `host: hello.aro.kmobb.com`.
+4. **Router → Pod**: The router terminates TLS (edge termination) and forwards the request as HTTP to the hello-openshift pod.
+
+Without `--origin-host-header`, Front Door would send the internal load balancer's IP address as the hostname, and the OpenShift router would not be able to match it to any route.
+
+## Clean Up
+
 To clean up everything you created, simply delete the resource group
 
 ```bash
