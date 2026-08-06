@@ -6,7 +6,7 @@ authors:
   - Paul Czarkowski
 ---
 
-This guide will walk you through deploying a ROSA HCP cluster using Terraform.  This is a great way to get started with ROSA and to automate the deployment of your clusters.
+This guide will walk you through deploying a ROSA HCP cluster using Terraform.  This is a great way to get started with ROSA and to automate the deployment of your clusters. For day-2 upgrades, see [Upgrading a ROSA HCP cluster with Terraform](/experts/rosa/terraform-hcp-upgrade/).
 
 {{< readfile file="/content/rosa/terraform/tf-prereqs.md" markdown="true" >}}
 
