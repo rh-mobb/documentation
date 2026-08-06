@@ -48,7 +48,7 @@ Pools may lag the control plane by up to two minor (y-stream) versions.
     rosa list upgrade --cluster <cluster_name> --machinepool <pool_name>
     ```
 
- {{% alert state="info" %}}If a machine pool shows no available upgrades (`[]`) while the CP target exists, the control plane has not finished moving to a version that unlocks that pool upgrade. Wait for the CP, then retry.{{% /alert %}}
+    {{% alert state="info" %}}If a machine pool shows no available upgrades (`[]`) while the CP target exists, the control plane has not finished moving to a version that unlocks that pool upgrade. Wait for the CP, then retry.{{% /alert %}}
 
 ### Z-stream vs y-stream
 
