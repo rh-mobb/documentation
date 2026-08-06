@@ -77,6 +77,9 @@ Make sure to use the same terminal session while going through this guide for al
 
    LBCONFIG_IP=$(az network lb frontend-ip list -g $ARO_RGNAME --lb-name $INTERNAL_LBNAME --query "[? contains(subnet.id,'$WORKER_SUBNET_ID')].privateIPAddress" -o tsv)
 
+   APPS_DOMAIN=$(az aro show -n $AROCLUSTER -g $ARORG --query 'consoleProfile.url' -o tsv | sed 's|https://console-openshift-console.||;s|/||')
+
+   ARO_ROUTE_HOST=hello-openshift.$APPS_DOMAIN
    ```
 ## Create a Private Link Service
 After we have the cluster up and running, we need to create a private link service.  The private link service will provide private and secure connectivity between the Front Door Service and our cluster.
@@ -134,7 +137,7 @@ After we have the cluster up and running, we need to create a private link servi
    az afd origin-group create \
    --origin-group-name 'afdorigin' \
    --probe-path '/' \
-   --probe-protocol Http \
+   --probe-protocol Https \
    --probe-request-type GET \
    --probe-interval-in-seconds 100 \
    --profile-name $AFD_NAME \
@@ -147,23 +150,31 @@ After we have the cluster up and running, we need to create a private link servi
 
 1. Create a Front Door Origin with the above Origin Group that will point to the ARO Internal Loadbalancer
 
-   The `--origin-host-header` is critical for SNI — it tells Front Door to send your application's hostname in the Host header and TLS SNI extension when connecting to the origin. Without this, Front Door sends the IP address as the Host header and the OpenShift router cannot match the request to the correct route.
+   Both `--host-name` and `--origin-host-header` must use the cluster's apps wildcard domain (e.g. `hello-openshift.apps.<cluster-domain>`). Azure Front Door requires certificate name verification (`enforceCertificateNameCheck`) for private link origins, and the OpenShift router's wildcard certificate only covers `*.apps.<cluster-domain>`, not your custom domain or the load balancer's IP address. Using the apps domain ensures the certificate check passes and the OpenShift router can match the request via SNI.
 
    ```bash
    az afd origin create \
-   --shared-private-link-resource "{\"private-link\":{\"id\":\"$privatelink_id\"},\"private-link-location\":\"$LOCATION\",\"request-message\":\"Private link service from AFD\"}" \
+   --enable-private-link true \
+   --private-link-resource $privatelink_id \
+   --private-link-location $LOCATION \
+   --private-link-request-message 'Private link service from AFD' \
    --weight 1000 \
    --priority 1 \
    --http-port 80 \
    --https-port 443 \
    --origin-group-name 'afdorigin' \
    --enabled-state Enabled \
-   --host-name $LBCONFIG_IP \
-   --origin-host-header $ARO_APP_FQDN \
+   --host-name $ARO_ROUTE_HOST \
+   --origin-host-header $ARO_ROUTE_HOST \
    --origin-name 'afdorigin' \
    --profile-name $AFD_NAME \
    --resource-group $ARORG
    ```
+
+   > **Note:** If your az CLI version does not recognize `--enable-private-link`, use the `--shared-private-link-resource` parameter instead:
+   > ```
+   > --shared-private-link-resource "{\"private-link\":{\"id\":\"$privatelink_id\"},\"private-link-location\":\"$LOCATION\",\"request-message\":\"Private link service from AFD\"}"
+   > ```
 
 1. Approve the private link connection
 
@@ -204,7 +215,7 @@ After we have the cluster up and running, we need to create a private link servi
 
 1. Add an Azure Front Door route for your custom domain
 
-   The `--forwarding-protocol HttpsOnly` ensures Front Door connects to the origin over HTTPS, which is required for SNI — the OpenShift router uses the TLS SNI extension to match incoming requests to the correct route.
+   The `--forwarding-protocol HttpsOnly` ensures Front Door connects to the origin over HTTPS, which is required for SNI: the OpenShift router uses the TLS SNI extension to match incoming requests to the correct route.
 
    ```bash
    az afd route create \
@@ -217,7 +228,7 @@ After we have the cluster up and running, we need to create a private link servi
    --route-name 'aro-hello-route' \
    --supported-protocols "[Http,Https]" \
    --patterns-to-match "[/*]" \
-   --formatted-custom-domains "[{id:$custom_domain_id}]"
+   --formatted-custom-domains "[{\"id\":\"$custom_domain_id\"}]"
    ```
 
 1. Update DNS
@@ -283,7 +294,7 @@ Now let's deploy a simple application to verify the Front Door configuration.
 
    > Before you deploy your application, you will need to be connected to a private network that has access to the cluster.
 
-   A great way to establish this connectivity is with a VPN connection.  Follow this [guide](../vpn/) to setup a VPN connection with your Azure account.
+   A great way to establish this connectivity is with a VPN connection.  Follow this [guide](/experts/aro/vpn/) to setup a VPN connection with your Azure account.
 
    ```bash
    kubeadmin_password=$(az aro list-credentials --name $AROCLUSTER --resource-group $ARORG --query kubeadminPassword --output tsv)
@@ -301,9 +312,9 @@ Now let's deploy a simple application to verify the Front Door configuration.
    oc new-app --image=quay.io/openshift/origin-hello-openshift --name=hello-openshift
    ```
 
-1. Create a TLS edge-terminated route for your custom domain
+1. Create a TLS edge-terminated route using the apps wildcard domain
 
-   The route must use TLS edge termination so the OpenShift router terminates TLS and can use SNI to match the incoming hostname from Front Door to the correct route.
+   The route uses the cluster's apps wildcard domain as its hostname. This matches what Front Door sends via SNI (`--origin-host-header`) and is covered by the OpenShift router's wildcard TLS certificate. Front Door handles the translation from your custom domain to this hostname automatically.
 
    ```bash
    cat << EOF | oc apply -f -
@@ -313,7 +324,7 @@ Now let's deploy a simple application to verify the Front Door configuration.
      name: hello-openshift
      namespace: hello-openshift
    spec:
-     host: $ARO_APP_FQDN
+     host: $ARO_ROUTE_HOST
      tls:
        termination: edge
        insecureEdgeTerminationPolicy: Redirect
@@ -353,9 +364,9 @@ Point your browser to your custom domain (e.g. `https://hello.aro.kmobb.com`). Y
 
 ## Verify SNI is Working
 
-To prove that SNI is the mechanism allowing the OpenShift router to match the request, temporarily remove the `--origin-host-header` from the origin. Without it, Front Door sends the internal load balancer's IP address as the hostname, and the router cannot match it to any route.
+To prove that SNI is the mechanism allowing the OpenShift router to match the request, temporarily change the `--origin-host-header` to a hostname that doesn't match any route. Without a matching hostname, the OpenShift router cannot route the request.
 
-1. Remove the origin-host-header
+1. Set the origin-host-header to a non-matching hostname
 
    ```bash
    az afd origin update \
@@ -363,16 +374,16 @@ To prove that SNI is the mechanism allowing the OpenShift router to match the re
    --origin-group-name 'afdorigin' \
    --profile-name $AFD_NAME \
    --resource-group $ARORG \
-   --origin-host-header ''
+   --origin-host-header 'does-not-exist.'$APPS_DOMAIN
    ```
 
-1. Test the application — it should fail
+1. Test the application (it should fail)
 
    ```bash
    curl -s -o /dev/null -w "%{http_code}" https://$ARO_APP_FQDN
    ```
 
-   You should receive a `503` (Service Unavailable) because the OpenShift router cannot match the incoming request to any route when the Host header is an IP address instead of your application's FQDN.
+   You should receive a `503` (Service Unavailable) because the OpenShift router cannot match the incoming hostname to any route.
 
 1. Restore the origin-host-header
 
@@ -382,10 +393,10 @@ To prove that SNI is the mechanism allowing the OpenShift router to match the re
    --origin-group-name 'afdorigin' \
    --profile-name $AFD_NAME \
    --resource-group $ARORG \
-   --origin-host-header $ARO_APP_FQDN
+   --origin-host-header $ARO_ROUTE_HOST
    ```
 
-1. Test again — it should work
+1. Test again (it should work)
 
    ```bash
    curl -s -o /dev/null -w "%{http_code}" https://$ARO_APP_FQDN
@@ -397,12 +408,12 @@ To prove that SNI is the mechanism allowing the OpenShift router to match the re
 
 The SNI flow through Azure Front Door to your private ARO cluster works as follows:
 
-1. **Client → Front Door**: The client connects to Azure Front Door using your custom domain (e.g. `hello.aro.kmobb.com`). Front Door terminates TLS and manages the certificate via its managed certificate.
-2. **Front Door → Origin (Private Link)**: Front Door opens a new HTTPS connection to the origin (the ARO internal load balancer) over the private link. Because `--origin-host-header` is set to your application's FQDN, Front Door sends that hostname in both the TLS SNI extension and the HTTP Host header.
-3. **OpenShift Router**: The OpenShift router receives the connection, reads the SNI hostname, and matches it to the correct route — your `hello-openshift` route with `host: hello.aro.kmobb.com`.
+1. **Client → Front Door**: The client connects to Azure Front Door using your custom domain (e.g. `hello.aro.kmobb.com`). Front Door terminates TLS and presents its managed certificate for your custom domain.
+2. **Front Door → Origin (Private Link)**: Front Door opens a new HTTPS connection to the origin (the ARO internal load balancer) over the private link. Because `--origin-host-header` is set to the app's route hostname under the cluster's apps wildcard domain, Front Door sends that hostname in both the TLS SNI extension and the HTTP Host header. The OpenShift router's wildcard certificate (`*.apps.<cluster-domain>`) matches this hostname, satisfying Front Door's mandatory certificate name check for private link origins.
+3. **OpenShift Router**: The OpenShift router receives the connection, reads the SNI hostname, and matches it to the correct route (your `hello-openshift` route with `host: hello-openshift.apps.<cluster-domain>`).
 4. **Router → Pod**: The router terminates TLS (edge termination) and forwards the request as HTTP to the hello-openshift pod.
 
-Without `--origin-host-header`, Front Door would send the internal load balancer's IP address as the hostname, and the OpenShift router would not be able to match it to any route.
+The custom domain (`hello.aro.kmobb.com`) is only used between the client and Front Door. Between Front Door and the origin, the apps wildcard domain is used so the OpenShift router's TLS certificate is valid for the connection.
 
 ## Clean Up
 
