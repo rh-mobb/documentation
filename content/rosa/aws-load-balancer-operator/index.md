@@ -225,6 +225,8 @@ Compared with default AWS In Tree Provider, this controller is actively develope
 
 1. Curl the ALB ingress endpoint to verify the echoserver pod is accessible
 
+   > It can take a couple of minutes for the AWS host record to resolve, if the command comes back blank initially give it bit and retry.
+
    ```
    INGRESS=$(oc -n echoserver get ingress echoserver \
      -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
@@ -261,6 +263,8 @@ Compared with default AWS In Tree Provider, this controller is actively develope
    ```
 
 1. Test the NLB endpoint
+
+   > It can take a couple of minutes for the AWS host record to resolve, if the command comes back blank initially give it bit and retry.
 
    ```bash
    NLB=$(oc -n echoserver get service echoserver-nlb \
