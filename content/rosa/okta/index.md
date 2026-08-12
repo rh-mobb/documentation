@@ -319,7 +319,7 @@ If Okta is the source of truth for group membership, use an appropriate group sy
 
 ## Troubleshooting
 
-### The `okta` login option does not appear
+#### The `okta` login option does not appear
 
 Verify that the identity provider exists:
 
@@ -335,7 +335,7 @@ If you have cluster access, inspect the authentication ClusterOperator:
 oc get co authentication
 ```
 
-### Okta reports a redirect URI error
+#### Okta reports a redirect URI error
 
 Verify that the Sign-in redirect URI configured in Okta exactly matches the callback URI provided by ROSA.
 
@@ -346,7 +346,7 @@ Pay attention to:
 * Identity provider name
 * `/oauth2callback/<idp-name>` path
 
-### Okta returns `Policy evaluation failed for this request`
+#### Okta returns `Policy evaluation failed for this request`
 
 Example:
 
@@ -361,7 +361,7 @@ Check:
 
 Ensure that an access policy applies to the ROSA application and that its rules allow the Authorization Code grant and the requested scopes.
 
-### OIDC discovery fails
+#### OIDC discovery fails
 
 Test the issuer:
 
@@ -378,7 +378,7 @@ Failures can indicate:
 * TLS inspection or certificate trust problems
 * An incorrect issuer URL
 
-### Okta login succeeds but the OpenShift console shows very little
+#### Okta login succeeds but the OpenShift console shows very little
 
 Authentication has succeeded, but the user likely has insufficient OpenShift RBAC permissions.
 
@@ -396,7 +396,7 @@ oc auth can-i --list --as=user@example.com
 
 Configure the appropriate RoleBinding or ClusterRoleBinding according to the intended access level.
 
-### Private or restricted-egress ROSA clusters
+#### Private or restricted-egress ROSA clusters
 
 For clusters with restrictive outbound networking, ensure that the environment can reach the Okta OIDC endpoints required by the configured authorization server.
 
