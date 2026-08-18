@@ -27,6 +27,7 @@ The following diagram shows the end-to-end request path from a public client thr
 
 * az cli
 * oc cli
+* jq cli
 * a custom domain
 * a DNS zone that you can easily modify
 
