@@ -96,7 +96,7 @@ Make sure to use the same terminal session while going through this guide for al
    ARO_ROUTE_HOST=hello-openshift.$APPS_DOMAIN
 
    PLS_SUBNET_NAME="${AROCLUSTER}-pls-subnet"
-   PLS_SUBNET_PREFIX="10.0.8.0/27"
+   PLS_SUBNET_PREFIX="10.0.3.224/27"
    ```
 
    > Choose a `PLS_SUBNET_PREFIX` that is inside your ARO virtual network address space and does not overlap with existing ARO, jumphost, or other subnets.
@@ -296,10 +296,6 @@ After we have the cluster up and running, we need to create a private link servi
    If you already have an Azure DNS zone, skip zone creation and set:
 
    ```bash
-   DNS_ZONE_RG='<existing DNS zone resource group>'
-   ```
-
-   ```bash
    az network dns zone create -g $DNS_ZONE_RG -n $DOMAIN
    ```
 
@@ -435,7 +431,7 @@ Point your browser to your custom domain (e.g. `https://hello.aro.kmobb.com`). Y
 
 ## Verify the Origin Hostname Is Required
 
-  To prove that Front Door must send a hostname that matches the OpenShift route and router certificate, temporarily change the origin hostname and origin host header to a non-matching apps-domain hostname. Without a matching hostname, the OpenShift router cannot route the request.
+To prove that Front Door must send a hostname that matches the OpenShift route and router certificate, temporarily change the origin hostname and origin host header to a non-matching apps-domain hostname. Without a matching hostname, the OpenShift router cannot route the request.
 
 1. Set the origin to a non-matching hostname
 
