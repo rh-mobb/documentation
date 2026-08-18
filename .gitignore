@@ -13,6 +13,7 @@ Thumbs.db
 *.vscode
 resources/
 references/
+reference/
 public/
 
 node_modules/
