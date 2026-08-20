@@ -1013,25 +1013,30 @@ done
 
 Before restoring, retrieve the original EFS access point paths from the primary cluster. The EFS CSI driver creates a unique subdirectory under `/dr-demo/` for each PVC (e.g., `/dr-demo/pvc-abc123`). EFS replication copies this data to the replica filesystem, but a Velero restore would dynamically provision **new** access points pointing to different, empty subdirectories. To ensure the restored application sees the replicated data, create static PVs that map to the original paths.
 
-List the access points on the primary EFS:
+Map each PVC to its EFS access point path by querying the PV `volumeHandle` on the primary cluster. The `volumeHandle` format is `<efs-id>::<access-point-id>`, and each access point has a root directory path where the PVC's data is stored:
 
 ```bash
-aws efs describe-access-points \
-  --file-system-id $PRIMARY_EFS \
-  --region $PRIMARY_REGION \
-  --query 'AccessPoints[*].[AccessPointId,RootDirectory.Path]' \
-  --output table
+for PVC in shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1; do
+  PV=$(oc get pvc $PVC -n dr-demo -o jsonpath='{.spec.volumeName}')
+  AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
+  AP_PATH=$(aws efs describe-access-points \
+    --access-point-id $AP_ID \
+    --region $PRIMARY_REGION \
+    --query 'AccessPoints[0].RootDirectory.Path' \
+    --output text)
+  echo "$PVC -> $AP_PATH"
+done
 ```
 
-The demo application has two EFS-backed volumes. Identify the access point paths for each PVC and export them:
+Export the paths from the output above:
 
 ```bash
-export SHARED_FLIGHT_DATA_PATH=<path-for-shared-flight-data-pvc>
-export FLIGHT_DATA_PATH=<path-for-flight-data-pvc>
-
-echo "shared-flight-data path: $SHARED_FLIGHT_DATA_PATH"
-echo "flight-data path: $FLIGHT_DATA_PATH"
+export SHARED_FLIGHT_DATA_PATH=<path-from-output-for-shared-flight-data>
+export FLIGHT_DATA_RECORDER_0_PATH=<path-from-output-for-flight-data-flight-recorder-0>
+export FLIGHT_DATA_RECORDER_1_PATH=<path-from-output-for-flight-data-flight-recorder-1>
 ```
+
+The flight-recorder StatefulSet has 2 replicas, so it creates two PVCs (`flight-data-flight-recorder-0` and `flight-data-flight-recorder-1`) plus the shared `shared-flight-data` PVC — 3 total.
 
 Create static PVs on the DR cluster that point to the replicated data at the original paths:
 
@@ -1056,7 +1061,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: dr-flight-data
+  name: dr-flight-data-0
 spec:
   capacity:
     storage: 5Gi
@@ -1067,7 +1072,23 @@ spec:
   storageClassName: ""
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_PATH}
+    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_0_PATH}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-flight-data-1
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_1_PATH}
 EOF
 ```
 
@@ -1131,7 +1152,21 @@ spec:
   accessModes:
     - ReadWriteMany
   storageClassName: ""
-  volumeName: dr-flight-data
+  volumeName: dr-flight-data-0
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flight-data-flight-recorder-1
+  namespace: dr-demo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: dr-flight-data-1
   resources:
     requests:
       storage: 5Gi
@@ -1231,7 +1266,7 @@ aws efs create-replication-configuration \
 In this scenario the DR cluster's worker nodes are stopped to save costs. Starting the instances is required before the restore can proceed.
 
 {{< alert >}}
-This scenario assumes Scenario 1 was completed first, which creates the EFS mount targets and `efs-sc` StorageClass on the DR cluster. If running Scenario 2 independently, create those resources before restoring (see the mount target and StorageClass steps in Scenario 1).
+This scenario assumes Scenario 1 was completed first, which creates the EFS mount targets on the DR cluster. If running Scenario 2 independently, create the mount targets before restoring (see the mount target creation steps in Scenario 1).
 {{< /alert >}}
 
 ### Setup: Scale Down DR Cluster
@@ -1330,17 +1365,27 @@ Wait for Velero to be ready (it will automatically reschedule when the nodes are
 oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
 ```
 
-Retrieve the original EFS access point paths from the primary cluster, then create static PVs on the DR side that map to the replicated data (see the note in Scenario 1 for why this is necessary):
+Map each PVC to its EFS access point path using the PV `volumeHandle` on the primary cluster (see Scenario 1 for why static provisioning is necessary):
 
 ```bash
-aws efs describe-access-points \
-  --file-system-id $PRIMARY_EFS \
-  --region $PRIMARY_REGION \
-  --query 'AccessPoints[*].[AccessPointId,RootDirectory.Path]' \
-  --output table
+for PVC in shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1; do
+  PV=$(oc get pvc $PVC -n dr-demo -o jsonpath='{.spec.volumeName}')
+  AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
+  AP_PATH=$(aws efs describe-access-points \
+    --access-point-id $AP_ID \
+    --region $PRIMARY_REGION \
+    --query 'AccessPoints[0].RootDirectory.Path' \
+    --output text)
+  echo "$PVC -> $AP_PATH"
+done
+```
 
-export SHARED_FLIGHT_DATA_PATH=<path-for-shared-flight-data-pvc>
-export FLIGHT_DATA_PATH=<path-for-flight-data-pvc>
+Export the paths from the output above:
+
+```bash
+export SHARED_FLIGHT_DATA_PATH=<path-from-output-for-shared-flight-data>
+export FLIGHT_DATA_RECORDER_0_PATH=<path-from-output-for-flight-data-flight-recorder-0>
+export FLIGHT_DATA_RECORDER_1_PATH=<path-from-output-for-flight-data-flight-recorder-1>
 
 cat <<EOF | oc apply -f -
 apiVersion: v1
@@ -1362,7 +1407,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: dr-flight-data
+  name: dr-flight-data-0
 spec:
   capacity:
     storage: 5Gi
@@ -1373,7 +1418,23 @@ spec:
   storageClassName: ""
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_PATH}
+    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_0_PATH}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-flight-data-1
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_1_PATH}
 EOF
 ```
 
@@ -1427,7 +1488,21 @@ spec:
   accessModes:
     - ReadWriteMany
   storageClassName: ""
-  volumeName: dr-flight-data
+  volumeName: dr-flight-data-0
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flight-data-flight-recorder-1
+  namespace: dr-demo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: dr-flight-data-1
   resources:
     requests:
       storage: 5Gi
