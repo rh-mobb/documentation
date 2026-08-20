@@ -1152,6 +1152,12 @@ This scenario assumes Scenario 1 was completed first, which creates the EFS moun
 
 ### Setup: Scale Down DR Cluster
 
+Delete the `dr-demo` namespace on the DR cluster to start with a clean state:
+
+```bash
+oc delete namespace dr-demo
+```
+
 Stop the DR cluster worker nodes to reduce costs during normal operation:
 
 ```bash
@@ -1173,24 +1179,9 @@ aws ec2 stop-instances \
 
 ### Failover to Cold DR
 
-Simulate a primary region outage by stopping the primary cluster's worker instances:
+The backup already exists in S3 from when the primary was running (created in Scenario 1 or by a scheduled backup). S3 Cross-Region Replication has copied it to the DR bucket.
 
-```bash
-PRIMARY_WORKER_IDS=($(aws ec2 describe-instances \
-  --region $PRIMARY_REGION \
-  --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
-            "Name=instance-state-name,Values=running" \
-  --query 'Reservations[*].Instances[*].InstanceId' \
-  --output text))
-
-aws ec2 stop-instances \
-  --instance-ids "${PRIMARY_WORKER_IDS[@]}" \
-  --region $PRIMARY_REGION
-```
-
-The primary cluster is now unavailable. The backup already exists in S3 from when the primary was running (created in Scenario 1 or by a scheduled backup). S3 Cross-Region Replication has copied it to the DR bucket.
-
-Log in to the DR cluster and list the available backups:
+Verify the backup is available in the DR bucket:
 
 ```bash
 aws s3 ls "s3://$OADP_BUCKET_DR/velero/backups/" --region $DR_REGION
@@ -1209,6 +1200,21 @@ aws s3 sync \
   s3://$OADP_BUCKET_PRIMARY/velero/backups/$BACKUP_NAME/ \
   s3://$OADP_BUCKET_DR/velero/backups/$BACKUP_NAME/ \
   --source-region $PRIMARY_REGION --region $DR_REGION
+```
+
+Simulate a primary region outage by stopping the primary cluster's worker instances:
+
+```bash
+PRIMARY_WORKER_IDS=($(aws ec2 describe-instances \
+  --region $PRIMARY_REGION \
+  --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=running" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
+aws ec2 stop-instances \
+  --instance-ids "${PRIMARY_WORKER_IDS[@]}" \
+  --region $PRIMARY_REGION
 ```
 
 Delete EFS replication to promote the replica to read-write:
@@ -1299,6 +1305,12 @@ oc set env deployment/mission-control -n dr-demo \
 ```
 
 DNS failover happens automatically via the Route 53 health check. If you did not configure Route 53, update DNS manually to point to the DR cluster.
+
+Once the pods are running and DNS has updated, you should see the application running on the DR cluster:
+
+![Application failed over to DR cluster](scenario2-dr.png)
+
+The result is the same as Scenario 1, but the failover takes longer because the DR cluster was scaled down to zero and the worker instances had to be started before the restore could proceed.
 
 ## Cleanup
 
