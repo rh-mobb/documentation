@@ -938,9 +938,9 @@ You should see the Mission Control dashboard:
 
 Confirm that telemetry data is being recorded and that the S3 connection is healthy before proceeding with DR testing.
 
-## DR Scenario 1: Hot-to-Hot Failover
+## DR Scenario 1: Hot-to-Warm Failover
 
-Both clusters have running worker nodes. This is the fastest failover scenario.
+Both clusters have running worker nodes, but the application is deployed only on the primary cluster. This is the fastest failover scenario.
 
 ### Failover (Primary to DR)
 
@@ -958,6 +958,9 @@ metadata:
 spec:
   includedNamespaces:
     - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
   storageLocation: dr-demo-dpa-1
   defaultVolumesToFsBackup: false
   snapshotVolumes: false
@@ -1006,6 +1009,8 @@ for SUBNET in $(rosa list machinepools -c $DR_CLUSTER_NAME -o json | jq -r '.[].
 done
 ```
 
+**On the DR cluster**
+
 Create the EFS StorageClass on the DR cluster pointing to the replica file system. The restore will recreate the PVCs, which need this StorageClass to dynamically provision new EFS access points:
 
 ```bash
@@ -1044,6 +1049,9 @@ spec:
   backupName: ${BACKUP_NAME}
   includedNamespaces:
     - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
   restorePVs: false
   existingResourcePolicy: update
 EOF
@@ -1097,7 +1105,7 @@ Once the primary workers are down, the Route 53 health check will fail and DNS w
 
 ### Failback (Automatic)
 
-In the hot-to-hot scenario, the primary cluster's application was never deleted - only the worker nodes were stopped. To fail back, restart the primary workers and re-enable auto-repair:
+In the hot-to-warm scenario, the primary cluster's application was never deleted - only the worker nodes were stopped. To fail back, restart the primary workers:
 
 ```bash
 WORKER_IDS=($(aws ec2 describe-instances \
@@ -1224,6 +1232,9 @@ spec:
   backupName: ${BACKUP_NAME}
   includedNamespaces:
     - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
   restorePVs: false
   existingResourcePolicy: update
 EOF
