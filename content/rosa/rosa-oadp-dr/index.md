@@ -346,13 +346,23 @@ echo "WORKER_SG_DR:      $WORKER_SG_DR"
 
 ### Install the EFS CSI Driver
 
-Install the AWS EFS CSI Driver Operator on both clusters by following [Enabling the AWS EFS CSI Driver Operator on ROSA](/experts/rosa/aws-efs/). Complete these sections from the guide on each cluster:
+Install the AWS EFS CSI Driver Operator on both clusters. You can automate this with the provided script or follow the [manual guide](/experts/rosa/aws-efs/).
 
+#### Option A: Automated install (recommended)
 
-{{< alert >}}
-Skip the "Create an EFS file system" section. This DR guide handles EFS file system creation, security groups, mount targets, and StorageClass in the steps above and below.
-{{< /alert >}}
+Download and run the install script on each cluster. The script prompts for the cluster name and auto-detects the remaining values.
 
+```bash
+curl -sLO https://raw.githubusercontent.com/rh-mobb/documentation/main/content/rosa/rosa-oadp-dr/install-efs-csi.sh
+chmod +x install-efs-csi.sh
+./install-efs-csi.sh
+```
+
+Run the script once while logged into the primary cluster, then again while logged into the DR cluster.
+
+#### Option B: Manual install
+
+Follow [Enabling the AWS EFS CSI Driver Operator on ROSA](/experts/rosa/aws-efs/). Complete these sections from the guide on each cluster:
 
 1. **Set environment variables**
 1. **Create the IAM policy and role** - creates the IAM role for the CSI driver operator
@@ -362,6 +372,10 @@ Skip the "Create an EFS file system" section. This DR guide handles EFS file sys
 1. **Attach EFS permissions to the worker role** - attaches `AmazonEFSCSIDriverPolicy` to the worker role
 
 Stop after **Attach EFS permissions to the worker role**. Do **not** continue to "Create an EFS security group" or beyond.
+
+{{< alert >}}
+Skip the "Create an EFS file system" section. This DR guide handles EFS file system creation, security groups, mount targets, and StorageClass in the steps below.
+{{< /alert >}}
 
 ## Step 3: Create IAM Roles
 
