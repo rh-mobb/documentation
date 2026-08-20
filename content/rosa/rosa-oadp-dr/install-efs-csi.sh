@@ -87,8 +87,46 @@ cat <<EOF > /tmp/efs-csi-trust-policy.json
 }
 EOF
 
+POLICY_NAME="${CLUSTER_NAME}-aws-efs-csi-policy"
+
+cat <<EOF > /tmp/efs-csi-policy.json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "elasticfilesystem:DescribeAccessPoints",
+        "elasticfilesystem:DescribeFileSystems",
+        "elasticfilesystem:DescribeMountTargets",
+        "elasticfilesystem:CreateAccessPoint",
+        "elasticfilesystem:DeleteAccessPoint",
+        "elasticfilesystem:TagResource",
+        "ec2:DescribeAvailabilityZones"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+
 echo ""
-echo "Step 1/5: Creating IAM role: $ROLE_NAME"
+echo "Step 1/6: Creating IAM role and policy: $ROLE_NAME"
+
+POLICY_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${POLICY_NAME}"
+if aws iam get-policy --policy-arn "$POLICY_ARN" &>/dev/null; then
+  echo "  Policy already exists, creating new version..."
+  aws iam create-policy-version \
+    --policy-arn "$POLICY_ARN" \
+    --policy-document file:///tmp/efs-csi-policy.json \
+    --set-as-default --no-cli-pager >/dev/null
+else
+  aws iam create-policy \
+    --policy-name "$POLICY_NAME" \
+    --policy-document file:///tmp/efs-csi-policy.json \
+    --no-cli-pager >/dev/null
+fi
+
 if aws iam get-role --role-name "$ROLE_NAME" &>/dev/null; then
   echo "  Role already exists, updating trust policy..."
   aws iam update-assume-role-policy \
@@ -103,7 +141,7 @@ fi
 
 aws iam attach-role-policy \
   --role-name "$ROLE_NAME" \
-  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy
+  --policy-arn "$POLICY_ARN"
 
 ROLE_ARN=$(aws iam get-role --role-name "$ROLE_NAME" --query 'Role.Arn' --output text)
 echo "  Role ARN: $ROLE_ARN"
@@ -237,11 +275,11 @@ echo "  Worker role: $WORKER_ROLE"
 # --- Step 5: Attach EFS permissions to the worker role ---
 
 echo ""
-echo "Step 6/6: Attaching AmazonEFSCSIDriverPolicy to worker role..."
+echo "Step 6/6: Attaching EFS CSI policy to worker role..."
 
 aws iam attach-role-policy \
   --role-name "$WORKER_ROLE" \
-  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy
+  --policy-arn "$POLICY_ARN"
 
 echo "  Done."
 

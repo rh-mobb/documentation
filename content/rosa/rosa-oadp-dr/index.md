@@ -369,7 +369,7 @@ Follow [Enabling the AWS EFS CSI Driver Operator on ROSA](/experts/rosa/aws-efs/
 1. **Install the AWS EFS CSI Driver Operator** - installs the operator via the web console
 1. **Create the ClusterCSIDriver** - enables the CSI driver pods
 1. **Find worker subnets, VPC, security groups, and IAM roles** - only the worker IAM role name is needed from this section
-1. **Attach EFS permissions to the worker role** - attaches `AmazonEFSCSIDriverPolicy` to the worker role
+1. **Attach EFS permissions to the worker role** - attaches the EFS CSI policy to the worker role
 
 Stop after **Attach EFS permissions to the worker role**. Do **not** continue to "Create an EFS security group" or beyond.
 
