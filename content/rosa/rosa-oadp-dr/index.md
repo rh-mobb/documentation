@@ -943,7 +943,7 @@ watch "oc get backup -n openshift-adp $BACKUP_NAME \
 
 Wait until the output shows `Completed`.
 
-Sync the backup to the DR bucket:
+Sync the backup to the DR bucket. Although S3 Cross-Region Replication is configured, it is asynchronous and may lag. The manual sync ensures the backup is immediately available for a time-critical restore:
 
 ```bash
 aws s3 sync \
@@ -955,7 +955,7 @@ aws s3 sync \
 Delete EFS replication to promote the replica to read-write:
 
 {{< alert >}}
-EFS cross-region replicas are read-only while replication is active. The DR cluster's pods cannot write to the replica file system until it is promoted to read-write. Deleting the replication configuration is the only way to promote it; AWS does not have a `promote` API, so you must break the replication link. Once you do that, the DR EFS becomes an independent read-write file system that the restored app can use. During failback, the guide re-establishes replication in the other direction to get the data flowing back to the primary.
+EFS cross-region replicas are read-only while replication is active. The DR cluster's pods cannot write to the replica file system until it is promoted to read-write. Deleting the replication configuration is the only way to promote it; AWS does not have a `promote` API, so you must break the replication link. Once you do that, the DR EFS becomes an independent read-write file system that the restored app can use. During failback, the guide re-establishes replication from primary to DR so it is ready for future failovers.
 {{< /alert >}}
 
 ```bash
@@ -1084,6 +1084,10 @@ aws ec2 start-instances \
 
 Once the workers are running, the application pods resume automatically. The Route 53 health check detects the primary is healthy again and DNS fails back - no OADP restore is needed.
 
+{{< alert >}}
+Any data written to the DR EFS during the failover window is not automatically synced back to the primary. When the primary resumes, it uses its original EFS, which does not contain writes made during failover. Re-establishing replication (primary to DR) below will overwrite the DR EFS with the primary's data. In a production environment, you would need to copy or merge DR EFS data back to the primary before this step.
+{{< /alert >}}
+
 Re-establish EFS replication from primary to DR so it is in place for future failovers. First, disable the overwrite protection that AWS enables on the replica after replication is deleted:
 
 ```bash
@@ -1103,6 +1107,10 @@ aws efs create-replication-configuration \
 ## DR Scenario 2: Cold DR (Scaled-Down DR Cluster)
 
 In this scenario the DR cluster's worker nodes are stopped to save costs. Starting the instances is required before the restore can proceed.
+
+{{< alert >}}
+This scenario assumes Scenario 1 was completed first, which creates the EFS mount targets and `efs-sc` StorageClass on the DR cluster. If running Scenario 2 independently, create those resources before restoring (see the mount target and StorageClass steps in Scenario 1).
+{{< /alert >}}
 
 ### Setup: Scale Down DR Cluster
 
