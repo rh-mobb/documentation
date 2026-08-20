@@ -1173,9 +1173,36 @@ aws ec2 stop-instances \
 
 ### Failover to Cold DR
 
-Create an OADP backup on the primary cluster (same as Scenario 1).
+Simulate a primary region outage by stopping the primary cluster's worker instances:
 
-Sync the backup to the DR bucket:
+```bash
+PRIMARY_WORKER_IDS=($(aws ec2 describe-instances \
+  --region $PRIMARY_REGION \
+  --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=running" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
+aws ec2 stop-instances \
+  --instance-ids "${PRIMARY_WORKER_IDS[@]}" \
+  --region $PRIMARY_REGION
+```
+
+The primary cluster is now unavailable. The backup already exists in S3 from when the primary was running (created in Scenario 1 or by a scheduled backup). S3 Cross-Region Replication has copied it to the DR bucket.
+
+Log in to the DR cluster and list the available backups:
+
+```bash
+aws s3 ls "s3://$OADP_BUCKET_DR/velero/backups/" --region $DR_REGION
+```
+
+Set the backup name to the most recent valid backup:
+
+```bash
+export BACKUP_NAME=<backup-name-from-list>
+```
+
+If CRR has not finished replicating the backup, manually sync it:
 
 ```bash
 aws s3 sync \
@@ -1207,12 +1234,6 @@ aws ec2 start-instances \
   --region $DR_REGION
 ```
 
-On the DR cluster, wait for the nodes to become ready:
-
-```bash
-oc get nodes -w
-```
-
 Wait for Velero to be ready (it will automatically reschedule when the nodes are available):
 
 ```bash
@@ -1238,6 +1259,20 @@ spec:
   restorePVs: false
   existingResourcePolicy: update
 EOF
+```
+
+Wait for the restore to complete and the namespace to be available:
+
+```bash
+watch "oc get restore -n openshift-adp -o jsonpath='{.items[-1].status.phase}' && echo"
+```
+
+```bash
+until oc get namespace dr-demo &>/dev/null; do
+  echo "Waiting for dr-demo namespace..."
+  sleep 5
+done
+echo "Namespace dr-demo is ready."
 ```
 
 Update the service account annotations and environment variables for the DR region:
