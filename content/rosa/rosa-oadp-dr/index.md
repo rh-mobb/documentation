@@ -820,6 +820,8 @@ export DR_ROUTER=$(oc get -n openshift-ingress-operator ingresscontroller/defaul
 echo "DR_ROUTER:      $DR_ROUTER"
 ```
 
+**On the primary cluster:**
+
 Get the application route hostname on the primary cluster (this is the hostname the health check will probe, not the generic router hostname):
 
 ```bash
@@ -921,6 +923,20 @@ oc create route edge dr-demo-custom \
   --key=$CERT_DIR/privkey.pem \
   -n dr-demo
 ```
+
+## Verify the Application
+
+Before testing DR scenarios, verify the application is running and accessible through your custom domain. Open `https://<your-custom-domain>` in a browser.
+
+{{< alert >}}
+It may take a few minutes for the Let's Encrypt certificate to be trusted by your browser. If you see a certificate warning, wait and try again shortly.
+{{< /alert >}}
+
+You should see the Mission Control dashboard:
+
+![Mission Control Dashboard](mission-control.png)
+
+Confirm that telemetry data is being recorded and that the S3 connection is healthy before proceeding with DR testing.
 
 ## DR Scenario 1: Hot-to-Hot Failover
 
