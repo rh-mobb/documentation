@@ -3,7 +3,9 @@ date: '2026-08-19'
 title: Disaster Recovery with OADP on ROSA HCP
 tags: ["ROSA HCP", "OADP"]
 authors:
-  - Kevin Collins, Diana Sari, Kumudu Herath
+  - Kevin Collins
+  - Diana Sari
+  - Kumudu Herath
 validated_version: "4.22"
 ---
 
@@ -13,13 +15,13 @@ This guide demonstrates a complete disaster recovery (DR) solution for ROSA HCP 
 
 - **Primary cluster** in us-east-1, **DR cluster** in us-east-2
 - **S3 with Cross-Region Replication** for application data and OADP backups
-- **EFS with cross-region replication** for persistent volume data
+- **EFS with Cross-Region Replication** for persistent volume data
 - **Route 53 failover routing** with health checks for automatic DNS failover
 
 ## Prerequisites
 
 - Two ROSA HCP clusters (one per region), referred to as `PRIMARY_CLUSTER` and `DR_CLUSTER`
-- AWS CLI, `oc` CLI, `rosa` CLI, Helm CLI
+- AWS CLI, `oc` CLI, `rosa` CLI, `helm` CLI
 - A Route 53 hosted zone (optional, for custom domain failover)
 - The AWS EFS CSI Driver Operator installed on both clusters. Follow [Enabling the AWS EFS CSI Driver Operator on ROSA](/experts/rosa/aws-efs/) to set up EFS CSI on each cluster.
 
@@ -102,6 +104,7 @@ for PAIR in "$APP_BUCKET_PRIMARY:$PRIMARY_REGION" \
             "$OADP_BUCKET_DR:$DR_REGION"; do
   BUCKET=${PAIR%%:*}
   REGION=${PAIR##*:}
+  # us-east-1 does not accept a LocationConstraint
   if [ "$REGION" = "us-east-1" ]; then
     aws s3api create-bucket --bucket $BUCKET --region $REGION
   else
@@ -233,7 +236,7 @@ aws s3api put-bucket-replication \
 
 ## Step 2: Create EFS with Cross-Region Replication
 
-### Create the primary EFS filesystem
+### Create the primary EFS file system
 
 Create a security group for EFS in the primary region:
 
@@ -248,7 +251,7 @@ export EFS_SG_PRIMARY=$(aws ec2 create-security-group \
 echo "EFS_SG_PRIMARY: $EFS_SG_PRIMARY"
 ```
 
-Create the EFS filesystem:
+Create the EFS file system:
 
 ```bash
 export PRIMARY_EFS=$(aws efs create-file-system \
@@ -260,14 +263,16 @@ export PRIMARY_EFS=$(aws efs create-file-system \
 echo "PRIMARY_EFS: $PRIMARY_EFS"
 ```
 
-Create a mount target in the primary subnet:
+Create mount targets in all machine pool subnets so pods in any AZ can access EFS:
 
 ```bash
-aws efs create-mount-target \
-  --region $PRIMARY_REGION \
-  --file-system-id $PRIMARY_EFS \
-  --subnet-id $SUBNET_PRIMARY \
-  --security-groups $EFS_SG_PRIMARY
+for SUBNET in $(rosa list machinepools -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.[].subnet'); do
+  aws efs create-mount-target \
+    --region $PRIMARY_REGION \
+    --file-system-id $PRIMARY_EFS \
+    --subnet-id $SUBNET \
+    --security-groups $EFS_SG_PRIMARY
+done
 ```
 
 Configure cross-region replication to the DR region:
@@ -279,7 +284,7 @@ aws efs create-replication-configuration \
   --destinations "[{\"Region\": \"${DR_REGION}\"}]"
 ```
 
-Get the replica EFS filesystem ID:
+Get the replica EFS file system ID:
 
 ```bash
 export DR_EFS=$(aws efs describe-replication-configurations \
@@ -344,18 +349,19 @@ echo "WORKER_SG_DR:      $WORKER_SG_DR"
 Install the AWS EFS CSI Driver Operator on both clusters by following [Enabling the AWS EFS CSI Driver Operator on ROSA](/experts/rosa/aws-efs/). Complete these sections from the guide on each cluster:
 
 
-Important:
-Skip the Create an EFS file system section
+{{< alert >}}
+Skip the "Create an EFS file system" section. This DR guide handles EFS file system creation, security groups, mount targets, and StorageClass in the steps above and below.
+{{< /alert >}}
 
 
 1. **Set environment variables**
-1. **Create the IAM policy and role** — creates the IAM role for the CSI driver operator
-1. **Install the AWS EFS CSI Driver Operator** — installs the operator via the web console
-1. **Create the ClusterCSIDriver** — enables the CSI driver pods
-1. **Find worker subnets, VPC, security groups, and IAM roles** — only the worker IAM role name is needed from this section
-1. **Attach EFS permissions to the worker role** — attaches `AmazonEFSCSIDriverPolicy` to the worker role
+1. **Create the IAM policy and role** - creates the IAM role for the CSI driver operator
+1. **Install the AWS EFS CSI Driver Operator** - installs the operator via the web console
+1. **Create the ClusterCSIDriver** - enables the CSI driver pods
+1. **Find worker subnets, VPC, security groups, and IAM roles** - only the worker IAM role name is needed from this section
+1. **Attach EFS permissions to the worker role** - attaches `AmazonEFSCSIDriverPolicy` to the worker role
 
-Stop after **Attach EFS permissions to the worker role**. Do **not** continue to "Create an EFS security group" or beyond — this DR guide handles EFS filesystem creation, security groups, mount targets, and StorageClass in the steps above and in the Helm chart.
+Stop after **Attach EFS permissions to the worker role**. Do **not** continue to "Create an EFS security group" or beyond.
 
 ## Step 3: Create IAM Roles
 
@@ -588,11 +594,11 @@ aws iam create-role \
 aws iam attach-role-policy \
   --role-name ${DR_CLUSTER_NAME}-oadp-velero \
   --policy-arn $OADP_POLICY_ARN
-    ```
+```
 
 ## Step 4: Install OADP on Both Clusters
 
-Repeat these steps on both the primary and DR clusters. The examples below show the primary cluster. Replace the role ARN and bucket name with DR values when installing on the DR cluster.
+Repeat these steps on both the primary and DR clusters.
 
 ### Install the OADP Operator
 
@@ -865,8 +871,7 @@ aws route53 change-resource-record-sets \
   }'
 ```
 
-Create a TLS certificate for the custom domain using Let's Encrypt with the `certbot-dns-route53` plugin. This uses DNS validation so you don't need to expose a web server.
-
+Create a TLS certificate for the custom domain using Let's Encrypt with the `certbot-dns-route53` plugin. This uses DNS validation, so you don't need to expose a web server.
 
 Request the certificate. Certbot uses your AWS credentials to create a temporary TXT record in Route 53 for domain validation:
 
@@ -949,7 +954,9 @@ aws s3 sync \
 
 Delete EFS replication to promote the replica to read-write:
 
-> **Note:** EFS cross-region replicas are read-only while replication is active. The DR cluster's pods can't write to the replica filesystem until it's promoted to read-write. Deleting the replication configuration is the only way to promote it — AWS doesn't have a "promote" API, you have to break the replication link. Once you do that, the DR EFS becomes an independent read-write filesystem that the restored app can use. During failback, the guide re-establishes replication in the other direction to get the data flowing back to the primary.
+{{< alert >}}
+EFS cross-region replicas are read-only while replication is active. The DR cluster's pods cannot write to the replica file system until it is promoted to read-write. Deleting the replication configuration is the only way to promote it; AWS does not have a `promote` API, so you must break the replication link. Once you do that, the DR EFS becomes an independent read-write file system that the restored app can use. During failback, the guide re-establishes replication in the other direction to get the data flowing back to the primary.
+{{< /alert >}}
 
 ```bash
 aws efs delete-replication-configuration \
@@ -957,17 +964,19 @@ aws efs delete-replication-configuration \
   --region $PRIMARY_REGION
 ```
 
-Create EFS mount targets on the replica filesystem in the DR region:
+Create EFS mount targets on the replica file system in all DR machine pool subnets:
 
 ```bash
-aws efs create-mount-target \
-  --region $DR_REGION \
-  --file-system-id $DR_EFS \
-  --subnet-id $SUBNET_DR \
-  --security-groups $EFS_SG_DR
+for SUBNET in $(rosa list machinepools -c $DR_CLUSTER_NAME -o json | jq -r '.[].subnet'); do
+  aws efs create-mount-target \
+    --region $DR_REGION \
+    --file-system-id $DR_EFS \
+    --subnet-id $SUBNET \
+    --security-groups $EFS_SG_DR
+done
 ```
 
-Create the EFS StorageClass on the DR cluster pointing to the replica filesystem. The restore will recreate the PVCs, which need this StorageClass to dynamically provision new EFS access points:
+Create the EFS StorageClass on the DR cluster pointing to the replica file system. The restore will recreate the PVCs, which need this StorageClass to dynamically provision new EFS access points:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -1036,9 +1045,9 @@ oc set env deployment/mission-control -n dr-demo \
 To simulate a primary site failure, disable auto-repair on the primary cluster's machine pool and stop the worker instances:
 
 ```bash
-rosa edit machinepool workers \
-  --cluster $PRIMARY_CLUSTER_NAME \
-  --autorepair=false
+for MP in $(rosa list machinepools -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.[].id'); do
+  rosa edit machinepool $MP --cluster $PRIMARY_CLUSTER_NAME --autorepair=false
+done
 
 WORKER_IDS=($(aws ec2 describe-instances \
   --region $PRIMARY_REGION \
@@ -1054,11 +1063,11 @@ aws ec2 stop-instances \
 
 Once the primary workers are down, the Route 53 health check will fail and DNS will automatically route traffic to the DR cluster. Open the Mission Control dashboard at your custom domain URL to confirm the failover. The dashboard shows the primary site is down and the DR site is now active:
 
-![Scenario 1 — Primary site down, DR site active](scenario1-dr.png)
+![Scenario 1 - Primary site down, DR site active](scenario1-dr.png)
 
 ### Failback (Automatic)
 
-In the hot-to-hot scenario, the primary cluster's application was never deleted — only the worker nodes were stopped. To fail back, restart the primary workers and re-enable auto-repair:
+In the hot-to-hot scenario, the primary cluster's application was never deleted - only the worker nodes were stopped. To fail back, restart the primary workers and re-enable auto-repair:
 
 ```bash
 WORKER_IDS=($(aws ec2 describe-instances \
@@ -1073,7 +1082,7 @@ aws ec2 start-instances \
   --region $PRIMARY_REGION
 ```
 
-Once the workers are running, the application pods resume automatically. The Route 53 health check detects the primary is healthy again and DNS fails back — no OADP restore is needed.
+Once the workers are running, the application pods resume automatically. The Route 53 health check detects the primary is healthy again and DNS fails back - no OADP restore is needed.
 
 Re-establish EFS replication from primary to DR so it is in place for future failovers. First, disable the overwrite protection that AWS enables on the replica after replication is deleted:
 
@@ -1089,20 +1098,20 @@ aws efs create-replication-configuration \
   --destinations "[{\"Region\": \"${DR_REGION}\", \"FileSystemId\": \"${DR_EFS}\"}]"
 ```
 
-![Scenario 1 — Primary site backup and active](scenario1-recover.png)
+![Scenario 1 - Primary site back up and active](scenario1-recover.png)
 
 ## DR Scenario 2: Cold DR (Scaled-Down DR Cluster)
 
-The DR cluster has worker nodes stopped to save costs. This requires starting instances before the restore can proceed.
+In this scenario the DR cluster's worker nodes are stopped to save costs. Starting the instances is required before the restore can proceed.
 
 ### Setup: Scale Down DR Cluster
 
 Stop the DR cluster worker nodes to reduce costs during normal operation:
 
 ```bash
-rosa edit machinepool workers \
-  --cluster $DR_CLUSTER_NAME \
-  --autorepair=false
+for MP in $(rosa list machinepools -c $DR_CLUSTER_NAME -o json | jq -r '.[].id'); do
+  rosa edit machinepool $MP --cluster $DR_CLUSTER_NAME --autorepair=false
+done
 
 WORKER_IDS=($(aws ec2 describe-instances \
   --region $DR_REGION \
@@ -1140,6 +1149,13 @@ aws efs delete-replication-configuration \
 Start the DR worker instances:
 
 ```bash
+WORKER_IDS=($(aws ec2 describe-instances \
+  --region $DR_REGION \
+  --filters "Name=tag:Name,Values=*${DR_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=stopped" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
 aws ec2 start-instances \
   --instance-ids "${WORKER_IDS[@]}" \
   --region $DR_REGION
@@ -1198,7 +1214,7 @@ oc set env deployment/mission-control -n dr-demo \
   AWS_ROLE_ARN=$DR_S3_ROLE_ARN
 ```
 
-DNS failover happens automatically via Route 53 health check, or update DNS manually.
+DNS failover happens automatically via the Route 53 health check. If you did not configure Route 53, update DNS manually to point to the DR cluster.
 
 ## Cleanup
 
@@ -1207,11 +1223,11 @@ Remove all resources created by this guide.
 ### Delete the demo application on both clusters
 
 ```bash
-oc delete namespace dr-demo
 helm uninstall phoenix-mission-control -n dr-demo 2>/dev/null || true
+oc delete namespace dr-demo
 ```
 
-### Delete the OADP operator on both clusters
+### Delete the OADP Operator on both clusters
 
 ```bash
 oc delete dpa dr-demo-dpa -n openshift-adp
@@ -1233,9 +1249,9 @@ for BUCKET in $APP_BUCKET_PRIMARY $APP_BUCKET_DR \
 done
 ```
 
-### Delete EFS filesystems
+### Delete EFS file systems
 
-Delete any remaining replication configuration, mount targets, access points, and the filesystems:
+Delete any remaining replication configuration, mount targets, access points, and the file systems:
 
 ```bash
 for EFS_ID in $PRIMARY_EFS $DR_EFS; do
@@ -1292,7 +1308,35 @@ done
 ### Delete Route 53 records and health checks (if created)
 
 ```bash
+aws route53 change-resource-record-sets \
+  --hosted-zone-id $HOSTED_ZONE_ID \
+  --change-batch '{
+    "Changes": [
+      {
+        "Action": "DELETE",
+        "ResourceRecordSet": {
+          "Name": "'$DR_DOMAIN'",
+          "Type": "CNAME",
+          "SetIdentifier": "primary",
+          "Failover": "PRIMARY",
+          "TTL": 60,
+          "ResourceRecords": [{"Value": "'$PRIMARY_ROUTER'"}],
+          "HealthCheckId": "'$HEALTH_CHECK_ID'"
+        }
+      },
+      {
+        "Action": "DELETE",
+        "ResourceRecordSet": {
+          "Name": "'$DR_DOMAIN'",
+          "Type": "CNAME",
+          "SetIdentifier": "secondary",
+          "Failover": "SECONDARY",
+          "TTL": 60,
+          "ResourceRecords": [{"Value": "'$DR_ROUTER'"}]
+        }
+      }
+    ]
+  }'
+
 aws route53 delete-health-check --health-check-id $HEALTH_CHECK_ID
 ```
-
-Delete the failover CNAME records from your hosted zone using the Route 53 console or `change-resource-record-sets` with `Action: DELETE`.
