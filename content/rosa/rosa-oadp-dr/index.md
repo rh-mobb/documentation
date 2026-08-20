@@ -1011,24 +1011,69 @@ done
 
 **On the DR cluster**
 
-Create the EFS StorageClass on the DR cluster pointing to the replica file system. The restore will recreate the PVCs, which need this StorageClass to dynamically provision new EFS access points:
+Before restoring, retrieve the original EFS access point paths from the primary cluster. The EFS CSI driver creates a unique subdirectory under `/dr-demo/` for each PVC (e.g., `/dr-demo/pvc-abc123`). EFS replication copies this data to the replica filesystem, but a Velero restore would dynamically provision **new** access points pointing to different, empty subdirectories. To ensure the restored application sees the replicated data, create static PVs that map to the original paths.
+
+List the access points on the primary EFS:
+
+```bash
+aws efs describe-access-points \
+  --file-system-id $PRIMARY_EFS \
+  --region $PRIMARY_REGION \
+  --query 'AccessPoints[*].[AccessPointId,RootDirectory.Path]' \
+  --output table
+```
+
+The demo application has two EFS-backed volumes. Identify the access point paths for each PVC and export them:
+
+```bash
+export SHARED_FLIGHT_DATA_PATH=<path-for-shared-flight-data-pvc>
+export FLIGHT_DATA_PATH=<path-for-flight-data-pvc>
+
+echo "shared-flight-data path: $SHARED_FLIGHT_DATA_PATH"
+echo "flight-data path: $FLIGHT_DATA_PATH"
+```
+
+Create static PVs on the DR cluster that point to the replicated data at the original paths:
 
 ```bash
 cat <<EOF | oc apply -f -
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
+apiVersion: v1
+kind: PersistentVolume
 metadata:
-  name: efs-sc
-provisioner: efs.csi.aws.com
-parameters:
-  provisioningMode: efs-ap
-  fileSystemId: "${DR_EFS}"
-  directoryPerms: "700"
-  basePath: /dr-demo
-reclaimPolicy: Delete
-volumeBindingMode: Immediate
+  name: dr-shared-flight-data
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${SHARED_FLIGHT_DATA_PATH}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-flight-data
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_PATH}
 EOF
 ```
+
+{{< alert >}}
+**Why static provisioning?** When the EFS CSI driver dynamically provisions a PVC, it creates a new access point with a unique subdirectory (e.g., `/dr-demo/pvc-xyz789`). The replicated data from the primary lives under the original subdirectory (e.g., `/dr-demo/pvc-abc123`). A dynamically provisioned PVC on the DR side would mount an empty directory. Static provisioning lets you point the DR PVs directly at the replicated data paths.
+{{< /alert >}}
 
 Log in to the DR cluster and wait for Velero to sync the backup (this happens automatically within a minute):
 
@@ -1036,7 +1081,7 @@ Log in to the DR cluster and wait for Velero to sync the backup (this happens au
 oc get backup -n openshift-adp
 ```
 
-Create the restore:
+Create the restore, excluding PVCs and PVs so the static PVs are used instead of dynamically provisioning new ones:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -1052,8 +1097,44 @@ spec:
   excludedResources:
     - pods
     - replicasets.apps
+    - persistentvolumeclaims
+    - persistentvolumes
   restorePVs: false
   existingResourcePolicy: update
+EOF
+```
+
+Create the PVCs that bind to the static PVs:
+
+```bash
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-flight-data
+  namespace: dr-demo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: dr-shared-flight-data
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flight-data-flight-recorder-0
+  namespace: dr-demo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: dr-flight-data
+  resources:
+    requests:
+      storage: 5Gi
 EOF
 ```
 
@@ -1123,7 +1204,10 @@ aws ec2 start-instances \
 Once the workers are running, the application pods resume automatically. The Route 53 health check detects the primary is healthy again and DNS fails back - no OADP restore is needed.
 
 {{< alert >}}
-Any data written to the DR EFS during the failover window is not automatically synced back to the primary. When the primary resumes, it uses its original EFS, which does not contain writes made during failover. Re-establishing replication (primary to DR) below will overwrite the DR EFS with the primary's data. In a production environment, you would need to copy or merge DR EFS data back to the primary before this step.
+**Data written during failover does not automatically sync back to the primary.** This applies to both storage layers:
+
+- **EFS:** The primary resumes using its original EFS, which does not contain writes made to the DR EFS during failover. Re-establishing replication (primary → DR) below will overwrite the DR EFS with the primary's data. In a production environment, copy or merge DR EFS data back to the primary before this step.
+- **S3:** S3 Cross-Region Replication is one-directional (primary → DR). Objects written to the DR bucket during failover are not replicated back to the primary bucket (the primary bucket will return 404 for those objects). To preserve DR-written data, set up reverse replication (DR → primary) or manually sync with `aws s3 sync` before re-establishing normal replication.
 {{< /alert >}}
 
 Re-establish EFS replication from primary to DR so it is in place for future failovers. First, disable the overwrite protection that AWS enables on the replica after replication is deleted:
@@ -1246,7 +1330,54 @@ Wait for Velero to be ready (it will automatically reschedule when the nodes are
 oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
 ```
 
-Restore from the backup:
+Retrieve the original EFS access point paths from the primary cluster, then create static PVs on the DR side that map to the replicated data (see the note in Scenario 1 for why this is necessary):
+
+```bash
+aws efs describe-access-points \
+  --file-system-id $PRIMARY_EFS \
+  --region $PRIMARY_REGION \
+  --query 'AccessPoints[*].[AccessPointId,RootDirectory.Path]' \
+  --output table
+
+export SHARED_FLIGHT_DATA_PATH=<path-for-shared-flight-data-pvc>
+export FLIGHT_DATA_PATH=<path-for-flight-data-pvc>
+
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-shared-flight-data
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${SHARED_FLIGHT_DATA_PATH}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-flight-data
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_PATH}
+EOF
+```
+
+Restore from the backup, excluding PVCs and PVs so the static PVs are used:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -1262,8 +1393,44 @@ spec:
   excludedResources:
     - pods
     - replicasets.apps
+    - persistentvolumeclaims
+    - persistentvolumes
   restorePVs: false
   existingResourcePolicy: update
+EOF
+```
+
+Create the PVCs that bind to the static PVs:
+
+```bash
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-flight-data
+  namespace: dr-demo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: dr-shared-flight-data
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flight-data-flight-recorder-0
+  namespace: dr-demo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: dr-flight-data
+  resources:
+    requests:
+      storage: 5Gi
 EOF
 ```
 
