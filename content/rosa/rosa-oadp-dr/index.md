@@ -13,7 +13,7 @@ This guide demonstrates a complete disaster recovery (DR) solution for ROSA HCP 
 
 ## Architecture Overview
 
-- **Primary cluster** in us-east-1, **DR cluster** in us-east-2
+- **Primary cluster** in Region A (e.g. us-east-1), **DR cluster** in Region B (e.g. us-west-2)
 - **S3 with Cross-Region Replication** for application data and OADP backups
 - **EFS with Cross-Region Replication** for persistent volume data
 - **Route 53 failover routing** with health checks for automatic DNS failover
