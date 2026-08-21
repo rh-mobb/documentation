@@ -362,6 +362,29 @@ echo "WORKER_SG_PRIMARY: $WORKER_SG_PRIMARY"
 echo "WORKER_SG_DR:      $WORKER_SG_DR"
 ```
 
+### Create mount targets on the DR replica
+
+Create mount targets on the DR replica file system so it is ready for failover. Mount targets can be created on a read-only replica — they will be functional once the replica is promoted to read-write during failover.
+
+```bash
+for SUBNET in $(rosa list machinepools -c $DR_CLUSTER_NAME -o json | jq -r '.[].subnet'); do
+  aws efs create-mount-target \
+    --region $DR_REGION \
+    --file-system-id $DR_EFS \
+    --subnet-id $SUBNET \
+    --security-groups $EFS_SG_DR
+done
+
+echo "Waiting for the DR EFS mount targets to become available..."
+
+while [ "$(aws efs describe-mount-targets --file-system-id $DR_EFS \
+  --region $DR_REGION --query 'length(MountTargets[?LifeCycleState!=`available`])' \
+  --output text)" != "0" ]; do
+  sleep 5
+done
+echo "DR EFS mount targets are available."
+```
+
 ### Install the EFS CSI Driver
 
 Install the AWS EFS CSI Driver Operator on both clusters. You can automate this with the provided script or follow the [manual guide](/experts/rosa/aws-efs/).
@@ -814,6 +837,42 @@ oc get route -n dr-demo
 
 Open the route URL in your browser to verify the application is working.
 
+### Record EFS Path Mapping for DR
+
+After the application is deployed and the PVCs are bound, record the EFS access point paths for each PVC. This mapping is essential for DR — it tells the static PVs on the DR cluster where the replicated data lives. Record these values and store them securely as part of your DR runbook. Update this mapping any time PVCs are recreated.
+
+**On the primary cluster:**
+
+```bash
+for PVC in shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1; do
+  PV=$(oc get pvc $PVC -n dr-demo -o jsonpath='{.spec.volumeName}')
+  AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
+  AP_PATH=$(aws efs describe-access-points \
+    --access-point-id $AP_ID \
+    --region $PRIMARY_REGION \
+    --query 'AccessPoints[0].RootDirectory.Path' \
+    --output text)
+  echo "$PVC -> $AP_PATH"
+done
+```
+
+Record the output. The demo application uses 3 EFS-backed PVCs:
+- `shared-flight-data` — shared volume mounted by the dashboard and flight recorder
+- `flight-data-flight-recorder-0` — StatefulSet replica 0
+- `flight-data-flight-recorder-1` — StatefulSet replica 1
+
+Export the paths (you will need these during any failover):
+
+```bash
+export SHARED_FLIGHT_DATA_PATH=<path-from-output-for-shared-flight-data>
+export FLIGHT_DATA_RECORDER_0_PATH=<path-from-output-for-flight-data-flight-recorder-0>
+export FLIGHT_DATA_RECORDER_1_PATH=<path-from-output-for-flight-data-flight-recorder-1>
+```
+
+{{< alert >}}
+**Why static provisioning?** When the EFS CSI driver dynamically provisions a PVC, it creates a new access point with a unique subdirectory (e.g., `/dr-demo/pvc-xyz789`). The replicated data from the primary lives under the original subdirectory (e.g., `/dr-demo/pvc-abc123`). A dynamically provisioned PVC on the DR side would mount an empty directory. Static provisioning lets you point the DR PVs directly at the replicated data paths.
+{{< /alert >}}
+
 ## Step 6: Configure Route 53 DNS Failover (Optional)
 
 This step sets up automatic DNS failover using Route 53 health checks and failover routing.
@@ -1027,61 +1086,9 @@ aws efs delete-replication-configuration \
   --region $PRIMARY_REGION
 ```
 
-Create EFS mount targets on the replica file system in all DR machine pool subnets:
-
-```bash
-for SUBNET in $(rosa list machinepools -c $DR_CLUSTER_NAME -o json | jq -r '.[].subnet'); do
-  aws efs create-mount-target \
-    --region $DR_REGION \
-    --file-system-id $DR_EFS \
-    --subnet-id $SUBNET \
-    --security-groups $EFS_SG_DR
-done
-
-echo "Waiting for the DR EFS mount targets to become available..."
-
-while [ "$(aws efs describe-mount-targets --file-system-id $DR_EFS \
-  --region $DR_REGION --query 'length(MountTargets[?LifeCycleState!=`available`])' \
-  --output text)" != "0" ]; do
-  sleep 5
-done
-echo "DR EFS mount targets are available."
-```
-
 **On the DR cluster**
 
-Before restoring, retrieve the original EFS access point paths from the primary cluster. The EFS CSI driver creates a unique subdirectory under `/dr-demo/` for each PVC (e.g., `/dr-demo/pvc-abc123`). EFS replication copies this data to the replica filesystem, but a Velero restore would dynamically provision **new** access points pointing to different, empty subdirectories. To ensure the restored application sees the replicated data, create static PVs that map to the original paths.
-
-{{< alert >}}
-The following steps query the primary cluster to map PVCs to their original EFS access point paths. In a real disaster, the primary cluster API might not be available. Record and maintain this PVC-to-EFS path mapping as part of your DR preparation rather than relying on discovering it during an outage.
-{{< /alert >}}
-
-Map each PVC to its EFS access point path by querying the PV `volumeHandle` on the primary cluster. The `volumeHandle` format is `<efs-id>::<access-point-id>`, and each access point has a root directory path where the PVC's data is stored:
-
-```bash
-for PVC in shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1; do
-  PV=$(oc get pvc $PVC -n dr-demo -o jsonpath='{.spec.volumeName}')
-  AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
-  AP_PATH=$(aws efs describe-access-points \
-    --access-point-id $AP_ID \
-    --region $PRIMARY_REGION \
-    --query 'AccessPoints[0].RootDirectory.Path' \
-    --output text)
-  echo "$PVC -> $AP_PATH"
-done
-```
-
-Export the paths from the output above:
-
-```bash
-export SHARED_FLIGHT_DATA_PATH=<path-from-output-for-shared-flight-data>
-export FLIGHT_DATA_RECORDER_0_PATH=<path-from-output-for-flight-data-flight-recorder-0>
-export FLIGHT_DATA_RECORDER_1_PATH=<path-from-output-for-flight-data-flight-recorder-1>
-```
-
-The flight-recorder StatefulSet has 2 replicas, so it creates two PVCs (`flight-data-flight-recorder-0` and `flight-data-flight-recorder-1`) plus the shared `shared-flight-data` PVC — 3 total.
-
-Create static PVs on the DR cluster that point to the replicated data at the original paths:
+Create static PVs using the EFS access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5). These paths ensure the restored application mounts the replicated data rather than empty directories:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -1134,10 +1141,6 @@ spec:
     volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_1_PATH}
 EOF
 ```
-
-{{< alert >}}
-**Why static provisioning?** When the EFS CSI driver dynamically provisions a PVC, it creates a new access point with a unique subdirectory (e.g., `/dr-demo/pvc-xyz789`). The replicated data from the primary lives under the original subdirectory (e.g., `/dr-demo/pvc-abc123`). A dynamically provisioned PVC on the DR side would mount an empty directory. Static provisioning lets you point the DR PVs directly at the replicated data paths.
-{{< /alert >}}
 
 Log in to the DR cluster and wait for Velero to sync the backup (this happens automatically within a minute):
 
@@ -1434,32 +1437,9 @@ Wait for Velero to be ready (it will automatically reschedule when the nodes are
 oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
 ```
 
-{{< alert >}}
-The following steps query the primary cluster to map PVCs to their original EFS access point paths. In a real disaster, the primary cluster API might not be available. Record and maintain this PVC-to-EFS path mapping as part of your DR preparation rather than relying on discovering it during an outage.
-{{< /alert >}}
-
-Map each PVC to its EFS access point path using the PV `volumeHandle` on the primary cluster (see Scenario 1 for why static provisioning is necessary):
+Create static PVs using the EFS access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5). These paths ensure the restored application mounts the replicated data rather than empty directories:
 
 ```bash
-for PVC in shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1; do
-  PV=$(oc get pvc $PVC -n dr-demo -o jsonpath='{.spec.volumeName}')
-  AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
-  AP_PATH=$(aws efs describe-access-points \
-    --access-point-id $AP_ID \
-    --region $PRIMARY_REGION \
-    --query 'AccessPoints[0].RootDirectory.Path' \
-    --output text)
-  echo "$PVC -> $AP_PATH"
-done
-```
-
-Export the paths from the output above:
-
-```bash
-export SHARED_FLIGHT_DATA_PATH=<path-from-output-for-shared-flight-data>
-export FLIGHT_DATA_RECORDER_0_PATH=<path-from-output-for-flight-data-flight-recorder-0>
-export FLIGHT_DATA_RECORDER_1_PATH=<path-from-output-for-flight-data-flight-recorder-1>
-
 cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
