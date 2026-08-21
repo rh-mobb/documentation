@@ -9,7 +9,7 @@ authors:
 validated_version: "4.22"
 ---
 
-This guide demonstrates a complete disaster recovery (DR) solution for ROSA HCP using OADP (OpenShift API for Data Protection), S3 Cross-Region Replication, EFS replication, and Route 53 DNS failover. You will deploy a demo application, configure backup and restore infrastructure, and walk through two DR scenarios: hot-to-hot failover and cold DR failover.
+This guide demonstrates a complete disaster recovery (DR) solution for ROSA HCP using OADP (OpenShift API for Data Protection), S3 Cross-Region Replication, EFS replication, and Route 53 DNS failover. You will deploy a demo application, configure backup and restore infrastructure, and walk through two DR scenarios: hot-to-warm failover and cold DR failover.
 
 ## Architecture Overview
 
@@ -261,6 +261,12 @@ export PRIMARY_EFS=$(aws efs create-file-system \
   --query 'FileSystemId' --output text)
 
 echo "PRIMARY_EFS: $PRIMARY_EFS"
+
+echo "Waiting for the primary EFS file system to become available..."
+
+aws efs wait file-system-available \
+  --file-system-id $PRIMARY_EFS \
+  --region $PRIMARY_REGION
 ```
 
 Create mount targets in all machine pool subnets so pods in any AZ can access EFS:
@@ -294,6 +300,12 @@ export DR_EFS=$(aws efs describe-replication-configurations \
   --output text)
 
 echo "DR_EFS: $DR_EFS"
+
+echo "Waiting for the DR EFS replica to become available..."
+
+aws efs wait file-system-available \
+  --file-system-id $DR_EFS \
+  --region $DR_REGION
 ```
 
 ### Configure security groups for the DR region
@@ -985,6 +997,18 @@ aws s3 sync \
   --source-region $PRIMARY_REGION --region $DR_REGION
 ```
 
+Verify that EFS replication is healthy and review the most recent replication timestamp before promoting the DR file system:
+
+```bash
+aws efs describe-replication-configurations \
+  --region $PRIMARY_REGION \
+  --file-system-id $PRIMARY_EFS \
+  --query 'Replications[0].Destinations[0].{Status:Status,LastReplicatedTimestamp:LastReplicatedTimestamp}' \
+  --output table
+```
+
+Confirm that the replication status is `ENABLED` and that `LastReplicatedTimestamp` meets your recovery point objective before proceeding. Data written after the last replicated timestamp might not be available on the DR file system.
+
 Delete EFS replication to promote the replica to read-write:
 
 {{< alert >}}
@@ -1007,11 +1031,21 @@ for SUBNET in $(rosa list machinepools -c $DR_CLUSTER_NAME -o json | jq -r '.[].
     --subnet-id $SUBNET \
     --security-groups $EFS_SG_DR
 done
+
+echo "Waiting for the DR EFS mount targets to become available..."
+
+aws efs wait mount-target-available \
+  --file-system-id $DR_EFS \
+  --region $DR_REGION
 ```
 
 **On the DR cluster**
 
 Before restoring, retrieve the original EFS access point paths from the primary cluster. The EFS CSI driver creates a unique subdirectory under `/dr-demo/` for each PVC (e.g., `/dr-demo/pvc-abc123`). EFS replication copies this data to the replica filesystem, but a Velero restore would dynamically provision **new** access points pointing to different, empty subdirectories. To ensure the restored application sees the replicated data, create static PVs that map to the original paths.
+
+{{< alert >}}
+The following steps query the primary cluster to map PVCs to their original EFS access point paths. In a real disaster, the primary cluster API might not be available. Record and maintain this PVC-to-EFS path mapping as part of your DR preparation rather than relying on discovering it during an outage.
+{{< /alert >}}
 
 Map each PVC to its EFS access point path by querying the PV `volumeHandle` on the primary cluster. The `volumeHandle` format is `<efs-id>::<access-point-id>`, and each access point has a root directory path where the PVC's data is stored:
 
@@ -1219,7 +1253,17 @@ Once the primary workers are down, the Route 53 health check will fail and DNS w
 
 ![Scenario 1 - Primary site down, DR site active](scenario1-dr.png)
 
-### Failback (Automatic)
+### Failback to the Primary Cluster
+
+{{< alert >}}
+**Do not fail traffic back to the primary cluster until data written in the DR region has been reconciled.**
+
+During failover, the DR EFS file system and DR S3 bucket become independent writable data stores. Writes made in the DR region are not automatically copied back to the primary region.
+
+For this demonstration, if no DR-side data needs to be preserved, you can restart the primary workers and re-establish primary-to-DR replication as shown below.
+
+For production workloads, first synchronize or otherwise reconcile DR-side EFS and S3 data with the primary environment, validate the recovered data, and only then return application traffic to the primary region.
+{{< /alert >}}
 
 In the hot-to-warm scenario, the primary cluster's application was never deleted - only the worker nodes were stopped. To fail back, restart the primary workers:
 
@@ -1236,7 +1280,11 @@ aws ec2 start-instances \
   --region $PRIMARY_REGION
 ```
 
-Once the workers are running, the application pods resume automatically. The Route 53 health check detects the primary is healthy again and DNS fails back - no OADP restore is needed.
+Once the workers are running, the application pods resume automatically.
+
+Before allowing production traffic to return to the primary cluster, verify that the application is healthy and that any required DR-side EFS and S3 data has been reconciled. Application health alone is not sufficient to determine that a stateful workload is ready for failback.
+
+After validation, Route 53 can return traffic to the primary cluster when the health check reports it as healthy.
 
 {{< alert >}}
 **Data written during failover does not automatically sync back to the primary.** This applies to both storage layers:
@@ -1336,6 +1384,18 @@ aws ec2 stop-instances \
   --region $PRIMARY_REGION
 ```
 
+Verify that EFS replication is healthy and review the most recent replication timestamp before promoting the DR file system:
+
+```bash
+aws efs describe-replication-configurations \
+  --region $PRIMARY_REGION \
+  --file-system-id $PRIMARY_EFS \
+  --query 'Replications[0].Destinations[0].{Status:Status,LastReplicatedTimestamp:LastReplicatedTimestamp}' \
+  --output table
+```
+
+Confirm that the replication status is `ENABLED` and that `LastReplicatedTimestamp` meets your recovery point objective before proceeding. Data written after the last replicated timestamp might not be available on the DR file system.
+
 Delete EFS replication to promote the replica to read-write:
 
 ```bash
@@ -1364,6 +1424,10 @@ Wait for Velero to be ready (it will automatically reschedule when the nodes are
 ```bash
 oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
 ```
+
+{{< alert >}}
+The following steps query the primary cluster to map PVCs to their original EFS access point paths. In a real disaster, the primary cluster API might not be available. Record and maintain this PVC-to-EFS path mapping as part of your DR preparation rather than relying on discovering it during an outage.
+{{< /alert >}}
 
 Map each PVC to its EFS access point path using the PV `volumeHandle` on the primary cluster (see Scenario 1 for why static provisioning is necessary):
 
