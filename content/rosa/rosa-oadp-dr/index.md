@@ -844,28 +844,31 @@ After the application is deployed and the PVCs are bound, record the EFS access 
 **On the primary cluster:**
 
 ```bash
-PVC_NAMES=(shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1)
-ENV_NAMES=(SHARED_FLIGHT_DATA_PATH FLIGHT_DATA_RECORDER_0_PATH FLIGHT_DATA_RECORDER_1_PATH)
-
-for i in "${!PVC_NAMES[@]}"; do
-  PV=$(oc get pvc ${PVC_NAMES[$i]} -n dr-demo -o jsonpath='{.spec.volumeName}')
-  AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
-  AP_PATH=$(aws efs describe-access-points \
+get_efs_path() {
+  local PV=$(oc get pvc $1 -n dr-demo -o jsonpath='{.spec.volumeName}')
+  local AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
+  aws efs describe-access-points \
     --access-point-id $AP_ID \
     --region $PRIMARY_REGION \
     --query 'AccessPoints[0].RootDirectory.Path' \
-    --output text)
-  export ${ENV_NAMES[$i]}=$AP_PATH
-  echo "export ${ENV_NAMES[$i]}=$AP_PATH"
-done
+    --output text
+}
+
+export SHARED_FLIGHT_DATA_PATH=$(get_efs_path shared-flight-data)
+export FLIGHT_DATA_RECORDER_0_PATH=$(get_efs_path flight-data-flight-recorder-0)
+export FLIGHT_DATA_RECORDER_1_PATH=$(get_efs_path flight-data-flight-recorder-1)
+
+echo "export SHARED_FLIGHT_DATA_PATH=$SHARED_FLIGHT_DATA_PATH"
+echo "export FLIGHT_DATA_RECORDER_0_PATH=$FLIGHT_DATA_RECORDER_0_PATH"
+echo "export FLIGHT_DATA_RECORDER_1_PATH=$FLIGHT_DATA_RECORDER_1_PATH"
 ```
 
-Record the output and save it as part of your DR runbook. The demo application uses 3 EFS-backed PVCs:
+Save the output as part of your DR runbook. The demo application uses 3 EFS-backed PVCs:
 - `shared-flight-data` — shared volume mounted by the dashboard and flight recorder
 - `flight-data-flight-recorder-0` — StatefulSet replica 0
 - `flight-data-flight-recorder-1` — StatefulSet replica 1
 
-The variables are automatically exported in your current shell. To re-export in a new session, paste the output from above.
+The variables are automatically exported in your current shell. To re-export in a new session, paste the `export` lines from the output.
 
 {{< alert >}}
 **Why static provisioning?** When the EFS CSI driver dynamically provisions a PVC, it creates a new access point with a unique subdirectory (e.g., `/dr-demo/pvc-xyz789`). The replicated data from the primary lives under the original subdirectory (e.g., `/dr-demo/pvc-abc123`). A dynamically provisioned PVC on the DR side would mount an empty directory. Static provisioning lets you point the DR PVs directly at the replicated data paths.
