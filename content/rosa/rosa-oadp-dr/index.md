@@ -1133,6 +1133,18 @@ aws efs delete-replication-configuration \
   --region $PRIMARY_REGION
 ```
 
+Wait for the DR file system to finish promoting to read-write. Pods that try to mount the EFS before this completes will fail with mount errors:
+
+```bash
+while true; do
+  STATUS=$(aws efs describe-file-systems --file-system-id $DR_EFS \
+    --region $DR_REGION --query 'FileSystems[0].LifeCycleState' --output text)
+  echo "DR EFS status: $STATUS"
+  [ "$STATUS" = "available" ] && break
+  sleep 10
+done
+```
+
 **On the DR cluster**
 
 Log in to the DR cluster and wait for Velero to sync the backup (this happens automatically within a minute):
@@ -1407,6 +1419,18 @@ Delete EFS replication to promote the replica to read-write:
 aws efs delete-replication-configuration \
   --source-file-system-id $PRIMARY_EFS \
   --region $PRIMARY_REGION
+```
+
+Wait for the DR file system to finish promoting to read-write. Pods that try to mount the EFS before this completes will fail with mount errors:
+
+```bash
+while true; do
+  STATUS=$(aws efs describe-file-systems --file-system-id $DR_EFS \
+    --region $DR_REGION --query 'FileSystems[0].LifeCycleState' --output text)
+  echo "DR EFS status: $STATUS"
+  [ "$STATUS" = "available" ] && break
+  sleep 10
+done
 ```
 
 Start the DR worker instances:
