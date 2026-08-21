@@ -264,9 +264,12 @@ echo "PRIMARY_EFS: $PRIMARY_EFS"
 
 echo "Waiting for the primary EFS file system to become available..."
 
-aws efs wait file-system-available \
-  --file-system-id $PRIMARY_EFS \
-  --region $PRIMARY_REGION
+while [ "$(aws efs describe-file-systems --file-system-id $PRIMARY_EFS \
+  --region $PRIMARY_REGION --query 'FileSystems[0].LifeCycleState' \
+  --output text)" != "available" ]; do
+  sleep 5
+done
+echo "Primary EFS is available."
 ```
 
 Create mount targets in all machine pool subnets so pods in any AZ can access EFS:
@@ -303,9 +306,12 @@ echo "DR_EFS: $DR_EFS"
 
 echo "Waiting for the DR EFS replica to become available..."
 
-aws efs wait file-system-available \
-  --file-system-id $DR_EFS \
-  --region $DR_REGION
+while [ "$(aws efs describe-file-systems --file-system-id $DR_EFS \
+  --region $DR_REGION --query 'FileSystems[0].LifeCycleState' \
+  --output text)" != "available" ]; do
+  sleep 5
+done
+echo "DR EFS replica is available."
 ```
 
 ### Configure security groups for the DR region
@@ -1034,9 +1040,12 @@ done
 
 echo "Waiting for the DR EFS mount targets to become available..."
 
-aws efs wait mount-target-available \
-  --file-system-id $DR_EFS \
-  --region $DR_REGION
+while [ "$(aws efs describe-mount-targets --file-system-id $DR_EFS \
+  --region $DR_REGION --query 'length(MountTargets[?LifeCycleState!=`available`])' \
+  --output text)" != "0" ]; do
+  sleep 5
+done
+echo "DR EFS mount targets are available."
 ```
 
 **On the DR cluster**
