@@ -1107,7 +1107,11 @@ spec:
   csi:
     driver: efs.csi.aws.com
     volumeHandle: ${DR_EFS}:${SHARED_FLIGHT_DATA_PATH}
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -1123,7 +1127,11 @@ spec:
   csi:
     driver: efs.csi.aws.com
     volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_0_PATH}
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -1188,7 +1196,11 @@ spec:
   resources:
     requests:
       storage: 5Gi
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -1202,7 +1214,11 @@ spec:
   resources:
     requests:
       storage: 5Gi
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -1456,7 +1472,11 @@ spec:
   csi:
     driver: efs.csi.aws.com
     volumeHandle: ${DR_EFS}:${SHARED_FLIGHT_DATA_PATH}
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -1472,7 +1492,11 @@ spec:
   csi:
     driver: efs.csi.aws.com
     volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_0_PATH}
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -1531,7 +1555,11 @@ spec:
   resources:
     requests:
       storage: 5Gi
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -1545,7 +1573,11 @@ spec:
   resources:
     requests:
       storage: 5Gi
----
+EOF
+```
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
