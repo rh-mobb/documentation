@@ -904,9 +904,9 @@ export SHARED_FLIGHT_DATA_PATH=$(get_efs_path shared-flight-data)
 export FLIGHT_DATA_RECORDER_0_PATH=$(get_efs_path flight-data-flight-recorder-0)
 export FLIGHT_DATA_RECORDER_1_PATH=$(get_efs_path flight-data-flight-recorder-1)
 
-echo "export SHARED_FLIGHT_DATA_PATH=$SHARED_FLIGHT_DATA_PATH"
-echo "export FLIGHT_DATA_RECORDER_0_PATH=$FLIGHT_DATA_RECORDER_0_PATH"
-echo "export FLIGHT_DATA_RECORDER_1_PATH=$FLIGHT_DATA_RECORDER_1_PATH"
+echo "SHARED_FLIGHT_DATA_PATH=$SHARED_FLIGHT_DATA_PATH"
+echo "FLIGHT_DATA_RECORDER_0_PATH=$FLIGHT_DATA_RECORDER_0_PATH"
+echo "FLIGHT_DATA_RECORDER_1_PATH=$FLIGHT_DATA_RECORDER_1_PATH"
 ```
 
 Save the output as part of your DR runbook. The demo application uses 3 EFS-backed PVCs:
@@ -1336,10 +1336,11 @@ This scenario assumes Scenario 1 was completed first, which creates the EFS moun
 
 ### Setup: Scale Down DR Cluster
 
-Delete the `dr-demo` namespace on the DR cluster to start with a clean state:
+Delete the `dr-demo` namespace on the DR cluster to start with a clean state, and remove any static PVs left over from a previous failover (PVs are cluster-scoped and survive namespace deletion):
 
 ```bash
 oc delete namespace dr-demo
+oc delete pv dr-shared-flight-data dr-flight-data-0 dr-flight-data-1 --ignore-not-found
 ```
 
 Stop the DR cluster worker nodes to reduce costs during normal operation:
