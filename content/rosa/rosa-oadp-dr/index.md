@@ -1141,38 +1141,7 @@ Log in to the DR cluster and wait for Velero to sync the backup (this happens au
 oc get backup -n openshift-adp
 ```
 
-Create the restore, excluding PVCs and PVs. The restore recreates the namespace and application resources but not the storage — we will create static PVs that point to the replicated EFS data:
-
-```bash
-export RESTORE_NAME=dr-restore-$(date +%Y%m%d-%H%M)
-
-cat <<EOF | oc apply -f -
-apiVersion: velero.io/v1
-kind: Restore
-metadata:
-  name: ${RESTORE_NAME}
-  namespace: openshift-adp
-spec:
-  backupName: ${BACKUP_NAME}
-  includedNamespaces:
-    - dr-demo
-  excludedResources:
-    - pods
-    - replicasets.apps
-    - persistentvolumeclaims
-    - persistentvolumes
-  restorePVs: false
-  existingResourcePolicy: update
-EOF
-```
-
-Wait for the restore to complete:
-
-```bash
-watch "oc get restore $RESTORE_NAME -n openshift-adp -o jsonpath='{.status.phase}' && echo"
-```
-
-Create static PVs and PVCs that mount the replicated EFS data. This uses the access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5):
+Create static PVs that point to the replicated EFS data. These must exist before the restore so that the restored PVCs bind to them immediately — preventing the StatefulSet controller or dynamic provisioner from creating new volumes. The `claimRef` pre-binds each PV to the expected PVC name:
 
 ```bash
 for ENTRY in \
@@ -1196,31 +1165,51 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
+  storageClassName: efs-sc
   claimRef:
     name: $PVC_NAME
     namespace: dr-demo
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${EFS_PATH}
-EOF
-
-  cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: $PVC_NAME
-  namespace: dr-demo
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: $PV_NAME
-  resources:
-    requests:
-      storage: 5Gi
+    volumeHandle: "${DR_EFS}:${EFS_PATH}"
 EOF
 done
+```
+
+Create the restore. PVs are excluded because we created our own above. PVCs are included — Velero restores them with `restorePVs: false`, which clears their `volumeName` so they bind to the pre-existing PVs via `claimRef`:
+
+```bash
+export RESTORE_NAME=dr-restore-$(date +%Y%m%d-%H%M)
+
+cat <<EOF | oc apply -f -
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: ${RESTORE_NAME}
+  namespace: openshift-adp
+spec:
+  backupName: ${BACKUP_NAME}
+  includedNamespaces:
+    - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
+    - persistentvolumes
+  restorePVs: false
+  existingResourcePolicy: update
+EOF
+```
+
+Wait for the restore to complete:
+
+```bash
+watch "oc get restore $RESTORE_NAME -n openshift-adp -o jsonpath='{.status.phase}' && echo"
+```
+
+Verify that PVCs are bound to the static PVs:
+
+```bash
+oc get pvc -n dr-demo
 ```
 
 Update the service account annotations and environment variables to use the DR cluster's IAM role and region. The restore brings over the primary cluster's values, which must be updated for the DR cluster's OIDC provider:
@@ -1441,46 +1430,7 @@ Wait for Velero to be ready (it will automatically reschedule when the nodes are
 oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
 ```
 
-Restore from the backup, excluding PVCs and PVs. The restore recreates the namespace and application resources but not the storage — we will create static PVs that point to the replicated EFS data:
-
-```bash
-export RESTORE_NAME=dr-cold-restore-$(date +%Y%m%d-%H%M)
-
-cat <<EOF | oc apply -f -
-apiVersion: velero.io/v1
-kind: Restore
-metadata:
-  name: ${RESTORE_NAME}
-  namespace: openshift-adp
-spec:
-  backupName: ${BACKUP_NAME}
-  includedNamespaces:
-    - dr-demo
-  excludedResources:
-    - pods
-    - replicasets.apps
-    - persistentvolumeclaims
-    - persistentvolumes
-  restorePVs: false
-  existingResourcePolicy: update
-EOF
-```
-
-Wait for the restore to complete and the namespace to be available:
-
-```bash
-watch "oc get restore $RESTORE_NAME -n openshift-adp -o jsonpath='{.status.phase}' && echo"
-```
-
-```bash
-until oc get namespace dr-demo &>/dev/null; do
-  echo "Waiting for dr-demo namespace..."
-  sleep 5
-done
-echo "Namespace dr-demo is ready."
-```
-
-Create static PVs and PVCs that mount the replicated EFS data. This uses the access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5):
+Create static PVs that point to the replicated EFS data before restoring. The `claimRef` pre-binds each PV to the expected PVC name so that restored PVCs bind immediately:
 
 ```bash
 for ENTRY in \
@@ -1504,31 +1454,59 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
+  storageClassName: efs-sc
   claimRef:
     name: $PVC_NAME
     namespace: dr-demo
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${EFS_PATH}
-EOF
-
-  cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: $PVC_NAME
-  namespace: dr-demo
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: $PV_NAME
-  resources:
-    requests:
-      storage: 5Gi
+    volumeHandle: "${DR_EFS}:${EFS_PATH}"
 EOF
 done
+```
+
+Restore from the backup. PVs are excluded because we created our own above. PVCs are included — Velero restores them with `restorePVs: false`, which clears their `volumeName` so they bind to the pre-existing PVs via `claimRef`:
+
+```bash
+export RESTORE_NAME=dr-cold-restore-$(date +%Y%m%d-%H%M)
+
+cat <<EOF | oc apply -f -
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: ${RESTORE_NAME}
+  namespace: openshift-adp
+spec:
+  backupName: ${BACKUP_NAME}
+  includedNamespaces:
+    - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
+    - persistentvolumes
+  restorePVs: false
+  existingResourcePolicy: update
+EOF
+```
+
+Wait for the restore to complete and the namespace to be available:
+
+```bash
+watch "oc get restore $RESTORE_NAME -n openshift-adp -o jsonpath='{.status.phase}' && echo"
+```
+
+```bash
+until oc get namespace dr-demo &>/dev/null; do
+  echo "Waiting for dr-demo namespace..."
+  sleep 5
+done
+echo "Namespace dr-demo is ready."
+```
+
+Verify that PVCs are bound to the static PVs:
+
+```bash
+oc get pvc -n dr-demo
 ```
 
 Update the service account annotations and environment variables for the DR region:
