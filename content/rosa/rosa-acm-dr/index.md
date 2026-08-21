@@ -1,16 +1,17 @@
 ---
-date: '2026-08-20'
+date: '2026-08-21'
 title: ROSA HCP Disaster Recovery with ACM and OpenShift GitOps
 tags: ["ROSA HCP", "ACM", "GitOps"]
 authors:
   - Kevin Collins
   - Diana Sari
   - Kumudu Herath
+validated_version: "4.22"
 ---
 
 This guide demonstrates how to set up an active/passive disaster recovery pattern for applications running on ROSA HCP clusters using Red Hat Advanced Cluster Management (ACM) and OpenShift GitOps (ArgoCD). ACM handles cluster health monitoring and automatic failover detection, while ArgoCD deploys the application to whichever cluster ACM selects.
 
-> **Important:** This guide covers **application placement DR only** — it automates deploying your application to a healthy cluster when the primary becomes unavailable. It does **not** cover data replication. If your application requires data continuity across regions, you must configure S3 Cross-Region Replication and/or EFS replication separately. See the companion [ROSA DR with OADP](/experts/rosa/rosa-oadp-dr/) guide for the data layer.
+> **Important:** This guide focuses on **application placement DR** — it automates deploying your application to a healthy cluster when the primary becomes unavailable. It includes the EFS and S3 data consistency steps required for the demo application to see replicated data on the standby cluster. For the complete data replication setup (S3 Cross-Region Replication, EFS replication, OADP backup/restore), see the companion [ROSA DR with OADP](/experts/rosa/rosa-oadp-dr/) guide.
 
 The pattern works as follows:
 
@@ -26,10 +27,11 @@ This guide assumes the following are already in place:
 
 * Two ROSA HCP clusters in different AWS regions (referred to as `$CLUSTER_EAST` in us-east-1 and `$CLUSTER_WEST` in us-west-2)
 * A third ROSA HCP cluster for the ACM hub (`$CLUSTER_ACM`) with the ACM operator installed
-* S3 buckets created in each region for application data
-* EFS file systems created in each region with the AWS EFS CSI Driver installed
+* S3 buckets created in each region for application data, with S3 Cross-Region Replication configured from the primary to the DR bucket
+* EFS file systems created with cross-region replication (primary EFS replicating to the DR region), with the AWS EFS CSI Driver Operator installed on both regional clusters. Follow [Enabling the AWS EFS CSI Driver Operator on ROSA](/experts/rosa/aws-efs/) to set up EFS CSI on each cluster.
+* EFS mount targets created in the DR cluster's worker subnets with NFS (port 2049) allowed in the security group
 * IRSA roles for S3 access created on each regional cluster
-* AWS CLI, `oc` CLI, and `rosa` CLI configured
+* AWS CLI, `oc` CLI, `rosa` CLI, and `helm` CLI configured
 * A Route 53 hosted zone for the custom domain
 
 ## Environment Variables
@@ -46,12 +48,18 @@ export S3_BUCKET_EAST=<your-east-s3-bucket>
 export S3_BUCKET_WEST=<your-west-s3-bucket>
 export S3_ROLE_ARN_EAST="arn:aws:iam::<your-account-id>:role/<your-east-s3-role>"
 export S3_ROLE_ARN_WEST="arn:aws:iam::<your-account-id>:role/<your-west-s3-role>"
-export EFS_ID_EAST=<your-east-efs-id>
-export EFS_ID_WEST=<your-west-efs-id>
+export EFS_ID_PRIMARY=<your-primary-efs-id>
+export EFS_ID_DR=<your-dr-efs-id>
+export PRIMARY_REGION=us-east-1
+export DR_REGION=us-west-2
 export HOSTED_ZONE_ID=<your-route53-hosted-zone-id>
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export CLUSTER_ADMIN_PASSWORD='<your-cluster-admin-password>'
 ```
+
+{{< alert >}}
+`EFS_ID_PRIMARY` is the source EFS file system in the primary region. `EFS_ID_DR` is its cross-region replica in the DR region. When EFS replication is active, the DR replica is read-only — it must be promoted before the application can write to it during failover.
+{{< /alert >}}
 
 ## Log into the ACM Hub Cluster
 
@@ -453,12 +461,12 @@ When the PlacementDecision changes (e.g., failover), ArgoCD automatically deploy
                      clusterRegion: us-east-1
                      s3Bucket: ${S3_BUCKET_EAST}
                      s3RoleArn: ${S3_ROLE_ARN_EAST}
-                     efsId: ${EFS_ID_EAST}
+                     efsId: ${EFS_ID_PRIMARY}
                    - name: ${CLUSTER_WEST}
                      clusterRegion: us-west-2
                      s3Bucket: ${S3_BUCKET_WEST}
                      s3RoleArn: ${S3_ROLE_ARN_WEST}
-                     efsId: ${EFS_ID_WEST}
+                     efsId: ${EFS_ID_DR}
      template:
        metadata:
          name: acm-demo-{{.name}}
@@ -521,6 +529,125 @@ When the PlacementDecision changes (e.g., failover), ArgoCD automatically deploy
    NAME                SYNC STATUS   HEALTH STATUS
    acm-demo-kmc-east   Synced        Healthy
    ```
+
+## Prepare DR Cluster for EFS Data Continuity
+
+When ArgoCD deploys the application to the DR cluster, the Helm chart dynamically provisions new EFS access points for each PVC. These new access points create fresh, empty subdirectories — the replicated data from the primary EFS lives under different paths. To ensure the DR application sees the replicated data, pre-create static PersistentVolumes on the DR cluster that point to the original data paths.
+
+The demo application uses 3 EFS-backed PVCs:
+- `shared-flight-data` — shared volume mounted by the dashboard and flight recorder
+- `flight-data-flight-recorder-0` — StatefulSet replica 0
+- `flight-data-flight-recorder-1` — StatefulSet replica 1
+
+### Record the PVC-to-path mapping
+
+{{< alert >}}
+Record this mapping as part of your DR preparation and keep it up to date. In a real disaster, the primary cluster API might not be available to query.
+{{< /alert >}}
+
+On the primary cluster, map each PVC to its EFS access point path. The PV `volumeHandle` format is `<efs-id>::<access-point-id>`, and each access point has a root directory path where the PVC's data is stored:
+
+```bash
+EAST_API=$(rosa describe cluster -c $CLUSTER_EAST -o json | jq -r '.api.url')
+oc login $EAST_API --username cluster-admin --password "$CLUSTER_ADMIN_PASSWORD"
+
+for PVC in shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1; do
+  PV=$(oc get pvc $PVC -n ${NAMESPACE} -o jsonpath='{.spec.volumeName}')
+  AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
+  AP_PATH=$(aws efs describe-access-points \
+    --access-point-id $AP_ID \
+    --region $PRIMARY_REGION \
+    --query 'AccessPoints[0].RootDirectory.Path' \
+    --output text)
+  echo "$PVC -> $AP_PATH"
+done
+```
+
+Export the paths from the output:
+
+```bash
+export SHARED_FLIGHT_DATA_PATH=<path-from-output-for-shared-flight-data>
+export FLIGHT_DATA_RECORDER_0_PATH=<path-from-output-for-flight-data-flight-recorder-0>
+export FLIGHT_DATA_RECORDER_1_PATH=<path-from-output-for-flight-data-flight-recorder-1>
+```
+
+### Pre-stage static PersistentVolumes on the DR cluster
+
+Log into the DR cluster and create static PVs with `claimRef` pre-binding. The `claimRef` reserves each PV for a specific PVC so that when ArgoCD deploys the application, the PVCs bind to these PVs instead of dynamically provisioning new access points:
+
+```bash
+WEST_API=$(rosa describe cluster -c $CLUSTER_WEST -o json | jq -r '.api.url')
+oc login $WEST_API --username cluster-admin --password "$CLUSTER_ADMIN_PASSWORD"
+
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-shared-flight-data
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: acm-efs-sc
+  claimRef:
+    namespace: ${NAMESPACE}
+    name: shared-flight-data
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${EFS_ID_DR}:${SHARED_FLIGHT_DATA_PATH}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-flight-data-0
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: acm-efs-sc
+  claimRef:
+    namespace: ${NAMESPACE}
+    name: flight-data-flight-recorder-0
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${EFS_ID_DR}:${FLIGHT_DATA_RECORDER_0_PATH}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dr-flight-data-1
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: acm-efs-sc
+  claimRef:
+    namespace: ${NAMESPACE}
+    name: flight-data-flight-recorder-1
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${EFS_ID_DR}:${FLIGHT_DATA_RECORDER_1_PATH}
+EOF
+```
+
+Log back into the ACM hub:
+
+```bash
+oc login $ACM_API --username cluster-admin --password "$CLUSTER_ADMIN_PASSWORD"
+```
+
+{{< alert >}}
+**Why static provisioning?** When the EFS CSI driver dynamically provisions a PVC, it creates a new access point with a unique subdirectory (e.g., `/acm-demo/pvc-xyz789`). The replicated data from the primary lives under the original subdirectory (e.g., `/acm-demo/pvc-abc123`). A dynamically provisioned PVC on the DR side would mount an empty directory. Static PVs with `claimRef` pre-binding ensure the DR PVCs mount the replicated data paths. The `claimRef` reserves each PV so only the named PVC can bind to it.
+{{< /alert >}}
 
 ## Set Up DNS
 
@@ -590,6 +717,30 @@ Simulate a region failure by stopping the worker instances on the east cluster.
    curl -sk https://${CUSTOM_DOMAIN}/healthz
    ```
 
+1. Verify EFS replication is healthy and review the most recent replication timestamp before promoting the DR file system
+
+   ```bash
+   aws efs describe-replication-configurations \
+     --region $PRIMARY_REGION \
+     --file-system-id $EFS_ID_PRIMARY \
+     --query 'Replications[0].Destinations[0].{Status:Status,LastReplicatedTimestamp:LastReplicatedTimestamp}' \
+     --output table
+   ```
+
+   Confirm that the replication status is `ENABLED` and that `LastReplicatedTimestamp` meets your recovery point objective before proceeding. Data written after the last replicated timestamp might not be available on the DR file system.
+
+1. Delete EFS replication to promote the DR replica to read-write
+
+   {{< alert >}}
+   EFS cross-region replicas are read-only while replication is active. The DR cluster's pods cannot write to the replica file system until it is promoted. Deleting the replication configuration is the only way to promote it — AWS does not have a separate `promote` API. Once deleted, the DR EFS becomes an independent read-write file system. During failback, the guide re-establishes replication from primary to DR.
+   {{< /alert >}}
+
+   ```bash
+   aws efs delete-replication-configuration \
+     --source-file-system-id $EFS_ID_PRIMARY \
+     --region $PRIMARY_REGION
+   ```
+
 1. Get the east cluster worker instance IDs
 
    ```bash
@@ -650,6 +801,17 @@ Simulate a region failure by stopping the worker instances on the east cluster.
 
 Failing back is a manual process. The Steady prioritizer in the Placement keeps the application on the current (west) cluster even after east recovers, preventing unnecessary flip-flopping.
 
+{{< alert >}}
+**Do not fail traffic back to the primary cluster until data written in the DR region has been reconciled.**
+
+During failover, the DR EFS file system and DR S3 bucket become independent writable data stores. Writes made in the DR region are not automatically copied back to the primary region.
+
+- **EFS:** The primary resumes using its original EFS, which does not contain writes made to the DR EFS during failover. Re-establishing replication (primary → DR) below will overwrite the DR EFS with the primary's data. In a production environment, copy or merge DR EFS data back to the primary before this step.
+- **S3:** S3 Cross-Region Replication is one-directional (primary → DR). Objects written to the DR bucket during failover are not replicated back to the primary bucket (the primary bucket will return 404 for those objects). To preserve DR-written data, set up reverse replication (DR → primary) or manually sync with `aws s3 sync` before re-establishing normal replication.
+
+For this demonstration, if no DR-side data needs to be preserved, you can restart the primary workers and re-establish primary-to-DR replication as shown below.
+{{< /alert >}}
+
 1. Start the east worker instances
 
    ```bash
@@ -682,6 +844,24 @@ Failing back is a manual process. The Steady prioritizer in the Placement keeps 
    ```
 
    Wait until `acm-demo-kmc-east` shows `Synced`/`Healthy`.
+
+1. Re-establish EFS replication from primary to DR
+
+   Before allowing production traffic to return to the primary cluster, verify that the application is healthy and that any required DR-side EFS and S3 data has been reconciled. Application health alone is not sufficient to determine that a stateful workload is ready for failback.
+
+   Re-establish EFS replication so it is in place for future failovers. First, disable the overwrite protection that AWS enables on the replica after replication is deleted:
+
+   ```bash
+   aws efs update-file-system-protection \
+     --file-system-id $EFS_ID_DR \
+     --region $DR_REGION \
+     --replication-overwrite-protection DISABLED
+
+   aws efs create-replication-configuration \
+     --region $PRIMARY_REGION \
+     --source-file-system-id $EFS_ID_PRIMARY \
+     --destinations "[{\"Region\": \"${DR_REGION}\", \"FileSystemId\": \"${EFS_ID_DR}\"}]"
+   ```
 
 1. Switch DNS back to the east cluster
 
@@ -734,10 +914,12 @@ Failing back is a manual process. The Steady prioritizer in the Placement keeps 
 
 ## Production Considerations
 
-- **Data replication:** This guide covers application placement only. Configure [S3 Cross-Region Replication](https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html) and [EFS replication](https://docs.aws.amazon.com/efs/latest/ug/efs-replication.html) to ensure data continuity across regions.
+- **EFS path mapping:** Record and maintain the PVC-to-EFS access point path mapping as part of your DR runbook. In a real disaster, the primary cluster API might not be available to query. Update this mapping whenever PVCs are recreated.
+- **Data reconciliation before failback:** Both EFS and S3 replication are one-directional (primary → DR). Data written during failover must be manually synced or merged back to the primary before re-establishing replication. See the [ROSA DR with OADP](/experts/rosa/rosa-oadp-dr/) guide for detailed failback data reconciliation steps.
 - **ACM hub availability:** The ACM hub is a single point of failure for failover detection. In production, deploy the hub with high availability or consider an active-passive hub configuration.
 - **DNS automation:** Replace the manual DNS switch with Route 53 health checks and failover routing policies for fully automated DR.
 - **Lease duration tuning:** The 10-second lease used in this guide is aggressive. For production, balance detection speed against the risk of false positives from transient network issues. A 60-second lease is a reasonable starting point.
+- **EFS mount targets:** Ensure the DR cluster has EFS mount targets in all worker subnets before a disaster occurs. Creating mount targets during a failover adds delay to the recovery process.
 
 ## Cleanup
 
