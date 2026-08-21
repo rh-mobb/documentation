@@ -1089,75 +1089,13 @@ aws efs delete-replication-configuration \
 
 **On the DR cluster**
 
-Create static PVs using the EFS access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5). These paths ensure the restored application mounts the replicated data rather than empty directories:
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: dr-shared-flight-data
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${SHARED_FLIGHT_DATA_PATH}
-EOF
-```
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: dr-flight-data-0
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_0_PATH}
-EOF
-```
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: dr-flight-data-1
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_1_PATH}
-EOF
-```
-
 Log in to the DR cluster and wait for Velero to sync the backup (this happens automatically within a minute):
 
 ```bash
 oc get backup -n openshift-adp
 ```
 
-Create the restore, excluding PVCs and PVs so the static PVs are used instead of dynamically provisioning new ones:
+Create the restore, excluding PVCs and PVs. The restore recreates the namespace and application resources but not the storage — we will create static PVs that point to the replicated EFS data:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -1180,60 +1118,61 @@ spec:
 EOF
 ```
 
-Create the PVCs that bind to the static PVs:
+Wait for the restore to complete:
 
 ```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: shared-flight-data
-  namespace: dr-demo
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: dr-shared-flight-data
-  resources:
-    requests:
-      storage: 5Gi
-EOF
+watch "oc get restore -n openshift-adp -o jsonpath='{.items[-1].status.phase}' && echo"
 ```
 
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: flight-data-flight-recorder-0
-  namespace: dr-demo
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: dr-flight-data-0
-  resources:
-    requests:
-      storage: 5Gi
-EOF
-```
+Create static PVs and PVCs that mount the replicated EFS data. This uses the access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5):
 
 ```bash
-cat <<EOF | oc apply -f -
+for ENTRY in \
+  "shared-flight-data:dr-shared-flight-data:${SHARED_FLIGHT_DATA_PATH}" \
+  "flight-data-flight-recorder-0:dr-flight-data-0:${FLIGHT_DATA_RECORDER_0_PATH}" \
+  "flight-data-flight-recorder-1:dr-flight-data-1:${FLIGHT_DATA_RECORDER_1_PATH}"; do
+
+  PVC_NAME=$(echo $ENTRY | cut -d: -f1)
+  PV_NAME=$(echo $ENTRY | cut -d: -f2)
+  EFS_PATH=$(echo $ENTRY | cut -d: -f3)
+
+  cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: $PV_NAME
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    name: $PVC_NAME
+    namespace: dr-demo
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${EFS_PATH}
+EOF
+
+  cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: flight-data-flight-recorder-1
+  name: $PVC_NAME
   namespace: dr-demo
 spec:
   accessModes:
     - ReadWriteMany
   storageClassName: ""
-  volumeName: dr-flight-data-1
+  volumeName: $PV_NAME
   resources:
     requests:
       storage: 5Gi
 EOF
+done
 ```
 
 Update the service account annotations and environment variables to use the DR cluster's IAM role and region. The restore brings over the primary cluster's values, which must be updated for the DR cluster's OIDC provider:
@@ -1454,69 +1393,7 @@ Wait for Velero to be ready (it will automatically reschedule when the nodes are
 oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
 ```
 
-Create static PVs using the EFS access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5). These paths ensure the restored application mounts the replicated data rather than empty directories:
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: dr-shared-flight-data
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${SHARED_FLIGHT_DATA_PATH}
-EOF
-```
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: dr-flight-data-0
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_0_PATH}
-EOF
-```
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: dr-flight-data-1
-spec:
-  capacity:
-    storage: 5Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: ${DR_EFS}:${FLIGHT_DATA_RECORDER_1_PATH}
-EOF
-```
-
-Restore from the backup, excluding PVCs and PVs so the static PVs are used:
+Restore from the backup, excluding PVCs and PVs. The restore recreates the namespace and application resources but not the storage — we will create static PVs that point to the replicated EFS data:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -1539,62 +1416,6 @@ spec:
 EOF
 ```
 
-Create the PVCs that bind to the static PVs:
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: shared-flight-data
-  namespace: dr-demo
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: dr-shared-flight-data
-  resources:
-    requests:
-      storage: 5Gi
-EOF
-```
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: flight-data-flight-recorder-0
-  namespace: dr-demo
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: dr-flight-data-0
-  resources:
-    requests:
-      storage: 5Gi
-EOF
-```
-
-```bash
-cat <<EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: flight-data-flight-recorder-1
-  namespace: dr-demo
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: dr-flight-data-1
-  resources:
-    requests:
-      storage: 5Gi
-EOF
-```
-
 Wait for the restore to complete and the namespace to be available:
 
 ```bash
@@ -1607,6 +1428,57 @@ until oc get namespace dr-demo &>/dev/null; do
   sleep 5
 done
 echo "Namespace dr-demo is ready."
+```
+
+Create static PVs and PVCs that mount the replicated EFS data. This uses the access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5):
+
+```bash
+for ENTRY in \
+  "shared-flight-data:dr-shared-flight-data:${SHARED_FLIGHT_DATA_PATH}" \
+  "flight-data-flight-recorder-0:dr-flight-data-0:${FLIGHT_DATA_RECORDER_0_PATH}" \
+  "flight-data-flight-recorder-1:dr-flight-data-1:${FLIGHT_DATA_RECORDER_1_PATH}"; do
+
+  PVC_NAME=$(echo $ENTRY | cut -d: -f1)
+  PV_NAME=$(echo $ENTRY | cut -d: -f2)
+  EFS_PATH=$(echo $ENTRY | cut -d: -f3)
+
+  cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: $PV_NAME
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    name: $PVC_NAME
+    namespace: dr-demo
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${DR_EFS}:${EFS_PATH}
+EOF
+
+  cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: $PVC_NAME
+  namespace: dr-demo
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: $PV_NAME
+  resources:
+    requests:
+      storage: 5Gi
+EOF
+done
 ```
 
 Update the service account annotations and environment variables for the DR region:
