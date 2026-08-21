@@ -418,6 +418,52 @@ Stop after **Attach EFS permissions to the worker role**. Do **not** continue to
 Skip the "Create an EFS file system" section. This DR guide handles EFS file system creation, security groups, mount targets, and StorageClass in the steps below.
 {{< /alert >}}
 
+### Create the EFS StorageClass
+
+Create the StorageClass on **both** clusters. Use `directoryPerms: "755"` so that EFS-provisioned directories are readable by any UID — this is required for DR because the DR cluster's pods run under a different UID range than the primary.
+
+**On the primary cluster:**
+
+```bash
+cat <<EOF | oc apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+parameters:
+  basePath: /dynamic_provisioning
+  directoryPerms: "755"
+  fileSystemId: ${PRIMARY_EFS}
+  gidRangeEnd: "2000"
+  gidRangeStart: "1000"
+  provisioningMode: efs-ap
+provisioner: efs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+EOF
+```
+
+**On the DR cluster:**
+
+```bash
+cat <<EOF | oc apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+parameters:
+  basePath: /dynamic_provisioning
+  directoryPerms: "755"
+  fileSystemId: ${DR_EFS}
+  gidRangeEnd: "2000"
+  gidRangeStart: "1000"
+  provisioningMode: efs-ap
+provisioner: efs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+EOF
+```
+
 ## Step 3: Create IAM Roles
 
 ### Application S3 access roles
