@@ -1144,11 +1144,13 @@ oc get backup -n openshift-adp
 Create the restore, excluding PVCs and PVs. The restore recreates the namespace and application resources but not the storage — we will create static PVs that point to the replicated EFS data:
 
 ```bash
+export RESTORE_NAME=dr-restore-$(date +%Y%m%d-%H%M)
+
 cat <<EOF | oc apply -f -
 apiVersion: velero.io/v1
 kind: Restore
 metadata:
-  name: dr-restore-$(date +%Y%m%d-%H%M)
+  name: ${RESTORE_NAME}
   namespace: openshift-adp
 spec:
   backupName: ${BACKUP_NAME}
@@ -1167,7 +1169,7 @@ EOF
 Wait for the restore to complete:
 
 ```bash
-watch "oc get restore -n openshift-adp -o jsonpath='{.items[-1].status.phase}' && echo"
+watch "oc get restore $RESTORE_NAME -n openshift-adp -o jsonpath='{.status.phase}' && echo"
 ```
 
 Create static PVs and PVCs that mount the replicated EFS data. This uses the access point paths recorded during DR preparation (see "Record EFS Path Mapping" after Step 5):
@@ -1442,11 +1444,13 @@ oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=3
 Restore from the backup, excluding PVCs and PVs. The restore recreates the namespace and application resources but not the storage — we will create static PVs that point to the replicated EFS data:
 
 ```bash
+export RESTORE_NAME=dr-cold-restore-$(date +%Y%m%d-%H%M)
+
 cat <<EOF | oc apply -f -
 apiVersion: velero.io/v1
 kind: Restore
 metadata:
-  name: dr-cold-restore-$(date +%Y%m%d-%H%M)
+  name: ${RESTORE_NAME}
   namespace: openshift-adp
 spec:
   backupName: ${BACKUP_NAME}
@@ -1465,7 +1469,7 @@ EOF
 Wait for the restore to complete and the namespace to be available:
 
 ```bash
-watch "oc get restore -n openshift-adp -o jsonpath='{.items[-1].status.phase}' && echo"
+watch "oc get restore $RESTORE_NAME -n openshift-adp -o jsonpath='{.status.phase}' && echo"
 ```
 
 ```bash
