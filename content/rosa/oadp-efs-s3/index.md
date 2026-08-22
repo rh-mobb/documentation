@@ -11,13 +11,13 @@ validated_version: "4.22"
 
 This guide shows a disaster recovery pattern for applications running on two existing ROSA HCP clusters. It uses OADP to back up and restore Kubernetes resources, S3 Cross-Region Replication for object data, and EFS replication for persistent file data.
 
-The workflow supports both hot-to-warm and hot-to-cold recovery. Both models use the same recovery procedure. In a hot-to-cold model, bring the DR cluster compute online first, then run the same recovery steps.
+The validated workflow covers hot-to-warm recovery. The same recovery procedure is intended for hot-to-cold recovery, with the additional step of bringing DR compute online first; that compute-start delta is pending Multi-AZ validation.
 
 This article keeps the recovery decisions visible. Helper scripts are used only for repetitive setup tasks such as IAM, S3, EFS, OADP installation, and recording EFS PVC mappings.
 
-ACM and GitOps based recovery are intentionally out of scope for this article and are covered separately.
+ACM and GitOps based recovery are intentionally out of scope for this article.
 
-## 0. Architecture
+## Architecture
 
 The reference environment has:
 
@@ -30,11 +30,11 @@ The reference environment has:
 - OADP installed on both clusters
 - An example workload that writes object data to S3 and file data to EFS
 
-During recovery, OADP restores the Kubernetes objects. EFS file data is not restored dynamically by OADP. Instead, the DR cluster uses static PersistentVolumes that point at the original replicated EFS paths recorded before the disaster.
+During recovery, OADP restores the Kubernetes objects. EFS file data is not restored dynamically by OADP. Instead, the DR cluster reconstructs one EFS access point for each recorded PVC path, then uses static PersistentVolumes with `volumeHandle: <dr-efs-id>::<dr-access-point-id>`. This preserves the original replicated EFS paths and the access point POSIX identity needed for writes.
 
 DNS or traffic cutover is external to this guide. After recovery is validated, update DNS, load balancer, or application routing according to your environment.
 
-## 1. Requirements
+## 0. Prerequisites
 
 You need:
 
@@ -45,6 +45,14 @@ You need:
 - `jq`
 - AWS permissions for IAM, EC2, S3, and EFS
 - Cluster admin access to both clusters
+
+The helper scripts used in this guide are included with the article source under `content/rosa/oadp-efs-s3/scripts/`. Clone or download the `rh-mobb/documentation` repository and run the commands from the `content/rosa/oadp-efs-s3` directory so the `./scripts/...` paths resolve correctly:
+
+```bash
+cd content/rosa/oadp-efs-s3
+```
+
+Invoke helpers as `./scripts/<script>.sh`. Do not `cd scripts`.
 
 The examples use these names:
 
@@ -94,11 +102,11 @@ source "$DR_ENV"
 
 The helper scripts write generated values to `dr.env` so later steps do not require manually copying IDs and ARNs. Each helper updates existing keys instead of appending duplicate entries.
 
-## 2. Prepare the DR Foundation
+## 1. Prepare the DR Foundation
 
 Run the setup steps before deploying or protecting the workload.
 
-### 2.1 Install the EFS CSI Driver
+### 1.1 Install the EFS CSI Driver
 
 Install the EFS CSI Driver on each cluster:
 
@@ -119,7 +127,7 @@ oc get pods -n openshift-cluster-csi-drivers | grep efs
 oc get clustercsidriver efs.csi.aws.com
 ```
 
-### 2.2 Configure S3 Replication
+### 1.2 Configure S3 Replication
 
 Create S3 buckets for application data and OADP backups, then configure one-way replication from primary to DR:
 
@@ -142,7 +150,7 @@ The script writes these values to `dr.env`:
 
 S3 Cross-Region Replication in this guide is one-way: primary to DR. Objects written to the DR bucket during failover are not automatically copied back to the primary bucket.
 
-### 2.3 Configure EFS Replication
+### 1.3 Configure EFS Replication
 
 Create the primary EFS file system, mount targets, and the DR replica:
 
@@ -189,7 +197,7 @@ source "$DR_ENV"
 
 The StorageClass uses dynamic EFS access point provisioning and `directoryPerms: "755"`. The validation helper creates a small throwaway PVC on the primary cluster, waits for it to bind, and removes the smoke-test namespace before continuing.
 
-### 2.4 Configure OADP
+### 1.4 Configure OADP
 
 Install OADP on both clusters and create the DataProtectionApplication objects:
 
@@ -223,7 +231,7 @@ oc get backupstoragelocation -n openshift-adp
 
 The phase must be `Available`.
 
-## 3. Deploy the Example Workload
+## 2. Deploy the Example Workload
 
 Phoenix Mission Control is used only as a lightweight example because it exercises the recovery cases this guide cares about:
 
@@ -263,7 +271,7 @@ printf '%s\n' "s3-$VALIDATION_ID" | aws s3 cp - \
 
 Adjust the in-pod EFS path if your example workload mounts EFS somewhere else.
 
-## 4. Record EFS PVC Mappings Before Failure
+## 3. Record EFS PVC Mappings Before Failure
 
 Record the EFS mapping while the primary cluster API is available:
 
@@ -293,9 +301,9 @@ Example:
 
 ```csv
 namespace,pvc,pv,source_access_point_id,efs_path,posix_uid,posix_gid,root_owner_uid,root_owner_gid,root_permissions,statefulset_ordinal,requested_storage,access_modes
-dr-demo,shared-flight-data,pvc-d7b69237,fsap-abc123,/dynamic_provisioning/pvc-d7b69237,1000,1000,1000,1000,750,,5Gi,ReadWriteMany
-dr-demo,flight-data-flight-recorder-0,pvc-483625aa,fsap-def456,/dynamic_provisioning/pvc-483625aa,1001,1001,1001,1001,750,0,5Gi,ReadWriteMany
-dr-demo,flight-data-flight-recorder-1,pvc-16a379dd,fsap-ghi789,/dynamic_provisioning/pvc-16a379dd,1002,1002,1002,1002,750,1,5Gi,ReadWriteMany
+dr-demo,shared-flight-data,pvc-d7b69237,fsap-abc123,/dynamic_provisioning/pvc-d7b69237,1000,1000,1000,1000,755,,5Gi,ReadWriteMany
+dr-demo,flight-data-flight-recorder-0,pvc-483625aa,fsap-def456,/dynamic_provisioning/pvc-483625aa,1001,1001,1001,1001,755,0,5Gi,ReadWriteMany
+dr-demo,flight-data-flight-recorder-1,pvc-16a379dd,fsap-ghi789,/dynamic_provisioning/pvc-16a379dd,1002,1002,1002,1002,755,1,5Gi,ReadWriteMany
 ```
 
 This mapping is critical for EFS recovery.
@@ -313,7 +321,7 @@ Each ordinal PVC can have a different original EFS path. Record every PVC separa
 
 Store the mapping file with your DR runbook. Do not assume the primary cluster API will be available during a disaster.
 
-## 5. Create an OADP Backup
+## 4. Create an OADP Backup
 
 Create a backup on the primary cluster and verify the exact backup appears on the DR cluster:
 
@@ -325,9 +333,11 @@ source "$DR_ENV"
 
 The backup intentionally excludes PVs and PVCs. EFS data is protected by EFS replication, and the DR cluster recreates the EFS claims from the mapping file recorded before the disaster.
 
-The helper creates the Velero `Backup`, waits for phase `Completed`, records `BACKUP_NAME` in `dr.env`, and verifies that the same backup name is visible from the DR cluster. For validation it also copies the exact Velero backup prefix from the primary OADP bucket to the DR OADP bucket so the test does not depend on S3 replication timing.
+The helper creates the Velero `Backup`, waits for phase `Completed`, records `BACKUP_NAME` in `dr.env`, waits for the exact Velero backup prefix to appear in the DR OADP bucket through S3 replication, and verifies that the same backup name is visible from the DR cluster.
 
-## 6. Recover to the DR Cluster
+For validation-only testing, the helper has an optional `--sync-to-dr-for-validation` flag that copies the exact Velero backup prefix from the primary OADP bucket to the DR OADP bucket. Do not use that flag as the normal recovery path because it bypasses the OADP-bucket CRR behavior this guide is validating.
+
+## 5. Recover to the DR Cluster
 
 Use this same recovery procedure for hot-to-warm and hot-to-cold.
 
@@ -346,7 +356,7 @@ oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=3
 
 Scale only the DR machine pool or pools that host the recovered workload. Use the name shown by `rosa list machinepools`.
 
-### 6.1 Confirm EFS Replication Freshness
+### 5.1 Confirm EFS Replication Freshness
 
 Before promoting EFS, verify that replication is healthy and recent enough for your recovery point objective:
 
@@ -367,7 +377,7 @@ Continue only if:
 
 Any data written after the last replicated timestamp might not exist on the DR file system.
 
-### 6.2 Promote the DR EFS Replica
+### 5.2 Promote the DR EFS Replica
 
 EFS replicas are read-only while replication is active. Promote the DR EFS file system by deleting the replication configuration:
 
@@ -402,7 +412,7 @@ aws efs describe-mount-targets \
 
 All mount targets used by DR worker subnets must be `available`.
 
-### 6.3 Recreate Static EFS Persistent Volumes and Claims
+### 5.3 Recreate Static EFS Persistent Volumes and Claims
 
 Use the mapping file recorded before the disaster. Create one DR EFS access point, one static PV, and one matching PVC for every EFS-backed claim in the mapping file. This avoids relying on OADP to rewrite restored PVC binding fields and preserves the access point POSIX identity needed for writes.
 
@@ -423,7 +433,7 @@ The important fields are:
 
 The helper waits until every recreated claim is `Bound` before returning.
 
-### 6.4 Restore Kubernetes Resources with OADP
+### 5.4 Restore Kubernetes Resources with OADP
 
 Restore the application namespace. Exclude PVs and PVCs because you already recreated the EFS-backed storage objects from the recorded mapping file. Workloads are restored only after the claims are present and bound.
 
@@ -434,7 +444,7 @@ source "$DR_ENV"
 
 The helper creates the Velero `Restore`, waits for phase `Completed`, records `RESTORE_NAME` in `dr.env`, and applies the DR-specific S3 bucket, Region, and IAM role values for Phoenix.
 
-### 6.5 Apply DR-Specific Configuration
+### 5.5 Apply DR-Specific Configuration
 
 The restored workload can contain primary-region values. For Phoenix Mission Control, the restore helper applies:
 
@@ -447,7 +457,7 @@ DR_CLUSTER_NAME
 
 For other applications, update any region-specific bucket names, IAM role annotations, external endpoints, or configuration values before sending traffic to DR.
 
-### 6.6 Validate Recovery
+### 5.6 Validate Recovery
 
 Run the recovery validator:
 
@@ -460,7 +470,7 @@ The validator checks StatefulSet readiness, PVC binding, each PV handle, each DR
 
 After these checks pass, perform your external DNS or traffic cutover.
 
-## 7. Failback Considerations
+## 6. Failback Considerations
 
 Failback is not a single generic command. Treat it as an application data reconciliation event.
 
@@ -477,9 +487,11 @@ Be careful when re-establishing EFS replication from primary to DR. AWS enables 
 
 S3 CRR in this guide is one-way. To preserve DR-side S3 writes, configure reverse replication or manually synchronize objects before returning traffic to primary.
 
-## 8. Cleanup
+## 7. Cleanup
 
 Cleanup was validated for the current single-AZ validation run. The helper scripts record generated resource names in `dr.env`; use that file as the cleanup source of truth.
+
+Only run `cleanup-openshift.sh` if the OADP and EFS CSI installations were created specifically for this exercise. The OpenShift cleanup helper removes the Phoenix namespace, OADP resources, and EFS CSI resources from the current cluster context. If OADP or EFS CSI already existed on the cluster or is shared by other workloads, remove only the exercise-specific resources manually.
 
 Run cleanup in this order and stop if any subsystem fails:
 

@@ -3,19 +3,24 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: create-dr-backup.sh --env-file FILE
+Usage: create-dr-backup.sh --env-file FILE [--sync-to-dr-for-validation]
 
 Creates an OADP Backup for dr-demo, persists BACKUP_NAME in dr.env, waits for
-the backup to complete, copies the exact backup object prefix to the DR bucket,
-and verifies the exact backup name appears on the DR cluster.
+the backup to complete, waits for the exact backup object prefix to replicate
+to the DR bucket, and verifies the exact backup name appears on the DR cluster.
+
+Use --sync-to-dr-for-validation only for deterministic validation runs where
+you intentionally do not want to wait for S3 CRR timing.
 EOF
 }
 
 ENV_FILE="./dr.env"
+SYNC_TO_DR_FOR_VALIDATION=false
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --env-file) ENV_FILE="$2"; shift 2 ;;
+    --sync-to-dr-for-validation) SYNC_TO_DR_FOR_VALIDATION=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
@@ -107,12 +112,30 @@ for attempt in $(seq 1 60); do
   sleep 10
 done
 
-echo "Copying exact backup prefix to DR object bucket."
 aws s3 ls "s3://${OADP_BUCKET_PRIMARY}/velero/backups/${BACKUP_NAME}/" --region "$PRIMARY_REGION"
-aws s3 sync "s3://${OADP_BUCKET_PRIMARY}/velero/backups/${BACKUP_NAME}/" \
-  "s3://${OADP_BUCKET_DR}/velero/backups/${BACKUP_NAME}/" \
-  --source-region "$PRIMARY_REGION" \
-  --region "$DR_REGION"
+
+if [ "$SYNC_TO_DR_FOR_VALIDATION" = "true" ]; then
+  echo "Validation-only: copying exact backup prefix to DR object bucket."
+  aws s3 sync "s3://${OADP_BUCKET_PRIMARY}/velero/backups/${BACKUP_NAME}/" \
+    "s3://${OADP_BUCKET_DR}/velero/backups/${BACKUP_NAME}/" \
+    --source-region "$PRIMARY_REGION" \
+    --region "$DR_REGION"
+else
+  echo "Waiting for backup prefix to replicate to DR object bucket."
+  for attempt in $(seq 1 90); do
+    listing=$(aws s3 ls "s3://${OADP_BUCKET_DR}/velero/backups/${BACKUP_NAME}/" --region "$DR_REGION" 2>/dev/null || true)
+    if [ -n "$listing" ]; then
+      printf '%s\n' "$listing"
+      break
+    fi
+    printf '[%s] waiting for S3 CRR of backup prefix %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$BACKUP_NAME"
+    if [ "$attempt" -eq 90 ]; then
+      echo "Timed out waiting for backup prefix ${BACKUP_NAME} to replicate to DR bucket." >&2
+      exit 1
+    fi
+    sleep 20
+  done
+fi
 
 echo "Waiting for backup ${BACKUP_NAME} to appear on ${DR_CLUSTER_NAME}."
 login_cluster "$DR_CLUSTER_NAME"
