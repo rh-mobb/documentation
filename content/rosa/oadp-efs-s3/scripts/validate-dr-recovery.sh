@@ -3,24 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: validate-dr-recovery.sh --env-file FILE
+Usage: validate-dr-recovery.sh
 
 Validates DR workload readiness, PVC/PV/EFS access-point mapping, old and new
 EFS markers, old and new S3 markers, and the route hostname.
 EOF
 }
 
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)
@@ -42,16 +38,6 @@ fi
 
 export AWS_PAGER=""
 
-upsert_env() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  tmp=$(mktemp)
-  touch "$ENV_FILE"
-  grep -v -E "^export ${key}=" "$ENV_FILE" > "$tmp" || true
-  printf 'export %s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 
 login_cluster() {
   local cluster_name="$1"
@@ -136,7 +122,7 @@ aws s3 cp "s3://${APP_BUCKET_DR}/validation/${VALIDATION_ID}.txt" - --region "$D
 
 DR_VALIDATION_ID="dr-$(date +%Y%m%d-%H%M%S)"
 export DR_VALIDATION_ID
-upsert_env DR_VALIDATION_ID "$DR_VALIDATION_ID"
+echo "export DR_VALIDATION_ID=$DR_VALIDATION_ID"
 
 echo "New DR EFS marker:"
 oc exec -n dr-demo deploy/mission-control -- \

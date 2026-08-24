@@ -3,24 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: restore-dr-workload.sh --env-file FILE
+Usage: restore-dr-workload.sh
 
 Creates an OADP Restore from BACKUP_NAME, waits for completion, then applies
 DR-specific service-account IAM annotations and S3/region environment values.
 EOF
 }
 
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)
@@ -39,16 +35,6 @@ fi
 : "${APP_S3_ROLE_ARN_DR:?}"
 : "${TF_VAR_admin_password:?Source .env.fallback from the repository root before running this script.}"
 
-upsert_env() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  tmp=$(mktemp)
-  touch "$ENV_FILE"
-  grep -v -E "^export ${key}=" "$ENV_FILE" > "$tmp" || true
-  printf 'export %s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 
 login_cluster() {
   local cluster_name="$1"
@@ -60,9 +46,9 @@ login_cluster() {
 
 RESTORE_NAME="dr-restore-$(date +%Y%m%d-%H%M)"
 export RESTORE_NAME
-upsert_env RESTORE_NAME "$RESTORE_NAME"
+echo "export RESTORE_NAME=$RESTORE_NAME"
 
-echo "Creating OADP Restore ${RESTORE_NAME} on ${DR_CLUSTER_NAME}."
+echo "Creating OADP Restore ${RESTORE_NAME} on ${DR_CLUSTER_NAME}." >&2
 login_cluster "$DR_CLUSTER_NAME"
 
 cat <<EOF | oc apply -f -
@@ -103,7 +89,7 @@ for attempt in $(seq 1 60); do
   sleep 10
 done
 
-echo "Applying DR-specific S3 role and environment values."
+echo "Applying DR-specific S3 role and environment values." >&2
 oc annotate sa/s3-writer sa/dashboard -n dr-demo \
   eks.amazonaws.com/role-arn="$APP_S3_ROLE_ARN_DR" \
   --overwrite
@@ -114,4 +100,4 @@ oc set env deployment/telemetry-transmitter deployment/mission-control -n dr-dem
   CLUSTER_NAME="$DR_CLUSTER_NAME" \
   AWS_ROLE_ARN="$APP_S3_ROLE_ARN_DR"
 
-echo "DR workload restore and configuration completed."
+echo "DR workload restore and configuration completed." >&2

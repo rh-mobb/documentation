@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: install-efs-csi.sh --cluster NAME --region REGION --env-file FILE
+Usage: install-efs-csi.sh --cluster NAME --region REGION
 
 Installs/configures EFS CSI prerequisites for the currently logged-in cluster.
 Writes generated IAM values to the shared dr.env file.
@@ -12,14 +12,11 @@ EOF
 
 CLUSTER_NAME=""
 REGION=""
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --cluster) CLUSTER_NAME="$2"; shift 2 ;;
     --region) REGION="$2"; shift 2 ;;
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
@@ -27,16 +24,6 @@ done
 [ -n "$CLUSTER_NAME" ] || { echo "--cluster is required" >&2; exit 1; }
 [ -n "$REGION" ] || { echo "--region is required" >&2; exit 1; }
 
-upsert_env() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  tmp=$(mktemp)
-  touch "$ENV_FILE"
-  grep -v -E "^export ${key}=" "$ENV_FILE" > "$tmp" || true
-  printf 'export %s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 
 wait_subscription_csv_succeeded() {
   local namespace="$1"
@@ -258,9 +245,9 @@ wait_serviceaccount "$NAMESPACE" "aws-efs-csi-driver-controller-sa"
 wait_deployment_available "$NAMESPACE" "aws-efs-csi-driver-controller"
 
 ENV_PREFIX=$(echo "$CLUSTER_NAME" | tr '[:lower:]-' '[:upper:]_')
-upsert_env "${ENV_PREFIX}_EFS_CSI_ROLE_NAME" "$ROLE_NAME"
-upsert_env "${ENV_PREFIX}_EFS_CSI_ROLE_ARN" "$ROLE_ARN"
-upsert_env "${ENV_PREFIX}_EFS_CSI_POLICY_NAME" "$POLICY_NAME"
-upsert_env "${ENV_PREFIX}_EFS_CSI_POLICY_ARN" "$POLICY_ARN"
+echo "export ${ENV_PREFIX}_EFS_CSI_ROLE_NAME=$ROLE_NAME"
+echo "export ${ENV_PREFIX}_EFS_CSI_ROLE_ARN=$ROLE_ARN"
+echo "export ${ENV_PREFIX}_EFS_CSI_POLICY_NAME=$POLICY_NAME"
+echo "export ${ENV_PREFIX}_EFS_CSI_POLICY_ARN=$POLICY_ARN"
 
-echo "EFS CSI setup completed for $CLUSTER_NAME."
+echo "EFS CSI setup completed for $CLUSTER_NAME." >&2

@@ -3,24 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: validate-efs-replication.sh --env-file FILE
+Usage: validate-efs-replication.sh
 
 Verifies guide-created EFS file systems, mount targets, and replication status
 after configure-efs-replication.sh has run.
 EOF
 }
 
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 : "${PRIMARY_REGION:?}"
 : "${DR_REGION:?}"

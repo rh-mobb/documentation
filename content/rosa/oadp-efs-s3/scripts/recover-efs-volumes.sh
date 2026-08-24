@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: recover-efs-volumes.sh --env-file FILE
+Usage: recover-efs-volumes.sh
 
 Consumes efs-pvc-map.csv, creates one DR EFS access point per original PVC
 path while preserving POSIX/root metadata, creates static PV/PVC objects using
@@ -11,17 +11,13 @@ ${DR_EFS}::${DR_ACCESS_POINT_ID}, and waits for each claim to bind.
 EOF
 }
 
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)

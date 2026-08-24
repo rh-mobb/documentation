@@ -3,24 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: deploy-phoenix.sh --env-file FILE
+Usage: deploy-phoenix.sh
 
 Deploys the Phoenix Mission Control validation workload to the primary cluster.
 The current oc context must already be logged in to PRIMARY_CLUSTER_NAME.
 EOF
 }
 
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 : "${PRIMARY_CLUSTER_NAME:?}"
 : "${PRIMARY_REGION:?}"

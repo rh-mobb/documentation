@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: configure-oadp.sh --cluster NAME --region REGION --bucket BUCKET --role-suffix NAME --env-file FILE
+Usage: configure-oadp.sh --cluster NAME --region REGION --bucket BUCKET --role-suffix NAME
 
 Installs OADP for the currently logged-in cluster and configures a DPA.
 Writes generated OADP IAM values to dr.env.
@@ -14,7 +14,6 @@ CLUSTER_NAME=""
 REGION=""
 BUCKET=""
 ROLE_SUFFIX=""
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -22,8 +21,6 @@ while [ $# -gt 0 ]; do
     --region) REGION="$2"; shift 2 ;;
     --bucket) BUCKET="$2"; shift 2 ;;
     --role-suffix) ROLE_SUFFIX="$2"; shift 2 ;;
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
@@ -33,19 +30,8 @@ done
 [ -n "$BUCKET" ] || { echo "--bucket is required" >&2; exit 1; }
 [ -n "$ROLE_SUFFIX" ] || { echo "--role-suffix is required" >&2; exit 1; }
 
-source "$ENV_FILE"
 : "${AWS_ACCOUNT_ID:?}"
 
-upsert_env() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  tmp=$(mktemp)
-  touch "$ENV_FILE"
-  grep -v -E "^export ${key}=" "$ENV_FILE" > "$tmp" || true
-  printf 'export %s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 
 wait_subscription_csv_succeeded() {
   local namespace="$1"
@@ -264,7 +250,7 @@ spec:
 EOF
 
 ENV_PREFIX=$(echo "$ROLE_SUFFIX" | tr '[:lower:]-' '[:upper:]_')
-upsert_env "OADP_POLICY_ARN" "$POLICY_ARN"
-upsert_env "OADP_ROLE_ARN_${ENV_PREFIX}" "$ROLE_ARN"
+echo "export OADP_POLICY_ARN=$POLICY_ARN"
+echo "export OADP_ROLE_ARN_${ENV_PREFIX}=$ROLE_ARN"
 
-echo "OADP configuration submitted for $CLUSTER_NAME. Verify BSL availability before continuing."
+echo "OADP configuration submitted for $CLUSTER_NAME. Verify BSL availability before continuing." >&2

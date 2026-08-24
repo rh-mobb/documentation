@@ -3,26 +3,21 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: cleanup-efs.sh --env-file FILE
+Usage: cleanup-efs.sh
 
 Deletes EFS resources recorded in dr.env in this order:
 replication, access points, mount targets with wait, file systems, security groups.
 EOF
 }
 
-ENV_FILE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-[ -n "$ENV_FILE" ] || { echo "--env-file is required" >&2; exit 1; }
 # shellcheck disable=SC1090
-source "$ENV_FILE"
 
 : "${PRIMARY_REGION:?}"
 : "${DR_REGION:?}"

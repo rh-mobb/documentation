@@ -3,23 +3,19 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: configure-s3-replication.sh --env-file FILE
+Usage: configure-s3-replication.sh
 
 Requires PRIMARY_CLUSTER_NAME, DR_CLUSTER_NAME, PRIMARY_REGION, DR_REGION in dr.env.
 Creates app and OADP buckets, enables versioning, and configures one-way CRR.
 EOF
 }
 
-ENV_FILE="./dr.env"
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 : "${PRIMARY_CLUSTER_NAME:?}"
 : "${DR_CLUSTER_NAME:?}"
@@ -27,16 +23,6 @@ source "$ENV_FILE"
 : "${DR_REGION:?}"
 : "${AWS_ACCOUNT_ID:?}"
 
-upsert_env() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  tmp=$(mktemp)
-  touch "$ENV_FILE"
-  grep -v -E "^export ${key}=" "$ENV_FILE" > "$tmp" || true
-  printf 'export %s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 
 ensure_policy() {
   local policy_name="$1"
@@ -292,16 +278,16 @@ aws iam attach-role-policy --role-name "$APP_ROLE_DR" --policy-arn "$APP_POLICY_
 APP_S3_ROLE_ARN_PRIMARY=$(aws iam get-role --role-name "$APP_ROLE_PRIMARY" --query 'Role.Arn' --output text)
 APP_S3_ROLE_ARN_DR=$(aws iam get-role --role-name "$APP_ROLE_DR" --query 'Role.Arn' --output text)
 
-upsert_env "APP_BUCKET_PRIMARY" "$APP_BUCKET_PRIMARY"
-upsert_env "APP_BUCKET_DR" "$APP_BUCKET_DR"
-upsert_env "OADP_BUCKET_PRIMARY" "$OADP_BUCKET_PRIMARY"
-upsert_env "OADP_BUCKET_DR" "$OADP_BUCKET_DR"
-upsert_env "S3_REPLICATION_ROLE_NAME" "$ROLE_NAME"
-upsert_env "S3_REPLICATION_ROLE_ARN" "$ROLE_ARN"
-upsert_env "APP_S3_POLICY_ARN" "$APP_POLICY_ARN"
-upsert_env "APP_S3_ROLE_NAME_PRIMARY" "$APP_ROLE_PRIMARY"
-upsert_env "APP_S3_ROLE_NAME_DR" "$APP_ROLE_DR"
-upsert_env "APP_S3_ROLE_ARN_PRIMARY" "$APP_S3_ROLE_ARN_PRIMARY"
-upsert_env "APP_S3_ROLE_ARN_DR" "$APP_S3_ROLE_ARN_DR"
+echo "export APP_BUCKET_PRIMARY=$APP_BUCKET_PRIMARY"
+echo "export APP_BUCKET_DR=$APP_BUCKET_DR"
+echo "export OADP_BUCKET_PRIMARY=$OADP_BUCKET_PRIMARY"
+echo "export OADP_BUCKET_DR=$OADP_BUCKET_DR"
+echo "export S3_REPLICATION_ROLE_NAME=$ROLE_NAME"
+echo "export S3_REPLICATION_ROLE_ARN=$ROLE_ARN"
+echo "export APP_S3_POLICY_ARN=$APP_POLICY_ARN"
+echo "export APP_S3_ROLE_NAME_PRIMARY=$APP_ROLE_PRIMARY"
+echo "export APP_S3_ROLE_NAME_DR=$APP_ROLE_DR"
+echo "export APP_S3_ROLE_ARN_PRIMARY=$APP_S3_ROLE_ARN_PRIMARY"
+echo "export APP_S3_ROLE_ARN_DR=$APP_S3_ROLE_ARN_DR"
 
-echo "S3 replication configured from $PRIMARY_REGION to $DR_REGION."
+echo "S3 replication configured from $PRIMARY_REGION to $DR_REGION." >&2

@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: configure-efs-replication.sh --env-file FILE [options]
+Usage: configure-efs-replication.sh [options]
 
 Requires PRIMARY_CLUSTER_NAME, DR_CLUSTER_NAME, PRIMARY_REGION, DR_REGION in dr.env.
 
@@ -18,7 +18,6 @@ targets, and configures primary-to-DR EFS replication.
 EOF
 }
 
-ENV_FILE="./dr.env"
 PRIMARY_WORKER_SECURITY_GROUP_ID="${PRIMARY_WORKER_SECURITY_GROUP_ID:-}"
 DR_WORKER_SECURITY_GROUP_ID="${DR_WORKER_SECURITY_GROUP_ID:-}"
 PRIMARY_SUBNET_IDS="${PRIMARY_SUBNET_IDS:-}"
@@ -30,8 +29,6 @@ CLI_DR_SUBNET_IDS=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    --primary-worker-sg) CLI_PRIMARY_WORKER_SECURITY_GROUP_ID="$2"; shift 2 ;;
     --dr-worker-sg) CLI_DR_WORKER_SECURITY_GROUP_ID="$2"; shift 2 ;;
     --primary-subnets) CLI_PRIMARY_SUBNET_IDS="$2"; shift 2 ;;
     --dr-subnets) CLI_DR_SUBNET_IDS="$2"; shift 2 ;;
@@ -40,7 +37,6 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-source "$ENV_FILE"
 
 : "${PRIMARY_CLUSTER_NAME:?}"
 : "${DR_CLUSTER_NAME:?}"
@@ -52,16 +48,6 @@ DR_WORKER_SECURITY_GROUP_ID="${CLI_DR_WORKER_SECURITY_GROUP_ID:-${DR_WORKER_SECU
 PRIMARY_SUBNET_IDS="${CLI_PRIMARY_SUBNET_IDS:-${PRIMARY_SUBNET_IDS:-${PRIMARY_EFS_SUBNET_IDS:-}}}"
 DR_SUBNET_IDS="${CLI_DR_SUBNET_IDS:-${DR_SUBNET_IDS:-${DR_EFS_SUBNET_IDS:-}}}"
 
-upsert_env() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  tmp=$(mktemp)
-  touch "$ENV_FILE"
-  grep -v -E "^export ${key}=" "$ENV_FILE" > "$tmp" || true
-  printf 'export %s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 
 csv_to_words() {
   echo "$1" | tr ',' ' '
@@ -272,15 +258,15 @@ for subnet in $(csv_to_words "$DR_SUBNET_IDS"); do
 done
 wait_mount_targets "$DR_EFS" "$DR_REGION"
 
-upsert_env "PRIMARY_SUBNET_IDS" "$PRIMARY_SUBNET_IDS"
-upsert_env "DR_SUBNET_IDS" "$DR_SUBNET_IDS"
-upsert_env "PRIMARY_WORKER_SECURITY_GROUP_ID" "$PRIMARY_WORKER_SECURITY_GROUP_ID"
-upsert_env "DR_WORKER_SECURITY_GROUP_ID" "$DR_WORKER_SECURITY_GROUP_ID"
-upsert_env "VPC_PRIMARY" "$VPC_PRIMARY"
-upsert_env "VPC_DR" "$VPC_DR"
-upsert_env "EFS_SG_PRIMARY" "$EFS_SG_PRIMARY"
-upsert_env "EFS_SG_DR" "$EFS_SG_DR"
-upsert_env "PRIMARY_EFS" "$PRIMARY_EFS"
-upsert_env "DR_EFS" "$DR_EFS"
+echo "export PRIMARY_SUBNET_IDS=$PRIMARY_SUBNET_IDS"
+echo "export DR_SUBNET_IDS=$DR_SUBNET_IDS"
+echo "export PRIMARY_WORKER_SECURITY_GROUP_ID=$PRIMARY_WORKER_SECURITY_GROUP_ID"
+echo "export DR_WORKER_SECURITY_GROUP_ID=$DR_WORKER_SECURITY_GROUP_ID"
+echo "export VPC_PRIMARY=$VPC_PRIMARY"
+echo "export VPC_DR=$VPC_DR"
+echo "export EFS_SG_PRIMARY=$EFS_SG_PRIMARY"
+echo "export EFS_SG_DR=$EFS_SG_DR"
+echo "export PRIMARY_EFS=$PRIMARY_EFS"
+echo "export DR_EFS=$DR_EFS"
 
-echo "EFS replication configured: $PRIMARY_EFS -> $DR_EFS."
+echo "EFS replication configured: $PRIMARY_EFS -> $DR_EFS." >&2

@@ -3,26 +3,21 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: cleanup-s3.sh --env-file FILE
+Usage: cleanup-s3.sh
 
 Deletes the four versioned S3 buckets recorded in dr.env.
 All object versions and delete markers are purged before bucket deletion.
 EOF
 }
 
-ENV_FILE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-[ -n "$ENV_FILE" ] || { echo "--env-file is required" >&2; exit 1; }
 # shellcheck disable=SC1090
-source "$ENV_FILE"
 
 : "${APP_BUCKET_PRIMARY:?}"
 : "${APP_BUCKET_DR:?}"

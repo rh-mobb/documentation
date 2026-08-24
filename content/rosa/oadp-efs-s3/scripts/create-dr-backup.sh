@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: create-dr-backup.sh --env-file FILE [--sync-to-dr-for-validation]
+Usage: create-dr-backup.sh [--sync-to-dr-for-validation]
 
 Creates an OADP Backup for dr-demo, persists BACKUP_NAME in dr.env, waits for
 the backup to complete, waits for the exact backup object prefix to replicate
@@ -14,19 +14,15 @@ you intentionally do not want to wait for S3 CRR timing.
 EOF
 }
 
-ENV_FILE="./dr.env"
 SYNC_TO_DR_FOR_VALIDATION=false
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    --sync-to-dr-for-validation) SYNC_TO_DR_FOR_VALIDATION=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)
@@ -48,16 +44,6 @@ fi
 
 export AWS_PAGER=""
 
-upsert_env() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  tmp=$(mktemp)
-  touch "$ENV_FILE"
-  grep -v -E "^export ${key}=" "$ENV_FILE" > "$tmp" || true
-  printf 'export %s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 
 login_cluster() {
   local cluster_name="$1"
@@ -69,9 +55,9 @@ login_cluster() {
 
 BACKUP_NAME="dr-demo-$(date +%Y%m%d-%H%M)"
 export BACKUP_NAME
-upsert_env BACKUP_NAME "$BACKUP_NAME"
+echo "export BACKUP_NAME=$BACKUP_NAME"
 
-echo "Creating OADP Backup ${BACKUP_NAME} on ${PRIMARY_CLUSTER_NAME}."
+echo "Creating OADP Backup ${BACKUP_NAME} on ${PRIMARY_CLUSTER_NAME}." >&2
 login_cluster "$PRIMARY_CLUSTER_NAME"
 
 cat <<EOF | oc apply -f -
@@ -137,7 +123,7 @@ else
   done
 fi
 
-echo "Waiting for backup ${BACKUP_NAME} to appear on ${DR_CLUSTER_NAME}."
+echo "Waiting for backup ${BACKUP_NAME} to appear on ${DR_CLUSTER_NAME}." >&2
 login_cluster "$DR_CLUSTER_NAME"
 for attempt in $(seq 1 30); do
   if oc get backup -n openshift-adp "$BACKUP_NAME" >/dev/null 2>&1; then
@@ -148,5 +134,5 @@ for attempt in $(seq 1 30); do
   sleep 10
 done
 
-echo "Timed out waiting for backup ${BACKUP_NAME} to appear on DR." >&2
+echo "Timed out waiting for backup ${BACKUP_NAME} to appear on DR." >&2 >&2
 exit 1

@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: cleanup-iam.sh --env-file FILE
+Usage: cleanup-iam.sh
 
 Deletes helper-created IAM roles and customer-managed policies recorded in dr.env.
 Attached managed policies and inline role policies are removed before role deletion.
@@ -11,19 +11,14 @@ Non-default policy versions are removed before policy deletion.
 EOF
 }
 
-ENV_FILE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-[ -n "$ENV_FILE" ] || { echo "--env-file is required" >&2; exit 1; }
 # shellcheck disable=SC1090
-source "$ENV_FILE"
 
 role_name_from_arn() {
   local arn="${1:-}"

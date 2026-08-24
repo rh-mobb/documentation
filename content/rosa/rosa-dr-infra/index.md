@@ -160,7 +160,7 @@ After EFS is created, create the EFS StorageClass on both clusters.
 ./scripts/validate-efs-csi.sh --efs-id "$DR_EFS"
 ```
 
-The StorageClass uses dynamic EFS access point provisioning and `directoryPerms: "755"`. The `--smoke-test` flag creates a small throwaway PVC on the primary cluster, waits for it to bind, and removes the smoke-test namespace before continuing.
+The StorageClass uses dynamic EFS access point provisioning and `directoryPerms: "775"`. The `--smoke-test` flag creates a small throwaway PVC on the primary cluster, waits for it to bind, and removes the smoke-test namespace before continuing.
 
 ## Next Steps
 

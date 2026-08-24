@@ -3,24 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: validate-s3-replication.sh --env-file FILE
+Usage: validate-s3-replication.sh
 
 Verifies guide-created S3 buckets have versioning enabled and that a primary
 app-bucket marker replicates to the DR app bucket.
 EOF
 }
 
-ENV_FILE="./dr.env"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-source "$ENV_FILE"
 
 : "${APP_BUCKET_PRIMARY:?}"
 : "${APP_BUCKET_DR:?}"

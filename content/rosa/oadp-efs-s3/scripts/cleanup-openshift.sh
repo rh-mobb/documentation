@@ -3,26 +3,21 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: cleanup-openshift.sh --env-file FILE
+Usage: cleanup-openshift.sh
 
 Deletes validation-created OpenShift resources from the current oc context.
 Run once while logged in to the primary cluster and once while logged in to the DR cluster.
 EOF
 }
 
-ENV_FILE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env-file) ENV_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 1 ;;
   esac
 done
 
-[ -n "$ENV_FILE" ] || { echo "--env-file is required" >&2; exit 1; }
 # shellcheck disable=SC1090
-source "$ENV_FILE"
 
 oc whoami >/dev/null
 
