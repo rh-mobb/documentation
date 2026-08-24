@@ -1,5 +1,5 @@
 ---
-date: '2026-08-21'
+date: '2026-08-24'
 title: ROSA HCP Disaster Recovery with ACM and OpenShift GitOps
 tags: ["ROSA HCP", "ACM", "GitOps"]
 authors:
@@ -9,14 +9,14 @@ authors:
 validated_version: "4.22"
 ---
 
-This guide demonstrates how to set up an active/passive disaster recovery pattern for applications running on ROSA HCP clusters using Red Hat Advanced Cluster Management (ACM) and OpenShift GitOps (ArgoCD). ACM handles cluster health monitoring and automatic failover detection, while ArgoCD deploys the application to whichever cluster ACM selects.
+This guide demonstrates how to set up an active/passive disaster recovery pattern for applications running on ROSA HCP clusters using Red Hat Advanced Cluster Management (ACM) and OpenShift GitOps (ArgoCD). ACM handles cluster health monitoring, while ArgoCD deploys the application to the active cluster.
 
 The pattern works as follows:
 
 - ACM monitors cluster health via klusterlet heartbeats
-- A Placement resource selects one healthy cluster at a time (active/passive)
-- When the active cluster becomes unreachable, ACM automatically moves the placement to the standby cluster
-- ArgoCD detects the placement change and deploys the application to the new target cluster
+- A Placement resource detects when the active cluster becomes unreachable
+- An `acm-dr-active` label on the ManagedCluster controls which cluster ArgoCD deploys to
+- During failover, switching the label triggers ArgoCD to deploy the application to the standby cluster
 - DNS is switched manually to point to the new active cluster
 
 ## Prerequisites
@@ -40,7 +40,7 @@ If you are starting a new shell session, re-run the environment variable steps f
 In addition to the shared infrastructure, this guide requires:
 
 * A third ROSA HCP cluster for the ACM hub (`$CLUSTER_ACM`)
-* AWS CLI, `oc` CLI, `rosa` CLI, and `helm` CLI configured
+* AWS CLI, `oc` CLI, and `rosa` CLI configured
 * A Route 53 hosted zone for the custom domain (optional, for DNS-based failover)
 
 ## Environment Variables
@@ -138,7 +138,7 @@ metadata:
   labels:
     name: ${PRIMARY_CLUSTER_NAME}
     cloud: Amazon
-    region: us-east-1
+    region: ${PRIMARY_REGION}
     vendor: OpenShift
 spec:
   hubAcceptsClient: true
@@ -193,7 +193,7 @@ metadata:
   labels:
     name: ${DR_CLUSTER_NAME}
     cloud: Amazon
-    region: us-west-2
+    region: ${DR_REGION}
     vendor: OpenShift
 spec:
   hubAcceptsClient: true
@@ -253,12 +253,20 @@ metadata:
 EOF
 ```
 
-Add both clusters to the set:
+Add both clusters to the set and mark the primary cluster as active:
 
 ```bash
-oc label managedcluster ${PRIMARY_CLUSTER_NAME} cluster.open-cluster-management.io/clusterset=dr-clusters --overwrite
-oc label managedcluster ${DR_CLUSTER_NAME} cluster.open-cluster-management.io/clusterset=dr-clusters --overwrite
+oc label managedcluster ${PRIMARY_CLUSTER_NAME} \
+  cluster.open-cluster-management.io/clusterset=dr-clusters \
+  acm-dr-active=true \
+  --overwrite
+
+oc label managedcluster ${DR_CLUSTER_NAME} \
+  cluster.open-cluster-management.io/clusterset=dr-clusters \
+  --overwrite
 ```
+
+The `acm-dr-active=true` label controls which cluster ArgoCD deploys the application to. Only one cluster should have this label at a time.
 
 ## Install OpenShift GitOps on the Hub
 
@@ -288,7 +296,7 @@ watch "oc get csv -n openshift-operators | grep gitops"
 
 Wait until the `PHASE` shows `Succeeded`.
 
-Grant the ArgoCD service accounts cluster-admin privileges. The application controller needs it to deploy resources to managed clusters, and the ApplicationSet controller needs it to read PlacementDecision resources:
+Grant the ArgoCD service accounts cluster-admin privileges. The application controller needs this to deploy resources to managed clusters, and the ApplicationSet controller needs it to read cluster secrets:
 
 ```bash
 oc adm policy add-cluster-role-to-user cluster-admin \
@@ -325,9 +333,37 @@ EOF
 
 ## Register Managed Clusters with ArgoCD
 
-Use the ACM GitOpsCluster CRD to register managed clusters as ArgoCD deployment targets. This uses the ACM cluster-proxy so ArgoCD can deploy to managed clusters without direct network access.
+Enable the `application-manager` addon on both managed clusters. This addon creates the ArgoCD cluster secrets that allow ArgoCD to deploy to managed clusters via the ACM cluster-proxy:
 
-Create a Placement to select all clusters in the DR cluster set:
+```bash
+cat << EOF | oc apply -f -
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ManagedClusterAddOn
+metadata:
+  name: application-manager
+  namespace: ${PRIMARY_CLUSTER_NAME}
+spec:
+  installNamespace: open-cluster-management-agent-addon
+---
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ManagedClusterAddOn
+metadata:
+  name: application-manager
+  namespace: ${DR_CLUSTER_NAME}
+spec:
+  installNamespace: open-cluster-management-agent-addon
+EOF
+```
+
+Wait for the addons to become available:
+
+```bash
+watch "oc get managedclusteraddon -A | grep application-manager"
+```
+
+Wait until both clusters show `True` in the AVAILABLE column.
+
+Create a Placement to select all clusters in the DR cluster set. This is used by the GitOpsCluster to register both clusters as ArgoCD deployment targets:
 
 ```bash
 cat << EOF | oc apply -f -
@@ -369,13 +405,11 @@ Verify the clusters appear as ArgoCD cluster secrets:
 oc get secrets -n openshift-gitops -l argocd.argoproj.io/secret-type=cluster
 ```
 
-You should see secrets for both managed clusters.
+You should see secrets for both managed clusters. The `application-manager` addon copies ManagedCluster labels to the cluster secrets, including the `acm-dr-active` label that the ApplicationSet uses to select the active cluster.
 
 ## Configure ACM Placement for Failover
 
-Create the Placement that controls which cluster the application is deployed to. This is the core of the DR mechanism.
-
-The Placement selects exactly one cluster from the `dr-clusters` set. The `Steady` prioritizer keeps the application on its current cluster unless it becomes unreachable. The tolerations allow 30 seconds after a cluster is tainted as unreachable before the placement moves.
+Create the Placement that monitors cluster health. This Placement selects exactly one cluster from the `dr-clusters` set. The `Steady` prioritizer keeps the selection on the current cluster unless it becomes unreachable. The tolerations allow 30 seconds after a cluster is tainted as unreachable before the placement moves.
 
 ```bash
 cat << EOF | oc apply -f -
@@ -405,24 +439,7 @@ spec:
 EOF
 ```
 
-Create the ConfigMap that tells the ArgoCD ApplicationSet how to read ACM PlacementDecisions:
-
-```bash
-cat << EOF | oc apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: acm-placement-config
-  namespace: openshift-gitops
-data:
-  apiVersion: cluster.open-cluster-management.io/v1beta1
-  kind: placementdecisions
-  statusListKey: status.decisions
-  matchKey: status.decisions[].clusterName
-EOF
-```
-
-Verify the placement is selecting a cluster:
+This Placement is used for health monitoring. To see which cluster ACM considers healthy:
 
 ```bash
 oc get placementdecision -n openshift-gitops \
@@ -471,13 +488,10 @@ export TLS_KEY=$(cat /tmp/certbot/config/live/${CUSTOM_DOMAIN}/privkey.pem)
 
 The ApplicationSet uses a merge generator that combines two sources:
 
-- **clusterDecisionResource**: reads from ACM's PlacementDecision to know which cluster to deploy to
+- **clusters**: reads ArgoCD cluster secrets, filtered by the `acm-dr-active=true` label so only the active cluster is selected
 - **list**: provides per-cluster configuration (region, S3 bucket, IRSA role ARN, EFS file system ID)
 
-When the PlacementDecision changes (e.g., failover), ArgoCD automatically deploys the application to the new target cluster and removes it from the old one.
-
-> **Note:** During failover, the old cluster is unreachable, so ArgoCD cannot prune resources from it immediately. When the old cluster recovers, ArgoCD will detect it is no longer the placement target and prune the application resources. During this recovery window, the application may temporarily run on both clusters.
-
+The merge generator joins them by cluster `name`. When you switch the `acm-dr-active` label to the DR cluster during failover, ArgoCD detects the change and deploys the application to the new target.
 
 Create the ApplicationSet:
 
@@ -495,21 +509,19 @@ spec:
         mergeKeys:
           - name
         generators:
-          - clusterDecisionResource:
-              configMapRef: acm-placement-config
-              labelSelector:
+          - clusters:
+              selector:
                 matchLabels:
-                  cluster.open-cluster-management.io/placement: acm-demo-placement
-              requeueAfterSeconds: 30
+                  acm-dr-active: "true"
           - list:
               elements:
                 - name: ${PRIMARY_CLUSTER_NAME}
-                  clusterRegion: us-east-1
+                  clusterRegion: ${PRIMARY_REGION}
                   s3Bucket: ${APP_BUCKET_PRIMARY}
                   s3RoleArn: ${APP_S3_ROLE_ARN_PRIMARY}
                   efsId: ${PRIMARY_EFS}
                 - name: ${DR_CLUSTER_NAME}
-                  clusterRegion: us-west-2
+                  clusterRegion: ${DR_REGION}
                   s3Bucket: ${APP_BUCKET_DR}
                   s3RoleArn: ${APP_S3_ROLE_ARN_DR}
                   efsId: ${DR_EFS}
@@ -527,28 +539,23 @@ spec:
         path: chart
         helm:
           releaseName: phoenix-mission-control
-          values: |
-            region: {{.clusterRegion}}
-            clusterName: {{.name}}
+          valuesObject:
+            region: "{{.clusterRegion}}"
+            clusterName: "{{.name}}"
             s3:
-              bucket: {{.s3Bucket}}
-              roleArn: {{.s3RoleArn}}
+              bucket: "{{.s3Bucket}}"
+              roleArn: "{{.s3RoleArn}}"
             efs:
-              fileSystemId: {{.efsId}}
-              storageClassName: acm-efs-sc
-            primaryRegion: us-east-1
+              fileSystemId: "{{.efsId}}"
+              storageClassName: efs-sc
+            primaryRegion: ${PRIMARY_REGION}
             primaryCluster: ${PRIMARY_CLUSTER_NAME}
             primaryHealthUrl: ""
-            drRegion: us-west-2
+            drRegion: ${DR_REGION}
             drCluster: ${DR_CLUSTER_NAME}
             route:
               enabled: true
               customDomain: ${CUSTOM_DOMAIN}
-              tls:
-                certificate: |
-${TLS_CERT_INDENTED}
-                key: |
-${TLS_KEY_INDENTED}
       destination:
         server: "{{.server}}"
         namespace: ${NAMESPACE}
@@ -561,7 +568,7 @@ ${TLS_KEY_INDENTED}
 EOF
 ```
 
-> **Note:** The heredoc substitutes `${VAR}` references with your environment variable values. The Go template `{{.field}}` references use double curly braces and are not substituted by the shell -- they are processed by ArgoCD at deploy time. If you did not set `TLS_CERT` and `TLS_KEY`, the TLS fields will be empty and the route will use the cluster's default wildcard certificate.
+> **Note:** The heredoc substitutes `${VAR}` references with your environment variable values. The Go template `{{.field}}` references use double curly braces and are not substituted by the shell -- they are processed by ArgoCD at deploy time. If you did not set `TLS_CERT` and `TLS_KEY`, the route will use the cluster's default wildcard certificate.
 
 Verify the Application was created and is syncing:
 
@@ -572,8 +579,8 @@ watch "oc get applications.argoproj.io -n openshift-gitops"
 Wait until the application shows `Synced` and `Healthy`:
 
 ```
-NAME                SYNC STATUS   HEALTH STATUS
-acm-demo-kmc-east   Synced        Healthy
+NAME                 SYNC STATUS   HEALTH STATUS
+acm-demo-kmc-east1   Synced        Healthy
 ```
 
 ## Prepare DR Cluster for EFS Data Continuity
@@ -637,7 +644,7 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: acm-efs-sc
+  storageClassName: efs-sc
   claimRef:
     namespace: ${NAMESPACE}
     name: shared-flight-data
@@ -656,7 +663,7 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: acm-efs-sc
+  storageClassName: efs-sc
   claimRef:
     namespace: ${NAMESPACE}
     name: flight-data-flight-recorder-0
@@ -675,7 +682,7 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: acm-efs-sc
+  storageClassName: efs-sc
   claimRef:
     namespace: ${NAMESPACE}
     name: flight-data-flight-recorder-1
@@ -790,7 +797,7 @@ aws efs delete-replication-configuration \
 Get the primary cluster worker instance IDs:
 
 ```bash
-PRIMARY_INSTANCE_IDS=$(aws ec2 describe-instances --region us-east-1 \
+PRIMARY_INSTANCE_IDS=$(aws ec2 describe-instances --region ${PRIMARY_REGION} \
   --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
             "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[].InstanceId' --output text)
@@ -800,19 +807,37 @@ echo "Primary instance IDs: $PRIMARY_INSTANCE_IDS"
 Stop the primary worker instances:
 
 ```bash
-aws ec2 stop-instances --region us-east-1 --force --instance-ids $PRIMARY_INSTANCE_IDS
+aws ec2 stop-instances --region ${PRIMARY_REGION} --force --instance-ids $PRIMARY_INSTANCE_IDS
 ```
 
-Watch for ACM to detect the failure and ArgoCD to deploy to the DR cluster. With the tuned lease duration (10s) and toleration (30s), this should take approximately 40-50 seconds:
+Watch for ACM to detect the failure. With the tuned lease duration (10s) and toleration (30s), detection takes approximately 40 seconds:
 
 ```bash
-watch -n5 "echo '=== Cluster Status ===' && \
-  oc get managedcluster ${PRIMARY_CLUSTER_NAME} -o jsonpath='Available: {.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status}' && \
-  echo '' && echo '' && echo '=== ArgoCD Apps ===' && \
-  oc get applications.argoproj.io -n openshift-gitops"
+watch -n5 "echo '=== Cluster Health ===' && \
+  oc get managedcluster ${PRIMARY_CLUSTER_NAME} \
+    -o jsonpath='Available: {.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status}' && \
+  echo '' && echo '' && echo '=== Placement Decision ===' && \
+  oc get placementdecision -n openshift-gitops \
+    -l cluster.open-cluster-management.io/placement=acm-demo-placement \
+    -o jsonpath='{.items[0].status.decisions[0].clusterName}'"
 ```
 
-Wait until `Available` changes from `True` to `Unknown` and a new application `acm-demo-kmc-west` appears with `Synced`/`Healthy` status.
+Wait until `Available` changes from `True` to `Unknown` and the PlacementDecision switches to the DR cluster.
+
+Once ACM detects the failure, switch the `acm-dr-active` label to the DR cluster to trigger ArgoCD deployment:
+
+```bash
+oc label managedcluster ${PRIMARY_CLUSTER_NAME} acm-dr-active-
+oc label managedcluster ${DR_CLUSTER_NAME} acm-dr-active=true
+```
+
+Watch ArgoCD deploy the application to the DR cluster:
+
+```bash
+watch "oc get applications.argoproj.io -n openshift-gitops"
+```
+
+Wait until `acm-demo-${DR_CLUSTER_NAME}` shows `Synced` and `Healthy`.
 
 Switch DNS to the DR cluster:
 
@@ -843,7 +868,7 @@ curl -sk https://${CUSTOM_DOMAIN}/healthz
 
 ## Failback
 
-Failing back is a manual process. The Steady prioritizer in the Placement keeps the application on the current (DR) cluster even after the primary recovers, preventing unnecessary flip-flopping.
+Failing back is a manual process. The Steady prioritizer in the health-monitoring Placement keeps the selection on the DR cluster even after the primary recovers, preventing unnecessary flip-flopping.
 
 {{< alert >}}
 **Do not fail traffic back to the primary cluster until data written in the DR region has been reconciled.**
@@ -859,31 +884,32 @@ For this demonstration, if no DR-side data needs to be preserved, you can restar
 Start the primary worker instances:
 
 ```bash
-aws ec2 start-instances --region us-east-1 --instance-ids $PRIMARY_INSTANCE_IDS
+aws ec2 start-instances --region ${PRIMARY_REGION} --instance-ids $PRIMARY_INSTANCE_IDS
 ```
 
 Wait for the primary cluster to rejoin ACM. This typically takes 2-3 minutes as the klusterlet pods restart and begin sending heartbeats:
 
 ```bash
-watch "oc get managedcluster ${PRIMARY_CLUSTER_NAME} -o jsonpath='Available: {.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status}'"
+watch "oc get managedcluster ${PRIMARY_CLUSTER_NAME} \
+  -o jsonpath='Available: {.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status}'"
 ```
 
 Wait until it shows `True`.
 
-Force the placement back to the primary cluster. The Steady prioritizer keeps the app on the DR cluster. To fail back, temporarily add a label selector that only matches the primary cluster:
+Switch the `acm-dr-active` label back to the primary cluster:
 
 ```bash
-oc patch placement acm-demo-placement -n openshift-gitops --type merge \
-  -p '{"spec":{"predicates":[{"requiredClusterSelector":{"labelSelector":{"matchLabels":{"name":"'${PRIMARY_CLUSTER_NAME}'"}}}}]}}'
+oc label managedcluster ${DR_CLUSTER_NAME} acm-dr-active-
+oc label managedcluster ${PRIMARY_CLUSTER_NAME} acm-dr-active=true
 ```
 
-Verify ArgoCD deployed to the primary cluster:
+Watch ArgoCD deploy to the primary cluster:
 
 ```bash
 watch "oc get applications.argoproj.io -n openshift-gitops"
 ```
 
-Wait until `acm-demo-kmc-east` shows `Synced`/`Healthy`.
+Wait until `acm-demo-${PRIMARY_CLUSTER_NAME}` shows `Synced` and `Healthy`.
 
 Re-establish EFS replication from primary to DR. Before allowing production traffic to return to the primary cluster, verify that the application is healthy and that any required DR-side EFS and S3 data has been reconciled. Application health alone is not sufficient to determine that a stateful workload is ready for failback.
 
@@ -919,13 +945,6 @@ aws route53 change-resource-record-sets \
   }"
 ```
 
-Remove the failback label selector to restore automatic failover:
-
-```bash
-oc patch placement acm-demo-placement -n openshift-gitops --type json \
-  -p '[{"op":"remove","path":"/spec/predicates"}]'
-```
-
 Flush local DNS cache and verify:
 
 ```bash
@@ -943,15 +962,17 @@ curl -sk https://${CUSTOM_DOMAIN}/healthz
 | Klusterlet lease expires | T+10s |
 | ACM taints cluster as unreachable | T+10s |
 | Placement toleration expires | T+40s |
-| ACM moves placement to standby cluster | T+40s |
-| ArgoCD detects change and begins sync | T+45s |
-| Application healthy on new cluster | T+50s |
-| DNS switch (manual) | T+60s |
+| ACM detects cluster is unhealthy | T+40s |
+| Switch `acm-dr-active` label (manual) | T+45s |
+| ArgoCD detects label change and begins sync | T+50s |
+| Application healthy on new cluster | T+60s |
+| DNS switch (manual) | T+70s |
 
-> **Note:** Failover detection is automatic. DNS switching is a manual step. For production environments, consider using Route 53 health checks with DNS failover routing to automate the DNS switch as well.
+> **Note:** Failover detection is automatic. The label switch and DNS update are manual steps. For production environments, consider automating the label switch with a controller that watches the PlacementDecision, and using Route 53 health checks with DNS failover routing to automate DNS.
 
 ## Production Considerations
 
+- **Automate the `acm-dr-active` label switch:** Create a controller or CronJob on the ACM hub that watches the PlacementDecision and automatically moves the `acm-dr-active` label to the selected cluster. This removes the manual step during failover.
 - **EFS path mapping:** Record and maintain the PVC-to-EFS access point path mapping as part of your DR runbook. In a real disaster, the primary cluster API might not be available to query. Update this mapping whenever PVCs are recreated.
 - **Data reconciliation before failback:** Both EFS and S3 replication are one-directional (primary to DR). Data written during failover must be manually synced or merged back to the primary before re-establishing replication. See the [Disaster Recovery with OADP on ROSA HCP](/experts/rosa/oadp-efs-s3/) guide for detailed failback data reconciliation steps.
 - **ACM hub availability:** The ACM hub is a single point of failure for failover detection. In production, deploy the hub with high availability or consider an active-passive hub configuration.
@@ -967,17 +988,11 @@ Delete the ApplicationSet:
 oc delete applicationset acm-demo -n openshift-gitops
 ```
 
-Delete the Placement and ConfigMap:
-
-```bash
-oc delete placement acm-demo-placement -n openshift-gitops
-oc delete configmap acm-placement-config -n openshift-gitops
-```
-
-Delete the GitOpsCluster and all-clusters Placement:
+Delete the Placements and GitOpsCluster:
 
 ```bash
 oc delete gitopscluster gitops-cluster -n openshift-gitops
+oc delete placement acm-demo-placement -n openshift-gitops
 oc delete placement all-dr-clusters -n openshift-gitops
 ```
 

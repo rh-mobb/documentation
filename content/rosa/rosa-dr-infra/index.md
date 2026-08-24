@@ -14,7 +14,7 @@ This guide builds the shared infrastructure for disaster recovery between two RO
 Once this infrastructure is in place, choose a recovery pattern:
 
 - **[Disaster Recovery with OADP](/experts/rosa/oadp-efs-s3/)** uses OADP (OpenShift API for Data Protection) to back up and restore Kubernetes resources. This is a traditional backup-and-restore approach where Velero captures application state on the primary cluster and replays it on the DR cluster during failover.
-- **[Disaster Recovery with ACM and OpenShift GitOps](/experts/rosa/rosa-acm-dr/)** uses Red Hat Advanced Cluster Management for automatic failover detection and ArgoCD for application deployment. This is a GitOps-driven approach where ACM monitors cluster health and ArgoCD continuously reconciles the application to whichever cluster ACM selects, removing the need for manual backup and restore operations.
+- **[Disaster Recovery with ACM and OpenShift GitOps](/experts/rosa/rosa-acm-dr/)** uses Red Hat Advanced Cluster Management for automatic failover detection and OpenShift GitOps (ArgoCD) for application deployment. ACM monitors cluster health, and an ArgoCD ApplicationSet deploys the application to whichever cluster carries the active label, removing the need for manual backup and restore operations.
 
 Both patterns use the same shared infrastructure configured in this guide.
 
@@ -167,4 +167,4 @@ The StorageClass uses dynamic EFS access point provisioning and `directoryPerms:
 With the EFS CSI Driver, S3 replication, and EFS replication in place, continue with a DR recovery pattern:
 
 - **[Disaster Recovery with OADP](/experts/rosa/oadp-efs-s3/)** -- backup-and-restore approach using OADP/Velero for Kubernetes resource recovery, with EFS PVC mapping and full failover/failback workflow.
-- **[Disaster Recovery with ACM and OpenShift GitOps](/experts/rosa/rosa-acm-dr/)** -- GitOps-driven approach using ACM for automatic failover detection and ArgoCD for continuous application reconciliation.
+- **[Disaster Recovery with ACM and OpenShift GitOps](/experts/rosa/rosa-acm-dr/)** -- ACM-driven approach using automatic failover detection and ArgoCD ApplicationSet for application deployment.
