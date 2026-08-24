@@ -1,7 +1,7 @@
 ---
 date: '2026-08-21'
 title: Disaster Recovery with OADP on ROSA HCP
-tags: ["ROSA HCP", "OADP", "EFS", "S3"]
+tags: ["ROSA HCP", "OADP"]
 authors:
   - Kevin Collins
   - Diana Sari
@@ -11,216 +11,130 @@ validated_version: "4.22"
 
 This guide shows a disaster recovery pattern for applications running on two existing ROSA HCP clusters. It uses OADP to back up and restore Kubernetes resources, S3 Cross-Region Replication for object data, and EFS replication for persistent file data.
 
-The validated workflow covers hot-to-warm recovery. The same recovery procedure is intended for hot-to-cold recovery, with the additional step of bringing DR compute online first; that compute-start delta is pending Multi-AZ validation.
+Our validated workflow supports two key disaster recovery (DR) scenarios, giving you the flexibility to balance readiness and cost:
 
-This article keeps the recovery decisions visible. Helper scripts are used only for repetitive setup tasks such as IAM, S3, EFS, OADP installation, and recording EFS PVC mappings.
+* **Hot-to-Warm Recovery:** Both the primary and DR clusters run simultaneously. However, to keep things lightweight, the applications aren't actually deployed on the DR cluster until a failover is triggered.
+* **Hot-to-Cold Recovery:** Designed to maximize cost savings, this approach scales the DR cluster down to zero active worker nodes when not in use.
 
-ACM and GitOps based recovery are intentionally out of scope for this article.
+This article keeps the recovery decisions visible. Helper scripts are used only for repetitive setup tasks such as IAM, OADP installation, and recording EFS PVC mappings.
+
+## Prerequisites
+
+Before starting this guide, complete the [Create ROSA HCP Disaster Recovery Infrastructure](/experts/rosa/rosa-dr-infra/) guide. That guide sets up:
+
+- EFS CSI Driver on both clusters
+- S3 Cross-Region Replication for application data and backup buckets
+- EFS replication from the primary to the DR Region
+
+You need the environment variables from that guide still set in your shell. If you are starting a new shell session, re-run the environment variable steps from the [DR infrastructure guide](/experts/rosa/rosa-dr-infra/).
+
+The helper scripts are in the [rosa-dr-scripts](https://github.com/rh-mobb/rosa-dr-scripts) repository. If you followed the [DR infrastructure guide](/experts/rosa/rosa-dr-infra/), you already have it cloned. Run the commands from the `rosa-dr-scripts` directory:
+
+```bash
+cd rosa-dr-scripts
+```
 
 ## Architecture
 
-The reference environment has:
+The OADP DR pattern adds to the shared DR infrastructure:
 
-- A primary ROSA HCP cluster in one AWS Region
-- A DR ROSA HCP cluster in another AWS Region
-- An application S3 bucket in the primary Region, replicated to a DR bucket
-- An OADP backup S3 bucket in the primary Region, replicated to a DR bucket
-- A primary EFS file system, replicated to an EFS file system in the DR Region
-- EFS CSI Driver installed on both clusters
 - OADP installed on both clusters
 - An example workload that writes object data to S3 and file data to EFS
 
 During recovery, OADP restores the Kubernetes objects. EFS file data is not restored dynamically by OADP. Instead, the DR cluster reconstructs one EFS access point for each recorded PVC path, then uses static PersistentVolumes with `volumeHandle: <dr-efs-id>::<dr-access-point-id>`. This preserves the original replicated EFS paths and the access point POSIX identity needed for writes.
 
-DNS or traffic cutover is external to this guide. After recovery is validated, update DNS, load balancer, or application routing according to your environment.
+## 1. Configure OADP
 
-## 0. Prerequisites
+Install the OADP operator on both clusters using IRSA, then create the DataProtectionApplication on each.
 
-You need:
+### Install the OADP Operator
 
-- Two existing ROSA HCP clusters
-- AWS CLI
-- `rosa` CLI
-- `oc` CLI
-- `jq`
-- AWS permissions for IAM, EC2, S3, and EFS
-- Cluster admin access to both clusters
-
-The helper scripts used in this guide are included with the article source under `content/rosa/oadp-efs-s3/scripts/`. Clone or download the `rh-mobb/documentation` repository and run the commands from the `content/rosa/oadp-efs-s3` directory so the `./scripts/...` paths resolve correctly:
+**Log in to the primary cluster**, then install OADP:
 
 ```bash
-cd content/rosa/oadp-efs-s3
+eval "$(./scripts/configure-oadp.sh \
+  --cluster "$PRIMARY_CLUSTER_NAME")"
 ```
 
-Invoke helpers as `./scripts/<script>.sh`. Do not `cd scripts`.
-
-The examples use these names:
+**Log in to the DR cluster**, then install OADP:
 
 ```bash
-export PRIMARY_CLUSTER_NAME=ds-uswest2
-export DR_CLUSTER_NAME=ds-useast1
-export PRIMARY_REGION=us-west-2
-export DR_REGION=us-east-1
-export DR_ENV=./dr.env
-export EFS_MAPPING_FILE=./efs-pvc-map.csv
+eval "$(./scripts/configure-oadp.sh \
+  --cluster "$DR_CLUSTER_NAME")"
 ```
 
-Identify the worker/node security groups that should be allowed to mount EFS. Also identify the subnet IDs where EFS mount targets should be created. If your ROSA HCP machine pools expose subnets through the `rosa` CLI, the EFS helper can discover the subnets. Security groups must be provided explicitly because EC2 name-tag discovery is not reliable across cluster layouts:
+The script creates the IAM policy, IAM role with OIDC trust, the `cloud-credentials` secret, and installs the OADP operator subscription. It does not create the DataProtectionApplication.
+
+### Create the DataProtectionApplication
+
+The DataProtectionApplication (DPA) tells OADP where to store backups. Each cluster gets its own DPA pointing to its regional OADP bucket. The `cloud-credentials` secret created by the install script provides the IAM role that Velero uses to read and write backup data in S3.
+
+**Log in to the primary cluster**, then create the DPA:
 
 ```bash
-export PRIMARY_WORKER_SECURITY_GROUP_ID=<primary-worker-or-node-sg>
-export DR_WORKER_SECURITY_GROUP_ID=<dr-worker-or-node-sg>
-
-# Optional if the helper cannot discover subnets from ROSA.
-export PRIMARY_SUBNET_IDS=<subnet-a,subnet-b>
-export DR_SUBNET_IDS=<subnet-c,subnet-d>
-```
-
-Create the initial environment file:
-
-```bash
-cat > "$DR_ENV" <<EOF
-export PRIMARY_CLUSTER_NAME=$PRIMARY_CLUSTER_NAME
-export DR_CLUSTER_NAME=$DR_CLUSTER_NAME
-export PRIMARY_REGION=$PRIMARY_REGION
-export DR_REGION=$DR_REGION
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export DR_ENV=$DR_ENV
-export EFS_MAPPING_FILE=$EFS_MAPPING_FILE
-export PRIMARY_WORKER_SECURITY_GROUP_ID=$PRIMARY_WORKER_SECURITY_GROUP_ID
-export DR_WORKER_SECURITY_GROUP_ID=$DR_WORKER_SECURITY_GROUP_ID
-export PRIMARY_SUBNET_IDS=${PRIMARY_SUBNET_IDS:-}
-export DR_SUBNET_IDS=${DR_SUBNET_IDS:-}
+cat <<EOF | oc apply -f -
+apiVersion: oadp.openshift.io/v1alpha1
+kind: DataProtectionApplication
+metadata:
+  name: dr-demo-dpa
+  namespace: openshift-adp
+spec:
+  configuration:
+    velero:
+      defaultPlugins:
+        - aws
+        - openshift
+        - csi
+    nodeAgent:
+      enable: false
+      uploaderType: kopia
+  backupLocations:
+    - velero:
+        provider: aws
+        default: true
+        objectStorage:
+          bucket: ${OADP_BUCKET_PRIMARY}
+          prefix: velero
+        config:
+          region: ${PRIMARY_REGION}
+        credential:
+          name: cloud-credentials
+          key: cloud
 EOF
 ```
 
-Load this file before each step:
+**Log in to the DR cluster**, then create the DPA:
 
 ```bash
-source "$DR_ENV"
-```
-
-The helper scripts write generated values to `dr.env` so later steps do not require manually copying IDs and ARNs. Each helper updates existing keys instead of appending duplicate entries.
-
-## 1. Prepare the DR Foundation
-
-Run the setup steps before deploying or protecting the workload.
-
-### 1.1 Install the EFS CSI Driver
-
-Install the EFS CSI Driver on each cluster:
-
-```bash
-oc login <primary-api-url>
-./scripts/install-efs-csi.sh --cluster "$PRIMARY_CLUSTER_NAME" --region "$PRIMARY_REGION" --env-file "$DR_ENV"
-
-oc login <dr-api-url>
-./scripts/install-efs-csi.sh --cluster "$DR_CLUSTER_NAME" --region "$DR_REGION" --env-file "$DR_ENV"
-```
-
-The helper creates a customer-managed EFS CSI controller IAM policy. This is intentional. The AWS-managed EFS CSI policy includes tag conditions that can conflict with tags injected by ROSA or OpenShift during access point creation. A custom policy avoids those tag-condition failures while keeping the EFS CSI permissions explicit.
-
-Verify the driver on each cluster:
-
-```bash
-oc get pods -n openshift-cluster-csi-drivers | grep efs
-oc get clustercsidriver efs.csi.aws.com
-```
-
-### 1.2 Configure S3 Replication
-
-Create S3 buckets for application data and OADP backups, then configure one-way replication from primary to DR:
-
-```bash
-source "$DR_ENV"
-./scripts/configure-s3-replication.sh --env-file "$DR_ENV"
-source "$DR_ENV"
-./scripts/validate-s3-replication.sh --env-file "$DR_ENV"
-```
-
-The script writes these values to `dr.env`:
-
-- `APP_BUCKET_PRIMARY`
-- `APP_BUCKET_DR`
-- `OADP_BUCKET_PRIMARY`
-- `OADP_BUCKET_DR`
-- `S3_REPLICATION_ROLE_ARN`
-- `APP_S3_ROLE_ARN_PRIMARY`
-- `APP_S3_ROLE_ARN_DR`
-
-S3 Cross-Region Replication in this guide is one-way: primary to DR. Objects written to the DR bucket during failover are not automatically copied back to the primary bucket.
-
-### 1.3 Configure EFS Replication
-
-Create the primary EFS file system, mount targets, and the DR replica:
-
-```bash
-source "$DR_ENV"
-./scripts/configure-efs-replication.sh \
-  --env-file "$DR_ENV" \
-  --primary-worker-sg "$PRIMARY_WORKER_SECURITY_GROUP_ID" \
-  --dr-worker-sg "$DR_WORKER_SECURITY_GROUP_ID"
-source "$DR_ENV"
-./scripts/validate-efs-replication.sh --env-file "$DR_ENV"
-```
-
-The script:
-
-- Discovers each cluster VPC from the EFS subnet list
-- Creates or reuses named EFS security groups
-- Uses the worker security groups recorded in `dr.env`
-- Creates a primary EFS file system
-- Waits for the primary file system to become available
-- Creates mount targets in every machine pool subnet
-- Creates EFS replication to the DR Region
-- Waits for the DR replica file system to become available
-- Creates DR mount targets
-- Waits for all mount targets to become available
-
-Waiting for file system and mount target readiness is required. Pods can fail to mount EFS if a file system or a mount target is not ready, or if a pod lands in an Availability Zone without a matching mount target.
-
-The script writes these values to `dr.env`:
-
-- `PRIMARY_EFS`
-- `DR_EFS`
-- `EFS_SG_PRIMARY`
-- `EFS_SG_DR`
-- `VPC_PRIMARY`
-- `VPC_DR`
-
-After EFS is created, create the EFS StorageClass on both clusters and verify dynamic provisioning on the primary cluster:
-
-```bash
-source "$DR_ENV"
-./scripts/validate-efs-csi.sh --env-file "$DR_ENV"
-```
-
-The StorageClass uses dynamic EFS access point provisioning and `directoryPerms: "755"`. The validation helper creates a small throwaway PVC on the primary cluster, waits for it to bind, and removes the smoke-test namespace before continuing.
-
-### 1.4 Configure OADP
-
-Install OADP on both clusters and create the DataProtectionApplication objects:
-
-```bash
-source "$DR_ENV"
-
-oc login <primary-api-url>
-./scripts/configure-oadp.sh \
-  --cluster "$PRIMARY_CLUSTER_NAME" \
-  --region "$PRIMARY_REGION" \
-  --bucket "$OADP_BUCKET_PRIMARY" \
-  --role-suffix primary \
-  --env-file "$DR_ENV"
-
-oc login <dr-api-url>
-./scripts/configure-oadp.sh \
-  --cluster "$DR_CLUSTER_NAME" \
-  --region "$DR_REGION" \
-  --bucket "$OADP_BUCKET_DR" \
-  --role-suffix dr \
-  --env-file "$DR_ENV"
-
-source "$DR_ENV"
+cat <<EOF | oc apply -f -
+apiVersion: oadp.openshift.io/v1alpha1
+kind: DataProtectionApplication
+metadata:
+  name: dr-demo-dpa
+  namespace: openshift-adp
+spec:
+  configuration:
+    velero:
+      defaultPlugins:
+        - aws
+        - openshift
+        - csi
+    nodeAgent:
+      enable: false
+      uploaderType: kopia
+  backupLocations:
+    - velero:
+        provider: aws
+        default: true
+        objectStorage:
+          bucket: ${OADP_BUCKET_DR}
+          prefix: velero
+        config:
+          region: ${DR_REGION}
+        credential:
+          name: cloud-credentials
+          key: cloud
+EOF
 ```
 
 Verify the BackupStorageLocation on each cluster:
@@ -233,20 +147,22 @@ The phase must be `Available`.
 
 ## 2. Deploy the Example Workload
 
-Phoenix Mission Control is used only as a lightweight example because it exercises the recovery cases this guide cares about:
+[Phoenix Mission Control](https://github.com/rh-mobb/phoenix-mission-control) is a space-themed demo application that exercises the recovery cases this guide cares about:
 
 - S3 object writes
 - Shared EFS file data
 - StatefulSet replicas with ordinal PVCs
+- A web dashboard accessible via an OpenShift route
 
 Deploy the workload on the primary cluster:
 
-```bash
-source "$DR_ENV"
-oc login <primary-api-url>
+**Log in to the primary cluster**, then deploy:
 
-./scripts/deploy-phoenix.sh --env-file "$DR_ENV"
+```bash
+./scripts/deploy-phoenix.sh
 ```
+
+The script clones the Helm chart, installs the application with your cluster's S3, EFS, and IRSA values, and waits for all workloads to be ready.
 
 For your own application, use an equivalent workload that has both S3 and EFS data and at least one StatefulSet.
 
@@ -256,33 +172,45 @@ Verify the workload:
 oc get pods,pvc,sts -n dr-demo
 ```
 
+Get the application route and confirm it is accessible:
+
+```bash
+export PRIMARY_APP_ROUTE=$(oc get route mission-control -n dr-demo \
+  -o jsonpath='{.spec.host}')
+
+echo "PRIMARY_APP_ROUTE: https://$PRIMARY_APP_ROUTE"
+```
+
+Open the URL in a browser and confirm the Mission Control dashboard loads. Verify that telemetry data is being recorded and the S3 connection is healthy before proceeding.
+
 Create visible test data:
 
 ```bash
 export VALIDATION_ID=dr-$(date +%Y%m%d%H%M%S)
 
 oc exec -n dr-demo deploy/mission-control -- \
-  sh -c "echo efs-$VALIDATION_ID > /shared/validation-$VALIDATION_ID.txt"
+  sh -c "echo efs-$VALIDATION_ID > /data/flight-recorder/validation-$VALIDATION_ID.txt"
 
 printf '%s\n' "s3-$VALIDATION_ID" | aws s3 cp - \
   "s3://$APP_BUCKET_PRIMARY/validation/$VALIDATION_ID.txt" \
   --region "$PRIMARY_REGION"
-```
 
-Adjust the in-pod EFS path if your example workload mounts EFS somewhere else.
+echo "VALIDATION_ID=$VALIDATION_ID"
+```
 
 ## 3. Record EFS PVC Mappings Before Failure
 
-Record the EFS mapping while the primary cluster API is available:
+OADP backs up Kubernetes resources but does not restore EFS-backed PersistentVolumes dynamically. During recovery, the DR cluster needs to recreate static PVs that point to the correct replicated EFS paths and access point identities. This step captures that metadata from the primary cluster. Run it before a disaster — the primary cluster API may not be available when you need it.
+
+**Log in to the primary cluster**, then record the mapping:
 
 ```bash
-source "$DR_ENV"
-oc login <primary-api-url>
-
 ./scripts/record-efs-mapping.sh \
+  --cluster "$PRIMARY_CLUSTER_NAME" \
   --namespace dr-demo \
-  --region "$PRIMARY_REGION" \
-  --output "$EFS_MAPPING_FILE"
+  --output efs-pvc-map.csv
+
+cat efs-pvc-map.csv
 ```
 
 The mapping file records:
@@ -321,65 +249,203 @@ Each ordinal PVC can have a different original EFS path. Record every PVC separa
 
 Store the mapping file with your DR runbook. Do not assume the primary cluster API will be available during a disaster.
 
-## 4. Create an OADP Backup
+## 4. Configure DNS Failover
 
-Create a backup on the primary cluster and verify the exact backup appears on the DR cluster:
+Set up automatic DNS failover so that when the primary cluster becomes unavailable, traffic is routed to the DR cluster. The steps below use Route 53 health checks and failover routing. If you use a different DNS provider, configure the equivalent failover records and health checks with that provider.
+
+### Get the router hostnames
+
+**Log in to the primary cluster:**
 
 ```bash
-source "$DR_ENV"
-./scripts/create-dr-backup.sh --env-file "$DR_ENV"
-source "$DR_ENV"
+export PRIMARY_ROUTER=$(oc get -n dr-demo route mission-control \
+  -o jsonpath='{.status.ingress[0].routerCanonicalHostname}')
+
+echo "PRIMARY_ROUTER: $PRIMARY_ROUTER"
+```
+
+**Log in to the DR cluster:**
+
+```bash
+export DR_ROUTER=$(oc get -n openshift-ingress-operator ingresscontroller/default \
+  -o jsonpath='{.status.domain}' | sed 's/^apps\./router-default.apps./')
+
+echo "DR_ROUTER: $DR_ROUTER"
+```
+
+### Create a Route 53 health check
+
+```bash
+export HEALTH_CHECK_ID=$(aws route53 create-health-check \
+  --caller-reference "dr-demo-$(date +%s)" \
+  --health-check-config \
+    Type=HTTPS,FullyQualifiedDomainName=${PRIMARY_APP_ROUTE},Port=443,ResourcePath=/healthz,RequestInterval=10,FailureThreshold=3 \
+  --query 'HealthCheck.Id' --output text)
+
+echo "HEALTH_CHECK_ID: $HEALTH_CHECK_ID"
+```
+
+### Create failover DNS records
+
+Set your hosted zone ID and custom domain:
+
+```bash
+export HOSTED_ZONE_ID=<your-hosted-zone-id>
+export DR_DOMAIN=mission-control.example.com
+```
+
+Create the PRIMARY failover CNAME record:
+
+```bash
+aws route53 change-resource-record-sets \
+  --hosted-zone-id $HOSTED_ZONE_ID \
+  --change-batch '{
+    "Changes": [{
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "'$DR_DOMAIN'",
+        "Type": "CNAME",
+        "SetIdentifier": "primary",
+        "Failover": "PRIMARY",
+        "TTL": 60,
+        "ResourceRecords": [{"Value": "'$PRIMARY_ROUTER'"}],
+        "HealthCheckId": "'$HEALTH_CHECK_ID'"
+      }
+    }]
+  }'
+```
+
+Create the SECONDARY failover CNAME record:
+
+```bash
+aws route53 change-resource-record-sets \
+  --hosted-zone-id $HOSTED_ZONE_ID \
+  --change-batch '{
+    "Changes": [{
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "'$DR_DOMAIN'",
+        "Type": "CNAME",
+        "SetIdentifier": "secondary",
+        "Failover": "SECONDARY",
+        "TTL": 60,
+        "ResourceRecords": [{"Value": "'$DR_ROUTER'"}]
+      }
+    }]
+  }'
+```
+
+### Create a TLS certificate for the custom domain
+
+Use Let's Encrypt with the `certbot-dns-route53` plugin. Certbot uses your AWS credentials to create a temporary TXT record in Route 53 for domain validation.
+
+**Important:** Replace `your-email@example.com` with your actual email address. Certbot will fail if you do not provide a valid email.
+
+```bash
+certbot certonly \
+  --dns-route53 \
+  -d $DR_DOMAIN \
+  --non-interactive \
+  --agree-tos \
+  --email your-email@example.com \
+  --config-dir /tmp/certbot/config \
+  --work-dir /tmp/certbot/work \
+  --logs-dir /tmp/certbot/logs
+```
+
+Set the certificate paths:
+
+```bash
+export CERT_DIR=/tmp/certbot/config/live/$DR_DOMAIN
+
+echo "Certificate: $CERT_DIR/fullchain.pem"
+echo "Private key: $CERT_DIR/privkey.pem"
+```
+
+### Add the custom domain route
+
+**Log in to the primary cluster:**
+
+```bash
+oc create route edge dr-demo-custom \
+  --service=mission-control \
+  --port=8080 \
+  --hostname=$DR_DOMAIN \
+  --cert=$CERT_DIR/fullchain.pem \
+  --key=$CERT_DIR/privkey.pem \
+  -n dr-demo
+```
+
+Verify the custom domain resolves to the primary cluster by opening `https://$DR_DOMAIN` in a browser. The OADP backup in the next step captures this route, and the restore recreates it on the DR cluster during failover.
+
+![Mission Control Dashboard](images/mission-control.png)
+
+## 5. Create an OADP Backup
+
+**Log in to the primary cluster**, then create the backup:
+
+```bash
+export BACKUP_NAME="dr-demo-$(date +%Y%m%d-%H%M)"
+echo "BACKUP_NAME=$BACKUP_NAME"
+
+cat <<EOF | oc apply -f -
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: ${BACKUP_NAME}
+  namespace: openshift-adp
+spec:
+  includedNamespaces:
+    - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
+    - persistentvolumes
+    - persistentvolumeclaims
+  storageLocation: dr-demo-dpa-1
+  defaultVolumesToFsBackup: false
+  snapshotVolumes: false
+EOF
 ```
 
 The backup intentionally excludes PVs and PVCs. EFS data is protected by EFS replication, and the DR cluster recreates the EFS claims from the mapping file recorded before the disaster.
 
-The helper creates the Velero `Backup`, waits for phase `Completed`, records `BACKUP_NAME` in `dr.env`, waits for the exact Velero backup prefix to appear in the DR OADP bucket through S3 replication, and verifies that the same backup name is visible from the DR cluster.
-
-For validation-only testing, the helper has an optional `--sync-to-dr-for-validation` flag that copies the exact Velero backup prefix from the primary OADP bucket to the DR OADP bucket. Do not use that flag as the normal recovery path because it bypasses the OADP-bucket CRR behavior this guide is validating.
-
-## 5. Recover to the DR Cluster
-
-Use this same recovery procedure for hot-to-warm and hot-to-cold.
-
-For hot-to-warm, the DR worker nodes are already running.
-
-Hot-to-cold is pending validation on a Multi-AZ lab. The recovery workflow is the same as hot-to-warm; the only additional step is bringing DR application compute online before running the shared recovery procedure. Do not assume the machine pool is named `workers`, and do not assume Multi-AZ automatically permits scaling a hosted machine pool to zero. Inspect the DR machine-pool topology first.
-
-For a topology that supports cold DR application compute, bring the selected DR compute online first, then continue here:
+Wait for the backup to complete and verify it replicates to the DR bucket:
 
 ```bash
-rosa list machinepools -c "$DR_CLUSTER_NAME"
-rosa edit machinepool <dr-machinepool-name> --cluster "$DR_CLUSTER_NAME" --replicas <replica-count>
-oc wait nodes --for=condition=Ready --all --timeout=600s
-oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
+./scripts/create-dr-backup.sh
 ```
 
-Scale only the DR machine pool or pools that host the recovered workload. Use the name shown by `rosa list machinepools`.
+The script waits for the backup phase to reach `Completed`, lists the backup objects in the primary OADP bucket, and waits for the exact backup prefix to appear in the DR OADP bucket through S3 CRR.
 
-### 5.1 Confirm EFS Replication Freshness
+For validation-only testing, the script has an optional `--sync-to-dr-for-validation` flag that copies the exact Velero backup prefix from the primary OADP bucket to the DR OADP bucket. Do not use that flag as the normal recovery path because it bypasses the OADP-bucket CRR behavior this guide is validating.
 
-Before promoting EFS, verify that replication is healthy and recent enough for your recovery point objective:
+## 6. DR Scenario 1: Hot-to-Warm Failover
+
+Both clusters have running worker nodes, but the application is deployed only on the primary cluster. This is the fastest failover scenario.
+
+### Failover (Primary to DR)
+
+Simulate a primary site failure by stopping the primary worker instances:
 
 ```bash
-source "$DR_ENV"
+for MP in $(rosa list machinepools -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.[].id'); do
+  rosa edit machinepool $MP --cluster $PRIMARY_CLUSTER_NAME --autorepair=false
+done
 
-aws efs describe-replication-configurations \
-  --region "$PRIMARY_REGION" \
-  --file-system-id "$PRIMARY_EFS" \
-  --query 'Replications[0].Destinations[0].{Status:Status,LastReplicatedTimestamp:LastReplicatedTimestamp}' \
-  --output table
+WORKER_IDS=($(aws ec2 describe-instances \
+  --region $PRIMARY_REGION \
+  --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=running" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
+aws ec2 stop-instances \
+  --instance-ids "${WORKER_IDS[@]}" \
+  --region $PRIMARY_REGION
 ```
 
-Continue only if:
-
-- `Status` is `ENABLED`
-- `LastReplicatedTimestamp` is acceptable for your workload
-
-Any data written after the last replicated timestamp might not exist on the DR file system.
-
-### 5.2 Promote the DR EFS Replica
-
-EFS replicas are read-only while replication is active. Promote the DR EFS file system by deleting the replication configuration:
+EFS replicas are read-only while replication is active. Promote the DR EFS file system to read-write by deleting the replication configuration:
 
 ```bash
 aws efs delete-replication-configuration \
@@ -387,134 +453,375 @@ aws efs delete-replication-configuration \
   --region "$PRIMARY_REGION"
 ```
 
-Wait until the DR file system is available:
+**Log in to the DR cluster**, then recreate the EFS volumes from the mapping file:
 
 ```bash
-until [ "$(aws efs describe-file-systems \
-  --file-system-id "$DR_EFS" \
-  --region "$DR_REGION" \
-  --query 'FileSystems[0].LifeCycleState' \
-  --output text)" = "available" ]; do
-  echo "Waiting for DR EFS to become available..."
-  sleep 10
-done
+export EFS_MAPPING_FILE=efs-pvc-map.csv
+./scripts/recover-efs-volumes.sh
 ```
 
-Verify DR mount targets are available:
+The helper creates one DR EFS access point, one static PV, and one matching PVC for every EFS-backed claim in the mapping file. It waits until every recreated claim is `Bound` before returning.
+
+Restore the application namespace. PVs and PVCs are excluded because the EFS-backed storage objects were already recreated from the mapping file:
 
 ```bash
-aws efs describe-mount-targets \
-  --file-system-id "$DR_EFS" \
-  --region "$DR_REGION" \
-  --query 'MountTargets[].{MountTargetId:MountTargetId,SubnetId:SubnetId,LifeCycleState:LifeCycleState}' \
-  --output table
+export RESTORE_NAME="dr-restore-$(date +%Y%m%d-%H%M)"
+echo "RESTORE_NAME=$RESTORE_NAME"
+
+cat <<EOF | oc apply -f -
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: ${RESTORE_NAME}
+  namespace: openshift-adp
+spec:
+  backupName: ${BACKUP_NAME}
+  includedNamespaces:
+    - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
+    - persistentvolumes
+    - persistentvolumeclaims
+  restorePVs: false
+  existingResourcePolicy: update
+EOF
 ```
 
-All mount targets used by DR worker subnets must be `available`.
-
-### 5.3 Recreate Static EFS Persistent Volumes and Claims
-
-Use the mapping file recorded before the disaster. Create one DR EFS access point, one static PV, and one matching PVC for every EFS-backed claim in the mapping file. This avoids relying on OADP to rewrite restored PVC binding fields and preserves the access point POSIX identity needed for writes.
-
-On the DR cluster:
+Wait for the restore to complete:
 
 ```bash
-source "$DR_ENV"
-./scripts/recover-efs-volumes.sh --env-file "$DR_ENV"
+watch "oc get restore $RESTORE_NAME -n openshift-adp \
+  -o jsonpath='{.status.phase}' && echo"
 ```
 
-The important fields are:
+Wait until the output shows `Completed`.
 
-- `claimRef.namespace` and `claimRef.name`, which pre-bind the PV to the expected PVC
-- `volumeName` on the PVC, which binds the claim to the static DR PV
-- `volumeHandle: "${DR_EFS}::${DR_ACCESS_POINT_ID}"`, which mounts the original replicated EFS path through a DR access point
-- the DR access point POSIX UID/GID, which preserves the write behavior of the original dynamically provisioned access point
-- one PV per EFS-backed PVC, including every StatefulSet ordinal PVC
-
-The helper waits until every recreated claim is `Bound` before returning.
-
-### 5.4 Restore Kubernetes Resources with OADP
-
-Restore the application namespace. Exclude PVs and PVCs because you already recreated the EFS-backed storage objects from the recorded mapping file. Workloads are restored only after the claims are present and bound.
+The restored workload contains primary-region values. Update the service account IAM annotations and environment variables for the DR cluster:
 
 ```bash
-source "$DR_ENV"
-./scripts/restore-dr-workload.sh --env-file "$DR_ENV"
+oc annotate sa/s3-writer sa/dashboard -n dr-demo \
+  eks.amazonaws.com/role-arn="$APP_S3_ROLE_ARN_DR" \
+  --overwrite
+
+oc set env deployment/telemetry-transmitter deployment/mission-control -n dr-demo \
+  S3_BUCKET="$APP_BUCKET_DR" \
+  AWS_REGION="$DR_REGION" \
+  CLUSTER_NAME="$DR_CLUSTER_NAME" \
+  AWS_ROLE_ARN="$APP_S3_ROLE_ARN_DR"
 ```
-
-The helper creates the Velero `Restore`, waits for phase `Completed`, records `RESTORE_NAME` in `dr.env`, and applies the DR-specific S3 bucket, Region, and IAM role values for Phoenix.
-
-### 5.5 Apply DR-Specific Configuration
-
-The restored workload can contain primary-region values. For Phoenix Mission Control, the restore helper applies:
-
-```bash
-APP_S3_ROLE_ARN_DR
-APP_BUCKET_DR
-DR_REGION
-DR_CLUSTER_NAME
-```
-
-For other applications, update any region-specific bucket names, IAM role annotations, external endpoints, or configuration values before sending traffic to DR.
-
-### 5.6 Validate Recovery
 
 Run the recovery validator:
 
 ```bash
-source "$DR_ENV"
-./scripts/validate-dr-recovery.sh --env-file "$DR_ENV"
+./scripts/validate-dr-recovery.sh
 ```
 
-The validator checks StatefulSet readiness, PVC binding, each PV handle, each DR access point root path, the pre-failover EFS and S3 markers, a new DR EFS write, a new DR S3 write, and the application route.
+Once the primary workers are down, the Route 53 health check fails and DNS automatically routes traffic to the DR cluster. Open the Mission Control dashboard at your custom domain URL to confirm the failover:
 
-After these checks pass, perform your external DNS or traffic cutover.
+![Scenario 1 - Primary site down, DR site active](images/scenario1-dr.png)
 
-## 6. Failback Considerations
+### Failback to the Primary Cluster
 
-Failback is not a single generic command. Treat it as an application data reconciliation event.
+{{< alert >}}
+**Do not fail traffic back to the primary cluster until data written in the DR region has been reconciled.**
 
-During failover, the DR EFS file system and DR S3 bucket become writable data stores. Writes made in the DR Region are not automatically copied back to the primary Region.
+During failover, the DR EFS file system and DR S3 bucket become independent writable data stores. Writes made in the DR region are not automatically copied back to the primary region.
 
-Before returning traffic to primary:
+For this demonstration, if no DR-side data needs to be preserved, you can restart the primary workers and re-establish primary-to-DR replication as shown below.
 
-- Reconcile DR EFS writes back to primary EFS, or intentionally discard them
-- Reconcile DR S3 writes back to the primary bucket, or intentionally discard them
-- Validate the primary application with reconciled data
-- Only then move traffic back to the primary cluster
+For production workloads, first synchronize or otherwise reconcile DR-side EFS and S3 data with the primary environment, validate the recovered data, and only then return application traffic to the primary region.
+{{< /alert >}}
 
-Be careful when re-establishing EFS replication from primary to DR. AWS enables overwrite protection after promotion. Disabling overwrite protection and recreating primary-to-DR replication can overwrite the DR EFS file system with primary data.
+In the hot-to-warm scenario, the primary cluster's application was never deleted — only the worker nodes were stopped. To fail back, restart the primary workers:
 
-S3 CRR in this guide is one-way. To preserve DR-side S3 writes, configure reverse replication or manually synchronize objects before returning traffic to primary.
+```bash
+WORKER_IDS=($(aws ec2 describe-instances \
+  --region $PRIMARY_REGION \
+  --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=stopped" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
 
-## 7. Cleanup
+aws ec2 start-instances \
+  --instance-ids "${WORKER_IDS[@]}" \
+  --region $PRIMARY_REGION
+```
 
-Cleanup was validated for the current single-AZ validation run. The helper scripts record generated resource names in `dr.env`; use that file as the cleanup source of truth.
+**Log in to the primary cluster** and wait for all nodes to be ready:
+
+```bash
+oc wait nodes --all --for=condition=Ready --timeout=600s
+oc get nodes
+```
+
+Once the workers are running, the application pods resume automatically. Route 53 returns traffic to the primary cluster when the health check reports it as healthy.
+
+{{< alert >}}
+**Data written during failover does not automatically sync back to the primary.** This applies to both storage layers:
+
+- **EFS:** The primary resumes using its original EFS, which does not contain writes made to the DR EFS during failover. Re-establishing replication (primary to DR) below overwrites the DR EFS with the primary's data. In a production environment, copy or merge DR EFS data back to the primary before this step.
+- **S3:** S3 Cross-Region Replication is one-directional (primary to DR). Objects written to the DR bucket during failover are not replicated back to the primary bucket. To preserve DR-written data, set up reverse replication or manually sync with `aws s3 sync` before re-establishing normal replication.
+{{< /alert >}}
+
+Re-establish EFS replication from primary to DR so it is in place for future failovers:
+
+```bash
+aws efs update-file-system-protection \
+  --file-system-id $DR_EFS \
+  --region $DR_REGION \
+  --replication-overwrite-protection DISABLED
+
+aws efs create-replication-configuration \
+  --region $PRIMARY_REGION \
+  --source-file-system-id $PRIMARY_EFS \
+  --destinations "[{\"Region\": \"${DR_REGION}\", \"FileSystemId\": \"${DR_EFS}\"}]"
+```
+
+![Scenario 1 - Primary site back up and active](images/scenario1-recover.png)
+
+## 7. DR Scenario 2: Cold DR (Scaled-Down DR Cluster)
+
+In this scenario the DR cluster's worker nodes are stopped to save costs. Starting the instances is required before the restore can proceed.
+
+### Setup: Scale Down DR Cluster
+
+Delete the `dr-demo` namespace on the DR cluster to start with a clean state, and remove any static PVs left over from a previous failover (PVs are cluster-scoped and survive namespace deletion):
+
+**Log in to the dr cluster**
+
+```bash
+oc delete namespace dr-demo
+oc delete pv -l app.kubernetes.io/managed-by=recover-efs-volumes --ignore-not-found
+```
+
+Stop the DR cluster worker nodes to reduce costs during normal operation:
+
+```bash
+for MP in $(rosa list machinepools -c $DR_CLUSTER_NAME -o json | jq -r '.[].id'); do
+  rosa edit machinepool $MP --cluster $DR_CLUSTER_NAME --autorepair=false
+done
+
+WORKER_IDS=($(aws ec2 describe-instances \
+  --region $DR_REGION \
+  --filters "Name=tag:Name,Values=*${DR_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=running" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
+aws ec2 stop-instances \
+  --instance-ids "${WORKER_IDS[@]}" \
+  --region $DR_REGION
+```
+
+### Failover to Cold DR
+
+The backup already exists in S3 from the primary cluster. S3 Cross-Region Replication has copied it to the DR bucket.
+
+Verify the backup is available in the DR bucket:
+
+```bash
+export BACKUP_NAME=$(aws s3 ls "s3://$OADP_BUCKET_DR/velero/backups/" \
+  --region $DR_REGION \
+  | sort | tail -1 | awk '{print $NF}' | sed 's|/$||')
+
+echo "BACKUP_NAME=$BACKUP_NAME"
+```
+
+Force sync the backup to the DR bucket to ensure all objects are present:
+
+```bash
+aws s3 sync \
+  s3://$OADP_BUCKET_PRIMARY/velero/backups/$BACKUP_NAME/ \
+  s3://$OADP_BUCKET_DR/velero/backups/$BACKUP_NAME/ \
+  --source-region $PRIMARY_REGION --region $DR_REGION
+```
+
+Simulate a primary region outage by stopping the primary cluster's worker instances:
+
+```bash
+for MP in $(rosa list machinepools -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.[].id'); do
+  rosa edit machinepool $MP --cluster $PRIMARY_CLUSTER_NAME --autorepair=false
+done
+
+PRIMARY_WORKER_IDS=($(aws ec2 describe-instances \
+  --region $PRIMARY_REGION \
+  --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=running" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
+aws ec2 stop-instances \
+  --instance-ids "${PRIMARY_WORKER_IDS[@]}" \
+  --region $PRIMARY_REGION
+```
+
+EFS replicas are read-only while replication is active. Promote the DR EFS file system to read-write by deleting the replication configuration:
+
+```bash
+aws efs delete-replication-configuration \
+  --source-file-system-id "$PRIMARY_EFS" \
+  --region "$PRIMARY_REGION"
+```
+
+Start the DR worker instances:
+
+```bash
+WORKER_IDS=($(aws ec2 describe-instances \
+  --region $DR_REGION \
+  --filters "Name=tag:Name,Values=*${DR_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=stopped" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
+aws ec2 start-instances \
+  --instance-ids "${WORKER_IDS[@]}" \
+  --region $DR_REGION
+```
+
+Wait for Velero to be ready:
+
+```bash
+oc wait nodes --for=condition=Ready --all --timeout=600s
+oc wait deployment/velero -n openshift-adp --for=condition=Available --timeout=300s
+```
+
+**Log in to the DR cluster**, then recreate the EFS volumes from the mapping file:
+
+```bash
+export EFS_MAPPING_FILE=efs-pvc-map.csv
+./scripts/recover-efs-volumes.sh
+```
+
+Restore the application namespace. PVs and PVCs are excluded because the EFS-backed storage objects were already recreated from the mapping file:
+
+```bash
+export RESTORE_NAME="dr-restore-$(date +%Y%m%d-%H%M)"
+echo "RESTORE_NAME=$RESTORE_NAME"
+
+cat <<EOF | oc apply -f -
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: ${RESTORE_NAME}
+  namespace: openshift-adp
+spec:
+  backupName: ${BACKUP_NAME}
+  includedNamespaces:
+    - dr-demo
+  excludedResources:
+    - pods
+    - replicasets.apps
+    - persistentvolumes
+    - persistentvolumeclaims
+  restorePVs: false
+  existingResourcePolicy: update
+EOF
+```
+
+Wait for the restore to complete:
+
+```bash
+watch "oc get restore $RESTORE_NAME -n openshift-adp \
+  -o jsonpath='{.status.phase}' && echo"
+```
+
+Wait until the output shows `Completed`.
+
+The restored workload contains primary-region values. Update the service account IAM annotations and environment variables for the DR cluster:
+
+```bash
+oc annotate sa/s3-writer sa/dashboard -n dr-demo \
+  eks.amazonaws.com/role-arn="$APP_S3_ROLE_ARN_DR" \
+  --overwrite
+
+oc set env deployment/telemetry-transmitter deployment/mission-control -n dr-demo \
+  S3_BUCKET="$APP_BUCKET_DR" \
+  AWS_REGION="$DR_REGION" \
+  CLUSTER_NAME="$DR_CLUSTER_NAME" \
+  AWS_ROLE_ARN="$APP_S3_ROLE_ARN_DR"
+```
+
+Run the recovery validator:
+
+```bash
+./scripts/validate-dr-recovery.sh
+```
+
+DNS failover happens automatically via the Route 53 health check. Once the pods are running and DNS has updated, you should see the application running on the DR cluster:
+
+![Scenario 2 - Application failed over to cold DR cluster](images/scenario2-dr.png)
+
+The result is the same as Scenario 1, but the failover takes longer because the DR worker instances had to be started before the restore could proceed.
+
+## 8. Cleanup
 
 Only run `cleanup-openshift.sh` if the OADP and EFS CSI installations were created specifically for this exercise. The OpenShift cleanup helper removes the Phoenix namespace, OADP resources, and EFS CSI resources from the current cluster context. If OADP or EFS CSI already existed on the cluster or is shared by other workloads, remove only the exercise-specific resources manually.
 
 Run cleanup in this order and stop if any subsystem fails:
 
-```bash
-source "$DR_ENV"
-
-oc login <primary-api-url>
-./scripts/cleanup-openshift.sh --env-file "$DR_ENV" || return 1
-
-oc login <dr-api-url>
-./scripts/cleanup-openshift.sh --env-file "$DR_ENV" || return 1
-
-./scripts/cleanup-s3.sh --env-file "$DR_ENV" || return 1
-./scripts/cleanup-efs.sh --env-file "$DR_ENV" || return 1
-./scripts/cleanup-iam.sh --env-file "$DR_ENV"
-```
-
-The cleanup scripts remove only resources recorded in `dr.env` or fixed validation resources created by this guide. The S3 cleanup purges all object versions and delete markers before deleting buckets. The EFS cleanup handles replication already being absent, deletes access points, deletes mount targets, waits until mount targets are gone, then deletes file systems and helper-created EFS security groups. The IAM cleanup detaches policies before deleting helper-created roles and customer-managed policies, including EFS CSI resources.
-
-Validate cleanup:
+**Log in to the primary cluster**, then clean up OpenShift resources:
 
 ```bash
-./scripts/validate-cleanup.sh --env-file "$DR_ENV"
+./scripts/cleanup-openshift.sh || return 1
 ```
 
-The validator prints `PASS deleted` for absent resources and returns nonzero if any guide-created S3 bucket, EFS file system, EFS security group, IAM role, IAM policy, or OpenShift validation resource remains.
+**Log in to the DR cluster**, then clean up OpenShift resources:
+
+```bash
+./scripts/cleanup-openshift.sh || return 1
+```
+
+Clean up AWS resources:
+
+```bash
+./scripts/cleanup-s3.sh || return 1
+./scripts/cleanup-efs.sh || return 1
+./scripts/cleanup-iam.sh
+```
+
+The cleanup scripts remove only resources they can identify from the environment variables. The S3 cleanup purges all object versions and delete markers before deleting buckets. The EFS cleanup handles replication already being absent, deletes access points, deletes mount targets, waits until mount targets are gone, then deletes file systems and helper-created EFS security groups. The IAM cleanup detaches policies before deleting helper-created roles and customer-managed policies, including EFS CSI resources.
+
+Delete Route 53 records and health check (if created):
+
+```bash
+aws route53 change-resource-record-sets \
+  --hosted-zone-id $HOSTED_ZONE_ID \
+  --change-batch '{
+    "Changes": [
+      {
+        "Action": "DELETE",
+        "ResourceRecordSet": {
+          "Name": "'$DR_DOMAIN'",
+          "Type": "CNAME",
+          "SetIdentifier": "primary",
+          "Failover": "PRIMARY",
+          "TTL": 60,
+          "ResourceRecords": [{"Value": "'$PRIMARY_ROUTER'"}],
+          "HealthCheckId": "'$HEALTH_CHECK_ID'"
+        }
+      },
+      {
+        "Action": "DELETE",
+        "ResourceRecordSet": {
+          "Name": "'$DR_DOMAIN'",
+          "Type": "CNAME",
+          "SetIdentifier": "secondary",
+          "Failover": "SECONDARY",
+          "TTL": 60,
+          "ResourceRecords": [{"Value": "'$DR_ROUTER'"}]
+        }
+      }
+    ]
+  }'
+
+aws route53 delete-health-check --health-check-id $HEALTH_CHECK_ID
+```
+
+Validate cleanup. **Log in to the primary cluster** first, then run the validator. Repeat while logged in to the DR cluster:
+
+```bash
+./scripts/validate-cleanup.sh
+```
+
+The validator checks AWS resources (S3, EFS, IAM) and OpenShift resources on the currently logged-in cluster. It prints `PASS deleted` for absent resources and returns nonzero if any remain.
