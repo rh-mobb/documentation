@@ -149,15 +149,12 @@ Log in to the primary cluster and get a token:
 
 ```bash
 PRIMARY_API=$(rosa describe cluster -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.api.url')
-oc login $PRIMARY_API
 PRIMARY_TOKEN=$(oc whoami -t)
 ```
 
 Log back in to the ACM hub, create the namespace, then create the auto-import secret:
 
 ```bash
-oc login $ACM_API
-
 oc create namespace ${PRIMARY_CLUSTER_NAME} --dry-run=client -o yaml | oc apply -f -
 
 oc create secret generic auto-import-secret \
@@ -598,40 +595,35 @@ The demo application uses 3 EFS-backed PVCs:
 Record this mapping as part of your DR preparation and keep it up to date. In a real disaster, the primary cluster API might not be available to query.
 {{< /alert >}}
 
-On the primary cluster, map each PVC to its EFS access point path. The PV `volumeHandle` format is `<efs-id>::<access-point-id>`, and each access point has a root directory path where the PVC's data is stored:
+Log in to the primary cluster, then map each PVC to its EFS access point path. The PV `volumeHandle` format is `<efs-id>::<access-point-id>`, and each access point has a root directory path where the PVC's data is stored:
 
 ```bash
-PRIMARY_API=$(rosa describe cluster -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.api.url')
-oc login $PRIMARY_API
-
+declare -A EFS_PATH_MAP
 for PVC in shared-flight-data flight-data-flight-recorder-0 flight-data-flight-recorder-1; do
   PV=$(oc get pvc $PVC -n ${NAMESPACE} -o jsonpath='{.spec.volumeName}')
   AP_ID=$(oc get pv $PV -o jsonpath='{.spec.csi.volumeHandle}' | awk -F'::' '{print $2}')
-  AP_PATH=$(aws efs describe-access-points \
+  EFS_PATH_MAP[$PVC]=$(aws efs describe-access-points \
     --access-point-id $AP_ID \
     --region $PRIMARY_REGION \
     --query 'AccessPoints[0].RootDirectory.Path' \
     --output text)
-  echo "$PVC -> $AP_PATH"
+  echo "$PVC -> ${EFS_PATH_MAP[$PVC]}"
 done
-```
 
-Export the paths from the output:
+export SHARED_FLIGHT_DATA_PATH="${EFS_PATH_MAP[shared-flight-data]}"
+export FLIGHT_DATA_RECORDER_0_PATH="${EFS_PATH_MAP[flight-data-flight-recorder-0]}"
+export FLIGHT_DATA_RECORDER_1_PATH="${EFS_PATH_MAP[flight-data-flight-recorder-1]}"
 
-```bash
-export SHARED_FLIGHT_DATA_PATH=<path-from-output-for-shared-flight-data>
-export FLIGHT_DATA_RECORDER_0_PATH=<path-from-output-for-flight-data-flight-recorder-0>
-export FLIGHT_DATA_RECORDER_1_PATH=<path-from-output-for-flight-data-flight-recorder-1>
+echo "SHARED_FLIGHT_DATA_PATH: $SHARED_FLIGHT_DATA_PATH"
+echo "FLIGHT_DATA_RECORDER_0_PATH: $FLIGHT_DATA_RECORDER_0_PATH"
+echo "FLIGHT_DATA_RECORDER_1_PATH: $FLIGHT_DATA_RECORDER_1_PATH"
 ```
 
 ### Pre-stage static PersistentVolumes on the DR cluster
 
-Log into the DR cluster and create static PVs with `claimRef` pre-binding. The `claimRef` reserves each PV for a specific PVC so that when ArgoCD deploys the application, the PVCs bind to these PVs instead of dynamically provisioning new access points:
+Log in to the DR cluster, then create static PVs with `claimRef` pre-binding. The `claimRef` reserves each PV for a specific PVC so that when ArgoCD deploys the application, the PVCs bind to these PVs instead of dynamically provisioning new access points:
 
 ```bash
-DR_API=$(rosa describe cluster -c $DR_CLUSTER_NAME -o json | jq -r '.api.url')
-oc login $DR_API
-
 cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
@@ -692,11 +684,7 @@ spec:
 EOF
 ```
 
-Log back into the ACM hub:
-
-```bash
-oc login $ACM_API
-```
+Log back in to the ACM hub cluster.
 
 {{< alert >}}
 **Why static provisioning?** When the EFS CSI driver dynamically provisions a PVC, it creates a new access point with a unique subdirectory (e.g., `/acm-demo/pvc-xyz789`). The replicated data from the primary lives under the original subdirectory (e.g., `/acm-demo/pvc-abc123`). A dynamically provisioned PVC on the DR side would mount an empty directory. Static PVs with `claimRef` pre-binding ensure the DR PVCs mount the replicated data paths. The `claimRef` reserves each PV so only the named PVC can bind to it.
@@ -708,27 +696,17 @@ Create a Route 53 A record pointing to the router of the active cluster.
 
 > **Note:** This guide uses a plain A record with a short TTL (30s) rather than an Alias record. Alias records with `EvaluateTargetHealth` can cause negative DNS caching if the ELB is temporarily unhealthy during failover. The trade-off is that ELB IP addresses can change without notice. With a 30s TTL this is tolerable for a demo, but for production use a CNAME or Alias record pointing to the ELB hostname with `EvaluateTargetHealth` set to `false`.
 
-Get the ELB hostname and IP for the primary cluster:
+Get the router IP for each cluster by extracting the apps domain from the console URL:
 
 ```bash
-PRIMARY_API=$(rosa describe cluster -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.api.url')
-PRIMARY_ELB=$(oc --server=$PRIMARY_API --insecure-skip-tls-verify \
-  get svc -n openshift-ingress router-default \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-PRIMARY_IP=$(dig +short $PRIMARY_ELB | head -1)
-echo "Primary ELB: $PRIMARY_ELB"
+PRIMARY_CONSOLE_HOST=$(rosa describe cluster -c $PRIMARY_CLUSTER_NAME -o json \
+  | jq -r '.console.url' | sed 's|^https://||')
+PRIMARY_IP=$(host $PRIMARY_CONSOLE_HOST | awk '/has address/{print $NF; exit}')
 echo "Primary IP: $PRIMARY_IP"
-```
 
-Get the ELB hostname and IP for the DR cluster:
-
-```bash
-DR_API=$(rosa describe cluster -c $DR_CLUSTER_NAME -o json | jq -r '.api.url')
-DR_ELB=$(oc --server=$DR_API --insecure-skip-tls-verify \
-  get svc -n openshift-ingress router-default \
-  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-DR_IP=$(dig +short $DR_ELB | head -1)
-echo "DR ELB: $DR_ELB"
+DR_CONSOLE_HOST=$(rosa describe cluster -c $DR_CLUSTER_NAME -o json \
+  | jq -r '.console.url' | sed 's|^https://||')
+DR_IP=$(host $DR_CONSOLE_HOST | awk '/has address/{print $NF; exit}')
 echo "DR IP: $DR_IP"
 ```
 
@@ -764,24 +742,6 @@ curl -sk https://${CUSTOM_DOMAIN}/healthz
 
 Simulate a region failure by stopping the worker instances on the primary cluster.
 
-Verify the application is healthy:
-
-```bash
-curl -sk https://${CUSTOM_DOMAIN}/healthz
-```
-
-Verify EFS replication is healthy and review the most recent replication timestamp before promoting the DR file system:
-
-```bash
-aws efs describe-replication-configurations \
-  --region $PRIMARY_REGION \
-  --file-system-id $PRIMARY_EFS \
-  --query 'Replications[0].Destinations[0].{Status:Status,LastReplicatedTimestamp:LastReplicatedTimestamp}' \
-  --output table
-```
-
-Confirm that the replication status is `ENABLED` and that `LastReplicatedTimestamp` meets your recovery point objective before proceeding. Data written after the last replicated timestamp might not be available on the DR file system.
-
 Delete EFS replication to promote the DR replica to read-write:
 
 {{< alert >}}
@@ -794,20 +754,23 @@ aws efs delete-replication-configuration \
   --region $PRIMARY_REGION
 ```
 
-Get the primary cluster worker instance IDs:
+Disable auto-repair on the primary cluster's machine pools so ROSA does not replace the stopped workers, then stop the instances:
 
 ```bash
-PRIMARY_INSTANCE_IDS=$(aws ec2 describe-instances --region ${PRIMARY_REGION} \
+for MP in $(rosa list machinepools -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.[].id'); do
+  rosa edit machinepool $MP --cluster $PRIMARY_CLUSTER_NAME --autorepair=false
+done
+
+PRIMARY_INSTANCE_IDS=($(aws ec2 describe-instances --region ${PRIMARY_REGION} \
   --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
             "Name=instance-state-name,Values=running" \
-  --query 'Reservations[].Instances[].InstanceId' --output text)
-echo "Primary instance IDs: $PRIMARY_INSTANCE_IDS"
-```
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+echo "Primary instance IDs: ${PRIMARY_INSTANCE_IDS[@]}"
 
-Stop the primary worker instances:
-
-```bash
-aws ec2 stop-instances --region ${PRIMARY_REGION} --force --instance-ids $PRIMARY_INSTANCE_IDS
+aws ec2 stop-instances \
+  --instance-ids "${PRIMARY_INSTANCE_IDS[@]}" \
+  --region $PRIMARY_REGION
 ```
 
 Watch for ACM to detect the failure. With the tuned lease duration (10s) and toleration (30s), detection takes approximately 40 seconds:
@@ -881,10 +844,22 @@ During failover, the DR EFS file system and DR S3 bucket become independent writ
 For this demonstration, if no DR-side data needs to be preserved, you can restart the primary workers and re-establish primary-to-DR replication as shown below.
 {{< /alert >}}
 
-Start the primary worker instances:
+Start the primary worker instances and re-enable auto-repair:
 
 ```bash
-aws ec2 start-instances --region ${PRIMARY_REGION} --instance-ids $PRIMARY_INSTANCE_IDS
+PRIMARY_INSTANCE_IDS=($(aws ec2 describe-instances --region ${PRIMARY_REGION} \
+  --filters "Name=tag:Name,Values=*${PRIMARY_CLUSTER_NAME}*worker*" \
+            "Name=instance-state-name,Values=stopped" \
+  --query 'Reservations[*].Instances[*].InstanceId' \
+  --output text))
+
+aws ec2 start-instances \
+  --instance-ids "${PRIMARY_INSTANCE_IDS[@]}" \
+  --region $PRIMARY_REGION
+
+for MP in $(rosa list machinepools -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.[].id'); do
+  rosa edit machinepool $MP --cluster $PRIMARY_CLUSTER_NAME --autorepair=true
+done
 ```
 
 Wait for the primary cluster to rejoin ACM. This typically takes 2-3 minutes as the klusterlet pods restart and begin sending heartbeats:
