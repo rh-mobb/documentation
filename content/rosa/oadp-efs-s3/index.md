@@ -188,7 +188,7 @@ Create visible test data:
 ```bash
 export VALIDATION_ID=dr-$(date +%Y%m%d%H%M%S)
 
-oc exec -n dr-demo deploy/mission-control -- \
+oc exec -n dr-demo sts/flight-recorder -- \
   sh -c "echo efs-$VALIDATION_ID > /data/flight-recorder/validation-$VALIDATION_ID.txt"
 
 printf '%s\n' "s3-$VALIDATION_ID" | aws s3 cp - \
