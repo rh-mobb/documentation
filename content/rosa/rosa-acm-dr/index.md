@@ -54,6 +54,51 @@ export CUSTOM_DOMAIN=<your-custom-domain>
 export HOSTED_ZONE_ID=<your-route53-hosted-zone-id>
 ```
 
+## Update S3 IRSA Trust Policies
+
+The DR infrastructure guide creates S3 IRSA roles with trust policies scoped to the `dr-demo` namespace. This guide deploys the application in the `acm-demo` namespace, so the trust policies must be updated to allow service accounts from both namespaces:
+
+```bash
+for ROLE_NAME in ${PRIMARY_CLUSTER_NAME}-dr-demo-s3 ${DR_CLUSTER_NAME}-dr-demo-s3; do
+  TRUST=$(aws iam get-role --role-name $ROLE_NAME \
+    --query 'Role.AssumeRolePolicyDocument' --output json)
+
+  OIDC_KEY=$(echo "$TRUST" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+cond = d['Statement'][0]['Condition']['StringEquals']
+print(list(cond.keys())[0])")
+
+  OIDC_PROVIDER=$(echo "$OIDC_KEY" | sed 's/:sub$//')
+
+  aws iam update-assume-role-policy \
+    --role-name $ROLE_NAME \
+    --policy-document "{
+      \"Version\": \"2012-10-17\",
+      \"Statement\": [{
+        \"Effect\": \"Allow\",
+        \"Principal\": {
+          \"Federated\": \"arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}\"
+        },
+        \"Action\": \"sts:AssumeRoleWithWebIdentity\",
+        \"Condition\": {
+          \"StringEquals\": {
+            \"${OIDC_KEY}\": [
+              \"system:serviceaccount:dr-demo:s3-writer\",
+              \"system:serviceaccount:dr-demo:dashboard\",
+              \"system:serviceaccount:dr-demo:default\",
+              \"system:serviceaccount:${NAMESPACE}:s3-writer\",
+              \"system:serviceaccount:${NAMESPACE}:dashboard\",
+              \"system:serviceaccount:${NAMESPACE}:default\"
+            ]
+          }
+        }
+      }]
+    }"
+  echo "Updated $ROLE_NAME to allow ${NAMESPACE} namespace"
+done
+```
+
 ## Log into the ACM Hub Cluster
 
 All resources in this guide are created on the ACM hub cluster unless otherwise noted.
@@ -250,7 +295,7 @@ metadata:
 EOF
 ```
 
-Add both clusters to the set and mark the primary cluster as active:
+Add both clusters to the set:
 
 ```bash
 oc label managedcluster ${PRIMARY_CLUSTER_NAME} \
@@ -307,6 +352,26 @@ ARGOCD_PASS=$(oc get secret openshift-gitops-cluster \
   -n openshift-gitops \
   -o jsonpath='{.data.admin\.password}' | base64 -d)
 echo "ArgoCD admin password: $ARGOCD_PASS"
+```
+
+### Custom Deployment Health Check
+
+ArgoCD's built-in Deployment health check evaluates the `Progressing` condition before `Available`. When a Deployment's rollout completed successfully but the worker nodes later go down, `Progressing` stays `True` (with reason `NewReplicaSetAvailable`) even though `Available` is `False`. ArgoCD reports `Healthy` because it returns early on the `Progressing` check without examining `Available`.
+
+Add a custom health check that evaluates `Available` first, so ArgoCD correctly reports `Degraded` when a Deployment has zero available replicas:
+
+```bash
+oc patch argocd openshift-gitops -n openshift-gitops --type merge -p '{
+  "spec": {
+    "resourceHealthChecks": [
+      {
+        "group": "apps",
+        "kind": "Deployment",
+        "check": "hs = {}\nif obj.status ~= nil then\n  if obj.status.conditions ~= nil then\n    for i, condition in ipairs(obj.status.conditions) do\n      if condition.type == \"Available\" and condition.status == \"False\" then\n        hs.status = \"Degraded\"\n        hs.message = condition.message\n        return hs\n      end\n    end\n    for i, condition in ipairs(obj.status.conditions) do\n      if condition.type == \"Progressing\" and condition.status == \"True\" and condition.reason == \"NewReplicaSetAvailable\" then\n        hs.status = \"Healthy\"\n        hs.message = \"\"\n        return hs\n      end\n      if condition.type == \"Progressing\" and condition.status == \"False\" then\n        hs.status = \"Degraded\"\n        hs.message = condition.message\n        return hs\n      end\n    end\n  end\nend\nhs.status = \"Progressing\"\nhs.message = \"Waiting for rollout to finish\"\nreturn hs\n"
+      }
+    ]
+  }
+}'
 ```
 
 ## Bind the ManagedClusterSet to GitOps
@@ -399,7 +464,39 @@ Verify the clusters appear as ArgoCD cluster secrets:
 oc get secrets -n openshift-gitops -l argocd.argoproj.io/secret-type=cluster
 ```
 
-You should see secrets for both managed clusters. The `application-manager` addon copies ManagedCluster labels to the cluster secrets, including the `acm-dr-active` label that the ApplicationSet uses to select the active cluster.
+You should see secrets for both managed clusters. The `application-manager` addon copies ManagedCluster labels to the cluster secrets, including the `cluster.open-cluster-management.io/clusterset` label that the ApplicationSet uses to select clusters.
+
+### Configure Direct API Access for Health Monitoring
+
+By default, the `application-manager` addon configures ArgoCD to reach managed clusters through ACM's cluster-proxy. The proxy agent runs on the managed cluster's worker nodes. When worker nodes go down during a failure, the proxy agent becomes unavailable and ArgoCD cannot re-evaluate application health, leaving it at the last cached state.
+
+To allow ArgoCD to detect unhealthy applications during a failure, update the cluster secrets to use the direct HCP API URL. With ROSA HCP, the hosted control plane stays running even when all worker nodes are stopped, so ArgoCD can still query the Kubernetes API and detect that Deployments have zero available replicas.
+
+```bash
+PRIMARY_API=$(rosa describe cluster -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.api.url')
+DR_API=$(rosa describe cluster -c $DR_CLUSTER_NAME -o json | jq -r '.api.url')
+
+for CLUSTER_NAME in $PRIMARY_CLUSTER_NAME $DR_CLUSTER_NAME; do
+  SECRET_NAME="${CLUSTER_NAME}-application-manager-cluster-secret"
+  CLUSTER_API=$([ "$CLUSTER_NAME" = "$PRIMARY_CLUSTER_NAME" ] && echo "$PRIMARY_API" || echo "$DR_API")
+
+  BEARER_TOKEN=$(oc get secret $SECRET_NAME -n openshift-gitops \
+    -o jsonpath='{.data.config}' | base64 -d | python3 -c "import sys,json; print(json.load(sys.stdin)['bearerToken'])")
+
+  NEW_CONFIG=$(python3 -c "
+import json, base64
+config = {'bearerToken': '${BEARER_TOKEN}', 'tlsClientConfig': {'insecure': True}}
+print(base64.b64encode(json.dumps(config).encode()).decode())
+")
+  NEW_SERVER=$(echo -n "$CLUSTER_API" | base64)
+
+  oc patch secret $SECRET_NAME -n openshift-gitops \
+    -p "{\"data\":{\"server\":\"$NEW_SERVER\",\"config\":\"$NEW_CONFIG\"}}"
+  echo "Patched $SECRET_NAME -> $CLUSTER_API"
+done
+```
+
+> **Note:** The `application-manager` addon may periodically reset the cluster secrets back to the proxy URL. If this happens, re-run the patch above. For a long-lived environment, consider disabling the addon's secret reconciliation or creating separate ArgoCD cluster secrets outside of the addon's management.
 
 ## Configure ACM Placement for Failover
 
@@ -784,21 +881,39 @@ aws ec2 stop-instances \
   --region $PRIMARY_REGION
 ```
 
-Watch for ACM to detect the failure. With the tuned lease duration (10s) and toleration (30s), detection takes approximately 40 seconds:
+Watch for ACM to detect the failure and ArgoCD to report the primary application as degraded. With the tuned lease duration (10s) and toleration (30s), ACM detection takes approximately 40 seconds. ArgoCD detects the degraded Deployments on the next health evaluation cycle:
 
 ```bash
 watch -n5 "echo '=== Cluster Health ===' && \
-  oc get managedcluster ${PRIMARY_CLUSTER_NAME} \
-    -o jsonpath='Available: {.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status}' && \
-  echo '' && echo '' && echo '=== Placement Decision ===' && \
+  oc get managedcluster -o custom-columns=\
+'NAME:.metadata.name,AVAILABLE:.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status' && \
+  echo '' && echo '=== Placement Decision ===' && \
   oc get placementdecision -n openshift-gitops \
     -l cluster.open-cluster-management.io/placement=acm-demo-placement \
-    -o jsonpath='{.items[0].status.decisions[0].clusterName}'"
+    -o jsonpath='{range .items[0].status.decisions[*]}{.clusterName}{end}' && \
+  echo '' && echo '' && echo '=== ArgoCD Applications ===' && \
+  oc get applications.argoproj.io -n openshift-gitops"
 ```
 
-Wait until `Available` changes from `True` to `Unknown` and the PlacementDecision switches to the DR cluster.
+Wait until the primary cluster shows `Available: Unknown`, the PlacementDecision shows only the DR cluster, and ArgoCD shows the primary application as `Degraded` while the DR application is `Healthy`:
 
-Because the application is already deployed to both clusters, no ArgoCD changes are needed. The DR cluster's application is already `Synced` and `Healthy`. You can verify in the ArgoCD UI that the primary cluster's application shows `Degraded` while the DR cluster's application remains `Healthy`.
+```
+=== Cluster Health ===
+NAME            AVAILABLE
+kmc-east1       Unknown
+kmc-west2       True
+local-cluster   True
+
+=== Placement Decision ===
+kmc-west2
+
+=== ArgoCD Applications ===
+NAME                 SYNC STATUS   HEALTH STATUS
+acm-demo-kmc-east1   Synced        Degraded
+acm-demo-kmc-west2   Synced        Healthy
+```
+
+Because the application is already deployed to both clusters, no ArgoCD redeployment is needed. The DR cluster's application is already running.
 
 Switch DNS to the DR cluster:
 
@@ -842,7 +957,7 @@ During failover, the DR EFS file system and DR S3 bucket become independent writ
 For this demonstration, if no DR-side data needs to be preserved, you can restart the primary workers and re-establish primary-to-DR replication as shown below.
 {{< /alert >}}
 
-Start the primary worker instances and re-enable auto-repair:
+Start the primary worker instances:
 
 ```bash
 PRIMARY_INSTANCE_IDS=($(aws ec2 describe-instances --region ${PRIMARY_REGION} \
@@ -854,28 +969,21 @@ PRIMARY_INSTANCE_IDS=($(aws ec2 describe-instances --region ${PRIMARY_REGION} \
 aws ec2 start-instances \
   --instance-ids "${PRIMARY_INSTANCE_IDS[@]}" \
   --region $PRIMARY_REGION
-
-for MP in $(rosa list machinepools -c $PRIMARY_CLUSTER_NAME -o json | jq -r '.[].id'); do
-  rosa edit machinepool $MP --cluster $PRIMARY_CLUSTER_NAME --autorepair=true
-done
 ```
 
-Wait for the primary cluster to rejoin ACM. This typically takes 2-3 minutes as the klusterlet pods restart and begin sending heartbeats:
+> **Note:** Do not re-enable auto-repair during failback. The ROSA HCP machine manager detects that the previously stopped nodes were `NotReady` and cordons them for replacement. With auto-repair enabled, it replaces all worker nodes, which extends the recovery time. With auto-repair disabled, the machine manager still replaces the nodes but does so on its own schedule. The new nodes join the cluster in a schedulable state.
+
+Wait for the primary cluster to rejoin ACM and for the nodes to be replaced. This typically takes 3-5 minutes:
 
 ```bash
-watch "oc get managedcluster ${PRIMARY_CLUSTER_NAME} \
-  -o jsonpath='Available: {.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status}'"
+watch -n10 "echo '=== ACM ===' && \
+  oc get managedcluster ${PRIMARY_CLUSTER_NAME} \
+    -o jsonpath='Available: {.status.conditions[?(@.type==\"ManagedClusterConditionAvailable\")].status}' && \
+  echo '' && echo '' && echo '=== ArgoCD ===' && \
+  oc get applications.argoproj.io -n openshift-gitops"
 ```
 
-Wait until it shows `True`.
-
-Verify that the primary cluster's ArgoCD application has returned to `Healthy`:
-
-```bash
-watch "oc get applications.argoproj.io -n openshift-gitops"
-```
-
-Wait until `acm-demo-${PRIMARY_CLUSTER_NAME}` shows `Synced` and `Healthy`.
+Wait until the primary cluster shows `Available: True` and `acm-demo-${PRIMARY_CLUSTER_NAME}` shows `Synced` and `Healthy`.
 
 Re-establish EFS replication from primary to DR. Before allowing production traffic to return to the primary cluster, verify that the application is healthy and that any required DR-side EFS and S3 data has been reconciled. Application health alone is not sufficient to determine that a stateful workload is ready for failback.
 
@@ -929,10 +1037,11 @@ curl -sk https://${CUSTOM_DOMAIN}/healthz
 | ACM taints cluster as unreachable | T+10s |
 | Placement toleration expires | T+40s |
 | ACM detects cluster is unhealthy | T+40s |
-| DNS switch (manual) | T+45s |
-| Traffic reaches DR cluster | T+75s (30s TTL) |
+| ArgoCD reports primary application Degraded | T+40-60s |
+| DNS switch (manual) | T+60s |
+| Traffic reaches DR cluster | T+90s (30s TTL) |
 
-> **Note:** Because the application is already running on both clusters, failover requires only a DNS switch. There is no ArgoCD deployment delay. For production environments, consider using Route 53 health checks with DNS failover routing to automate the DNS switch entirely.
+> **Note:** Because the application is already running on both clusters, failover requires only a DNS switch. There is no ArgoCD deployment delay. ArgoCD reports `Degraded` on the primary because the custom health check detects `Available: False` on the Deployments via the direct HCP API connection. For production environments, consider using Route 53 health checks with DNS failover routing to automate the DNS switch entirely.
 
 ## Production Considerations
 
