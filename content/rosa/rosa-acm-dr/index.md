@@ -13,11 +13,11 @@ This guide demonstrates how to set up an active/passive disaster recovery patter
 
 The pattern works as follows:
 
+- ArgoCD deploys the application to both clusters simultaneously via an ApplicationSet
 - ACM monitors cluster health via klusterlet heartbeats
-- A Placement resource detects when the active cluster becomes unreachable
-- An `acm-dr-active` label on the ManagedCluster controls which cluster ArgoCD deploys to
-- During failover, switching the label triggers ArgoCD to deploy the application to the standby cluster
-- DNS is switched manually to point to the new active cluster
+- A Placement resource detects when a cluster becomes unreachable
+- During failover, only DNS needs to be switched to point to the healthy cluster
+- The application is already running on the DR cluster, so there is no deployment delay
 
 ## Prerequisites
 
@@ -255,15 +255,12 @@ Add both clusters to the set and mark the primary cluster as active:
 ```bash
 oc label managedcluster ${PRIMARY_CLUSTER_NAME} \
   cluster.open-cluster-management.io/clusterset=dr-clusters \
-  acm-dr-active=true \
   --overwrite
 
 oc label managedcluster ${DR_CLUSTER_NAME} \
   cluster.open-cluster-management.io/clusterset=dr-clusters \
   --overwrite
 ```
-
-The `acm-dr-active=true` label controls which cluster ArgoCD deploys the application to. Only one cluster should have this label at a time.
 
 ## Install OpenShift GitOps on the Hub
 
@@ -459,41 +456,43 @@ oc patch managedcluster ${DR_CLUSTER_NAME} --type merge \
 
 ## Obtain a TLS Certificate (Optional)
 
-If you want to serve the application on a custom domain with a valid TLS certificate, obtain one using Let's Encrypt with a DNS-01 challenge via Route 53.
+If you want to serve the application on a custom domain with a valid TLS certificate, obtain one using Let's Encrypt with the `certbot-dns-route53` plugin. Certbot uses your AWS credentials to create a temporary TXT record in Route 53 for domain validation.
 
-Request the certificate:
+**Important:** Replace `your-email@example.com` with your actual email address.
 
 ```bash
-certbot certonly --manual --preferred-challenges dns \
-  --server https://acme-v02.api.letsencrypt.org/directory \
-  -d ${CUSTOM_DOMAIN} \
+certbot certonly \
+  --dns-route53 \
+  -d $CUSTOM_DOMAIN \
+  --non-interactive \
+  --agree-tos \
+  --email your-email@example.com \
   --config-dir /tmp/certbot/config \
   --work-dir /tmp/certbot/work \
   --logs-dir /tmp/certbot/logs
 ```
 
-Follow the prompts to create a DNS TXT record in Route 53 for validation.
-
-Store the certificate and key in environment variables:
+Set the certificate directory:
 
 ```bash
-export TLS_CERT=$(cat /tmp/certbot/config/live/${CUSTOM_DOMAIN}/fullchain.pem)
-export TLS_KEY=$(cat /tmp/certbot/config/live/${CUSTOM_DOMAIN}/privkey.pem)
+export CERT_DIR=/tmp/certbot/config/live/${CUSTOM_DOMAIN}
 ```
 
 ## Create the ArgoCD ApplicationSet
 
 The ApplicationSet uses a merge generator that combines two sources:
 
-- **clusters**: reads ArgoCD cluster secrets, filtered by the `acm-dr-active=true` label so only the active cluster is selected
+- **clusters**: reads ArgoCD cluster secrets, selecting all clusters in the `dr-clusters` ManagedClusterSet so the application is deployed to both clusters
 - **list**: provides per-cluster configuration (region, S3 bucket, IRSA role ARN, EFS file system ID)
 
-The merge generator joins them by cluster `name`. When you switch the `acm-dr-active` label to the DR cluster during failover, ArgoCD detects the change and deploys the application to the new target.
+The merge generator joins them by cluster `name`. Because the application is deployed to both clusters, failover only requires switching DNS to the DR cluster.
+
+The YAML is built in segments to cleanly embed the multi-line PEM certificate and key. The first heredoc writes everything up to `certificate: |`, then `sed` appends the indented PEM content directly from the cert files, and a final heredoc closes the YAML.
 
 Create the ApplicationSet:
 
 ```bash
-cat << EOF | oc apply -f -
+cat > /tmp/appset.yaml << EOF
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -509,7 +508,7 @@ spec:
           - clusters:
               selector:
                 matchLabels:
-                  acm-dr-active: "true"
+                  cluster.open-cluster-management.io/clusterset: dr-clusters
           - list:
               elements:
                 - name: ${PRIMARY_CLUSTER_NAME}
@@ -553,9 +552,18 @@ spec:
             route:
               enabled: true
               customDomain: ${CUSTOM_DOMAIN}
+              tls:
+                certificate: |
+EOF
+
+sed 's/^/                  /' "$CERT_DIR/fullchain.pem" >> /tmp/appset.yaml
+printf '                key: |\n' >> /tmp/appset.yaml
+sed 's/^/                  /' "$CERT_DIR/privkey.pem" >> /tmp/appset.yaml
+
+cat >> /tmp/appset.yaml << 'EOF'
       destination:
         server: "{{.server}}"
-        namespace: ${NAMESPACE}
+        namespace: acm-demo
       syncPolicy:
         automated:
           prune: true
@@ -563,9 +571,11 @@ spec:
         syncOptions:
           - CreateNamespace=true
 EOF
+
+oc apply -f /tmp/appset.yaml
 ```
 
-> **Note:** The heredoc substitutes `${VAR}` references with your environment variable values. The Go template `{{.field}}` references use double curly braces and are not substituted by the shell -- they are processed by ArgoCD at deploy time. If you did not set `TLS_CERT` and `TLS_KEY`, the route will use the cluster's default wildcard certificate.
+> **Note:** The Go template `{{.field}}` references use double curly braces and are not substituted by the shell. They are processed by ArgoCD at deploy time. If you skipped the TLS certificate step, remove the `tls` block from the `route` section, remove the `sed` and `printf` lines, and the route will use the cluster's default wildcard certificate.
 
 Verify the Application was created and is syncing:
 
@@ -573,11 +583,12 @@ Verify the Application was created and is syncing:
 watch "oc get applications.argoproj.io -n openshift-gitops"
 ```
 
-Wait until the application shows `Synced` and `Healthy`:
+Wait until both applications show `Synced` and `Healthy`:
 
 ```
 NAME                 SYNC STATUS   HEALTH STATUS
 acm-demo-kmc-east1   Synced        Healthy
+acm-demo-kmc-west2   Synced        Healthy
 ```
 
 ## Prepare DR Cluster for EFS Data Continuity
@@ -787,20 +798,7 @@ watch -n5 "echo '=== Cluster Health ===' && \
 
 Wait until `Available` changes from `True` to `Unknown` and the PlacementDecision switches to the DR cluster.
 
-Once ACM detects the failure, switch the `acm-dr-active` label to the DR cluster to trigger ArgoCD deployment:
-
-```bash
-oc label managedcluster ${PRIMARY_CLUSTER_NAME} acm-dr-active-
-oc label managedcluster ${DR_CLUSTER_NAME} acm-dr-active=true
-```
-
-Watch ArgoCD deploy the application to the DR cluster:
-
-```bash
-watch "oc get applications.argoproj.io -n openshift-gitops"
-```
-
-Wait until `acm-demo-${DR_CLUSTER_NAME}` shows `Synced` and `Healthy`.
+Because the application is already deployed to both clusters, no ArgoCD changes are needed. The DR cluster's application is already `Synced` and `Healthy`. You can verify in the ArgoCD UI that the primary cluster's application shows `Degraded` while the DR cluster's application remains `Healthy`.
 
 Switch DNS to the DR cluster:
 
@@ -871,14 +869,7 @@ watch "oc get managedcluster ${PRIMARY_CLUSTER_NAME} \
 
 Wait until it shows `True`.
 
-Switch the `acm-dr-active` label back to the primary cluster:
-
-```bash
-oc label managedcluster ${DR_CLUSTER_NAME} acm-dr-active-
-oc label managedcluster ${PRIMARY_CLUSTER_NAME} acm-dr-active=true
-```
-
-Watch ArgoCD deploy to the primary cluster:
+Verify that the primary cluster's ArgoCD application has returned to `Healthy`:
 
 ```bash
 watch "oc get applications.argoproj.io -n openshift-gitops"
@@ -938,16 +929,14 @@ curl -sk https://${CUSTOM_DOMAIN}/healthz
 | ACM taints cluster as unreachable | T+10s |
 | Placement toleration expires | T+40s |
 | ACM detects cluster is unhealthy | T+40s |
-| Switch `acm-dr-active` label (manual) | T+45s |
-| ArgoCD detects label change and begins sync | T+50s |
-| Application healthy on new cluster | T+60s |
-| DNS switch (manual) | T+70s |
+| DNS switch (manual) | T+45s |
+| Traffic reaches DR cluster | T+75s (30s TTL) |
 
-> **Note:** Failover detection is automatic. The label switch and DNS update are manual steps. For production environments, consider automating the label switch with a controller that watches the PlacementDecision, and using Route 53 health checks with DNS failover routing to automate DNS.
+> **Note:** Because the application is already running on both clusters, failover requires only a DNS switch. There is no ArgoCD deployment delay. For production environments, consider using Route 53 health checks with DNS failover routing to automate the DNS switch entirely.
 
 ## Production Considerations
 
-- **Automate the `acm-dr-active` label switch:** Create a controller or CronJob on the ACM hub that watches the PlacementDecision and automatically moves the `acm-dr-active` label to the selected cluster. This removes the manual step during failover.
+- **Resource overhead:** The application runs on both clusters simultaneously. For resource-intensive applications, consider whether the cost of running on both clusters is acceptable. The trade-off is faster failover (DNS-only, no deployment delay) versus higher steady-state resource consumption.
 - **EFS path mapping:** Record and maintain the PVC-to-EFS access point path mapping as part of your DR runbook. In a real disaster, the primary cluster API might not be available to query. Update this mapping whenever PVCs are recreated.
 - **Data reconciliation before failback:** Both EFS and S3 replication are one-directional (primary to DR). Data written during failover must be manually synced or merged back to the primary before re-establishing replication. See the [Disaster Recovery with OADP on ROSA HCP](/experts/rosa/oadp-efs-s3/) guide for detailed failback data reconciliation steps.
 - **ACM hub availability:** The ACM hub is a single point of failure for failover detection. In production, deploy the hub with high availability or consider an active-passive hub configuration.
