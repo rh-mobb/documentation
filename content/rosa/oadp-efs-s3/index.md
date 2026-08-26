@@ -34,6 +34,19 @@ The helper scripts are in the [rosa-dr-scripts](https://github.com/rh-mobb/rosa-
 cd rosa-dr-scripts
 ```
 
+If you follow the DNS failover workflow in this guide, you also need:
+
+- A Route 53 public hosted zone
+- A custom domain or hostname where you are allowed to create DNS records
+- `certbot`
+- The `certbot-dns-route53` plugin
+
+Verify the Route 53 Certbot plugin before starting the DNS failover section:
+
+```bash
+certbot plugins | grep -q dns-route53
+```
+
 ## Architecture
 
 The OADP DR pattern adds to the shared DR infrastructure:

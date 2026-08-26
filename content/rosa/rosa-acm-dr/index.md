@@ -41,7 +41,17 @@ In addition to the shared infrastructure, this guide requires:
 
 * A third ROSA HCP cluster for the ACM hub (`$CLUSTER_ACM`)
 * AWS CLI, `oc` CLI, and `rosa` CLI configured
-* A Route 53 hosted zone for the custom domain (optional, for DNS-based failover)
+* For DNS-based failover:
+  * A Route 53 public hosted zone
+  * A custom domain or hostname where you are allowed to create DNS records
+  * `certbot`
+  * The `certbot-dns-route53` plugin
+
+If you follow the DNS failover or custom certificate workflow, verify the Route 53 Certbot plugin before starting those steps:
+
+```bash
+certbot plugins | grep -q dns-route53
+```
 
 ## Environment Variables
 
