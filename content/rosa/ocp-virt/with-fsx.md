@@ -4,6 +4,8 @@ title: Deploying Openshift Virtualization on ROSA with NetApp FSx storage.
 tags: ["ROSA", "Virtualization"]
 authors:
   - Paul Czarkowski
+  - Nerav Doshi
+validated_version: "4.20"
 ---
 
 OpenShift Virtualization is a feature of OpenShift that allows you to run virtual machines alongside your containers.  This is useful for running legacy applications that can't be containerized, or for running applications that require special hardware or software that isn't available in a container.
@@ -17,7 +19,7 @@ If you're planning to deploy OpenShift Virtualization in a production environmen
 * A ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/))
 * An AWS account with permissions to create FSx for ONTAP
 * The `git` binary installed on your machine.  You can download it from the [git website](https://git-scm.com/downloads).
-* The `virtctl` binary installed on your machine.  You can follow installation instructions on the [OpenShift website](https://docs.openshift.com/container-platform/4.15/virt/getting_started/virt-using-the-cli-tools.html).
+* The `virtctl` binary installed on your machine.  You can follow installation instructions in the [ROSA Virtualization documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/virtualization/getting-started#virt-installing-the-virtctl-binary-on-rhel-9-or-later-linux-windows-or-macos).
 
 > Note: This guide re-uses environment variables from the [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) guide. If you have an existing cluster, you'll need to set them appropriately for the cluster.
 
@@ -311,9 +313,9 @@ This can take some time, so we can go ahead and deploy the OpenShift Virtualizat
 
 1. SSH into the VM
    
-    >Note: Be sure you have a compatible `virtctl` binary otherwise this command may fail if you installed an incompatible version (e.g. `brew install virtctl`).  Proper installation instructions will always be located in the OpenShift documentation (https://docs.openshift.com/container-platform/4.15/virt/getting_started/virt-using-the-cli-tools.html).
+    >Note: Be sure you have a compatible `virtctl` binary otherwise this command may fail if you installed an incompatible version (e.g. `brew install virtctl`).  Proper installation instructions will always be located in the [ROSA Virtualization documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/virtualization/getting-started#virt-installing-the-virtctl-binary-on-rhel-9-or-later-linux-windows-or-macos).
     ```bash
-    virtctl ssh fedora@my-first-fedora-vm -i ~/.ssh/id_rsa
+    virtctl ssh fedora@vm/my-first-fedora-vm -i ~/.ssh/id_rsa
     ```
     >Output:
     ```output
