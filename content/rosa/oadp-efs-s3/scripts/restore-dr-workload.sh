@@ -100,14 +100,5 @@ oc set env deployment/telemetry-transmitter deployment/mission-control -n dr-dem
   CLUSTER_NAME="$DR_CLUSTER_NAME" \
   AWS_ROLE_ARN="$APP_S3_ROLE_ARN_DR"
 
-# The restored mission-control deployment mounts EFS as readOnly. Remove it so
-# DR validation can confirm the recovered filesystem is writable.
-if oc get deployment mission-control -n dr-demo -o jsonpath='{.spec.template.spec.containers[0].volumeMounts}' 2>/dev/null \
-    | grep -q '"readOnly":true'; then
-  oc patch deployment mission-control -n dr-demo --type json -p '[
-    {"op":"test","path":"/spec/template/spec/containers/0/volumeMounts/1/readOnly","value":true},
-    {"op":"remove","path":"/spec/template/spec/containers/0/volumeMounts/1/readOnly"}
-  ]'
-fi
 
 echo "DR workload restore and configuration completed." >&2

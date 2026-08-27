@@ -51,7 +51,7 @@ metadata:
   name: efs-sc
 parameters:
   basePath: /dynamic_provisioning
-  directoryPerms: "755"
+  directoryPerms: "775"
   fileSystemId: ${file_system_id}
   gidRangeEnd: "2000"
   gidRangeStart: "1000"
