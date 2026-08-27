@@ -18,6 +18,21 @@ Our validated workflow supports two key disaster recovery (DR) scenarios, giving
 
 This article keeps the recovery decisions visible. Helper scripts are used only for repetitive setup tasks such as IAM, OADP installation, and recording EFS PVC mappings.
 
+## Architecture
+
+The following architecture shows the multi-region ROSA HCP DR design using OADP backup/restore and ACM + GitOps warm DR.
+
+![ROSA HCP DR architecture](images/rosa-dr-v1.png)
+
+This guide covers DR Strategy 1, OADP Backup & Restore. The ACM article covers DR Strategy 2, ACM + GitOps Warm DR.
+
+The OADP DR pattern adds to the shared DR infrastructure:
+
+- OADP installed on both clusters
+- An example workload that writes object data to S3 and file data to EFS
+
+During recovery, OADP restores the Kubernetes objects. EFS file data is not restored dynamically by OADP. Instead, the DR cluster reconstructs one EFS access point for each recorded PVC path, then uses static PersistentVolumes with `volumeHandle: <dr-efs-id>::<dr-access-point-id>`. This preserves the original replicated EFS paths and the access point POSIX identity needed for writes.
+
 ## Prerequisites
 
 Before starting this guide, complete the [Create ROSA HCP Disaster Recovery Infrastructure](/experts/rosa/rosa-dr-infra/) guide. That guide sets up:
@@ -46,21 +61,6 @@ Verify the Route 53 Certbot plugin before starting the DNS failover section:
 ```bash
 certbot plugins | grep -q dns-route53
 ```
-
-## Architecture
-
-The following architecture shows the multi-region ROSA HCP DR design using OADP backup/restore and ACM + GitOps warm DR.
-
-![ROSA HCP DR architecture](images/rosa-dr-v1.png)
-
-This guide covers DR Strategy 1, OADP Backup & Restore. The ACM article covers DR Strategy 2, ACM + GitOps Warm DR.
-
-The OADP DR pattern adds to the shared DR infrastructure:
-
-- OADP installed on both clusters
-- An example workload that writes object data to S3 and file data to EFS
-
-During recovery, OADP restores the Kubernetes objects. EFS file data is not restored dynamically by OADP. Instead, the DR cluster reconstructs one EFS access point for each recorded PVC path, then uses static PersistentVolumes with `volumeHandle: <dr-efs-id>::<dr-access-point-id>`. This preserves the original replicated EFS paths and the access point POSIX identity needed for writes.
 
 ## 1. Configure OADP
 
