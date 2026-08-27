@@ -77,6 +77,7 @@ delete_role() {
 delete_policy() {
   local policy_arn="$1"
   local version_id
+  local attached_role
   [ -n "$policy_arn" ] || return 0
   if ! policy_exists "$policy_arn"; then
     echo "Policy $policy_arn is already absent."
@@ -88,6 +89,14 @@ delete_policy() {
     --query 'Versions[?IsDefaultVersion==`false`].VersionId' \
     --output text); do
     aws iam delete-policy-version --policy-arn "$policy_arn" --version-id "$version_id"
+  done
+
+  for attached_role in $(aws iam list-entities-for-policy \
+    --policy-arn "$policy_arn" \
+    --query 'PolicyRoles[].RoleName' \
+    --output text 2>/dev/null); do
+    aws iam detach-role-policy --role-name "$attached_role" --policy-arn "$policy_arn"
+    echo "Detached policy from role $attached_role."
   done
 
   aws iam delete-policy --policy-arn "$policy_arn"

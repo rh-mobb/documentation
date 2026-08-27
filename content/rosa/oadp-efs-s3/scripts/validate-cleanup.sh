@@ -159,10 +159,12 @@ for cluster in "$PRIMARY_CLUSTER_NAME" "$DR_CLUSTER_NAME"; do
   login_cluster "$cluster"
   check_openshift_resource_absent "${cluster} namespace/dr-demo" oc get namespace dr-demo
   check_openshift_resource_absent "${cluster} namespace/efs-smoke" oc get namespace efs-smoke
+  check_openshift_resource_absent "${cluster} namespace/openshift-adp" oc get namespace openshift-adp
   check_openshift_resource_absent "${cluster} dpa/openshift-adp/dr-demo-dpa" oc get dpa dr-demo-dpa -n openshift-adp
   check_openshift_resource_absent "${cluster} secret/openshift-adp/cloud-credentials" oc get secret cloud-credentials -n openshift-adp
   check_openshift_resource_absent "${cluster} subscription/openshift-adp/redhat-oadp-operator" oc get subscription redhat-oadp-operator -n openshift-adp
   check_openshift_resource_absent "${cluster} clustercsidriver/efs.csi.aws.com" oc get clustercsidriver efs.csi.aws.com
+  check_openshift_resource_absent "${cluster} storageclass/efs-sc" oc get sc efs-sc
   check_openshift_resource_absent "${cluster} secret/openshift-cluster-csi-drivers/aws-efs-cloud-credentials" oc get secret aws-efs-cloud-credentials -n openshift-cluster-csi-drivers
   check_openshift_resource_absent "${cluster} subscription/openshift-cluster-csi-drivers/aws-efs-csi-driver-operator" oc get subscription aws-efs-csi-driver-operator -n openshift-cluster-csi-drivers
 done
