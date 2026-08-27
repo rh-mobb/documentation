@@ -18,15 +18,9 @@ Our validated workflow supports two key disaster recovery (DR) scenarios, giving
 
 This article keeps the recovery decisions visible. Helper scripts are used only for repetitive setup tasks such as IAM, OADP installation, and recording EFS PVC mappings.
 
-## Architecture
+## What This Pattern Adds
 
-The following architecture shows the multi-region ROSA HCP DR design using OADP backup/restore and ACM + GitOps warm DR.
-
-![ROSA HCP DR architecture](images/rosa-dr-v1.png)
-
-This guide covers DR Strategy 1, OADP Backup & Restore. The ACM article covers DR Strategy 2, ACM + GitOps Warm DR.
-
-The OADP DR pattern adds to the shared DR infrastructure:
+See the [architecture overview](/experts/rosa/rosa-dr-infra/#architecture) in the parent guide. This OADP pattern adds to the shared DR infrastructure:
 
 - OADP installed on both clusters
 - An example workload that writes object data to S3 and file data to EFS
@@ -35,7 +29,7 @@ During recovery, OADP restores the Kubernetes objects. EFS file data is not rest
 
 ## Prerequisites
 
-Before starting this guide, complete the [Create ROSA HCP Disaster Recovery Infrastructure](/experts/rosa/rosa-dr-infra/) guide. That guide sets up:
+Before starting this guide, complete the [Application Disaster Recovery on ROSA HCP](/experts/rosa/rosa-dr-infra/) guide. That guide sets up:
 
 - EFS CSI Driver on both clusters
 - S3 Cross-Region Replication for application data and backup buckets

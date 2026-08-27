@@ -1,7 +1,7 @@
 ---
 date: '2026-08-24'
-title: Create ROSA HCP Disaster Recovery Infrastructure
-tags: ["ROSA HCP"]
+title: Application Disaster Recovery on ROSA HCP
+tags: ["ROSA HCP", "OADP"]
 authors:
   - Kevin Collins
   - Diana Sari
@@ -9,7 +9,7 @@ authors:
 validated_version: "4.22"
 ---
 
-This guide builds the shared infrastructure for disaster recovery between two ROSA HCP clusters in different AWS Regions. It configures the EFS CSI Driver, S3 Cross-Region Replication, and EFS replication, giving you a foundation that multiple DR recovery patterns can build on.
+This guide builds the shared infrastructure for application disaster recovery between two ROSA HCP clusters in different AWS Regions. It configures the EFS CSI Driver, S3 Cross-Region Replication, and EFS replication, giving you a foundation that multiple DR recovery patterns can build on.
 
 Once this infrastructure is in place, choose a recovery pattern:
 
@@ -19,6 +19,10 @@ Once this infrastructure is in place, choose a recovery pattern:
 Both patterns use the same shared infrastructure configured in this guide.
 
 ## Architecture
+
+The following architecture shows the multi-region ROSA HCP application DR design using OADP backup/restore and ACM + GitOps warm DR.
+
+![ROSA HCP Application DR architecture](images/rosa-dr-v1.png)
 
 The reference environment has:
 

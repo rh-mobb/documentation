@@ -22,7 +22,7 @@ The pattern works as follows:
 
 ## Prerequisites
 
-Before starting this guide, complete the [Create ROSA HCP Disaster Recovery Infrastructure](/experts/rosa/rosa-dr-infra/) guide. That guide sets up:
+Before starting this guide, complete the [Application Disaster Recovery on ROSA HCP](/experts/rosa/rosa-dr-infra/) guide. That guide sets up:
 
 - EFS CSI Driver on both clusters
 - S3 Cross-Region Replication for application data and backup buckets
