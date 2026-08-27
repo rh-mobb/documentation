@@ -88,12 +88,15 @@ oc create namespace dr-demo --dry-run=client -o yaml | oc apply -f -
     static_pv="dr-${pv}"
     access_mode_yaml=$(printf '%s\n' "$access_modes" | tr ';' '\n' | sed 's/^/    - /')
 
+    # Use 0:0 with 777 permissions instead of the recorded primary POSIX identity.
+    # OpenShift SCC assigns arbitrary UIDs per namespace so the primary UID/GID
+    # will not match the DR namespace range, causing read-only mounts.
     dr_access_point_id=$(aws efs create-access-point \
       --file-system-id "$DR_EFS" \
       --region "$DR_REGION" \
       --client-token "dr-${source_ap_id}" \
-      --posix-user "Uid=${posix_uid},Gid=${posix_gid}" \
-      --root-directory "Path=${efs_path},CreationInfo={OwnerUid=${root_owner_uid},OwnerGid=${root_owner_gid},Permissions=${root_permissions}}" \
+      --posix-user "Uid=0,Gid=0" \
+      --root-directory "Path=${efs_path},CreationInfo={OwnerUid=0,OwnerGid=0,Permissions=777}" \
       --tags "Key=Name,Value=dr-${pvc}" "Key=SourceAccessPoint,Value=${source_ap_id}" "Key=SourcePVC,Value=${namespace}/${pvc}" \
       --query 'AccessPointId' \
       --output text)
