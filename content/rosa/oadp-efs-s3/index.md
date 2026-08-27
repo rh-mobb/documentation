@@ -49,6 +49,12 @@ certbot plugins | grep -q dns-route53
 
 ## Architecture
 
+The following architecture shows the multi-region ROSA HCP DR design using OADP backup/restore and ACM + GitOps warm DR.
+
+![ROSA HCP DR architecture](images/rosa-dr-v1.png)
+
+This guide covers DR Strategy 1, OADP Backup & Restore. The ACM article covers DR Strategy 2, ACM + GitOps Warm DR.
+
 The OADP DR pattern adds to the shared DR infrastructure:
 
 - OADP installed on both clusters
