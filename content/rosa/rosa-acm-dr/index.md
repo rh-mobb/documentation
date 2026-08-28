@@ -556,10 +556,19 @@ EOF
 Verify the clusters appear as ArgoCD cluster secrets:
 
 ```bash
-oc get secrets -n openshift-gitops -l argocd.argoproj.io/secret-type=cluster
+oc get secrets -n openshift-gitops -l argocd.argoproj.io/secret-type=cluster \
+  -o custom-columns='NAME:.metadata.name,CLUSTERSET:.metadata.labels.cluster\.open-cluster-management\.io/clusterset'
 ```
 
-You should see secrets for both managed clusters. The `application-manager` addon copies ManagedCluster labels to the cluster secrets, including the `cluster.open-cluster-management.io/clusterset` label.
+You should see secrets for both managed clusters with the cluster set label:
+
+```
+NAME                                              CLUSTERSET
+${PRIMARY_CLUSTER_NAME}-application-manager-...    ${CLUSTERSET_NAME}
+${DR_CLUSTER_NAME}-application-manager-...         ${CLUSTERSET_NAME}
+```
+
+The `application-manager` addon copies ManagedCluster labels to the cluster secrets, including the `cluster.open-cluster-management.io/clusterset` label.
 
 ### Keep ACM-Managed Cluster Secrets
 
