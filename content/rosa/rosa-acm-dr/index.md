@@ -1011,7 +1011,7 @@ aws ec2 stop-instances \
   --region $PRIMARY_REGION
 ```
 
-Watch for ACM to detect the failure and for Placement to move the active decision to the DR cluster. With the tuned lease duration (10s) and toleration (30s), failover time is approximately ACM detection latency plus the 30-second toleration period and controller reconciliation:
+Log back in to the ACM hub cluster. Watch for ACM to detect the failure and for Placement to move the active decision to the DR cluster. With the tuned lease duration (10s) and toleration (30s), failover time is approximately ACM detection latency plus the 30-second toleration period and controller reconciliation:
 
 ```bash
 watch -n5 "echo '=== Cluster Health ===' && \
