@@ -172,3 +172,43 @@ With the EFS CSI Driver, S3 replication, and EFS replication in place, continue 
 
 - **[Disaster Recovery with OADP](/experts/rosa/oadp-efs-s3/)** -- backup-and-restore approach using OADP/Velero for Kubernetes resource recovery, with EFS PVC mapping and full failover/failback workflow.
 - **[Disaster Recovery with ACM and OpenShift GitOps](/experts/rosa/rosa-acm-dr/)** -- ACM-driven approach using automatic failover detection and ArgoCD ApplicationSet for application deployment.
+
+## Cleanup
+
+After completing a DR recovery pattern and its cleanup, remove the shared infrastructure created by this guide. Run the cleanup scripts from the helper scripts repository in the following order.
+
+**Log in to the primary cluster**, then remove OpenShift resources:
+
+```bash
+./scripts/cleanup-openshift.sh
+```
+
+**Log in to the DR cluster**, then remove OpenShift resources:
+
+```bash
+./scripts/cleanup-openshift.sh
+```
+
+Delete the EFS file systems, mount targets, replication, and security groups:
+
+```bash
+./scripts/cleanup-efs.sh
+```
+
+Delete the S3 buckets (all object versions and delete markers are purged automatically):
+
+```bash
+./scripts/cleanup-s3.sh
+```
+
+Delete the IAM roles and customer-managed policies:
+
+```bash
+./scripts/cleanup-iam.sh
+```
+
+Verify all resources have been removed:
+
+```bash
+./scripts/validate-cleanup.sh
+```

@@ -1186,17 +1186,30 @@ curl -sk https://${CUSTOM_DOMAIN}/healthz
 
 ## Cleanup
 
-Delete the ApplicationSet and demo namespace resources:
+From the ACM hub cluster, delete the ApplicationSet and hub-side namespace:
 
 ```bash
 oc delete applicationset ${APPSET_NAME} -n openshift-gitops
 oc delete namespace ${NAMESPACE} --ignore-not-found
+```
+
+The ApplicationSet deletion removes the ArgoCD Applications, which prunes resources on the managed clusters. If a managed cluster was unreachable during cleanup, log in to that cluster and delete the namespace manually:
+
+```bash
+oc delete namespace ${NAMESPACE} --ignore-not-found
+```
+
+From the DR cluster, delete the static PVs:
+
+```bash
 oc delete pv \
   ${ACM_PREFIX}-dr-shared-flight-data \
   ${ACM_PREFIX}-dr-flight-data-0 \
   ${ACM_PREFIX}-dr-flight-data-1 \
   --ignore-not-found
 ```
+
+Log back in to the ACM hub cluster.
 
 Delete the Placements and GitOpsCluster:
 
@@ -1220,20 +1233,31 @@ oc delete managedcluster ${PRIMARY_CLUSTER_NAME}
 oc delete managedcluster ${DR_CLUSTER_NAME}
 ```
 
-Delete the DNS record:
+Delete the DNS record. The record value may point to either cluster depending on whether failback was completed:
 
 ```bash
-aws route53 change-resource-record-sets \
+CURRENT_IP=$(aws route53 list-resource-record-sets \
   --hosted-zone-id $HOSTED_ZONE_ID \
-  --change-batch "{
-    \"Changes\": [{
-      \"Action\": \"DELETE\",
-      \"ResourceRecordSet\": {
-        \"Name\": \"${CUSTOM_DOMAIN}\",
-        \"Type\": \"A\",
-        \"TTL\": 30,
-        \"ResourceRecords\": [{\"Value\": \"${PRIMARY_IP}\"}]
-      }
-    }]
-  }"
+  --query "ResourceRecordSets[?Name=='${CUSTOM_DOMAIN}.'].ResourceRecords[0].Value" \
+  --output text)
+
+if [ -n "$CURRENT_IP" ] && [ "$CURRENT_IP" != "None" ]; then
+  aws route53 change-resource-record-sets \
+    --hosted-zone-id $HOSTED_ZONE_ID \
+    --change-batch "{
+      \"Changes\": [{
+        \"Action\": \"DELETE\",
+        \"ResourceRecordSet\": {
+          \"Name\": \"${CUSTOM_DOMAIN}\",
+          \"Type\": \"A\",
+          \"TTL\": 30,
+          \"ResourceRecords\": [{\"Value\": \"${CURRENT_IP}\"}]
+        }
+      }]
+    }"
+fi
 ```
+
+### Shared Infrastructure
+
+After cleaning up the ACM-specific resources above, remove the shared DR infrastructure (EFS, S3, IAM, EFS CSI Driver) by following the [Cleanup](/experts/rosa/rosa-dr-infra/#cleanup) section in the parent guide.
