@@ -213,7 +213,7 @@ echo "VALIDATION_ID=$VALIDATION_ID"
 
 ## 3. Record EFS PVC Mappings Before Failure
 
-OADP backs up Kubernetes resources but does not restore EFS-backed PersistentVolumes dynamically. During recovery, the DR cluster needs to recreate static PVs that point to the correct replicated EFS paths and access point identities. This step captures that metadata from the primary cluster. Run it before a disaster — the primary cluster API may not be available when you need it.
+OADP backs up Kubernetes resources but does not restore EFS-backed PersistentVolumes dynamically. During recovery, the DR cluster needs to recreate static PVs that point to the correct replicated EFS paths and access point identities. This step captures that metadata from the primary cluster. Run it before a disaster, the primary cluster API may not be available when you need it.
 
 **Log in to the primary cluster**, then record the mapping:
 
@@ -546,7 +546,7 @@ For this demonstration, if no DR-side data needs to be preserved, you can restar
 For production workloads, first synchronize or otherwise reconcile DR-side EFS and S3 data with the primary environment, validate the recovered data, and only then return application traffic to the primary region.
 {{< /alert >}}
 
-In the hot-to-warm scenario, the primary cluster's application was never deleted — only the worker nodes were stopped. To fail back, restart the primary workers:
+In the hot-to-warm scenario, the primary cluster's application was never deleted, only the worker nodes were stopped. To fail back, restart the primary workers:
 
 ```bash
 WORKER_IDS=($(aws ec2 describe-instances \
@@ -601,7 +601,7 @@ In this scenario the DR cluster's worker nodes are stopped to save costs. Starti
 
 Delete the `dr-demo` namespace on the DR cluster to start with a clean state, and remove any static PVs left over from a previous failover (PVs are cluster-scoped and survive namespace deletion):
 
-**Log in to the dr cluster**
+**Log in to the DR cluster**
 
 ```bash
 oc delete namespace dr-demo
