@@ -171,7 +171,7 @@ The StorageClass uses dynamic EFS access point provisioning and `directoryPerms:
 With the EFS CSI Driver, S3 replication, and EFS replication in place, continue with a DR recovery pattern:
 
 - **[Disaster Recovery with OADP](/experts/rosa/oadp-efs-s3/)** -- backup-and-restore approach using OADP/Velero for Kubernetes resource recovery, with EFS PVC mapping and full failover/failback workflow.
-- **[Disaster Recovery with ACM and OpenShift GitOps](/experts/rosa/rosa-acm-dr/)** -- ACM-driven approach using automatic failover detection and ArgoCD ApplicationSet for application deployment.
+- **[Disaster Recovery with ACM and OpenShift GitOps](/experts/rosa/rosa-acm-dr/)** -- ACM-driven approach using automatic failover detection and Argo CD ApplicationSet for application deployment.
 
 ## Cleanup
 
