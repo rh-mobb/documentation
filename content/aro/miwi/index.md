@@ -29,6 +29,10 @@ This guide creates an Azure Red Hat OpenShift (ARO) cluster that uses:
 This guide was originally adapted from [Ken Moini's HackMD deployment guide](https://hackmd.io/@uEc--auZQr6p9NRV2558Hw/HkzS4XhiWl) and has since been updated and validated against the current Azure CLI managed identity workflow.
 {{% /alert %}}
 
+{{% alert state="info" %}}
+This workflow was additionally validated with custom pod and service CIDRs, private API and ingress, `UserDefinedRouting` mode with an attached route table, managed identities, and platform workload identity federation. The validated cluster reported `identity.type: UserAssigned`, `servicePrincipalProfile: null`, populated platform workload identities, and a populated OIDC issuer.
+{{% /alert %}}
+
 ## Prerequisites
 
 You need:
@@ -81,10 +85,16 @@ AZR_PULL_SECRET="$HOME/Downloads/pull-secret.txt"
 AZR_VNET="${AZR_CLUSTER}-vnet-${AZR_RESOURCE_LOCATION}"
 AZR_MASTER_SUBNET="${AZR_CLUSTER}-control-subnet-${AZR_RESOURCE_LOCATION}"
 AZR_WORKER_SUBNET="${AZR_CLUSTER}-machine-subnet-${AZR_RESOURCE_LOCATION}"
+AZR_ROUTE_TABLE=""
 
 AZR_MASTER_VM_SIZE="Standard_D8s_v5"
 AZR_WORKER_VM_SIZE="Standard_D4s_v5"
 AZR_WORKER_COUNT="3"
+AZR_POD_CIDR="10.128.0.0/14"
+AZR_SERVICE_CIDR="172.30.0.0/16"
+AZR_APISERVER_VISIBILITY="Public"
+AZR_INGRESS_VISIBILITY="Public"
+AZR_OUTBOUND_TYPE="Loadbalancer"
 
 AZR_CLUSTER_IDENTITY="${AZR_CLUSTER}-cluster"
 AZR_CCM_IDENTITY="${AZR_CLUSTER}-cloud-controller-manager"
@@ -113,9 +123,15 @@ printf '%-30s %s\n' \
   "VNet name:" "$AZR_VNET" \
   "Control plane subnet:" "$AZR_MASTER_SUBNET" \
   "Worker subnet:" "$AZR_WORKER_SUBNET" \
+  "Route table:" "${AZR_ROUTE_TABLE:-none}" \
   "Control plane VM size:" "$AZR_MASTER_VM_SIZE" \
   "Worker VM size:" "$AZR_WORKER_VM_SIZE" \
   "Worker count:" "$AZR_WORKER_COUNT" \
+  "Pod CIDR:" "$AZR_POD_CIDR" \
+  "Service CIDR:" "$AZR_SERVICE_CIDR" \
+  "API visibility:" "$AZR_APISERVER_VISIBILITY" \
+  "Ingress visibility:" "$AZR_INGRESS_VISIBILITY" \
+  "Outbound type:" "$AZR_OUTBOUND_TYPE" \
   "Pull secret:" "$AZR_PULL_SECRET"
 ```
 
@@ -137,6 +153,12 @@ export AZR_RESOURCE_GROUP="aro-mi-rg"
 export AZR_VNET_RESOURCE_GROUP="aro-mi-network-rg"
 export AZR_CLUSTER="aro-mi"
 export AZR_PULL_SECRET="$HOME/Downloads/pull-secret.txt"
+export AZR_ROUTE_TABLE="${AZR_CLUSTER}-rt"
+export AZR_POD_CIDR="10.181.0.0/17"
+export AZR_SERVICE_CIDR="10.181.128.0/17"
+export AZR_APISERVER_VISIBILITY="Private"
+export AZR_INGRESS_VISIBILITY="Private"
+export AZR_OUTBOUND_TYPE="UserDefinedRouting"
 
 curl -fsSLo create-aro-miwi.sh \
   "${DOCS_SITE_ORIGIN%/}/experts/aro/miwi/create-aro-miwi.sh"
@@ -145,6 +167,8 @@ chmod +x create-aro-miwi.sh
 ```
 
 The variable block in [Set variables](#1-set-variables) is for the manual path. Use `export` when setting values for the automation script so the script receives them in its environment.
+
+If `AZR_ROUTE_TABLE` is set, the script creates or reuses that route table, attaches it to the master and worker subnets, and assigns the File CSI Driver platform identity the ARO File Storage Operator role on the route table. Without that assignment, an install that uses an attached route table can fail with `InvalidWorkloadIdentityPermissions`.
 
 Review the script before running it, especially resource-group names, network ranges, and VM sizes.
 
@@ -213,6 +237,31 @@ az network vnet subnet create \
   --address-prefixes 10.0.2.0/23
 ```
 
+For `UserDefinedRouting`, create or reuse a route table and attach it to the ARO subnets before creating the cluster:
+
+```bash
+AZR_ROUTE_TABLE="${AZR_CLUSTER}-rt"
+
+az network route-table create \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+  --name "$AZR_ROUTE_TABLE" \
+  --location "$AZR_RESOURCE_LOCATION"
+
+az network vnet subnet update \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+  --vnet-name "$AZR_VNET" \
+  --name "$AZR_MASTER_SUBNET" \
+  --route-table "$AZR_ROUTE_TABLE"
+
+az network vnet subnet update \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+  --vnet-name "$AZR_VNET" \
+  --name "$AZR_WORKER_SUBNET" \
+  --route-table "$AZR_ROUTE_TABLE"
+```
+
+The route table can be empty when you are only validating the ARO CLI and resource provider behavior for `UserDefinedRouting`. A production private egress design normally requires routes to a validated egress path, such as an NVA, firewall, or customer routing appliance.
+
 ## 5. Create the nine user-assigned managed identities
 
 ```bash
@@ -265,6 +314,18 @@ WORKER_SUBNET_ID="$(az network vnet subnet show \
   --vnet-name "$AZR_VNET" \
   --name "$AZR_WORKER_SUBNET" \
   --query id --output tsv)"
+
+MASTER_ROUTE_TABLE_ID="$(az network vnet subnet show \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+  --vnet-name "$AZR_VNET" \
+  --name "$AZR_MASTER_SUBNET" \
+  --query routeTable.id --output tsv)"
+
+WORKER_ROUTE_TABLE_ID="$(az network vnet subnet show \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+  --vnet-name "$AZR_VNET" \
+  --name "$AZR_WORKER_SUBNET" \
+  --query routeTable.id --output tsv)"
 
 identity_id() {
   az identity show \
@@ -422,13 +483,42 @@ az role assignment create \
 File CSI Driver:
 
 ```bash
+FILE_CSI_ROLE_ID="/subscriptions/${SUBSCRIPTION_ID}/providers/Microsoft.Authorization/roleDefinitions/0d7aedc0-15fd-4a67-a412-efad370c947e"
+
 az role assignment create \
   --assignee-object-id "$AZR_FILE_CSI_PRINCIPAL_ID" \
   --assignee-principal-type ServicePrincipal \
-  --role "/subscriptions/${SUBSCRIPTION_ID}/providers/Microsoft.Authorization/roleDefinitions/0d7aedc0-15fd-4a67-a412-efad370c947e" \
+  --role "$FILE_CSI_ROLE_ID" \
   --scope "$VNET_ID" \
   --only-show-errors
 ```
+
+If the master or worker subnet has an attached route table, assign the same File CSI Driver role to each unique route table:
+
+```bash
+SEEN_ROUTE_TABLE_IDS=" "
+
+for ROUTE_TABLE_ID in "$MASTER_ROUTE_TABLE_ID" "$WORKER_ROUTE_TABLE_ID"; do
+  if [ -z "$ROUTE_TABLE_ID" ] || [ "$ROUTE_TABLE_ID" = "null" ]; then
+    continue
+  fi
+
+  case "$SEEN_ROUTE_TABLE_IDS" in
+    *" $ROUTE_TABLE_ID "*) continue ;;
+  esac
+
+  SEEN_ROUTE_TABLE_IDS="${SEEN_ROUTE_TABLE_IDS}${ROUTE_TABLE_ID} "
+
+  az role assignment create \
+    --assignee-object-id "$AZR_FILE_CSI_PRINCIPAL_ID" \
+    --assignee-principal-type ServicePrincipal \
+    --role "$FILE_CSI_ROLE_ID" \
+    --scope "$ROUTE_TABLE_ID" \
+    --only-show-errors
+done
+```
+
+Skipping this route-table-scoped assignment can cause cluster creation to fail with `InvalidWorkloadIdentityPermissions`.
 
 Image Registry:
 
@@ -502,6 +592,8 @@ Expected minimums for this basic network layout:
 <cluster>-aro-operator               2 assignments
 ```
 
+When a route table is attached to the ARO subnets, expect one additional File CSI Driver assignment for each unique attached route table.
+
 The Disk CSI Driver identity having zero direct Azure RBAC assignments at this stage is expected. The cluster identity still has its assignment over the Disk CSI Driver identity so that the required federated credential can be created.
 
 ## 9. Check VM SKU availability and quota
@@ -537,6 +629,8 @@ az vm list-usage \
 
 ARO needs sufficient quota for the bootstrap, control-plane, and worker nodes during installation.
 
+Even when quota and SKU restrictions look clean, Azure regional or zonal capacity can still fail during VM allocation. Keep an approved fallback VM family or size ready before starting a customer deployment. During southcentralus validation, `Standard_D8s_v5` and `Standard_D4s_v5` failed with `ZonalAllocationFailed`, while `Standard_D8s_v4` and `Standard_D4s_v4` succeeded.
+
 ## 10. Optionally select an OpenShift version
 
 List installable versions:
@@ -563,10 +657,13 @@ Run ARO validation before cluster creation:
 az aro validate \
   --resource-group "$AZR_RESOURCE_GROUP" \
   --name "$AZR_CLUSTER" \
+  --location "$AZR_RESOURCE_LOCATION" \
   --vnet-resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet "$AZR_VNET" \
   --master-subnet "$AZR_MASTER_SUBNET" \
   --worker-subnet "$AZR_WORKER_SUBNET" \
+  --pod-cidr "$AZR_POD_CIDR" \
+  --service-cidr "$AZR_SERVICE_CIDR" \
   --enable-managed-identity \
   --assign-cluster-identity "$AZR_CLUSTER_IDENTITY_ID" \
   --assign-platform-workload-identity file-csi-driver "$AZR_FILE_CSI_IDENTITY_ID" \
@@ -591,6 +688,7 @@ Explicitly set VM sizes. This avoids an Azure CLI validation error where the wor
 az aro create \
   --resource-group "$AZR_RESOURCE_GROUP" \
   --name "$AZR_CLUSTER" \
+  --location "$AZR_RESOURCE_LOCATION" \
   --vnet-resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet "$AZR_VNET" \
   --master-subnet "$AZR_MASTER_SUBNET" \
@@ -598,6 +696,11 @@ az aro create \
   --master-vm-size "$AZR_MASTER_VM_SIZE" \
   --worker-vm-size "$AZR_WORKER_VM_SIZE" \
   --worker-count "$AZR_WORKER_COUNT" \
+  --pod-cidr "$AZR_POD_CIDR" \
+  --service-cidr "$AZR_SERVICE_CIDR" \
+  --apiserver-visibility "$AZR_APISERVER_VISIBILITY" \
+  --ingress-visibility "$AZR_INGRESS_VISIBILITY" \
+  --outbound-type "$AZR_OUTBOUND_TYPE" \
   --pull-secret "@$AZR_PULL_SECRET" \
   --enable-managed-identity \
   --assign-cluster-identity "$AZR_CLUSTER_IDENTITY_ID" \
@@ -702,6 +805,16 @@ Resolution: specify both VM sizes explicitly:
 
 Confirm the SKUs are unrestricted in the target region before retrying.
 
+### VM allocation fails after validation passes
+
+Symptom:
+
+```text
+ZonalAllocationFailed
+```
+
+Resolution: retry with an approved fallback VM family or size in the same region, or choose another supported region. This can happen even when `az vm list-skus` shows no restrictions and quota is available.
+
 ### Cluster creation needs more detail
 
 Add `--debug` to the `az aro create` command when you need verbose Azure CLI request and response details for troubleshooting.
@@ -734,6 +847,8 @@ The account running these commands must be able to create role assignments at al
 The required role assignments in this guide already cover the ARO virtual network and control plane and worker subnets.
 
 If you attach additional network resources, such as network security groups, route tables, NAT gateways, or additional subnets, assign the required operator roles to those resources before cluster creation.
+
+For route tables attached to the ARO subnets, assign the File CSI Driver platform identity the ARO File Storage Operator role on each unique route table. Missing this assignment can cause `InvalidWorkloadIdentityPermissions` during cluster creation.
 
 ## Cleanup
 

@@ -60,6 +60,45 @@ ensure_subnet() {
     --only-show-errors
 }
 
+ensure_route_table() {
+  if [ -z "$AZR_ROUTE_TABLE" ]; then
+    return
+  fi
+
+  if [[ "$AZR_ROUTE_TABLE" == /subscriptions/* ]]; then
+    return
+  fi
+
+  if az network route-table show \
+    --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+    --name "$AZR_ROUTE_TABLE" \
+    --only-show-errors >/dev/null 2>&1; then
+    echo "Route table exists: $AZR_ROUTE_TABLE"
+    return
+  fi
+
+  az network route-table create \
+    --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+    --name "$AZR_ROUTE_TABLE" \
+    --location "$AZR_RESOURCE_LOCATION" \
+    --only-show-errors >/dev/null
+}
+
+attach_route_table() {
+  local subnet_name="$1"
+
+  if [ -z "$AZR_ROUTE_TABLE" ]; then
+    return
+  fi
+
+  az network vnet subnet update \
+    --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+    --vnet-name "$AZR_VNET" \
+    --name "$subnet_name" \
+    --route-table "$AZR_ROUTE_TABLE" \
+    --only-show-errors >/dev/null
+}
+
 ensure_identity() {
   local identity_name="$1"
 
@@ -134,10 +173,16 @@ require_command az
 : "${AZR_VNET_CIDR:=10.0.0.0/22}"
 : "${AZR_MASTER_SUBNET_CIDR:=10.0.0.0/23}"
 : "${AZR_WORKER_SUBNET_CIDR:=10.0.2.0/23}"
+: "${AZR_ROUTE_TABLE:=}"
 
 : "${AZR_MASTER_VM_SIZE:=Standard_D8s_v5}"
 : "${AZR_WORKER_VM_SIZE:=Standard_D4s_v5}"
 : "${AZR_WORKER_COUNT:=3}"
+: "${AZR_POD_CIDR:=10.128.0.0/14}"
+: "${AZR_SERVICE_CIDR:=172.30.0.0/16}"
+: "${AZR_APISERVER_VISIBILITY:=Public}"
+: "${AZR_INGRESS_VISIBILITY:=Public}"
+: "${AZR_OUTBOUND_TYPE:=Loadbalancer}"
 : "${ARO_VERSION:=}"
 
 : "${AZR_CLUSTER_IDENTITY:=${AZR_CLUSTER}-cluster}"
@@ -165,9 +210,15 @@ printf '%-30s %s\n' \
   "VNet name:" "$AZR_VNET" \
   "Control plane subnet:" "$AZR_MASTER_SUBNET" \
   "Worker subnet:" "$AZR_WORKER_SUBNET" \
+  "Route table:" "${AZR_ROUTE_TABLE:-none}" \
   "Control plane VM size:" "$AZR_MASTER_VM_SIZE" \
   "Worker VM size:" "$AZR_WORKER_VM_SIZE" \
   "Worker count:" "$AZR_WORKER_COUNT" \
+  "Pod CIDR:" "$AZR_POD_CIDR" \
+  "Service CIDR:" "$AZR_SERVICE_CIDR" \
+  "API visibility:" "$AZR_APISERVER_VISIBILITY" \
+  "Ingress visibility:" "$AZR_INGRESS_VISIBILITY" \
+  "Outbound type:" "$AZR_OUTBOUND_TYPE" \
   "Pull secret:" "$AZR_PULL_SECRET"
 
 echo "Registering Azure resource providers..."
@@ -190,8 +241,11 @@ ensure_group "$AZR_VNET_RESOURCE_GROUP"
 
 echo "Creating or verifying network resources..."
 ensure_vnet
+ensure_route_table
 ensure_subnet "$AZR_MASTER_SUBNET" "$AZR_MASTER_SUBNET_CIDR"
 ensure_subnet "$AZR_WORKER_SUBNET" "$AZR_WORKER_SUBNET_CIDR"
+attach_route_table "$AZR_MASTER_SUBNET"
+attach_route_table "$AZR_WORKER_SUBNET"
 
 echo "Creating or verifying managed identities..."
 for identity in \
@@ -224,6 +278,18 @@ WORKER_SUBNET_ID="$(az network vnet subnet show \
   --vnet-name "$AZR_VNET" \
   --name "$AZR_WORKER_SUBNET" \
   --query id --output tsv)"
+
+MASTER_ROUTE_TABLE_ID="$(az network vnet subnet show \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+  --vnet-name "$AZR_VNET" \
+  --name "$AZR_MASTER_SUBNET" \
+  --query routeTable.id --output tsv)"
+
+WORKER_ROUTE_TABLE_ID="$(az network vnet subnet show \
+  --resource-group "$AZR_VNET_RESOURCE_GROUP" \
+  --vnet-name "$AZR_VNET" \
+  --name "$AZR_WORKER_SUBNET" \
+  --query routeTable.id --output tsv)"
 
 AZR_CLUSTER_IDENTITY_ID="$(identity_id "$AZR_CLUSTER_IDENTITY")"
 AZR_CCM_IDENTITY_ID="$(identity_id "$AZR_CCM_IDENTITY")"
@@ -279,6 +345,20 @@ ensure_role_assignment "$AZR_NETWORK_PRINCIPAL_ID" "$CLOUD_NETWORK_CONFIG_ROLE_I
 ensure_role_assignment "$AZR_FILE_CSI_PRINCIPAL_ID" "$FILE_CSI_ROLE_ID" "$VNET_ID"
 ensure_role_assignment "$AZR_IMAGE_REGISTRY_PRINCIPAL_ID" "$IMAGE_REGISTRY_ROLE_ID" "$VNET_ID"
 
+seen_route_table_ids=" "
+for route_table_id in "$MASTER_ROUTE_TABLE_ID" "$WORKER_ROUTE_TABLE_ID"; do
+  if [ -z "$route_table_id" ] || [ "$route_table_id" = "null" ]; then
+    continue
+  fi
+
+  case "$seen_route_table_ids" in
+    *" $route_table_id "*) continue ;;
+  esac
+
+  seen_route_table_ids="${seen_route_table_ids}${route_table_id} "
+  ensure_role_assignment "$AZR_FILE_CSI_PRINCIPAL_ID" "$FILE_CSI_ROLE_ID" "$route_table_id"
+done
+
 ARO_RP_SP_OBJECT_ID="$(az ad sp list \
   --display-name "Azure Red Hat OpenShift RP" \
   --query '[0].id' \
@@ -295,10 +375,13 @@ echo "Validating ARO configuration..."
 az aro validate \
   --resource-group "$AZR_RESOURCE_GROUP" \
   --name "$AZR_CLUSTER" \
+  --location "$AZR_RESOURCE_LOCATION" \
   --vnet-resource-group "$AZR_VNET_RESOURCE_GROUP" \
   --vnet "$AZR_VNET" \
   --master-subnet "$AZR_MASTER_SUBNET" \
   --worker-subnet "$AZR_WORKER_SUBNET" \
+  --pod-cidr "$AZR_POD_CIDR" \
+  --service-cidr "$AZR_SERVICE_CIDR" \
   --enable-managed-identity \
   --assign-cluster-identity "$AZR_CLUSTER_IDENTITY_ID" \
   --assign-platform-workload-identity file-csi-driver "$AZR_FILE_CSI_IDENTITY_ID" \
@@ -313,6 +396,7 @@ az aro validate \
 create_args=(
   --resource-group "$AZR_RESOURCE_GROUP"
   --name "$AZR_CLUSTER"
+  --location "$AZR_RESOURCE_LOCATION"
   --vnet-resource-group "$AZR_VNET_RESOURCE_GROUP"
   --vnet "$AZR_VNET"
   --master-subnet "$AZR_MASTER_SUBNET"
@@ -320,6 +404,11 @@ create_args=(
   --master-vm-size "$AZR_MASTER_VM_SIZE"
   --worker-vm-size "$AZR_WORKER_VM_SIZE"
   --worker-count "$AZR_WORKER_COUNT"
+  --pod-cidr "$AZR_POD_CIDR"
+  --service-cidr "$AZR_SERVICE_CIDR"
+  --apiserver-visibility "$AZR_APISERVER_VISIBILITY"
+  --ingress-visibility "$AZR_INGRESS_VISIBILITY"
+  --outbound-type "$AZR_OUTBOUND_TYPE"
   --pull-secret "@$AZR_PULL_SECRET"
   --enable-managed-identity
   --assign-cluster-identity "$AZR_CLUSTER_IDENTITY_ID"
