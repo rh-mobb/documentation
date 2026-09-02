@@ -133,6 +133,8 @@ The image registry operator role needs permissions to encrypt and decrypt object
 
 ## Configure the image registry to use the KMS key
 
+ROSA HCP configures the default image registry with S3 encryption enabled (`spec.storage.s3.encrypt: true`). This procedure changes the encryption key used by the existing registry S3 backend by setting `spec.storage.s3.keyID`.
+
 1. Patch the image registry operator configuration to use the customer KMS key:
 
    ```bash
