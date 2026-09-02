@@ -125,13 +125,26 @@ Stop and correct the variable values before continuing if anything is unexpected
 
 The included script performs the same deployment described in this guide.
 
+Set the site origin to the environment you are testing. For PR preview validation, use the PR preview host so the downloaded script matches the rendered preview page.
+
 Export any variables you want to override, then download and run the script:
 
 ```bash
-curl -O https://raw.githubusercontent.com/rh-mobb/documentation/main/content/aro/miwi/create-aro-miwi.sh
+export DOCS_SITE_ORIGIN="<current-preview-or-production-origin>"
+
+export AZR_RESOURCE_LOCATION="westus2"
+export AZR_RESOURCE_GROUP="aro-mi-rg"
+export AZR_VNET_RESOURCE_GROUP="aro-mi-network-rg"
+export AZR_CLUSTER="aro-mi"
+export AZR_PULL_SECRET="$HOME/Downloads/pull-secret.txt"
+
+curl -fsSLo create-aro-miwi.sh \
+  "${DOCS_SITE_ORIGIN%/}/experts/aro/miwi/create-aro-miwi.sh"
 chmod +x create-aro-miwi.sh
 ./create-aro-miwi.sh
 ```
+
+The variable block in [Set variables](#1-set-variables) is for the manual path. Use `export` when setting values for the automation script so the script receives them in its environment.
 
 Review the script before running it, especially resource-group names, network ranges, and VM sizes.
 
