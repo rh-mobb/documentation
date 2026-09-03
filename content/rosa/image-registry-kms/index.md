@@ -1,6 +1,6 @@
 ---
 date: '2026-09-02'
-title: Configuring Customer KMS Key for the OpenShift Image Registry on ROSA ( Classic and HCP )
+title: Configuring Customer KMS Key for the OpenShift Image Registry on ROSA (Classic and HCP)
 tags: ["ROSA","ROSA HCP"]
 authors:
   - Kevin Collins
@@ -8,7 +8,7 @@ authors:
 validated_version: "4.22"
 ---
 
-By default, ROSA clusters ( Classic and HCP ) store container images in an S3 bucket encrypted with an AWS-managed key. Organizations with compliance or data-sovereignty requirements may need to use a customer-managed AWS KMS key instead, giving them full control over key rotation, access policies, and audit trails.
+By default, ROSA clusters (Classic and HCP) store container images in an S3 bucket encrypted with an AWS-managed key. Organizations with compliance or data-sovereignty requirements may need to use a customer-managed AWS KMS key instead, giving them full control over key rotation, access policies, and audit trails.
 
 This guide walks through creating a customer-managed KMS key and configuring the ROSA image registry to use it for server-side encryption of all stored container images.
 
