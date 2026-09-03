@@ -1,6 +1,6 @@
 ---
 date: '2026-09-02'
-title: Configuring Customer KMS Key for the OpenShift Image Registry on ROSA HCP
+title: Configuring Customer KMS Key for the OpenShift Image Registry on ROSA ( Classic and HCP )
 tags: ["ROSA","ROSA HCP"]
 authors:
   - Kevin Collins
@@ -8,15 +8,15 @@ authors:
 validated_version: "4.22"
 ---
 
-By default, ROSA HCP clusters store container images in an S3 bucket encrypted with an AWS-managed key. Organizations with compliance or data-sovereignty requirements may need to use a customer-managed AWS KMS key instead, giving them full control over key rotation, access policies, and audit trails.
+By default, ROSA clusters ( Classic and HCP ) store container images in an S3 bucket encrypted with an AWS-managed key. Organizations with compliance or data-sovereignty requirements may need to use a customer-managed AWS KMS key instead, giving them full control over key rotation, access policies, and audit trails.
 
-This guide walks through creating a customer-managed KMS key and configuring the ROSA HCP image registry to use it for server-side encryption of all stored container images.
+This guide walks through creating a customer-managed KMS key and configuring the ROSA image registry to use it for server-side encryption of all stored container images.
 
 ## Prerequisites
 
 You need:
 
-* A ROSA HCP cluster (running and logged into)
+* A ROSA cluster (running and logged into)
 * The `rosa` CLI
 * The `oc` CLI
 * The AWS CLI
@@ -41,7 +41,7 @@ export AWS_PAGER=""
    ```bash
    KMS_KEY_ID=$(aws kms create-key \
      --region $REGION \
-     --description "Customer KMS key for ROSA HCP image registry - $CLUSTER_NAME" \
+     --description "Customer KMS key for ROSA image registry - $CLUSTER_NAME" \
      --query 'KeyMetadata.KeyId' \
      --output text)
 
@@ -133,7 +133,7 @@ The image registry operator role needs permissions to encrypt and decrypt object
 
 ## Configure the image registry to use the KMS key
 
-ROSA HCP configures the default image registry with S3 encryption enabled (`spec.storage.s3.encrypt: true`). This procedure changes the encryption key used by the existing registry S3 backend by setting `spec.storage.s3.keyID`.
+ROSA configures the default image registry with S3 encryption enabled (`spec.storage.s3.encrypt: true`). This procedure changes the encryption key used by the existing registry S3 backend by setting `spec.storage.s3.keyID`.
 
 1. Patch the image registry operator configuration to use the customer KMS key:
 
