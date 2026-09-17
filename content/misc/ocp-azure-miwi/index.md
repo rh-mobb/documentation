@@ -8,9 +8,9 @@ authors:
 
 Microsoft Entra Workload Identity allows Kubernetes workloads to access Azure resources without storing credentials. It works by federating Kubernetes service account tokens with Microsoft Entra ID, so pods can obtain Azure access tokens using short-lived, automatically rotated credentials.
 
-On Azure Red Hat OpenShift (ARO), Workload Identity (MIWI) is available as a first-class deployment option. On **self-managed OpenShift clusters**, however, you need to configure the federation manually. This guide walks through the full setup: hosting an OIDC discovery document on Azure Blob Storage, configuring the cluster's service account issuer, and installing the Workload Identity webhook. A validation section at the end creates a test managed identity and pod to verify the end-to-end flow.
+On Azure Red Hat OpenShift (ARO), Managed Identities and Workload Identity (MIWI) are supported as a first-class deployment model. On **self-managed OpenShift clusters**, however, you need to configure the federation manually. This guide walks through the full setup: hosting an OIDC discovery document on Azure Blob Storage, configuring the cluster's service account issuer, and installing the Workload Identity webhook. A validation section at the end creates a test managed identity and pod to verify the end-to-end flow.
 
-{{% alert state="info" %}}This guide works for any self-managed OpenShift cluster, regardless of where it runs. The cluster does not need to be hosted on Azure. The OIDC discovery endpoint is hosted on Azure Blob Storage, and Microsoft Entra ID validates tokens by fetching the public keys from that endpoint. No inbound network access to the cluster is required.{{% /alert %}}
+{{% alert state="info" %}}This guide works for any self-managed OpenShift cluster, regardless of where it runs. The cluster does not need to be hosted on Azure. The OIDC discovery endpoint is hosted on Azure Blob Storage, and Microsoft Entra ID validates tokens by fetching the public keys from that endpoint. No inbound network access to the cluster is required. Workloads using Workload Identity must have outbound HTTPS connectivity to Microsoft Entra ID and to the Azure services they access.{{% /alert %}}
 
 ## Prerequisites
 
@@ -19,20 +19,11 @@ On Azure Red Hat OpenShift (ARO), Workload Identity (MIWI) is available as a fir
 * `az` CLI (logged in with a subscription that has permissions to create managed identities, role assignments, and storage accounts)
 * `helm` CLI
 * `jq` and `yq`
-
-### Install the Azure Workload Identity CLI
-
-The `azwi` CLI is used to generate JWKS documents from the cluster's service account signing keys.
-
-```bash
-brew install Azure/azure-workload-identity/azwi
-```
-
-{{% alert state="info" %}}On Linux or other platforms, see the [Azure Workload Identity installation guide](https://azure.github.io/azure-workload-identity/docs/installation.html) for alternative install methods.{{% /alert %}}
+* `envsubst` (from GNU gettext)
 
 ### Prepare environment variables
 
-{{% alert state="info" %}}Adjust `AZ_LOCATION` and `OCP_AZ_MIWI_RESOURCE_PREFIX` to match your environment.{{% /alert %}}
+{{% alert state="info" %}}Adjust `AZ_LOCATION` and `OCP_AZ_MIWI_RESOURCE_PREFIX` for your environment. The resulting Azure Storage account name must be globally unique across Azure, between 3 and 24 characters long, and contain only lowercase letters and numbers.{{% /alert %}}
 
 ```bash
 export AZ_LOCATION="eastus"
@@ -46,24 +37,6 @@ Create a dedicated resource group:
 
 ```bash
 az group create --name "${AZURE_RG_NAME}" --location "${AZ_LOCATION}"
-```
-
----
-
-## Retrieve the cluster's service account signing keys
-
-OpenShift stores the service account signing key pair in a secret in the `openshift-kube-apiserver` namespace. These keys are used to sign the service account tokens that Microsoft Entra ID will validate.
-
-Export the private and public keys to local files:
-
-```bash
-oc get secret bound-service-account-signing-key \
-  -n openshift-kube-apiserver \
-  -o jsonpath='{.data.service-account\.key}' | base64 -d > service-account.key
-
-oc get secret bound-service-account-signing-key \
-  -n openshift-kube-apiserver \
-  -o jsonpath='{.data.service-account\.pub}' | base64 -d > service-account.pub
 ```
 
 ---
@@ -83,17 +56,24 @@ az storage account create \
   --location "${AZ_LOCATION}"
 ```
 
-{{% alert state="info" %}}The `$web` container is the fixed, required name for Azure Blob Storage static websites. Azure serves content from this container at the storage account's static website endpoint.{{% /alert %}}
+Enable static website hosting, which automatically provisions the `$web` container:
 
 ```bash
-az storage container create \
-  --name '$web' \
-  --account-name "${AZURE_STORAGE_ACCOUNT}"
-
 az storage blob service-properties update \
   --account-name "${AZURE_STORAGE_ACCOUNT}" \
   --static-website \
   --index-document index.html
+```
+
+Retrieve the static website endpoint. The zone identifier in the URL varies by region and storage cluster, so it must be queried dynamically:
+
+```bash
+export ISSUER_URL="$(az storage account show \
+  --name "${AZURE_STORAGE_ACCOUNT}" \
+  --resource-group "${AZURE_RG_NAME}" \
+  --query "primaryEndpoints.web" -o tsv)"
+
+echo "Issuer URL: ${ISSUER_URL}"
 ```
 
 ### Upload the OpenID Connect discovery document
@@ -103,8 +83,8 @@ Create and upload the OIDC discovery document to the storage account's static we
 ```bash
 cat <<EOF > openid-configuration.json
 {
-  "issuer": "https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/",
-  "jwks_uri": "https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/openid/v1/jwks",
+  "issuer": "${ISSUER_URL}",
+  "jwks_uri": "${ISSUER_URL}openid/v1/jwks",
   "response_types_supported": [
     "id_token"
   ],
@@ -128,15 +108,15 @@ az storage blob upload \
 Verify the document is accessible:
 
 ```bash
-curl -s "https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/.well-known/openid-configuration" | jq .
+curl -s "${ISSUER_URL}.well-known/openid-configuration" | jq .
 ```
 
 ### Upload the JWKS document
 
-Generate the JWKS document from the cluster's public signing key and upload it:
+The OpenShift API server publishes the complete public JWKS at `/openid/v1/jwks`. Fetch it directly and upload:
 
 ```bash
-azwi jwks --public-keys service-account.pub --output-file jwks.json
+oc get --raw /openid/v1/jwks > jwks.json
 
 az storage blob upload \
   --account-name "${AZURE_STORAGE_ACCOUNT}" \
@@ -149,10 +129,10 @@ az storage blob upload \
 Verify the JWKS endpoint:
 
 ```bash
-curl -s "https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/openid/v1/jwks" | jq .
+curl -s "${ISSUER_URL}openid/v1/jwks" | jq .
 ```
 
-{{% alert state="warning" %}}The JWKS document contains the public signing keys that Microsoft Entra ID uses to validate service account tokens. If the cluster's signing keys rotate (for example during an OpenShift upgrade or manual revocation), the JWKS document on the storage account must be re-uploaded. Tokens signed with the new key will fail validation until the JWKS is updated. See [Automate OIDC key synchronization](#automate-oidc-key-synchronization) for a Deployment that watches for key changes and handles this automatically.{{% /alert %}}
+{{% alert state="warning" %}}The JWKS document contains the public signing keys that Microsoft Entra ID uses to validate service account tokens. If the cluster's signing keys are rotated or manually revoked, the JWKS document on the storage account must be re-uploaded. Tokens signed with the new key will fail validation until the JWKS is updated. See [Automate OIDC key synchronization](#automate-oidc-key-synchronization) for an experimental watcher that reduces the need for manual JWKS synchronization.{{% /alert %}}
 
 ---
 
@@ -160,9 +140,15 @@ curl -s "https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/openid/v1/jwk
 
 Patch the cluster's `Authentication` resource to use the storage account's static website URL as the service account token issuer. This tells the API server to include this URL as the `iss` claim in all service account tokens, which Microsoft Entra ID will validate against the OIDC discovery document.
 
-Check the current configuration:
+Save the current issuer so it can be restored during cleanup, then check the full configuration:
 
 ```bash
+export ORIGINAL_SERVICE_ACCOUNT_ISSUER="$(
+  oc get authentication cluster \
+    -o jsonpath='{.spec.serviceAccountIssuer}'
+)"
+
+echo "Current issuer: ${ORIGINAL_SERVICE_ACCOUNT_ISSUER}"
 oc get authentication cluster -o yaml | yq '.spec'
 ```
 
@@ -170,7 +156,7 @@ Apply the patch:
 
 ```bash
 oc patch authentication cluster --type=merge \
-  -p "{\"spec\":{\"serviceAccountIssuer\":\"https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/\"}}"
+  -p "{\"spec\":{\"serviceAccountIssuer\":\"${ISSUER_URL}\"}}"
 ```
 
 Verify the change:
@@ -179,7 +165,14 @@ Verify the change:
 oc get authentication cluster -o yaml | yq '.spec'
 ```
 
-{{% alert state="warning" %}}Changing the service account issuer triggers a rolling restart of the kube-apiserver pods. Wait for all API server pods to stabilize before continuing.{{% /alert %}}
+Changing the service account issuer triggers a rolling restart of the kube-apiserver pods. Wait until all nodes have reached the latest revision before continuing:
+
+```bash
+oc get kubeapiserver cluster \
+  -o jsonpath='{.status.conditions[?(@.type=="NodeInstallerProgressing")].reason}{"\n"}'
+```
+
+The output should be `AllNodesAtLatestRevision`. If it shows a different value, wait and re-check until the rollout completes.
 
 ---
 
@@ -187,7 +180,7 @@ oc get authentication cluster -o yaml | yq '.spec'
 
 The [Azure Workload Identity webhook](https://azure.github.io/azure-workload-identity/) mutates pods that opt in (via the `azure.workload.identity/use: "true"` label) to inject the federated token volume and environment variables needed for Microsoft Entra ID authentication.
 
-Grant the privileged SCC to the webhook's service accounts:
+On OpenShift, the webhook components require the `privileged` SCC. The SCC is granted to the service account group of the dedicated `azure-workload-identity-system` namespace because the Helm chart creates multiple service accounts. Do not deploy unrelated workloads into this namespace.
 
 ```bash
 oc adm policy add-scc-to-group privileged \
@@ -203,20 +196,23 @@ helm repo update
 
 helm install workload-identity-webhook \
   azure-workload-identity/workload-identity-webhook \
+  --version 1.6.1 \
   --namespace azure-workload-identity-system \
   --create-namespace \
   --set azureTenantID="${AZURE_TENANT_ID}"
 ```
 
-At this point the cluster-level setup is complete. The OIDC discovery document is hosted, the service account issuer is configured, and the webhook is running. Every pod that carries the `azure.workload.identity/use: "true"` label will have a federated token volume and the `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_FEDERATED_TOKEN_FILE` environment variables injected automatically.
+At this point the cluster-level setup is complete. The OIDC discovery document is hosted, the service account issuer is configured, and the webhook is running. For opted-in pods (carrying the `azure.workload.identity/use: "true"` label) using a service account with the Workload Identity annotations, the webhook injects the projected token volume and the `AZURE_AUTHORITY_HOST`, `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_FEDERATED_TOKEN_FILE` environment variables.
 
-{{% alert state="info" %}}The JWKS document uploaded earlier is a point-in-time snapshot. To keep it in sync automatically when the cluster's signing keys change (rotation or manual revocation), deploy the sync watcher described in [Automate OIDC key synchronization](#automate-oidc-key-synchronization) after completing the validation below.{{% /alert %}}
+{{% alert state="info" %}}The JWKS document uploaded earlier is a point-in-time snapshot. To reduce the need for manual re-uploads when the cluster's signing keys change, consider deploying the experimental sync watcher described in [Automate OIDC key synchronization](#automate-oidc-key-synchronization) after completing the validation below.{{% /alert %}}
 
 ---
 
 ## Validate the setup
 
 To verify the end-to-end flow, create a test managed identity with a federated credential, deploy a test pod, and confirm it can authenticate against Azure.
+
+{{% alert state="info" %}}Newly created federated credentials, managed identities, and Azure RBAC assignments can take a few minutes to propagate. If an initial authentication or authorization attempt fails, wait a moment and retry before investigating the OpenShift configuration.{{% /alert %}}
 
 ### Create a test managed identity
 
@@ -243,7 +239,7 @@ az identity federated-credential create \
   --name "openshift-federated-cred" \
   --identity-name "${AZURE_MIWI_IDENTITY_NAME}" \
   --resource-group "${AZURE_RG_NAME}" \
-  --issuer "https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/" \
+  --issuer "${ISSUER_URL}" \
   --subject "system:serviceaccount:azure-workload-identity-test:azure-identity-test-sa" \
   --audiences "api://AzureADTokenExchange"
 ```
@@ -266,7 +262,8 @@ export STORAGE_SCOPE="$(az storage account show \
   -o tsv)"
 
 az role assignment create \
-  --assignee "${MI_PRINCIPAL_ID}" \
+  --assignee-object-id "${MI_PRINCIPAL_ID}" \
+  --assignee-principal-type ServicePrincipal \
   --role "Storage Blob Data Contributor" \
   --scope "${STORAGE_SCOPE}"
 ```
@@ -302,7 +299,10 @@ spec:
   serviceAccountName: azure-identity-test-sa
   containers:
     - name: azure-cli
-      image: mcr.microsoft.com/azure-cli:latest
+      image: mcr.microsoft.com/azure-cli:2.87.0-azurelinux3.0
+      env:
+        - name: AZURE_STORAGE_ACCOUNT
+          value: "${AZURE_STORAGE_ACCOUNT}"
       command:
         - /bin/sh
         - -c
@@ -324,7 +324,7 @@ Open a shell in the test pod:
 oc exec -it azure-cli-test-pod -n azure-workload-identity-test -- bash
 ```
 
-Inside the pod, the webhook has injected the `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_FEDERATED_TOKEN_FILE` environment variables. Use them to log in:
+Inside the pod, the webhook has injected the `AZURE_AUTHORITY_HOST`, `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_FEDERATED_TOKEN_FILE` environment variables. Use them to log in:
 
 ```bash
 az login --service-principal \
@@ -358,20 +358,40 @@ az identity delete \
   --resource-group "${AZURE_RG_NAME}"
 ```
 
-To also remove the cluster-level setup:
+To also remove the cluster-level setup, first restore the original service account issuer and wait for the kube-apiserver rollout to complete before deleting the Azure resources:
 
 ```bash
+if [ -z "${ORIGINAL_SERVICE_ACCOUNT_ISSUER}" ]; then
+  export ORIGINAL_SERVICE_ACCOUNT_ISSUER="https://kubernetes.default.svc"
+fi
+
+oc patch authentication cluster --type=merge \
+  -p "{\"spec\":{\"serviceAccountIssuer\":\"${ORIGINAL_SERVICE_ACCOUNT_ISSUER}\"}}"
+```
+
+Wait until the rollout completes before deleting the Azure resources. Deleting the OIDC endpoint while the cluster still references it as its issuer will break token validation.
+
+```bash
+oc get kubeapiserver cluster \
+  -o jsonpath='{.status.conditions[?(@.type=="NodeInstallerProgressing")].reason}{"\n"}'
+```
+
+Continue once the output is `AllNodesAtLatestRevision`.
+
+```bash
+oc adm policy remove-scc-from-group privileged \
+  system:serviceaccounts:azure-workload-identity-system
+
 helm uninstall workload-identity-webhook \
   --namespace azure-workload-identity-system
 oc delete namespace azure-workload-identity-system
 
 az group delete --name "${AZURE_RG_NAME}" --yes --no-wait
 
-rm -f service-account.key service-account.pub \
-  openid-configuration.json jwks.json
+rm -f openid-configuration.json jwks.json
 ```
 
-{{% alert state="info" %}}If you deployed the OIDC sync watcher, each option includes its own cleanup steps: [Option A cleanup](#a7-cleanup) or [Option B cleanup](#b6-cleanup).{{% /alert %}}
+{{% alert state="info" %}}If you deployed the OIDC sync watcher, clean it up **before** deleting the Azure resource group. Each option includes its own cleanup steps: [Option A cleanup](#a7-cleanup) or [Option B cleanup](#b6-cleanup).{{% /alert %}}
 
 ---
 
@@ -379,17 +399,21 @@ rm -f service-account.key service-account.pub \
 
 The OIDC discovery and JWKS documents uploaded in the initial setup are a point-in-time snapshot of the cluster's service account signing keys. These keys can change in two scenarios:
 
-* **Automatic rotation**: during OpenShift upgrades, the cluster may rotate the signing keys. The API server keeps the previous key in its JWKS endpoint for a **24-hour grace period**, so tokens signed with the old key remain valid during the transition.
-* **Manual revocation**: if an administrator manually revokes or deletes the signing keys, the old keys are removed immediately with no grace period.
+* **Signing key rotation**: OpenShift's signer rotation process temporarily publishes both the existing and the next public signing key in the JWKS endpoint while the signer is transitioned, giving existing tokens time to expire naturally.
+* **Manual revocation**: if an administrator manually revokes or deletes the signing keys, the old keys are removed immediately with no overlap period.
 
 In both cases, the JWKS document on Azure Storage must be updated to reflect the new keys. The Deployment below watches the `bound-service-account-signing-key` secret in the `openshift-kube-apiserver` namespace for changes. On startup it performs an initial sync, then re-uploads the JWKS whenever the secret is modified.
 
+{{% alert state="warning" %}}This synchronization mechanism is experimental. It keeps the externally hosted JWKS aligned with the JWKS currently exposed by the OpenShift API server, but it is not a replacement for OpenShift's documented service account signing key rotation procedure. It reacts to changes of the active signing key rather than participating in the complete `next-bound-service-account-signing-key` rotation sequence. Test key rotation carefully before relying on this mechanism in production.{{% /alert %}}
+
 The sync pod must authenticate to Azure **independently of Workload Identity**. If the signing keys change and the JWKS on Azure Storage has not been updated yet, a Workload Identity-based pod would present a token signed with the new key that Microsoft Entra ID cannot validate against the stale JWKS. Two options avoid this circular dependency. Pick the one that fits your security model and follow that option through to the end.
 
-* **Option A** uses a service principal with Entra ID RBAC, audit trails, and scoped permissions.
+* **Option A** uses a Microsoft Entra service principal authenticated with a client secret and authorized to the storage account through Azure RBAC. This provides audit trails and scoped permissions.
 * **Option B** uses a storage account access key for a simpler setup, but the key grants full access to the entire storage account.
 
 ### Option A: Service principal
+
+{{% alert state="info" %}}Option A requires Microsoft Entra ID directory permissions to register applications, create service principals, and create application credentials. These are separate from Azure subscription RBAC.{{% /alert %}}
 
 #### A1) Create a service principal
 
@@ -428,7 +452,8 @@ export STORAGE_SCOPE="$(az storage account show \
   -o tsv)"
 
 az role assignment create \
-  --assignee "${OIDC_SYNC_SP_OBJECT_ID}" \
+  --assignee-object-id "${OIDC_SYNC_SP_OBJECT_ID}" \
+  --assignee-principal-type ServicePrincipal \
   --role "Storage Blob Data Contributor" \
   --scope "${STORAGE_SCOPE}"
 ```
@@ -471,10 +496,6 @@ rules:
       - /openid/v1/jwks
     verbs:
       - get
-  - apiGroups: ["console.openshift.io"]
-    resources: ["consoleclidownloads"]
-    resourceNames: ["oc-cli-downloads"]
-    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -497,8 +518,11 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
+    verbs: ["watch", "list"]
+  - apiGroups: [""]
+    resources: ["secrets"]
     resourceNames: ["bound-service-account-signing-key"]
-    verbs: ["get", "watch", "list"]
+    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -519,9 +543,7 @@ EOF
 #### A5) Deploy the sync watcher
 
 ```bash
-export ISSUER_URL="https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/"
-
-cat <<'OUTER' | envsubst | oc apply -f -
+cat <<'OUTER' | envsubst '$OIDC_SYNC_NAMESPACE $AZURE_STORAGE_ACCOUNT $ISSUER_URL' | oc apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -538,10 +560,24 @@ spec:
         app: azure-oidc-key-sync
     spec:
       serviceAccountName: oidc-key-sync-sa
+      initContainers:
+        - name: install-oc
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cp "$(command -v oc)" /cli/oc
+              chmod 0755 /cli/oc
+          volumeMounts:
+            - name: cli
+              mountPath: /cli
       containers:
         - name: oidc-sync
-          image: mcr.microsoft.com/azure-cli:latest
+          image: mcr.microsoft.com/azure-cli:2.87.0-azurelinux3.0
           env:
+            - name: PATH
+              value: "/opt/openshift-cli:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             - name: AZURE_SP_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -561,20 +597,15 @@ spec:
               value: "${AZURE_STORAGE_ACCOUNT}"
             - name: ISSUER_URL
               value: "${ISSUER_URL}"
+          volumeMounts:
+            - name: cli
+              mountPath: /opt/openshift-cli
+              readOnly: true
           command:
             - /bin/sh
             - -c
             - |
               set -e
-
-              # Download the oc CLI from the cluster's ConsoleCLIDownload endpoint
-              echo "[$(date -Iseconds)] Installing oc CLI..."
-              CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-              OC_URL=$(curl -s --cacert "${CA}" -H "Authorization: Bearer ${TOKEN}" \
-                "https://kubernetes.default.svc/apis/console.openshift.io/v1/consoleclidownloads/oc-cli-downloads" \
-                | sed -n 's/.*"href":"\(https:[^"]*linux\/oc\.tar\)".*/\1/p' | head -1)
-              curl -sk "${OC_URL}" | tar xf - -C /usr/local/bin/
 
               sync_jwks() {
                 echo "[$(date -Iseconds)] Authenticating to Azure..."
@@ -627,8 +658,7 @@ spec:
                 | {
                   read -r _  # skip initial output (already synced)
                   while read -r _; do
-                    echo "[$(date -Iseconds)] Signing key changed, waiting 60s for API server rollout..."
-                    sleep 60
+                    echo "[$(date -Iseconds)] Signing key changed, synchronizing JWKS..."
                     sync_jwks
                   done
                 }
@@ -637,6 +667,9 @@ spec:
                 sleep 10
                 sync_jwks
               done
+      volumes:
+        - name: cli
+          emptyDir: {}
 OUTER
 ```
 
@@ -658,6 +691,11 @@ oc delete clusterrolebinding oidc-jwks-reader-binding
 oc delete clusterrole oidc-jwks-reader
 oc delete rolebinding signing-key-watcher-binding -n openshift-kube-apiserver
 oc delete role signing-key-watcher -n openshift-kube-apiserver
+
+az role assignment delete \
+  --assignee-object-id "${OIDC_SYNC_SP_OBJECT_ID}" \
+  --role "Storage Blob Data Contributor" \
+  --scope "${STORAGE_SCOPE}"
 
 az ad app delete --id "${OIDC_SYNC_APP_ID}"
 ```
@@ -713,10 +751,6 @@ rules:
       - /openid/v1/jwks
     verbs:
       - get
-  - apiGroups: ["console.openshift.io"]
-    resources: ["consoleclidownloads"]
-    resourceNames: ["oc-cli-downloads"]
-    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -739,8 +773,11 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
+    verbs: ["watch", "list"]
+  - apiGroups: [""]
+    resources: ["secrets"]
     resourceNames: ["bound-service-account-signing-key"]
-    verbs: ["get", "watch", "list"]
+    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -761,9 +798,7 @@ EOF
 #### B4) Deploy the sync watcher
 
 ```bash
-export ISSUER_URL="https://${AZURE_STORAGE_ACCOUNT}.z13.web.core.windows.net/"
-
-cat <<'OUTER' | envsubst | oc apply -f -
+cat <<'OUTER' | envsubst '$OIDC_SYNC_NAMESPACE $AZURE_STORAGE_ACCOUNT $ISSUER_URL' | oc apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -780,10 +815,24 @@ spec:
         app: azure-oidc-key-sync
     spec:
       serviceAccountName: oidc-key-sync-sa
+      initContainers:
+        - name: install-oc
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cp "$(command -v oc)" /cli/oc
+              chmod 0755 /cli/oc
+          volumeMounts:
+            - name: cli
+              mountPath: /cli
       containers:
         - name: oidc-sync
-          image: mcr.microsoft.com/azure-cli:latest
+          image: mcr.microsoft.com/azure-cli:2.87.0-azurelinux3.0
           env:
+            - name: PATH
+              value: "/opt/openshift-cli:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             - name: AZURE_STORAGE_KEY
               valueFrom:
                 secretKeyRef:
@@ -793,20 +842,15 @@ spec:
               value: "${AZURE_STORAGE_ACCOUNT}"
             - name: ISSUER_URL
               value: "${ISSUER_URL}"
+          volumeMounts:
+            - name: cli
+              mountPath: /opt/openshift-cli
+              readOnly: true
           command:
             - /bin/sh
             - -c
             - |
               set -e
-
-              # Download the oc CLI from the cluster's ConsoleCLIDownload endpoint
-              echo "[$(date -Iseconds)] Installing oc CLI..."
-              CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-              OC_URL=$(curl -s --cacert "${CA}" -H "Authorization: Bearer ${TOKEN}" \
-                "https://kubernetes.default.svc/apis/console.openshift.io/v1/consoleclidownloads/oc-cli-downloads" \
-                | sed -n 's/.*"href":"\(https:[^"]*linux\/oc\.tar\)".*/\1/p' | head -1)
-              curl -sk "${OC_URL}" | tar xf - -C /usr/local/bin/
 
               sync_jwks() {
                 echo "[$(date -Iseconds)] Fetching live JWKS from API server..."
@@ -854,8 +898,7 @@ spec:
                 | {
                   read -r _  # skip initial output (already synced)
                   while read -r _; do
-                    echo "[$(date -Iseconds)] Signing key changed, waiting 60s for API server rollout..."
-                    sleep 60
+                    echo "[$(date -Iseconds)] Signing key changed, synchronizing JWKS..."
                     sync_jwks
                   done
                 }
@@ -864,6 +907,9 @@ spec:
                 sleep 10
                 sync_jwks
               done
+      volumes:
+        - name: cli
+          emptyDir: {}
 OUTER
 ```
 
