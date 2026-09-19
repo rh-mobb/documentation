@@ -675,6 +675,102 @@ file_selectors:
 Gzip decompression is handled automatically by Filebeat via magic header detection (`\x1f\x8b`). The `content_type` setting controls JSON parsing, not decompression. You do not need — and cannot use — a `decompress` option.
 {{% /alert %}}
 
+## Production Considerations
+
+The manifest in this guide uses `output.console` and `emptyDir` storage — both are suitable for validation but require changes before running in production.
+
+### Output destination
+
+Replace `output.console` with `output.logstash` or `output.elasticsearch` in the ConfigMap.
+
+**Logstash** (recommended when you need pipeline routing, enrichment, or fan-out to multiple destinations):
+
+```yaml
+output.logstash:
+  hosts: ["logstash.your-namespace.svc.cluster.local:5044"]
+```
+
+**Elasticsearch directly** (simpler when you don't need Logstash transformation):
+
+```yaml
+output.elasticsearch:
+  hosts: ["https://your-elasticsearch:9200"]
+  index: "rosa-control-plane-audit-%{+yyyy.MM.dd}"
+  username: "${ELASTICSEARCH_USERNAME}"
+  password: "${ELASTICSEARCH_PASSWORD}"
+```
+
+### Keep replicas at 1
+
+Run exactly one Filebeat replica. The SQS visibility timeout (`VisibilityTimeout`) prevents two consumers from processing the same message simultaneously, but if a second replica picks up a message before the first acknowledges it, both will download and parse the same S3 object. There is no deduplication downstream that removes identical audit events, so multiple replicas produce duplicate events in Elasticsearch.
+
+If you need higher throughput, increase the `number_of_workers` setting inside the `aws-s3` input instead:
+
+```yaml
+filebeat.inputs:
+  - type: aws-s3
+    number_of_workers: 4   # parallel S3 download goroutines within one pod
+    queue_url: "${SQS_URL}"
+    ...
+```
+
+### Persistent volume for Filebeat state
+
+The `data` volume in the manifest uses `emptyDir`, which is wiped on every pod restart. Filebeat stores its SQS position and per-file cursor in `/usr/share/filebeat/data`. Without persistence, a pod restart causes Filebeat to re-download and re-process every unacknowledged SQS message.
+
+Replace the `emptyDir` volume with a `PersistentVolumeClaim`:
+
+```yaml
+# Add to your manifest
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: filebeat-data
+  namespace: rosa-logging
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+Then update the Deployment volume entry:
+
+```yaml
+volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: filebeat-data   # replaces emptyDir: {}
+```
+
+### SQS dead-letter queue
+
+Configure a dead-letter queue (DLQ) on the SQS queue so that S3 objects Filebeat cannot parse do not cycle indefinitely. Without a DLQ, a corrupt or unexpected file format causes the message to become visible again after `VisibilityTimeout` expires and Filebeat retries it forever.
+
+```bash
+# Create the DLQ
+DLQ_ARN=$(aws sqs create-queue \
+  --queue-name "${SQS_QUEUE_NAME}-dlq" \
+  --region "${CLUSTER_REGION}" \
+  --query QueueUrl --output text | xargs -I{} \
+  aws sqs get-queue-attributes --queue-url {} \
+    --attribute-names QueueArn \
+    --query Attributes.QueueArn --output text)
+
+# Attach DLQ to the main queue (retry 3 times before routing to DLQ)
+aws sqs set-queue-attributes \
+  --queue-url "${SQS_URL}" \
+  --region "${CLUSTER_REGION}" \
+  --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"${DLQ_ARN}\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}"
+```
+
+{{% alert state="info" %}}
+**Priority order for production readiness:** The single most impactful change is replacing `emptyDir` with a PVC. Without it, every pod restart risks re-processing audit events that were already sent to Elasticsearch. Output destination and DLQ are important but secondary.
+{{% /alert %}}
+
+
 ## Cleanup
 
 Remove the Filebeat deployment and namespace:
