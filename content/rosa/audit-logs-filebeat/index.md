@@ -735,4 +735,3 @@ aws iam delete-role --role-name "${CUSTOMER_ROLE_NAME}" 2>/dev/null || true
 * [Elastic documentation: Filebeat aws-s3 input](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-input-aws-s3.html)
 * [GitHub PR #35475: Add support for top-level JSON arrays in aws-s3 input](https://github.com/elastic/beats/pull/35475) — introduces `expand_event_list_from_field: ".[]"` (Filebeat 8.9.0)
 * [AWS documentation: S3 Event Notifications with SQS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html)
-* [Red Hat support Case 04290112](https://access.redhat.com/support/cases/#/case/04290112) — the customer issue that motivated this guide
