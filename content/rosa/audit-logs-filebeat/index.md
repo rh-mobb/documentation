@@ -61,7 +61,6 @@ export CLUSTER_NAME="my-hcp-cluster"
 export CLUSTER_REGION="us-west-2"            # region where the ROSA HCP cluster runs
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export BUCKET_NAME="${CLUSTER_NAME}-audit-logs"
-# export CUSTOMER_ROLE_NAME="CustomerLogDistribution-${CLUSTER_NAME}"   # must include "CustomerLogDistribution"
 export SQS_QUEUE_NAME="${CLUSTER_NAME}-audit-s3-events"
 export SQS_URL="https://sqs.${CLUSTER_REGION}.amazonaws.com/${AWS_ACCOUNT_ID}/${SQS_QUEUE_NAME}"
 export IAM_ROLE_NAME="${CLUSTER_NAME}-filebeat-s3-reader"
