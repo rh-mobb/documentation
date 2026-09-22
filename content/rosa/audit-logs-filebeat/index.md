@@ -525,7 +525,7 @@ The core pipeline is now complete — ROSA HCP control plane audit logs are flow
 
 ## Querying Audit Events
 
-Once events reach Elasticsearch or Logstash, the following fields are available for filtering and alerting.
+The queries in this section assume you have an existing Elasticsearch and Kibana deployment that Filebeat is already forwarding events to. This guide does not deploy Elasticsearch or Kibana. Once events reach Elasticsearch, the following fields are available for filtering and alerting.
 
 ### Key Fields Reference
 
