@@ -6,7 +6,7 @@ authors:
   - Kumudu Herath
   - Michael McNeill
   - Kevin Collins
-validated_version: "4.20"
+validated_version: "4.22"
 ---
 
 In ROSA Hosted Control Planes (HCP), the Kubernetes API server, authentication server, and OAuth server run on Red Hat-managed infrastructure. Because there are no customer-accessible control plane nodes, the standard approach of reading audit logs directly from `/var/log/kube-apiserver/audit.log` does not apply. Instead, Red Hat's built-in log forwarder continuously ships control plane audit logs to an S3 bucket that you own and control.
@@ -68,6 +68,7 @@ export LOG_PREFIX="${CLUSTER_NAME}"
 export FILEBEAT_NAMESPACE="rosa-logging"
 export FILEBEAT_SA="filebeat"
 ```
+
 ## Forward Control Plane Logs to S3
 Create ROSA HCP cluster [control plane logs forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs) to an [S3 bucket](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#rosa-set-up-s3-bucket_rosa-configuring-the-log-forwarder). Update the above environment variables `LOG_PREFIX` and `BUCKET_NAME` accordingly.
 
