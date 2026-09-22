@@ -31,7 +31,7 @@ This data is the primary source of truth for compliance auditing (PCI-DSS, HIPAA
 
 ## S3 Log Format
 
-Before configuring ingestion it is important to understand the format produced by ROSA's log forwarder:
+Before configuring ingestion, it is important to understand the format produced by ROSA's log forwarder:
 
 | Property | Value |
 |---|---|
@@ -68,8 +68,8 @@ export LOG_PREFIX="${CLUSTER_NAME}"
 export FILEBEAT_NAMESPACE="rosa-logging"
 export FILEBEAT_SA="filebeat"
 ```
-## Create Forwarding control plane logs to S3
-Create ROSA HCP cluster [control plane logs forwading](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs) to [S3 bucket](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#rosa-set-up-s3-bucket_rosa-configuring-the-log-forwarder). Update above environment variable LOG_PREFIX and BUCKET_NAME accordinly. 
+## Forward Control Plane Logs to S3
+Create ROSA HCP cluster [control plane logs forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs) to an [S3 bucket](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#rosa-set-up-s3-bucket_rosa-configuring-the-log-forwarder). Update the above environment variables `LOG_PREFIX` and `BUCKET_NAME` accordingly.
 
 {{% alert state="warning" %}}
 The S3 bucket **must be in the same AWS region as the ROSA HCP cluster**. ROSA's OCM API validates bucket accessibility by attempting to reach the bucket from the cluster's region. A bucket in a different region fails the pre-flight check with `Failed to reach bucket`, even if the bucket exists and the policy is correct.
@@ -465,7 +465,7 @@ filebeat-s3-75b58ff747-4rbgj   1/1     Running   0          30s
 
 ## Validate Structured Audit Events
 
-Check the Filebeat pod logs. After a few seconds you should see it connect to the SQS queue and begin processing S3 objects.
+Check the Filebeat pod logs. After a few seconds, you should see it connect to the SQS queue and begin processing S3 objects.
 
 ```bash
 oc logs -n "${FILEBEAT_NAMESPACE}" deployment/filebeat-s3 2>&1 | \
