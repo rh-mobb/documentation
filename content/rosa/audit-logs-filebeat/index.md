@@ -137,7 +137,8 @@ Filebeat uses SQS event notifications to know when new objects arrive in S3. Cre
 aws sqs create-queue \
   --queue-name "${SQS_QUEUE_NAME}" \
   --region "${CLUSTER_REGION}" \
-  --attributes '{"VisibilityTimeout":"300","MessageRetentionPeriod":"86400"}'
+  --attributes '{"VisibilityTimeout":"300","MessageRetentionPeriod":"86400"}' \
+  > /dev/null
 ```
 
 Get the queue ARN and apply a policy that permits S3 to send messages to it:
@@ -149,10 +150,7 @@ SQS_ARN=$(aws sqs get-queue-attributes \
   --region "${CLUSTER_REGION}" \
   --query 'Attributes.QueueArn' --output text)
 
-aws sqs set-queue-attributes \
-  --queue-url "${SQS_URL}" \
-  --region "${CLUSTER_REGION}" \
-  --attributes "Policy=$(cat <<EOF | tr -d '\n'
+cat > /tmp/sqs-policy.json <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [{
@@ -165,7 +163,13 @@ aws sqs set-queue-attributes \
   }]
 }
 EOF
-)"
+
+POLICY=$(cat /tmp/sqs-policy.json | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+
+aws sqs set-queue-attributes \
+  --queue-url "${SQS_URL}" \
+  --region "${CLUSTER_REGION}" \
+  --attributes "{\"Policy\": ${POLICY}}"
 ```
 
 Configure S3 event notifications to publish to the queue when new objects appear under the log prefix:
@@ -234,64 +238,67 @@ Expected output:
 OIDC provider: oidc.op1.openshiftapps.com/2stioo4np7rlnl6gcefe3grd10reftcd
 ```
 
-Create the IAM role with a trust policy scoped to the `filebeat` service account:
+Create the IAM role with a trust policy scoped to the `filebeat` service account, and attach an inline policy granting read access to the S3 bucket and SQS queue:
 
 ```bash
-aws iam create-role \
+cat > /tmp/trust-policy.json <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {
+        "${OIDC_PROVIDER}:sub": "system:serviceaccount:${FILEBEAT_NAMESPACE}:${FILEBEAT_SA}",
+        "${OIDC_PROVIDER}:aud": "openshift"
+      }
+    }
+  }]
+}
+EOF
+
+FILEBEAT_ROLE_ARN=$(aws iam create-role \
   --role-name "${IAM_ROLE_NAME}" \
   --description "IRSA role for Filebeat pod to read from S3 and SQS (${CLUSTER_NAME})" \
-  --assume-role-policy-document "{
-    \"Version\": \"2012-10-17\",
-    \"Statement\": [{
-      \"Effect\": \"Allow\",
-      \"Principal\": {
-        \"Federated\": \"arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}\"
-      },
-      \"Action\": \"sts:AssumeRoleWithWebIdentity\",
-      \"Condition\": {
-        \"StringEquals\": {
-          \"${OIDC_PROVIDER}:sub\": \"system:serviceaccount:${FILEBEAT_NAMESPACE}:${FILEBEAT_SA}\",
-          \"${OIDC_PROVIDER}:aud\": \"openshift\"
-        }
-      }
-    }]
-  }"
-```
+  --assume-role-policy-document file:///tmp/trust-policy.json \
+  --query 'Role.Arn' --output text)
 
-Attach an inline policy granting Filebeat read access to the S3 bucket and SQS queue:
+cat > /tmp/filebeat-policy.json <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3ReadAuditLogs",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:ListBucket", "s3:GetBucketLocation"],
+      "Resource": [
+        "arn:aws:s3:::${BUCKET_NAME}",
+        "arn:aws:s3:::${BUCKET_NAME}/*"
+      ]
+    },
+    {
+      "Sid": "SQSReceiveMessages",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+      ],
+      "Resource": "${SQS_ARN}"
+    }
+  ]
+}
+EOF
 
-```bash
 aws iam put-role-policy \
   --role-name "${IAM_ROLE_NAME}" \
   --policy-name filebeat-s3-sqs-access \
-  --policy-document "{
-    \"Version\": \"2012-10-17\",
-    \"Statement\": [
-      {
-        \"Sid\": \"S3ReadAuditLogs\",
-        \"Effect\": \"Allow\",
-        \"Action\": [\"s3:GetObject\", \"s3:ListBucket\", \"s3:GetBucketLocation\"],
-        \"Resource\": [
-          \"arn:aws:s3:::${BUCKET_NAME}\",
-          \"arn:aws:s3:::${BUCKET_NAME}/*\"
-        ]
-      },
-      {
-        \"Sid\": \"SQSReceiveMessages\",
-        \"Effect\": \"Allow\",
-        \"Action\": [
-          \"sqs:ReceiveMessage\",
-          \"sqs:DeleteMessage\",
-          \"sqs:GetQueueAttributes\",
-          \"sqs:GetQueueUrl\"
-        ],
-        \"Resource\": \"${SQS_ARN}\"
-      }
-    ]
-  }"
+  --policy-document file:///tmp/filebeat-policy.json
 
-FILEBEAT_ROLE_ARN=$(aws iam get-role --role-name "${IAM_ROLE_NAME}" \
-  --query 'Role.Arn' --output text)
 echo "Filebeat role ARN: ${FILEBEAT_ROLE_ARN}"
 ```
 
@@ -368,8 +375,8 @@ data:
                 not:
                   has_fields: ["audit.auditID"]
 
-    output.logstash:
-      hosts: ["logstash.your-namespace.svc.cluster.local:5044"]
+    output.console:
+      pretty: false
 
     logging.level: info
     logging.to_stderr: true
