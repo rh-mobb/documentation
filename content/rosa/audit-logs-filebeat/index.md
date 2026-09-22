@@ -11,7 +11,7 @@ validated_version: "4.22"
 
 In ROSA Hosted Control Planes (HCP), the Kubernetes API server, authentication server, and OAuth server run on Red Hat-managed infrastructure. Because there are no customer-accessible control plane nodes, the standard approach of reading audit logs directly from `/var/log/kube-apiserver/audit.log` does not apply. Instead, Red Hat's built-in log forwarder continuously ships control plane audit logs to an S3 bucket that you own and control.
 
-This guide walks through the complete pipeline: configuring ROSA HCP to forward control plane audit logs to S3, setting up an Amazon SQS notification queue, deploying a Filebeat pod inside the cluster using IAM Roles for Service Accounts (IRSA) to receive and parse those logs, and validating that structured audit events — including `who`, `what`, `when`, and `which resource` — are correctly extracted. The same pipeline feeds Logstash, Elasticsearch, Splunk, or any other destination that Filebeat supports.
+This guide walks through the complete pipeline: configuring ROSA HCP to forward control plane audit logs to S3, setting up an Amazon SQS notification queue, deploying a Filebeat pod inside the cluster using IAM Roles for Service Accounts (IRSA) to receive and parse those logs, and validating that structured audit events (including `who`, `what`, `when`, and `which resource`) are correctly extracted. The same pipeline feeds Logstash, Elasticsearch, Splunk, or any other destination that Filebeat supports.
 
 ## Use Case
 
@@ -37,25 +37,25 @@ Before configuring ingestion, it is important to understand the format produced 
 |---|---|
 | **S3 key pattern** | `<prefix>/ocm-production-<cluster-id>-<cluster-name>/kube-apiserver/<pod-name>/<timestamp>-<uuid>.json.gz` |
 | **Content-Type** | `binary/octet-stream` (not `application/json`) |
-| **Compression** | Single gzip — detected automatically by magic header, not by file extension or Content-Type |
-| **Content structure** | Top-level JSON array `[{…}, {…}]` — NOT newline-delimited JSON |
+| **Compression** | Single gzip, detected automatically by magic header (not by file extension or Content-Type) |
+| **Content structure** | Top-level JSON array `[{…}, {…}]` (NOT newline-delimited JSON) |
 | **Each array element** | Wrapper object with fields: `application`, `container_name`, `message`, `kubernetes`, `timestamp` |
 | **`message` field** | JSON string containing one complete Kubernetes audit event (`audit.k8s.io/v1`) |
 
-The two-layer structure means parsing requires two `decode_json_fields` passes — one to unwrap the array element, and a second to decode the nested audit event inside `message`. This is covered in the Filebeat configuration section below.
+The two-layer structure means parsing requires two `decode_json_fields` passes: one to unwrap the array element, and a second to decode the nested audit event inside `message`. This is covered in the Filebeat configuration section below.
 
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configured with permissions to create S3 buckets, SQS queues, and IAM roles
 * [ROSA CLI](https://console.redhat.com/openshift/downloads) v1.2.64 or later, logged in (`rosa login`)
 * [OpenShift CLI (`oc`)](https://console.redhat.com/openshift/downloads), logged in to the target cluster as a cluster administrator
-* A ROSA HCP cluster in **Ready** state — verify with `rosa describe cluster -c <cluster-name>`
+* A ROSA HCP cluster in **Ready** state. Verify with `rosa describe cluster -c <cluster-name>`
 
   {{% alert state="info" %}}
   Create a ROSA HCP cluster [control plane logs forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs) to an [S3 bucket](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#rosa-set-up-s3-bucket_rosa-configuring-the-log-forwarder).
   {{% /alert %}}
 
-* Filebeat 8.9.0 or later — this guide uses 8.15.0 in a container image; the `expand_event_list_from_field: ".[]"` option for top-level JSON arrays was added in 8.9.0
+* Filebeat 8.9.0 or later. This guide uses 8.15.0 in a container image; the `expand_event_list_from_field: ".[]"` option for top-level JSON arrays was added in 8.9.0
 
 ## Set Environment Variables
 
@@ -521,12 +521,12 @@ added=1145, filtered=0,   acked=1145
 ```
 
 {{% alert state="info" %}}
-`filtered` counts events dropped by the `drop_event` processor — these are non-audit application log lines from the kube-apiserver container. `acked` counts genuine audit events forwarded to Logstash or Elasticsearch.
+`filtered` counts events dropped by the `drop_event` processor. These are non-audit application log lines from the kube-apiserver container. `acked` counts genuine audit events forwarded to Logstash or Elasticsearch.
 {{% /alert %}}
 
 ---
 
-The core pipeline is now complete — ROSA HCP control plane audit logs are flowing from S3 through SQS into Filebeat, where they are parsed into structured events. The sections below cover reference material for querying and operating the pipeline in production.
+The core pipeline is now complete. ROSA HCP control plane audit logs are flowing from S3 through SQS into Filebeat, where they are parsed into structured events. The sections below cover reference material for querying and operating the pipeline in production.
 
 ---
 
@@ -608,7 +608,7 @@ TIME (UTC)            VERB    RESOURCE                    NAME                  
 Each user action is immediately followed by a cascade of system controller actions (scheduler, replicaset-controller, endpoint-controller) that are also fully recorded. This gives security teams a complete causal chain from the initial human action to every side effect.
 
 {{% alert state="info" %}}
-The `system:node:…` identity deleting a pod at 21:09:12 represents the node cleaning up a completed build pod — expected behavior. A similar `delete pods` event by `system:admin` or an unexpected service account during off-hours would be a candidate for an alert.
+The `system:node:…` identity deleting a pod at 21:09:12 represents the node cleaning up a completed build pod, which is expected behavior. A similar `delete pods` event by `system:admin` or an unexpected service account during off-hours would be a candidate for an alert.
 {{% /alert %}}
 
 ## Common Configuration Pitfalls
@@ -620,7 +620,7 @@ These are the three most frequent configuration errors when ingesting ROSA HCP a
 When `file_selectors` is present, Filebeat applies only the selector's own settings to matching files. Input-level `content_type` and `expand_event_list_from_field` are **silently ignored** for selector-matched files.
 
 ```yaml
-# WRONG — expand_event_list_from_field at the input level is silently ignored
+# WRONG: expand_event_list_from_field at the input level is silently ignored
 # when file_selectors is also present. The entire file is treated as one event.
 filebeat.inputs:
   - type: aws-s3
@@ -630,7 +630,7 @@ filebeat.inputs:
     file_selectors:
       - regex: "/kube-apiserver/"
 
-# CORRECT — both options must be inside the selector
+# CORRECT: both options must be inside the selector
 filebeat.inputs:
   - type: aws-s3
     queue_url: "..."
@@ -647,14 +647,14 @@ The symptom of this mistake is a `message` field containing the entire raw JSON 
 The ROSA log forwarder wraps each audit event in an outer metadata object. A single `decode_json_fields` pass decodes the outer wrapper but leaves `message` (the inner audit event) as an unparsed string under `audit.message`. `audit.auditID` is never populated, so `drop_event` removes every event.
 
 ```yaml
-# WRONG — only one decode pass. audit.auditID is never set.
+# WRONG: only one decode pass. audit.auditID is never set.
 processors:
   - decode_json_fields:
       fields: ["message"]
       target: "audit"
       overwrite_keys: true
 
-# CORRECT — two decode passes: outer wrapper then inner audit event
+# CORRECT: two decode passes (outer wrapper, then inner audit event)
 processors:
   - decode_json_fields:
       fields: ["message"]
@@ -677,11 +677,11 @@ processors:
 Only `regex`, `content_type`, and `expand_event_list_from_field` are valid inside `file_selectors`. Using `input` or `decompress` causes Filebeat to silently ignore those keys, leaving `content_type` unset and processing every file as `binary/octet-stream`.
 
 ```yaml
-# WRONG — 'input' and 'decompress' are not valid file_selectors fields
+# WRONG: 'input' and 'decompress' are not valid file_selectors fields
 file_selectors:
   - regex: '.*\.json\.gz$'
-    input: "application/json"    # invalid — silently ignored
-    decompress: true              # invalid — silently ignored
+    input: "application/json"    # invalid, silently ignored
+    decompress: true              # invalid, silently ignored
     expand_event_list_from_field: ".[]"
 
 # CORRECT
@@ -692,12 +692,12 @@ file_selectors:
 ```
 
 {{% alert state="warning" %}}
-Gzip decompression is handled automatically by Filebeat via magic header detection (`\x1f\x8b`). The `content_type` setting controls JSON parsing, not decompression. You do not need — and cannot use — a `decompress` option.
+Gzip decompression is handled automatically by Filebeat via magic header detection (`\x1f\x8b`). The `content_type` setting controls JSON parsing, not decompression. You do not need (and cannot use) a `decompress` option.
 {{% /alert %}}
 
 ## Production Considerations
 
-The manifest in this guide uses `output.console` and `emptyDir` storage — both are suitable for validation but require changes before running in production.
+The manifest in this guide uses `output.console` and `emptyDir` storage. Both are suitable for validation but require changes before running in production.
 
 ### Output destination
 
@@ -837,7 +837,7 @@ aws iam delete-role --role-name "${CUSTOMER_ROLE_NAME}" 2>/dev/null || true
 | Component | Key Requirement | Why |
 |---|---|---|
 | **S3 bucket region** | Must match the ROSA HCP cluster region | ROSA's OCM API validates bucket accessibility from the cluster's region during log forwarder creation |
-| **Customer log distribution role** | Optional; role name must include `CustomerLogDistribution` | Required only when the S3 bucket uses a KMS customer-managed key — the Red Hat central role has no access to your KMS keys, but a role in your account can bridge the gap |
+| **Customer log distribution role** | Optional; role name must include `CustomerLogDistribution` | Required only when the S3 bucket uses a KMS customer-managed key. The Red Hat central role has no access to your KMS keys, but a role in your account can bridge the gap |
 | **`content_type` in `file_selectors`** | Must be inside the selector entry, not at input level | Input-level `content_type` is silently ignored when `file_selectors` is present |
 | **`expand_event_list_from_field`** | Must be inside the selector entry, set to `.[]` | Filebeat 8.9.0+ only; required to split the top-level JSON array into individual events |
 | **Two `decode_json_fields` passes** | First on `message → audit`, second on `audit.message → audit` | ROSA wraps each audit event in an outer metadata object; the audit event itself is a JSON string inside `message` |
@@ -849,5 +849,5 @@ aws iam delete-role --role-name "${CUSTOMER_ROLE_NAME}" 2>/dev/null || true
 
 * [Red Hat documentation: Forwarding control plane logs on ROSA HCP](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs)
 * [Elastic documentation: Filebeat aws-s3 input](https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-input-aws-s3.html)
-* [GitHub PR #35475: Add support for top-level JSON arrays in aws-s3 input](https://github.com/elastic/beats/pull/35475) — introduces `expand_event_list_from_field: ".[]"` (Filebeat 8.9.0)
+* [GitHub PR #35475: Add support for top-level JSON arrays in aws-s3 input](https://github.com/elastic/beats/pull/35475), which introduces `expand_event_list_from_field: ".[]"` (Filebeat 8.9.0)
 * [AWS documentation: S3 Event Notifications with SQS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html)
