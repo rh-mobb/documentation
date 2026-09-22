@@ -50,6 +50,11 @@ The two-layer structure means parsing requires two `decode_json_fields` passes �
 * [ROSA CLI](https://console.redhat.com/openshift/downloads) v1.2.64 or later, logged in (`rosa login`)
 * [OpenShift CLI (`oc`)](https://console.redhat.com/openshift/downloads), logged in to the target cluster as a cluster administrator
 * A ROSA HCP cluster in **Ready** state — verify with `rosa describe cluster -c <cluster-name>`
+
+  {{% alert state="info" %}}
+  Create a ROSA HCP cluster [control plane logs forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs) to an [S3 bucket](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#rosa-set-up-s3-bucket_rosa-configuring-the-log-forwarder).
+  {{% /alert %}}
+
 * Filebeat 8.9.0 or later — this guide uses 8.15.0 in a container image; the `expand_event_list_from_field: ".[]"` option for top-level JSON arrays was added in 8.9.0
 
 ## Set Environment Variables
@@ -70,7 +75,8 @@ export FILEBEAT_SA="filebeat"
 ```
 
 ## Forward Control Plane Logs to S3
-Create ROSA HCP cluster [control plane logs forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs) to an [S3 bucket](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#rosa-set-up-s3-bucket_rosa-configuring-the-log-forwarder). Update the above environment variables `LOG_PREFIX` and `BUCKET_NAME` accordingly.
+
+Follow the Red Hat documentation to [configure control plane log forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs) to your S3 bucket. Update the environment variables `LOG_PREFIX` and `BUCKET_NAME` above to match your configuration.
 
 {{% alert state="warning" %}}
 The S3 bucket **must be in the same AWS region as the ROSA HCP cluster**. ROSA's OCM API validates bucket accessibility by attempting to reach the bucket from the cluster's region. A bucket in a different region fails the pre-flight check with `Failed to reach bucket`, even if the bucket exists and the policy is correct.
