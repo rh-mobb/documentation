@@ -517,6 +517,12 @@ added=1145, filtered=0,   acked=1145
 `filtered` counts events dropped by the `drop_event` processor — these are non-audit application log lines from the kube-apiserver container. `acked` counts genuine audit events forwarded to Logstash or Elasticsearch.
 {{% /alert %}}
 
+---
+
+The core pipeline is now complete — ROSA HCP control plane audit logs are flowing from S3 through SQS into Filebeat, where they are parsed into structured events. The sections below cover reference material for querying and operating the pipeline in production.
+
+---
+
 ## Querying Audit Events
 
 Once events reach Elasticsearch or Logstash, the following fields are available for filtering and alerting.
