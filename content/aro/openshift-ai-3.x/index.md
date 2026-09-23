@@ -1,17 +1,18 @@
 ---
 date: '2026-07-22'
 title: Installing Red Hat OpenShift AI 3.x on Azure Red Hat OpenShift
-tags: ["ARO", "Azure", "AI", "ML", "GPU", "OpenShift AI", "RHOAI"]
+tags: ["ARO", "RHOAI"]
 authors:
   - Kumudu Herath
   - Kevin Collins
+validated_version: "4.20"
 ---
 
 **Planning a POC?** Review the [ARO POC Guide for OpenShift AI](https://github.com/rh-mobb/poc-guides/blob/main/aro/04-special-considerations/04b-AI.md) for scenario planning, infrastructure sizing, and success criteria before starting installation.
 
 ---
 
-# Installing Red Hat OpenShift AI 3.x on Azure Red Hat OpenShift AI
+# Installing Red Hat OpenShift AI 3.x on Azure Red Hat OpenShift
 
 ## Overview
 
@@ -279,9 +280,9 @@ oc wait --for=condition=Ready pod -l name=rhods-operator -n redhat-ods-operator 
 **📚 This is the comprehensive reference section** for all 11 operators. If you're following a deployment path, install only the operators your path requires and use this section for detailed instructions.
 
 **Path-based installation guide:**
-- **Path A (Minimal):** No additional operators needed — skip to [Part 2: Path A](#path-a-minimal-deployment)
-- **Path B (Standard):** Install operators 3.1, 3.2, 3.4, 3.5, 3.6 — see [Part 2: Path B](#path-b-standard-deployment) for your streamlined guide
-- **Path C (Full):** Install all operators (3.1-3.11) — see [Part 2: Path C](#path-c-full-deployment) for your streamlined guide
+- **Path A (Minimal):** No additional operators needed. Skip to [Part 2: Path A](#path-a-minimal-deployment).
+- **Path B (Standard):** Install operators 3.1, 3.2, 3.4, 3.5, 3.6. See [Part 2: Path B](#path-b-standard-deployment) for your streamlined guide.
+- **Path C (Full):** Install all operators (3.1-3.11). See [Part 2: Path C](#path-c-full-deployment) for your streamlined guide.
 
 **Operator Quick Reference:**
 
@@ -1976,7 +1977,7 @@ ARO Cluster
 - **Predictability** - Guaranteed resources for storage operations
 - **High Availability** - One node per Azure availability zone ensures data resilience
 
-**Reference:** [Configure ARO with OpenShift Data Foundation](https://cloud.redhat.com/experts/aro/odf/)
+**Reference:** [Configure ARO with OpenShift Data Foundation](/experts/aro/odf/)
 
 ### 7. Verify Installation
 
@@ -2945,14 +2946,14 @@ oc run test-pod --image=curlimages/curl --rm -it --restart=Never \
 
 ### GPU and Hardware Acceleration
 - [Use GPU workloads with ARO](https://learn.microsoft.com/en-us/azure/openshift/howto-gpu-workloads)
-- [ARO with NVIDIA GPU Workloads - Red Hat Cloud Experts](https://cloud.redhat.com/experts/aro/gpu/)
+- [ARO with NVIDIA GPU Workloads - Red Hat Cloud Experts](/experts/aro/gpu/)
 - [NVIDIA GPU Operator on OpenShift](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/openshift/contents.html)
 - [Node Feature Discovery Operator](https://docs.openshift.com/container-platform/4.14/hardware_enablement/psap-node-feature-discovery-operator.html)
 - [NVIDIA Multi-Instance GPU (MIG) User Guide](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/)
 - [GPU Time-Slicing Configuration](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-sharing.html)
 
 ### Storage
-- [Configure ARO with OpenShift Data Foundation](https://cloud.redhat.com/experts/aro/odf/)
+- [Configure ARO with OpenShift Data Foundation](/experts/aro/odf/)
 - [Deploying ODF using Microsoft Azure](https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.9/html-single/deploying_openshift_data_foundation_using_microsoft_azure/index)
 - [Azure Disk CSI Driver](https://learn.microsoft.com/en-us/azure/aks/azure-disk-csi)
 - [Azure Files CSI Driver](https://learn.microsoft.com/en-us/azure/aks/azure-files-csi)
@@ -2964,7 +2965,7 @@ oc run test-pod --image=curlimages/curl --rm -it --restart=Never \
 - [ARO Egress Lockdown Overview](https://learn.microsoft.com/en-us/azure/openshift/concepts-egress-lockdown)
 - [Create Private ARO Cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-create-private-cluster-4x)
 - [ARO Documentation](https://learn.microsoft.com/en-us/azure/openshift/)
-- [Azure Red Hat OpenShift - Red Hat Cloud Experts](https://cloud.redhat.com/experts/aro/)
+- [Azure Red Hat OpenShift - Red Hat Cloud Experts](/experts/aro/)
 
 ### Disconnected Deployments
 - [How to operate OpenShift in air-gapped environments](https://developers.redhat.com/articles/2026/03/19/how-operate-openshift-air-gapped-environments)
