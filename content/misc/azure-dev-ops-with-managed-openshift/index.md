@@ -222,7 +222,7 @@ Enter the settings we retrieved in the previous step:
 * Docker Password - the service account token
 * Service connection name - enter openshift-registry
 
-Next, let's create a another serivce connection for our cluster.
+Next, let's create another service connection for our cluster.
 
 Click New service connection:
 
