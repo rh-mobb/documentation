@@ -240,19 +240,19 @@ for pod in $(oc get pods -n lb-test -l app=loadtest-passthrough \
 done
 ```
 
-Expected output: each client pins all requests to a single pod. With 5 clients, only 5 of 10 pods receive traffic.
+Expected output: each client pins all 200 requests to a single pod. With 5 clients, only 3 of 10 pods receive traffic.
 
 ```
-=== Client loadtest-persistent-67p9v: 2000 requests over PERSISTENT connection ===
-  echo-server-5b6c5b479d-wk5hf                         2000 (100.0%) ##################################################
-=== Client loadtest-persistent-hcz82: 2000 requests over PERSISTENT connection ===
-  echo-server-5b6c5b479d-wndrl                         2000 (100.0%) ##################################################
-=== Client loadtest-persistent-jckp9: 2000 requests over PERSISTENT connection ===
-  echo-server-5b6c5b479d-4p6rg                         2000 (100.0%) ##################################################
-=== Client loadtest-persistent-nlgjs: 2000 requests over PERSISTENT connection ===
-  echo-server-5b6c5b479d-5k44p                         2000 (100.0%) ##################################################
-=== Client loadtest-persistent-s6jd5: 2000 requests over PERSISTENT connection ===
-  echo-server-5b6c5b479d-kt9vv                         2000 (100.0%) ##################################################
+=== Client loadtest-passthrough-4ppzh: 200 requests over PERSISTENT TLS connection (passthrough route) ===
+  echo-server-55d5c99f57-pxpgv                          200 (100.0%) ##################################################
+=== Client loadtest-passthrough-6bndv: 200 requests over PERSISTENT TLS connection (passthrough route) ===
+  echo-server-55d5c99f57-ldtdr                          200 (100.0%) ##################################################
+=== Client loadtest-passthrough-6t5pj: 200 requests over PERSISTENT TLS connection (passthrough route) ===
+  echo-server-55d5c99f57-mkp8l                          200 (100.0%) ##################################################
+=== Client loadtest-passthrough-lvnx8: 200 requests over PERSISTENT TLS connection (passthrough route) ===
+  echo-server-55d5c99f57-mkp8l                          200 (100.0%) ##################################################
+=== Client loadtest-passthrough-qz4qv: 200 requests over PERSISTENT TLS connection (passthrough route) ===
+  echo-server-55d5c99f57-pxpgv                          200 (100.0%) ##################################################
 ```
 
 ### Fix: Switch to an Edge Route
