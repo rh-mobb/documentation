@@ -20,7 +20,7 @@ The retrofit procedure:
 2. Verify coexistence (both rule sets active, no conflicts)
 3. Delete the platform-managed tag-targeted rules
 4. Disable CCM firewall management so the Cloud Controller Manager does not recreate rules
-5. Validate day-2 operations (scale-up, upgrades) with BYO rules only
+5. (Optional) Validate day-2 operations (scale-up, upgrades) with BYO rules only
 
 ## Prerequisites
 
@@ -154,23 +154,15 @@ EOF
 Verify all networking paths:
 
 ```bash
-# API health
 curl -sk $(oc whoami --show-server)/healthz
-
-# Ingress route
-curl -s http://$(oc get route hello -n byo-fw-test -o jsonpath='{.spec.host}')
-
-# Node status
-oc get nodes
-
-# ClusterOperators
-oc get co
-
-# LoadBalancer external IP
-oc get svc test-lb -n byo-fw-test
 ```
 
-All checks should pass: API healthy, ingress returning `Hello OpenShift!`, all nodes Ready, all ClusterOperators Available, and LoadBalancer assigned an external IP.
+```bash
+curl -s http://$(oc get route hello -n byo-fw-test -o jsonpath='{.spec.host}')
+```
+
+
+All checks should pass: API healthy, ingress returning `Hello OpenShift!`.
 
 ## Step 4: Create BYO Firewall Rules (SA-Targeted)
 
@@ -311,7 +303,13 @@ At this point both rule sets (tag-based and SA-based) are active simultaneously.
 
 ```bash
 oc get nodes
+```
+
+```bash
 oc get co
+```
+
+```bash
 curl -sk $(oc whoami --show-server)/healthz
 ```
 
@@ -335,19 +333,24 @@ Leave CCM-managed `k8s-*` rules (for existing LoadBalancer services) in place fo
 Immediately verify the cluster:
 
 ```bash
-# API
 curl -sk $(oc whoami --show-server)/healthz
+```
 
-# Nodes
+```bash
 oc get nodes
+```
 
-# ClusterOperators
+```bash
 oc get co
+```
 
-# Ingress route (if baseline workload deployed)
+If the baseline workload was deployed:
+
+```bash
 curl -s http://$(oc get route hello -n byo-fw-test -o jsonpath='{.spec.host}')
+```
 
-# LoadBalancer (if baseline workload deployed)
+```bash
 oc get svc test-lb -n byo-fw-test
 ```
 
@@ -486,28 +489,38 @@ watch 'oc get clusterversion; echo "---"; oc get co | grep -v "True.*False.*Fals
 After the upgrade completes, verify:
 
 ```bash
-# Cluster version
 oc get clusterversion
+```
 
-# All nodes Ready
+```bash
 oc get nodes
+```
 
-# All operators healthy
+```bash
 oc get co
+```
 
-# BYO firewall rules still present
+Confirm BYO firewall rules are still present:
+
+```bash
 gcloud compute firewall-rules list \
   --project=${GCP_PROJECT} \
   --filter="network=${VPC_NETWORK} AND name~${BYO_PREFIX}" \
   --format="table(name)"
+```
 
-# Platform-managed rules still gone
+Confirm platform-managed rules are still gone:
+
+```bash
 gcloud compute firewall-rules list \
   --project=${GCP_PROJECT} \
   --filter="network=${VPC_NETWORK} AND name~${INFRA_ID}" \
   --format="table(name)"
+```
 
-# Flag persisted through upgrade
+Confirm the flag persisted through the upgrade:
+
+```bash
 oc get cm cloud-conf -n openshift-cloud-controller-manager \
   -o jsonpath='{.data.cloud\.conf}' | grep firewall
 ```
