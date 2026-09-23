@@ -419,6 +419,7 @@ EOF
 Reset the echo server and run 5 parallel clients that each send 2,000 requests over a single persistent HTTP/1.1 connection through the ClusterIP Service. The client uses a raw socket to guarantee that the same TCP connection (and therefore the same OVN-K 5-tuple hash) is used for every request:
 
 ```bash
+oc delete job loadtest-persistent -n lb-test 2>/dev/null; true
 oc rollout restart deployment/echo-server -n lb-test
 oc rollout status deployment/echo-server -n lb-test --timeout=120s
 ```
