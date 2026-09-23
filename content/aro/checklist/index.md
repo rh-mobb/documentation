@@ -127,7 +127,7 @@ oc get clusterversion
 
 - [ ] Azure subscription with 40+ available vCPU quota
 - [ ] `Microsoft.RedHatOpenShift` resource provider registered
-- [ ] Azure CLI version 2.30.0 or later installed
+- [ ] Azure CLI version 2.84.0 or later installed
 - [ ] Red Hat pull secret obtained (recommended)
 - [ ] Network architecture planned (VNet, subnets, IP ranges)
 - [ ] Identity strategy selected (Managed Identity strongly recommended)
@@ -150,7 +150,7 @@ oc get clusterversion
 |----------|--------------|
 | ARO Documentation | https://docs.microsoft.com/azure/openshift/ |
 | OpenShift Documentation | https://docs.openshift.com/ |
-| Red Hat Cloud Experts ARO Tutorials | https://cloud.redhat.com/experts/tags/aro/ |
+| Red Hat Cloud Experts ARO Tutorials | [cloud.redhat.com/experts/tags/aro/](/experts/tags/aro/) |
 | Microsoft Support | Azure Portal > Support |
 | Red Hat Support | https://access.redhat.com/ |
 | ARO Resource Provider GitHub | https://github.com/Azure/ARO-RP |
@@ -344,7 +344,7 @@ Proper planning is essential for a successful ARO deployment. This section cover
 
 **Complete setup instructions:**
 - [Microsoft Official Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster)
-- [Red Hat Managed Identity Guide](https://cloud.redhat.com/experts/aro/miwi/)
+- [Red Hat Managed Identity Guide](/experts/aro/miwi/)
 - [Managed Identity Concepts](https://learn.microsoft.com/en-us/azure/openshift/howto-understand-managed-identities)
 
 **Benefits:**
@@ -550,7 +550,7 @@ A great getting starting reference is the [ARO Landing Zone Accelerator](https:/
   **Common Overlap Issues:**
   - Default Pod CIDR (10.128.0.0/14) overlaps with on-prem 10.0.0.0/8
   - Default Service CIDR (172.30.0.0/16) overlaps with common VPN ranges
-  - Solution: Use non-standard CIDRs like 100.64.0.0/14 for pods
+  - Solution: Choose a pod CIDR that does not overlap with your VNet, peered VNets, on-premises networks, or the OVN-K reserved ranges (100.64.0.0/16, 100.88.0.0/16)
 
 #### Connectivity Planning
 
@@ -884,7 +884,7 @@ Create a Virtual Network with two dedicated subnets for ARO:
   - Service endpoint for Microsoft.ContainerRegistry
 
 **Deployment:**
-- [ARO with Managed Identities with AZ CLI](https://cloud.redhat.com/experts/aro/miwi/)
+- [ARO with Managed Identities with AZ CLI](/experts/aro/miwi/)
 - [Terraform Examples](https://github.com/rh-mobb/terraform-aro) (includes VNet configuration)
 
 #### BYO NSG Configuration (Optional)
@@ -960,7 +960,12 @@ terraform apply
 
 📚 **Provider Documentation**: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster
 
-**Minimal Example:**
+**Minimal Example (Legacy Service Principal):**
+
+{{% alert state="warning" %}}
+The example below uses the service principal credential model. For new clusters, use managed identities instead. See the [Red Hat MOBB Terraform examples](https://github.com/rh-mobb/terraform-aro) for complete managed identity setup.
+{{% /alert %}}
+
 ```hcl
 resource "azurerm_redhat_openshift_cluster" "aro" {
   name                = "aro-cluster"
@@ -1003,8 +1008,6 @@ resource "azurerm_redhat_openshift_cluster" "aro" {
   }
 }
 ```
-
-**For Managed Identity Configuration**, see the [Red Hat MOBB examples](https://github.com/rh-mobb/terraform-aro) which include complete managed identity setup.
 
 ---
 
@@ -1233,7 +1236,7 @@ Essential configurations to establish immediately after deployment:
 
 - [ ] **Deploy Cluster Logging Operator** - Install operator and create ClusterLogging instance ([guide](https://docs.openshift.com/container-platform/latest/logging/cluster-logging-deploying.html))
 
-- [ ] **Using Cluster Logging Forwarder in ARO with Azure Monitor (Optional)** - Install operator for native forwarding to Azure Monitor and Azure Log Analytics ([guide](https://cloud.redhat.com/experts/aro/clf-to-azure/))
+- [ ] **Using Cluster Logging Forwarder in ARO with Azure Monitor (Optional)** - Install operator for native forwarding to Azure Monitor and Azure Log Analytics ([guide](/experts/aro/clf-to-azure/))
 
 - [ ] **Enable API Audit Logging** - Update APIServer resource with audit policy (Default, WriteRequestBodies, or AllRequestBodies) ([guide](https://docs.openshift.com/container-platform/latest/security/audit-log-policy-config.html))
 
@@ -1252,7 +1255,7 @@ To use a custom domain instead of the default `*.aroapp.io`:
 - [ ] **Update API server certificate** with custom TLS cert
 - [ ] **Update ingress controller certificate** with wildcard TLS cert
 
-**Complete guide:** [Custom Domain Configuration](https://cloud.redhat.com/experts/aro/custom-domain/)
+**Complete guide:** [Custom Domain Configuration](/experts/aro/custom-domain/)
 
 ---
 
@@ -1272,7 +1275,7 @@ For private clusters, establish access to the API server and console:
 **Detailed setup guides:**
 - [Point-to-Site VPN](https://learn.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-howto-point-to-site-resource-manager-portal)
 - [Azure Bastion](https://learn.microsoft.com/en-us/azure/bastion/quickstart-host-portal)
-- [Private ARO Cluster Access](https://cloud.redhat.com/experts/aro/private-cluster/)
+- [Private ARO Cluster Access](/experts/aro/private-cluster/)
 
 #### Option 3: ExpressRoute
 
@@ -1592,9 +1595,9 @@ These operations are essential for a production-ready ARO cluster.
 - [ ] **Test restore procedures** - Validate backup/restore process in non-production environment
 
 **Backup guides:**
-- [OADP with Azure](https://cloud.redhat.com/experts/aro/oadp/)
+- [OADP with Azure](/experts/aro/oadp/)
 - [ARO Backup Best Practices](https://learn.microsoft.com/en-us/azure/openshift/howto-create-a-backup)
-- [ARO Disaster Recovery Planning](https://cloud.redhat.com/experts/aro/disaster-recovery/)
+- [ARO Disaster Recovery Planning](/experts/aro/disaster-recovery/)
 
 #### Backup Schedules
 
@@ -1710,11 +1713,11 @@ These operations are essential for a production-ready ARO cluster.
 
 - [ ] **Configure External Secrets** 
  
-  [Azure Key Vault CSI on Azure Red Hat OpenShift](https://cloud.redhat.com/experts/misc/secrets-store-csi/azure-key-vault/)
+  [Azure Key Vault CSI on Azure Red Hat OpenShift](/experts/misc/secrets-store-csi/azure-key-vault/)
  
-  [Installing the HashiCorp Vault Secret CSI Driver]https://cloud.redhat.com/experts/misc/secrets-store-csi/hashicorp-vault/
+  [Installing the HashiCorp Vault Secret CSI Driver](/experts/misc/secrets-store-csi/hashicorp-vault/)
  
-  *Note: other methods can be use, these are just two common methods
+  *Note: other methods can be used, these are just two common methods.*
 
 
 ---
@@ -1790,7 +1793,7 @@ If you want additional features (OperatorHub, Red Hat Telemetry, cluster updates
 
 #### Azure Firewall Configuration Example
 
-  [End to End Example](https://cloud.redhat.com/experts/aro/private-cluster/)
+  [End to End Example](/experts/aro/private-cluster/)
   
 - [ ] **Create Azure Firewall**
 - [ ] **Create Firewall Application Rules**
@@ -2021,7 +2024,7 @@ az role assignment list --assignee ${USER_ASSIGNED_IDENTITY_CLIENT_ID} --all
 **References:**
 - **Official ARO Guide:** https://learn.microsoft.com/en-us/azure/openshift/howto-deploy-configure-application
 - [Azure Workload Identity Overview](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-overview)
-- [Red Hat Managed Identity Guide](https://cloud.redhat.com/experts/aro/miwi/)
+- [Red Hat Managed Identity Guide](/experts/aro/miwi/)
 
 ---
 
@@ -2033,7 +2036,7 @@ az role assignment list --assignee ${USER_ASSIGNED_IDENTITY_CLIENT_ID} --all
 
 **Option 2: Service Principal Pull Secret (Legacy)**
 
-- [ ] **Configure ACR Pull Secret with Service Principal.** See [ACR with ARO](https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro) | [Guide on using Azure Container Registry in Private ARO clusters](https://cloud.redhat.com/experts/aro/aro-acr/)
+- [ ] **Configure ACR Pull Secret with Service Principal.** See [ACR with ARO](https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro) | [Guide on using Azure Container Registry in Private ARO clusters](/experts/aro/aro-acr/)
 
 **References:**
 - [ACR with ARO](https://learn.microsoft.com/en-us/azure/openshift/howto-use-acr-with-aro)
@@ -2057,23 +2060,23 @@ These enhancements are for specific use cases and advanced requirements.
 ### AI/ML and Advanced Workloads
 
 For GPU workloads, Red Hat OpenShift AI, and advanced compute scenarios, see specialized guides:
-- [GPU Configuration Guide](https://cloud.redhat.com/experts/aro/gpu/)
+- [GPU Configuration Guide](/experts/aro/gpu/)
 - [Red Hat OpenShift AI Setup](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.4/html/installing_and_uninstalling_openshift_ai_self-managed/installing-and-deploying-openshift-ai_install)
-- [OpenShift Virtualization](https://cloud.redhat.com/experts/aro/aro-virt/)
+- [OpenShift Virtualization](/experts/aro/aro-virt/)
 
 ### GitOps & CI/CD
 
 For ArgoCD, Tekton, and CI/CD integration, see:
 - [GitOps with OpenShift GitOps (ArgoCD)](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/gitops/index)
 - [CI/CD with OpenShift Pipelines (Tekton)](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/pipelines/index)
-- [Azure DevOps Integration](https://cloud.redhat.com/experts/misc/azure-dev-ops-with-managed-openshift/)
-- [Configuring Cross-Tenant Azure DevOps Access from ArgoCD on ARO](https://cloud.redhat.com/experts/misc/cross-tenant-access-argocd-ado/)
+- [Azure DevOps Integration](/experts/misc/azure-dev-ops-with-managed-openshift/)
+- [Configuring Cross-Tenant Azure DevOps Access from ArgoCD on ARO](/experts/misc/cross-tenant-access-argocd-ado/)
 
 ### Multi-Cluster Management
 
 For Advanced Cluster Management, Submariner, and multi-cluster setups, see:
 - [Red Hat Advanced Cluster Management Guide](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.16)
-- [Deploying Advanced Cluster Management and OpenShift Data Foundation for ARO Disaster Recovery](https://cloud.redhat.com/experts/aro/acm-odf-aro/)
+- [Deploying Advanced Cluster Management and OpenShift Data Foundation for ARO Disaster Recovery](/experts/aro/acm-odf-aro/)
 
 ---
 
@@ -2736,7 +2739,7 @@ ARO clusters use TLS certificates for:
 
 cert-manager automates certificate issuance and renewal using various CA providers including Let's Encrypt, Azure Key Vault, and HashiCorp Vault.
 
-[End to End Guide](https://cloud.redhat.com/experts/aro/cert-manager/)
+[End to End Guide](/experts/aro/cert-manager/)
   
   cert-manager will automatically:
   1. Create a Certificate resource
@@ -2832,7 +2835,8 @@ This is managed by the ARO service. To request an update to Azure Red Hat OpenSh
     --patch='{"spec":{"defaultCertificate":{"name":"apps-cert"}}}'
   ```
 
-*Note: the default IngressController is managed by the ARO service. To request an update to Azure Red Hat OpenShift cluster certificates follow this [Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-update-certificates)
+*Note: the default IngressController is managed by the ARO service. To request an update to Azure Red Hat OpenShift cluster certificates follow this [Guide](https://learn.microsoft.com/en-us/azure/openshift/howto-update-certificates).*
+
 ---
 
 ## Appendix C: Troubleshooting Guide
