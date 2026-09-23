@@ -28,7 +28,7 @@ This guide describes how to setup the following:
 
 ## Pre-requisites
 
-1. You will need a A Private ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).  Make sure to select the private option in Terraform.
+1. You will need a Private ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).  Make sure to select the private option in Terraform.
 
 1. Set environment variables.  In the example we re-use the variables from the Terraform guide
 

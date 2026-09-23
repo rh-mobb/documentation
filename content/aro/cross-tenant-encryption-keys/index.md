@@ -161,7 +161,7 @@ managed identity to this newly created service account:
   az ad sp create --id ${APP_CLIENT_ID}
   ```
 
-3. Create the resource group to host the Azure Key Vault and and the encryption key:
+3. Create the resource group to host the Azure Key Vault and the encryption key:
 
   ```bash
   az group create \

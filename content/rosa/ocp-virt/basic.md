@@ -20,7 +20,7 @@ If you don't want to deploy the resources yourself, you can watch the video belo
 
 ## Pre-requisites
 
-1. You will need a A ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).
+1. You will need a ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).
 
 1. Set the cluster name as an environment variable (in the example we re-use the variable from the Terraform guide).
 

@@ -79,7 +79,7 @@ Do you currently have the ability to do a point in time restore of Backups of yo
 
 ### Failover to an existing cluster in the DR region (Hot / Warm)
 
-In a Hot / Warm situation the destination cluster should be similar to the the source cluster, but for financial reasons may be smaller, or be single AZ. If this is the case you may either run the DR cluster with lower expectations on performance and resiliance with the idea of failing back to the original cluster ASAP, or you will expand the DR cluster to match the original cluster and turn the original cluster into the next DR site.
+In a Hot / Warm situation the destination cluster should be similar to the source cluster, but for financial reasons may be smaller, or be single AZ. If this is the case you may either run the DR cluster with lower expectations on performance and resiliance with the idea of failing back to the original cluster ASAP, or you will expand the DR cluster to match the original cluster and turn the original cluster into the next DR site.
 
 Ideally Your applications and data should be replicated to the DR site and should be ready to switch over within a very short window.
 

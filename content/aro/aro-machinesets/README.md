@@ -7,4 +7,4 @@ authors:
   - Kumudu Herath
 ---
 
-Please refer to the The Managed OpenShift Black Belt team maintained Helm chart at [here](https://github.com/rh-mobb/helm-charts/tree/main/charts/aro-machinesets#readme).
+Please refer to the Managed OpenShift Black Belt team maintained Helm chart at [here](https://github.com/rh-mobb/helm-charts/tree/main/charts/aro-machinesets#readme).

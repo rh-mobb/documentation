@@ -26,7 +26,7 @@ If you are using `zsh` as your shell (which is the default shell on macOS) you m
 ### Capture the OAuth callback URL
 First, construct the cluster's OAuth callback URL and make note of it. To do so, run the following command, making sure to replace the variables specified:
 
-The "AAD" directory at the end of the the OAuth callback URL should match the OAuth identity provider name you'll setup later.
+The "AAD" directory at the end of the OAuth callback URL should match the OAuth identity provider name you'll setup later.
 
 ```bash
 RESOURCE_GROUP=example-rg # Replace this with the name of your ARO cluster's resource group
