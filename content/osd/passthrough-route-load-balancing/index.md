@@ -1,14 +1,14 @@
 ---
 date: '2026-09-23'
 title: Fixing Uneven Load Distribution with Passthrough Routes and Persistent Connections
-tags: ["OSD"]
+tags: ["ARO", "OSD", "ROSA"]
 authors:
   - Kevin Collins
   - Kumudu Herath
 validated_version: "4.22"
 ---
 
-Applications that use SSL passthrough routes or ClusterIP Services with persistent HTTP connections often experience uneven request distribution across pods. This guide explains why that happens, how to reproduce the problem, and how to fix it using a headless Service with client-side load balancing.
+Applications that use SSL passthrough routes or ClusterIP Services with persistent HTTP connections often experience uneven request distribution across pods. This applies to all Red Hat managed OpenShift services, including ARO, ROSA, and OSD on GCP. This guide explains why that happens, how to reproduce the problem, and how to fix it using a headless Service with client-side load balancing.
 
 ## The Problem
 
@@ -24,7 +24,7 @@ Setting `haproxy.router.openshift.io/balance: roundrobin` and `haproxy.router.op
 
 ## Prerequisites
 
-* An OpenShift Dedicated cluster (or any OpenShift cluster)
+* An ARO, ROSA, or OSD on GCP cluster (or any OpenShift cluster)
 * `oc` CLI logged in with permissions to create namespaces, deployments, services, and routes
 
 ## Reproduce the Problem
