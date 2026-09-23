@@ -543,7 +543,7 @@ EOF
 Reset the echo server and run the headless load test:
 
 ```bash
-oc delete job loadtest-persistent -n lb-test 2>/dev/null; true
+oc delete job loadtest-persistent loadtest-headless -n lb-test 2>/dev/null; true
 oc rollout restart deployment/echo-server -n lb-test
 oc rollout status deployment/echo-server -n lb-test --timeout=120s
 ```
