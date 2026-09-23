@@ -17,7 +17,7 @@ Red Hat OpenShift Dev Spaces (formally CodeReady Workspaces) is an Operator avai
 
 ### Installing via the Console
 
-1. Log into the Openshift cluster web console with cluster-admin credentials
+1. Log into the OpenShift cluster web console with cluster-admin credentials
 
 1. On the left navigation pane under Administator perspective, select **Operators** --> **OperatorHub**
 

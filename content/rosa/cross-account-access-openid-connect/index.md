@@ -66,7 +66,7 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
 
 ## Create ODIC Provider on the Spoke Account
 
-1. Obtain the ARN for the OpenID Connect associated with your Openshift Environment from the **Hub Account**
+1. Obtain the ARN for the OpenID Connect associated with your OpenShift Environment from the **Hub Account**
 
     Find using command below:
 
@@ -137,7 +137,7 @@ For clarity in this context, we will designate the AWS account housing our ROSA 
 
 Verify our capability to assume the role established in our spoke account using the recently generated OIDC provider.
 
-1. Login to Openshift on the **Spoke Account**
+1. Login to OpenShift on the **Spoke Account**
 
 1. Create an OpenShift project
 

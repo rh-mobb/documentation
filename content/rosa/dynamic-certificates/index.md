@@ -417,7 +417,7 @@ Check if all the pods are running successfully and that the events do not mentio
 3. Access the application Route.
 
    Do a curl test (or any http client of your preference) to confirm there are no certificate related errors.
-   > *Output should print "Hello OpenShfit!", and you should also notice a line that says "subjectAltName: host hello.apps.$DOMIAN" matched cert's "hello.apps.$DOMIAN"*
+   > *Output should print "Hello OpenShift!", and you should also notice a line that says "subjectAltName: host hello.apps.$DOMIAN" matched cert's "hello.apps.$DOMIAN"*
 
    ```bash
    curl -vv https://hello.apps.$DOMAIN

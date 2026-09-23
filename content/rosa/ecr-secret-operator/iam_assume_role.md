@@ -12,7 +12,7 @@ authors:
 
 * Prequisites
 
-  * [An STS Openshift Cluster](https://docs.openshift.com/container-platform/4.10/authentication/managing_cloud_provider_credentials/cco-mode-sts.html)
+  * [An STS OpenShift Cluster](https://docs.openshift.com/container-platform/4.10/authentication/managing_cloud_provider_credentials/cco-mode-sts.html)
 
   * Setup Environment Variables
    ```bash

@@ -31,7 +31,7 @@ In this document, I will show you how to connect your OpenShift and Cloud provid
 
 ### **Installing the Cost Management Metric Operator**
 
-1. Log into the Openshift cluster web console with cluster-admin credentials
+1. Log into the OpenShift cluster web console with cluster-admin credentials
 
 1. On the left navigation pane under Administator perspective, select **Operators** --> **OperatorHub**
 
@@ -187,7 +187,7 @@ Cost management will begin polling Azure for cost data, which will appear on the
 
 ## Managing your Costs
 
-After adding your Openshift Container Platform and Cloud Provider sources, Cost management will show cost data by
+After adding your OpenShift Container Platform and Cloud Provider sources, Cost management will show cost data by
 
 1. Source
 

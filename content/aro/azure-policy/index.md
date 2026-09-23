@@ -1,6 +1,6 @@
 ---
 date: '2022-07-25'
-title: Apply Azure Policy to Azure Red Hat Openshift ( ARO )
+title: Apply Azure Policy to Azure Red Hat OpenShift ( ARO )
 tags: ["ARO"]
 authors:
   - Shaozhen Ding
@@ -8,13 +8,13 @@ authors:
   - Kumudu Herath
 ---
 
-[Azure Policy](https://docs.microsoft.com/en-us/azure/governance/policy/overview) helps to enforce organizational standards and to assess compliance at-scale. Azure Policy supports [arc enabled kubernetes cluster](https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/overview) with both build-in and custom policies to ensure kubernetes resources are compliant. This article demonstrates how to make Azure Redhat Openshift cluster compliant with azure policy.
+[Azure Policy](https://docs.microsoft.com/en-us/azure/governance/policy/overview) helps to enforce organizational standards and to assess compliance at-scale. Azure Policy supports [arc enabled kubernetes cluster](https://docs.microsoft.com/en-us/azure/azure-arc/kubernetes/overview) with both build-in and custom policies to ensure kubernetes resources are compliant. This article demonstrates how to make Azure Red Hat OpenShift cluster compliant with azure policy.
 
 ## Prerequisites
 
 * Azure CLI
-* Openshift CLI
-* Azure Openshift Cluster (ARO Cluster)
+* OpenShift CLI
+* Azure OpenShift Cluster (ARO Cluster)
 
 ## Deploy Azure Policy
 

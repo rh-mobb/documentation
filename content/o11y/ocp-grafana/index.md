@@ -1,6 +1,6 @@
 ---
 date: '2023-03-16'
-title: Deploying Grafana on Openshift 4
+title: Deploying Grafana on OpenShift 4
 tags: ["Observability"]
 authors:
   - Paul Czarkowski

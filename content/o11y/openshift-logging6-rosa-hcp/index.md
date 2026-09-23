@@ -547,7 +547,7 @@ This example selects all application, infrastructure and audit logs and forwards
 ## Log visualization in openshift console
 Visualization for logging is provided by deploying the Logging UI Plugin of the Cluster Observability Operator(COO). Follow detail instructions for [Installing the Cluster Observability operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html-single/cluster_observability_operator/index#installing-the-cluster-observability-operator-in-the-web-console-_installing_the_cluster_observability_operator)
 
-1. Openshift project for COO
+1. OpenShift project for COO
 
 ```bash
 oc create ns  openshift-cluster-observability-operator
@@ -616,7 +616,7 @@ EOF
 6. Verify Logging UI plugin
 Wait until you see the openshift web console refresh request. Once the console is refreshed, expand Observe in the left hand side of the openshift console and go to the log tab.
 
-![logs in Openshift Web console](./coo_logs.png)
+![logs in OpenShift Web console](./coo_logs.png)
 
 
 
