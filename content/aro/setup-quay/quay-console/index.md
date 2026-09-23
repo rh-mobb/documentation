@@ -7,7 +7,7 @@ tags: ["ARO"]
 
 ![Quay Logo](../images/redhat-quay-logo.png)
 
-## Red Hat Quay setup on ARO (Azure Openshift)
+## Red Hat Quay setup on ARO (Azure OpenShift)
 A guide to deploying an Azure Red Hat OpenShift Cluster with Red Hat Quay.
 
 Author: [Kristopher White x Connor Wooley]

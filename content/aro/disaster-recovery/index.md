@@ -197,7 +197,7 @@ From here the two clusters are visible to each other via their frontends. This m
 
 ## Cross Region Registry Replication
 
-Openshift comes with a local registry that is used for local builds etc, but it is likely
+OpenShift comes with a local registry that is used for local builds etc, but it is likely
 that you use a centralized registry for your own applications and images. Ensure that your registry supports replication to the DR region. Ensure that you understand if it supports active/active replication or if its a one way replication.
 
 In a Hot/Warm scenario where you'll only ever use the DR region as a backup to the primary region its likely okay for one-way replication to be used.
