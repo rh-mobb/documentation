@@ -47,7 +47,17 @@ This approach is different from [adding Ingress Controller and ALB to ROSA guide
 
 ## 2. Create a private IngressController (inner NLB)
 
-Once you're logged into your cluster, please take a look at this [guide](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/). From there, follow the step of **Create the Ingress Controller** to create the first NLB (let's call this **inner NLB**) and retrieve the IP addresses of your NLB. You can do so by following the first section of **Create the ALB** on that guide but please be sure not to continue creating the ALB since we are not going to do that here. Please keep these IP addresses handy as we are going to use it in the later steps.
+Once you're logged into your cluster, please take a look at this [guide](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/).
+
+From there, follow the steps to create the private IngressController and the first NLB (let's call this the **inner NLB**).
+
+Complete that guide through the point where:
+
+- the IngressController service has been patched to expose the router health check port (`1936`)
+- the inner NLB is healthy
+- you have retrieved the private IP addresses of the inner NLB targets
+
+Please keep these IP addresses handy, as we are going to use them in the next step when creating the outer target group and NLB for CloudFront.
 
 ## 3. Configure VPC for IPv6
 
