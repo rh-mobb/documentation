@@ -8,7 +8,7 @@ authors:
 validated_version: "4.22"
 ---
 
-Applications that use SSL passthrough routes or ClusterIP Services with persistent HTTP connections often experience uneven request distribution across pods. This applies to all Red Hat managed OpenShift services, including ARO, ROSA, and OSD on GCP. This guide explains why that happens, reproduces the problem in two common scenarios, and demonstrates a fix for each.
+Applications that use SSL passthrough routes or ClusterIP Services with persistent HTTP connections often experience uneven request distribution across pods. This applies to all Red Hat managed OpenShift services, including ARO, ROSA, and OSD on GCP. This guide explains why that happens, reproduces the problem in three scenarios, and demonstrates a fix for each.
 
 ## The Problem
 
@@ -20,7 +20,7 @@ With a small number of long-lived clients (connection pools, sidecar proxies, or
 
 ## Why This Matters
 
-Setting `haproxy.router.openshift.io/balance: roundrobin` and `haproxy.router.openshift.io/disable_cookies: "true"` on a passthrough route does not help. These annotations control how new TCP connections are assigned, not how requests within a connection are routed. Under sustained load with connection pooling, the imbalance grows: some pods can receive 50% more requests than others.
+Setting `haproxy.router.openshift.io/balance: roundrobin` and `haproxy.router.openshift.io/disable_cookies: "true"` on a passthrough route does not help. These annotations control how new TCP connections are assigned, not how requests within a connection are routed. Under sustained load with connection pooling, a single client sends all of its requests to one pod while others receive none. In production with many concurrent clients, some pods can end up handling significantly more traffic than others.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Setting `haproxy.router.openshift.io/balance: roundrobin` and `haproxy.router.op
 
 ## Setup
 
-Create a namespace and deploy two versions of an echo server: a plain HTTP server for the ClusterIP scenario and a TLS-enabled server for the passthrough route scenario. Both return the pod hostname in the response so you can see which pod handled each request.
+Create a namespace and deploy a single echo server that listens on two ports: TLS on 8443 for the passthrough route scenario and plain HTTP on 8080 for the ClusterIP scenarios. Each pod returns its hostname in the response so you can see which pod handled each request.
 
 ```bash
 cat <<'EOF' | oc apply -f -
@@ -724,6 +724,9 @@ INTERNAL_HOST=$(oc get route echo-server-internal -n lb-test \
   -o jsonpath='{.spec.host}')
 INTERNAL_ROUTER_IP=$(oc get svc router-internal-internal-router \
   -n openshift-ingress -o jsonpath='{.spec.clusterIP}')
+
+echo "Internal route host: ${INTERNAL_HOST}"
+echo "Internal router IP: ${INTERNAL_ROUTER_IP}"
 ```
 
 Reset the echo server and run the load test. The client resolves the route hostname via the internal router's IP to ensure traffic stays in-cluster:
@@ -813,7 +816,7 @@ Expected output: all 10 pods receive traffic from each client, compared to the C
 ...
 ```
 
-As with the edge route in Scenario 1, the distribution is approximately even rather than perfect. The key result is that all 10 pods are active and receiving traffic. Internal callers get L7 per-request balancing without any changes to the client application.
+As with the edge route in Scenario 1, the distribution is approximately even rather than perfect. A pod that shows a very low percentage (for example, 0.5%) typically just started and had not yet passed HAProxy's backend health checks when the test began. The key result is that all 10 pods are active and receiving traffic. Internal callers get L7 per-request balancing without any changes to the client application.
 
 ## Summary
 
