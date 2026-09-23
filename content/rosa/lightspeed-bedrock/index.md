@@ -5,9 +5,8 @@ tags: ["ROSA", "ROSA HCP", "Lightspeed"]
 authors:
   - Kevin Collins
   - Kumudu Herath
+validated_version: "4.22"
 ---
-
-{{% alert state="info" %}}This guide has been validated on **OpenShift 4.22**. Operator CRD names, API versions, and console paths may differ on other versions.{{% /alert %}}
 
 OpenShift Lightspeed is an AI-powered assistant that helps developers and administrators interact with OpenShift using natural language. This guide walks you through integrating OpenShift Lightspeed with AWS Bedrock on Red Hat OpenShift Service on AWS (ROSA).
 
@@ -97,7 +96,7 @@ The **bedrock-proxy** is a critical translation layer that enables OpenShift Lig
     export SERVICE_ACCOUNT_NAME=lightspeed-service-account
     ```
 
-    {{% alert state="warning" %}}**Inference Profiles Required for Newer Models**: Newer Bedrock models (e.g., Claude Sonnet 5) cannot be invoked directly by model ID — you must use a **cross-region inference profile ID** such as `us.anthropic.claude-sonnet-5`. Using the direct model ID (e.g., `anthropic.claude-sonnet-5`) will result in a `ValidationException`. You can list available inference profiles with:
+    {{% alert state="warning" %}}**Inference Profiles Required for Newer Models**: Newer Bedrock models (e.g., Claude Sonnet 5) cannot be invoked directly by model ID. You must use a **cross-region inference profile ID** such as `us.anthropic.claude-sonnet-5`. Using the direct model ID (e.g., `anthropic.claude-sonnet-5`) will result in a `ValidationException`. You can list available inference profiles with:
     ```bash
     aws bedrock list-inference-profiles --region ${AWS_REGION} \
       --query "inferenceProfileSummaries[?contains(inferenceProfileId, 'anthropic')].{id: inferenceProfileId, name: inferenceProfileName}" \
