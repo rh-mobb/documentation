@@ -307,7 +307,7 @@ oc debug -n demo-egress-ns demo-egress-ns -- curl -s http://$LOAD_BALANCER_HOSTN
 ```
 
 You should see output similar to the following, indicating a successful
-connection.  It should be noted that that `client_address` below is the
+connection.  It should be noted that `client_address` below is the
 internal IP address of the load balancer rather than our egress IP.  Successful
 connectivity (by limiting the service to `.spec.loadBalancerSourceRanges`)
 is what provides a successful demonstration:
@@ -362,7 +362,7 @@ curl -s http://$LOAD_BALANCER_HOSTNAME
 ```
 
 You should see output similar to the following, indicating a successful
-connection.  It should be noted that that `client_address` below is the
+connection.  It should be noted that `client_address` below is the
 internal IP address of the load balancer rather than our egress IP.  Successful
 connectivity (by limiting the service to `.spec.loadBalancerSourceRanges`)
 is what provides a successful demonstration:

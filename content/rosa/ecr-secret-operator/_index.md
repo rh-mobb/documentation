@@ -100,7 +100,7 @@ EOF
 oc start-build ruby-sample-build --wait
 ```
 
-Build should succeed and push the image to the the private ECR Container repository
+Build should succeed and push the image to the private ECR Container repository
 
 ![Success Build](./images/build.png)
 

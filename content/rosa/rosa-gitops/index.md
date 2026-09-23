@@ -94,7 +94,7 @@ policies.  If errors or more stringent security lockdowns are found, please subm
 so that we can get this fixed.
 
 1. Download, review and make the script executable, and finally run the script 
-to create the required policies and roles.  This creates a a policy for the operator, and 
+to create the required policies and roles.  This creates a policy for the operator, and 
 a role which allows the operator to assume a role against the OIDC identity of the 
 ROSA cluster.  If the policies and roles already exist (prefixed by your cluster 
 name), then the creation of them is skipped:
