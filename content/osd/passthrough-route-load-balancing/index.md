@@ -232,7 +232,7 @@ EOF
 Check the results:
 
 ```bash
-oc wait --for=condition=complete job/loadtest-passthrough -n lb-test --timeout=300s
+oc wait --for=condition=complete job/loadtest-passthrough -n lb-test --timeout=400s
 
 for pod in $(oc get pods -n lb-test -l app=loadtest-passthrough \
   --no-headers -o name); do
@@ -362,7 +362,7 @@ EOF
 ```
 
 ```bash
-oc wait --for=condition=complete job/loadtest-edge -n lb-test --timeout=300s
+oc wait --for=condition=complete job/loadtest-edge -n lb-test --timeout=400s
 
 for pod in $(oc get pods -n lb-test -l app=loadtest-edge \
   --no-headers -o name); do
@@ -493,7 +493,7 @@ EOF
 ```
 
 ```bash
-oc wait --for=condition=complete job/loadtest-persistent -n lb-test --timeout=300s
+oc wait --for=condition=complete job/loadtest-persistent -n lb-test --timeout=400s
 
 for pod in $(oc get pods -n lb-test -l app=loadtest-persistent \
   --no-headers -o name); do
@@ -613,7 +613,7 @@ EOF
 ```
 
 ```bash
-oc wait --for=condition=complete job/loadtest-headless -n lb-test --timeout=300s
+oc wait --for=condition=complete job/loadtest-headless -n lb-test --timeout=400s
 
 for pod in $(oc get pods -n lb-test -l app=loadtest-headless \
   --no-headers -o name); do
@@ -791,7 +791,7 @@ EOF
 ```
 
 ```bash
-oc wait --for=condition=complete job/loadtest-internal-route -n lb-test --timeout=300s
+oc wait --for=condition=complete job/loadtest-internal-route -n lb-test --timeout=400s
 
 for pod in $(oc get pods -n lb-test -l app=loadtest-internal-route \
   --no-headers -o name); do
