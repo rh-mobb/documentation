@@ -10,7 +10,7 @@ authors:
 validated_version: "4.20"
 ---
 
-Effectively securing your Azure Storage Account requires more than just basic access controls. Azure Private Endpoints provide a powerful layer of protection by establishing a direct, private connection between your virtual network and storage resources—completely bypassing the public internet. This approach not only minimizes your attack surface and the risk of data exfiltration, but also enhances performance through reduced latency, simplifies network architecture, supports compliance efforts, and enables secure hybrid connectivity. It's a comprehensive solution for protecting your critical cloud data.
+Effectively securing your Azure Storage Account requires more than just basic access controls. Azure Private Endpoints provide a powerful layer of protection by establishing a direct, private connection between your virtual network and storage resources, completely bypassing the public internet. This approach not only minimizes your attack surface and the risk of data exfiltration, but also enhances performance through reduced latency, simplifies network architecture, supports compliance efforts, and enables secure hybrid connectivity. It's a comprehensive solution for protecting your critical cloud data.
 
 Configuring private endpoint access to an Azure Storage Account involves three key steps:
 
@@ -20,7 +20,7 @@ Configuring private endpoint access to an Azure Storage Account involves three k
 
 3) Define a new storage class for Azure Red Hat OpenShift (ARO)
 
->Note: In many environments, Azure administrators use automation to streamline steps 1 and 2. This typically ensures the storage account is provisioned according to organizational policies—such as encryption and security configurations—along with the automatic creation of the associated private endpoint.
+>Note: In many environments, Azure administrators use automation to streamline steps 1 and 2. This typically ensures the storage account is provisioned according to organizational policies (such as encryption and security configurations) along with the automatic creation of the associated private endpoint.
 
 
 

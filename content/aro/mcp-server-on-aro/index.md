@@ -248,7 +248,7 @@ git clone https://github.com/openshift/openshift-mcp-server.git
 cd openshift-mcp-server/charts/kubernetes-mcp-server
 ```
 
-The chart already ships `values-openshift.yaml` (sets `openshift: true` and OpenShift image defaults). Your overlay file layers on top of that—do not replace it.
+The chart already ships `values-openshift.yaml` (sets `openshift: true` and OpenShift image defaults). Your overlay file layers on top of that; do not replace it.
 
 ### Step 7: Determine the Ingress Hostname (if exposing a route later)
 
@@ -267,12 +267,12 @@ On ROSA, you can also use `rosa describe cluster -c <cluster> -o json | jq -r '.
 
 ### Step 8: Create the ARO Values Overlay
 
-Create `values-aro.yaml`. This file intentionally does **not** set `securityContext` or `podSecurityContext`—the chart defaults already satisfy OpenShift's `restricted-v2` SCC (`readOnlyRootFilesystem`, dropped capabilities, `seccompProfile`, and so on). Overriding those fields with a partial block removes those protections.
+Create `values-aro.yaml`. This file intentionally does **not** set `securityContext` or `podSecurityContext` because the chart defaults already satisfy OpenShift's `restricted-v2` SCC (`readOnlyRootFilesystem`, dropped capabilities, `seccompProfile`, and so on). Overriding those fields with a partial block removes those protections.
 
-Do **not** use `mcp.args`—that key is ignored by Helm. Use the `config` block (rendered to `config.toml`) for server settings.
+Do **not** use `mcp.args` (that key is ignored by Helm). Use the `config` block (rendered to `config.toml`) for server settings.
 
 ```yaml
-# values-aro.yaml — layer on the chart's values-openshift.yaml
+# values-aro.yaml: layer on the chart's values-openshift.yaml
 
 rbac:
   create: false
@@ -385,7 +385,7 @@ Expect **HTTP 200** with a JSON-RPC `result` containing server capabilities.
 
 ### Step 12: Expose an Edge-Terminated HTTPS Route (Optional)
 
-Only after local testing succeeds, enable the chart ingress. The chart adds `route.openshift.io/termination: edge` when `openshift: true` (from `values-openshift.yaml`), creating an HTTPS route—do **not** use `oc expose svc`, which creates a plain HTTP route.
+Only after local testing succeeds, enable the chart ingress. The chart adds `route.openshift.io/termination: edge` when `openshift: true` (from `values-openshift.yaml`), creating an HTTPS route. Do **not** use `oc expose svc`, which creates a plain HTTP route.
 
 Set `ingress.enabled: true` and a non-empty `ingress.host` in `values-aro.yaml`, then upgrade:
 
@@ -431,7 +431,7 @@ when using port-forward, or:
 https://<route-host>/mcp
 ```
 
-when using the optional route. Clients must send a valid OpenShift bearer token (or complete a full OIDC flow if you add Entra ID settings—see below).
+when using the optional route. Clients must send a valid OpenShift bearer token (or complete a full OIDC flow if you add Entra ID settings; see below).
 
 ## Optional: Full Entra ID OIDC
 
@@ -465,6 +465,6 @@ Store client secrets in a Kubernetes Secret and pass them at install time with `
 
 - [Model Context Protocol server for Red Hat OpenShift (technology preview)](https://www.redhat.com/en/blog/model-context-protocol-server-red-hat-openshift-now-available-technology-preview)
 - [OpenShift MCP Server (GitHub)](https://github.com/openshift/openshift-mcp-server)
-- [Kubernetes MCP Server — configuration (OAuth)](https://github.com/containers/kubernetes-mcp-server/blob/main/docs/configuration.md)
-- [Kubernetes MCP Server — Entra ID setup](https://github.com/containers/kubernetes-mcp-server/blob/main/docs/ENTRA_ID_SETUP.md)
+- [Kubernetes MCP Server: configuration (OAuth)](https://github.com/containers/kubernetes-mcp-server/blob/main/docs/configuration.md)
+- [Kubernetes MCP Server: Entra ID setup](https://github.com/containers/kubernetes-mcp-server/blob/main/docs/ENTRA_ID_SETUP.md)
 - [Configure Azure AD as an ARO identity provider](/experts/aro/idp/azuread-aro/)
