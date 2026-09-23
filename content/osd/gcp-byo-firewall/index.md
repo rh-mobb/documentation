@@ -10,7 +10,7 @@ validated_version: "4.20, 4.21, 4.22"
 
 OSD-GCP clusters are provisioned with platform-managed firewall rules that use GCP network tags to target instances. The BYO (Bring Your Own) firewall feature replaces these with rules that target WIF service accounts instead. This gives customers full ownership of their firewall rules while maintaining the same network security posture.
 
-This guide walks through retrofitting an existing OSD-GCP cluster from tag-targeted rules to SA-targeted BYO rules, disabling CCM firewall management, and validating day-2 operations.
+This guide walks through retrofitting an existing OSD-GCP cluster from tag-targeted rules to SA-targeted BYO rules, disabling CCM firewall management, and validating Day-2 operations.
 
 ## Overview
 
@@ -20,7 +20,7 @@ The retrofit procedure:
 2. Verify coexistence (both rule sets active, no conflicts)
 3. Delete the platform-managed tag-targeted rules
 4. Disable CCM firewall management so the Cloud Controller Manager does not recreate rules
-5. (Optional) Validate day-2 operations (scale-up, upgrades) with BYO rules only
+5. (Optional) Validate Day-2 operations (scale-up, upgrades) with BYO rules only
 
 ## Prerequisites
 
@@ -160,7 +160,6 @@ curl -sk $(oc whoami --show-server)/healthz
 ```bash
 curl -s http://$(oc get route hello -n byo-fw-test -o jsonpath='{.spec.host}')
 ```
-
 
 All checks should pass: API healthy, ingress returning `Hello OpenShift!`.
 
@@ -379,9 +378,16 @@ openshift-cloud-controller-manager/cloud-conf    (key: cloud.conf)
 Read the current cloud config, set `firewall-rules-management` to `Disabled`, and patch it back:
 
 ```bash
-NEW_CONFIG=$(oc get configmap cloud-provider-config -n openshift-config \
-  -o jsonpath='{.data.config}' | \
-  sed 's/firewall-rules-management = Enabled/firewall-rules-management = Disabled/')
+CURRENT_CONFIG=$(oc get configmap cloud-provider-config -n openshift-config \
+  -o jsonpath='{.data.config}')
+
+if echo "$CURRENT_CONFIG" | grep -q 'firewall-rules-management'; then
+  NEW_CONFIG=$(echo "$CURRENT_CONFIG" | \
+    sed 's/firewall-rules-management = Enabled/firewall-rules-management = Disabled/')
+else
+  NEW_CONFIG="${CURRENT_CONFIG}
+firewall-rules-management = Disabled"
+fi
 
 oc patch configmap cloud-provider-config -n openshift-config \
   --type merge \
@@ -468,7 +474,10 @@ Schedule an upgrade:
 ```bash
 CLUSTER_ID=$(ocm describe cluster ${CLUSTER_NAME} --json | jq -r '.id')
 TARGET_VERSION="<target-version>"
+# macOS:
 NEXT_TS=$(date -u -v+10M '+%Y-%m-%dT%H:%M:%SZ')
+# Linux:
+# NEXT_TS=$(date -u -d '+10 minutes' '+%Y-%m-%dT%H:%M:%SZ')
 
 echo '{"version":"'${TARGET_VERSION}'","schedule_type":"manual","next_run":"'${NEXT_TS}'"}' \
   > /tmp/upgrade-policy.json
