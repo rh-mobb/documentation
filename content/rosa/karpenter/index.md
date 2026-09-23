@@ -8,7 +8,7 @@ authors:
 validated_version: "4.22"
 ---
 
-Red Hat build of Karpenter (AutoNode) brings workload-aware, just-in-time node provisioning to Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes. Instead of managing static machine pools with pre-defined instance types, Karpenter evaluates the exact CPU, memory, and scheduling constraints of pending pods and provisions the optimal EC2 instance automatically — then consolidates underutilized nodes when they are no longer needed.
+Red Hat build of Karpenter (AutoNode) brings workload-aware, just-in-time node provisioning to Red Hat OpenShift Service on AWS (ROSA) with Hosted Control Planes. Instead of managing static machine pools with pre-defined instance types, Karpenter evaluates the exact CPU, memory, and scheduling constraints of pending pods and provisions the optimal EC2 instance automatically, then consolidates underutilized nodes when they are no longer needed.
 
 This guide walks through enabling AutoNode on a ROSA HCP cluster, configuring a NodePool and EC2NodeClass, and exploring use cases including right-sizing, Spot optimization, and consolidation.
 
@@ -30,7 +30,7 @@ export AWS_REGION=us-east-1
 
 ## Deploy a Karpenter-Enabled ROSA Cluster
 
-### Option 1 — Automated (Recommended)
+### Option 1: Automated (Recommended)
 
 Use the [terraform-rosa](https://github.com/rh-mobb/terraform-rosa) Terraform module to deploy a fully configured ROSA HCP cluster with AutoNode enabled in a single command. Set `karpenter = true` alongside your cluster variables and Terraform handles the IAM role, trust policy, cluster wiring, and default NodePool/EC2NodeClass automatically.
 
@@ -70,7 +70,7 @@ terraform apply my-cluster.plan
 
 Terraform will create the cluster, configure the Karpenter IAM role, and apply the default `OpenshiftEC2NodeClass` and `NodePool` automatically.
 
-### Option 2 — Manual
+### Option 2: Manual
 
 Follow the [official Red Hat documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html-single/cluster_administration/index#rosa-nodes-autonode-managing) to:
 
@@ -98,14 +98,14 @@ oc login <API_URL> --username admin --password <PASSWORD>
 # Confirm ROSA-specific CRDs are present
 oc get crd | grep karpenter
 
-# Karpenter runs in the hosted control plane — no pods on your worker nodes
+# Karpenter runs in the hosted control plane; no pods on your worker nodes
 oc get pods -A | grep karpenter
 # Expected: no output
 ```
 
 ## Configure NodePool and EC2NodeClass
 
-ROSA uses `OpenshiftEC2NodeClass` instead of the upstream `EC2NodeClass`. ROSA automatically manages subnet and security group selectors via `karpenter.sh/discovery` tags — no manual configuration is needed in the spec.
+ROSA uses `OpenshiftEC2NodeClass` instead of the upstream `EC2NodeClass`. ROSA automatically manages subnet and security group selectors via `karpenter.sh/discovery` tags, so no manual configuration is needed in the spec.
 
 > **Note:** If you deployed via `terraform-rosa` with `karpenter = true`, these resources are already applied. Skip to [Use Case 1](#use-case-1--basic-scale-up).
 
@@ -175,7 +175,7 @@ NAME                                    NODECLASS   NODES   READY   AGE
 nodepool.karpenter.sh/default           default     0       True    30s
 ```
 
-`NODES: 0` is correct — Karpenter provisions nodes on demand when pods are pending.
+`NODES: 0` is correct. Karpenter provisions nodes on demand when pods are pending.
 
 ## Create the Test Namespace
 
@@ -187,7 +187,7 @@ oc new-project karpenter-test
 
 ---
 
-## Use Case 1 — Basic Scale-Up
+## Use Case 1: Basic Scale-Up
 
 Deploy a workload that exceeds current capacity and watch Karpenter provision a right-sized node automatically.
 
@@ -229,15 +229,15 @@ EOF
 Watch Karpenter respond:
 
 ```bash
-# Terminal 1 — watch pods
+# Terminal 1: watch pods
 watch oc get pods -n karpenter-test
 
-# Terminal 2 — watch nodes
+# Terminal 2: watch nodes
 watch oc get nodes -L node.kubernetes.io/instance-type,karpenter.sh/capacity-type
 ```
 
 **What to observe:**
-1. Pods enter `Pending` state — no capacity available on existing nodes
+1. Pods enter `Pending` state (no capacity available on existing nodes)
 2. Within ~30 seconds, Karpenter detects pending pods and creates a `NodeClaim`
 3. A new node joins the cluster (~2–4 minutes)
 4. All pods schedule and move to `Running`
@@ -254,11 +254,11 @@ Karpenter evaluated the total pending resource requests (10 × 1 CPU / 1Gi) and 
 
 ---
 
-## Use Case 2 — Instance Type Flexibility (Right-Sizing)
+## Use Case 2: Instance Type Flexibility (Right-Sizing)
 
 Show how Karpenter selects different instance families for memory-heavy vs CPU-heavy workloads.
 
-> **Important:** Resource requests must be large enough that workloads cannot efficiently share a single node. Karpenter always optimizes for cost — small requests will be bin-packed onto one large instance instead of provisioning specialized nodes. `topologySpreadConstraints` forces pods to spread across separate nodes.
+> **Important:** Resource requests must be large enough that workloads cannot efficiently share a single node. Karpenter always optimizes for cost; small requests will be bin-packed onto one large instance instead of provisioning specialized nodes. `topologySpreadConstraints` forces pods to spread across separate nodes.
 
 Deploy a memory-heavy workload (12Gi per pod → drives `r`-family selection):
 
@@ -340,11 +340,11 @@ After nodes provision (~3–4 minutes):
 oc get nodes -L node.kubernetes.io/instance-type,karpenter.sh/capacity-type
 ```
 
-The memory workload lands on `r`-family instances; the CPU workload lands on `c`-family instances — no manual node group configuration required.
+The memory workload lands on `r`-family instances; the CPU workload lands on `c`-family instances, with no manual node group configuration required.
 
 ---
 
-## Use Case 3 — Spot Instance Optimization
+## Use Case 3: Spot Instance Optimization
 
 Show cost savings through automatic Spot instance usage.
 
@@ -396,7 +396,7 @@ Spot instances can deliver 60–90% cost savings vs On-Demand. Karpenter monitor
 
 ---
 
-## Use Case 4 — Consolidation (Scale Down)
+## Use Case 4: Consolidation (Scale Down)
 
 Show Karpenter automatically reclaiming unused capacity.
 
@@ -415,11 +415,11 @@ Within ~60 seconds Karpenter identifies underutilized nodes, cordons and drains 
 
 ---
 
-## Use Case 5 — Coexistence with Machine Pools
+## Use Case 5: Coexistence with Machine Pools
 
 
 
-Karpenter-managed nodes and existing ROSA machine pool nodes run side by side in the same cluster. You can use node selectors and affinity rules to direct specific workloads to either provisioner. This enables a gradual migration — existing workloads stay on managed machine pools while new workloads adopt Karpenter at your own pace.
+Karpenter-managed nodes and existing ROSA machine pool nodes run side by side in the same cluster. You can use node selectors and affinity rules to direct specific workloads to either provisioner. This enables a gradual migration: existing workloads stay on managed machine pools while new workloads adopt Karpenter at your own pace.
 
 ### View existing machine pools
 
@@ -527,7 +527,7 @@ EOF
 Watch for new nodes and confirm they came from the machine pool (no `autonode` label) rather than Karpenter:
 
 ```bash
-# Watch nodes join — machine pool nodes will NOT have an autonode label
+# Watch nodes join: machine pool nodes will NOT have an autonode label
 watch oc get nodes -L autonode,node.kubernetes.io/instance-type,karpenter.sh/capacity-type
 ```
 
@@ -548,7 +548,7 @@ Confirm the machine pool replica count increased:
 rosa describe machinepool $MACHINE_POOL -c $CLUSTER_NAME | grep -A5 "Autoscaling\|Replicas"
 ```
 
-**What to observe:** Pods targeting machine pool nodes go `Pending` because existing nodes are full. The Cluster Autoscaler detects the unschedulable pods, scales the machine pool up, and the new nodes carry standard machine pool labels — no `autonode` label, no `karpenter.sh/nodepool` label. This confirms the two provisioners are operating independently on the same cluster.
+**What to observe:** Pods targeting machine pool nodes go `Pending` because existing nodes are full. The Cluster Autoscaler detects the unschedulable pods, scales the machine pool up, and the new nodes carry standard machine pool labels (no `autonode` label, no `karpenter.sh/nodepool` label). This confirms the two provisioners are operating independently on the same cluster.
 
 ### Verify workload placement side by side
 
@@ -556,7 +556,7 @@ rosa describe machinepool $MACHINE_POOL -c $CLUSTER_NAME | grep -A5 "Autoscaling
 oc get nodes -L autonode,node.kubernetes.io/instance-type,karpenter.sh/capacity-type
 ```
 
-Expected result — two distinct groups of nodes:
+Expected result: two distinct groups of nodes:
 
 | Node | `autonode` | Instance Type | Capacity Type | Provisioner |
 |---|---|---|---|---|
@@ -596,5 +596,5 @@ After the namespace is deleted, both provisioners will reclaim their nodes autom
 ## Additional Resources
 
 * [Red Hat build of Karpenter documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html-single/cluster_administration/index#rosa-nodes-autonode-managing)
-* [terraform-rosa — Automated ROSA cluster deployment with Karpenter](https://github.com/rh-mobb/terraform-rosa)
+* [terraform-rosa: Automated ROSA cluster deployment with Karpenter](https://github.com/rh-mobb/terraform-rosa)
 * [Karpenter upstream project](https://karpenter.sh)
