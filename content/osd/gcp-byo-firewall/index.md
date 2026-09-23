@@ -5,7 +5,7 @@ tags: ["OSD"]
 authors:
   - Kevin Collins
   - Kumudu Herath
-validated_version: "4.22"
+validated_version: "4.20, 4.21, 4.22"
 ---
 
 OSD-GCP clusters are provisioned with platform-managed firewall rules that use GCP network tags to target instances. The BYO (Bring Your Own) firewall feature replaces these with rules that target WIF service accounts instead. This gives customers full ownership of their firewall rules while maintaining the same network security posture.
