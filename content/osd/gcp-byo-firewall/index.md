@@ -151,6 +151,12 @@ spec:
 EOF
 ```
 
+Wait for the LoadBalancer to be assigned an external IP (this may take up to 90 seconds):
+
+```bash
+oc get svc test-lb -n byo-fw-test -w
+```
+
 Verify all networking paths:
 
 ```bash
@@ -165,7 +171,7 @@ All checks should pass: API healthy, ingress returning `Hello OpenShift!`.
 
 ## Step 4: Create BYO Firewall Rules (SA-Targeted)
 
-Create 9 SA-targeted rules that mirror the platform-managed rules plus cover ingress and SSH. These rules coexist safely with the existing tag-targeted rules.
+Create 8 SA-targeted rules that mirror the platform-managed rules plus cover ingress. These rules coexist safely with the existing tag-targeted rules.
 
 ```bash
 # Rule 1: API server (external access)
@@ -255,17 +261,6 @@ gcloud compute firewall-rules create ${BYO_PREFIX}-ingress-k8s-http-hc \
   --source-ranges=${LB_CIDRS} \
   --target-service-accounts=${WORKER_SA} \
   --priority=1000
-
-# Rule 9: SSH to control plane (bootstrap)
-gcloud compute firewall-rules create ${BYO_PREFIX}-bootstrap-in-ssh \
-  --project=${GCP_PROJECT} \
-  --network=${VPC_NETWORK} \
-  --direction=INGRESS \
-  --action=ALLOW \
-  --rules=tcp:22 \
-  --source-ranges=0.0.0.0/0 \
-  --target-service-accounts=${CP_SA} \
-  --priority=1000
 ```
 
 ### BYO Rules Summary
@@ -280,11 +275,10 @@ gcloud compute firewall-rules create ${BYO_PREFIX}-bootstrap-in-ssh \
 | 6 | `${BYO_PREFIX}-internal-cluster` | tcp,udp,icmp | CP+Worker SA | CP+Worker |
 | 7 | `${BYO_PREFIX}-ingress-k8s-fw` | tcp:80,443 | 0.0.0.0/0 | Worker |
 | 8 | `${BYO_PREFIX}-ingress-k8s-http-hc` | tcp:30000-32767 | GCP LB CIDRs | Worker |
-| 9 | `${BYO_PREFIX}-bootstrap-in-ssh` | tcp:22 | 0.0.0.0/0 | CP |
 
 ### Verify BYO Rules
 
-Confirm all 9 rules were created:
+Confirm all 8 rules were created:
 
 ```bash
 gcloud compute firewall-rules list \
@@ -430,12 +424,7 @@ oc logs -n openshift-cloud-controller-manager \
   -l k8s-app=gcp-cloud-controller-manager --tail=50 | grep -i firewall
 ```
 
-When a LoadBalancer service is created with the flag disabled, CCM should log:
-
-```
-firewallNeedsUpdate(...): firewall rules are unmanaged
-ensureHTTPHealthCheckFirewall(...): firewall rules are unmanaged
-```
+When a LoadBalancer service is created with the flag disabled, CCM logs should contain entries with `firewall rules are unmanaged`, confirming that firewall operations are being skipped. The exact function names and message format may vary across OpenShift versions.
 
 CCM will still provision load balancer resources (forwarding rules, target pools, external IPs) but will skip all firewall rule creation and deletion.
 
