@@ -1,341 +1,434 @@
 ---
-date: '2024-11-12'
+date: '2026-09-25'
 title: Deploying vLLM with Audio and LLM Inference on ROSA with GPUs
-tags: ["AWS", "ROSA", "GPU", "vLLM", "AI", "Whisper", "Inference"]
+tags: ["ROSA", "ROSA HCP", "RHOAI"]
 aliases: ["/docs/ai-ml/vllm-transcription-webapp"]
 authors:
   - Florian Jacquin
+validated_version: "4.22"
 ---
 
-Red Hat OpenShift Service on AWS (ROSA) provides a managed OpenShift environment that can leverage AWS GPU instances. This guide will walk you through deploying vLLM for both audio transcription (Whisper) and large language model inference on ROSA using GPU instances, along with a web application to interact with both services.
+This guide deploys audio transcription and text inference on Red Hat OpenShift Service on AWS (ROSA) with NVIDIA GPUs. Models run on the vLLM runtime that ships with Red Hat OpenShift AI, using Red Hat model images from the container registry.
+
+This procedure was run on a ROSA with hosted control planes cluster, OpenShift 4.22.10, in `us-east-1`. The installed software was:
+
+* Node Feature Discovery Operator `4.22.0-202609151747` from the `stable` channel
+* NVIDIA GPU Operator `26.7.1` (`gpu-operator-certified.v26.7.1`) from the `stable` channel
+* Red Hat OpenShift AI `3.5.1` from the `stable-3.x` channel
+* vLLM `0.24.0` from `registry.redhat.io/rhaii/vllm-cuda-rhel9`, through the OpenShift AI template `vllm-cuda-runtime-template`
+* `registry.redhat.io/rhelai1/modelcar-whisper-large-v3-turbo-quantized-w4a16:1.5`
+* `registry.redhat.io/rhelai1/modelcar-gpt-oss-20b:1.5`
+
+The GPU pool was two `g6.xlarge` nodes (one NVIDIA L4, 24 GB, per node). `gpt-oss-20b` needs about 16 GB of GPU memory.
 
 ## Use case
 
-Automatically transcribe audio conversations (meetings, customer calls) and analyze content with an LLM to extract insights, decisions, and action items
-
-Maintain confidentiality of sensitive data by avoiding external SaaS services, while benefiting from advanced AI capabilities (transcription + intelligent analysis) with a production-ready and supported solution.
+Transcribe audio conversations, such as meetings or customer calls, and send the transcript to a language model for a summary, decisions, and action items. The models stay on the cluster.
 
 ## Prerequisites
 
-* A Red Hat OpenShift on AWS (ROSA classic or HCP) 4.18+ cluster
-* OC CLI (Admin access to cluster)
-* ROSA CLI
+* A ROSA with hosted control planes cluster, OpenShift 4.22, with `cluster-admin` access
+* The `oc` and `rosa` CLIs, logged in to the cluster, and `jq`
+* AWS quota for two `g6.xlarge` instances in the cluster Region
+* Three worker nodes besides the GPU pool. This validation used three `m7i.xlarge` workers for OpenShift AI
 
-## Set up GPU-enabled Machine Pool
+## 1. Create a GPU machine pool
 
-First we need to check availability of our instance type used here (g6.xlarge), it should be in same region of the cluster.
-
-Using the following command, you can check for the availability of the g6.xlarge instance type in all eu-* regions:
-
-```bash
-for region in $(aws ec2 describe-regions --query 'Regions[?starts_with(RegionName, `eu`)].RegionName' --output text); do
-    echo "Region: $region"
-    aws ec2 describe-instance-type-offerings --location-type availability-zone \
-    --filters Name=instance-type,Values=g6.xlarge --region $region \
-    --query 'InstanceTypeOfferings[].Location' --output table
-    echo ""
-done
-```
-
-With the region and zone known, use the following command to create a machine pool with GPU Enabled Instances. In this example we use region eu-west-3b:
+Create a dedicated pool with one GPU per model server. The taint keeps other workloads off these nodes.
 
 ```bash
-# Replace $mycluster with the name of your ROSA cluster
-export CLUSTER_NAME=$mycluster
-rosa create machine-pool -c $CLUSTER_NAME --name gpu --replicas=2 --instance-type g6.xlarge
+export CLUSTER=<your-cluster-name>
+
+rosa create machinepool \
+  --cluster=$CLUSTER \
+  --name=gpu \
+  --replicas=2 \
+  --instance-type=g6.xlarge \
+  --labels=node-role.kubernetes.io/gpu=,nvidia.com/gpu.present=true \
+  --taints=nvidia.com/gpu=true:NoSchedule \
+  -y
 ```
 
-This command creates a machine pool named "gpu" with two replicas using the g6.xlarge instance, which provides modern GPU capabilities suitable for inference workloads.
-
-## Deploy Required Operators
-
-We'll use kustomize to deploy the necessary operators thanks to this repository provided by Red Hat COP (Community of Practices) [link](https://github.com/redhat-cop/gitops-catalog)
-
-1. Node Feature Discovery (NFD) Operator:
-
-   ```bash
-   oc apply -k https://github.com/redhat-cop/gitops-catalog/nfd/operator/overlays/stable
-   ```
-   The NFD Operator detects hardware features and configuration in your cluster.
-
-2. GPU Operator:
-
-   ```bash
-   oc apply -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/operator/overlays/stable
-   ```
-   The GPU Operator manages NVIDIA GPUs drivers in your cluster.
-
-## Create Operator Instances
-
-After the operators are installed, wait about 20 seconds, then use the following commands to create their instances:
-
-1. NFD Instance:
-
-   ```bash
-   oc apply -k https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia
-   ```
-   This creates an NFD instance for cluster.
-
-2. GPU Operator Instance:
-
-   ```bash
-   oc apply -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/instance/overlays/aws
-   ```
-   This creates a GPU Operator instance configured for AWS.
-
-## Deploy vLLM for Audio Inference (Whisper)
-
-Next, we'll deploy a vLLM instance for audio transcription using the Whisper model.
-
-1. Create a new project:
-
-   ```bash
-   oc new-project inference
-   ```
-
-2. Deploy the Whisper vLLM instance:
-
-   ```bash
-   oc new-app registry.redhat.io/rhaiis/vllm-cuda-rhel9:3 --name rh-inf-whisper -l app=rh-inf-whisper \
-     -e HF_HUB_OFFLINE=0 \
-     -e VLLM_MAX_AUDIO_CLIP_FILESIZE_MB=500
-   ```
-
-3. Configure the deployment strategy to use Recreate instead of rolling updates:
-
-   ```bash
-   oc patch deployment rh-inf-whisper --type=json -p='[
-     {"op": "replace", "path": "/spec/strategy/type", "value": "Recreate"},
-     {"op": "remove", "path": "/spec/strategy/rollingUpdate"}
-   ]'
-   ```
-
-4. Add persistent storage for model caching:
-
-   ```bash
-   oc set volume deployment/rh-inf-whisper --add --type=pvc --claim-size=100Gi --mount-path=/opt/app-root/src/.cache --name=llm-cache
-   ```
-
-5. Allocate GPU resources:
-
-   ```bash
-   oc set resources deployment/rh-inf-whisper --limits=nvidia.com/gpu=1
-   ```
-
-6. Configure vLLM to serve the Whisper model:
-
-   ```bash
-   oc patch deployment rh-inf-whisper --type='json' -p='[
-     {
-       "op": "replace",
-       "path": "/spec/template/spec/containers/0/command",
-       "value": ["vllm"]
-     },
-     {
-       "op": "replace",
-       "path": "/spec/template/spec/containers/0/args",
-       "value": [
-         "serve",
-         "RedHatAI/whisper-large-v3-turbo-quantized.w4a16"
-       ]
-     }
-   ]'
-   ```
-
-7. Create a service to expose the Whisper inference endpoint:
-
-   ```bash
-   oc create service clusterip rh-inf-whisper --tcp=8000:8000
-   ```
-
-## Deploy vLLM for LLM Inference
-
-Now we'll deploy a second vLLM instance for language model inference.
-
-1. Deploy the LLM vLLM instance:
-
-   ```bash
-   oc new-app registry.redhat.io/rhaiis/vllm-cuda-rhel9:3 --name rh-inf-llm -l app=rh-inf-llm \
-     -e HF_HUB_OFFLINE=0 \
-     -e VLLM_MAX_AUDIO_CLIP_FILESIZE_MB=500
-   ```
-
-2. Configure the deployment strategy:
-
-   ```bash
-   oc patch deployment rh-inf-llm --type=json -p='[
-     {"op": "replace", "path": "/spec/strategy/type", "value": "Recreate"},
-     {"op": "remove", "path": "/spec/strategy/rollingUpdate"}
-   ]'
-   ```
-
-3. Add persistent storage for model caching:
-
-   ```bash
-   oc set volume deployment/rh-inf-llm --add --type=pvc --claim-size=100Gi --mount-path=/opt/app-root/src/.cache --name=llm-cache
-   ```
-
-4. Allocate GPU resources:
-
-   ```bash
-   oc set resources deployment/rh-inf-llm --limits=nvidia.com/gpu=1
-   ```
-
-5. Configure vLLM to serve the language model:
-
-   ```bash
-   oc patch deployment rh-inf-llm --type='json' -p='[
-     {
-       "op": "replace",
-       "path": "/spec/template/spec/containers/0/command",
-       "value": ["vllm"]
-     },
-     {
-       "op": "replace",
-       "path": "/spec/template/spec/containers/0/args",
-       "value": [
-         "serve",
-         "RedHatAI/gpt-oss-20b"
-       ]
-     }
-   ]'
-   ```
-
-6. Create a service to expose the LLM inference endpoint:
-
-   ```bash
-   oc create service clusterip rh-inf-llm --tcp=8000:8000
-   ```
-
-## Deploy the Transcription Web Application
-
-Finally, we'll deploy a web application that integrates both the audio transcription and LLM inference services.
-
-> **Note**: This transcription web application was entirely created using Cursor IDE with a single prompt. The complete prompt used to generate the application can be found in the [PROMPT.md](https://github.com/rh-mobb/transcription-webapp/blob/main/PROMPT.md) file of the repository. This demonstrates how modern AI-assisted development tools can rapidly create functional applications from a well-structured prompt.
-
-1. Deploy the application from the Git repository:
-
-   ```bash
-   oc new-app https://github.com/rh-mobb/transcription-webapp.git --strategy=docker \
-   -e AUDIO_INFERENCE_URL=http://rh-inf-whisper:8000 \
-   -e AUDIO_MODEL_NAME=RedHatAI/whisper-large-v3-turbo-quantized.w4a16 \
-   -e LLM_INFERENCE_URL=http://rh-inf-llm:8000 \
-   -e LLM_MODEL_NAME=RedHatAI/gpt-oss-20b
-   ```
-
-2. Create a secure route to access the application:
-
-   ```bash
-   oc create route edge --service=transcription-webapp
-   ```
-
-3. Configure the route timeout for longer processing times:
-
-   ```bash
-   oc annotate route transcription-webapp haproxy.router.openshift.io/timeout=180s
-   ```
-
-## Verify Deployment
-
-1. Use the following commands to ensure all nvidia pods are either running or completed:
-
-   ```bash
-   oc get pods -n nvidia-gpu-operator
-   ```
-
-2. All pods in the inference namespace should be running:
-
-   ```bash
-   oc get pods -n inference
-   ```
-
-3. Check logs of the Whisper inference service to verify GPU detection:
-
-   ```bash
-   oc logs -l app=rh-inf-whisper
-   ```
-
-4. Check logs of the LLM inference service:
-
-   ```bash
-   oc logs -l app=rh-inf-llm
-   ```
-
-5. Verify that both vLLM instances can receive requests and have started correctly:
-
-   ```bash
-   oc exec deployment/rh-inf-whisper -- curl -XPOST localhost:8000/ping -s -I
-   oc exec deployment/rh-inf-llm -- curl -XPOST localhost:8000/ping -s -I
-   ```
-   
-   You should receive HTTP 200 responses from both endpoints, indicating the services are ready to accept inference requests.
-
-## Accessing the Web Application
-
-After deploying the transcription web application, follow these steps to access it:
-
-1. Get the route URL:
-
-   ```bash
-   oc get route transcription-webapp
-   ```
-
-2. Open the URL in your web browser. You should see the transcription application interface.
-
-3. Testing Your Setup:
-   - Upload an audio file to test the Whisper transcription service.
-   - The transcribed text can be processed further using the LLM service.
-   - Verify that both services are responding correctly.
-
-## Architecture Overview
-
-This deployment creates a complete inference pipeline:
-
-- **Whisper Service**: Handles audio transcription using the Whisper large v3 turbo quantized model
-- **LLM Service**: Provides text generation and processing capabilities using the GPT-OSS 20B model
-- **Web Application**: Provides a user-friendly interface to interact with both services
-
-Each vLLM instance runs in its own pod with dedicated GPU resources, ensuring optimal performance and isolation.
-
-## Cost Optimization
-
-For development or non-production environments, you can scale down the GPU machine pool to 0 when not in use:
+On the multi-AZ cluster used for this validation, both replicas were placed in one availability zone. Wait until the pool reports two ready replicas:
 
 ```bash
-rosa edit machine-pool -c $CLUSTER_NAME gpu --replicas=0
+rosa describe machinepool --cluster=$CLUSTER --machinepool=gpu
 ```
 
-This helps optimize costs while maintaining the ability to quickly scale up when needed.
+## 2. Install the GPU software stack
 
-## Uninstalling
+Install Node Feature Discovery and the certified NVIDIA GPU Operator from the `stable` channel. On this cluster that installed NFD `4.22.0-202609151747` and `gpu-operator-certified.v26.7.1`.
 
-1. Delete the inference namespace:
+```bash
+cat <<'EOF' | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-nfd
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-nfd
+  namespace: openshift-nfd
+spec:
+  targetNamespaces:
+  - openshift-nfd
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: nfd
+  namespace: openshift-nfd
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: nfd
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nvidia-gpu-operator
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: nvidia-gpu-operator
+  namespace: nvidia-gpu-operator
+spec:
+  targetNamespaces:
+  - nvidia-gpu-operator
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: gpu-operator-certified
+  namespace: nvidia-gpu-operator
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: gpu-operator-certified
+  source: certified-operators
+  sourceNamespace: openshift-marketplace
+EOF
+```
 
-   ```bash
-   oc delete project inference
-   ```
+Wait until both CSVs are `Succeeded`, then create the NFD instance:
 
-2. Delete operator instances:
+```bash
+oc get csv -n openshift-nfd
+oc get csv -n nvidia-gpu-operator
 
-   ```bash
-   oc delete -k https://github.com/redhat-cop/gitops-catalog/nfd/instance/overlays/only-nvidia
-   oc delete -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/instance/overlays/aws
-   ```
+cat <<'EOF' | oc apply -f -
+apiVersion: nfd.openshift.io/v1
+kind: NodeFeatureDiscovery
+metadata:
+  name: nfd-instance
+  namespace: openshift-nfd
+spec: {}
+EOF
+```
 
-3. Delete operators:
+Create the `ClusterPolicy` from the example shipped with the installed GPU Operator:
 
-   ```bash
-   oc delete -k https://github.com/redhat-cop/gitops-catalog/nfd/operator/overlays/stable
-   oc delete -k https://github.com/redhat-cop/gitops-catalog/gpu-operator-certified/operator/overlays/stable
-   ```
+```bash
+CSV=$(oc get csv -n nvidia-gpu-operator -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep '^gpu-operator-certified' | head -n1)
 
-4. Delete the GPU machine pool:
+oc get csv -n nvidia-gpu-operator "$CSV" \
+  -o jsonpath='{.metadata.annotations.alm-examples}' \
+  | jq -r '.[] | select(.kind=="ClusterPolicy")' > gpu-cluster-policy.json
 
-   ```bash
-   rosa delete machine-pool -c $CLUSTER_NAME gpu
-   ```
+oc apply -f gpu-cluster-policy.json
+```
 
-## Conclusion
+The driver build took about five minutes after the GPU nodes joined. The `ClusterPolicy` can report ready before a GPU node exists. Confirm allocatable GPUs before continuing:
 
-- **Production-Ready Solution**: By using exclusively Red Hat certified container images (registry.redhat.io), this deployment benefits from the complete Red Hat lifecycle management, including security patches, updates, and enterprise support. This allows organizations to rapidly achieve a fully production-ready AI inference platform.
-- **Enhanced Productivity with Confidentiality**: This solution enables organizations to significantly boost employee productivity with AI capabilities while maintaining complete data confidentiality. By deploying models on-premises or in your own cloud infrastructure, you avoid the risks of shadow IT and maintain full control over sensitive data, ensuring it never leaves your security perimeter.
+```bash
+oc get nodes -l node.kubernetes.io/instance-type=g6.xlarge \
+  -o jsonpath='{range .items[*]}{.metadata.name}{" gpu="}{.status.allocatable.nvidia\.com/gpu}{"\n"}{end}'
+```
+
+Each GPU node should report `gpu=1`.
+
+## 3. Install OpenShift AI
+
+This validation enabled the dashboard and KServe. The other OpenShift AI components were left `Removed` so they would not schedule onto the three worker nodes.
+
+```bash
+oc new-project redhat-ods-operator
+
+cat <<'EOF' | oc apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: rhods-operator
+  namespace: redhat-ods-operator
+spec:
+  upgradeStrategy: Default
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: rhods-operator
+  namespace: redhat-ods-operator
+spec:
+  channel: stable-3.x
+  installPlanApproval: Automatic
+  name: rhods-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+```
+
+Wait until the operator CSV is `Succeeded`:
+
+```bash
+oc get csv -n redhat-ods-operator
+```
+
+This validation installed `rhods-operator.3.5.1`.
+
+Create the initialization object and the `DataScienceCluster`:
+
+```bash
+cat <<'EOF' | oc apply -f -
+apiVersion: dscinitialization.opendatahub.io/v2
+kind: DSCInitialization
+metadata:
+  name: default-dsci
+spec:
+  applicationsNamespace: redhat-ods-applications
+  monitoring:
+    managementState: Managed
+    metrics: {}
+    namespace: redhat-ods-monitoring
+  trustedCABundle:
+    customCABundle: ""
+    managementState: Managed
+---
+apiVersion: datasciencecluster.opendatahub.io/v2
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+spec:
+  components:
+    aigateway:
+      batchGateway:
+        managementState: Removed
+      managementState: Removed
+    aipipelines:
+      managementState: Removed
+    dashboard:
+      managementState: Managed
+    feastoperator:
+      managementState: Removed
+    kserve:
+      managementState: Managed
+      modelsAsService:
+        managementState: Removed
+      nim:
+        managementState: Removed
+      wva:
+        managementState: Removed
+    kueue:
+      managementState: Removed
+    llamastackoperator:
+      managementState: Removed
+    mcplifecycleoperator:
+      managementState: Removed
+    mlflowoperator:
+      managementState: Removed
+    modelregistry:
+      managementState: Removed
+    ogx:
+      managementState: Removed
+    ray:
+      managementState: Removed
+    sparkoperator:
+      managementState: Removed
+    trainer:
+      managementState: Removed
+    trainingoperator:
+      managementState: Removed
+    trustyai:
+      managementState: Removed
+    workbenches:
+      managementState: Removed
+EOF
+```
+
+Wait until the data science cluster is `Ready`:
+
+```bash
+oc get dsc default-dsc
+```
+
+KServe on this release reports vLLM `v0.24.0`. The first reconcile can fail while the KServe webhook pod is still starting. Wait and check again. It became `Ready` once `kserve-controller-manager` and `llmisvc-controller-manager` were running.
+
+## 4. Deploy the vLLM runtime and the models
+
+Create a project and apply the OpenShift AI vLLM CUDA runtime template. The template creates a `ServingRuntime` named `vllm-cuda-runtime`. It serves the model mounted at `/mnt/models` on port `8080`, and it publishes the InferenceService name as the model id.
+
+```bash
+oc new-project inference
+
+oc process -n redhat-ods-applications vllm-cuda-runtime-template | oc apply -n inference -f -
+```
+
+Deploy Whisper and `gpt-oss-20b` from the Red Hat model images. Each server requests one GPU and tolerates the machine pool taint.
+
+```bash
+cat <<'EOF' | oc apply -n inference -f -
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: whisper
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    model:
+      modelFormat:
+        name: vLLM
+      runtime: vllm-cuda-runtime
+      storageUri: oci://registry.redhat.io/rhelai1/modelcar-whisper-large-v3-turbo-quantized-w4a16:1.5
+      resources:
+        requests:
+          cpu: "1"
+          memory: 4Gi
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "2"
+          memory: 8Gi
+          nvidia.com/gpu: "1"
+    tolerations:
+    - key: nvidia.com/gpu
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: gpt-oss-20b
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    model:
+      modelFormat:
+        name: vLLM
+      runtime: vllm-cuda-runtime
+      storageUri: oci://registry.redhat.io/rhelai1/modelcar-gpt-oss-20b:1.5
+      resources:
+        requests:
+          cpu: "1"
+          memory: 8Gi
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "3"
+          memory: 12Gi
+          nvidia.com/gpu: "1"
+    tolerations:
+    - key: nvidia.com/gpu
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
+EOF
+```
+
+The `gpt-oss-20b` model image is about 41 GB, and the vLLM runtime image is about 18 GB. The first pull and model load took roughly 25 minutes in this validation. Wait until both InferenceServices are `Ready`:
+
+```bash
+oc get inferenceservice -n inference
+oc get pods -n inference -o wide
+```
+
+The predictor Services are headless. Each Service exposes port `80` and targets container port `8080`, but a headless Service does not translate the port. Clients must call port `8080`. A call to port `80` on the pod IP is refused.
+
+The `serving.kserve.io/deploymentMode: RawDeployment` annotation is stored as `Standard` after reconcile. The pods are still normal Deployments, which is what this validation used.
+
+```bash
+oc exec -n inference deploy/whisper-predictor -c kserve-container -- \
+  python -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8080/v1/models").read().decode())'
+
+oc exec -n inference deploy/gpt-oss-20b-predictor -c kserve-container -- \
+  python -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8080/v1/models").read().decode())'
+```
+
+The model ids are `whisper` and `gpt-oss-20b`.
+
+## 5. Deploy the transcription web application
+
+The sample application is [rh-mobb/transcription-webapp](https://github.com/rh-mobb/transcription-webapp). It forwards audio to `/v1/audio/transcriptions` and text to `/v1/chat/completions`.
+
+```bash
+oc new-app https://github.com/rh-mobb/transcription-webapp.git --strategy=docker \
+  -e AUDIO_INFERENCE_URL=http://whisper-predictor:8080 \
+  -e AUDIO_MODEL_NAME=whisper \
+  -e LLM_INFERENCE_URL=http://gpt-oss-20b-predictor:8080 \
+  -e LLM_MODEL_NAME=gpt-oss-20b
+```
+
+Wait for the image build and the rollout:
+
+```bash
+oc logs -f buildconfig/transcription-webapp
+oc rollout status deploy/transcription-webapp
+```
+
+Create the route after the deployment is available:
+
+```bash
+oc create route edge transcription-webapp --service=transcription-webapp
+oc annotate route transcription-webapp haproxy.router.openshift.io/timeout=180s --overwrite
+oc get route transcription-webapp
+```
+
+Open the route. The application accepts WAV files only. Upload a WAV file to transcribe it, then summarize the transcript. A one-second tone returned a transcription payload, and a short summary request returned a chat completion from `gpt-oss-20b` (`vllm-0.24.0`).
+
+## Cost
+
+Scale the GPU pool to zero when it is idle:
+
+```bash
+rosa edit machinepool gpu --cluster=$CLUSTER --replicas=0
+```
+
+## Uninstall
+
+Delete the application project:
+
+```bash
+oc delete project inference
+```
+
+Remove OpenShift AI. Wait until the `DataScienceCluster` is gone before deleting the operator:
+
+```bash
+oc delete datasciencecluster default-dsc
+oc delete dscinitialization default-dsci
+oc delete subscription rhods-operator -n redhat-ods-operator
+oc delete csv -n redhat-ods-operator -l operators.coreos.com/rhods-operator.redhat-ods-operator
+oc delete namespace redhat-ods-operator redhat-ods-applications redhat-ods-monitoring
+```
+
+Remove the GPU stack and the machine pool:
+
+```bash
+oc delete clusterpolicy gpu-cluster-policy
+oc delete subscription gpu-operator-certified -n nvidia-gpu-operator
+oc delete namespace nvidia-gpu-operator
+
+oc delete nodefeaturediscovery nfd-instance -n openshift-nfd
+oc delete subscription nfd -n openshift-nfd
+oc delete namespace openshift-nfd
+
+rosa delete machinepool --cluster=$CLUSTER --machinepool=gpu
+```
