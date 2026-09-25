@@ -22,7 +22,7 @@ OpenShift also provides built-in mechanisms for traffic to and from VMs, and you
 
 * **Direct, routable access to VMs**: UDN/CUDN addresses are reachable from the VPC without per-VM LBs or port maps, so existing tools (SSH/RDP/agents) work unmodified.
 * **Cert-based, NAT-friendly**: The cluster peer authenticates with a **device certificate**, so it can sit **behind NAT**; no brittle dependence on a static egress IP, and **no PSKs** to manage.
-* **AWS-native and minimally invasive**: Uses TGW, CGW (certificate), and standard route tables—no changes to managed ROSA networking, and no inbound exposure (no NLB/NodePorts) because the **VM initiates**.
+* **AWS-native and minimally invasive**: Uses TGW, CGW (certificate), and standard route tables with no changes to managed ROSA networking, and no inbound exposure (no NLB/NodePorts) because the **VM initiates**.
 * **High availability**: In the event that the node or availability zone hosting the IPSec VM goes down, a second node can take over both the VPN tunnel and the next-hop IP address that other VMs in the cluster use. Experiments have found a failover recovery time of about 5 seconds.
 * **Scales and hardens cleanly**: Advertise additional prefixes, or introduce dynamic routing later. As BGP-based UDN routing matures, you can evolve without re-architecting.
 
@@ -62,7 +62,7 @@ You should consider these limitations of this VPN solution when deciding whether
 
 We build a [Site-to-Site (S2S) VPN](https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html) between an AWS [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) and a [User-Defined Network (UDN/CUDN)](https://www.redhat.com/en/blog/user-defined-networks-red-hat-openshift-virtualization) that OpenShift Virtualization VMs are attached to. We deploy set of small CentOS VM inside the cluster running [Libreswan](https://github.com/libreswan/libreswan) that establish an [IPsec/IKEv2 tunnel](https://aws.amazon.com/what-is/ipsec/) through an AWS [Transit Gateway (TGW)](https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/aws-transit-gateway.html).
 
-We use [certificate-based authentication](https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-tunnel-authentication-options.html#certificate): the AWS [Customer Gateway (CGW)](https://docs.aws.amazon.com/vpn/latest/s2svpn/your-cgw.html) references a certificate issued by [ACM Private CA](https://docs.aws.amazon.com/privateca/latest/userguide/PcaWelcome.html), and the cluster VM uses the matching device certificate. Because identities are verified by certificates—not a fixed public IP—the VM can **initiate** the VPN **from behind NAT** (worker → NAT Gateway) and still form stable tunnels.
+We use [certificate-based authentication](https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-tunnel-authentication-options.html#certificate): the AWS [Customer Gateway (CGW)](https://docs.aws.amazon.com/vpn/latest/s2svpn/your-cgw.html) references a certificate issued by [ACM Private CA](https://docs.aws.amazon.com/privateca/latest/userguide/PcaWelcome.html), and the cluster VM uses the matching device certificate. Because identities are verified by certificates (not a fixed public IP), the VM can **initiate** the VPN **from behind NAT** (worker → NAT Gateway) and still form stable tunnels.
 
 On AWS, the **TGW** terminates **two redundant tunnels** (two “outside” IPs). We associate the **VPC attachment(s)** and the **VPN attachment** with a TGW route table and enable **propagation** as needed. In the VPC, route tables send traffic for the CUDN prefix (e.g., `192.168.1.0/24`) **to the TGW**. On the cluster side, the CUDN has **IPAM disabled**; you can optionally add a **return route** on other CUDN workloads to use the IPsec VM as next hop when those workloads need to reach the VPC.
 
@@ -128,8 +128,8 @@ This will prompt you with passphrase you created before.
 
 You now have the following files, which you should save for a future step.
 
-* `left-cert.p12` — the PKCS#12 you just created (leaf + key + chain)
-* `certificate_chain.pem` — the full CA chain (subordinate **then** root)
+* `left-cert.p12`: the PKCS#12 you just created (leaf + key + chain)
+* `certificate_chain.pem`: the full CA chain (subordinate **then** root)
 
 
 ## 2. Create a Customer Gateway (CGW) 
@@ -453,7 +453,7 @@ You will now use the certificate files you generated earlier. Both VMs will use 
 
 Change `ipsec-a` below to `ipsec-b` when configuring the second VM.
 
-**Option A — using virtctl (easiest):**
+**Option A: using virtctl (easiest):**
 
 ```bash
 # from your local machine
@@ -461,7 +461,7 @@ virtctl scp ./left-cert.p12  vpn-infra/ipsec-a:/root/left-cert.p12
 virtctl scp ./certificate_chain.pem vpn-infra/ipsec-a:/root/certificate_chain.pem
 ```
 
-**Option B — if you only have PEMs on the VM (build P12 on the VM):**
+**Option B: if you only have PEMs on the VM (build P12 on the VM):**
 
 ```bash
 # copy PEMs instead, then build the PKCS#12 on the VM
@@ -762,7 +762,7 @@ ping -c3 <CUDN-IP>
 
 **Why do this?**
 
-* **Scale & simplicity:** with VTIs you route like normal Linux—no per-subnet policy rules. Adding more VPC CIDRs later is just adding routes.
+* **Scale & simplicity:** with VTIs you route like normal Linux with no per-subnet policy rules. Adding more VPC CIDRs later is just adding routes.
 * **Better availability:** you can ECMP two tunnels (one per TGW endpoint). That gives fast failover on the *tunnel* path. (Note: this is **not** AZ-resilient if you still have only one VM.)
 
 

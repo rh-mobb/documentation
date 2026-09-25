@@ -212,7 +212,7 @@ helm install pega pega/pega \
 
 > The database install process takes approximately 20 minutes to complete, followed by the Pega web deployment.
 
-For subsequent installs where the database schema already exists, use the same command — the installer will detect the existing schema and skip creation.
+For subsequent installs where the database schema already exists, use the same command. The installer will detect the existing schema and skip creation.
 
 ## Access the Pega Web Interface
 
