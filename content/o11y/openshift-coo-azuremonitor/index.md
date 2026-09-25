@@ -76,7 +76,7 @@ SERVICE_PRINCIPAL_CLIENT_ID="$(az ad sp list --display-name cfung-azure-monitor-
    --from-literal clientsecret=${SERVICE_PRINCIPAL_CLIENT_SECRET}
    ```
 
-1. Create 2 additonal projects and label them. These will be used to deploy 2 sample applications
+1. Create 2 additional projects and label them. These will be used to deploy 2 sample applications
 
    ```bash
    oc new-project test1

@@ -63,7 +63,7 @@ There may be situations when you prefer not to use wild-card certificates. This 
 
    In order to make changes to the AWS Route53 Hosted Zone to add/remove DNS TXT challenge records by the cert-manager pod, we first need to create an IAM role with specific policy permissions & a trust relationship to allow access to the pod.
 
-  > My Custom Domain Hosted Zone is in the same accout as the ROSA cluster. If these are in different accounts, few additional steps for [Cross Account Access](https://cert-manager.io/docs/configuration/acme/dns01/route53/#cross-account-access) will be required.
+  > My Custom Domain Hosted Zone is in the same account as the ROSA cluster. If these are in different accounts, few additional steps for [Cross Account Access](https://cert-manager.io/docs/configuration/acme/dns01/route53/#cross-account-access) will be required.
 
 1. Prepare an IAM Policy file
 
@@ -383,7 +383,7 @@ This step will create a new deployment (and hence a pod) that'll watch out for s
    ```bash
    oc apply -f https://github.com/cert-manager/openshift-routes/releases/latest/download/cert-manager-openshift-routes.yaml -n cert-manager
    ```
-   > *Additonal OpenShift resources such as a ClusterRole (with permissions to watch and update the routes across the cluster), a ServiceAccount (with these permissions, that will be used to run this newly created pod) and a ClusterRoleBinding to bind these two resources, will be created in this step too.*
+   > *Additional OpenShift resources such as a ClusterRole (with permissions to watch and update the routes across the cluster), a ServiceAccount (with these permissions, that will be used to run this newly created pod) and a ClusterRoleBinding to bind these two resources, will be created in this step too.*
    > *If the cluster does not have access to github, you may as well save the raw contents locally, and run oc apply -f localfilename.yaml -n cert-manager*
 
 2. View the status of the new pod.
@@ -412,12 +412,12 @@ Check if all the pods are running successfully and that the events do not mentio
    oc annotate route testroute -n testapp cert-manager.io/issuer-kind=ClusterIssuer cert-manager.io/issuer-name=letsencryptissuer
    ```
 
-   > *It will take a 2-3 minutes for the Certificate to be created. The renewal of the certitificate will automatically be managed by the cert-manager compoenents as it approaches expiry.*
+   > *It will take a 2-3 minutes for the Certificate to be created. The renewal of the certificate will automatically be managed by the cert-manager components as it approaches expiry.*
 
 3. Access the application Route.
 
    Do a curl test (or any http client of your preference) to confirm there are no certificate related errors.
-   > *Output should print "Hello OpenShfit!", and you should also notice a line that says "subjectAltName: host hello.apps.$DOMIAN" matched cert's "hello.apps.$DOMIAN"*
+   > *Output should print "Hello OpenShfit!", and you should also notice a line that says "subjectAltName: host hello.apps.$DOMAIN" matched cert's "hello.apps.$DOMAIN"*
 
    ```bash
    curl -vv https://hello.apps.$DOMAIN

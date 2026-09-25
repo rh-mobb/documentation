@@ -62,7 +62,7 @@ Run the following command:
 az connectedk8s connect --resource-group $resourceGroupName --name $clusterName --distribution openshift
 ```
 
-After running the commnad. grant the following permissions and restart kube-aad-proxy pod
+After running the command, grant the following permissions and restart kube-aad-proxy pod
 ```
 oc project azure-arc
 oc adm policy add-scc-to-user privileged system:serviceaccount:azure-arc:azure-arc-kube-aad-proxy-sa

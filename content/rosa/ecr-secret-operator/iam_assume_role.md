@@ -10,7 +10,7 @@ authors:
 
 **Notes: These are sample commands. Please fill in your own resource parameters E.g. ARN**
 
-* Prequisites
+* Prerequisites
 
   * [An STS Openshift Cluster](https://docs.openshift.com/container-platform/4.10/authentication/managing_cloud_provider_credentials/cco-mode-sts.html)
 

@@ -102,7 +102,7 @@ Ideally, a user would be created inside the Okta organization that was specifica
 
 The Group Sync Operator provides a cron-based scheduling parameter for specifying how often the groups and users should be synchronized. This can be set in the instance YAML file during initial configuration or at any time after.
 
-The schedule setting of `schedule: "* * * * *"` would result in synchronization occuring every minute. It also supports the cron "slash" notation (e.g., "*/5 * * * *", which would synchronize every five minutes).
+The schedule setting of `schedule: "* * * * *"` would result in synchronization occurring every minute. It also supports the cron "slash" notation (e.g., "*/5 * * * *", which would synchronize every five minutes).
 
 ## Testing the synchronization process ##
 
