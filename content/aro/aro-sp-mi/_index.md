@@ -252,8 +252,8 @@ Older SDK versions will not auto-detect workload identity, even if the webhook i
 
 The **[rh-mobb/example-aro-sp-to-miwi](https://github.com/rh-mobb/example-aro-sp-to-miwi)** repository contains two Python Flask demo applications and a step-by-step walkthrough for migrating them from an SP cluster to an MI cluster with workload identity:
 
-- **keyvault-reader** — reads secrets from Azure Key Vault using `ClientSecretCredential` on the SP cluster. Demonstrates the most common migration case: a one-line code change to `DefaultAzureCredential` plus replacing the K8s Secret with a ServiceAccount annotation.
-- **blob-writer** — writes to Azure Blob Storage using `DefaultAzureCredential` on both clusters. Demonstrates that apps already using `DefaultAzureCredential` need no code change at all — only the K8s manifest changes.
+- **keyvault-reader**: reads secrets from Azure Key Vault using `ClientSecretCredential` on the SP cluster. Demonstrates the most common migration case: a one-line code change to `DefaultAzureCredential` plus replacing the K8s Secret with a ServiceAccount annotation.
+- **blob-writer**: writes to Azure Blob Storage using `DefaultAzureCredential` on both clusters. Demonstrates that apps already using `DefaultAzureCredential` need no code change at all, only the K8s manifest changes.
 
 The README walks through environment setup, creating managed identities and federated credentials, building and deploying both apps on the MI cluster, and validating that workload identity is working with no secrets in the pods.
 
