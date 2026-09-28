@@ -33,7 +33,7 @@ In addition, if you are using `zsh` as your shell (which is the default shell on
 ### Capture the OAuth callback URL
 First, construct the cluster's OAuth callback URL and make note of it. To do so, run the following command, making sure to replace the variable specified:
 
-The "AAD" directory at the end of the the OAuth callback URL should match the OAuth identity provider name you'll setup later.
+The "AAD" directory at the end of the OAuth callback URL should match the OAuth identity provider name you'll setup later.
 
 ```bash
 CLUSTER_NAME=example-cluster # Replace this with the name of your ROSA cluster

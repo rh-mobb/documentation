@@ -350,7 +350,7 @@ spec:
 EOF
 ```
 
-* Create (in the Hub)` auto-import-secret.yaml` secret defining the the token and server from first ROSA cluster
+* Create (in the Hub)` auto-import-secret.yaml` secret defining the token and server from first ROSA cluster
 
 ```sh
 cat << EOF | kubectl apply -f -
@@ -437,7 +437,7 @@ spec:
 EOF
 ```
 
-* Create (in the Hub) auto-import-secret.yaml secret defining the the token and server from second ROSA cluster
+* Create (in the Hub) auto-import-secret.yaml secret defining the token and server from second ROSA cluster
 
 ```sh
 cat << EOF | kubectl apply -f -
@@ -536,7 +536,7 @@ spec:
 EOF
 ```
 
-NOTE: Set the the value of `globalnetEnabled: true` if you want to enable Submariner Globalnet in the ManagedClusterSet.
+NOTE: Set the value of `globalnetEnabled: true` if you want to enable Submariner Globalnet in the ManagedClusterSet.
 
 * Check the Submariner Broker in the `rosa-clusters-broker` namespace:
 

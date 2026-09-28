@@ -73,7 +73,7 @@ The GroupSync job requires permissions on the Azure AD tenant beyond those of th
 
     ![Group Sync instance](./images/grp-sync-instance.png)
 
-1. Select all the default YAML and replace is with a modified version of the the example below, customizingthe YAML to match the group names and save the configuration.
+1. Select all the default YAML and replace is with a modified version of the example below, customizingthe YAML to match the group names and save the configuration.
 
     ![Instance YAML modification](./images/grp-sync-yaml.png)
 
