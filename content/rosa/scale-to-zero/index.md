@@ -344,7 +344,7 @@ The OCM API enforces that the **sum of `min_replica` across all non-tainted node
 
 For example, given a cluster with three non-tainted pools (`compute-0`, `compute-1`, `compute-2`) each at `min_replica=1`:
 
-1. Setting `compute-0` to `min_replica=0` **succeeds** — the remaining pools still guarantee 2 replicas (1+1=2).
+1. Setting `compute-0` to `min_replica=0` **succeeds** because the remaining pools still guarantee 2 replicas (1+1=2).
 
     ```bash
     ocm patch /api/clusters_mgmt/v1/clusters/$CLUSTER_ID/node_pools/compute-0 <<'EOF'
@@ -362,7 +362,7 @@ For example, given a cluster with three non-tainted pools (`compute-0`, `compute
     }
     ```
 
-1. Setting `compute-1` to `min_replica=0` **fails** — only `compute-2` at `min_replica=1` would remain, which is less than 2.
+1. Setting `compute-1` to `min_replica=0` **fails** because only `compute-2` at `min_replica=1` would remain, which is less than 2.
 
     ```bash
     ocm patch /api/clusters_mgmt/v1/clusters/$CLUSTER_ID/node_pools/compute-1 <<'EOF'
@@ -383,9 +383,9 @@ For example, given a cluster with three non-tainted pools (`compute-0`, `compute
 
 **Key points:**
 
-- Tainted node pools (e.g. pools with `NoSchedule` taints) are **excluded** from the count — system pods cannot schedule on them.
+- Tainted node pools (e.g. pools with `NoSchedule` taints) are **excluded** from the count because system pods cannot schedule on them.
 - The constraint checks the sum of `min_replica` values, not the current number of running nodes.
-- You can set as many **tainted** pools to `min_replica=0` as you want — only non-tainted pools are subject to this rule.
+- You can set as many **tainted** pools to `min_replica=0` as you want; only non-tainted pools are subject to this rule.
 
 | Pool Config | Non-tainted min_replica sum | Accepted? |
 |---|---|---|
@@ -406,8 +406,8 @@ For example, given a cluster with three non-tainted pools (`compute-0`, `compute
     ```
 
     Look for `ScaleDown` status:
-    - **`CandidatesPresent`** — the autoscaler has identified nodes to scale down and is waiting out the idle timer.
-    - **`NoCandidates`** — something is preventing scale-down. Investigate further below.
+    - **`CandidatesPresent`**: the autoscaler has identified nodes to scale down and is waiting out the idle timer.
+    - **`NoCandidates`**: something is preventing scale-down. Investigate further below.
 
 1. Check for pods with `safe-to-evict=false` annotation, which blocks scale-down.
 
@@ -437,13 +437,13 @@ System pods with PodDisruptionBudgets (PDBs) such as `router-default`, `image-re
 
 ### Anti-Affinity Cascade Locks
 
-If you have multiple node pools that can scale to zero and many system pods with hard pod anti-affinity rules (`requiredDuringSchedulingIgnoredDuringExecution`), a circular dependency can form. When nodes scale down, evicted system pods land on remaining nodes — including workload-designated pools — and their anti-affinity rules can prevent further scale-down.
+If you have multiple node pools that can scale to zero and many system pods with hard pod anti-affinity rules (`requiredDuringSchedulingIgnoredDuringExecution`), a circular dependency can form. When nodes scale down, evicted system pods land on remaining nodes, including workload-designated pools, and their anti-affinity rules can prevent further scale-down.
 
 To avoid this:
 
 - **Use taints and tolerations** on workload pools to prevent system pods from landing on them (as shown in this guide).
 - **Keep at least one general-purpose pool** with `min_replicas >= 1` that is large enough to host all system pods.
-- **The [minimum replica constraint](#minimum-replica-constraint) still applies** — ensure your non-tainted pools still guarantee at least 2 replicas.
+- **The [minimum replica constraint](#minimum-replica-constraint) still applies**: ensure your non-tainted pools still guarantee at least 2 replicas.
 
 ## Cleanup
 

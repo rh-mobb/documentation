@@ -20,7 +20,7 @@ The OAuth server route (`oauth-openshift.apps.*`) cannot be customized on HCP. T
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configured with permissions to create IAM roles and manage Route 53
 * [ROSA CLI](https://console.redhat.com/openshift/downloads) v1.2.65 or later, logged in (`rosa login`)
-* A Red Hat OCM service account `client_id` and `client_secret` — create one at [console.redhat.com/iam/service-accounts](https://console.redhat.com/iam/service-accounts)
+* A Red Hat OCM service account `client_id` and `client_secret` (create one at [console.redhat.com/iam/service-accounts](https://console.redhat.com/iam/service-accounts))
 * [Terraform](https://developer.hashicorp.com/terraform/downloads) v1.5.0 or later
 * [OpenShift CLI (`oc`)](https://console.redhat.com/openshift/downloads)
 * [certbot](https://certbot.eff.org/) with the `certbot-dns-route53` plugin installed via `pipx`
