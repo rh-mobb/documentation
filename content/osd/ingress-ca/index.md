@@ -187,7 +187,7 @@ gcloud compute health-checks create tcp ${CLUSTER_NAME}-armor-hc \
   --description="Health check for ${INGRESS_NAME} ingress controller"
 ```
 
-**Note:** The TCP health check verifies that the OpenShift router is accepting connections on port 443. Unlike an HTTPS health check, it does not require a deployed application or a route with a matching hostname — the backend becomes healthy as soon as the router pods are running.
+**Note:** The TCP health check verifies that the OpenShift router is accepting connections on port 443. Unlike an HTTPS health check, it does not require a deployed application or a route with a matching hostname; the backend becomes healthy as soon as the router pods are running.
 
 ## 6. Create Backend Service
 
@@ -451,7 +451,7 @@ Test the end-to-end path from the internet through Cloud Armor to the IngressCon
 curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 ```
 
-You should see `503`. This confirms the full path is working — Cloud Armor accepted the request, forwarded it through the backend service to the Internal NLB, and the OpenShift router responded. The 503 is expected because no routes exist yet for this hostname.
+You should see `503`. This confirms the full path is working. Cloud Armor accepted the request, forwarded it through the backend service to the Internal NLB, and the OpenShift router responded. The 503 is expected because no routes exist yet for this hostname.
 
 {{< alert state="info" >}}
 A `503` from the router means the end-to-end path is healthy. Once you create routes labeled `type=cloudarmor`, requests to those hostnames will return `200`.
@@ -464,10 +464,10 @@ A `503` from the router means the end-to-end path is healthy. Once you create ro
 If you configured the geo-restriction rule (allowing only US/CA), test from a different location or use a VPN:
 
 ```bash
-# From an allowed location (US/CA) — expect 503 (allowed through, no matching route)
+# From an allowed location (US/CA): expect 503 (allowed through, no matching route)
 curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 
-# From a blocked location (not US/CA) — expect 403
+# From a blocked location (not US/CA): expect 403
 curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 ```
 
@@ -491,7 +491,7 @@ gcloud compute security-policies rules create 500 \
 echo "Waiting 60 seconds for rule to propagate..."
 sleep 60
 
-# Test access — expect 403 (blocked by Cloud Armor)
+# Test access: expect 403 (blocked by Cloud Armor)
 curl -s -o /dev/null -w "%{http_code}\n" https://test.$INGRESS_NAME.$DOMAIN
 
 # Remove the test rule
@@ -602,11 +602,11 @@ sleep 60
 Test SQL injection protection:
 
 ```bash
-# Attempt a SQL injection pattern — expect 403 (blocked by Cloud Armor)
+# Attempt a SQL injection pattern: expect 403 (blocked by Cloud Armor)
 curl -s -o /dev/null -w "SQLi: %{http_code}\n" \
   "https://test.$INGRESS_NAME.$DOMAIN/?id=1%27%20OR%20%271%27=%271"
 
-# Normal request — expect 503 (allowed through, no matching route)
+# Normal request: expect 503 (allowed through, no matching route)
 curl -s -o /dev/null -w "Normal: %{http_code}\n" \
   "https://test.$INGRESS_NAME.$DOMAIN/"
 ```
@@ -640,11 +640,11 @@ sleep 60
 Test XSS protection:
 
 ```bash
-# Attempt an XSS pattern — expect 403 (blocked by Cloud Armor)
+# Attempt an XSS pattern: expect 403 (blocked by Cloud Armor)
 curl -s -o /dev/null -w "XSS: %{http_code}\n" \
   "https://test.$INGRESS_NAME.$DOMAIN/?name=%3Cscript%3Ealert%28%27xss%27%29%3C/script%3E"
 
-# Normal request — expect 503 (allowed through, no matching route)
+# Normal request: expect 503 (allowed through, no matching route)
 curl -s -o /dev/null -w "Normal: %{http_code}\n" \
   "https://test.$INGRESS_NAME.$DOMAIN/"
 ```

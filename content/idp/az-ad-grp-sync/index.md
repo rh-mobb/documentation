@@ -73,7 +73,7 @@ The GroupSync job requires permissions on the Azure AD tenant beyond those of th
 
     ![Group Sync instance](./images/grp-sync-instance.png)
 
-1. Select all the default YAML and replace is with a modified version of the the example below, customizingthe YAML to match the group names and save the configuration.
+1. Select all the default YAML and replace is with a modified version of the example below, customizingthe YAML to match the group names and save the configuration.
 
     ![Instance YAML modification](./images/grp-sync-yaml.png)
 
@@ -103,7 +103,7 @@ The GroupSync job requires permissions on the Azure AD tenant beyond those of th
 
 The Group Sync Operator provides a cron-based scheduling parameter for specifying how often the groups and users should be synchronized. This can be set in the instance YAML file during initial configuration or at any time after.
 
-The schedule setting of `schedule: * * * * *` would result in synchronization occuring every minute. It also supports the cron "slash" notation (e.g., "*/5 * * * *", which would synchronize every five minutes).
+The schedule setting of `schedule: * * * * *` would result in synchronization occurring every minute. It also supports the cron "slash" notation (e.g., "*/5 * * * *", which would synchronize every five minutes).
 
 ## Testing the synchronization process ##
 

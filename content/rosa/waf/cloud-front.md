@@ -63,7 +63,7 @@ authors:
       -d "*.$DOMAIN"
     ```
 
-1. Follow Certbot's instructions to create a DNS TXT record.  certificate records will be saved on your system, in my case in `/etc/letsencrypt/live/waf.mobb.ninja/`. set that as an enviroment variable.
+1. Follow Certbot's instructions to create a DNS TXT record.  certificate records will be saved on your system, in my case in `/etc/letsencrypt/live/waf.mobb.ninja/`. set that as an environment variable.
 
     ```bash
     CERTS=/etc/letsencrypt/live/waf.mobb.ninja

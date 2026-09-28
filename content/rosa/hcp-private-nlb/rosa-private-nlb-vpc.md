@@ -1,11 +1,11 @@
 ---
 date: '2024-10-29'
-title: Securely exposing an application on a private ROSA cluser with an AWS Network Load Balancer
+title: Securely exposing an application on a private ROSA cluster with an AWS Network Load Balancer
 tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
 ---
-## Continuation of [Securely exposing an application on a private ROSA cluser with an AWS Network Load Balancer](/experts/rosa/hcp-private-nlb/)
+## Continuation of [Securely exposing an application on a private ROSA cluster with an AWS Network Load Balancer](/experts/rosa/hcp-private-nlb/)
 
 These instructions go through setting up an additional VPC as part of the overall blog.  If you already have a VPC that you would like to use, you can skip these instructions.
 

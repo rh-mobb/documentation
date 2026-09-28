@@ -18,7 +18,7 @@ If you don't want to deploy the resources yourself, you can watch the video belo
 
 ## Pre-requisites
 
-1. You will need a A ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).
+1. You will need a ROSA Cluster (see [Deploying ROSA HCP with Terraform](/experts/rosa/terraform/hcp/) if you need help creating one).
 
 1. Browse to the [OpenShift Cluster Manager](https://console.redhat.com/openshift) and select your cluster, then click on the "Machine Pools" tab.
 

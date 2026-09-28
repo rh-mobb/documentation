@@ -15,7 +15,7 @@ In the modern cloud-native landscape, managing sensitive credentials across dist
 ### The Security Limitations of Native Kubernetes Secrets
 
 While Kubernetes provides a native Secret resource, relying on it alone presents significant security hurdles for production-grade environments:
-* Encoding vs. Encryption: By default, native secrets are stored as Base64-encoded strings—an obfuscation method that offers no true cryptographic protection and is easily reversible.
+* Encoding vs. Encryption: By default, native secrets are stored as Base64-encoded strings, an obfuscation method that offers no true cryptographic protection and is easily reversible.
 * The "Admin-as-Superuser" Risk: Even when encryption-at-rest is enabled in etcd, cluster administrators often maintain inherent visibility into secret values, complicating compliance in multi-tenant environments.
 * Rotation Inconsistency: Manual rotation processes are prone to human error, often leading to stale credentials or security gaps across global clusters.
 * Access Control Fragility: A single misconfiguration in Role-Based Access Control (RBAC) can inadvertently expose sensitive data to unauthorized entities within a namespace.
@@ -24,7 +24,7 @@ While Kubernetes provides a native Secret resource, relying on it alone presents
 Moving sensitive data out of the cluster and into a dedicated management system shifts the security paradigm from reactive to proactive. By utilizing an external-first approach, organizations gain:
 * Centralized Governance: A single source of truth for sensitive data that exists independently of the Kubernetes lifecycle.
 * Enhanced Privilege Separation: By decoupling storage from the cluster, you can protect secrets from cluster admins and enforce strict "least-privilege" access.
-* Automated Lifecycle Management: Fully automate the secret lifecycle—from creation and fine-grained access control to rotation and expiration—ensuring your security posture evolves in real-time.
+* Automated Lifecycle Management: Fully automate the secret lifecycle, from creation and fine-grained access control to rotation and expiration, ensuring your security posture evolves in real-time.
 
 
 Refer to [External Secrets Operator for Red Hat OpenShift](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/security_and_compliance/external-secrets-operator-for-red-hat-openshift) for more details.

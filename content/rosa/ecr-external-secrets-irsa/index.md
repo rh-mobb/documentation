@@ -7,36 +7,36 @@ authors:
 validated_version: "4.20"
 ---
 
-Amazon Elastic Container Registry (ECR) issues short-lived authorization tokens that expire after **12 hours**. On Red Hat OpenShift Service on AWS (ROSA), workloads that pull images from private ECR repositories need those tokens refreshed before they expire — otherwise pods fail to start with `ImagePullBackOff` errors.
+Amazon Elastic Container Registry (ECR) issues short-lived authorization tokens that expire after **12 hours**. On Red Hat OpenShift Service on AWS (ROSA), workloads that pull images from private ECR repositories need those tokens refreshed before they expire, otherwise pods fail to start with `ImagePullBackOff` errors.
 
 The [External Secrets Operator](https://external-secrets.io/) (ESO) solves this by generating and automatically refreshing ECR tokens as Kubernetes `dockerconfigjson` pull secrets. Combined with AWS STS and IAM Roles for Service Accounts (IRSA), this removes every long-lived credential from the picture.
 
 {{% alert state="info" %}}The **External Secrets Operator for Red Hat OpenShift** is available in OperatorHub on ROSA and OpenShift. It is the recommended, fully-supported distribution and is the version used throughout this guide. See the [Red Hat documentation](https://docs.openshift.com/container-platform/latest/security/external-secrets-operator/index.html) for details.{{% /alert %}}
 
-This guide covers two approaches — pick the one that fits your operating model.
+This guide covers two approaches; pick the one that fits your operating model.
 
-#### [Approach A — Namespace-scoped pull secret](#approach-a--namespace-scoped-pull-secret)
+#### [Approach A: Namespace-scoped pull secret](#approach-a--namespace-scoped-pull-secret)
 
 Each namespace owns its own IAM role, service account, and ESO resources.
 
 * **IAM role:** one role per namespace/service account
 * **ESO resources:** `ECRAuthorizationToken` + `ExternalSecret` per namespace
 * **Namespace onboarding:** team creates resources in their namespace
-* **Isolation:** strong — each namespace has its own IRSA binding
+* **Isolation:** strong; each namespace has its own IRSA binding
 * **Pros:** least-privilege per team; compromise of one role does not affect others
 * **Cons:** more IAM roles to manage; each team must create ESO resources
 * **Best for:** multi-tenant clusters, strict isolation
 
-#### [Approach B — Centrally managed with label-based namespace injection](#approach-b--centrally-managed-with-label-based-namespace-injection)
+#### [Approach B: Centrally managed with label-based namespace injection](#approach-b--centrally-managed-with-label-based-namespace-injection)
 
 A platform team manages ESO resources once at the cluster level. Namespaces opt in via a label.
 
 * **IAM role:** one shared role on the ESO controller
 * **ESO resources:** `ClusterGenerator` + `ClusterExternalSecret` (cluster-scoped)
 * **Namespace onboarding:** platform admin adds a label to the namespace
-* **Isolation:** shared — single role covers all labeled namespaces
+* **Isolation:** shared; single role covers all labeled namespaces
 * **Pros:** single setup for the entire cluster; easy onboarding via `oc label`
-* **Cons:** broader blast radius — a misconfigured shared role affects all labeled namespaces
+* **Cons:** broader blast radius (a misconfigured shared role affects all labeled namespaces)
 * **Best for:** platform-managed clusters, central governance
 
 ---
@@ -185,7 +185,7 @@ podman push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 
 ---
 
-## Approach A — Namespace-scoped pull secret
+## Approach A: Namespace-scoped pull secret
 
 {{% alert state="warning" %}}Complete all [Prerequisites](#prerequisites), [Install the External Secrets Operator for Red Hat OpenShift](#install-the-external-secrets-operator-for-red-hat-openshift), and [Create an ECR repository](#create-an-ecr-repository-optional) steps before continuing.{{% /alert %}}
 
@@ -229,7 +229,7 @@ echo ${ECR_POLICY_ARN}
 
 ### A2) Create the application namespace and a dedicated service account
 
-The External Secrets Operator needs a service account annotated with an IAM role to authenticate against AWS via IRSA. A **dedicated** service account (rather than `default`) is used so the IAM trust policy grants ECR access only to the ESO generator — not to every pod in the namespace.
+The External Secrets Operator needs a service account annotated with an IAM role to authenticate against AWS via IRSA. A **dedicated** service account (rather than `default`) is used so the IAM trust policy grants ECR access only to the ESO generator, not to every pod in the namespace.
 
 ```bash
 export APP_NAMESPACE=my-application
@@ -400,7 +400,7 @@ Watch the pod until it reaches `Running`:
 oc get pod ecr-pull-test -n ${APP_NAMESPACE} -w
 ```
 
-If the pod starts successfully the entire pipeline — IRSA, token generator, and pull secret — is working correctly.
+If the pod starts successfully the entire pipeline (IRSA, token generator, and pull secret) is working correctly.
 
 ### A10) Cleanup
 
@@ -415,7 +415,7 @@ rm -f ecr-policy.json trust-policy.json
 
 ---
 
-## Approach B — Centrally managed with label-based namespace injection
+## Approach B: Centrally managed with label-based namespace injection
 
 {{% alert state="warning" %}}Complete all [Prerequisites](#prerequisites), [Install the External Secrets Operator for Red Hat OpenShift](#install-the-external-secrets-operator-for-red-hat-openshift), and [Create an ECR repository](#create-an-ecr-repository-optional) steps before continuing.{{% /alert %}}
 
@@ -655,9 +655,9 @@ rm -f ecr-central-policy.json central-trust-policy.json
 
 ## Additional resources
 
-* [External Secrets Operator for Red Hat OpenShift — documentation](https://docs.openshift.com/container-platform/latest/security/external-secrets-operator/index.html)
-* [External Secrets Operator — ECR generator reference](https://external-secrets.io/latest/api/generator/ecr/)
-* [External Secrets Operator — ClusterExternalSecret reference](https://external-secrets.io/latest/api/clusterexternalsecret/)
+* [External Secrets Operator for Red Hat OpenShift: documentation](https://docs.openshift.com/container-platform/latest/security/external-secrets-operator/index.html)
+* [External Secrets Operator: ECR generator reference](https://external-secrets.io/latest/api/generator/ecr/)
+* [External Secrets Operator: ClusterExternalSecret reference](https://external-secrets.io/latest/api/clusterexternalsecret/)
 * [AWS ECR Private Registry Authentication](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html)
 * [Configuring a ROSA cluster to pull images from ECR](/experts/rosa/ecr/)
 * [ECR Secret Operator](/experts/rosa/ecr-secret-operator/)

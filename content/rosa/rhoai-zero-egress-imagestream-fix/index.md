@@ -47,9 +47,9 @@ The fundamental issue is how ImageStream imports pull images. On a zero-egress c
 | Worker node (CRI-O) | `kube-system/global-pull-secret` | Yes | Image pulls succeed |
 | ImageStream import controller | `openshift-config/pull-secret` | No | **Import fails** |
 
-The `openshift-config/pull-secret` is a managed resource — direct modifications are automatically reverted. The import controller is redirected to ECR via IDMS but cannot authenticate. This affects both `registry.redhat.io` and `quay.io/modh` images.
+The `openshift-config/pull-secret` is a managed resource; direct modifications are automatically reverted. The import controller is redirected to ECR via IDMS but cannot authenticate. This affects both `registry.redhat.io` and `quay.io/modh` images.
 
-Additionally, the `quay.io/modh` images have no default IDMS configured. Without an IDMS redirect, the import controller tries to pull directly from `quay.io` — which fails on zero-egress clusters because there is no outbound internet access.
+Additionally, the `quay.io/modh` images have no default IDMS configured. Without an IDMS redirect, the import controller tries to pull directly from `quay.io`, which fails on zero-egress clusters because there is no outbound internet access.
 
 ## Solutions
 
@@ -282,11 +282,11 @@ The workbench pod should reach `Running` status.
 
 ## Result: Before and After
 
-**Before applying the fix**, ImageStream tags show **empty Identifier and Last updated columns** — the import failed and no image was stored in the internal registry.
+**Before applying the fix**, ImageStream tags show **empty Identifier and Last updated columns** because the import failed and no image was stored in the internal registry.
 
-**After applying the fix**, all tags — both `quay.io/modh` and `registry.redhat.io` — show populated Identifier and Last updated values:
+**After applying the fix**, all tags (both `quay.io/modh` and `registry.redhat.io`) show populated Identifier and Last updated values:
 
-![ImageStream tags after fix — all tags imported successfully](imagestream-after-fix.png)
+![ImageStream tags after fix, all tags imported successfully](imagestream-after-fix.png)
 
 Workbenches created from the OpenShift AI console start successfully:
 
