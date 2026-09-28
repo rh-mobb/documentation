@@ -10,10 +10,10 @@ tags: ["Miscellaneous"]
 
 # This content has been deprecated, the article remains available historically on GitHub.
 
-You will need the following prerequistes in order to run a basic Jupyter notebook with GPU on OpenShift
+You will need the following prerequisites in order to run a basic Jupyter notebook with GPU on OpenShift
 
-### 1. A OpenShift Cluster
-This will assume you have already provisioned a OpenShift cluster succesfully and are able to use it.
+### 1. An OpenShift Cluster
+This will assume you have already provisioned an OpenShift cluster successfully and are able to use it.
 
 You will need to log in as cluster admin to deploy [GPU Operator](/experts/aro/gpu/).
 

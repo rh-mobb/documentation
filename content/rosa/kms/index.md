@@ -63,7 +63,7 @@ This guide will walk you through installing ROSA (Red Hat OpenShift Service on A
    "elasticloadbalancing.amazonaws.com"
    ```
 
-5. Set the AWS region you plan to deploy your cluser into. For this example, we will deploy into `us-east-2`.
+5. Set the AWS region you plan to deploy your cluster into. For this example, we will deploy into `us-east-2`.
 
    ```bash
    export AWS_REGION="us-east-2"

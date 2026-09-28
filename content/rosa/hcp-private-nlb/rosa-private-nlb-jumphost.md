@@ -1,11 +1,11 @@
 ---
 date: '2024-10-29'
-title: Securely exposing an application on a private ROSA cluser with an AWS Network Load Balancer - Jump Host
+title: Securely exposing an application on a private ROSA cluster with an AWS Network Load Balancer - Jump Host
 tags: ["ROSA", "ROSA HCP"]
 authors:
   - Kevin Collins
 ---
-## Continuation of [Securely exposing an application on a private ROSA cluser with an AWS Network Load Balancer](/experts/rosa/hcp-private-nlb/)
+## Continuation of [Securely exposing an application on a private ROSA cluster with an AWS Network Load Balancer](/experts/rosa/hcp-private-nlb/)
 
 These instructions go through setting up a jump host to connect to the private rosa cluster.
 
