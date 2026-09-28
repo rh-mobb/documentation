@@ -8,7 +8,7 @@ tags: ["ARO", "Miscellaneous"]
 ---
 
 
-[Azure Red Hat Openshift](https://azure.microsoft.com/en-us/products/openshift/#overview) clusters have built in metrics and logs that can be viewed by both Administrators and Developers via the OpenShift Console. But there are many reasons you might want to store and view these metrics and logs from outside of the cluster.
+[Azure Red Hat OpenShift](https://azure.microsoft.com/en-us/products/openshift/#overview) clusters have built in metrics and logs that can be viewed by both Administrators and Developers via the OpenShift Console. But there are many reasons you might want to store and view these metrics and logs from outside of the cluster.
 
 The OpenShift developers have anticipated this needs and have provided ways to ship both metrics and logs outside of the cluster. In Azure we have the Azure Blob storage service which is perfect for storing the data.
 

@@ -50,7 +50,7 @@ With Managed Identity-enabled ARO clusters now generally available, we will leve
 
 This default ArgoCD instance uses the ServiceAccount (SA) named **default** for the repo-server pod. We are going to switch the default SA with a custom one for improved security.
 
-First, log in to Openshift using the oc client. You can retrieve the login command from the OpenShift console. Click on **Copy login command**, then click on `Display Token`. Copy the `Log in with this token` command, and paste in your terminal. 
+First, log in to OpenShift using the oc client. You can retrieve the login command from the OpenShift console. Click on **Copy login command**, then click on `Display Token`. Copy the `Log in with this token` command, and paste in your terminal. 
 
  ![oc_login_command.png](./images/oc_login_command.png)
 

@@ -107,7 +107,7 @@ certbot certonly --manual \
 
 > if using the jump host, you will need to copy the key and certificate to the jump host and run the oc command there
 
-log into the Openshift cluster, if you need the ROSA API url you can find it with this command
+log into the OpenShift cluster, if you need the ROSA API url you can find it with this command
 
 ```bash
 rosa describe cluster -c kmc-private -o json | jq -r '.api.url'

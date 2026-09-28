@@ -1,6 +1,6 @@
 ---
 date: '2024-05-20'
-title: Deploying Openshift Virtualization on ROSA with NetApp FSx storage.
+title: Deploying OpenShift Virtualization on ROSA with NetApp FSx storage.
 tags: ["ROSA", "Virtualization"]
 authors:
   - Paul Czarkowski

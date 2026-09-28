@@ -12,7 +12,7 @@ validated_version: "4.20"
 ## Prerequisites
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-* [Openshift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.11+
+* [OpenShift CLI](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/) 4.11+
 * [Podman Desktop](https://podman-desktop.io/)
 * [ROSA Cluster](https://cloud.redhat.com/experts/rosa/quickstart/)
 

@@ -11,7 +11,7 @@ validated_version: "4.20"
 
 ## Overview
 
-Infrastructure as Code has become one of the most prevalent ways in which to deploy and install code for good reason, especially on the cloud. This lab will use the popular tool Terraform in order to create a clear repeatable process in which to install an Azure Managed Openshift(ARO) cluster and all the required components.
+Infrastructure as Code has become one of the most prevalent ways in which to deploy and install code for good reason, especially on the cloud. This lab will use the popular tool Terraform in order to create a clear repeatable process in which to install an Azure Managed OpenShift(ARO) cluster and all the required components.
 
 ### Terraform
 
@@ -21,7 +21,7 @@ This article will go over using the Terraform's official [azurerm provider](http
 
 ### Azure's Terraform Provider
 
-[Azurerm](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs) is one of Azure's official Terraform provider, which contains the [Azurerm Red Hat Openshift Cluster Module](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster) that is used for the deployment of Azure Managed Red Hat Openshift(ARO).
+[Azurerm](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs) is one of Azure's official Terraform provider, which contains the [Azurerm Red Hat OpenShift Cluster Module](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster) that is used for the deployment of Azure Managed Red Hat OpenShift(ARO).
 
 {{% alert state="info" %}}This lab will also be using resources from the [azuread module](https://registry.terraform.io/providers/hashicorp/azuread/latest/docs).{{% /alert %}}
 
