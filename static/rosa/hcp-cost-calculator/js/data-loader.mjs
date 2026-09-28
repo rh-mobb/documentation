@@ -1,3 +1,8 @@
+const LEGACY_REGIONS_FILE = "regions.json";
+const LEGACY_CATALOG_FILE = "instance-catalog.json";
+const DEFAULT_REGIONS_FILE = "hcp-regions-snapshot.json";
+const DEFAULT_CATALOG_FILE = "hcp-instance-catalog.json";
+
 export async function loadJson(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -6,17 +11,67 @@ export async function loadJson(url) {
   return response.json();
 }
 
+async function tryLoadJson(url) {
+  try {
+    return await loadJson(url);
+  } catch (error) {
+    console.warn(`Skipping ${url}: ${error.message}`);
+    return null;
+  }
+}
+
+async function loadFirstAvailableJson(baseUrl, candidates) {
+  const uniqueCandidates = Array.from(
+    new Set(candidates.filter((candidate) => typeof candidate === "string" && candidate.length > 0))
+  );
+  for (const fileName of uniqueCandidates) {
+    const payload = await tryLoadJson(`${baseUrl}/${fileName}`);
+    if (payload) {
+      return payload;
+    }
+  }
+  return null;
+}
+
+function resolveRegionsList(regionsPayload, manifest) {
+  if (Array.isArray(regionsPayload?.regions) && regionsPayload.regions.length > 0) {
+    return regionsPayload.regions;
+  }
+  if (Array.isArray(manifest?.regions_detail) && manifest.regions_detail.length > 0) {
+    return manifest.regions_detail;
+  }
+  return [];
+}
+
 export async function loadSnapshotData(baseUrl) {
   const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
-  const [regions, catalog, manifest] = await Promise.all([
-    loadJson(`${normalizedBaseUrl}/regions.json`),
-    loadJson(`${normalizedBaseUrl}/instance-catalog.json`),
-    loadJson(`${normalizedBaseUrl}/snapshot-manifest.json`)
+  const manifest = await loadJson(`${normalizedBaseUrl}/snapshot-manifest.json`);
+
+  const regionsCandidates = [
+    manifest?.files?.regions,
+    DEFAULT_REGIONS_FILE,
+    LEGACY_REGIONS_FILE
+  ];
+  const catalogCandidates = [
+    manifest?.files?.instance_catalog,
+    DEFAULT_CATALOG_FILE,
+    LEGACY_CATALOG_FILE
+  ];
+
+  const [regionsPayload, catalog] = await Promise.all([
+    loadFirstAvailableJson(normalizedBaseUrl, regionsCandidates),
+    loadFirstAvailableJson(normalizedBaseUrl, catalogCandidates)
   ]);
 
+  if (!Array.isArray(catalog?.instances) || catalog.instances.length === 0) {
+    throw new Error("Instance catalog could not be loaded.");
+  }
+
+  const regionsList = resolveRegionsList(regionsPayload, manifest);
   const regionCodes =
-    manifest?.regions ??
-    (Array.isArray(regions?.regions) ? regions.regions.map((region) => region.code) : []);
+    (Array.isArray(manifest?.regions) && manifest.regions.length > 0
+      ? manifest.regions
+      : regionsList.map((region) => region?.code).filter(Boolean));
 
   const pricingEntries = await Promise.all(
     regionCodes.map(async (regionCode) => {
@@ -36,16 +91,14 @@ export async function loadSnapshotData(baseUrl) {
     throw new Error("No region pricing files could be loaded.");
   }
 
-  const filteredRegionsList = Array.isArray(regions?.regions)
-    ? regions.regions.filter((region) => availableRegionCodes.has(region?.code))
-    : [];
+  const filteredRegionsList = regionsList.filter((region) => availableRegionCodes.has(region?.code));
   const filteredManifestRegions = Array.isArray(manifest?.regions)
     ? manifest.regions.filter((regionCode) => availableRegionCodes.has(regionCode))
     : [];
 
   return {
     regions: {
-      ...regions,
+      ...(regionsPayload ?? {}),
       regions: filteredRegionsList
     },
     catalog,

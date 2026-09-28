@@ -4,8 +4,8 @@
 
 The ROSA HCP calculator reads committed snapshot JSON files at runtime from:
 
-- `static/rosa/hcp-cost-calculator/data/regions.json`
-- `static/rosa/hcp-cost-calculator/data/instance-catalog.json`
+- `static/rosa/hcp-cost-calculator/data/hcp-regions-snapshot.json`
+- `static/rosa/hcp-cost-calculator/data/hcp-instance-catalog.json`
 - `static/rosa/hcp-cost-calculator/data/pricing/<region>.json`
 - `static/rosa/hcp-cost-calculator/data/snapshot-manifest.json`
 
@@ -52,8 +52,9 @@ If validation succeeds, the script updates `generated_at` timestamps and rewrite
 The generated dataset also records source URLs in:
 
 - `snapshot-manifest.json` (`sources`)
-- `regions.json` (`source`)
-- `instance-catalog.json` (`source`)
+- `hcp-regions-snapshot.json` (`source`)
+- `hcp-instance-catalog.json` (`source`)
+- `snapshot-manifest.json` (`regions_detail`, embedded AZ lists used when the regions file is unavailable)
 
 ### Region coverage behavior
 
