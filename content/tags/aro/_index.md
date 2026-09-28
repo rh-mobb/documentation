@@ -11,9 +11,9 @@ hero_blurb: |
   A fully managed turnkey application platform that helps organizations increase operational efficiency, focus on innovation, and quickly build, deploy, and scale applications. Jointly engineered, managed, and supported by Red Hat and Microsoft.
 hero_primary:
   text: "Quickstart guide"
-  url: "/experts/aro/quickstart/"
+  url: "/experts/tags/aro-classic/"
 hero_secondary:
-  text: "Get started"
-  url: "https://www.redhat.com/en/technologies/cloud-computing/openshift/azure/get-started"
+  text: "Hosted Control Planes (preview)"
+  url: "/experts/tags/aro-hcp/"
 hero_background: openshift
 ---

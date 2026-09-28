@@ -1,7 +1,7 @@
 ---
 date: '2022-03-19'
 title: Adding an additional ingress controller to an ARO cluster
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Paul Czarkowski
   - Stuart Kirk

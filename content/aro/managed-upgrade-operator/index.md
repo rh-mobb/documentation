@@ -5,7 +5,7 @@ build:
   render: never
 date: '2022-04-12'
 title: Enable the Managed Upgrade Operator in ARO and schedule Upgrades
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Paul Czarkowski
   - Connor Wooley

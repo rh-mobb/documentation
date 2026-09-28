@@ -6,7 +6,7 @@ aliases: [/experts/quickstart-aro.md]
 authors: 
   - Paul Czarkowski
   - Nerav Doshi
-tags: ["ARO", "Quickstarts"]
+tags: ["ARO", "ARO Classic", "Quickstarts"]
 validated_version: "4.20"
 ---
 A Quickstart guide to deploying an Azure Red Hat OpenShift cluster.

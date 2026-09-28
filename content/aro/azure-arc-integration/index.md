@@ -1,7 +1,7 @@
 ---
 date: '2022-11-04'
 title: Integrating Azure ARC with ARO
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Connor Wooley
   - Sohaib Azed

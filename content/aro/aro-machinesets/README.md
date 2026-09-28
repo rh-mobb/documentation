@@ -1,7 +1,7 @@
 ---
 date: '2022-12-08'
 title: Helm Chart to set up extra MachineSets on ARO clusters
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Paul Czarkowski
   - Kumudu Herath

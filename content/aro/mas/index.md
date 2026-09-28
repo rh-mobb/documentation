@@ -1,7 +1,7 @@
 ---
 date: '2024-08-26'
 title: Maximo Application Suite on ARO ( Azure Red Hat OpenShift )
-tags: ["ARO", "Maximo"]
+tags: ["ARO", "ARO Classic", "Maximo"]
 authors:
   - Kevin Collins
 ---

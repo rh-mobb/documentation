@@ -1,7 +1,7 @@
 ---
 date: '2026-02-26'
 title: Add or Update a Red Hat Pull Secret on ARO
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Paul Czarkowski
   - Diana Sari

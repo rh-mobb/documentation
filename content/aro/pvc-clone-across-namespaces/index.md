@@ -2,7 +2,7 @@
 date: '2026-06-24'
 title: Cloning PersistentVolumeClaims Across Namespaces in Azure Red Hat OpenShift (ARO)
 
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Nerav Doshi
 validated_version: "4.20"
