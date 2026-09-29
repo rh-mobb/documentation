@@ -1865,7 +1865,8 @@
       projectBasicSelectionsToEstimate,
       projectExpertStateToEstimate
     } from "./js/state.mjs";
-    import { loadSnapshotData } from "./js/data-loader.mjs";
+    import { ensureRegionPricing, loadSnapshotCore } from "./js/data-loader.mjs";
+    import { clearSnapshotStorage } from "./js/snapshot-storage.mjs";
     import { validateEstimate } from "./js/validation.mjs";
     import { buildScenarioCsv, parseScenarioCsv } from "./js/csv-io.mjs";
     import { buildCostExplorerConfig, buildCostExplorerUrl } from "./js/cost-explorer-bridge.mjs";
@@ -2300,7 +2301,9 @@
       region: "us-east-1",
       zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
     });
+    const SNAPSHOT_DATA_BASE = "/experts/rosa/hcp-cost-calculator/data";
     let snapshotCache = null;
+    let snapshotLoadPromise = null;
     let calculatorMode = "basic";
     const instanceFilters = {
       architecture: "x86-intel",
@@ -3226,50 +3229,86 @@
       renderScenarioTotals();
     }
 
-    async function resolveSnapshotContext() {
-      try {
-        const snapshots = await loadSnapshotData("/experts/rosa/hcp-cost-calculator/data");
-        snapshotCache = snapshots;
-        return { snapshots };
-      } catch (error) {
-        console.error("Failed to load pricing snapshot, using fallback pricing.", error);
-        const snapshots = {
-          regions: {
-            regions: [
-              {
-                code: estimate.region,
-                zones: estimate.sets[0].pools.map((pool) => pool.az)
-              }
-            ]
-          },
-          catalog: {
-            instances: [
-              { type: "m7i.xlarge", vcpus: 4, memory_gib: 16, supported_regions: [estimate.region] },
-              { type: "m7g.xlarge", vcpus: 4, memory_gib: 16, supported_regions: [estimate.region] }
-            ]
-          },
-          pricingByRegion: {
-            [estimate.region]: {
-              region: estimate.region,
-              byInstanceType: {
-                "m7i.xlarge": {
-                  onDemandMonthly: 100,
-                  oneYearMonthly: 80,
-                  threeYearMonthly: 60
-                },
-                "m7g.xlarge": {
-                  onDemandMonthly: 82,
-                  oneYearMonthly: 67,
-                  threeYearMonthly: 49
-                }
+    function buildFallbackSnapshot() {
+      const region = basicState.region || estimate.region || "us-east-1";
+      const zones = estimate.sets?.[0]?.pools?.map((pool) => pool.az) ?? [`${region}a`, `${region}b`, `${region}c`];
+      return {
+        regions: {
+          regions: [{ code: region, zones }]
+        },
+        catalog: {
+          instances: [
+            { type: "m7i.xlarge", vcpus: 4, memory_gib: 16, supported_regions: [region] },
+            { type: "m7g.xlarge", vcpus: 4, memory_gib: 16, supported_regions: [region] }
+          ]
+        },
+        pricingByRegion: {
+          [region]: {
+            region,
+            byInstanceType: {
+              "m7i.xlarge": {
+                onDemandMonthly: 100,
+                oneYearMonthly: 80,
+                threeYearMonthly: 60
+              },
+              "m7g.xlarge": {
+                onDemandMonthly: 82,
+                oneYearMonthly: 67,
+                threeYearMonthly: 49
               }
             }
-          },
-          manifest: {}
-        };
-        snapshotCache = snapshots;
-        return { snapshots };
+          }
+        },
+        manifest: {}
+      };
+    }
+
+    async function resolveSnapshotContext() {
+      if (snapshotCache) {
+        return { snapshots: snapshotCache };
       }
+      if (!snapshotLoadPromise) {
+        snapshotLoadPromise = loadSnapshotCore(SNAPSHOT_DATA_BASE)
+          .then((snapshots) => {
+            snapshotCache = snapshots;
+            return snapshots;
+          })
+          .catch((error) => {
+            console.error("Failed to load pricing snapshot, using fallback pricing.", error);
+            snapshotCache = buildFallbackSnapshot();
+            return snapshotCache;
+          });
+      }
+      const snapshots = await snapshotLoadPromise;
+      snapshotCache = snapshots;
+      return { snapshots };
+    }
+
+    function getRequiredPricingRegions() {
+      const fromEstimate = getSelectedEstimateRegions();
+      if (fromEstimate.size > 0) {
+        return fromEstimate;
+      }
+      const fallback =
+        basicState.region ||
+        expertState.clusters?.[0]?.region ||
+        document.getElementById("region-select")?.value ||
+        "us-east-1";
+      return new Set([fallback]);
+    }
+
+    async function ensureEstimatePricing() {
+      await resolveSnapshotContext();
+      if (!snapshotCache.pricingByRegion) {
+        snapshotCache.pricingByRegion = {};
+      }
+      await ensureRegionPricing(
+        SNAPSHOT_DATA_BASE,
+        getRequiredPricingRegions(),
+        snapshotCache.pricingByRegion,
+        { snapshotVersion: snapshotCache.manifest?.generated_at }
+      );
+      return snapshotCache;
     }
 
     function renderBasicInstanceTypeOptions() {
@@ -4432,6 +4471,9 @@
         draftPersistTimer = null;
       }
       clearDraft();
+      clearSnapshotStorage();
+      snapshotCache = null;
+      snapshotLoadPromise = null;
       if (window.location.hash.startsWith("#s=")) {
         history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
       }
@@ -5022,6 +5064,7 @@
         return;
       }
 
+      await ensureEstimatePricing();
       renderMachinePoolSummary();
       schedulePersistDraft();
     }

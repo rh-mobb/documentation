@@ -54,7 +54,7 @@ The generated dataset also records source URLs in:
 - `snapshot-manifest.json` (`sources`)
 - `hcp-regions-snapshot.json` (`source`)
 - `hcp-instance-catalog.json` (`source`)
-- `snapshot-manifest.json` (`regions_detail`, embedded AZ lists used when the regions file is unavailable)
+- `snapshot-manifest.json` (`regions_detail`, embedded AZ lists; runtime prefers this over the separate regions file)
 
 ### Region coverage behavior
 
