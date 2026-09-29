@@ -142,8 +142,8 @@ async function refresh() {
   const repoRoot = path.resolve(scriptDir, "..");
   const dataRoot = path.join(repoRoot, "static", "rosa", "hcp-cost-calculator", "data");
   const pricingDir = path.join(dataRoot, "pricing");
-  const regionsPath = path.join(dataRoot, "regions.json");
-  const catalogPath = path.join(dataRoot, "instance-catalog.json");
+  const regionsPath = path.join(dataRoot, "hcp-regions-snapshot.json");
+  const catalogPath = path.join(dataRoot, "hcp-instance-catalog.json");
   const manifestPath = path.join(dataRoot, "snapshot-manifest.json");
 
   await mkdir(pricingDir, { recursive: true });
@@ -296,9 +296,10 @@ async function refresh() {
       pricing_feed_template: "https://rosa.wigarcia.com/prices/{region}-ec2.json"
     },
     regions: includedRegions,
+    regions_detail: regionsPayload.regions,
     files: {
-      regions: "regions.json",
-      instance_catalog: "instance-catalog.json",
+      regions: "hcp-regions-snapshot.json",
+      instance_catalog: "hcp-instance-catalog.json",
       pricing: Object.fromEntries(includedRegions.map((regionCode) => [regionCode, `pricing/${regionCode}.json`]))
     }
   };
