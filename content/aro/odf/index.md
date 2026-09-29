@@ -1,7 +1,7 @@
 ---
 date: '2022-06-28'
 title: Configure ARO with OpenShift Data Foundation
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Kevin Collins
   - Mohsen Houshmand Sarvestani

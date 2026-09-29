@@ -1,7 +1,7 @@
 ---
 date: '2026-04-06'
 title: 'Deploy ARO with Managed Identities and Workload Identity'
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Ken Moini
   - Kevin Collins

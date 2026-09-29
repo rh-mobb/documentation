@@ -1,7 +1,7 @@
 ---
 date: '2021-07-15'
 title: ARO - Considerations for Disaster Recovery
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Paul Czarkowski
   - Connor Wooley

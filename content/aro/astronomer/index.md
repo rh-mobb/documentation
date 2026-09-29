@@ -1,7 +1,7 @@
 ---
 date: '2021-05-24'
 title: Installing Astronomer on a private ARO cluster
-tags: ["ARO", "Miscellaneous"]
+tags: ["ARO", "ARO Classic", "Miscellaneous"]
 authors:
   - Connor Wooley
 ---

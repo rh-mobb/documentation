@@ -1,7 +1,7 @@
 ---
 date: '2022-05-23'
 title: Trident operator setup for Azure NetApp Files on ARO
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Byron Miller
   - Connor Wooley

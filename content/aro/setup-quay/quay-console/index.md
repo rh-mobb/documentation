@@ -2,7 +2,7 @@
 date: '2022-09-19'
 title: Setting up Quay on an ARO cluster via Console
 aliases: ['/experts/aro/setup-quay/quay-cli.md']
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 ---
 
 ![Quay Logo](../images/redhat-quay-logo.png)

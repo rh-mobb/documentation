@@ -13,7 +13,7 @@ hero_primary:
   text: "Quickstart guide"
   url: "/experts/aro/quickstart/"
 hero_secondary:
-  text: "Get started"
-  url: "https://www.redhat.com/en/technologies/cloud-computing/openshift/azure/get-started"
+  text: "Hosted Control Planes (preview)"
+  url: "/experts/tags/aro-hcp/"
 hero_background: openshift
 ---

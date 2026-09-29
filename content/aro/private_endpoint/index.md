@@ -1,7 +1,7 @@
 ---
 date: '2023-06-27T22:07:09.774151'
 title: Configure an ARO cluster with Azure Files using a private endpoint
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Kevin Collins
   - Kumudu Herath

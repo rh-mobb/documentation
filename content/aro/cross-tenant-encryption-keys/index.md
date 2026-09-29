@@ -1,7 +1,7 @@
 ---
 date: '2023-08-25'
 title: ARO - Cross Tenant Provisioning
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Dustin Scott
 ---

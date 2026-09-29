@@ -1,7 +1,7 @@
 ---
 date: '2022-08-17'
 title: Adding infrastructure nodes to an ARO cluster
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Paul Czarkowski
 validated_version: "4.20"

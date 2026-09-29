@@ -1,7 +1,7 @@
 ---
 date: '2025-06-16'
 title: Scalability and Cost Management for Azure Red Hat OpenShift
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Nerav Doshi
   - Deepika Ranganathan

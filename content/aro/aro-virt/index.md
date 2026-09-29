@@ -1,7 +1,7 @@
 ---
 date: '2025-10-13'
 title: Deploying OpenShift Virtualization on ARO
-tags: ["ARO", "Virtualization"]
+tags: ["ARO", "ARO Classic", "Virtualization"]
 authors:
   - Kevin Collins
   - Kumudu Herath

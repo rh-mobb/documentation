@@ -1,7 +1,7 @@
 ---
 date: '2022-06-28'
 title: Accessing the Internal Registry from ARO
-tags: ["ARO"]
+tags: ["ARO", "ARO Classic"]
 authors:
   - Kevin Collins
   - Connor Wooley
