@@ -1,5 +1,5 @@
 ---
-date: '2026-03-28'
+date: '2026-09-29'
 title: Deploying ARO HCP with Terraform
 weight: 2
 tags: ["ARO", "ARO HCP", "Terraform", "Quickstarts"]
