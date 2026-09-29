@@ -2,9 +2,12 @@
 date: '2021-08-18'
 title: Installing the HashiCorp Vault Secret CSI Driver
 aliases: ['/experts/security/secrets-store-csi/hashicorp-vault']
-tags: ["ROSA", "ARO", "OSD", "Miscellaneous"]
+tags: ["ROSA", "ARO", "OSD"]
 authors:
   - Connor Wooley
+  - Kevin Collins
+  - Deepika Ranganathan
+validated_version: "4.20"
 ---
 
 The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in HashiCorp Vault as Kubernetes Volumes.
@@ -47,19 +50,31 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 1. Create a values file for Helm to use
 
     ```bash
-    cat << EOF > values.yaml
+    export SCRATCH_DIR=~/tmp/vault
+    mkdir -p $SCRATCH_DIR
+    cat << EOF > "${SCRATCH_DIR}/values.yaml"
     global:
       openshift: true
+
     csi:
       enabled: true
+      image:
+        repository: "registry.connect.redhat.com/hashicorp/vault-csi-provider"
+        tag: "1.6.0-ubi"
+      agent:
+        image:
+          repository: "registry.connect.redhat.com/hashicorp/vault"
+          tag: "1.20.4-ubi"
       daemonSet:
         providersDir: /var/run/secrets-store-csi-providers
+
     injector:
       enabled: false
+
     server:
       image:
         repository: "registry.connect.redhat.com/hashicorp/vault"
-        tag: "1.8.0-ubi"
+        tag: "1.20.4-ubi"
       dev:
         enabled: true
     EOF
@@ -69,7 +84,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 
     ```bash
     helm install -n hashicorp-vault vault \
-      hashicorp/vault --values values.yaml
+      hashicorp/vault --values "${SCRATCH_DIR}/values.yaml"
     ```
 
 1. Patch the CSI daemonset
@@ -152,7 +167,7 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
 
     ```bash
     cat <<EOF | oc apply -f -
-    apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+    apiVersion: secrets-store.csi.x-k8s.io/v1
     kind: SecretProviderClass
     metadata:
       name: vault-database
@@ -201,6 +216,12 @@ The HashiCorp Vault Secret CSI Driver allows you to access secrets stored in Has
             volumeAttributes:
               secretProviderClass: "vault-database"
     EOF
+    ```
+
+1. Wait for the Pod to start
+
+    ```bash
+    oc wait --for=condition=Ready pod/webapp -n default --timeout=120s
     ```
 
 1. Check the Pod has the secret
