@@ -6,10 +6,14 @@ aliases: [/experts/quickstart-aro.md]
 authors: 
   - Paul Czarkowski
   - Nerav Doshi
+  - Diana Sari
 tags: ["ARO", "Quickstarts"]
 validated_version: "4.20"
 ---
-A Quickstart guide to deploying an Azure Red Hat OpenShift cluster.
+
+A quickstart guide to deploying an Azure Red Hat OpenShift (ARO) cluster by using Azure CLI.
+
+For new clusters, use Azure managed identities with platform workload identity federation when possible. This avoids long-lived service principal credentials for ARO platform operations.
 
 ## Video Walkthrough
 
@@ -23,6 +27,10 @@ If you prefer a more visual medium, you can watch [Paul Czarkowski](https://twit
 ### Azure CLI
 
 _Obviously you'll need to have an Azure account to configure the CLI against._
+
+{{% alert state="info" %}}
+The standard service-principal deployment in this quickstart works with supported Azure CLI versions. Creating ARO with managed identities and platform workload identity federation requires Azure CLI 2.84.0 or later.
+{{% /alert %}}
 
 **macOS**
 
@@ -63,8 +71,13 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
     sudo dnf install -y azure-cli
     ```
 
+Confirm your installation: 
 
-### Prepare Azure Account for Azure OpenShift
+```bash
+az version --query '"azure-cli"' --output tsv
+```
+
+### Prepare the Azure account for ARO
 
 1. Log into the Azure CLI by running the following and then authorizing through your Web Browser. If you have more than one subscription, list them and select the one where you will deploy the cluster.
 
@@ -93,7 +106,9 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 ### Get Red Hat pull secret
 
-{{% alert state="info" %}}This step is optional, but highly recommended. Without it, you can still install the cluster, but access to Red Hat container catalog images and many OperatorHub entries is limited.{{% /alert %}}
+{{% alert state="info" %}}
+A Red Hat pull secret is strongly recommended and is used by the deployment command in this guide. Without a pull secret, access to Red Hat container catalog images and many OperatorHub entries is limited. To deploy without one, omit the `--pull-secret` argument from the `az aro create` command.
+{{% /alert %}}
 
 1. Log into <https://console.redhat.com>
 
@@ -101,7 +116,22 @@ _Obviously you'll need to have an Azure account to configure the CLI against._
 
 1. Click the **Download pull secret** button and save the file to a known path (for example the default `AZR_PULL_SECRET` path used below). Restrict access to the file and do not commit it to source control; for example on macOS or Linux: `chmod 600 ~/Downloads/pull-secret.txt`.
 
-## Deploy Azure OpenShift
+## Choose a credential method
+
+ARO supports two cluster credential models:
+
+- **Managed identities with platform workload identity federation**: Recommended for new clusters. Azure user-assigned managed identities hold the required Azure RBAC permissions, and OpenShift platform operators authenticate by using federated service account tokens.
+- **Service principal**: Uses an application client ID and client secret for Azure access.
+
+{{% alert state="warning" %}}
+An existing service-principal-based ARO cluster cannot be converted in place to use managed identities. To adopt managed identities, create a new cluster and migrate workloads to it.
+{{% /alert %}}
+
+For the managed-identity deployment workflow, follow [Deploy ARO with Managed Identities and Workload Identity Federation](../miwi/).
+
+The remaining deployment steps in this quickstart use the service-principal credential model.
+
+## Deploy ARO using the service-principal credential model
 
 ### Variables and Resource Group
 
@@ -183,9 +213,13 @@ Create a virtual network with two empty subnets
 
     {{% alert state="info" %}}To **pin** a build, add `--version` with a full version string from that output (for example `4.18.12`) to the `az aro create` command below. Omit `--version` to let the platform pick the default for new clusters.{{% /alert %}}
 
-1. Create the cluster
+1. Create the service-principal-based cluster
 
-    {{% alert state="info" %}}The cluster installation typically takes 45 -50 minutes, but we recommend budgeting an hour or more.{{% /alert %}}
+    {{% alert state="info" %}}The cluster installation typically takes 45-50 minutes, but we recommend budgeting an hour or more.{{% /alert %}}
+
+    {{% alert state="warning" %}}
+    The command below creates a service-principal-based ARO cluster. For new clusters, use the [managed identity and workload identity federation guide](../miwi/) unless you have a specific requirement for the service-principal credential model.
+    {{% /alert %}}
 
     ```bash
     az aro create \
@@ -234,6 +268,10 @@ Create a virtual network with two empty subnets
 ### Delete Cluster
 
 Once you're done it is a good idea to delete the cluster so you avoid unexpected charges.
+
+{{% alert state="info" %}}
+These cleanup steps apply to the service-principal deployment in this quickstart. For a managed-identity cluster, follow the [cleanup instructions in the managed identity guide](../miwi/) to account for pre-created identities and role assignments.
+{{% /alert %}}
 
 1. Delete the cluster
 
