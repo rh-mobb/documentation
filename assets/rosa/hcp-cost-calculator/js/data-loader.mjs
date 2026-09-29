@@ -80,9 +80,15 @@ export async function loadSnapshotCore(baseUrl) {
 
   const cached = readCachedSnapshotCore(snapshotVersion);
   if (cached) {
+    const manifestRegions = Array.isArray(manifest?.regions) ? manifest.regions : [];
     return {
       ...cached,
-      pricingByRegion: {}
+      pricingByRegion: {},
+      manifest: {
+        ...cached.manifest,
+        ...manifest,
+        regions: manifestRegions
+      }
     };
   }
 
