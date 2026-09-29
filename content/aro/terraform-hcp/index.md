@@ -12,6 +12,10 @@ validated_version: "4.22"
 
 This guide covers a **public cluster** deployment (`clusters/public`): public API and ingress. For private API or ingress, use [`clusters/private`](https://github.com/rh-mobb/validated-pattern-aro-hcp/tree/main/clusters/private) and the [private cluster steps](https://rh-mobb.github.io/validated-pattern-aro-hcp/getting-started/quick-start/#private-cluster-profile) in the reference docs.
 
+{{% alert state="info" %}}
+Looking for a simple Azure CLI example rather than a hardened production deployment? Follow [Create an ARO with hosted control planes cluster (Azure CLI)](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster?pivots=aro-az-cli) on Microsoft Learn.
+{{% /alert %}}
+
 {{% alert state="warning" header="Public preview" %}}
 ARO HCP is in [public preview](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster), not GA. APIs, regions, quotas, and supported features may change before GA.
 
