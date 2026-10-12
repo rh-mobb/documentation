@@ -254,6 +254,10 @@ az role assignment create --assignee-object-id "$CLUSTER_OBJECT_ID" \
 
 Allow time for RBAC propagation. The validated SP path reconciled worker NIC forwarding, Route Server peers, and worker replacement successfully.
 
+Upstream engineering maintains [`e2e-aro-classic-operator`](https://github.com/openshift/release/blob/main/ci-operator/config/openshift/bgp-cloud-connector/openshift-bgp-cloud-connector-main.yaml) as an active CI path for this model. Open [`openshift/release#86440`](https://github.com/openshift/release/pull/86440) makes the job gating because ARO Classic with a service principal is a supported BGP Cloud Connector 1.1 configuration.
+
+Earlier job failures caused by Microsoft Graph rejecting the Entra application `addPassword` operation occurred during ARO cluster provisioning, before a cluster existed. They were not BGP Cloud Connector functional failures. [`openshift/release#86426`](https://github.com/openshift/release/pull/86426) corrected that provisioning path by creating the application separately, retrying password creation, and waiting for the service principal to become visible before calling `az aro create`.
+
 ## Install the validated engineering build
 
 {{% alert state="warning" %}}
