@@ -25,8 +25,10 @@ The procedures were validated with:
 - Operator image `quay.io/redhat-user-workloads/bgp-cloud-connector-tenant/bgp-cloud-connector/bgp-cloud-connector-operator@sha256:1acd2ea1727ba868e4cd324730d76b3bdb12d48357b73cdf2b8b67fd80140bc5`
 
 {{% alert state="warning" %}}
-This guide documents functional validation of the current engineering implementation. The additive federated credential on the ARO `machine-api` identity used by the MIWI path remains subject to product and support guidance. This guide does not make a support-policy determination or present that identity arrangement as final product architecture.
+This guide documents functional validation of the current engineering implementation. The BGP Cloud Connector integration described here is not yet GA product guidance. The additive federated credential on the ARO `machine-api` identity used by the MIWI path remains subject to Red Hat and Microsoft product and support approval, including whether that identity arrangement is acceptable for long-term supported use. This guide does not make a support-policy determination or present that identity arrangement as final product architecture.
 {{% /alert %}}
+
+ARO HCP is being evaluated separately. The current BGP Cloud Connector implementation does not yet define a complete ARO HCP credential-delivery and worker-NIC identity model, so HCP procedures are intentionally not included in this guide.
 
 This guide does not validate production scale, production readiness, upgrade behavior, or every failure scenario.
 
