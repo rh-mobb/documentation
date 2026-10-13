@@ -18,7 +18,7 @@ This guide covers deploying and testing BGP Cloud Connector on ARO Classic using
 
 Both paths were tested with Azure Route Server, routed CUDN connectivity, and OpenShift Virtualization workloads.
 
-The procedures were validated with:
+The procedures were tested with:
 
 - ARO Classic and OpenShift 4.21.22
 - Azure CLI 2.90.0 for the MIWI deployment
@@ -49,6 +49,30 @@ The diagram below describes the configuration differences for each model.
 
 ![deployment-type](images/deployment-type.png)
 <br />
+
+## How to use this guide
+
+This guide covers two tested ARO Classic deployment models for BGP Cloud Connector: Service Principal and Managed Identity / Workload Identity. Many configuration and validation steps are shared, but the Azure identity setup differs. Start with the shared prerequisites and architecture sections, follow the model-specific setup for your chosen deployment type, then continue with the shared BGP configuration, validation, lifecycle, and cleanup steps.
+
+### Service Principal path
+
+1. Review **Architecture** and **Choose an ARO deployment and identity model**, then complete **Shared prerequisites**.
+2. Complete **ARO Classic with a service principal**.
+3. Install the operator in **Install the validated engineering build**, following the service principal direction in **Configure the identity-specific operator environment**.
+4. Complete **Select router workers** and the service principal configuration under **Configure BGPCloudConfiguration**.
+5. Continue through **Configure shared BGPRouting and CUDN resources**, **Create a shared OpenShift Virtualization VM example**, and **Shared validation**.
+6. Optionally complete **Optional lifecycle validation**, using the **ARO Classic with a service principal** subsection for the tested result.
+7. Use the shared and service principal guidance under **Troubleshooting and gotchas**, then follow the shared and service principal steps under **Cleanup**.
+
+### Managed Identity / Workload Identity path
+
+1. Review **Architecture** and **Choose an ARO deployment and identity model**, then complete **Shared prerequisites**.
+2. Complete **ARO Classic with MIWI**.
+3. Install the operator in **Install the validated engineering build**, following the MIWI direction in **Configure the identity-specific operator environment**.
+4. Complete **Select router workers** and the MIWI configuration under **Configure BGPCloudConfiguration**.
+5. Continue through **Configure shared BGPRouting and CUDN resources**, **Create a shared OpenShift Virtualization VM example**, and **Shared validation**.
+6. Optionally complete **Optional lifecycle validation**, using the **ARO Classic with MIWI** subsection for the tested result.
+7. Use the shared and MIWI guidance under **Troubleshooting and gotchas**, then follow the shared and MIWI steps under **Cleanup**.
 
 ## 0. Shared prerequisites
 
@@ -99,6 +123,8 @@ az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "$VNE
 ```
 
 ## 1. ARO Classic with MIWI
+
+**Applies to: Managed Identity / Workload Identity only**
 
 ### 1.1 Create ARO managed identities and base RBAC
 
@@ -225,6 +251,8 @@ Do not replace or remove the ARO-managed FIC for `system:serviceaccount:openshif
 
 ## 2. ARO Classic with a service principal
 
+**Applies to: Service Principal only**
+
 Create an ARO Classic service-principal cluster through your normal ARO deployment procedure, using the shared network prerequisites. CCO passthrough supplies the cluster service principal credential, and that principal performs both worker NIC and Route Server operations.
 
 No dedicated BGP workload identity, additive operator FIC on `machine-api`, or `networkInterfaceClientID` is required.
@@ -248,6 +276,8 @@ Upstream engineering maintains [`e2e-aro-classic-operator`](https://github.com/o
 Earlier job failures caused by Microsoft Graph rejecting the Entra application `addPassword` operation occurred during ARO cluster provisioning, before a cluster existed. They were not BGP Cloud Connector functional failures. [`openshift/release#86426`](https://github.com/openshift/release/pull/86426) corrected that provisioning path by creating the application separately, retrying password creation, and waiting for the service principal to become visible before calling `az aro create`.
 
 ## 3. Install the validated engineering build
+
+**Applies to: Both deployment models**
 
 {{% alert state="warning" %}}
 This procedure reproduces the engineering implementation used in functional testing at the exact source commit and image digest below. It is not final production installation guidance. Recheck the upstream project and applicable product guidance before selecting an installation path or using a newer build.
@@ -302,6 +332,8 @@ oc get nodes -l bgp_router=true -o wide
 
 ### 5.1 ARO Classic with MIWI
 
+**Applies to: Managed Identity / Workload Identity only**
+
 ```bash
 envsubst <<'EOF' | oc apply -f -
 apiVersion: networking.openshift.io/v1beta1
@@ -326,6 +358,8 @@ EOF
 Verify the generated Secret includes `azure_federated_token_file`, excludes `azure_client_secret`, and references the dedicated BGP identity.
 
 ### 5.2 ARO Classic with a service principal
+
+**Applies to: Service Principal only**
 
 Use the same resource but omit `networkInterfaceClientID`. The relevant block is:
 
@@ -515,6 +549,10 @@ At the validated commit, `docs/azure-integration-test-plan.md` was absent. The i
 
 ## 11. Cleanup
 
+### 11.1 Shared Kubernetes and operator resources
+
+**Applies to: Both deployment models**
+
 ```bash
 oc delete virtualmachine "$CUDN_VM_NAME" -n "$CUDN_NAMESPACE"
 oc delete bgprouting "$BGP_ROUTING_NAME"
@@ -526,15 +564,15 @@ oc delete bgpcloudconfiguration cluster
 
 Wait for normal CUDN, `RouteAdvertisements`, FRR, and Azure peer cleanup, then remove the operator.
 
-### 11.1 ARO Classic with MIWI
+### 11.2 ARO Classic with MIWI
 
 Remove the dedicated BGP identity, role, and FIC, plus only the additive `bgp-cloud-connector` FIC from `machine-api`. Preserve the original `machine-api-controllers` FIC until cluster deletion. Distinguish MIWI-specific assignments from pre-existing network or ARO resource-provider permissions before deleting RBAC. After cluster deletion, remove the nine identities and cluster-specific roles.
 
-### 11.2 ARO Classic with a service principal
+### 11.3 ARO Classic with a service principal
 
 Remove only the additional Route Server resource-group permission created by this procedure. Do not perform MIWI identity or FIC cleanup. Remove the service principal only if the cluster deployment owns it and it is not shared.
 
-### 11.3 Shared Azure resources
+### 11.4 Shared Azure resources
 
 Delete the ARO cluster, then remove Route Server, test infrastructure, VNet resources, and resource groups according to their ownership and dependencies.
 
