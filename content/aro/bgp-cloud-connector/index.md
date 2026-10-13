@@ -4,6 +4,7 @@ title: "Deploying BGP Cloud Connector on ARO Classic"
 tags: ["ARO", "ARO Classic", "Virtualization"]
 authors:
   - Diana Sari
+  - Charlotte Fung
 validated_version: "4.21"
 ---
 
@@ -73,6 +74,9 @@ This guide covers two tested ARO Classic deployment models for BGP Cloud Connect
 5. Continue through **Configure shared BGPRouting and CUDN resources**, **Create a shared OpenShift Virtualization VM example**, and **Shared validation**.
 6. Optionally complete **Optional lifecycle validation**, using the **ARO Classic with MIWI** subsection for the tested result.
 7. Use the shared and MIWI guidance under **Troubleshooting and gotchas**, then follow the shared and MIWI steps under **Cleanup**.
+
+![deployment-path](images/deployment-path.png)
+<br />
 
 ## 0. Shared prerequisites
 
