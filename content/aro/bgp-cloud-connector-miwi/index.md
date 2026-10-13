@@ -36,36 +36,21 @@ This guide does not validate production scale, production readiness, upgrade beh
 
 ## Architecture
 
-The example uses local ASN `65001`, the fixed Azure Route Server ASN `65515`, and CUDN subnet `10.100.0.0/16`. Replace all other example names and addresses with values for your environment.
+The architecture below shows the tested ARO Classic BGP Cloud Connector data path at a high level. OpenShift Virtualization workloads run on a CUDN, selected worker nodes act as BGP routers, and the BGP Cloud Connector reconciles Azure Route Server peers and worker NIC IP forwarding so the CUDN network can be routed directly into the Azure VNet. The same overall data path is used for both service principal and managed identity/workload identity deployments; the main difference between the two is how Azure API access is authenticated.
 
-{{< mermaid >}}
-flowchart LR
-    VM[OpenShift Virtualization VM<br/>CUDN 10.100.0.0/16]
-    W[Three selected ARO workers<br/>FRR ASN 65001]
-    RS[Azure Route Server<br/>ASN 65515]
-    AVM[Azure test VM<br/>VNet subnet]
-
-    VM -->|l2bridge| W
-    W <-->|eBGP, two sessions per worker| RS
-    RS --> AVM
-{{< /mermaid >}}
-
-Azure requires the Route Server subnet to be named exactly `RouteServerSubnet`. Follow current Azure sizing guidance and use `/26` or larger for a new deployment.
+![architecture diagram](images/bgp-classic-arch.png)
+<br />
 
 ## Choose an ARO deployment and identity model
 
-<!-- TODO after validation: add ARO HCP + MIWI as the first deployment model -->
+BGP Cloud Connector was tested on ARO Classic with two Azure identity models: a cluster service principal and managed identity/workload identity. With a service principal, the cluster credential is used for both worker NIC and Route Server operations. With managed identity/workload identity, those responsibilities are split: the ARO machine-api identity is used for worker NIC operations, while a dedicated BGP identity is used for Route Server operations.
 
-Choose one of the validated ARO Classic paths before continuing:
+The diagram below describes the configuration differences for each model.
 
-| Deployment model | Operator Azure credential | Worker NIC operations | Route Server operations |
-|:---|:---|:---|:---|
-| ARO Classic + MIWI | CCO-generated federated workload identity credential | ARO `machine-api` identity | Dedicated BGP Cloud Connector identity |
-| ARO Classic + service principal | CCO passthrough cluster service principal credential | Cluster service principal | Cluster service principal |
+![deployment-type](images/deployment-type.png)
+<br />
 
-The BGP dataplane, router-worker labels, `BGPRouting`, generated CUDN and `RouteAdvertisements`, VM example, and connectivity validation are otherwise shared.
-
-## Shared prerequisites
+## 0. Shared prerequisites
 
 You need:
 
@@ -82,7 +67,7 @@ Do not manually configure Route Server peers. Peer lifecycle is part of the oper
 
 Set shared environment variables. The values below are placeholders unless explicitly described as examples.
 
-```
+```bash
 export SUBSCRIPTION_ID="<subscription-id>"
 export TENANT_ID="<tenant-id>"
 export LOCATION="<azure-region>"
@@ -103,7 +88,7 @@ export BGP_OPERATOR_SERVICE_ACCOUNT="openshift-bgp-cloud-connector-controller-ma
 
 Confirm that both ARO subnets are empty and review any attached NSG, route table, or NAT gateway:
 
-```
+```bash
 az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "$VNET_NAME" \
   --name "$MASTER_SUBNET" \
   --query '{ipConfigurations:length(ipConfigurations),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
@@ -113,13 +98,13 @@ az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "$VNE
   --query '{ipConfigurations:length(ipConfigurations),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
 ```
 
-## ARO Classic with MIWI
+## 1. ARO Classic with MIWI
 
-### Create ARO managed identities and base RBAC
+### 1.1 Create ARO managed identities and base RBAC
 
 Use Azure CLI 2.90.0 or a current version that exposes the same managed-identity helpers. Ask the CLI to calculate requirements for your cluster version and network before it creates anything:
 
-```
+```bash
 az aro identity get-required \
   --resource-group "$RESOURCE_GROUP" --location "$LOCATION" \
   --version "$OPENSHIFT_VERSION" --vnet "$VNET_NAME" \
@@ -129,7 +114,7 @@ az aro identity get-required \
 
 Review the identities, roles, and scopes, then create the base identities and assignments:
 
-```
+```bash
 az aro identity create-required \
   --resource-group "$RESOURCE_GROUP" --location "$LOCATION" \
   --version "$OPENSHIFT_VERSION" --vnet "$VNET_NAME" \
@@ -151,11 +136,11 @@ The validated flow created these nine user-assigned managed identities:
 
 Use the helper output as the source of truth for the base roles. The validated topology produced 20 base assignments, including eight assignments that allow `aro-cluster` to create federated credentials on the platform identities.
 
-### Add BYO NSG role assignments where required
+### 1.2 Add BYO NSG role assignments where required
 
 When the ARO subnets use a preconfigured NSG, current ARO guidance also requires four NSG-scoped assignments.
 
-```
+```bash
 export NSG_ID="$(az network nsg show --resource-group "$RESOURCE_GROUP" \
   --name "$NSG_NAME" --query id --output tsv)"
 
@@ -178,7 +163,7 @@ If the topology also brings a route table, NAT gateway, or another linked networ
 
 ### Create the ARO Classic MIWI cluster
 
-```
+```bash
 az aro create \
   --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --location "$LOCATION" \
   --cluster-resource-group "$MANAGED_RESOURCE_GROUP" \
@@ -203,7 +188,7 @@ Wait for `Succeeded`, log in, and verify `oc get nodes` and `oc get clusteropera
 
 ### Create the dedicated BGP Cloud Connector identity
 
-```
+```bash
 export BGP_IDENTITY_NAME="${CLUSTER_NAME}-bgp-cloud-connector"
 az identity create --resource-group "$RESOURCE_GROUP" --location "$LOCATION" \
   --name "$BGP_IDENTITY_NAME"
@@ -219,7 +204,7 @@ az role assignment create --assignee-object-id "$BGP_PRINCIPAL_ID" \
 
 ### Configure workload identity federation
 
-```
+```bash
 export SERVICE_ACCOUNT_ISSUER="$(oc get authentication cluster \
   -o jsonpath='{.spec.serviceAccountIssuer}')"
 export BGP_OPERATOR_SUBJECT="system:serviceaccount:${BGP_OPERATOR_NAMESPACE}:${BGP_OPERATOR_SERVICE_ACCOUNT}"
@@ -246,7 +231,7 @@ No dedicated BGP workload identity, additive operator FIC on `machine-api`, or `
 
 Grant the cluster principal `Network Contributor` on the resource group containing Route Server:
 
-```
+```bash
 export CLUSTER_CLIENT_ID="$(oc get secret azure-credentials -n kube-system \
   -o jsonpath='{.data.azure_client_id}' | base64 -d)"
 export CLUSTER_OBJECT_ID="$(az ad sp show --id "$CLUSTER_CLIENT_ID" --query id -o tsv)"
@@ -268,7 +253,7 @@ Earlier job failures caused by Microsoft Graph rejecting the Entra application `
 This procedure reproduces the engineering implementation used in functional testing at the exact source commit and image digest below. It is not final production installation guidance. Recheck the upstream project and applicable product guidance before selecting an installation path or using a newer build.
 {{% /alert %}}
 
-```
+```bash
 export BGP_CC_COMMIT="d317567b54e6d4457246032f952fa6c6b80973c7"
 export BGP_CC_IMAGE="quay.io/redhat-user-workloads/bgp-cloud-connector-tenant/bgp-cloud-connector/bgp-cloud-connector-operator@sha256:1acd2ea1727ba868e4cd324730d76b3bdb12d48357b73cdf2b8b67fd80140bc5"
 git clone https://github.com/openshift/bgp-cloud-connector.git
@@ -287,7 +272,7 @@ oc apply -f bgp-cloud-connector-operator.yaml
 
 For MIWI, set all three identity inputs:
 
-```
+```bash
 oc set env deployment/openshift-bgp-cloud-connector-controller-manager \
   -n "$BGP_OPERATOR_NAMESPACE" CLIENTID="$BGP_CLIENT_ID" \
   TENANTID="$TENANT_ID" SUBSCRIPTIONID="$SUBSCRIPTION_ID"
@@ -299,7 +284,7 @@ For service principal, do not set these MIWI variables. CCO passthrough supplies
 
 This procedure is shared by both Classic identity models:
 
-```
+```bash
 for node in $(oc get nodes -l node-role.kubernetes.io/worker -o name); do
   machine_name="$(oc get "$node" -o jsonpath='{.metadata.annotations.machine\.openshift\.io/machine}')"
   machine_namespace="${machine_name%%/*}"
@@ -317,7 +302,7 @@ oc get nodes -l bgp_router=true -o wide
 
 ### ARO Classic with MIWI
 
-```
+```bash
 envsubst <<'EOF' | oc apply -f -
 apiVersion: networking.openshift.io/v1beta1
 kind: BGPCloudConfiguration
@@ -355,7 +340,7 @@ CCO creates the same `CredentialsRequest`, but the passthrough Secret carries th
 
 ## Configure shared `BGPRouting` and CUDN resources
 
-```
+```bash
 export CUDN_NAMESPACE="<cudn-test-namespace>"
 export CUDN_NETWORK_NAME="<cudn-network-name>"
 export BGP_ROUTING_NAME="<bgp-routing-name>"
@@ -390,7 +375,7 @@ Do not manually create or modify the generated CUDN or `RouteAdvertisements`.
 
 The validation used the `stable` channel, OpenShift Virtualization 4.21.17, a pinned Fedora containerdisk, and the required `l2bridge` binding.
 
-```
+```bash
 export CUDN_VM_NAME="cudn-connectivity-test"
 export SSH_PUBLIC_KEY="$(cat /path/to/test-public-key)"
 envsubst <<'EOF' | oc apply -f -
@@ -442,7 +427,7 @@ EOF
 
 ## Shared validation
 
-```
+```bash
 oc get bgpcloudconfiguration cluster \
   -o jsonpath='{range .status.conditions[*]}{.type}{"="}{.status}{" reason="}{.reason}{"\n"}{end}'
 oc get frrconfiguration bgp-cc-1 -n openshift-frr-k8s -o yaml
@@ -461,7 +446,7 @@ Identity attribution differs:
 
 From the guest:
 
-```
+```bash
 ip addr
 ip route
 ip rule
@@ -475,7 +460,7 @@ Both paths validated address `10.100.0.3/16`, gateway `10.100.0.1`, MTU 1400, AS
 
 Delete one router Machine through the OpenShift Machine API, never the Azure VM directly:
 
-```
+```bash
 export ROUTER_MACHINE_NAME="<router-machine-name>"
 oc delete machine "$ROUTER_MACHINE_NAME" -n openshift-machine-api
 ```
@@ -530,7 +515,7 @@ At the validated commit, `docs/azure-integration-test-plan.md` was absent. The i
 
 ## Cleanup
 
-```
+```bash
 oc delete virtualmachine "$CUDN_VM_NAME" -n "$CUDN_NAMESPACE"
 oc delete bgprouting "$BGP_ROUTING_NAME"
 oc wait --for=delete clusteruserdefinednetwork/"cluster-udn-${CUDN_NETWORK_NAME}" \
