@@ -161,7 +161,7 @@ assign_nsg_role file-csi-driver "Azure Red Hat OpenShift File Storage Operator"
 
 If the topology also brings a route table, NAT gateway, or another linked network resource, use `az aro identity get-required` and current ARO documentation to determine additional scoped assignments.
 
-### Create the ARO Classic MIWI cluster
+### 1.3 Create the ARO Classic MIWI cluster
 
 ```bash
 az aro create \
@@ -186,7 +186,7 @@ az aro create \
 
 Wait for `Succeeded`, log in, and verify `oc get nodes` and `oc get clusteroperators` are healthy.
 
-### Create the dedicated BGP Cloud Connector identity
+### 1.4 Create the dedicated BGP Cloud Connector identity
 
 ```bash
 export BGP_IDENTITY_NAME="${CLUSTER_NAME}-bgp-cloud-connector"
@@ -202,7 +202,7 @@ az role assignment create --assignee-object-id "$BGP_PRINCIPAL_ID" \
   --scope "$NETWORK_RESOURCE_GROUP_ID"
 ```
 
-### Configure workload identity federation
+### 1.5 Configure workload identity federation
 
 ```bash
 export SERVICE_ACCOUNT_ISSUER="$(oc get authentication cluster \
@@ -223,7 +223,7 @@ export MACHINE_API_CLIENT_ID="$(az identity show -g "$RESOURCE_GROUP" -n machine
 
 Do not replace or remove the ARO-managed FIC for `system:serviceaccount:openshift-machine-api:machine-api-controllers`.
 
-## ARO Classic with a service principal
+## 2. ARO Classic with a service principal
 
 Create an ARO Classic service-principal cluster through your normal ARO deployment procedure, using the shared network prerequisites. CCO passthrough supplies the cluster service principal credential, and that principal performs both worker NIC and Route Server operations.
 
@@ -247,7 +247,7 @@ Upstream engineering maintains [`e2e-aro-classic-operator`](https://github.com/o
 
 Earlier job failures caused by Microsoft Graph rejecting the Entra application `addPassword` operation occurred during ARO cluster provisioning, before a cluster existed. They were not BGP Cloud Connector functional failures. [`openshift/release#86426`](https://github.com/openshift/release/pull/86426) corrected that provisioning path by creating the application separately, retrying password creation, and waiting for the service principal to become visible before calling `az aro create`.
 
-## Install the validated engineering build
+## 3. Install the validated engineering build
 
 {{% alert state="warning" %}}
 This procedure reproduces the engineering implementation used in functional testing at the exact source commit and image digest below. It is not final production installation guidance. Recheck the upstream project and applicable product guidance before selecting an installation path or using a newer build.
@@ -268,7 +268,7 @@ bgp-cloud-connector/bin/kustomize build bgp-cloud-connector/config/default \
 oc apply -f bgp-cloud-connector-operator.yaml
 ```
 
-### Configure the identity-specific operator environment
+### 3.1 Configure the identity-specific operator environment
 
 For MIWI, set all three identity inputs:
 
@@ -280,7 +280,7 @@ oc set env deployment/openshift-bgp-cloud-connector-controller-manager \
 
 For service principal, do not set these MIWI variables. CCO passthrough supplies the credential. Wait for the operator Deployment to become Available. At this commit, the `CredentialsRequest` appears only after `BGPCloudConfiguration` reconciliation begins.
 
-## Select router workers
+## 4. Select router workers
 
 This procedure is shared by both Classic identity models:
 
@@ -298,9 +298,9 @@ done
 oc get nodes -l bgp_router=true -o wide
 ```
 
-## Configure `BGPCloudConfiguration`
+## 5. Configure `BGPCloudConfiguration`
 
-### ARO Classic with MIWI
+### 5.1 ARO Classic with MIWI
 
 ```bash
 envsubst <<'EOF' | oc apply -f -
@@ -325,7 +325,7 @@ EOF
 
 Verify the generated Secret includes `azure_federated_token_file`, excludes `azure_client_secret`, and references the dedicated BGP identity.
 
-### ARO Classic with a service principal
+### 5.2 ARO Classic with a service principal
 
 Use the same resource but omit `networkInterfaceClientID`. The relevant block is:
 
@@ -338,7 +338,7 @@ azure:
 
 CCO creates the same `CredentialsRequest`, but the passthrough Secret carries the cluster service principal credential.
 
-## Configure shared `BGPRouting` and CUDN resources
+## 6. Configure shared `BGPRouting` and CUDN resources
 
 ```bash
 export CUDN_NAMESPACE="<cudn-test-namespace>"
@@ -371,7 +371,7 @@ oc get routeadvertisements bgp-cc-route-advertisements -o yaml
 
 Do not manually create or modify the generated CUDN or `RouteAdvertisements`.
 
-## Create a shared OpenShift Virtualization VM example
+## 7. Create a shared OpenShift Virtualization VM example
 
 The validation used the `stable` channel, OpenShift Virtualization 4.21.17, a pinned Fedora containerdisk, and the required `l2bridge` binding.
 
@@ -425,7 +425,7 @@ spec:
 EOF
 ```
 
-## Shared validation
+## 8. Shared validation
 
 ```bash
 oc get bgpcloudconfiguration cluster \
@@ -456,7 +456,7 @@ ping -c 4 "$AZURE_TEST_VM_IP"
 
 Both paths validated address `10.100.0.3/16`, gateway `10.100.0.1`, MTU 1400, AS path `65001`, and guest-to-Azure connectivity with zero packet loss.
 
-## Optional lifecycle validation
+## 9. Optional lifecycle validation
 
 Delete one router Machine through the OpenShift Machine API, never the Azure VM directly:
 
@@ -467,53 +467,53 @@ oc delete machine "$ROUTER_MACHINE_NAME" -n openshift-machine-api
 
 Verify automatic old peer cleanup, replacement creation and readiness, inherited `bgp_router=true`, replacement NIC forwarding, new peer creation, Established sessions, Ready BGP configuration, and learned CUDN routes.
 
-### ARO Classic with MIWI
+### 9.1 ARO Classic with MIWI
 
 - Router address changed from `10.0.2.5` to `10.0.2.7`.
 - Peer and NIC reconciliation succeeded automatically.
 - Activity Logs attributed NIC writes to `machine-api` and peer writes to the dedicated BGP identity.
 - Post-replacement guest ping was not repeated because of the separate KubeVirt streaming and login issue.
 
-### ARO Classic with a service principal
+### 9.2 ARO Classic with a service principal
 
 - Router address changed from `10.0.2.6` to `10.0.2.7`.
 - Peer and NIC reconciliation succeeded automatically.
 - The cluster service principal performed both operations.
 - Post-replacement connectivity returned four replies from four packets with zero loss.
 
-## Troubleshooting and gotchas
+## 10. Troubleshooting and gotchas
 
-### Shared
+### 10.1 Shared
 
-#### FRR webhook startup race
+#### 10.1.1 FRR webhook startup race
 
 Initial reconciliation can report `FRRConfigurationApplied=False` while `frr-k8s-webhook-service` has no healthy endpoint. Both labs recovered through normal reconciliation without configuration changes.
 
-#### `disableMP` warning
+#### 10.1.2 `disableMP` warning
 
 At the validated commit, the operator intentionally sets this deprecated field to satisfy OCP 4.21 RouteAdvertisements validation. Do not edit generated FRR resources.
 
-#### Route Server learning and effective-route output
+#### 10.1.3 Route Server learning and effective-route output
 
 The Azure test NIC effective-route API did not display an exact `10.100.0.0/16` entry even though Route Server learned it and dataplane connectivity succeeded. Evaluate Route Server, FRR, and guest evidence together.
 
-#### `virtctl` WebSocket close 1006
+#### 10.1.4 `virtctl` WebSocket close 1006
 
 Matching `virtctl` v1.7.4 enabled the initial guest test, but the issue later recurred. The VM remained Running and Ready, and no evidence indicated a BGP or CUDN failure. Matching versions are a diagnostic step, not a guaranteed fix.
 
-### ARO Classic with MIWI
+### 10.2 ARO Classic with MIWI
 
 If credentials remain pending, verify `CLIENTID`, `TENANTID`, and `SUBSCRIPTIONID`, the `CredentialsRequest`, and the dedicated identity's FIC issuer, subject, and audience.
 
 ARO protects the managed resource group with an Azure deny assignment. For NIC write failures, verify `networkInterfaceClientID`, the additive operator FIC on `machine-api`, and expected Activity Log attribution.
 
-### ARO Classic with a service principal
+### 10.3 ARO Classic with a service principal
 
 The operator uses CCO passthrough. For Route Server authorization failures, verify the principal from `kube-system/azure-credentials` has `Network Contributor` on the Route Server resource group and allow for RBAC propagation.
 
 At the validated commit, `docs/azure-integration-test-plan.md` was absent. The implementation, CRD schema, and current engineering documentation were used as the source of truth.
 
-## Cleanup
+## 11. Cleanup
 
 ```bash
 oc delete virtualmachine "$CUDN_VM_NAME" -n "$CUDN_NAMESPACE"
@@ -526,19 +526,19 @@ oc delete bgpcloudconfiguration cluster
 
 Wait for normal CUDN, `RouteAdvertisements`, FRR, and Azure peer cleanup, then remove the operator.
 
-### ARO Classic with MIWI
+### 11.1 ARO Classic with MIWI
 
 Remove the dedicated BGP identity, role, and FIC, plus only the additive `bgp-cloud-connector` FIC from `machine-api`. Preserve the original `machine-api-controllers` FIC until cluster deletion. Distinguish MIWI-specific assignments from pre-existing network or ARO resource-provider permissions before deleting RBAC. After cluster deletion, remove the nine identities and cluster-specific roles.
 
-### ARO Classic with a service principal
+### 11.2 ARO Classic with a service principal
 
 Remove only the additional Route Server resource-group permission created by this procedure. Do not perform MIWI identity or FIC cleanup. Remove the service principal only if the cluster deployment owns it and it is not shared.
 
-### Shared Azure resources
+### 11.3 Shared Azure resources
 
 Delete the ARO cluster, then remove Route Server, test infrastructure, VNet resources, and resource groups according to their ownership and dependencies.
 
-## References
+## 12. References
 
 - [BGP Cloud Connector engineering repository](https://github.com/openshift/bgp-cloud-connector)
 - [Validated BGP Cloud Connector commit](https://github.com/openshift/bgp-cloud-connector/commit/d317567b54e6d4457246032f952fa6c6b80973c7)
