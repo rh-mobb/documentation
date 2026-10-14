@@ -80,18 +80,45 @@ This guide covers two tested ARO Classic deployment models for BGP Cloud Connect
 
 ## 0. Shared prerequisites
 
-You need:
+Before following either identity path, prepare the ARO cluster and shared Azure networking. In the topology tested for this guide, the ARO control-plane subnet, worker subnet, Azure Route Server subnet, and connectivity-test VM subnet were separate subnets in the same customer VNet.
 
-- OpenShift 4.21 or newer.
-- An Azure subscription where you can create ARO clusters, networking, role assignments, and test resources.
-- `oc`, Azure CLI, `git`, `make`, `jq`, and `envsubst`.
-- A Red Hat pull secret stored outside source control.
-- An existing resource group, VNet, and empty ARO control-plane and worker subnets.
-- An Azure Route Server in a subnet named exactly `RouteServerSubnet`.
-- An Azure VM or another endpoint in a routed VNet subnet for connectivity testing.
-- OpenShift Virtualization if you use the VM example in this guide.
+### ARO cluster prerequisites
 
-Do not manually configure Route Server peers. Peer lifecycle is part of the operator behavior being validated.
+- Use OpenShift 4.21 or newer.
+- Use an Azure subscription where you can create ARO clusters, networking, role assignments, and test resources.
+- Store the Red Hat pull secret outside source control.
+- Prepare empty control-plane and worker subnets for the ARO cluster.
+- Use the Microsoft documentation as the baseline cluster-creation guidance for your selected identity model:
+  - [Create an ARO Classic cluster using the standard service-principal deployment](https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster)
+  - [Create an ARO Classic cluster with managed identities](https://learn.microsoft.com/en-us/azure/openshift/howto-create-openshift-cluster?pivots=aro-deploy-az-cli)
+
+The later model-specific sections retain the exact commands used to reproduce the BGP Cloud Connector test, including the MIWI identity helpers and managed-identity cluster creation. This guide supplements rather than replaces the canonical ARO cluster-creation documentation.
+
+### Shared Azure networking prerequisites
+
+- Create or select one customer VNet with separate subnets for the ARO control plane, ARO workers, Azure Route Server, and the test VM.
+- Deploy Azure Route Server in the same customer VNet as the ARO cluster for the topology documented here. Follow the Microsoft [Azure Route Server creation guidance](https://learn.microsoft.com/en-us/azure/route-server/quickstart-create-route-server-cli).
+- Create a dedicated Route Server subnet named exactly `RouteServerSubnet`. Azure requires this exact subnet name, and current guidance requires a `/26` or larger prefix for new Route Server deployments.
+- Keep `RouteServerSubnet` dedicated to Azure Route Server. Do not place the ARO cluster or test VM in it.
+
+Do not manually configure Route Server peers. Peer lifecycle is part of the operator behavior being tested.
+
+### Test endpoint prerequisites
+
+- Create an Azure VM or another reachable endpoint for connectivity testing. In the tested topology, the Azure test VM was in the same customer VNet as ARO and Route Server, but in its own regular subnet.
+- A test endpoint in a different routed VNet can also be used when end-to-end routing is already configured, but that topology was not tested for this guide.
+- Install OpenShift Virtualization if you use the CUDN VM example in this guide.
+
+The shared VNet, Azure Route Server, and test VM can be reused between Service Principal and MIWI testing. The ARO control-plane and worker subnets may be reused only after the previous ARO cluster has been fully deleted and the subnets are empty. Resource reuse is optional and was simply how the tested environments were exercised.
+
+### Required tools
+
+- `oc`
+- Azure CLI
+- `git`
+- `make`
+- `jq`
+- `envsubst`
 
 Set shared environment variables. The values below are placeholders unless explicitly described as examples.
 
@@ -586,7 +613,9 @@ Delete the ARO cluster, then remove Route Server, test infrastructure, VNet reso
 - [Validated BGP Cloud Connector commit](https://github.com/openshift/bgp-cloud-connector/commit/d317567b54e6d4457246032f952fa6c6b80973c7)
 - [Azure authentication in BGP Cloud Connector](https://github.com/openshift/bgp-cloud-connector/blob/d317567b54e6d4457246032f952fa6c6b80973c7/docs/azure-authentication.md)
 - [BGP Cloud Connector custom resources](https://github.com/openshift/bgp-cloud-connector/blob/d317567b54e6d4457246032f952fa6c6b80973c7/docs/custom-resources.md)
+- [Create an ARO Classic cluster using the standard service-principal deployment](https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster)
 - [Create ARO with managed identities](https://learn.microsoft.com/azure/openshift/howto-create-openshift-cluster?pivots=aro-deploy-az-cli)
 - [Understand ARO managed identities](https://learn.microsoft.com/azure/openshift/howto-understand-managed-identities)
 - [Azure Route Server overview](https://learn.microsoft.com/azure/route-server/overview)
+- [Create Azure Route Server using Azure CLI](https://learn.microsoft.com/en-us/azure/route-server/quickstart-create-route-server-cli)
 - [ARO Classic BGP Cloud Connector lab](https://github.com/diana-sari/aro-virt-bgp)
