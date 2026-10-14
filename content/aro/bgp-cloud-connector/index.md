@@ -78,7 +78,7 @@ This guide covers two tested ARO Classic deployment models for BGP Cloud Connect
 ![deployment-path](images/deployment-path.png)
 <br />
 
-## 0. Shared prerequisites
+## Shared prerequisites
 
 Before following either identity path, prepare the ARO cluster and shared Azure networking. In the topology tested for this guide, the ARO control-plane subnet, worker subnet, Azure Route Server subnet, and connectivity-test VM subnet were separate subnets in the same customer VNet.
 
