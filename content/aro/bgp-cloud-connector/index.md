@@ -143,14 +143,16 @@ export BGP_OPERATOR_SERVICE_ACCOUNT="openshift-bgp-cloud-connector-controller-ma
 
 Confirm that both ARO subnets are empty and review any attached NSG, route table, or NAT gateway:
 
+An empty subnet may return `ipConfigurations: null`; the query treats that as an empty array so the count returns `0`.
+
 ```bash
 az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "$VNET_NAME" \
   --name "$MASTER_SUBNET" \
-  --query '{ipConfigurations:length(ipConfigurations),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
+  --query '{ipConfigurations:length(ipConfigurations || `[]`),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
 
 az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "$VNET_NAME" \
   --name "$WORKER_SUBNET" \
-  --query '{ipConfigurations:length(ipConfigurations),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
+  --query '{ipConfigurations:length(ipConfigurations || `[]`),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
 ```
 
 ## 1. ARO Classic with MIWI
