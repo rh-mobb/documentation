@@ -107,7 +107,7 @@ Do not manually configure Route Server peers. Peer lifecycle is part of the oper
 
 - Create an Azure VM or another reachable endpoint for connectivity testing. In the tested topology, the Azure test VM was in the same customer VNet as ARO and Route Server, but in its own regular subnet.
 - A test endpoint in a different routed VNet can also be used when end-to-end routing is already configured, but that topology was not tested for this guide.
-- Install OpenShift Virtualization if you use the CUDN VM example in this guide.
+- OpenShift Virtualization must be installed, configured, and available on the ARO cluster if you want to use the VM-based connectivity example in this guide. Installing only the Operator is not sufficient; create the `HyperConverged` custom resource and verify the deployment is available. The tested environment used OpenShift Virtualization 4.21.17. See [Deploying OpenShift Virtualization on ARO](/experts/aro/aro-virt/) for installation guidance.
 
 The shared VNet, Azure Route Server, and test VM can be reused between Service Principal and MIWI testing. The ARO control-plane and worker subnets may be reused only after the previous ARO cluster has been fully deleted and the subnets are empty. Resource reuse is optional and was simply how the tested environments were exercised.
 
@@ -388,7 +388,27 @@ spec:
 EOF
 ```
 
-Verify the generated Secret includes `azure_federated_token_file`, excludes `azure_client_secret`, and references the dedicated BGP identity.
+During `BGPCloudConfiguration` reconciliation, the operator creates `CredentialsRequest/bgp-cloud-connector-azure`. In response, CCO creates `Secret/bgp-cloud-connector-azure-credentials` in namespace `openshift-bgp-cloud-connector`, set here by `$BGP_OPERATOR_NAMESPACE`. Verify the Secret contains the workload identity keys without displaying their values:
+
+```bash
+oc get secret bgp-cloud-connector-azure-credentials \
+  -n "$BGP_OPERATOR_NAMESPACE" \
+  -o json | jq -r '.data | keys[]'
+```
+
+The keys must include `azure_client_id`, `azure_federated_token_file`, `azure_region`, `azure_subscription_id`, and `azure_tenant_id`. They must not include `azure_client_secret`.
+
+Decode only the client ID and compare it with the dedicated BGP Cloud Connector identity:
+
+```bash
+oc get secret bgp-cloud-connector-azure-credentials \
+  -n "$BGP_OPERATOR_NAMESPACE" \
+  -o jsonpath='{.data.azure_client_id}' | base64 -d
+echo
+echo "$BGP_CLIENT_ID"
+```
+
+The two client IDs must match.
 
 ### 5.2 ARO Classic with a service principal
 
@@ -491,6 +511,18 @@ spec:
                 - ${SSH_PUBLIC_KEY}
 EOF
 ```
+
+The guest username is `cloud-user`, and the manifest configures only the public key supplied through `SSH_PUBLIC_KEY`. It does not create a console password, so the OpenShift console may show **No credentials**, and a VNC or serial-console login prompt will not accept a password. Use SSH with the private key that corresponds to `SSH_PUBLIC_KEY`:
+
+```bash
+virtctl ssh \
+  --username cloud-user \
+  --identity-file <path-to-private-key> \
+  -n "$CUDN_NAMESPACE" \
+  vm/"$CUDN_VM_NAME"
+```
+
+If `virtctl ssh` fails with a WebSocket close 1006 error, see the separate OpenShift Virtualization observation under **Troubleshooting and gotchas**. That streaming failure is not by itself evidence of a BGP or CUDN failure.
 
 ## 8. Shared validation
 
