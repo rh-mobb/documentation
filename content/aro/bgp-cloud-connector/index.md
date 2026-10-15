@@ -553,7 +553,18 @@ ip neigh show
 ping -c 4 "$AZURE_TEST_VM_IP"
 ```
 
-Both paths validated address `10.100.0.3/16`, gateway `10.100.0.1`, MTU 1400, AS path `65001`, and guest-to-Azure connectivity with zero packet loss.
+Both paths validated address `10.100.0.3/16`, gateway `10.100.0.1`, MTU 1400, AS path `65001`, and guest-to-Azure connectivity with zero packet loss. The retained lab evidence does not include Azure-to-guest ping output, so perform the reverse-direction test below as an additional recommended validation rather than treating it as a recorded result.
+
+From a Linux shell on the Azure test VM, test the reverse direction to the guest VM's CUDN address:
+
+```bash
+export CUDN_VM_IP="<guest-cudn-ip>"
+ping -c 4 "$CUDN_VM_IP"
+```
+
+For a test endpoint where `ping -c` is not available, use the equivalent connectivity test for its operating system. A successful test demonstrates that the Azure test VM reaches the guest directly at its CUDN IP through Azure Route Server and the selected BGP router workers. No NAT, NodePort, OpenShift Route, LoadBalancer service, translated address, or service IP is involved. The observed source and destination addresses should remain the routed endpoint addresses.
+
+This same-VNet result does not establish universal or transitive reachability from every Azure-peered or on-premises network. Other connected networks require their own routing, peering, and route-propagation configuration for the CUDN prefix.
 
 ## 9. Optional lifecycle validation
 
