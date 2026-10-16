@@ -316,18 +316,21 @@ Earlier job failures caused by Microsoft Graph rejecting the Entra application `
 This procedure reproduces the engineering implementation used in functional testing at the exact source commit and image digest below. It is not final production installation guidance. Recheck the upstream project and applicable product guidance before selecting an installation path or using a newer build.
 {{% /alert %}}
 
+The pinned engineering source expects a Go version with tool-module support that satisfies its `go.mod` requirements. At this commit, the repository defines kustomize as `go tool kustomize`; the procedure below follows that source-tree mechanism. If you use a separately installed kustomize binary instead, ensure its version is compatible with the pinned source. The repository does not install a local kustomize binary through a Make target.
+
 ```bash
 export BGP_CC_COMMIT="d317567b54e6d4457246032f952fa6c6b80973c7"
 export BGP_CC_IMAGE="quay.io/redhat-user-workloads/bgp-cloud-connector-tenant/bgp-cloud-connector/bgp-cloud-connector-operator@sha256:1acd2ea1727ba868e4cd324730d76b3bdb12d48357b73cdf2b8b67fd80140bc5"
 git clone https://github.com/openshift/bgp-cloud-connector.git
 git -C bgp-cloud-connector checkout "$BGP_CC_COMMIT"
-make -C bgp-cloud-connector kustomize
 (
   cd bgp-cloud-connector/config/manager
-  ../../bin/kustomize edit set image controller="$BGP_CC_IMAGE"
+  go tool kustomize edit set image controller="$BGP_CC_IMAGE"
 )
-bgp-cloud-connector/bin/kustomize build bgp-cloud-connector/config/default \
-  > bgp-cloud-connector-operator.yaml
+(
+  cd bgp-cloud-connector
+  go tool kustomize build config/default
+) > bgp-cloud-connector-operator.yaml
 oc apply -f bgp-cloud-connector-operator.yaml
 ```
 
