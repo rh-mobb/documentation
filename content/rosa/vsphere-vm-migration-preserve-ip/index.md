@@ -666,11 +666,81 @@ OVN derives the MAC address from the IP address on a Layer 2 CUDN. Here `0a:58:`
     60 packets transmitted, 60 received, 0% packet loss
     ```
 
+## 10. Enable outbound internet access with an EgressIP
+
+Out of the box, a VM on an advertised CUDN cannot reach the internet, although cluster DNS and east to west traffic both work. The reason is worth understanding before you fix it.
+
+When OVN-Kubernetes advertises a network over BGP, it **disables SNAT** for that network. That is deliberate: the point of advertising the network is that the VM's real address is routable, so masquerading it would defeat the purpose. The VM therefore sends packets to the internet with a source address of `10.100.0.50`, which leaves the node (the BGP operator disables the EC2 source and destination check for exactly this reason) and reaches the VPC route for `0.0.0.0/0`, pointing at the NAT gateway.
+
+An AWS NAT gateway only translates traffic whose source falls inside the VPC CIDR. `10.100.0.50` is outside `10.20.0.0/16`, so the NAT gateway discards it.
+
+This also explains the apparent contradiction where DNS works but the internet does not: cluster DNS lives on the service network and is resolved inside the OVN overlay, so it never reaches the VPC or the NAT gateway at all.
+
+The fix is an **EgressIP** from the VPC CIDR. Outbound traffic is then SNATed to an address the NAT gateway will translate, while inbound traffic to the VM address continues to work unchanged.
+
+1. Pick an unused address inside the subnet your worker nodes sit in, and confirm it is free:
+
+    ```bash
+    aws ec2 describe-network-interfaces --region <region> \
+      --filters "Name=addresses.private-ip-address,Values=10.20.15.200" \
+      --query 'NetworkInterfaces[].NetworkInterfaceId' --output text
+    ```
+
+1. Label the nodes allowed to host egress addresses. Using your general worker nodes keeps the virtualization nodes free:
+
+    ```bash
+    oc label node <worker-node> k8s.ovn.org/egress-assignable=""
+    ```
+
+1. Create the `EgressIP`, selecting the namespace holding your VMs:
+
+    ```yaml
+    cat << EOF | oc apply -f -
+    apiVersion: k8s.ovn.org/v1
+    kind: EgressIP
+    metadata:
+      name: vms-egress
+    spec:
+      egressIPs:
+        - 10.20.15.200
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: vms
+    EOF
+    ```
+
+1. Confirm it was assigned to a node:
+
+    ```bash
+    oc get egressip
+    ```
+
+    ```output
+    NAME         EGRESSIPS      ASSIGNED NODE   ASSIGNED EGRESSIPS
+    vms-egress   10.20.15.200   worker-2        10.20.15.200
+    ```
+
+1. Confirm the cloud network config controller attached it to the node network interface in AWS:
+
+    ```bash
+    aws ec2 describe-network-interfaces --region <region> \
+      --filters "Name=addresses.private-ip-address,Values=10.20.15.200" \
+      --query 'NetworkInterfaces[].[NetworkInterfaceId,Attachment.InstanceId]' --output text
+    ```
+
+1. From inside the VM, outbound traffic now works, and the source address seen by the internet is your NAT gateway public address:
+
+    ```bash
+    curl -4 -s -o /dev/null -w '%{http_code}\n' https://1.1.1.1/
+    curl -4 -s https://ifconfig.me
+    ```
+
+Inbound reachability, DNS, east to west traffic, and live migration are all unaffected by this change.
+
 ## Known limitations
 
 | Behaviour | Detail |
 |---|---|
-| **No outbound internet access from the VM** | A VM on a primary Layer 2 CUDN has no north to south egress. Cluster DNS resolution works (the guest resolves through the cluster CoreDNS service address), and east to west traffic to other CUDN workloads works, but outbound connections to the internet time out. Plan for an egress path if your workload needs one |
 | **Conversion pods cannot run in a CUDN namespace** | As described in step 6, pods in a primary CUDN namespace lose their route to external networks including vSphere. This is why the migration targets a staging namespace |
 | **Guest MAC address changes** | OVN derives the MAC from the IP on a Layer 2 CUDN. If your workload is licensed against a MAC address, test this before committing to a migration window |
 | **Serial console may be unavailable** | VMs installed from an ISO in vSphere typically lack `console=ttyS0` on the kernel command line, so `virtctl console` shows nothing. Use `virtctl vnc`, or the VNC screenshot API, to see the guest console |
