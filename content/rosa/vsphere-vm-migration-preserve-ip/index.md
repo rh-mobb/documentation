@@ -30,6 +30,17 @@ Four pieces have to line up. Missing any one of them produces a VM that either b
 The ROSA advanced networking documentation uses `bridge: {}` binding for VMs on an advertised CUDN, and warns that `masquerade` installs nftables rules that drop inbound traffic. Both points hold. This guide uses the **`l2bridge` binding plugin** instead, because plain `bridge` reports `LIVE-MIGRATABLE=False`: KubeVirt requires masquerade or a migration aware binding plugin. If you do not need live migration, `bridge` is the simpler choice.
 {{< /alert >}}
 
+### How the layers fit together
+
+It is easy to read "Layer 2 network" and "BGP" together and assume one of them is wrong. Both are accurate, they just describe different halves of the path.
+
+| Where | Layer | What it does |
+|---|---|---|
+| Inside the cluster | **Layer 2** | The CUDN is a flat broadcast domain for the VM subnet, encapsulated between nodes. This is what lets a VM keep its address when it live migrates, because it never leaves the segment |
+| Cluster to AWS | **Layer 3** | BGP advertises the VM subnet as a route into the VPC route table, with a node address as the next hop |
+
+No Layer 2 is extended into AWS, and none needs to be. You can see the split in a ping: traffic between two VMs on the CUDN stays on the same subnet, while a ping from an EC2 instance to a VM arrives with a decremented TTL, because it was routed.
+
 ## Prerequisites
 
 * A ROSA cluster with hosted control planes, version 4.22 or later
