@@ -278,8 +278,8 @@ Choose a subnet that does **not** overlap your VPC CIDR, and that contains the a
 
 ```yaml
 cat << EOF | oc apply -f -
-apiVersion: v1
-kind: Namespace
+apiVersion: project.openshift.io/v1
+kind: Project
 metadata:
   name: openshift-mtv
 ---
@@ -298,10 +298,11 @@ metadata:
   name: mtv-operator
   namespace: openshift-mtv
 spec:
+  channel: release-v2.12
+  installPlanApproval: Automatic
+  name: mtv-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  name: mtv-operator
-  channel: release-v2.12
 EOF
 ```
 
@@ -340,7 +341,7 @@ oc get pods -n openshift-mtv
       namespace: openshift-mtv
       labels:
         createdForResourceType: providers
-        createdForResource: vcenter
+        createdForProviderType: vsphere
     type: Opaque
     stringData:
       user: 'administrator@vsphere.local'
@@ -384,6 +385,23 @@ external command 'curl ...': exited with error 60
         namespace: openshift-mtv
     EOF
     ```
+
+    {{< alert state="warning" >}}
+**Consider building a VDDK image before you migrate anything.** This guide does not use one, which is why the transfer in step 7 is slow and why the TLS workaround above is needed at all. The MTV documentation is firm on the point: creating the image is optional but "highly recommended", and "using MTV without VDDK is not recommended and could result in significantly lower migration speeds."
+
+It is not always optional. **You must use a VDDK image if the source VMs are backed by VMware vSAN.**
+
+To use one, build and push the image per the MTV documentation, then set it on the provider:
+
+```yaml
+spec:
+  settings:
+    sdkEndpoint: vcenter
+    vddkInitImage: <registry_path>/vddk:<tag>
+```
+
+Note that storing the VDDK image in a public registry might violate VMware licence terms.
+    {{< /alert >}}
 
 1. Confirm the provider connects and populates its inventory:
 
@@ -481,7 +499,7 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
 
 1. Power off the source VM in vSphere. Cold migration requires it.
 
-1. Create the plan. Set `targetPowerState: "off"` so you can pin the address before the VM ever boots:
+1. Create the plan. Set `targetPowerState: "off"` so you can pin the address before the VM ever boots. The accepted values are `off`, `on`, and `auto`, where `auto` preserves the power state of the source VM. It can also be set per VM under `spec.vms` if a single plan carries VMs that should end up in different states:
 
     ```yaml
     cat << EOF | oc apply -f -
