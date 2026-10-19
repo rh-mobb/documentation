@@ -22,9 +22,13 @@ Four pieces have to line up. Missing any one of them produces a VM that either b
 | Piece | Role |
 |---|---|
 | **BGP Cloud Connector operator** | Advertises the VM network into the AWS VPC route table so the address is reachable from outside the cluster |
-| **ClusterUserDefinedNetwork (CUDN)** with `ipam.lifecycle: Persistent` | A primary Layer 2 network whose IP allocations survive restart and live migration |
+| **ClusterUserDefinedNetwork (CUDN)** with `ipam.lifecycle: Persistent` | A primary Layer 2 network whose IP allocations survive restart and live migration. You do not create this by hand, the `BGPRouting` resource generates it |
 | **IPAMClaim** | Pins one specific address to one specific VM, so you choose the address rather than accepting whatever IPAM offers |
 | **`l2bridge` network binding** | Gives the guest the real network address (not a NAT address) while remaining live migratable |
+
+{{< alert state="info" >}}
+The ROSA advanced networking documentation uses `bridge: {}` binding for VMs on an advertised CUDN, and warns that `masquerade` installs nftables rules that drop inbound traffic. Both points hold. This guide uses the **`l2bridge` binding plugin** instead, because plain `bridge` reports `LIVE-MIGRATABLE=False`: KubeVirt requires masquerade or a migration aware binding plugin. If you do not need live migration, `bridge` is the simpler choice.
+{{< /alert >}}
 
 ## Prerequisites
 
@@ -43,148 +47,195 @@ oc get nodes -o json | jq -r '.items[] | "\(.metadata.name)  kvm=\(.status.alloc
 ```
 {{< /alert >}}
 
-## 1. Install the BGP Cloud Connector operator
+## 1. Prepare AWS for the BGP Cloud Connector
 
-The BGP Cloud Connector advertises your VM network into the AWS VPC route table, so workloads elsewhere in the VPC (and anything reachable through your VPN) can route to the VM address directly.
+The BGP Cloud Connector peers your ROSA compute nodes with an **AWS Route Server**, so the VM network is reachable from the VPC without NAT. The Operator generates `FRRConfiguration` resources and disables the source and destination check on the compute node network interfaces.
 
-1. Create the operator namespace and subscription:
+This section follows the [ROSA advanced networking documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/advanced_networking/index). Refer to it for the authoritative IAM policy contents.
+
+1. Capture the cluster OIDC provider and your account ID:
+
+    ```bash
+    OIDC_PROVIDER=$(oc get authentication cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed 's|https://||')
+    AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+    ```
+
+1. Create an IAM permission policy for the Operator. It needs `sts:GetCallerIdentity`, `ec2:DescribeRouteServers`, `ec2:DescribeRouteServerEndpoints`, `ec2:DescribeSubnets`, `ec2:DescribeRouteServerPeers`, `ec2:CreateRouteServerPeer`, `ec2:DeleteRouteServerPeer`, `ec2:CreateTags`, `ec2:DescribeInstances`, and `ec2:ModifyNetworkInterfaceAttribute`:
+
+    ```bash
+    POLICY_ARN=$(aws iam create-policy \
+      --policy-name bgp-cloud-connector-operator-policy \
+      --policy-document file://operator-permission-policy.json \
+      --query 'Policy.Arn' --output text)
+    ```
+
+1. Create a role whose trust policy allows `sts:AssumeRoleWithWebIdentity` from the cluster OIDC provider, scoped to the Operator service account:
+
+    ```json
+    "${OIDC_PROVIDER}:sub": "system:serviceaccount:bgp-cloud-connector:openshift-bgp-cloud-connector-controller-manager"
+    ```
+
+    ```bash
+    aws iam create-role --role-name bgp-cloud-connector-operator \
+      --assume-role-policy-document file://operator-trust-policy.json
+    aws iam attach-role-policy --role-name bgp-cloud-connector-operator \
+      --policy-arn ${POLICY_ARN}
+    ```
+
+    {{< alert state="warning" >}}
+The Operator cannot create its own IAM role. On ROSA, which always uses STS, you must create this role in advance and pass its ARN to the Operator subscription in step 2.
+    {{< /alert >}}
+
+1. Create a security group for BGP peering traffic, and allow TCP 179 outbound and inbound, plus the ephemeral port range `32768-60999` for TCP and UDP. The ephemeral range is needed because return traffic can arrive on a different node:
+
+    ```bash
+    BGP_SG_ID=$(aws ec2 create-security-group \
+      --group-name "bgp-peering-sg" \
+      --description "BGP Cloud Connector peering traffic" \
+      --vpc-id <vpc-id> \
+      --query 'GroupId' --output text)
+    ```
+
+1. Create a machine pool that carries both the security group and the `bgp_router` label. These are the nodes that peer with the Route Server, so use the same bare metal nodes that will run your VMs:
+
+    ```bash
+    rosa create machinepool --cluster <cluster-name> \
+      --name bgp-workers \
+      --availability-zone <az> \
+      --additional-security-group-ids ${BGP_SG_ID} \
+      --labels "bgp_router=true" \
+      --instance-type <bare-metal-type> \
+      --replicas 2
+
+    oc get nodes -l bgp_router=true
+    ```
+
+    {{< alert state="info" >}}
+Apply `bgp_router=true` to **every** node your VMs can land on, not only the nodes you expect to carry ingress traffic. Those nodes act as the next hop and have their source and destination check disabled.
+    {{< /alert >}}
+
+1. Create the Route Server, associate it with the VPC, and create an endpoint in each private subnet holding BGP nodes:
+
+    ```bash
+    aws ec2 create-route-server --amazon-side-asn <amazon-asn>
+    aws ec2 associate-route-server --route-server-id <rs-id> --vpc-id <vpc-id>
+    aws ec2 create-route-server-endpoint --route-server-id <rs-id> --subnet-id <subnet-id>
+    ```
+
+    AWS permits a maximum of two Route Server endpoints per subnet.
+
+1. Enable route propagation on the route tables for your compute node subnets, and on any subnets providing external connectivity:
+
+    ```bash
+    aws ec2 enable-route-server-propagation \
+      --route-server-id <rs-id> --route-table-id <route-table-id>
+    ```
+
+1. Confirm the subnet network ACLs allow TCP 179 in both directions. Network ACLs are stateless, so a missing return rule silently breaks peering:
+
+    ```bash
+    aws ec2 describe-network-acls \
+      --filters "Name=association.subnet-id,Values=<subnet-id>" \
+      --query "NetworkAcls[].Entries"
+    ```
+
+## 2. Install the BGP Cloud Connector Operator
+
+1. Create the namespace and operator group:
+
+    ```bash
+    oc create namespace bgp-cloud-connector
+    ```
 
     ```yaml
     cat << EOF | oc apply -f -
-    apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: bgp-cloud-connector
-    ---
     apiVersion: operators.coreos.com/v1
     kind: OperatorGroup
     metadata:
-      name: bgp-cloud-connector
+      name: bgp-cloud-connector-operatorgroup
       namespace: bgp-cloud-connector
     spec:
       targetNamespaces:
         - bgp-cloud-connector
-    ---
+    EOF
+    ```
+
+1. Create the subscription, passing the IAM role ARN from step 1 through the `ROLEARN` environment variable:
+
+    ```yaml
+    cat << EOF | oc apply -f -
     apiVersion: operators.coreos.com/v1alpha1
     kind: Subscription
     metadata:
       name: bgp-cloud-connector-operator
       namespace: bgp-cloud-connector
     spec:
+      channel: stable
+      name: bgp-cloud-connector
       source: redhat-operators
       sourceNamespace: openshift-marketplace
-      name: bgp-cloud-connector
-      channel: stable
+      config:
+        env:
+          - name: ROLEARN
+            value: arn:aws:iam::${AWS_ACCOUNT_ID}:role/bgp-cloud-connector-operator
     EOF
     ```
 
-1. Wait for the operator to report `Succeeded`:
+1. Wait for the Operator to report `Succeeded`:
 
     ```bash
-    oc get csv -n bgp-cloud-connector -w
+    oc get csv -n bgp-cloud-connector
     ```
 
-1. Create an **AWS Route Server** in the VPC that hosts your cluster, and associate it with the VPC. Note the route server ID, you need it in the next step.
+## 3. Configure BGP and create the VM network
 
-    ```bash
-    aws ec2 create-route-server --amazon-side-asn 65000 --region <region>
-    aws ec2 associate-route-server --route-server-id <rs-id> --vpc-id <vpc-id> --region <region>
-    ```
+The `BGPCloudConfiguration` resource is a cluster scoped singleton and **must** be named `cluster`.
 
-1. Label the nodes that will act as BGP routers. These should be your bare metal virtualization nodes:
-
-    ```bash
-    oc label node <node-name> bgp_router=true
-    ```
-
-1. Create the `BGPCloudConfiguration`:
+1. Create the BGP configuration. `localASN` must differ from the Amazon side ASN, which is discovered automatically:
 
     ```yaml
     cat << EOF | oc apply -f -
-    apiVersion: networking.openshift.io/v1
+    apiVersion: networking.openshift.io/v1beta1
     kind: BGPCloudConfiguration
     metadata:
       name: cluster
     spec:
       platform: AWS
-      aws:
-        region: <region>
-        routeServerIDs:
-          - <rs-id>
       bgp:
         localASN: 65001
         livenessDetection: bgp-keepalive
       routerNodeSelector:
         bgp_router: "true"
+      aws:
+        region: <region>
+        routeServerIDs:
+          - <rs-id>
     EOF
     ```
 
-1. Confirm it reaches `Ready`:
-
-    ```bash
-    oc get bgpcloudconfigurations.networking.openshift.io cluster \
-      -o jsonpath='{.status.phase}{"\n"}'
-    ```
-
-## 2. Create the ClusterUserDefinedNetwork
-
-The CUDN is the network your migrated VM will live on. Three properties matter:
-
-* **`role: Primary`** means this network replaces the default pod network for namespaces that match the selector. A VM attached with plain `pod: {}` networking lands on the CUDN automatically, with no Multus or NetworkAttachmentDefinition reference in the VM manifest.
-* **`topology: Layer2`** gives a flat broadcast domain across nodes, which is what allows an address to follow a VM between hosts.
-* **`ipam.lifecycle: Persistent`** is the critical one. Without it, the VM is handed a fresh address on every restart.
-
-{{< alert state="warning" >}}
-Choose a CUDN subnet that does **not** overlap your VPC CIDR, and that contains the addresses of the VMs you intend to migrate. In this guide the VM being migrated has `10.100.0.50`, so the CUDN subnet is `10.100.0.0/16`.
-{{< /alert >}}
-
-1. Create the namespace that will hold your VMs, and label it so the CUDN selects it:
-
-    ```bash
-    oc new-project vms
-    oc label namespace vms cluster-udn=my-cudn
-    ```
-
-1. Create the CUDN:
+1. Create the namespace that will hold your VMs. **Both labels must be present when the namespace is created**, because admission rejects adding the user defined network label to an existing namespace:
 
     ```yaml
     cat << EOF | oc apply -f -
-    apiVersion: k8s.ovn.org/v1
-    kind: ClusterUserDefinedNetwork
+    apiVersion: v1
+    kind: Namespace
     metadata:
-      name: my-cudn
-    spec:
-      namespaceSelector:
-        matchLabels:
-          cluster-udn: my-cudn
-      network:
-        topology: Layer2
-        layer2:
-          role: Primary
-          ipam:
-            lifecycle: Persistent
-          subnets:
-            - 10.100.0.0/16
+      name: vms
+      labels:
+        k8s.ovn.org/primary-user-defined-network: ""
+        cluster-udn: my-cudn
     EOF
     ```
 
-1. Verify it was created and allocated:
+    {{< alert state="warning" >}}
+Do not use `oc new-project` followed by `oc label` here. The label has to be set at creation time, and retrofitting it fails.
+    {{< /alert >}}
 
-    ```bash
-    oc get clusteruserdefinednetwork my-cudn \
-      -o jsonpath='{range .status.conditions[*]}{.type}={.status}{"\n"}{end}'
-    ```
-
-    ```output
-    NetworkCreated=True
-    NetworkAllocationSucceeded=True
-    ```
-
-1. Advertise the CUDN subnet through BGP:
+1. Create the `BGPRouting` resource. This **generates** the ClusterUserDefinedNetwork for you, so you do not create the CUDN by hand. The `name` under `spec.network` must match the `cluster-udn` label on the namespace:
 
     ```yaml
     cat << EOF | oc apply -f -
-    apiVersion: networking.openshift.io/v1
+    apiVersion: networking.openshift.io/v1beta1
     kind: BGPRouting
     metadata:
       name: my-cudn
@@ -196,14 +247,34 @@ Choose a CUDN subnet that does **not** overlap your VPC CIDR, and that contains 
     EOF
     ```
 
-1. Confirm the route appears in your VPC route table:
+    {{< alert state="warning" >}}
+Choose a subnet that does **not** overlap your VPC CIDR, and that contains the addresses of the VMs you intend to migrate. In this guide the VM being migrated has `10.100.0.50`, so the subnet is `10.100.0.0/16`. A Layer 2 CUDN permits one IPv4 and one IPv6 CIDR per subnet.
+    {{< /alert >}}
+
+1. Verify. The generated network is named `cluster-udn-<network_name>`, and it is created as a primary Layer 2 network with `ipam.lifecycle: Persistent`, which is what allows an address to survive restart and live migration:
+
+    ```bash
+    oc get bgpcloudconfiguration cluster -o jsonpath='{.status.phase}{"\n"}'
+    oc get bgprouting my-cudn -o jsonpath='{.status.phase}{"\n"}'
+    oc get clusteruserdefinednetwork
+    oc get routeadvertisements
+    oc get frrconfiguration -n openshift-frr-k8s
+    ```
+
+    ```output
+    Ready
+    Ready
+    NAME                   AGE
+    cluster-udn-my-cudn    1m
+    ```
+
+1. Confirm the subnet now appears in the VPC route table:
 
     ```bash
     aws ec2 describe-route-tables --route-table-id <private-rtb-id> --region <region> \
       --query 'RouteTables[0].Routes[?DestinationCidrBlock==`10.100.0.0/16`]' --output table
     ```
-
-## 3. Install the Migration Toolkit for Virtualization
+## 4. Install the Migration Toolkit for Virtualization
 
 ```yaml
 cat << EOF | oc apply -f -
@@ -254,7 +325,7 @@ Wait for the MTV pods to come up:
 oc get pods -n openshift-mtv
 ```
 
-## 4. Add the vSphere provider
+## 5. Add the vSphere provider
 
 1. Retrieve your vCenter CA certificate. From the vCenter appliance, or by downloading `https://<vcenter>/certs/download.zip`.
 
@@ -291,7 +362,7 @@ virt-v2v: error: downloading https://vcenter.example.com/folder/...vmdk:
 external command 'curl ...': exited with error 60
 ```
 
-`curl` exit code 60 means the peer certificate could not be verified. Setting `insecureSkipVerify` adds `?no_verify=1` to the `vpx://` URL that virt-v2v builds, which clears the failure. Configuring a VDDK image avoids both this issue and the slow transfer described in step 6.
+`curl` exit code 60 means the peer certificate could not be verified. Setting `insecureSkipVerify` adds `?no_verify=1` to the `vpx://` URL that virt-v2v builds, which clears the failure. Configuring a VDDK image avoids both this issue and the slow transfer described in step 7.
     {{< /alert >}}
 
 1. Create the provider:
@@ -326,7 +397,7 @@ external command 'curl ...': exited with error 60
     vcenter   vsphere     Ready    True    True        True
     ```
 
-## 5. Record the VM address you intend to preserve
+## 6. Record the VM address you intend to preserve
 
 Query the MTV inventory for the source VM. The guest address comes from VMware Tools, so capture it **before** powering the VM off.
 
@@ -344,16 +415,16 @@ oc exec -n openshift-mtv deploy/forklift-controller -- \
 10.100.0.50/16 mac=00:50:56:bc:09:a3
 ```
 
-Record that address. It is the value you pin in step 8.
+Record that address. It is the value you pin in step 9.
 
-## 6. Create the network and storage maps, and run the migration
+## 7. Create the network and storage maps, and run the migration
 
 {{< alert state="warning" >}}
 **Migrate into a namespace that does _not_ have the CUDN label.**
 
 This is counterintuitive, but it matters. In a namespace selected by a **primary** CUDN, every pod receives the CUDN as its default route, including the MTV guest conversion pod. That pod needs to reach vCenter, and the CUDN has no path to your vSphere network, so conversion fails with a connection timeout after roughly two minutes.
 
-Migrate into an ordinary namespace first, then move the disk onto the CUDN in step 7.
+Migrate into an ordinary namespace first, then move the disk onto the CUDN in step 8.
 {{< /alert >}}
 
 1. Create a staging namespace:
@@ -484,7 +555,7 @@ On a 16 GiB Fedora VM across a Site to Site VPN with around 72 ms round trip, co
 
 </details>
 
-## 7. Clone the converted disk onto the CUDN namespace
+## 8. Clone the converted disk onto the CUDN namespace
 
 The converted disk now lives in the staging namespace. Clone it into the CUDN namespace, and take the opportunity to place it on RWX storage so the VM can live migrate.
 
@@ -520,7 +591,7 @@ Wait for the clone:
 oc get dv my-vm-root -n vms -w
 ```
 
-## 8. Pin the IP address with an IPAMClaim
+## 9. Pin the IP address with an IPAMClaim
 
 Persistent IPAM records each allocation in an `IPAMClaim` named `<vm-name>.<interface-name>`. Create that claim yourself, before the VM first boots, and the VM receives exactly the address you choose.
 
@@ -583,7 +654,13 @@ oc get vm my-vm -n vm-staging -o jsonpath='{.spec.template.spec.domain.firmware}
 **Use the `l2bridge` binding, not `bridge`.** Plain `bridge: {}` gives the guest the correct address but reports `LIVE-MIGRATABLE=False`, because KubeVirt requires masquerade or a migration aware binding plugin. `masquerade` is migratable but hides the real address behind NAT inside the guest. The `l2bridge` binding plugin gives you both.
     {{< /alert >}}
 
-1. Create the IPAMClaim and pin the address. The `network` value is `cluster_udn_` followed by the CUDN name:
+1. Create the IPAMClaim and pin the address.
+
+    The `network` value is `cluster_udn_` followed by the **full generated CUDN name**, which itself begins with `cluster-udn-`. For a `BGPRouting` named `my-cudn`, the CUDN is `cluster-udn-my-cudn`, so the value is `cluster_udn_cluster-udn-my-cudn`. Confirm it rather than assuming:
+
+    ```bash
+    oc get clusteruserdefinednetwork -o name
+    ```
 
     ```bash
     VM_UID=$(oc get vm my-vm -n vms -o jsonpath='{.metadata.uid}')
@@ -605,7 +682,7 @@ oc get vm my-vm -n vm-staging -o jsonpath='{.spec.template.spec.domain.firmware}
           blockOwnerDeletion: true
     spec:
       interface: ""
-      network: cluster_udn_my-cudn
+      network: cluster_udn_cluster-udn-my-cudn
     EOF
 
     oc patch ipamclaim my-vm.default -n vms --subresource=status --type=merge \
@@ -618,7 +695,7 @@ oc get vm my-vm -n vm-staging -o jsonpath='{.spec.template.spec.domain.firmware}
     oc patch vm my-vm -n vms --type=merge -p '{"spec":{"runStrategy":"Always"}}'
     ```
 
-## 9. Verify
+## 10. Verify
 
 1. The VM should come up on the original address:
 
@@ -666,7 +743,7 @@ OVN derives the MAC address from the IP address on a Layer 2 CUDN. Here `0a:58:`
     60 packets transmitted, 60 received, 0% packet loss
     ```
 
-## 10. Enable outbound internet access with an EgressIP
+## 11. Enable outbound internet access with an EgressIP
 
 Out of the box, a VM on an advertised CUDN cannot reach the internet, although cluster DNS and east to west traffic both work. The reason is worth understanding before you fix it.
 
@@ -741,7 +818,7 @@ Inbound reachability, DNS, east to west traffic, and live migration are all unaf
 
 | Behaviour | Detail |
 |---|---|
-| **Conversion pods cannot run in a CUDN namespace** | As described in step 6, pods in a primary CUDN namespace lose their route to external networks including vSphere. This is why the migration targets a staging namespace |
+| **Conversion pods cannot run in a CUDN namespace** | As described in step 7, pods in a primary CUDN namespace lose their route to external networks including vSphere. This is why the migration targets a staging namespace |
 | **Guest MAC address changes** | OVN derives the MAC from the IP on a Layer 2 CUDN. If your workload is licensed against a MAC address, test this before committing to a migration window |
 | **Serial console may be unavailable** | VMs installed from an ISO in vSphere typically lack `console=ttyS0` on the kernel command line, so `virtctl console` shows nothing. Use `virtctl vnc`, or the VNC screenshot API, to see the guest console |
 
