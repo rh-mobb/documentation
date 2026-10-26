@@ -16,7 +16,7 @@ This guide configures BGP Cloud Connector on an existing ROSA cluster with hoste
 
 ![BGP Cloud Connector architecture](images/rosa-bgp-arch-diagram.png)
 
-The traffic path has two parts:
+The traffic path has four steps, in two phases — route distribution (1–2) and the data path (3–4):
 
 1. FRR on selected ROSA compute nodes establishes BGP sessions with two AWS Route Server endpoints.
 1. BGP Cloud Connector advertises the CUDN prefix. Route Server propagates the learned route into selected VPC route tables.
@@ -41,7 +41,7 @@ You need:
 * Current `aws`, `rosa`, `oc`, `jq`, and `virtctl` clients.
 
 {{% alert state="warning" header="Costs and ownership" %}}
-Route Server endpoints, bare-metal workers, EC2 instances, and VM storage incur charges. Record the owner and provisioning method for each resource before creating it. Do not delete shared resources during cleanup.
+Route Server endpoints, bare-metal workers, EC2 instances, and VM storage incur charges. Route Server endpoints are billed **per endpoint per hour** whether or not traffic flows, and this procedure creates two; check current pricing before you start. Bare-metal instance types are also materially more expensive than standard workers. Record the owner and provisioning method for each resource before creating it. Do not delete shared resources during cleanup.
 {{% /alert %}}
 
 Set the values used repeatedly:
@@ -154,6 +154,28 @@ Configure these rules according to your network policy:
 * Workload protocols required for the test, such as ICMP and TCP 8080 from the VPC CIDR.
 * UDP 3784 if you use BFD rather than BGP keepalives.
 
+Scoped to the VPC CIDR, that is:
+
+```bash
+VPC_CIDR=$(aws ec2 describe-vpcs --region "${AWS_REGION}" \
+  --vpc-ids "${VPC_ID}" --query 'Vpcs[0].CidrBlock' --output text)
+
+for RULE in "tcp 179" "tcp 32768-60999" "udp 32768-60999" "tcp 8080" "udp 3784"; do
+  set -- ${RULE}
+  aws ec2 authorize-security-group-ingress \
+    --region "${AWS_REGION}" --group-id "${BGP_SG_ID}" \
+    --protocol "$1" --port "$2" --cidr "${VPC_CIDR}"
+done
+
+aws ec2 authorize-security-group-ingress \
+  --region "${AWS_REGION}" --group-id "${BGP_SG_ID}" \
+  --protocol icmp --port -1 --cidr "${VPC_CIDR}"
+```
+
+Tighten these before production use; the VPC CIDR is broader than the Route Server
+endpoint and router-worker subnets actually require. Egress is covered by the
+default allow-all egress rule, so TCP 179 egress needs no explicit entry.
+
 Security groups do not override network ACLs. Confirm that the worker and endpoint subnet ACLs allow TCP 179 in both directions. BGP rules alone are not sufficient for the connectivity test. The worker and EC2 tester subnet ACLs must also allow the application traffic, such as ICMP and TCP 8080, plus the corresponding response traffic. Network ACLs are stateless, so define both ingress and egress rules, including the applicable ephemeral TCP ports for replies. Check every subnet that can carry the request or return path, especially when traffic can enter through one router worker and leave through another. The dedicated security group supplements the ROSA-managed groups; it does not replace them.
 
 Create a machine pool with the security group and router label. The lab used one worker. Use a topology appropriate for your availability requirements.
@@ -162,7 +184,7 @@ Create a machine pool with the security group and router label. The lab used one
 rosa create machinepool \
   --cluster "${CLUSTER_NAME}" \
   --name bgp-workers \
-  --availability-zone <availability-zone> \
+  --subnet <router-worker-subnet-id> \
   --additional-security-group-ids "${BGP_SG_ID}" \
   --labels "bgp_router=true" \
   --instance-type <bare-metal-instance-type> \
@@ -171,6 +193,12 @@ rosa create machinepool \
 rosa describe machinepool --cluster "${CLUSTER_NAME}" bgp-workers
 oc get nodes -l bgp_router=true -o wide
 ```
+
+Use `--subnet`, not `--availability-zone`. The router worker must land in the **same
+subnet** that holds the Route Server endpoints created in step 2. An availability zone can
+contain several subnets, so the AZ flag does not guarantee correct placement. The two flags
+are mutually exclusive; supplying both fails with `setting both subnet and
+availability-zone flag is not supported`.
 
 Attach the security group when creating the machine pool. Adding one to an existing ROSA HCP machine pool can require replacement.
 
@@ -209,10 +237,16 @@ aws ec2 create-route-server-endpoint \
 
 aws ec2 describe-route-server-endpoints \
   --region "${AWS_REGION}" \
-  --filters Name=route-server-id,Values="${ROUTE_SERVER_ID}"
+  --query "RouteServerEndpoints[?RouteServerId=='${ROUTE_SERVER_ID}'].[RouteServerEndpointId,State,EniAddress]" \
+  --output text
 ```
 
-Wait until both endpoints are `available`.
+`describe-route-server-endpoints` does not accept a `route-server-id` filter. Passing
+`--filters Name=route-server-id,...` returns `InvalidParameterValue`. Filter client-side
+with `--query`, as above, or pass explicit `--route-server-endpoint-ids`.
+
+Wait until both endpoints are `available`. Note the `EniAddress` of each; these are the
+BGP peer addresses the router worker will connect to.
 
 Enable propagation on the route tables used by the router-worker subnets and EC2 tester subnet:
 
@@ -455,10 +489,22 @@ oc wait vm/bgp-test-vm -n bgp-test-vms \
   --for=condition=Ready --timeout=15m
 oc get vm,vmi -n bgp-test-vms -o wide
 
-VM_IP=$(oc get vmi bgp-test-vm -n bgp-test-vms \
-  -o jsonpath='{.status.interfaces[0].ipAddress}')
+# The address is reported by the guest agent, which connects a little after the VM
+# becomes Ready. Wait for it rather than reading the field immediately.
+oc wait vmi/bgp-test-vm -n bgp-test-vms \
+  --for=condition=AgentConnected --timeout=5m
+
+until [[ -n "${VM_IP:-}" ]]; do
+  VM_IP=$(oc get vmi bgp-test-vm -n bgp-test-vms \
+    -o jsonpath='{.status.interfaces[0].ipAddress}')
+  [[ -n "${VM_IP}" ]] || sleep 10
+done
 echo "${VM_IP}"
 ```
+
+Reading `ipAddress` immediately after `oc wait --for=condition=Ready` returns an empty
+string: `Ready` indicates the VM is running, not that the guest agent has reported its
+addresses. The address should fall inside the CUDN prefix, for example `10.100.0.4`.
 
 ## 6. Confirm BGP and direct connectivity
 
