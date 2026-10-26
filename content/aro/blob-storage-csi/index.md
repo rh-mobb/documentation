@@ -12,7 +12,7 @@ validated_version: "4.21"
 
 The Azure Blob Storage Container Storage Interface (CSI) is a CSI-compliant driver that can be installed on an Azure Red Hat OpenShift (ARO) cluster to provision and mount Azure Blob storage for Kubernetes workloads.
 
-When you use this CSI driver to mount Azure Blob storage into a pod, it allows you to use blob storage to work with massive amounts of data.
+The driver mounts Azure Blob storage for use by pods.
 
 You can also refer to the driver's documentation [here](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/charts/README.md).
 
@@ -26,10 +26,10 @@ The Azure Blob CSI driver supports two common dynamic provisioning models:
 
 * The steps below were validated on ARO using a dynamic provisioning path with BlobFuse2 and a manually specified storage account.
 * The driver-managed storage account creation path was outside the scope of this update.
-* During validation, additional ARO-specific controller credential wiring was required:
-  - `azure-cred-file` ConfigMap in `kube-system`
+* During validation, the ARO-specific configuration included:
   - a dedicated cloud configuration secret in `kube-system`
-  - explicit BlobFuse2 working directory in the StorageClass mount options
+  - the chart's RHCOS path handling with read-ahead configuration disabled
+  - an explicit BlobFuse2 working directory in the dynamic StorageClass mount options
 * A statically provisioned volume using service principal authentication and an Azure RBAC data role was also validated, and is described in [Mounting without a storage account key](#mounting-without-a-storage-account-key).
 
 
@@ -80,7 +80,7 @@ The storage account name must be globally unique in Azure. Update `STORAGE_ACCOU
 
 The Azure Blob CSI driver needs Azure credentials so it can access the blob storage resources used by this walkthrough.
 
-For the validated ARO path used here, this includes:
+This guide uses:
 
 - a service principal with the required Azure permissions
 - a Kubernetes secret for the driver
@@ -90,61 +90,44 @@ For the validated ARO path used here, this includes:
 1. Create a service principal for the Blob CSI driver:
 
     ```bash
-    az ad sp create-for-rbac --name http://$CSI_BLOB_SECRET
-    ```
-
-    Example output:
-
-    ```json
-    {
-      "appId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "displayName": "csi-azure-blob-secret",
-      "password": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "tenant": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-    }
+    umask 077
+    az ad sp create-for-rbac \
+      --name http://$CSI_BLOB_SECRET \
+      --skip-assignment > blob-csi-driver-credentials.json
     ```
 
     Note that the service principal name based on `http://$CSI_BLOB_SECRET` must be unique enough to avoid colliding with an existing Azure AD app.
 
-1. Export the values from the command output:
+1. Export the values from the protected credentials file:
 
     ```bash
-    export AZURE_CLIENT_ID=<appId>
-    export AZURE_CLIENT_SECRET=<password>
-    export AZURE_TENANT_ID=<tenant>
+    export AZURE_CLIENT_ID=$(jq -r .appId blob-csi-driver-credentials.json)
+    export AZURE_CLIENT_SECRET=$(jq -r .password blob-csi-driver-credentials.json)
+    export AZURE_TENANT_ID=$(jq -r .tenant blob-csi-driver-credentials.json)
     ```
+
+    Delete `blob-csi-driver-credentials.json` after creating the cloud configuration secret.
 
 1. Assign the required roles to the service principal.
 
-    For the validated ARO path in this article, the service principal required:
+    The lab used these permissions:
+
     - `Contributor` on the relevant resource group
     - `Storage Account Contributor` on the target storage account after that account is created
+
+    These permissions supported the tested lab. They are not presented as the minimum permissions for every BYO storage account deployment. Required permissions depend on which resources the driver must discover, create, or manage.
 
 
     Assign `Contributor` on the resource group:
 
     ```bash
-    az role assignment create \
+    export CSI_RG_ROLE_ASSIGNMENT_ID=$(az role assignment create \
       --assignee $AZURE_CLIENT_ID \
       --role Contributor \
-      --scope /subscriptions/$SUB_ID/resourceGroups/$RG_NAME
+      --scope /subscriptions/$SUB_ID/resourceGroups/$RG_NAME \
+      --query id -o tsv)
     ```
 
-
-1. Create the `azure-cred-file` ConfigMap in `kube-system` so the controller can locate the host cloud configuration:
-
-    ```bash
-    cat <<'EOF' | oc apply -f -
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: azure-cred-file
-      namespace: kube-system
-    data:
-      path: /etc/kubernetes/cloud.conf
-      path-windows: C:\\k\\cloud.conf
-    EOF
-    ```
 
 1. Create a dedicated cloud configuration secret in `kube-system` for the Blob CSI driver:
 
@@ -164,13 +147,20 @@ For the validated ARO path used here, this includes:
 
     oc -n kube-system create secret generic blob-csi-cloud-provider \
       --from-file=cloud-config=blob-csi-cloud-provider.json
-
-    rm -f blob-csi-cloud-provider.json
     ```
 
     {{< alert state="warning" >}}
-    Use `blob-csi-cloud-provider`, not the chart default name `azure-cloud-provider`, and use plain `oc create` rather than `oc apply`. A cluster may already hold a secret named `azure-cloud-provider` containing an unrelated `aadClientId` and `aadClientSecret`, and `oc apply` would silently overwrite it. Plain `oc create` fails if the name is already taken, which is the safer behaviour. The driver is pointed at this name in the next section.
+    If `oc create` returns `AlreadyExists`, stop and resolve the name or ownership conflict before continuing. Do not overwrite or delete the existing resource. This guide uses `blob-csi-cloud-provider` instead of the chart default, `azure-cloud-provider`. Never modify or delete `azure-cloud-provider` as part of this guide.
     {{< /alert >}}
+
+    After `oc create` succeeds, label the new secret and remove the temporary files:
+
+    ```bash
+    oc -n kube-system label secret blob-csi-cloud-provider \
+      app.kubernetes.io/part-of=blob-csi-guide
+
+    rm -f blob-csi-cloud-provider.json blob-csi-driver-credentials.json
+    ```
 
     Keep the data key as `cloud-config`. The driver reads the secret through the Kubernetes API at runtime, so it does not appear as a mounted volume in the pod specification.
 
@@ -179,7 +169,7 @@ For the validated ARO path used here, this includes:
 
 After creating the identity and required Azure configuration, install the Azure Blob CSI driver on the cluster.
 
-On ARO, the default Blob CSI Helm install needs an additional workaround. During validation on ARO 4.20, the default chart left the node pods stuck in `Init:CreateContainerError` because the init container tries to mount `/usr/local`, which is a symlink on RHCOS. To work around this, disable those components at install time and remove the init container from the node DaemonSet.
+On ARO, use the chart's RHCOS path handling and disable its read-ahead initialization. In chart `1.27.11`, `linux.distro: rhcos` changes the init container's `/usr/local` host mount to `/var/usrlocal`. Setting `node.blobfuseProxy.setReadAheadSize: false` prevents the init script from writing a host udev rule and running `udevadm control --reload`, which fails on RHCOS. The init container remains in place and completes normally, so no manual DaemonSet patch is required.
 
 1. Add the Blob CSI driver Helm repository:
 
@@ -192,6 +182,9 @@ On ARO, the default Blob CSI Helm install needs an additional workaround. During
 
     ```bash
     cat <<EOF > blob-csi-aro-values.yaml
+    linux:
+      distro: rhcos
+
     controller:
       cloudConfigSecretName: blob-csi-cloud-provider
       cloudConfigSecretNamespace: kube-system
@@ -201,16 +194,19 @@ On ARO, the default Blob CSI Helm install needs an additional workaround. During
       cloudConfigSecretNamespace: kube-system
       enableBlobfuseProxy: false
       enableAznfsMount: false
+      blobfuseProxy:
+        setReadAheadSize: false
     EOF
 
     helm install blob-csi-driver blob-csi-driver/blob-csi-driver \
       --namespace kube-system \
+      --version 1.27.11 \
       -f blob-csi-aro-values.yaml
     ```
 
     The `cloudConfigSecretName` overrides point the controller and node components at the dedicated secret created in the previous section, instead of the chart default `azure-cloud-provider`.
 
-1. Confirm the driver is using the dedicated secret:
+1. Confirm the controller and node workloads reference the dedicated secret:
 
     ```bash
     oc get deploy csi-blob-controller -n kube-system \
@@ -218,23 +214,24 @@ On ARO, the default Blob CSI Helm install needs an additional workaround. During
       | tr ' ' '\n' | grep cloud-config-secret
     ```
 
-    The output should name `blob-csi-cloud-provider`.
-
-1. Confirm the Blob CSI node DaemonSet name:
+    Repeat the check for the node DaemonSet:
 
     ```bash
-    oc get daemonset -n kube-system | grep blob
+    oc get daemonset csi-blob-node -n kube-system \
+      -o jsonpath='{.spec.template.spec.containers[*].args}' \
+      | tr ' ' '\n' | grep cloud-config-secret
     ```
 
-    In this case, the node DaemonSet was `csi-blob-node`.
+    Both commands should name `blob-csi-cloud-provider` and `kube-system`.
 
-1. Remove the init container from the Blob CSI node DaemonSet:
+1. Confirm the RHCOS init settings rendered as expected:
 
     ```bash
-    oc patch daemonset csi-blob-node -n kube-system \
-      --type='json' \
-      -p='[{"op":"remove","path":"/spec/template/spec/initContainers"}]'
+    oc get daemonset csi-blob-node -n kube-system -o yaml | grep -A1 -E \
+      'SET_READ_AHEAD_SIZE|host-usr-local|mountPath: /host/var/usrlocal|path: /var/usrlocal'
     ```
+
+    Verify that `SET_READ_AHEAD_SIZE` is `false`, the init container mount path is `/host/var/usrlocal`, and the host path is `/var/usrlocal`.
 
 1. Verify that the Blob CSI driver pods are running:
 
@@ -242,23 +239,19 @@ On ARO, the default Blob CSI Helm install needs an additional workaround. During
     oc get pods -n kube-system | grep blob
     ```
 
-    Expected output should include the Blob CSI controller and node pods in a `Running` state after applying the ARO-specific workaround above.
+    Expected output should include two Blob CSI controller pods and one node pod per cluster node in a `Running` state. Do not continue while any node pod is in an init error state.
 
-1. If you created or updated the ARO-specific controller configuration in the previous section, restart the controller so it picks up the latest configuration:
-
-    ```bash
-    oc rollout restart deploy/csi-blob-controller -n kube-system
-    oc rollout status deploy/csi-blob-controller -n kube-system
-    ```
-
-1. Confirm that the controller is healthy before continuing:
+1. Confirm that the controller and node processes actually read the dedicated secret:
 
     ```bash
     oc get pods -n kube-system -l app=csi-blob-controller -o wide
     oc logs -n kube-system deploy/csi-blob-controller -c blob --tail=100 | cat
+
+    oc get pods -n kube-system -l app=csi-blob-node -o wide
+    oc logs -n kube-system daemonset/csi-blob-node -c blob --tail=100 | cat
     ```
 
-    At this point, the Blob CSI controller should be running without missing cloud configuration errors and ready for the StorageClass and PVC workflow used in the next section.
+    In both logs, look for `reading cloud config from secret kube-system/blob-csi-cloud-provider`. Checking only the container arguments proves that the configuration rendered; the startup log proves that the process read the named secret.
 
 
 ## Test the CSI driver is working
@@ -273,7 +266,9 @@ To test the Blob CSI driver, create the required storage resources, then create 
       --resource-group $RG_NAME \
       --location $LOCATION \
       --sku Standard_LRS \
-      --kind StorageV2
+      --kind StorageV2 \
+      --allow-shared-key-access true \
+      --min-tls-version TLS1_2
     ```
 
     Assign `Storage Account Contributor` on the storage account:
@@ -286,10 +281,11 @@ To test the Blob CSI driver, create the required storage resources, then create 
 
     test -n "$STORAGE_ACCOUNT_ID"
 
-    az role assignment create \
+    export CSI_STORAGE_ROLE_ASSIGNMENT_ID=$(az role assignment create \
       --assignee $AZURE_CLIENT_ID \
       --role "Storage Account Contributor" \
-      --scope $STORAGE_ACCOUNT_ID
+      --scope $STORAGE_ACCOUNT_ID \
+      --query id -o tsv)
     ```
 
 1. Create the blob container:
@@ -309,13 +305,18 @@ To test the Blob CSI driver, create the required storage resources, then create 
 1. Create a secret in the test project containing the storage account credentials:
 
     ```bash
+    umask 077
+    az storage account keys list \
+      --account-name $STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME \
+      --query '[0].value' -o tsv > azurestorageaccountkey
+
     oc create secret generic azure-secret \
       --from-literal azurestorageaccountname=$STORAGE_ACCOUNT_NAME \
-      --from-literal azurestorageaccountkey="$(az storage account keys list \
-        --account-name $STORAGE_ACCOUNT_NAME \
-        --resource-group $RG_NAME \
-        --query '[0].value' -o tsv)" \
+      --from-file=azurestorageaccountkey=azurestorageaccountkey \
       -n $CSI_TESTING_PROJECT
+
+    rm -f azurestorageaccountkey
     ```
 
     {{< alert state="info" >}}
@@ -382,10 +383,19 @@ To test the Blob CSI driver, create the required storage resources, then create 
       name: blobfuse2-test-pod
       namespace: $CSI_TESTING_PROJECT
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: app
         image: registry.access.redhat.com/ubi9/ubi-minimal
         command: ["/bin/sh", "-c", "sleep infinity"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
         volumeMounts:
         - name: azureblob
           mountPath: /mnt/blob
@@ -413,6 +423,22 @@ To test the Blob CSI driver, create the required storage resources, then create 
     - the mount is present at `/mnt/blob`
     - the filesystem shows `blobfuse2`
 
+1. Verify create, read, modify, and delete operations through the mount:
+
+    ```bash
+    oc exec -n $CSI_TESTING_PROJECT blobfuse2-test-pod -- sh -ceu '
+      probe=/mnt/blob/.dynamic-probe
+      printf "first\n" > "$probe"
+      test "$(cat "$probe")" = first
+      printf "second\n" >> "$probe"
+      cat "$probe"
+      rm "$probe"
+      test ! -e "$probe"
+    '
+    ```
+
+    If the Blob CSI node DaemonSet is restarted later, existing BlobFuse2 mounts can report `Transport endpoint is not connected` even though their workload pods still show `Running`. Recreate only the affected workload pods after the node rollout so Kubernetes establishes fresh mounts.
+
 
 ## Mounting without a storage account key
 
@@ -420,36 +446,130 @@ The test workflow above authenticates with a storage account key. Where shared k
 
 This removes storage account keys from the mount. It is not secretless: the service principal still has a client secret. If client secrets are also prohibited, this approach does not meet that requirement either.
 
-1. Set the values for the dedicated application. Use an application created for this purpose, not the cluster's own service principal:
+1. If you are starting with this section, create a dedicated test project or select one that you created for this walkthrough:
 
     ```bash
-    export BLOB_CLIENT_ID=<application-client-id>
-    export BLOB_TENANT_ID=<application-tenant-id>
+    oc get project $CSI_TESTING_PROJECT
+    ```
+
+    If it does not exist, create it:
+
+    ```bash
+    oc new-project $CSI_TESTING_PROJECT
+    ```
+
+    If it already exists and is dedicated to this walkthrough, select it:
+
+    ```bash
+    oc project $CSI_TESTING_PROJECT
+    ```
+
+    Do not use a shared project because the cleanup section removes the test project.
+
+1. Set unique names for a second, dedicated storage account and application:
+
+    ```bash
+    export SPN_STORAGE_ACCOUNT_NAME=<globally-unique-storage-account-name>
+    export SPN_BLOB_CONTAINER_NAME=blob-spn
+    export BLOB_APP_NAME=<unique-application-name>
+    ```
+
+1. Create the storage account with Shared Key access disabled, then create the container through the Azure Resource Manager API:
+
+    ```bash
+    az storage account create \
+      --name $SPN_STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME \
+      --location $LOCATION \
+      --sku Standard_LRS \
+      --kind StorageV2 \
+      --allow-shared-key-access false \
+      --https-only true \
+      --min-tls-version TLS1_2
+
+    export SPN_STORAGE_ACCOUNT_ID=$(az storage account show \
+      --resource-group $RG_NAME \
+      --name $SPN_STORAGE_ACCOUNT_NAME \
+      --query id -o tsv)
+
+    az storage container-rm create \
+      --storage-account $SPN_STORAGE_ACCOUNT_ID \
+      --name $SPN_BLOB_CONTAINER_NAME \
+      --public-access off \
+      --fail-on-exist
+
+    az storage account show \
+      --resource-group $RG_NAME \
+      --name $SPN_STORAGE_ACCOUNT_NAME \
+      --query allowSharedKeyAccess -o tsv
+    ```
+
+    Using `az storage container-rm` avoids relying on a storage account key to create the container. The final command must return `false`.
+
+1. Create a dedicated application identity and save its generated credentials in a protected temporary file:
+
+    ```bash
+    umask 077
+    az ad sp create-for-rbac \
+      --name $BLOB_APP_NAME \
+      --skip-assignment > blob-spn-credentials.json
+
+    export BLOB_CLIENT_ID=$(jq -r .appId blob-spn-credentials.json)
+    export BLOB_TENANT_ID=$(jq -r .tenant blob-spn-credentials.json)
     export BLOB_SP_OBJECT_ID=$(az ad sp show --id $BLOB_CLIENT_ID --query id -o tsv)
     export IS_HNS_ENABLED=$(az storage account show \
-      --resource-group $RG_NAME --name $STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME --name $SPN_STORAGE_ACCOUNT_NAME \
       --query 'isHnsEnabled || `false`' -o tsv)
     ```
 
-    `az ad sp show` returns the service principal object ID, which is different from the application client ID. Role assignments need the object ID.
+    The credentials file contains a client secret. Keep it out of source control and delete it after creating the Kubernetes Secret. `az ad sp show` returns the service principal object ID, which is different from the application client ID. Role assignments need the object ID.
 
 1. Grant the application a data plane role scoped to the container:
 
     ```bash
-    az role assignment create \
+    export BLOB_ROLE_ASSIGNMENT_ID=$(az role assignment create \
       --assignee-object-id $BLOB_SP_OBJECT_ID \
       --assignee-principal-type ServicePrincipal \
       --role "Storage Blob Data Contributor" \
-      --scope "/subscriptions/$SUB_ID/resourceGroups/$RG_NAME/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT_NAME/blobServices/default/containers/$BLOB_CONTAINER_NAME"
+      --scope "$SPN_STORAGE_ACCOUNT_ID/blobServices/default/containers/$SPN_BLOB_CONTAINER_NAME" \
+      --query id -o tsv)
     ```
 
     Role assignments can take several minutes to take effect.
 
+1. If you need independent proof of the authenticating identity, enable Blob service diagnostics before mounting the volume:
+
+    ```bash
+    export LOG_WORKSPACE=<unique-log-analytics-workspace-name>
+
+    az monitor log-analytics workspace create \
+      --resource-group $RG_NAME \
+      --workspace-name $LOG_WORKSPACE \
+      --location $LOCATION
+
+    export LOG_WORKSPACE_ID=$(az monitor log-analytics workspace show \
+      --resource-group $RG_NAME \
+      --workspace-name $LOG_WORKSPACE \
+      --query id -o tsv)
+
+    az monitor diagnostic-settings create \
+      --name blob-csi-oauth \
+      --resource "$SPN_STORAGE_ACCOUNT_ID/blobServices/default" \
+      --workspace $LOG_WORKSPACE_ID \
+      --logs '[{"category":"StorageRead","enabled":true},{"category":"StorageWrite","enabled":true},{"category":"StorageDelete","enabled":true}]'
+    ```
+
+    Log ingestion is not immediate. The mount and I/O tests do not need this diagnostic setting, but identity verification does.
+
 1. Create a secret holding only the client secret. Read it from a protected file rather than passing it on the command line:
 
     ```bash
+    jq -r .password blob-spn-credentials.json > blob-spn-client-secret
+
     oc -n $CSI_TESTING_PROJECT create secret generic blob-spn \
-      --from-file=azurestoragespnclientsecret=<path-to-protected-file>
+      --from-file=azurestoragespnclientsecret=blob-spn-client-secret
+
+    rm -f blob-spn-client-secret blob-spn-credentials.json
     ```
 
     This secret contains no `azurestorageaccountkey`, and is separate from both `azure-secret` and the driver's `blob-csi-cloud-provider` secret.
@@ -476,13 +596,13 @@ This removes storage account keys from the mount. It is not secretless: the serv
         - -o allow_other
       csi:
         driver: blob.csi.azure.com
-        volumeHandle: "$RG_NAME#$STORAGE_ACCOUNT_NAME#$BLOB_CONTAINER_NAME#spn"
+        volumeHandle: "$RG_NAME#$SPN_STORAGE_ACCOUNT_NAME#$SPN_BLOB_CONTAINER_NAME#spn"
         volumeAttributes:
           protocol: fuse2
           subscriptionID: "$SUB_ID"
           resourceGroup: "$RG_NAME"
-          storageAccount: "$STORAGE_ACCOUNT_NAME"
-          containerName: "$BLOB_CONTAINER_NAME"
+          storageAccount: "$SPN_STORAGE_ACCOUNT_NAME"
+          containerName: "$SPN_BLOB_CONTAINER_NAME"
           isHnsEnabled: "$IS_HNS_ENABLED"
           AzureStorageAuthType: "SPN"
           AzureStorageSPNClientID: "$BLOB_CLIENT_ID"
@@ -509,16 +629,51 @@ This removes storage account keys from the mount. It is not secretless: the serv
 
     An empty `storageClassName` keeps this volume out of the dynamic, key based StorageClass created earlier. The `volumeHandle` must be unique within the cluster, and the capacity is a binding value rather than a quota on the container.
 
-1. Confirm the claim binds, then mount it in a pod the same way as the test pod above:
+1. Create a test pod that mounts the static claim:
+
+    ```bash
+    cat <<EOF | oc apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: blob-spn-test-pod
+      namespace: $CSI_TESTING_PROJECT
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: app
+        image: registry.access.redhat.com/ubi9/ubi-minimal
+        command: ["/bin/sh", "-c", "sleep infinity"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: azureblob
+          mountPath: /mnt/blob
+      volumes:
+      - name: azureblob
+        persistentVolumeClaim:
+          claimName: blob-spn-pvc
+    EOF
+    ```
+
+1. Confirm the claim binds and the pod becomes ready:
 
     ```bash
     oc get pvc blob-spn-pvc -n $CSI_TESTING_PROJECT
+    oc wait pod/blob-spn-test-pod -n $CSI_TESTING_PROJECT \
+      --for=condition=Ready --timeout=5m
     ```
 
 1. Verify the data path from inside the pod:
 
     ```bash
-    oc exec <pod-name> -n $CSI_TESTING_PROJECT -- sh -ceu '
+    oc exec blob-spn-test-pod -n $CSI_TESTING_PROJECT -- sh -ceu '
       probe="/mnt/blob/.spn-probe-$(date +%s)"
       printf "first\n" > "$probe"
       printf "second\n" >> "$probe"
@@ -529,8 +684,28 @@ This removes storage account keys from the mount. It is not secretless: the serv
 
     The output should be `first` and `second` on separate lines.
 
+1. If you enabled diagnostics, query the ingested storage requests:
+
+    ```bash
+    export LOG_WORKSPACE_CUSTOMER_ID=$(az monitor log-analytics workspace show \
+      --resource-group $RG_NAME \
+      --workspace-name $LOG_WORKSPACE \
+      --query customerId -o tsv)
+
+    az monitor log-analytics query \
+      --workspace $LOG_WORKSPACE_CUSTOMER_ID \
+      --timespan PT1H \
+      --analytics-query "StorageBlobLogs
+        | where TimeGenerated > ago(1h)
+        | where AccountName == '$SPN_STORAGE_ACCOUNT_NAME'
+        | project TimeGenerated, OperationName, AuthenticationType, RequesterAppId, StatusCode, StatusText
+        | order by TimeGenerated desc"
+    ```
+
+    Allow several minutes for ingestion. Successful `PutBlob`, `ListBlobs`, and `DeleteBlob` rows should have `AuthenticationType` set to `OAuth` and `RequesterAppId` set to `$BLOB_CLIENT_ID`.
+
     {{< alert state="info" >}}
-    A bound claim and a successful mount do not by themselves prove that identity based access was used. To confirm the authentication path, check the storage account's diagnostic logs for requests with an `AuthenticationType` of OAuth and a `RequesterAppId` matching the application. Diagnostic logging has to be enabled on the storage account beforehand.
+    A bound claim and a successful mount prove that the data path works while Shared Key is disabled, but do not by themselves identify the caller. The diagnostic log fields provide that separate identity proof.
     {{< /alert >}}
 
 ## Troubleshooting
@@ -546,12 +721,11 @@ oc logs -n kube-system deploy/csi-blob-controller -c blob --tail=100 | cat
 
 During validation on ARO, dynamic provisioning required additional controller-side Azure configuration in `kube-system`:
 
-* `azure-cred-file` ConfigMap
 * the dedicated cloud configuration secret
 
-If those resources are missing or incomplete, the controller may fail to initialize correctly.
+If the secret is missing or incomplete, the controller may fail to initialize correctly.
 
-You can recreate them and then restart the controller:
+You can recreate the secret and then restart the controller:
 
 ```bash
 oc rollout restart deploy/csi-blob-controller -n kube-system
@@ -608,6 +782,8 @@ Expected result:
 
 After testing is complete, remove the test resources created for the Blob CSI validation.
 
+Delete only resources that you created while following this guide. If a name existed before you started, do not overwrite or delete that resource. Never modify or delete the existing `azure-cloud-provider` secret.
+
 1. Delete the test pod, PersistentVolumeClaim, and StorageClass:
 
     ```bash
@@ -625,12 +801,27 @@ After testing is complete, remove the test resources created for the Blob CSI va
 1. If you followed [Mounting without a storage account key](#mounting-without-a-storage-account-key), remove those resources as well:
 
     ```bash
+    oc delete pod blob-spn-test-pod -n $CSI_TESTING_PROJECT
     oc delete pvc blob-spn-pvc -n $CSI_TESTING_PROJECT
     oc delete pv pv-blob-spn
     oc delete secret blob-spn -n $CSI_TESTING_PROJECT
+
+    az role assignment delete --ids $BLOB_ROLE_ASSIGNMENT_ID
+    az ad app delete --id $BLOB_CLIENT_ID
+    az storage account delete \
+      --name $SPN_STORAGE_ACCOUNT_NAME \
+      --resource-group $RG_NAME \
+      --yes
+
+    if test -n "$LOG_WORKSPACE"; then
+      az monitor log-analytics workspace delete \
+        --resource-group $RG_NAME \
+        --workspace-name $LOG_WORKSPACE \
+        --yes
+    fi
     ```
 
-    The role assignment granted to the application remains until it is removed separately with `az role assignment delete`.
+    Skip the Log Analytics command if you did not enable diagnostics. Deleting the dedicated storage account also removes its diagnostic setting.
 
 1. Delete the test project:
 
@@ -638,23 +829,31 @@ After testing is complete, remove the test resources created for the Blob CSI va
     oc delete project $CSI_TESTING_PROJECT
     ```
 
+    Run this command only if you created the project for this walkthrough and it contains no unrelated resources.
+
 1. Uninstall the Blob CSI driver Helm chart:
 
     ```bash
     helm uninstall blob-csi-driver -n kube-system
     ```
 
-1. If you created the ARO-specific controller configuration for this validation and no longer need it, remove it from `kube-system`:
+1. Remove the dedicated driver secret only if it still carries the label added by this walkthrough:
 
     ```bash
-    oc delete configmap azure-cred-file -n kube-system
-    oc delete secret blob-csi-cloud-provider -n kube-system
+    oc delete secret blob-csi-cloud-provider -n kube-system \
+      --selector app.kubernetes.io/part-of=blob-csi-guide
     ```
+
+    The selector is an additional safeguard, not proof of ownership. Run this command only for the secret that you successfully created and labeled during this walkthrough. Do not delete `azure-cloud-provider`.
 
 1. If no longer needed, delete the service principal created for the Blob CSI driver:
 
     ```bash
-    az ad sp delete --id $AZURE_CLIENT_ID
+    az role assignment delete --ids \
+      $CSI_RG_ROLE_ASSIGNMENT_ID \
+      $CSI_STORAGE_ROLE_ASSIGNMENT_ID
+
+    az ad app delete --id $AZURE_CLIENT_ID
     ```
 
 1. If you created a temporary storage account and blob container specifically for this test, delete them:
