@@ -17,9 +17,9 @@ This guide covers deploying and testing BGP Cloud Connector on ARO Classic using
 - ARO Classic with a service principal
 - ARO Classic with Azure managed identities and workload identity (MIWI)
 
-Both paths were tested with Azure Route Server, routed CUDN connectivity, and OpenShift Virtualization workloads.
+We tested both paths with Azure Route Server, routed CUDN connectivity, and OpenShift Virtualization workloads.
 
-The procedures were tested with:
+Test environment:
 
 - ARO Classic and OpenShift 4.21.22
 - Azure CLI 2.90.0 for the MIWI deployment
@@ -37,7 +37,7 @@ This guide does not validate production scale, production readiness, upgrade beh
 
 ## Architecture
 
-The architecture below shows the tested ARO Classic BGP Cloud Connector data path at a high level. OpenShift Virtualization workloads run on a CUDN, selected worker nodes act as BGP routers, and the BGP Cloud Connector reconciles Azure Route Server peers and worker NIC IP forwarding so the CUDN network can be routed directly into the Azure VNet. The same overall data path is used for both service principal and managed identity/workload identity deployments; the main difference between the two is how Azure API access is authenticated.
+The architecture below shows the ARO Classic BGP Cloud Connector data path used during testing. OpenShift Virtualization workloads run on a CUDN, selected worker nodes act as BGP routers, and the BGP Cloud Connector reconciles Azure Route Server peers and worker NIC IP forwarding so the CUDN network can be routed directly into the Azure VNet. The same overall data path is used for both service principal and managed identity/workload identity deployments; the main difference between the two is how Azure API access is authenticated.
 
 ![architecture diagram](images/bgp-classic-arch.png)
 <br />
@@ -53,13 +53,13 @@ The diagram below describes the configuration differences for each model.
 
 ## How to use this guide
 
-This guide covers two tested ARO Classic deployment models for BGP Cloud Connector: Service Principal and Managed Identity / Workload Identity. Many configuration and validation steps are shared, but the Azure identity setup differs. Start with the shared prerequisites and architecture sections, follow the model-specific setup for your chosen deployment type, then continue with the shared BGP configuration, validation, lifecycle, and cleanup steps.
+The Service Principal and Managed Identity / Workload Identity paths share most configuration and test steps, but their Azure identity setup differs. Start with the shared prerequisites and architecture sections, follow the model-specific setup for your chosen deployment type, then continue with the shared BGP configuration, connectivity checks, lifecycle test, and cleanup steps.
 
 ### Service Principal path
 
 1. Review **Architecture** and **Choose an ARO deployment and identity model**, then complete **Shared prerequisites**.
 2. Complete **ARO Classic with a service principal**.
-3. Install the operator in **Install the validated engineering build**, following the service principal direction in **Configure the identity-specific operator environment**.
+3. Install the operator in **Install the tested engineering build**, following the service principal direction in **Configure the identity-specific operator environment**.
 4. Complete **Select router workers** and the service principal configuration under **Configure BGPCloudConfiguration**.
 5. Continue through **Configure shared BGPRouting and CUDN resources**, **Create a shared OpenShift Virtualization VM example**, and **Shared validation**.
 6. Optionally complete **Optional lifecycle validation**, using the **ARO Classic with a service principal** subsection for the tested result.
@@ -69,7 +69,7 @@ This guide covers two tested ARO Classic deployment models for BGP Cloud Connect
 
 1. Review **Architecture** and **Choose an ARO deployment and identity model**, then complete **Shared prerequisites**.
 2. Complete **ARO Classic with MIWI**.
-3. Install the operator in **Install the validated engineering build**, following the MIWI direction in **Configure the identity-specific operator environment**.
+3. Install the operator in **Install the tested engineering build**, following the MIWI direction in **Configure the identity-specific operator environment**.
 4. Complete **Select router workers** and the MIWI configuration under **Configure BGPCloudConfiguration**.
 5. Continue through **Configure shared BGPRouting and CUDN resources**, **Create a shared OpenShift Virtualization VM example**, and **Shared validation**.
 6. Optionally complete **Optional lifecycle validation**, using the **ARO Classic with MIWI** subsection for the tested result.
@@ -107,7 +107,7 @@ Do not manually configure Route Server peers. Peer lifecycle is part of the oper
 
 - Create an Azure VM or another reachable endpoint for connectivity testing. In the tested topology, the Azure test VM was in the same customer VNet as ARO and Route Server, but in its own regular subnet.
 - A test endpoint in a different routed VNet can also be used when end-to-end routing is already configured, but that topology was not tested for this guide.
-- OpenShift Virtualization must be installed, configured, and available on the ARO cluster if you want to use the VM-based connectivity example in this guide. Installing only the Operator is not sufficient; create the `HyperConverged` custom resource and verify the deployment is available. The tested environment used OpenShift Virtualization 4.21.17. See [Deploying OpenShift Virtualization on ARO](/experts/aro/aro-virt/) for installation guidance.
+- OpenShift Virtualization must be installed, configured, and available on the ARO cluster if you want to use the VM-based connectivity example in this guide. Installing only the Operator is not sufficient; create the `HyperConverged` custom resource and confirm the deployment is available. The tested environment used OpenShift Virtualization 4.21.17. See [Deploying OpenShift Virtualization on ARO](/experts/aro/aro-virt/) for installation guidance.
 
 The shared VNet, Azure Route Server, and test VM can be reused between Service Principal and MIWI testing. The ARO control-plane and worker subnets may be reused only after the previous ARO cluster has been fully deleted and the subnets are empty. Resource reuse is optional and was simply how the tested environments were exercised.
 
@@ -181,7 +181,7 @@ az aro identity create-required \
   --master-subnet "$MASTER_SUBNET" --worker-subnet "$WORKER_SUBNET" --yes
 ```
 
-The validated flow created these nine user-assigned managed identities:
+The tested flow created these nine user-assigned managed identities:
 
 - `aro-cluster`
 - `aro-operator`
@@ -193,7 +193,7 @@ The validated flow created these nine user-assigned managed identities:
 - `ingress`
 - `machine-api`
 
-Use the helper output as the source of truth for the base roles. The validated topology produced 20 base assignments, including eight assignments that allow `aro-cluster` to create federated credentials on the platform identities.
+Use the helper output as the source of truth for the base roles. The tested topology produced 20 base assignments, including eight assignments that allow `aro-cluster` to create federated credentials on the platform identities.
 
 ### 1.2 Add BYO NSG role assignments where required
 
@@ -243,7 +243,7 @@ az aro create \
   --pull-secret "@${PULL_SECRET_PATH}"
 ```
 
-Wait for `Succeeded`, log in, and verify `oc get nodes` and `oc get clusteroperators` are healthy.
+Wait for `Succeeded`, log in, and confirm that `oc get nodes` and `oc get clusteroperators` report healthy resources.
 
 ### 1.4 Create the dedicated BGP Cloud Connector identity
 
@@ -302,13 +302,13 @@ az role assignment create --assignee-object-id "$CLUSTER_OBJECT_ID" \
   --scope "$NETWORK_RESOURCE_GROUP_ID"
 ```
 
-Allow time for RBAC propagation. The validated SP path reconciled worker NIC forwarding, Route Server peers, and worker replacement successfully.
+Allow time for RBAC propagation. During SP testing, the operator successfully reconciled worker NIC forwarding, Route Server peers, and worker replacement.
 
 Upstream engineering maintains [`e2e-aro-classic-operator`](https://github.com/openshift/release/blob/main/ci-operator/config/openshift/bgp-cloud-connector/openshift-bgp-cloud-connector-main.yaml) as an active CI path for this model. Open [`openshift/release#86440`](https://github.com/openshift/release/pull/86440) makes the job gating because ARO Classic with a service principal is a supported BGP Cloud Connector 1.1 configuration.
 
 Earlier job failures caused by Microsoft Graph rejecting the Entra application `addPassword` operation occurred during ARO cluster provisioning, before a cluster existed. They were not BGP Cloud Connector functional failures. [`openshift/release#86426`](https://github.com/openshift/release/pull/86426) corrected that provisioning path by creating the application separately, retrying password creation, and waiting for the service principal to become visible before calling `az aro create`.
 
-## 3. Install the validated engineering build
+## 3. Install the tested engineering build
 
 **Applies to: Both deployment models**
 
@@ -391,7 +391,7 @@ spec:
 EOF
 ```
 
-During `BGPCloudConfiguration` reconciliation, the operator creates `CredentialsRequest/bgp-cloud-connector-azure`. In response, CCO creates `Secret/bgp-cloud-connector-azure-credentials` in namespace `openshift-bgp-cloud-connector`, set here by `$BGP_OPERATOR_NAMESPACE`. Verify the Secret contains the workload identity keys without displaying their values:
+During `BGPCloudConfiguration` reconciliation, the operator creates `CredentialsRequest/bgp-cloud-connector-azure`. In response, CCO creates `Secret/bgp-cloud-connector-azure-credentials` in namespace `openshift-bgp-cloud-connector`, set here by `$BGP_OPERATOR_NAMESPACE`. List the Secret keys without displaying their values:
 
 ```bash
 oc get secret bgp-cloud-connector-azure-credentials \
@@ -463,7 +463,7 @@ Do not manually create or modify the generated CUDN or `RouteAdvertisements`.
 
 ## 7. Create a shared OpenShift Virtualization VM example
 
-The validation used the `stable` channel, OpenShift Virtualization 4.21.17, a pinned Fedora containerdisk, and the required `l2bridge` binding.
+During testing, we used the `stable` channel, OpenShift Virtualization 4.21.17, a pinned Fedora containerdisk, and the required `l2bridge` binding.
 
 ```bash
 export CUDN_VM_NAME="cudn-connectivity-test"
@@ -556,7 +556,7 @@ ip neigh show
 ping -c 4 "$AZURE_TEST_VM_IP"
 ```
 
-Both paths validated address `10.100.0.3/16`, gateway `10.100.0.1`, MTU 1400, AS path `65001`, and guest-to-Azure connectivity with zero packet loss. The retained lab evidence does not include Azure-to-guest ping output, so perform the reverse-direction test below as an additional recommended validation rather than treating it as a recorded result.
+Testing of both paths confirmed address `10.100.0.3/16`, gateway `10.100.0.1`, MTU 1400, AS path `65001`, and guest-to-Azure connectivity with zero packet loss. The retained lab evidence does not include Azure-to-guest ping output, so perform the reverse-direction test below as an additional check rather than treating it as a recorded result.
 
 From a Linux shell on the Azure test VM, test the reverse direction to the guest VM's CUDN address:
 
@@ -604,7 +604,7 @@ Initial reconciliation can report `FRRConfigurationApplied=False` while `frr-k8s
 
 #### 10.1.2 `disableMP` warning
 
-At the validated commit, the operator intentionally sets this deprecated field to satisfy OCP 4.21 RouteAdvertisements validation. Do not edit generated FRR resources.
+In the commit used for this guide, the operator intentionally sets this deprecated field to satisfy OCP 4.21 RouteAdvertisements validation. Do not edit generated FRR resources.
 
 #### 10.1.3 Route Server learning and effective-route output
 
@@ -616,15 +616,15 @@ Matching `virtctl` v1.7.4 enabled the initial guest test, but the issue later re
 
 ### 10.2 ARO Classic with MIWI
 
-If credentials remain pending, verify `CLIENTID`, `TENANTID`, and `SUBSCRIPTIONID`, the `CredentialsRequest`, and the dedicated identity's FIC issuer, subject, and audience.
+If credentials remain pending, check `CLIENTID`, `TENANTID`, and `SUBSCRIPTIONID`, the `CredentialsRequest`, and the dedicated identity's FIC issuer, subject, and audience.
 
-ARO protects the managed resource group with an Azure deny assignment. For NIC write failures, verify `networkInterfaceClientID`, the additive operator FIC on `machine-api`, and expected Activity Log attribution.
+ARO protects the managed resource group with an Azure deny assignment. For NIC write failures, check `networkInterfaceClientID`, the additive operator FIC on `machine-api`, and expected Activity Log attribution.
 
 ### 10.3 ARO Classic with a service principal
 
-The operator uses CCO passthrough. For Route Server authorization failures, verify the principal from `kube-system/azure-credentials` has `Network Contributor` on the Route Server resource group and allow for RBAC propagation.
+The operator uses CCO passthrough. For Route Server authorization failures, confirm that the principal from `kube-system/azure-credentials` has `Network Contributor` on the Route Server resource group, then allow for RBAC propagation.
 
-At the validated commit, `docs/azure-integration-test-plan.md` was absent. The implementation, CRD schema, and current engineering documentation were used as the source of truth.
+In the commit used for this guide, `docs/azure-integration-test-plan.md` was absent. The implementation, CRD schema, and current engineering documentation were used as the source of truth.
 
 ## 11. Cleanup
 
@@ -658,7 +658,7 @@ Delete the ARO cluster, then remove Route Server, test infrastructure, VNet reso
 ## 12. References
 
 - [BGP Cloud Connector engineering repository](https://github.com/openshift/bgp-cloud-connector)
-- [Validated BGP Cloud Connector commit](https://github.com/openshift/bgp-cloud-connector/commit/d317567b54e6d4457246032f952fa6c6b80973c7)
+- [BGP Cloud Connector commit used for testing](https://github.com/openshift/bgp-cloud-connector/commit/d317567b54e6d4457246032f952fa6c6b80973c7)
 - [Azure authentication in BGP Cloud Connector](https://github.com/openshift/bgp-cloud-connector/blob/d317567b54e6d4457246032f952fa6c6b80973c7/docs/azure-authentication.md)
 - [BGP Cloud Connector custom resources](https://github.com/openshift/bgp-cloud-connector/blob/d317567b54e6d4457246032f952fa6c6b80973c7/docs/custom-resources.md)
 - [Create an ARO Classic cluster using the standard service-principal deployment](https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster)
