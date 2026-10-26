@@ -24,29 +24,24 @@ IP retention and reachability rely on the following components:
 ![VMware VM migration to ROSA HCP with a persistent CUDN address advertised into AWS through BGP](images/vmw-rosa-ip-pres-arc-diagram.png)
 
 - **BGP Cloud Connector Operator**
-  - Advertises the VM network into the AWS VPC route tables.
-  - This is what makes the VM address reachable from outside the cluster, such as from an EC2 instance.
-
+    - Advertises the VM network into the AWS VPC route tables.
+    - This is what makes the VM address reachable from outside the cluster, such as from an EC2 instance.
 - **Primary Layer 2 CUDN with persistent IPAM**
-  - Provides the VM subnet inside the cluster.
-  - Keeps IP allocations stable across VM restarts, and with the right storage, across live migration.
-  - In this workflow, you do not create the CUDN directly. The `BGPRouting` resource generates it.
-
+    - Provides the VM subnet inside the cluster.
+    - Keeps IP allocations stable across VM restarts, and with the right storage, across live migration.
+    - In this workflow, you do not create the CUDN directly. The `BGPRouting` resource generates it.
 - **Declarative address request**
-  - The `network.kubevirt.io/addresses` annotation asks for a specific VM IP.
-  - OVN-Kubernetes then creates and manages the backing `IPAMClaim` automatically.
-
+    - The `network.kubevirt.io/addresses` annotation asks for a specific VM IP.
+    - OVN-Kubernetes then creates and manages the backing `IPAMClaim` automatically.
 - **`l2bridge` binding**
-  - Lets the guest use the real CUDN address instead of a NATed pod address.
-  - This is also the binding used in our live migration tests.
-
+    - Lets the guest use the real CUDN address instead of a NATed pod address.
+    - This is also the binding used in our live migration tests.
 - **Inside the cluster**, the VM lives on a **Layer 2** network. That is what lets the VM keep the same subnet identity while moving between nodes.
-
 - **Outside the cluster**, AWS reaches that subnet through **Layer 3 routing**. BGP advertises the route, and AWS sends traffic toward the selected node next hop.
 
-{{< alert state="info" >}}
+{{% alert state="info" %}}
 The companion BGP deployment test used native KubeVirt `bridge: {}` for direct EC2-to-VM routing. This guide uses the **`l2bridge` binding plugin**, which supports live migration when the VM also uses suitable shared storage.
-{{< /alert >}}
+{{% /alert %}}
 
 ## Prerequisites
 
@@ -58,7 +53,7 @@ The companion BGP deployment test used native KubeVirt `bridge: {}` for direct E
 * `oc`, `virtctl`, and the `aws` CLI available locally
 * Cluster administrator access
 
-{{< alert state="info" >}}
+{{% alert state="info" %}}
 Check which of your nodes can actually run VMs before you start. Only nodes reporting a `devices.kubevirt.io/kvm` value are eligible:
 
 ```bash
@@ -67,7 +62,7 @@ oc get nodes -l bgp_router=true -o wide
 ```
 
 If virtualization uses a separate machine pool, configure `bgp_router=true` on that machine pool before scheduling these VMs. Do not use a different VM node selector unless the same nodes also match `BGPCloudConfiguration.spec.routerNodeSelector`.
-{{< /alert >}}
+{{% /alert %}}
 
 ## 1. Confirm the BGP and CUDN prerequisite
 
@@ -192,7 +187,7 @@ oc get pods -n openshift-mtv
     EOF
     ```
 
-    {{< alert state="warning" >}}
+    {{% alert state="warning" %}}
 **Keep TLS verification enabled.** Supply the complete CA chain for every hostname used by vCenter and the VMDK download endpoint. Without a VDDK image, MTV can download the VMDK over HTTPS by using `nbdkit` and `curl`. In our lab, the provider accepted the custom CA but the child curl process did not use that trust path, and guest conversion failed with:
 
 ```text
@@ -201,7 +196,7 @@ external command 'curl ...': exited with error 60
 ```
 
 `curl` exit code 60 means the peer certificate could not be verified. Setting `insecureSkipVerify: 'true'` allowed the lab migration to proceed, but it disabled certificate verification for the VMware provider rather than only for one disk transfer. Treat that as an experimental lab workaround, not the standard configuration. Correct the CA chain or use the supported VDDK path before production migration. Configuring a VDDK image also avoids the slow direct-download transfer described in step 5.
-    {{< /alert >}}
+    {{% /alert %}}
 
 1. Create the provider:
 
@@ -223,7 +218,7 @@ external command 'curl ...': exited with error 60
     EOF
     ```
 
-    {{< alert state="warning" >}}
+    {{% alert state="warning" %}}
 **Consider building a VDDK image before you migrate anything.** This guide does not use one, which is why the transfer in step 5 is slow and why the TLS workaround above is needed at all. The [MTV 2.12 VMware migration planning documentation](https://docs.redhat.com/en/documentation/migration_toolkit_for_virtualization/2.12/html/planning_your_migration_to_red_hat_openshift_virtualization/assembly_planning-migration-vmware_mtv) is firm on the point: creating the image is optional but "highly recommended", and "using MTV without VDDK is not recommended and could result in significantly lower migration speeds."
 
 It is not always optional. **You must use a VDDK image if the source VMs are backed by VMware vSAN.**
@@ -238,7 +233,7 @@ spec:
 ```
 
 Note that storing the VDDK image in a public registry might violate VMware licence terms.
-    {{< /alert >}}
+    {{% /alert %}}
 
 1. Confirm the provider connects and populates its inventory:
 
@@ -272,13 +267,13 @@ Record that address. It is the value you request in step 7.
 
 ## 5. Create the network and storage maps, and run the migration
 
-{{< alert state="warning" >}}
+{{% alert state="warning" %}}
 **Migrate into a namespace that does _not_ have the CUDN label.**
 
 This is counterintuitive, but it matters. In a namespace selected by a **primary** CUDN, every pod receives the CUDN as its default route, including the MTV guest conversion pod. That pod needs to reach vCenter, and the CUDN has no path to your vSphere network, so conversion fails with a connection timeout after roughly two minutes.
 
 Migrate into an ordinary namespace first, then reconstruct the destination VM in the CUDN namespace from the converted disk in step 6.
-{{< /alert >}}
+{{% /alert %}}
 
 1. Create a staging namespace:
 
@@ -435,9 +430,9 @@ spec:
 EOF
 ```
 
-{{< alert state="info" >}}
+{{% alert state="info" %}}
 This example uses `ReadWriteMany` because the destination VM will be live migrated between nodes. A VM that will remain on one node does not universally require RWX storage. On ROSA, Amazon FSx for NetApp ONTAP with the Trident CSI driver can provide RWX. See [Deploying OpenShift Virtualization on ROSA with NetApp FSx storage](/experts/rosa/ocp-virt/with-fsx/) for setup instructions.
-{{< /alert >}}
+{{% /alert %}}
 
 Wait for the clone:
 
@@ -512,7 +507,7 @@ The controller creates `IPAMClaim/my-vm.default`, assigns the requested address,
     EOF
     ```
 
-    {{< alert state="warning" >}}
+    {{% alert state="warning" %}}
 **Match the firmware to the converted VM.** If the vSphere VM used UEFI and the final definition falls back to legacy BIOS, the guest can stop at `SeaBIOS: Booting from Hard Disk...`. Copy the firmware settings from the halted MTV-generated VM:
 
 ```bash
@@ -520,7 +515,7 @@ oc get vm my-vm -n vm-staging -o jsonpath='{.spec.template.spec.domain.firmware}
 ```
 
 **Keep the primary network definition consistent.** Use `pod: {}` for the primary CUDN and `l2bridge` for the matching `default` interface. Adding a Multus network here would create another interface rather than selecting the primary CUDN.
-    {{< /alert >}}
+    {{% /alert %}}
 
 1. Inspect the converted guest network profile while the VM is still halted. The annotation reserves an OVN address, but it does not rewrite NetworkManager inside the disk. Check for a stale VMware interface name such as `ens33`, a MAC match that no longer agrees with the VM definition, and destination gateway or DNS values that are not reachable from the CUDN.
 
@@ -636,7 +631,7 @@ The BGP Cloud Connector advertises the CUDN into AWS. It does not automatically 
 
 - **Serial console access may not work out of the box:** Guests installed through a vSphere ISO may not have `console=ttyS0` configured. If `virtctl console` shows no output, use `virtctl vnc` or the VNC screenshot API to access the graphical console.
 
-{{< alert state="info" >}}
+{{% alert state="info" %}}
 The VNC screenshot API is useful for non interactive troubleshooting, for example confirming whether a VM is actually booting:
 
 ```bash
@@ -644,7 +639,7 @@ oc get --raw \
   "/apis/subresources.kubevirt.io/v1/namespaces/vms/virtualmachineinstances/my-vm/vnc/screenshot?moveCursor=false" \
   > screenshot.png
 ```
-{{< /alert >}}
+{{% /alert %}}
 
 ## Cleanup
 
