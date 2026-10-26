@@ -13,18 +13,15 @@ Many VM dependencies refer to an IP address rather than a VM name. Firewall rule
 
 This guide describes how we migrated a Fedora VM from vSphere to Red Hat OpenShift Service on AWS (ROSA) with hosted control planes by using the Migration Toolkit for Virtualization (MTV). The destination VM used its original IP address, `10.100.0.50`, and an EC2 instance reached that address directly over BGP without inbound NAT.
 
-We also tested declarative IP and MAC assignment on a separate RHEL 9 VM, which retained both addresses across stop/start and live migration between worker nodes.
-
-Please note that while we successfully migrated a VMware-derived Fedora VM to ROSA with its original IP address and confirmed direct connectivity from EC2, we have not yet tested the complete workflow on that same migrated VM, including automatic IPAMClaim management and live migration with the original IP and assigned MAC intact. Those capabilities will be tested separately in the future articles.
+We also tested declarative IP and MAC assignment on a separate RHEL 9 VM. Both addresses survived stop/start and live migration between worker nodes. We have not yet tested the combined workflow on a VMware-derived VM, from disk conversion through automatic IPAMClaim management and live migration with the requested identity.
 
 This guide builds on [Deploying BGP Cloud Connector on ROSA HCP](/experts/rosa/bgp-cloud-connector/), which covers the official Red Hat Operator, AWS Route Server, FRR, the primary CUDN, and direct EC2-to-VM routing. The sections below focus on migration and identity retention.
 
 ## How IP preservation works
 
-Keeping the same VM IP on ROSA depends on a few pieces working together. Each one solves a different part of the problem.
+IP retention and reachability rely on the following components:
 
-![vmw-rosa-arc-diagram](images/vmw-rosa-ip-pres-arc-diagram.png)
-<br />
+![VMware VM migration to ROSA HCP with a persistent CUDN address advertised into AWS through BGP](images/vmw-rosa-ip-pres-arc-diagram.png)
 
 - **BGP Cloud Connector Operator**
   - Advertises the VM network into the AWS VPC route tables.
@@ -43,20 +40,12 @@ Keeping the same VM IP on ROSA depends on a few pieces working together. Each on
   - Lets the guest use the real CUDN address instead of a NATed pod address.
   - This is also the binding used in our live migration tests.
 
-These pieces are related, but they do different jobs:
-
 - **Inside the cluster**, the VM lives on a **Layer 2** network. That is what lets the VM keep the same subnet identity while moving between nodes.
 
 - **Outside the cluster**, AWS reaches that subnet through **Layer 3 routing**. BGP advertises the route, and AWS sends traffic toward the selected node next hop.
 
-So both Layer 2 and BGP are correct here. They just describe different parts of the path.
-
 {{< alert state="info" >}}
-The companion BGP deployment test used native KubeVirt `bridge: {}` and confirmed direct EC2-to-VM routing. That proved the routed connectivity path.
-
-Separate RHEL tests used the **`l2bridge` binding plugin** together with declarative IP and MAC assignment. Those tests showed that the assigned identity survived stop and start, and one live migration when shared storage was used.
-
-The Fedora migration result and the RHEL live migration result are therefore related, but they are not the same test.
+The companion BGP deployment test used native KubeVirt `bridge: {}` for direct EC2-to-VM routing. This guide uses the **`l2bridge` binding plugin**, which supports live migration when the VM also uses suitable shared storage.
 {{< /alert >}}
 
 ## Prerequisites
@@ -98,7 +87,7 @@ Both BGP custom resources must report `Ready`, all expected sessions must report
 
 The companion guide uses `bgp-test-vms` for its disposable VM. This migration guide uses a separate namespace named `vms`. Create it with both labels, matching the `bgp-test-cudn` network from the companion guide:
 
-```yaml
+```bash
 cat << EOF | oc apply -f -
 apiVersion: v1
 kind: Namespace
@@ -124,7 +113,7 @@ Confirm that the generated CUDN selects `cluster-udn: bgp-test-cudn`, uses Layer
 
 ## 2. Install the Migration Toolkit for Virtualization
 
-```yaml
+```bash
 cat << EOF | oc apply -f -
 apiVersion: project.openshift.io/v1
 kind: Project
@@ -156,7 +145,7 @@ EOF
 
 Then create the controller:
 
-```yaml
+```bash
 cat << EOF | oc apply -f -
 apiVersion: forklift.konveyor.io/v1beta1
 kind: ForkliftController
@@ -180,7 +169,7 @@ oc get pods -n openshift-mtv
 
 1. Create the credentials secret:
 
-    ```yaml
+    ```bash
     cat << EOF | oc apply -f -
     apiVersion: v1
     kind: Secret
@@ -216,7 +205,7 @@ external command 'curl ...': exited with error 60
 
 1. Create the provider:
 
-    ```yaml
+    ```bash
     cat << EOF | oc apply -f -
     apiVersion: forklift.konveyor.io/v1beta1
     kind: Provider
@@ -288,7 +277,7 @@ Record that address. It is the value you request in step 7.
 
 This is counterintuitive, but it matters. In a namespace selected by a **primary** CUDN, every pod receives the CUDN as its default route, including the MTV guest conversion pod. That pod needs to reach vCenter, and the CUDN has no path to your vSphere network, so conversion fails with a connection timeout after roughly two minutes.
 
-Migrate into an ordinary namespace first, then move the disk onto the CUDN in step 6.
+Migrate into an ordinary namespace first, then reconstruct the destination VM in the CUDN namespace from the converted disk in step 6.
 {{< /alert >}}
 
 1. Create a staging namespace:
@@ -299,7 +288,7 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
 
 1. Create the maps. Map the source network to `pod`, and the source datastore to a storage class:
 
-    ```yaml
+    ```bash
     cat << EOF | oc apply -f -
     apiVersion: forklift.konveyor.io/v1beta1
     kind: NetworkMap
@@ -347,7 +336,7 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
 
 1. Create the plan. Set `targetPowerState: "off"` on the VM entry so the converted staging VM remains halted for inspection. Set `skipGuestConversion: false` to use the standard virt-v2v conversion path. The successful Fedora migration used `preserveStaticIPs: false`. Destination CUDN address allocation is handled separately when the final VM is reconstructed in step 7. Do not substitute a different MTV preservation setting without testing it for the guest and migration path in use.
 
-    ```yaml
+    ```bash
     cat << EOF | oc apply -f -
     apiVersion: forklift.konveyor.io/v1beta1
     kind: Plan
@@ -383,7 +372,7 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
 
 1. Start the migration:
 
-    ```yaml
+    ```bash
     cat << EOF | oc apply -f -
     apiVersion: forklift.konveyor.io/v1beta1
     kind: Migration
@@ -414,21 +403,17 @@ Cold migration requires transferring the VM disk from vSphere and converting the
 
 Our 16 GiB Fedora VM was migrated over a site-to-site VPN with approximately 72 ms round-trip latency. We observed transfer rates of around 0.13 MB/s during conversion and 1.75 MB/s during disk copying, with the migration taking approximately 85 minutes overall.
 
-**For better performance, use VDDK.** Our test used the `nbdkit` curl transport over HTTPS rather than VMware's Virtual Disk Development Kit (VDDK). Red Hat strongly recommends configuring a VDDK init image for VMware migrations, as migrations without VDDK can be significantly slower.
-
-We did not perform a VDDK comparison in this test, so the potential improvement would depend on your environment.
-
-See the [Red Hat MTV documentation](https://docs.redhat.com/en/documentation/migration_toolkit_for_virtualization/2.9/html-single/installing_and_using_the_migration_toolkit_for_virtualization/installing_and_using_the_migration_toolkit_for_virtualization) for VDDK configuration and migration performance recommendations.
+This test used the `nbdkit` curl transport over HTTPS. We did not compare it with VDDK in this environment. For the recommended VDDK configuration, see section 3.
 
 </details>
 
 ## 6. Clone the converted disk onto the CUDN namespace
 
-The converted disk now lives in the staging namespace. The Fedora VM in our lab was reconstructed in the CUDN namespace from a converted staging disk. Treat this as a controlled handoff: keep the staging VM halted, clone its disk, and do not boot two VMs with the same IP or MAC.
+The converted disk now lives in the staging namespace. Keep the staging VM halted and clone its disk into the CUDN namespace. The destination VM is reconstructed from that converted disk in the following section. Never boot two VMs with the same IP or MAC.
 
-The example places the clone on RWX storage so the final VM can live migrate. We tested this Block-to-Filesystem CDI copy pattern with a RHEL 9 disk. The complete VMware-derived disk clone, declarative address request, guest network configuration, and first boot have not yet been tested as one end-to-end sequence.
+This example places the clone on RWX storage so the destination VM can live migrate. The RHEL 9 test used this Block-to-Filesystem CDI copy pattern.
 
-```yaml
+```bash
 cat << EOF | oc apply -f -
 apiVersion: cdi.kubevirt.io/v1beta1
 kind: DataVolume
@@ -451,7 +436,7 @@ EOF
 ```
 
 {{< alert state="info" >}}
-`ReadWriteMany` is required for live migration. On ROSA, Amazon FSx for NetApp ONTAP with the Trident CSI driver provides RWX. See [Deploying OpenShift Virtualization on ROSA with NetApp FSx storage](/experts/rosa/ocp-virt/with-fsx/) for how to set that up.
+This example uses `ReadWriteMany` because the destination VM will be live migrated between nodes. A VM that will remain on one node does not universally require RWX storage. On ROSA, Amazon FSx for NetApp ONTAP with the Trident CSI driver can provide RWX. See [Deploying OpenShift Virtualization on ROSA with NetApp FSx storage](/experts/rosa/ocp-virt/with-fsx/) for setup instructions.
 {{< /alert >}}
 
 Wait for the clone:
@@ -464,7 +449,7 @@ oc get dv my-vm-root -n vms -w
 
 Persistent CUDN IPAM supports a declarative address request on the VM template. Put `network.kubevirt.io/addresses` under `spec.template.metadata.annotations`. The key inside the JSON object must match the KubeVirt interface and network name, which is `default` in this example.
 
-The steps below combine behaviors tested separately. We have not yet tested the entire VMware-derived disk clone, offline guest configuration, declarative address request, and first boot as one sequence. Treat this as a proposed procedure and stop at each identity and guest-network check.
+The RHEL 9 tests confirmed declarative address assignment, automatic IPAMClaim management, stop/start persistence, and live migration. The steps below apply those results to a converted VMware disk, but that complete sequence has not yet been tested end to end. Verify the disk, guest network profile, requested identity, and first boot at each stage.
 
 The controller creates `IPAMClaim/my-vm.default`, assigns the requested address, and owns its lifecycle. Do not create the claim or patch `IPAMClaim.status` yourself. 
 
@@ -477,7 +462,7 @@ The controller creates `IPAMClaim/my-vm.default`, assigns the requested address,
 
 1. Create the VM in a stopped state. This example requests the original VMware IP with a unique locally administered example MAC. Original VMware MAC preservation has not yet been tested through this complete procedure.
 
-    ```yaml
+    ```bash
     cat << EOF | oc apply -f -
     apiVersion: kubevirt.io/v1
     kind: VirtualMachine
@@ -554,7 +539,7 @@ oc get vm my-vm -n vm-staging -o jsonpath='{.spec.template.spec.domain.firmware}
 
 ## 8. Verify
 
-Our migrated Fedora VM ran at `10.100.0.50`, and an EC2 tester reached it directly through the BGP-advertised route without inbound NAT. That VM was reconstructed during an earlier experimental iteration. We tested the declarative annotation and explicit-MAC procedure in step 7 separately with RHEL 9 VMs.
+The migrated Fedora VM ran at `10.100.0.50`, and an EC2 tester reached it through the BGP-advertised route without inbound NAT. That destination used a different MAC from the VMware source. Separately, the RHEL 9 tests confirmed the declarative annotation and explicit MAC through stop/start and live migration. The output below shows the proposed Fedora address with the locally administered example MAC from step 7.
 
 1. The VM should come up on the original address:
 
@@ -580,9 +565,7 @@ Our migrated Fedora VM ran at `10.100.0.50`, and an EC2 tester reached it direct
     ip=10.100.0.50 mac=02:50:56:64:00:50 src=domain, guest-agent
     ```
 
-    {{< alert state="info" >}}
-The explicit MAC in the VM definition prevents OVN from generating one from the IP address. Our RHEL tests confirmed persistence with an explicit MAC, but the working Fedora migration was reconstructed with a different destination MAC. Preserving the original VMware MAC has not yet been tested, especially when licences or access controls depend on it.
-    {{< /alert >}}
+    An explicit MAC in the VM definition prevents OVN from generating one from the IP address. Original VMware MAC preservation remains untested and requires separate verification when licences or access controls depend on it.
 
 1. Confirm the VM is reachable from elsewhere in the VPC, which proves the BGP advertisement is working:
 
@@ -608,9 +591,9 @@ The explicit MAC in the VM definition prevents OVN from generating one from the 
 
 ## 9. Evaluate outbound connectivity separately
 
-We confirmed direct EC2-to-VM connectivity over the advertised CUDN. However, outbound internet connectivity was not tested. Do not treat successful DNS resolution or inbound BGP routing as proof that guest-originated traffic reaches the internet.
+We confirmed direct EC2-to-VM connectivity over the advertised CUDN. We attempted outbound-path checks, but did not confirm end-to-end guest-originated internet connectivity. Successful DNS resolution or inbound BGP routing does not prove that path works.
 
-OVN logical tracing in our environment showed traffic from `10.100.0.50` leaving the CUDN gateway toward the worker `br-ex` interface without being translated to a worker address. The worker subnet had a default route to an AWS NAT Gateway, and both the private and NAT Gateway subnet route tables had an active BGP return route for `10.100.0.0/16`. This supports using the existing NAT Gateway as an outbound design. We did not complete a normal guest-originated data-plane test, so this article does not present that path as confirmed working.
+OVN logical tracing showed traffic from `10.100.0.50` leaving the CUDN gateway toward the worker `br-ex` interface without being translated to a worker address. The worker subnet had a default route to an AWS NAT Gateway, and both the private and NAT Gateway subnet route tables had an active BGP return route for `10.100.0.0/16`. These observations support the NAT Gateway design, but do not prove the complete guest-to-internet path.
 
 An OpenShift `EgressIP` is another possible design. It applies SNAT before traffic leaves the cluster. That can be useful when private destinations require a source address from the VPC CIDR, but it changes the source address those destinations observe. Firewall rules, database grants, and other controls that rely on the preserved VM IP might then need changes.
 
@@ -645,11 +628,9 @@ The BGP Cloud Connector advertises the CUDN into AWS. It does not automatically 
 
 ## Known limitations
 
-A few things to keep in mind when adapting this workflow to your environment:
-
 - **Fedora 44 is not a supported MTV guest:** We used a disposable Fedora 44 VM for this test. For production migrations, use a supported guest operating system and check the current MTV compatibility matrix.
 
-- **Migration pods need connectivity to vSphere:** MTV runs its migration pods in the target namespace. Our primary CUDN had no route to vCenter or ESXi, so we first migrated the VM into a staging namespace using the default pod network, then moved it to the CUDN-backed namespace.
+- **Migration pods need connectivity to vSphere:** MTV runs its migration pods in the target namespace. Our primary CUDN had no route to vCenter or ESXi, so we migrated the VM into a staging namespace using the default pod network, then reconstructed the destination VM in the CUDN namespace from the converted disk.
 
 - **The original VMware MAC was not preserved:** Our migrated Fedora VM used a different MAC address. We separately confirmed that an explicitly assigned MAC survives VM restarts and live migration on RHEL 9. If your applications, licences, or security policies depend on the original MAC, test this before migrating.
 
@@ -679,7 +660,7 @@ Do not delete `vm-staging` if it contains unrelated resources. Delete the namesp
 
 ## Future research
 
-The following items do not invalidate the proven destination IP-retention result. They need additional testing before this procedure can be treated as a complete migration pattern for every guest:
+The following areas still need testing:
 
 * **Guest-originated outbound connectivity:** Test the AWS NAT Gateway and EgressIP designs from a normal guest session, with packet captures that show the source address before and after translation.
 * **Full VMware-to-CUDN declarative workflow:** Test the staging clone, offline guest profile inspection, declarative address request, and first boot as one repeatable sequence on a VMware-derived disk.
