@@ -24,13 +24,13 @@ The Azure Blob CSI driver supports two common dynamic provisioning models:
 
 ## Scope of validation
 
-* The steps below were validated on ARO using a dynamic provisioning path with BlobFuse2 and a manually specified storage account.
+* We tested the steps below on ARO using dynamic provisioning with BlobFuse2 and a manually specified storage account.
 * The driver-managed storage account creation path was outside the scope of this update.
-* During validation, the ARO-specific configuration included:
+* The ARO-specific settings included:
   - a dedicated cloud configuration secret in `kube-system`
   - the chart's RHCOS path handling with read-ahead configuration disabled
   - an explicit BlobFuse2 working directory in the dynamic StorageClass mount options
-* A statically provisioned volume using service principal authentication and an Azure RBAC data role was also validated, and is described in [Mounting without a storage account key](#mounting-without-a-storage-account-key).
+* We also tested a statically provisioned volume with service principal authentication and an Azure RBAC data role. See [Mounting without a storage account key](#mounting-without-a-storage-account-key).
 
 
 ## Prerequisites
@@ -40,7 +40,7 @@ The Azure Blob CSI driver supports two common dynamic provisioning models:
 * oc - command line utility.
 * jq - command line utility.
 * Azure CLI logged into the correct subscription.
-* Permissions to create or access an Azure Storage Account for the test workflow.
+* Permissions to create or access an Azure Storage Account for the test.
 * Permissions to create a service principal and assign Azure RBAC roles.
 
 
@@ -66,7 +66,7 @@ The Azure Blob CSI driver supports two common dynamic provisioning models:
     export CSI_TESTING_PROJECT=testing-project
     ```
 
-1. Set additional environment variables for the storage resources used by the test workflow, including the storage account and blob container names:
+1. Set environment variables for the test storage account and blob container:
 
     ```bash
     export APP_NAME=myapp
@@ -231,9 +231,9 @@ On ARO, use the chart's RHCOS path handling and disable its read-ahead initializ
       'SET_READ_AHEAD_SIZE|host-usr-local|mountPath: /host/var/usrlocal|path: /var/usrlocal'
     ```
 
-    Verify that `SET_READ_AHEAD_SIZE` is `false`, the init container mount path is `/host/var/usrlocal`, and the host path is `/var/usrlocal`.
+    The output should show `SET_READ_AHEAD_SIZE` set to `false`, the init container mount path set to `/host/var/usrlocal`, and the host path set to `/var/usrlocal`.
 
-1. Verify that the Blob CSI driver pods are running:
+1. Check that the Blob CSI driver pods are running:
 
     ```bash
     oc get pods -n kube-system | grep blob
@@ -406,13 +406,13 @@ To test the Blob CSI driver, create the required storage resources, then create 
     EOF
     ```
 
-1. Verify that the pod is running:
+1. Check that the pod is running:
 
     ```bash
     oc get pod -n $CSI_TESTING_PROJECT
     ```
 
-1. Verify that the volume is mounted successfully:
+1. Check the volume mount:
 
     ```bash
     oc exec -it -n $CSI_TESTING_PROJECT blobfuse2-test-pod -- sh -c 'df -h /mnt/blob && ls -la /mnt/blob'
@@ -423,7 +423,7 @@ To test the Blob CSI driver, create the required storage resources, then create 
     - the mount is present at `/mnt/blob`
     - the filesystem shows `blobfuse2`
 
-1. Verify create, read, modify, and delete operations through the mount:
+1. Test create, read, modify, and delete operations through the mount:
 
     ```bash
     oc exec -n $CSI_TESTING_PROJECT blobfuse2-test-pod -- sh -ceu '
@@ -442,7 +442,7 @@ To test the Blob CSI driver, create the required storage resources, then create 
 
 ## Mounting without a storage account key
 
-The test workflow above authenticates with a storage account key. Where shared key access is not permitted, a service principal with an Azure RBAC data role can be used instead, through a statically provisioned volume.
+The test above authenticates with a storage account key. Where shared key access is not permitted, a service principal with an Azure RBAC data role can be used instead, through a statically provisioned volume.
 
 This removes storage account keys from the mount. It is not secretless: the service principal still has a client secret. If client secrets are also prohibited, this approach does not meet that requirement either.
 
@@ -670,7 +670,7 @@ This removes storage account keys from the mount. It is not secretless: the serv
       --for=condition=Ready --timeout=5m
     ```
 
-1. Verify the data path from inside the pod:
+1. Test the data path from inside the pod:
 
     ```bash
     oc exec blob-spn-test-pod -n $CSI_TESTING_PROJECT -- sh -ceu '
@@ -719,7 +719,7 @@ oc get pods -n kube-system | grep blob
 oc logs -n kube-system deploy/csi-blob-controller -c blob --tail=100 | cat
 ```
 
-During validation on ARO, dynamic provisioning required additional controller-side Azure configuration in `kube-system`:
+Testing on ARO showed that dynamic provisioning required additional controller-side Azure configuration in `kube-system`:
 
 * the dedicated cloud configuration secret
 
@@ -740,7 +740,7 @@ If the PersistentVolumeClaim does not bind, describe the PVC and review the rela
 oc describe pvc azureblob-pvc -n $CSI_TESTING_PROJECT
 ```
 
-Also verify:
+Also check:
 
 * the `StorageClass` name matches the PVC
 * the storage account name and key are correct in the secret
@@ -755,7 +755,7 @@ If the pod does not start, describe the pod and review the events:
 oc describe pod blobfuse2-test-pod -n $CSI_TESTING_PROJECT
 ```
 
-During validation with BlobFuse2 on ARO, one observed failure was a read-only filesystem error for the default BlobFuse2 working directory.
+On ARO, BlobFuse2 returned a read-only filesystem error for its default working directory.
 
 To avoid this, include the following mount option in the `StorageClass`:
 
@@ -763,7 +763,7 @@ To avoid this, include the following mount option in the `StorageClass`:
 --default-working-dir=/tmp/blobfuse2
 ```
 
-### Verify the mount inside the pod
+### Check the mount inside the pod
 
 To confirm the mount is working:
 
@@ -780,7 +780,7 @@ Expected result:
 
 ## Clean up
 
-After testing is complete, remove the test resources created for the Blob CSI validation.
+After testing is complete, remove the Blob CSI test resources.
 
 Delete only resources that you created while following this guide. If a name existed before you started, do not overwrite or delete that resource. Never modify or delete the existing `azure-cloud-provider` secret.
 
