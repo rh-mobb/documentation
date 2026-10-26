@@ -27,6 +27,8 @@ Note that the AWS Route Server distributes routes. It is not in the application 
 
 The lab used one `c5n.metal` router worker, two Route Server endpoints, CUDN `10.100.0.0/16`, VM `10.100.0.11`, and EC2 tester `10.20.31.131`. This single-worker topology was sufficient for a functional test, but it is not highly available. A production design should use eligible workers and Route Server endpoints across the required subnets and Availability Zones.
 
+The recorded lab environment ran OpenShift 4.22.9, OpenShift Virtualization 4.22.12, and BGP Cloud Connector Operator 1.0.0.
+
 ## Prerequisites
 
 You need:
@@ -99,12 +101,17 @@ Create `operator-trust-policy.json`. Replace both placeholders with the values c
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {
       "StringEquals": {
-        "<oidc-provider>:sub": "system:serviceaccount:bgp-cloud-connector:openshift-bgp-cloud-connector-controller-manager"
+        "<oidc-provider>:sub": "system:serviceaccount:bgp-cloud-connector:openshift-bgp-cloud-connector-controller-manager",
+        "<oidc-provider>:aud": ["openshift", "sts.amazonaws.com"]
       }
     }
   }]
 }
 ```
+
+The subject restricts the role to the Operator service account. The `openshift` audience is used by the Manual/STS token projected through the Cloud Credential Operator flow configured later with `ROLEARN`. The `sts.amazonaws.com` audience is used by the alternative pod-injected IRSA flow. The upstream authentication guidance includes both audiences so the same role can support either documented credential path. This guide uses the Manual/STS `ROLEARN` flow.
+
+The permission policy above retains `"Resource": "*"` because it is the simplified policy used for this lab. Read-only `Describe` actions and `sts:GetCallerIdentity` require that scope. For a hardened deployment, scope the mutating Route Server peer, tagging, and ENI actions as described in the upstream [AWS authentication least-privilege guidance](https://github.com/openshift/bgp-cloud-connector/blob/main/docs/aws-authentication.md#create-the-iam-role-and-policy). Verify current EC2 action and condition-key support before applying a restricted policy.
 
 Create the policy and role:
 
@@ -147,7 +154,7 @@ Configure these rules according to your network policy:
 * Workload protocols required for the test, such as ICMP and TCP 8080 from the VPC CIDR.
 * UDP 3784 if you use BFD rather than BGP keepalives.
 
-Security groups do not override network ACLs. Confirm that the worker and endpoint subnet ACLs allow TCP 179 in both directions. The dedicated security group supplements the ROSA-managed groups; it does not replace them.
+Security groups do not override network ACLs. Confirm that the worker and endpoint subnet ACLs allow TCP 179 in both directions. BGP rules alone are not sufficient for the connectivity test. The worker and EC2 tester subnet ACLs must also allow the application traffic, such as ICMP and TCP 8080, plus the corresponding response traffic. Network ACLs are stateless, so define both ingress and egress rules, including the applicable ephemeral TCP ports for replies. Check every subnet that can carry the request or return path, especially when traffic can enter through one router worker and leave through another. The dedicated security group supplements the ROSA-managed groups; it does not replace them.
 
 Create a machine pool with the security group and router label. The lab used one worker. Use a topology appropriate for your availability requirements.
 
@@ -358,7 +365,7 @@ If you already have an OpenShift Virtualization VM connected to the primary CUDN
 
 Otherwise, follow the example below to deploy a disposable VM for testing.
 
-The example uses the native KubeVirt `bridge` binding, as used in our original BGP connectivity test. The `l2bridge` binding is another option and was tested separately for live migration.
+The example preserves the native KubeVirt `bridge` binding used in the original inbound BGP connectivity test. The official ROSA BGP routing guide also shows `bridge: {}`. The upstream BGP Cloud Connector [`kubevirt-testing.md`](https://github.com/openshift/bgp-cloud-connector/blob/main/docs/kubevirt-testing.md) example instead shows the `l2bridge` binding, although its binding table also reports that `bridge` supports inbound and outbound traffic. Separate RHEL tests in this lab used `l2bridge` for persistent identity and live migration. Those tests did not establish that `bridge` is live-migratable, and the original inbound test did not use `l2bridge`.
 
 The lab used `quay.io/containerdisks/fedora:latest`, but the resolved digest was not recorded. Resolve and pin an image digest for a repeatable deployment, then test that image with your OpenShift release. The manifest assumes the guest image includes cloud-init, systemd, and Python 3 so it can create the HTTP endpoint. If the selected image lacks one of these components, use a compatible image or adjust the service.
 
@@ -541,7 +548,36 @@ Do not delete shared ROSA, VPC, IAM, or storage resources solely because they we
 1. Delete `BGPCloudConfiguration` and wait for Operator-created Route Server peers to be removed.
 1. Remove the Operator only if no other configuration uses it.
 1. Disable propagation, delete endpoints, disassociate the VPC, and delete the Route Server through the workflow that created them.
-1. Remove the dedicated security group, machine pool, and IAM role only when no other workload uses them.
+1. Delete the dedicated machine pool only after confirming that it contains no shared workloads:
+
+   ```bash
+   rosa delete machinepool --cluster "${CLUSTER_NAME}" bgp-workers
+   rosa list machinepools --cluster "${CLUSTER_NAME}"
+   ```
+
+1. Wait for the machine-pool EC2 instances and their ENIs to disappear. Do not delete the security group while an instance or ENI still uses it:
+
+   ```bash
+   aws ec2 describe-instances \
+     --region "${AWS_REGION}" \
+     --filters \
+       Name=instance.group-id,Values="${BGP_SG_ID}" \
+       Name=instance-state-name,Values=pending,running,stopping,stopped,shutting-down
+
+   aws ec2 describe-network-interfaces \
+     --region "${AWS_REGION}" \
+     --filters Name=group-id,Values="${BGP_SG_ID}"
+   ```
+
+1. After both checks return no resources, delete the dedicated security group:
+
+   ```bash
+   aws ec2 delete-security-group \
+     --region "${AWS_REGION}" \
+     --group-id "${BGP_SG_ID}"
+   ```
+
+   Remove the IAM role only if no other workload uses it. Do not remove a shared machine pool, security group, or role.
 
 ## References
 
