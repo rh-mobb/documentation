@@ -224,7 +224,7 @@ external command 'curl ...': exited with error 60
     ```
 
     {{< alert state="warning" >}}
-**Consider building a VDDK image before you migrate anything.** This guide does not use one, which is why the transfer in step 5 is slow and why the TLS workaround above is needed at all. The MTV documentation is firm on the point: creating the image is optional but "highly recommended", and "using MTV without VDDK is not recommended and could result in significantly lower migration speeds."
+**Consider building a VDDK image before you migrate anything.** This guide does not use one, which is why the transfer in step 5 is slow and why the TLS workaround above is needed at all. The [MTV 2.12 VMware migration planning documentation](https://docs.redhat.com/en/documentation/migration_toolkit_for_virtualization/2.12/html/planning_your_migration_to_red_hat_openshift_virtualization/assembly_planning-migration-vmware_mtv) is firm on the point: creating the image is optional but "highly recommended", and "using MTV without VDDK is not recommended and could result in significantly lower migration speeds."
 
 It is not always optional. **You must use a VDDK image if the source VMs are backed by VMware vSAN.**
 
