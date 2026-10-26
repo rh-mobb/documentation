@@ -9,43 +9,62 @@ authors:
 validated_version: "4.22"
 ---
 
-When you lift a virtual machine out of vSphere and onto OpenShift Virtualization, the thing that most often breaks is not the disk, it is the address. Firewall rules, DNS records, load balancer members, licence servers, and monitoring targets are all pinned to the IP the VM had in vSphere. Renumbering a VM turns a one hour migration into a multi team change request.
+Many VM dependencies refer to an IP address rather than a VM name. Firewall rules, DNS records, load balancer members, licence servers, and monitoring targets can all require changes when a migrated VM is renumbered.
 
-This guide walks through migrating a VM from vSphere to Red Hat OpenShift Service on AWS (ROSA) with hosted control planes, using the Migration Toolkit for Virtualization (MTV), and keeping the VM on its original IP address after the move.
+This guide describes how we migrated a Fedora VM from vSphere to Red Hat OpenShift Service on AWS (ROSA) with hosted control planes by using the Migration Toolkit for Virtualization (MTV). The destination VM used its original IP address, `10.100.0.50`, and an EC2 instance reached that address directly over BGP without inbound NAT.
 
-The address is preserved end to end: across the migration itself, across VM restarts, and across live migration between worker nodes.
+We also tested declarative IP and MAC assignment on a separate RHEL 9 VM, which retained both addresses across stop/start and live migration between worker nodes.
 
-## What makes IP preservation work
+Please note that while we successfully migrated a VMware-derived Fedora VM to ROSA with its original IP address and confirmed direct connectivity from EC2, we have not yet tested the complete workflow on that same migrated VM, including automatic IPAMClaim management and live migration with the original IP and assigned MAC intact. Those capabilities will be tested separately in the future articles.
 
-Four pieces have to line up. Missing any one of them produces a VM that either boots with the wrong address or cannot live migrate.
+This guide builds on [Deploying BGP Cloud Connector on ROSA HCP](/experts/rosa/bgp-cloud-connector/), which covers the official Red Hat Operator, AWS Route Server, FRR, the primary CUDN, and direct EC2-to-VM routing. The sections below focus on migration and identity retention.
 
-| Piece | Role |
-|---|---|
-| **BGP Cloud Connector operator** | Advertises the VM network into the AWS VPC route table so the address is reachable from outside the cluster |
-| **ClusterUserDefinedNetwork (CUDN)** with `ipam.lifecycle: Persistent` | A primary Layer 2 network whose IP allocations survive restart and live migration. You do not create this by hand, the `BGPRouting` resource generates it |
-| **IPAMClaim** | Pins one specific address to one specific VM, so you choose the address rather than accepting whatever IPAM offers |
-| **`l2bridge` network binding** | Gives the guest the real network address (not a NAT address) while remaining live migratable |
+## How IP preservation works
+
+Keeping the same VM IP on ROSA depends on a few pieces working together. Each one solves a different part of the problem.
+
+![vmw-rosa-arc-diagram](images/vmw-rosa-ip-pres-arc-diagram.png)
+<br />
+
+- **BGP Cloud Connector Operator**
+  - Advertises the VM network into the AWS VPC route tables.
+  - This is what makes the VM address reachable from outside the cluster, such as from an EC2 instance.
+
+- **Primary Layer 2 CUDN with persistent IPAM**
+  - Provides the VM subnet inside the cluster.
+  - Keeps IP allocations stable across VM restarts, and with the right storage, across live migration.
+  - In this workflow, you do not create the CUDN directly. The `BGPRouting` resource generates it.
+
+- **Declarative address request**
+  - The `network.kubevirt.io/addresses` annotation asks for a specific VM IP.
+  - OVN-Kubernetes then creates and manages the backing `IPAMClaim` automatically.
+
+- **`l2bridge` binding**
+  - Lets the guest use the real CUDN address instead of a NATed pod address.
+  - This is also the binding used in our live migration tests.
+
+These pieces are related, but they do different jobs:
+
+- **Inside the cluster**, the VM lives on a **Layer 2** network. That is what lets the VM keep the same subnet identity while moving between nodes.
+
+- **Outside the cluster**, AWS reaches that subnet through **Layer 3 routing**. BGP advertises the route, and AWS sends traffic toward the selected node next hop.
+
+So both Layer 2 and BGP are correct here. They just describe different parts of the path.
 
 {{< alert state="info" >}}
-The ROSA advanced networking documentation uses `bridge: {}` binding for VMs on an advertised CUDN, and warns that `masquerade` installs nftables rules that drop inbound traffic. Both points hold. This guide uses the **`l2bridge` binding plugin** instead, because plain `bridge` reports `LIVE-MIGRATABLE=False`: KubeVirt requires masquerade or a migration aware binding plugin. If you do not need live migration, `bridge` is the simpler choice.
+The companion BGP deployment test used native KubeVirt `bridge: {}` and confirmed direct EC2-to-VM routing. That proved the routed connectivity path.
+
+Separate RHEL tests used the **`l2bridge` binding plugin** together with declarative IP and MAC assignment. Those tests showed that the assigned identity survived stop and start, and one live migration when shared storage was used.
+
+The Fedora migration result and the RHEL live migration result are therefore related, but they are not the same test.
 {{< /alert >}}
-
-### How the layers fit together
-
-It is easy to read "Layer 2 network" and "BGP" together and assume one of them is wrong. Both are accurate, they just describe different halves of the path.
-
-| Where | Layer | What it does |
-|---|---|---|
-| Inside the cluster | **Layer 2** | The CUDN is a flat broadcast domain for the VM subnet, encapsulated between nodes. This is what lets a VM keep its address when it live migrates, because it never leaves the segment |
-| Cluster to AWS | **Layer 3** | BGP advertises the VM subnet as a route into the VPC route table, with a node address as the next hop |
-
-No Layer 2 is extended into AWS, and none needs to be. You can see the split in a ping: traffic between two VMs on the CUDN stays on the same subnet, while a ping from an EC2 instance to a VM arrives with a decremented TTL, because it was routed.
 
 ## Prerequisites
 
 * A ROSA cluster with hosted control planes, version 4.22 or later
+* The official BGP Cloud Connector Operator deployed as described in the [companion guide](/experts/rosa/bgp-cloud-connector/), with `BGPCloudConfiguration` and `BGPRouting` reporting `Ready`, established BGP sessions, and the CUDN prefix present in the required AWS route tables
 * The **OpenShift Virtualization** operator installed, with a healthy `HyperConverged` resource. See [Deploying OpenShift Virtualization on ROSA](/experts/rosa/ocp-virt/basic/) if you have not done this yet
-* At least **two bare metal worker nodes**. Live migration requires a second eligible node, and only bare metal instance types expose `devices.kubevirt.io/kvm`
+* At least **two bare metal worker nodes** that match `bgp_router=true`. The companion guide assigns that label through the ROSA machine pool so BGP Cloud Connector selects every node that can host a directly routed VM. Live migration requires a second eligible node, and only bare metal instance types expose `devices.kubevirt.io/kvm`
 * Network connectivity from the cluster to your vSphere environment, for example an AWS Site to Site VPN or Direct Connect
 * `oc`, `virtctl`, and the `aws` CLI available locally
 * Cluster administrator access
@@ -55,237 +74,55 @@ Check which of your nodes can actually run VMs before you start. Only nodes repo
 
 ```bash
 oc get nodes -o json | jq -r '.items[] | "\(.metadata.name)  kvm=\(.status.allocatable["devices.kubevirt.io/kvm"] // "none")"'
+oc get nodes -l bgp_router=true -o wide
 ```
+
+If virtualization uses a separate machine pool, configure `bgp_router=true` on that machine pool before scheduling these VMs. Do not use a different VM node selector unless the same nodes also match `BGPCloudConfiguration.spec.routerNodeSelector`.
 {{< /alert >}}
 
-## 1. Prepare AWS for the BGP Cloud Connector
+## 1. Confirm the BGP and CUDN prerequisite
 
-The BGP Cloud Connector peers your ROSA compute nodes with an **AWS Route Server**, so the VM network is reachable from the VPC without NAT. The Operator generates `FRRConfiguration` resources and disables the source and destination check on the compute node network interfaces.
+The companion deployment guide creates the primary Layer 2 CUDN through `BGPRouting`. For this migration example, use a non-overlapping subnet that contains the source VM address, such as `10.100.0.0/16`, and a workload namespace selected by the generated CUDN.
 
-This section follows the [ROSA advanced networking documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/advanced_networking/index). Refer to it for the authoritative IAM policy contents.
+Before installing MTV, confirm the existing routing foundation:
 
-1. Capture the cluster OIDC provider and your account ID:
+```bash
+oc get bgpcloudconfiguration cluster
+oc get bgprouting
+oc get bgpsessionstate -n openshift-frr-k8s
+oc get clusteruserdefinednetwork
+oc get routeadvertisements
+```
 
-    ```bash
-    OIDC_PROVIDER=$(oc get authentication cluster -o jsonpath='{.spec.serviceAccountIssuer}' | sed 's|https://||')
-    AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-    ```
+Both BGP custom resources must report `Ready`, all expected sessions must report `Established`, and the CUDN route must be active in the AWS route tables used by migration test clients. Do not edit the Operator-generated CUDN directly.
 
-1. Create an IAM permission policy for the Operator. It needs `sts:GetCallerIdentity`, `ec2:DescribeRouteServers`, `ec2:DescribeRouteServerEndpoints`, `ec2:DescribeSubnets`, `ec2:DescribeRouteServerPeers`, `ec2:CreateRouteServerPeer`, `ec2:DeleteRouteServerPeer`, `ec2:CreateTags`, `ec2:DescribeInstances`, and `ec2:ModifyNetworkInterfaceAttribute`:
+The companion guide uses `bgp-test-vms` for its disposable VM. This migration guide uses a separate namespace named `vms`. Create it with both labels, matching the `bgp-test-cudn` network from the companion guide:
 
-    ```bash
-    POLICY_ARN=$(aws iam create-policy \
-      --policy-name bgp-cloud-connector-operator-policy \
-      --policy-document file://operator-permission-policy.json \
-      --query 'Policy.Arn' --output text)
-    ```
+```yaml
+cat << EOF | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vms
+  labels:
+    cluster-udn: bgp-test-cudn
+    k8s.ovn.org/primary-user-defined-network: ""
+EOF
+```
 
-1. Create a role whose trust policy allows `sts:AssumeRoleWithWebIdentity` from the cluster OIDC provider, scoped to the Operator service account:
+Both labels must be present when the namespace is created. Verify the namespace and generated CUDN before continuing:
 
-    ```json
-    "${OIDC_PROVIDER}:sub": "system:serviceaccount:bgp-cloud-connector:openshift-bgp-cloud-connector-controller-manager"
-    ```
+```bash
+oc get namespace vms -o json | jq '{
+  clusterUDN: .metadata.labels["cluster-udn"],
+  primaryUDN: .metadata.labels["k8s.ovn.org/primary-user-defined-network"]
+}'
+oc get clusteruserdefinednetwork cluster-udn-bgp-test-cudn -o yaml
+```
 
-    ```bash
-    aws iam create-role --role-name bgp-cloud-connector-operator \
-      --assume-role-policy-document file://operator-trust-policy.json
-    aws iam attach-role-policy --role-name bgp-cloud-connector-operator \
-      --policy-arn ${POLICY_ARN}
-    ```
+Confirm that the generated CUDN selects `cluster-udn: bgp-test-cudn`, uses Layer 2 topology, contains the source address subnet, and has persistent IPAM.
 
-    {{< alert state="warning" >}}
-The Operator cannot create its own IAM role. On ROSA, which always uses STS, you must create this role in advance and pass its ARN to the Operator subscription in step 2.
-    {{< /alert >}}
-
-1. Create a security group for BGP peering traffic, and allow TCP 179 outbound and inbound, plus the ephemeral port range `32768-60999` for TCP and UDP. The ephemeral range is needed because return traffic can arrive on a different node:
-
-    ```bash
-    BGP_SG_ID=$(aws ec2 create-security-group \
-      --group-name "bgp-peering-sg" \
-      --description "BGP Cloud Connector peering traffic" \
-      --vpc-id <vpc-id> \
-      --query 'GroupId' --output text)
-    ```
-
-1. Create a machine pool that carries both the security group and the `bgp_router` label. These are the nodes that peer with the Route Server, so use the same bare metal nodes that will run your VMs:
-
-    ```bash
-    rosa create machinepool --cluster <cluster-name> \
-      --name bgp-workers \
-      --availability-zone <az> \
-      --additional-security-group-ids ${BGP_SG_ID} \
-      --labels "bgp_router=true" \
-      --instance-type <bare-metal-type> \
-      --replicas 2
-
-    oc get nodes -l bgp_router=true
-    ```
-
-    {{< alert state="info" >}}
-Apply `bgp_router=true` to **every** node your VMs can land on, not only the nodes you expect to carry ingress traffic. Those nodes act as the next hop and have their source and destination check disabled.
-    {{< /alert >}}
-
-1. Create the Route Server, associate it with the VPC, and create an endpoint in each private subnet holding BGP nodes:
-
-    ```bash
-    aws ec2 create-route-server --amazon-side-asn <amazon-asn>
-    aws ec2 associate-route-server --route-server-id <rs-id> --vpc-id <vpc-id>
-    aws ec2 create-route-server-endpoint --route-server-id <rs-id> --subnet-id <subnet-id>
-    ```
-
-    AWS permits a maximum of two Route Server endpoints per subnet.
-
-1. Enable route propagation on the route tables for your compute node subnets, and on any subnets providing external connectivity:
-
-    ```bash
-    aws ec2 enable-route-server-propagation \
-      --route-server-id <rs-id> --route-table-id <route-table-id>
-    ```
-
-1. Confirm the subnet network ACLs allow TCP 179 in both directions. Network ACLs are stateless, so a missing return rule silently breaks peering:
-
-    ```bash
-    aws ec2 describe-network-acls \
-      --filters "Name=association.subnet-id,Values=<subnet-id>" \
-      --query "NetworkAcls[].Entries"
-    ```
-
-## 2. Install the BGP Cloud Connector Operator
-
-1. Create the namespace and operator group:
-
-    ```bash
-    oc create namespace bgp-cloud-connector
-    ```
-
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: operators.coreos.com/v1
-    kind: OperatorGroup
-    metadata:
-      name: bgp-cloud-connector-operatorgroup
-      namespace: bgp-cloud-connector
-    spec:
-      targetNamespaces:
-        - bgp-cloud-connector
-    EOF
-    ```
-
-1. Create the subscription, passing the IAM role ARN from step 1 through the `ROLEARN` environment variable:
-
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: operators.coreos.com/v1alpha1
-    kind: Subscription
-    metadata:
-      name: bgp-cloud-connector-operator
-      namespace: bgp-cloud-connector
-    spec:
-      channel: stable
-      name: bgp-cloud-connector
-      source: redhat-operators
-      sourceNamespace: openshift-marketplace
-      config:
-        env:
-          - name: ROLEARN
-            value: arn:aws:iam::${AWS_ACCOUNT_ID}:role/bgp-cloud-connector-operator
-    EOF
-    ```
-
-1. Wait for the Operator to report `Succeeded`:
-
-    ```bash
-    oc get csv -n bgp-cloud-connector
-    ```
-
-## 3. Configure BGP and create the VM network
-
-The `BGPCloudConfiguration` resource is a cluster scoped singleton and **must** be named `cluster`.
-
-1. Create the BGP configuration. `localASN` must differ from the Amazon side ASN, which is discovered automatically:
-
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: networking.openshift.io/v1beta1
-    kind: BGPCloudConfiguration
-    metadata:
-      name: cluster
-    spec:
-      platform: AWS
-      bgp:
-        localASN: 65001
-        livenessDetection: bgp-keepalive
-      routerNodeSelector:
-        bgp_router: "true"
-      aws:
-        region: <region>
-        routeServerIDs:
-          - <rs-id>
-    EOF
-    ```
-
-1. Create the namespace that will hold your VMs. **Both labels must be present when the namespace is created**, because admission rejects adding the user defined network label to an existing namespace:
-
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: vms
-      labels:
-        k8s.ovn.org/primary-user-defined-network: ""
-        cluster-udn: my-cudn
-    EOF
-    ```
-
-    {{< alert state="warning" >}}
-Do not use `oc new-project` followed by `oc label` here. The label has to be set at creation time, and retrofitting it fails.
-    {{< /alert >}}
-
-1. Create the `BGPRouting` resource. This **generates** the ClusterUserDefinedNetwork for you, so you do not create the CUDN by hand. The `name` under `spec.network` must match the `cluster-udn` label on the namespace:
-
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: networking.openshift.io/v1beta1
-    kind: BGPRouting
-    metadata:
-      name: my-cudn
-    spec:
-      network:
-        name: my-cudn
-        subnets:
-          - 10.100.0.0/16
-    EOF
-    ```
-
-    {{< alert state="warning" >}}
-Choose a subnet that does **not** overlap your VPC CIDR, and that contains the addresses of the VMs you intend to migrate. In this guide the VM being migrated has `10.100.0.50`, so the subnet is `10.100.0.0/16`. A Layer 2 CUDN permits one IPv4 and one IPv6 CIDR per subnet.
-    {{< /alert >}}
-
-1. Verify. The generated network is named `cluster-udn-<network_name>`, and it is created as a primary Layer 2 network with `ipam.lifecycle: Persistent`, which is what allows an address to survive restart and live migration:
-
-    ```bash
-    oc get bgpcloudconfiguration cluster -o jsonpath='{.status.phase}{"\n"}'
-    oc get bgprouting my-cudn -o jsonpath='{.status.phase}{"\n"}'
-    oc get clusteruserdefinednetwork
-    oc get routeadvertisements
-    oc get frrconfiguration -n openshift-frr-k8s
-    ```
-
-    ```output
-    Ready
-    Ready
-    NAME                   AGE
-    cluster-udn-my-cudn    1m
-    ```
-
-1. Confirm the subnet now appears in the VPC route table:
-
-    ```bash
-    aws ec2 describe-route-tables --route-table-id <private-rtb-id> --region <region> \
-      --query 'RouteTables[0].Routes[?DestinationCidrBlock==`10.100.0.0/16`]' --output table
-    ```
-## 4. Install the Migration Toolkit for Virtualization
+## 2. Install the Migration Toolkit for Virtualization
 
 ```yaml
 cat << EOF | oc apply -f -
@@ -337,7 +174,7 @@ Wait for the MTV pods to come up:
 oc get pods -n openshift-mtv
 ```
 
-## 5. Add the vSphere provider
+## 3. Add the vSphere provider
 
 1. Retrieve your vCenter CA certificate. From the vCenter appliance, or by downloading `https://<vcenter>/certs/download.zip`.
 
@@ -357,7 +194,7 @@ oc get pods -n openshift-mtv
     stringData:
       user: 'administrator@vsphere.local'
       password: '<password>'
-      insecureSkipVerify: 'true'
+      insecureSkipVerify: 'false'
       url: 'https://vcenter.example.com/sdk'
       cacert: |
         -----BEGIN CERTIFICATE-----
@@ -367,14 +204,14 @@ oc get pods -n openshift-mtv
     ```
 
     {{< alert state="warning" >}}
-**Why `insecureSkipVerify: 'true'`.** When no VDDK image is configured, MTV falls back to downloading the VMDK over HTTPS using `nbdkit` and `curl`. In that path the CA certificate from the secret is mounted into the conversion pod but is not applied to the `curl` transport, and guest conversion fails with:
+**Keep TLS verification enabled.** Supply the complete CA chain for every hostname used by vCenter and the VMDK download endpoint. Without a VDDK image, MTV can download the VMDK over HTTPS by using `nbdkit` and `curl`. In our lab, the provider accepted the custom CA but the child curl process did not use that trust path, and guest conversion failed with:
 
 ```text
 virt-v2v: error: downloading https://vcenter.example.com/folder/...vmdk:
 external command 'curl ...': exited with error 60
 ```
 
-`curl` exit code 60 means the peer certificate could not be verified. Setting `insecureSkipVerify` adds `?no_verify=1` to the `vpx://` URL that virt-v2v builds, which clears the failure. Configuring a VDDK image avoids both this issue and the slow transfer described in step 7.
+`curl` exit code 60 means the peer certificate could not be verified. Setting `insecureSkipVerify: 'true'` allowed the lab migration to proceed, but it disabled certificate verification for the VMware provider rather than only for one disk transfer. Treat that as an experimental lab workaround, not the standard configuration. Correct the CA chain or use the supported VDDK path before production migration. Configuring a VDDK image also avoids the slow direct-download transfer described in step 5.
     {{< /alert >}}
 
 1. Create the provider:
@@ -398,7 +235,7 @@ external command 'curl ...': exited with error 60
     ```
 
     {{< alert state="warning" >}}
-**Consider building a VDDK image before you migrate anything.** This guide does not use one, which is why the transfer in step 7 is slow and why the TLS workaround above is needed at all. The MTV documentation is firm on the point: creating the image is optional but "highly recommended", and "using MTV without VDDK is not recommended and could result in significantly lower migration speeds."
+**Consider building a VDDK image before you migrate anything.** This guide does not use one, which is why the transfer in step 5 is slow and why the TLS workaround above is needed at all. The MTV documentation is firm on the point: creating the image is optional but "highly recommended", and "using MTV without VDDK is not recommended and could result in significantly lower migration speeds."
 
 It is not always optional. **You must use a VDDK image if the source VMs are backed by VMware vSAN.**
 
@@ -426,17 +263,15 @@ Note that storing the VDDK image in a public registry might violate VMware licen
     vcenter   vsphere     Ready    True    True        True
     ```
 
-## 6. Record the VM address you intend to preserve
+## 4. Record the VM address you intend to preserve
 
 Query the MTV inventory for the source VM. The guest address comes from VMware Tools, so capture it **before** powering the VM off.
 
 ```bash
 PROVIDER_UID=$(oc get provider vcenter -n openshift-mtv -o jsonpath='{.metadata.uid}')
-TOKEN=$(oc whoami -t)
 
-oc exec -n openshift-mtv deploy/forklift-controller -- \
-  curl -sk -H "Authorization: Bearer $TOKEN" \
-  "https://forklift-inventory.openshift-mtv.svc:8443/providers/vsphere/${PROVIDER_UID}/vms?detail=4" \
+oc get --raw \
+  "/api/v1/namespaces/openshift-mtv/services/https:forklift-inventory:api-https/proxy/providers/vsphere/${PROVIDER_UID}/vms?detail=4" \
   | jq -r '.[] | select(.name=="my-vm") | .guestNetworks[]? | "\(.ip)/\(.prefix) mac=\(.mac)"'
 ```
 
@@ -444,16 +279,16 @@ oc exec -n openshift-mtv deploy/forklift-controller -- \
 10.100.0.50/16 mac=00:50:56:bc:09:a3
 ```
 
-Record that address. It is the value you pin in step 9.
+Record that address. It is the value you request in step 7.
 
-## 7. Create the network and storage maps, and run the migration
+## 5. Create the network and storage maps, and run the migration
 
 {{< alert state="warning" >}}
 **Migrate into a namespace that does _not_ have the CUDN label.**
 
 This is counterintuitive, but it matters. In a namespace selected by a **primary** CUDN, every pod receives the CUDN as its default route, including the MTV guest conversion pod. That pod needs to reach vCenter, and the CUDN has no path to your vSphere network, so conversion fails with a connection timeout after roughly two minutes.
 
-Migrate into an ordinary namespace first, then move the disk onto the CUDN in step 8.
+Migrate into an ordinary namespace first, then move the disk onto the CUDN in step 6.
 {{< /alert >}}
 
 1. Create a staging namespace:
@@ -510,7 +345,7 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
 
 1. Power off the source VM in vSphere. Cold migration requires it.
 
-1. Create the plan. Set `targetPowerState: "off"` so you can pin the address before the VM ever boots. The accepted values are `off`, `on`, and `auto`, where `auto` preserves the power state of the source VM. It can also be set per VM under `spec.vms` if a single plan carries VMs that should end up in different states:
+1. Create the plan. Set `targetPowerState: "off"` on the VM entry so the converted staging VM remains halted for inspection. Set `skipGuestConversion: false` to use the standard virt-v2v conversion path. The successful Fedora migration used `preserveStaticIPs: false`. Destination CUDN address allocation is handled separately when the final VM is reconstructed in step 7. Do not substitute a different MTV preservation setting without testing it for the guest and migration path in use.
 
     ```yaml
     cat << EOF | oc apply -f -
@@ -522,10 +357,10 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
     spec:
       type: cold
       targetNamespace: vm-staging
-      targetPowerState: "off"
       targetNodeSelector:
-        mobb.redhat.com/virtualization: "true"
+        bgp_router: "true"
       preserveStaticIPs: false
+      skipGuestConversion: false
       provider:
         source:
           name: vcenter
@@ -542,6 +377,7 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
           namespace: openshift-mtv
       vms:
         - name: my-vm
+          targetPowerState: "off"
     EOF
     ```
 
@@ -569,24 +405,28 @@ Migrate into an ordinary namespace first, then move the disk onto the CUDN in st
     ```
 
 <details>
-<summary>Why this takes so long, and how to speed it up</summary>
+<summary>Why did our migration take so long?</summary>
 
-Cold migration pulls the entire disk across your link to vSphere. Two phases dominate:
+Cold migration requires transferring the VM disk from vSphere and converting the guest for OpenShift Virtualization. In our test, two steps accounted for most of the time:
 
-| Phase | What it does | Typical rate over a VPN |
-|---|---|---|
-| `ConvertGuest` | Inspects the guest filesystem and rebuilds the initramfs with virtio drivers using `dracut` | Very slow, it is latency bound rather than bandwidth bound, because it issues many small random reads across the link |
-| `CopyDisksVirtV2V` | Sequential copy of the converted disk | Closer to your link bandwidth |
+- **`ConvertGuest`:** Prepares the guest for OpenShift Virtualization, including changes to support VirtIO devices. This step was particularly slow in our environment, where the VMware source was accessed over a high-latency VPN connection.
+- **`CopyDisksVirtV2V`:** Transfers the VM disk data to the destination. Its performance depends on the source storage, network connection, and transfer method.
 
-On a 16 GiB Fedora VM across a Site to Site VPN with around 72 ms round trip, conversion ran at roughly 0.13 MB/s for 40 minutes, and the disk copy at roughly 1.75 MB/s, for about 85 minutes in total.
+Our 16 GiB Fedora VM was migrated over a site-to-site VPN with approximately 72 ms round-trip latency. We observed transfer rates of around 0.13 MB/s during conversion and 1.75 MB/s during disk copying, with the migration taking approximately 85 minutes overall.
 
-**Configuring a VDDK image is the single biggest improvement.** Without it MTV uses the `nbdkit` curl transport over HTTPS, which is markedly slower, especially during the random access conversion phase. Building a VDDK init image is a one time task that pays back on every migration afterwards.
+**For better performance, use VDDK.** Our test used the `nbdkit` curl transport over HTTPS rather than VMware's Virtual Disk Development Kit (VDDK). Red Hat strongly recommends configuring a VDDK init image for VMware migrations, as migrations without VDDK can be significantly slower.
+
+We did not perform a VDDK comparison in this test, so the potential improvement would depend on your environment.
+
+See the [Red Hat MTV documentation](https://docs.redhat.com/en/documentation/migration_toolkit_for_virtualization/2.9/html-single/installing_and_using_the_migration_toolkit_for_virtualization/installing_and_using_the_migration_toolkit_for_virtualization) for VDDK configuration and migration performance recommendations.
 
 </details>
 
-## 8. Clone the converted disk onto the CUDN namespace
+## 6. Clone the converted disk onto the CUDN namespace
 
-The converted disk now lives in the staging namespace. Clone it into the CUDN namespace, and take the opportunity to place it on RWX storage so the VM can live migrate.
+The converted disk now lives in the staging namespace. The Fedora VM in our lab was reconstructed in the CUDN namespace from a converted staging disk. Treat this as a controlled handoff: keep the staging VM halted, clone its disk, and do not boot two VMs with the same IP or MAC.
+
+The example places the clone on RWX storage so the final VM can live migrate. We tested this Block-to-Filesystem CDI copy pattern with a RHEL 9 disk. The complete VMware-derived disk clone, declarative address request, guest network configuration, and first boot have not yet been tested as one end-to-end sequence.
 
 ```yaml
 cat << EOF | oc apply -f -
@@ -620,11 +460,22 @@ Wait for the clone:
 oc get dv my-vm-root -n vms -w
 ```
 
-## 9. Pin the IP address with an IPAMClaim
+## 7. Request the destination IP and MAC declaratively
 
-Persistent IPAM records each allocation in an `IPAMClaim` named `<vm-name>.<interface-name>`. Create that claim yourself, before the VM first boots, and the VM receives exactly the address you choose.
+Persistent CUDN IPAM supports a declarative address request on the VM template. Put `network.kubevirt.io/addresses` under `spec.template.metadata.annotations`. The key inside the JSON object must match the KubeVirt interface and network name, which is `default` in this example.
 
-1. Create the VM in a stopped state:
+The steps below combine behaviors tested separately. We have not yet tested the entire VMware-derived disk clone, offline guest configuration, declarative address request, and first boot as one sequence. Treat this as a proposed procedure and stop at each identity and guest-network check.
+
+The controller creates `IPAMClaim/my-vm.default`, assigns the requested address, and owns its lifecycle. Do not create the claim or patch `IPAMClaim.status` yourself. 
+
+1. Confirm that the address and MAC are not already allocated. Check VM definitions, VMIs, and existing claims. Repeat this check immediately before starting the final VM:
+
+    ```bash
+    oc get vm,vmi,ipamclaim -A -o yaml | \
+      grep -E '10\.100\.0\.50|02:50:56:64:00:50'
+    ```
+
+1. Create the VM in a stopped state. This example requests the original VMware IP with a unique locally administered example MAC. Original VMware MAC preservation has not yet been tested through this complete procedure.
 
     ```yaml
     cat << EOF | oc apply -f -
@@ -639,9 +490,12 @@ Persistent IPAM records each allocation in an `IPAMClaim` named `<vm-name>.<inte
         metadata:
           labels:
             kubevirt.io/domain: my-vm
+            vm.kubevirt.io/name: my-vm
+          annotations:
+            network.kubevirt.io/addresses: '{"default":["10.100.0.50"]}'
         spec:
           nodeSelector:
-            mobb.redhat.com/virtualization: "true"
+            bgp_router: "true"
           domain:
             cpu:
               cores: 2
@@ -659,6 +513,8 @@ Persistent IPAM records each allocation in an `IPAMClaim` named `<vm-name>.<inte
                     bus: virtio
               interfaces:
                 - name: default
+                  model: virtio
+                  macAddress: "02:50:56:64:00:50"
                   binding:
                     name: l2bridge
           networks:
@@ -671,60 +527,34 @@ Persistent IPAM records each allocation in an `IPAMClaim` named `<vm-name>.<inte
     EOF
     ```
 
-    Two fields in that manifest are easy to miss and both will cost you time:
-
     {{< alert state="warning" >}}
-**Match the firmware to the source VM.** If the vSphere VM booted with UEFI and you omit the `firmware.bootloader.efi` stanza, the VM falls back to legacy BIOS and hangs at `SeaBIOS: Booting from Hard Disk...` with no further output. Check what MTV detected on the VM it generated in the staging namespace:
+**Match the firmware to the converted VM.** If the vSphere VM used UEFI and the final definition falls back to legacy BIOS, the guest can stop at `SeaBIOS: Booting from Hard Disk...`. Copy the firmware settings from the halted MTV-generated VM:
 
 ```bash
 oc get vm my-vm -n vm-staging -o jsonpath='{.spec.template.spec.domain.firmware}{"\n"}'
 ```
 
-**Use the `l2bridge` binding, not `bridge`.** Plain `bridge: {}` gives the guest the correct address but reports `LIVE-MIGRATABLE=False`, because KubeVirt requires masquerade or a migration aware binding plugin. `masquerade` is migratable but hides the real address behind NAT inside the guest. The `l2bridge` binding plugin gives you both.
+**Keep the primary network definition consistent.** Use `pod: {}` for the primary CUDN and `l2bridge` for the matching `default` interface. Adding a Multus network here would create another interface rather than selecting the primary CUDN.
     {{< /alert >}}
 
-1. Create the IPAMClaim and pin the address.
+1. Inspect the converted guest network profile while the VM is still halted. The annotation reserves an OVN address, but it does not rewrite NetworkManager inside the disk. Check for a stale VMware interface name such as `ens33`, a MAC match that no longer agrees with the VM definition, and destination gateway or DNS values that are not reachable from the CUDN.
 
-    The `network` value is `cluster_udn_` followed by the **full generated CUDN name**, which itself begins with `cluster-udn-`. For a `BGPRouting` named `my-cudn`, the CUDN is `cluster-udn-my-cudn`, so the value is `cluster_udn_cluster-udn-my-cudn`. Confirm it rather than assuming:
+    If virt-v2v already corrected the profile, keep its changes. If offline remediation is required, modify only the cloned destination disk. Do not change the VMware source guest. A DHCP profile matched to the explicit MAC is the simplest arrangement when the guest can use OVN DHCP. A guest-static profile can also work when its address, prefix, gateway, DNS, interface name, and MAC all match the destination design.
 
-    ```bash
-    oc get clusteruserdefinednetwork -o name
-    ```
+1. Start the VM. The persistent claim is created during VMI network admission:
 
     ```bash
-    VM_UID=$(oc get vm my-vm -n vms -o jsonpath='{.metadata.uid}')
+    virtctl start my-vm -n vms
 
-    cat << EOF | oc apply -f -
-    apiVersion: k8s.cni.cncf.io/v1alpha1
-    kind: IPAMClaim
-    metadata:
-      name: my-vm.default
-      namespace: vms
-      finalizers:
-        - kubevirt.io/persistent-ipam
-      ownerReferences:
-        - apiVersion: kubevirt.io/v1
-          kind: VirtualMachine
-          name: my-vm
-          uid: ${VM_UID}
-          controller: true
-          blockOwnerDeletion: true
-    spec:
-      interface: ""
-      network: cluster_udn_cluster-udn-my-cudn
-    EOF
-
-    oc patch ipamclaim my-vm.default -n vms --subresource=status --type=merge \
-      -p '{"status":{"ips":["10.100.0.50/16"]}}'
+    oc get ipamclaim my-vm.default -n vms -o json | \
+      jq '{ips: .status.ips, conditions: .status.conditions}'
     ```
 
-1. Start the VM:
+    Stop immediately if the claim does not contain `10.100.0.50/16`, the VMI reports another MAC, or any other workload acquired the requested identity.
 
-    ```bash
-    oc patch vm my-vm -n vms --type=merge -p '{"spec":{"runStrategy":"Always"}}'
-    ```
+## 8. Verify
 
-## 10. Verify
+Our migrated Fedora VM ran at `10.100.0.50`, and an EC2 tester reached it directly through the BGP-advertised route without inbound NAT. That VM was reconstructed during an earlier experimental iteration. We tested the declarative annotation and explicit-MAC procedure in step 7 separately with RHEL 9 VMs.
 
 1. The VM should come up on the original address:
 
@@ -744,12 +574,14 @@ oc get vm my-vm -n vm-staging -o jsonpath='{.spec.template.spec.domain.firmware}
       jq -r '.status.interfaces[] | "ip=\(.ipAddress) mac=\(.mac) src=\(.infoSource)"'
     ```
 
+    The following output is illustrative for the proposed original-IP and locally administered MAC configuration:
+
     ```output
-    ip=10.100.0.50 mac=0a:58:0a:64:00:32 src=domain, guest-agent
+    ip=10.100.0.50 mac=02:50:56:64:00:50 src=domain, guest-agent
     ```
 
     {{< alert state="info" >}}
-OVN derives the MAC address from the IP address on a Layer 2 CUDN. Here `0a:58:` is the OVN prefix and `0a:64:00:32` is `10.100.0.50` in hexadecimal. The guest MAC therefore changes from the vSphere value, while the IP address is preserved.
+The explicit MAC in the VM definition prevents OVN from generating one from the IP address. Our RHEL tests confirmed persistence with an explicit MAC, but the working Fedora migration was reconstructed with a different destination MAC. Preserving the original VMware MAC has not yet been tested, especially when licences or access controls depend on it.
     {{< /alert >}}
 
 1. Confirm the VM is reachable from elsewhere in the VPC, which proves the BGP advertisement is working:
@@ -758,114 +590,98 @@ OVN derives the MAC address from the IP address on a Layer 2 CUDN. Here `0a:58:`
     ping 10.100.0.50
     ```
 
-1. Live migrate, and confirm the address survives:
+1. If the VM uses RWX storage and reports `LiveMigratable=True`, live migrate it and confirm the address survives:
 
     ```bash
     virtctl migrate my-vm -n vms
     ```
 
-    Run a continuous ping from another host in the VPC while the migration happens. A successful run shows the node change with no packet loss and no change to the IP or MAC:
+    Run a continuous ping from another host in the VPC while the migration happens. Record packet loss rather than assuming there is none. In the independent RHEL test, the node changed while the declarative IP, explicit MAC, and automatically managed IPAMClaim remained unchanged. The test lost 1 packet out of 980 and the longest observed reply gap was approximately 422 ms.
 
     ```output
-    PRE : node=worker-2  ip=10.100.0.50  mac=0a:58:0a:64:00:32
-    POST: node=worker-1  ip=10.100.0.50  mac=0a:58:0a:64:00:32
-    60 packets transmitted, 60 received, 0% packet loss
+    PRE : node=worker-2  ip=10.100.0.61  mac=02:50:56:64:00:61
+    POST: node=worker-1  ip=10.100.0.61  mac=02:50:56:64:00:61
+    980 packets transmitted, 979 received, 0.102% packet loss
     ```
 
-## 11. Enable outbound internet access with an EgressIP
+    This live migration result came from a native RHEL 9 test VM, not the migrated Fedora VM.
 
-Out of the box, a VM on an advertised CUDN cannot reach the internet, although cluster DNS and east to west traffic both work. The reason is worth understanding before you fix it.
+## 9. Evaluate outbound connectivity separately
 
-When OVN-Kubernetes advertises a network over BGP, it **disables SNAT** for that network. That is deliberate: the point of advertising the network is that the VM's real address is routable, so masquerading it would defeat the purpose. The VM therefore sends packets to the internet with a source address of `10.100.0.50`, which leaves the node (the BGP operator disables the EC2 source and destination check for exactly this reason) and reaches the VPC route for `0.0.0.0/0`, pointing at the NAT gateway.
+We confirmed direct EC2-to-VM connectivity over the advertised CUDN. However, outbound internet connectivity was not tested. Do not treat successful DNS resolution or inbound BGP routing as proof that guest-originated traffic reaches the internet.
 
-An AWS NAT gateway only translates traffic whose source falls inside the VPC CIDR. `10.100.0.50` is outside `10.20.0.0/16`, so the NAT gateway discards it.
+OVN logical tracing in our environment showed traffic from `10.100.0.50` leaving the CUDN gateway toward the worker `br-ex` interface without being translated to a worker address. The worker subnet had a default route to an AWS NAT Gateway, and both the private and NAT Gateway subnet route tables had an active BGP return route for `10.100.0.0/16`. This supports using the existing NAT Gateway as an outbound design. We did not complete a normal guest-originated data-plane test, so this article does not present that path as confirmed working.
 
-This also explains the apparent contradiction where DNS works but the internet does not: cluster DNS lives on the service network and is resolved inside the OVN overlay, so it never reaches the VPC or the NAT gateway at all.
+An OpenShift `EgressIP` is another possible design. It applies SNAT before traffic leaves the cluster. That can be useful when private destinations require a source address from the VPC CIDR, but it changes the source address those destinations observe. Firewall rules, database grants, and other controls that rely on the preserved VM IP might then need changes.
 
-The fix is an **EgressIP** from the VPC CIDR. Outbound traffic is then SNATed to an address the NAT gateway will translate, while inbound traffic to the VM address continues to work unchanged.
+Our lab confirmed EgressIP control-plane assignment to an eligible worker and attachment of the secondary address to its AWS network interface. The VM-to-EC2 data-plane test did not produce packet evidence, so EgressIP outbound connectivity is also not presented as confirmed working.
 
-1. Pick an unused address inside the subnet your worker nodes sit in, and confirm it is free:
+Before selecting either approach, test both private and public destinations and capture the source address at each hop:
 
-    ```bash
-    aws ec2 describe-network-interfaces --region <region> \
-      --filters "Name=addresses.private-ip-address,Values=10.20.15.200" \
-      --query 'NetworkInterfaces[].NetworkInterfaceId' --output text
-    ```
+1. From the VM, inspect the routes to a private EC2 address and to a public address.
+1. Capture the flow at the VM interface, worker `br-ex`, and private destination.
+1. For the NAT Gateway design, confirm that `br-ex` sees the CUDN source address and that a public IP echo service returns the NAT Gateway EIP.
+1. For EgressIP, confirm which destinations observe the EgressIP and review every source-IP-based access rule.
+1. Reconfirm that EC2-initiated connections still reach the VM's real CUDN address over BGP.
 
-1. Label the nodes allowed to host egress addresses. Using your general worker nodes keeps the virtualization nodes free:
+Keep EgressIP selectors narrow. A namespace-wide selector can affect every VM in that namespace if an eligible node is added later.
 
-    ```bash
-    oc label node <worker-node> k8s.ovn.org/egress-assignable=""
-    ```
+## 10. Plan the on-premises routing cutover
 
-1. Create the `EgressIP`, selecting the namespace holding your VMs:
+Assigning the original IP to the ROSA VM does not move ownership of the source subnet from VMware to AWS. If the same subnet still contains running VMs on premises, routers must have an unambiguous path to each address during the migration window.
 
-    ```yaml
-    cat << EOF | oc apply -f -
-    apiVersion: k8s.ovn.org/v1
-    kind: EgressIP
-    metadata:
-      name: vms-egress
-    spec:
-      egressIPs:
-        - 10.20.15.200
-      namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: vms
-    EOF
-    ```
+Do not advertise the same aggregate from both locations and assume normal routing will select the intended VM. A phased migration can require more-specific routes for migrated addresses, carefully controlled route preference, or an L2 extension between environments. Each design has failure and rollback implications and must be tested with the network team before migration.
 
-1. Confirm it was assigned to a node:
+At minimum, define:
 
-    ```bash
-    oc get egressip
-    ```
+* when the source VM is powered off;
+* when the destination route becomes authoritative;
+* how on-premises clients learn the destination path;
+* how return traffic stays symmetric;
+* how DNS, firewalls, and load balancers are updated or verified;
+* how the route is withdrawn before a source rollback.
 
-    ```output
-    NAME         EGRESSIPS      ASSIGNED NODE   ASSIGNED EGRESSIPS
-    vms-egress   10.20.15.200   worker-2        10.20.15.200
-    ```
-
-1. Confirm the cloud network config controller attached it to the node network interface in AWS:
-
-    ```bash
-    aws ec2 describe-network-interfaces --region <region> \
-      --filters "Name=addresses.private-ip-address,Values=10.20.15.200" \
-      --query 'NetworkInterfaces[].[NetworkInterfaceId,Attachment.InstanceId]' --output text
-    ```
-
-1. From inside the VM, outbound traffic now works, and the source address seen by the internet is your NAT gateway public address:
-
-    ```bash
-    curl -4 -s -o /dev/null -w '%{http_code}\n' https://1.1.1.1/
-    curl -4 -s https://ifconfig.me
-    ```
-
-Inbound reachability, DNS, east to west traffic, and live migration are all unaffected by this change.
+The BGP Cloud Connector advertises the CUDN into AWS. It does not automatically provide transparent connectivity from the original on-premises network or coordinate overlapping subnet ownership.
 
 ## Known limitations
 
-| Behaviour | Detail |
-|---|---|
-| **Conversion pods cannot run in a CUDN namespace** | As described in step 7, pods in a primary CUDN namespace lose their route to external networks including vSphere. This is why the migration targets a staging namespace |
-| **Guest MAC address changes** | OVN derives the MAC from the IP on a Layer 2 CUDN. If your workload is licensed against a MAC address, test this before committing to a migration window |
-| **Serial console may be unavailable** | VMs installed from an ISO in vSphere typically lack `console=ttyS0` on the kernel command line, so `virtctl console` shows nothing. Use `virtctl vnc`, or the VNC screenshot API, to see the guest console |
+A few things to keep in mind when adapting this workflow to your environment:
+
+- **Fedora 44 is not a supported MTV guest:** We used a disposable Fedora 44 VM for this test. For production migrations, use a supported guest operating system and check the current MTV compatibility matrix.
+
+- **Migration pods need connectivity to vSphere:** MTV runs its migration pods in the target namespace. Our primary CUDN had no route to vCenter or ESXi, so we first migrated the VM into a staging namespace using the default pod network, then moved it to the CUDN-backed namespace.
+
+- **The original VMware MAC was not preserved:** Our migrated Fedora VM used a different MAC address. We separately confirmed that an explicitly assigned MAC survives VM restarts and live migration on RHEL 9. If your applications, licences, or security policies depend on the original MAC, test this before migrating.
+
+- **Serial console access may not work out of the box:** Guests installed through a vSphere ISO may not have `console=ttyS0` configured. If `virtctl console` shows no output, use `virtctl vnc` or the VNC screenshot API to access the graphical console.
 
 {{< alert state="info" >}}
 The VNC screenshot API is useful for non interactive troubleshooting, for example confirming whether a VM is actually booting:
 
 ```bash
-curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
-  "$(oc whoami --show-server)/apis/subresources.kubevirt.io/v1/namespaces/vms/virtualmachineinstances/my-vm/vnc/screenshot?moveCursor=false" \
-  -o screenshot.png
+oc get --raw \
+  "/apis/subresources.kubevirt.io/v1/namespaces/vms/virtualmachineinstances/my-vm/vnc/screenshot?moveCursor=false" \
+  > screenshot.png
 ```
 {{< /alert >}}
 
 ## Cleanup
 
-Once you are satisfied the migrated VM is healthy, remove the staging copy:
+Once you are satisfied the migrated VM is healthy, identify the exact staging resources owned by this migration. Delete only those resources after checking their ownership and storage reclaim policies:
 
 ```bash
+oc get vm,dv,pvc -n vm-staging
 oc delete vm my-vm -n vm-staging
-oc delete project vm-staging
+oc get all,vm,dv,pvc -n vm-staging
 ```
+
+Do not delete `vm-staging` if it contains unrelated resources. Delete the namespace only when it was created exclusively for this migration and an inventory confirms that nothing else depends on it.
+
+## Future research
+
+The following items do not invalidate the proven destination IP-retention result. They need additional testing before this procedure can be treated as a complete migration pattern for every guest:
+
+* **Guest-originated outbound connectivity:** Test the AWS NAT Gateway and EgressIP designs from a normal guest session, with packet captures that show the source address before and after translation.
+* **Full VMware-to-CUDN declarative workflow:** Test the staging clone, offline guest profile inspection, declarative address request, and first boot as one repeatable sequence on a VMware-derived disk.
+* **On-premises routing cutover:** Test route ownership, symmetry, rollback, and phased migration when the original subnet still has active VMware workloads.
+* **Original VMware MAC preservation:** Test the original MAC through conversion, reconstruction, restart, and live migration when an application requires it.
