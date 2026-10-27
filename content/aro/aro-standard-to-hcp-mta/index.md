@@ -1,6 +1,6 @@
 ---
 date: '2026-10-20'
-title: 'Migrating an ARO Standard cluster to ARO HCP with the Migration Toolkit for Applications (MTA)'
+title: 'Migrating Applications from ARO Standard to ARO HCP with Migration Toolkit for Applications (MTA)'
 tags: ["ARO", "ARO Classic", "ARO HCP"]
 authors:
   - Kevin Collins
@@ -266,7 +266,7 @@ Do not copy a database that is still running. A file-by-file copy is not an atom
 
 ## 7. Transfer all volumes
 
-Re-run the five Azure Files transfers from step 5. With the sourcestopped, this pass is the authoritative one.
+Re-run the five Azure Files transfers from step 5. With the source stopped, this pass is the authoritative one.
 
 Then transfer the five Azure Disk volumes:
 
