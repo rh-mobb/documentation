@@ -16,6 +16,8 @@ MCG runs in standalone mode, so you don't need the extra storage nodes that a fu
 
 * OpenShift AI installed on ARO. See [Installing Red Hat OpenShift AI 3.x on ARO](/experts/aro/openshift-ai-3.x/).
 * The `az` CLI, logged in to the subscription that contains the cluster.
+* `oc` 4.18 or later (for `oc wait --for=create`).
+* ODF must **not** already be installed. If it is, skip [Deploy the Multicloud Object Gateway](#deploy-the-multicloud-object-gateway) and create only the backing store and bucket class in that section.
 * Set these variables:
 
     ```bash
@@ -37,11 +39,15 @@ export AZR_STORAGE_KEY=$(az storage account keys list -n $AZR_STORAGE_ACCOUNT -g
 az storage container create -n $AZR_CONTAINER --account-name $AZR_STORAGE_ACCOUNT --account-key $AZR_STORAGE_KEY
 ```
 
+> **Note:** For simplicity, this guide authenticates with a storage account key. For production, restrict network access to the storage account (for example with a private endpoint in the cluster VNet), and plan for key rotation. Rotating the key means updating the `azure-blob-creds` secret.
+
 ## Deploy the Multicloud Object Gateway
 
-1. Install the ODF Operator:
+1. Install the ODF Operator. The channel matches the cluster's OpenShift minor version:
 
     ```bash
+    export ODF_CHANNEL=stable-$(oc get clusterversion version -o jsonpath='{.status.desired.version}' | cut -d. -f1,2)
+
     cat <<EOF | oc apply -f -
     apiVersion: v1
     kind: Namespace
@@ -65,7 +71,7 @@ az storage container create -n $AZR_CONTAINER --account-name $AZR_STORAGE_ACCOUN
       name: odf-operator
       namespace: openshift-storage
     spec:
-      channel: stable-4.20
+      channel: $ODF_CHANNEL
       name: odf-operator
       source: redhat-operators
       sourceNamespace: openshift-marketplace
@@ -74,8 +80,10 @@ az storage container create -n $AZR_CONTAINER --account-name $AZR_STORAGE_ACCOUN
 
     oc wait subscription/odf-operator -n openshift-storage \
       --for=jsonpath='{.status.state}'=AtLatestKnown --timeout=600s
+    oc wait csv -n openshift-storage -l operators.coreos.com/odf-operator.openshift-storage \
+      --for=jsonpath='{.status.phase}'=Succeeded --timeout=600s
     ```
-    <!-- TODO(validate): channel must match the cluster's OpenShift minor version -->
+    <!-- TODO(validate): confirm ocs-operator CSV is also Succeeded at this point (StorageCluster CRD + webhook) -->
 
 1. Create a standalone MCG StorageCluster:
 
@@ -91,7 +99,9 @@ az storage container create -n $AZR_CONTAINER --account-name $AZR_STORAGE_ACCOUN
         reconcileStrategy: standalone
     EOF
 
-    oc wait noobaa/noobaa -n openshift-storage --for=jsonpath='{.status.phase}'=Ready --timeout=900s
+    oc wait noobaa/noobaa -n openshift-storage --for=create --timeout=300s
+    oc wait noobaa/noobaa -n openshift-storage --for=jsonpath='{.status.phase}'=Ready --timeout=900s \
+      || oc get noobaa/noobaa -n openshift-storage -o jsonpath='{.status.conditions}'
     ```
 
 1. Create a backing store for the Blob container and a bucket class that uses it:
@@ -161,7 +171,14 @@ az storage container create -n $AZR_CONTAINER --account-name $AZR_STORAGE_ACCOUN
 
 ## Configure the pipeline server
 
-Point the pipeline server at the MCG service. The cluster service CA signs the service certificate, and every namespace has that CA in the `openshift-service-ca.crt` ConfigMap.
+Point the pipeline server at the MCG service. The cluster service CA signs the service certificate. OpenShift publishes that CA to every namespace in the `openshift-service-ca.crt` ConfigMap:
+
+```bash
+oc get configmap openshift-service-ca.crt -n $PROJECT -o jsonpath='{.data.service-ca\.crt}' | head -1
+```
+<!-- TODO(validate): confirm the s3.openshift-storage.svc certificate is issued by the service CA -->
+
+Create the pipeline server:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -199,7 +216,8 @@ oc wait dspa/dspa -n $PROJECT --for=condition=Ready --timeout=600s
 ## Validate
 
 1. In the dashboard, open the project, go to **Pipelines**, and import a sample pipeline. Then create a run.
-1. When the run finishes, check that MCG has written objects to the Azure container:
+1. When the run finishes, open one of its output artifacts. The dashboard reads it back through the S3 endpoint, which confirms both the write and the read.
+1. Check that MCG has written objects to the Azure container:
 
     ```bash
     az storage blob list -c $AZR_CONTAINER --account-name $AZR_STORAGE_ACCOUNT \
@@ -210,9 +228,19 @@ oc wait dspa/dspa -n $PROJECT --for=condition=Ready --timeout=600s
 
 ## Clean up
 
+> **Warning:** These steps permanently delete pipeline data. Run only the steps for resources you created with this guide.
+
+Remove the project and its bucket:
+
 ```bash
 oc delete project $PROJECT
+```
+
+Remove the shared storage only if no other project uses it. To check, run `oc get obc -A`.
+
+```bash
 oc delete bucketclass,backingstore azure-blob -n openshift-storage
+# Only if you created the standalone StorageCluster in this guide:
 oc delete storagecluster ocs-storagecluster -n openshift-storage
 az storage account delete -n $AZR_STORAGE_ACCOUNT -g $AZR_RESOURCE_GROUP --yes
 ```

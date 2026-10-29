@@ -226,6 +226,8 @@ Each optional component needs some extra setup, and then you set it to `Managed`
 
     oc wait subscription/kueue-operator -n openshift-kueue-operator \
       --for=jsonpath='{.status.state}'=AtLatestKnown --timeout=300s
+    oc wait csv -n openshift-kueue-operator -l operators.coreos.com/kueue-operator.openshift-kueue-operator \
+      --for=jsonpath='{.status.phase}'=Succeeded --timeout=300s
     ```
     <!-- TODO(validate): channel name was taken from the original PR; confirm against the packagemanifest -->
 
@@ -297,11 +299,15 @@ Remove `targetNamespaces` from that OperatorGroup, or remove the Subscription if
 
 ## Clean up
 
+> **Warning:** This removes OpenShift AI from the whole cluster, including every workbench, model deployment and model registry, and the data stored in them. Back up anything you need first.
+
 ```bash
 oc create configmap delete-self-managed-odh -n redhat-ods-operator
 oc label configmap/delete-self-managed-odh api.openshift.com/addon-managed-odh-delete=true -n redhat-ods-operator
-while oc get project redhat-ods-applications &> /dev/null; do sleep 5; done
+oc wait --for=delete namespace/redhat-ods-applications --timeout=15m
 oc delete namespace redhat-ods-operator
 ```
 
-To also remove the dependent operators, delete the `cert-manager-operator` and `openshift-kueue-operator` namespaces.
+If the wait times out, check `oc get datasciencecluster -o yaml` and the operator logs for resources that are blocking deletion.
+
+cert-manager and Kueue may be used by other workloads. Check before you remove them (for example, `oc get certificates -A` and `oc get clusterqueues`).
