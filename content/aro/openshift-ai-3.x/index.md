@@ -177,6 +177,8 @@ oc get datasciencecluster default-dsc \
 oc get pods -n redhat-ods-applications
 ```
 
+> **Next step:** Before you can create a pipeline server, AI pipelines need S3-compatible object storage. On ARO, follow [Data science pipelines with Azure Blob storage on ARO](/experts/aro/openshift-ai-pipelines-storage/).
+
 ## Optional components
 
 Each optional component needs some extra setup, and then you set it to `Managed` in the DataScienceCluster.
