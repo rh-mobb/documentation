@@ -51,6 +51,7 @@ export AWS_REGION=$REGION                # so every AWS CLI command targets the 
 
 export INGRESS_NAME=private-ingress
 export DOMAIN=cf.aws-amer.mobb.cloud     # your custom domain
+export SCOPE=Internal                    # the linked guide's manifest reads $SCOPE
 ```
 
 Follow [Private IngressController with ALB](https://cloud.redhat.com/experts/rosa/private-ingress-controller-with-alb/) **only as far as the "Create the Ingress Controller" section**, using `scope: Internal` and the `LoadBalancerService` strategy. That guide uses `lab.domain.com` in its examples; substitute your own `$DOMAIN`.
@@ -74,15 +75,31 @@ On the cluster tested for this guide the inner target groups reported `0/3` heal
 
 `healthCheckNodePort` is the **node-level Service health endpoint** allocated for a Service with `externalTrafficPolicy: Local`. It reports whether that node currently holds endpoints for the Service. It is a different endpoint from the router's own readiness check on port `1936` (`/healthz/ready`), which reports HAProxy readiness and is not what this target group probes.
 
-That `healthCheckNodePort` endpoint returned `200` when probed directly from a host in the NLB's own subnet, and setting `proxy_protocol_v2.enabled=false` on a target group changed its reported health to the expected `2/3`. That is consistent with AWS applying the PROXY v2 header to health-check connections as well as data connections, and the kube-proxy health endpoint not parsing it.
+Probed directly from a host inside the VPC, that same endpoint answered normally:
+
+```text
+$ curl -s -w '\nHTTP %{http_code}\n' http://<node-ip>:30669/healthz
+{ "service": { "namespace": "openshift-ingress", "name": "router-private-ingress" }, "localEndpoints": 1 }
+HTTP 200
+```
+
+Toggling the attribute on its own moved the reported health each way, with nothing else changed:
+
+| `proxy_protocol_v2.enabled` | Healthy targets |
+|---|---|
+| `true` | `0/3` |
+| `false` | `2/3` |
+| `true` again | `0/3` |
+
+`2/3` is the expected figure, not `3/3`: the IngressController runs two router replicas, so only the two nodes holding an endpoint report healthy. All of this is consistent with AWS applying the PROXY v2 header to health-check connections as well as data connections, and the node-level health endpoint not parsing it.
 
 Do **not** treat clearing `proxy_protocol_v2` as the remediation. The same attribute governs the data connections to the router, whose `:443` listener binds with `accept-proxy`, so clearing it to satisfy the health check breaks the data path unless `ROUTER_USE_PROXY_PROTOCOL` is changed to match.
 
-Treat this as an observation from one tested configuration, not an expected ROSA condition: confirm the health-check protocol, port, PROXY attribute and failure reason on your own cluster before concluding the same cause.
+This was reproduced on two independently built ROSA HCP 4.22 clusters, each with a freshly created secondary IngressController, so expect to meet it rather than treating it as a one-off. It is still an observation about a tested configuration rather than a documented ROSA behaviour: confirm the health-check protocol, port, PROXY attribute and failure reason on your own cluster before concluding the same cause.
 {{% /alert %}}
 
 {{% alert state="warning" header="Known limitation of the tested configuration" %}}
-The inner target group's health-check failure described above was **not resolved** in the environment used to validate this guide. The end-to-end path in step 6.3 returned the application because the inner NLB forwards to all targets when none are healthy.
+The inner target group's health-check failure described above was **not resolved** in either environment used to validate this guide. The end-to-end path in step 6.3 returned the application because the inner NLB forwards to all targets when none are healthy, confirmed by a `200` and `Hello OpenShift!` through CloudFront while all three inner targets were reporting `unhealthy`.
 
 That means the validated result demonstrates a working traffic path, **not** a healthy or resilient one: with every inner target marked unhealthy, the inner NLB cannot shed a genuinely failed node. Resolve the inner health check before treating this deployment as production ready, or carry the limitation explicitly.
 {{% /alert %}}
@@ -109,6 +126,14 @@ echo $INNER_NLB_IPS
 ```
 
 Keep `$INNER_NLB_ARN` and `$INNER_NLB_IPS` exported. Step 3.3 uses both and step 4 registers the addresses as the outer NLB's targets.
+
+{{% alert state="info" header="Whitespace-separated variables are wrapped in $(echo ...) on purpose" %}}
+Two variables in this guide hold several values separated by whitespace: `$INNER_NLB_IPS` here, and `$EDGE_SUBNETS` in step 4. Bash splits a bare `$VAR` into separate words, but **zsh does not**, and zsh is the default shell on macOS.
+
+In zsh a bare `for IP in $INNER_NLB_IPS` passes the whole list as a single item and the loop fails with `CIDR block 10.0.1.10<tab>10.0.3.11/32 is malformed`. The same applies to `--subnets $EDGE_SUBNETS`, which AWS expects as a list of subnet IDs but which zsh passes as one argument.
+
+Every such use in this guide is therefore written `$(echo $VAR)`. Command substitution is word-split by both shells, so the same text works in either. If you prefer, run the whole walkthrough under `bash` instead and the plain `$VAR` form is fine.
+{{% /alert %}}
 
 As a **smoke test only**, confirm the inner NLB answers from a host inside the ROSA VPC, such as your jump host:
 
@@ -240,7 +265,7 @@ The inner NLB has no security group, so nothing is filtered at the load balancer
 
 ```bash
 INNER_TG=$(aws elbv2 describe-listeners --load-balancer-arn $INNER_NLB_ARN \
-  --query "Listeners[?Port==\`443\`].DefaultActions[?Type=='forward'].TargetGroupArn | [0][0]" \
+  --query 'Listeners[?Port==`443`] | [0].DefaultActions[?Type==`forward`] | [0].TargetGroupArn' \
   --output text)
 
 echo $INNER_TG
@@ -316,7 +341,7 @@ aws ec2 authorize-security-group-ingress \
 **Rule 2: health checks.** The inner NLB always originates its health checks from its **own private addresses**, regardless of the `preserve_client_ip` setting. Allow those addresses on the health-check port, never the edge CIDR:
 
 ```bash
-for IP in $INNER_NLB_IPS; do
+for IP in $(echo $INNER_NLB_IPS); do
   aws ec2 authorize-security-group-ingress \
     --group-id <resolved-sg> \
     --protocol tcp \
@@ -396,7 +421,7 @@ aws elbv2 modify-target-group-attributes --target-group-arn $OUTER_TG \
 ### 4.3: Register the inner NLB addresses
 
 ```bash
-for ip in $INNER_NLB_IPS; do
+for ip in $(echo $INNER_NLB_IPS); do
   aws elbv2 register-targets --target-group-arn $OUTER_TG \
     --targets Id=$ip,Port=443,AvailabilityZone=all
 done
@@ -409,7 +434,7 @@ The `AvailabilityZone` parameter is required when registering IP targets that si
 ```bash
 OUTER_NLB=$(aws elbv2 create-load-balancer \
   --name outer-nlb \
-  --subnets $EDGE_SUBNETS \
+  --subnets $(echo $EDGE_SUBNETS) \
   --security-groups $OUTER_SG \
   --scheme internal --type network --ip-address-type ipv4 \
   --query 'LoadBalancers[0].LoadBalancerArn' --output text)
@@ -437,7 +462,7 @@ Record the outer NLB's ARN for the next step.
 ### 5.1: Create CloudFront VPC Origin
 
 {{% alert state="warning" header="The VPC needs an internet gateway" %}}
-CloudFront requires an internet gateway attached to the VPC that hosts the origin, even though the NLB stays internal and no public route to it is created. The subnets also need free IP addresses for the CloudFront-managed network interfaces. IPv6 subnet ranges are needed only for a dual-stack origin. Without one, `Create VPC origin` fails with `does not have an internet gateway in its VPC`.
+CloudFront requires an internet gateway attached to the VPC that hosts the origin, even though the NLB stays internal and no public route to it is created. The subnets also need free IP addresses for the CloudFront-managed network interfaces. IPv6 subnet ranges are needed only for a dual-stack origin. Without an internet gateway, `Create VPC origin` fails with `does not have an internet gateway in its VPC`.
 {{% /alert %}}
 
 1. On the AWS console in Account B, look for **CloudFront**, and on the CloudFront sidebar select **VPC origins**, and then hit the **Create VPC origin**. Give it a name like `outer-nlb-vpc-og` and paste the outer NLB's ARN from step 4 for the **Origin ARN**. Choose **HTTPS only** for the protocol, leave the port to **443** and the minimum origin SSL protocol to **TLSv1.2.**
@@ -458,6 +483,40 @@ CloudFront requires an internet gateway attached to the VPC that hosts the origi
    
    ![resource-share](./images/resource-share.png)
 
+{{% alert state="warning" header="Share only after the origin reaches Deployed, then verify the association" %}}
+In testing, sharing a VPC origin that was still **Deploying** created the resource share successfully but left the *resource* association in `FAILED`, with an empty status message and no error returned by the share command. The principal association still read `ASSOCIATED`, so the share looked healthy while Account A saw no origin. This is an observation from that run, not a documented AWS behaviour, but the check below costs nothing.
+
+The console flow avoids the situation because step 5.2 begins only once the status reads **Deployed**. If you automate the share instead, set these from what you created in Account B:
+
+```bash
+# from step 5.1, the Id shown on the VPC origin page or returned by create-vpc-origin
+export VPC_ORIGIN_ID=vo_xxxxxxxxxxxx
+export VPCO_ARN=$(aws cloudfront get-vpc-origin --id $VPC_ORIGIN_ID \
+  --query 'VpcOrigin.Arn' --output text)
+
+# from step 5.2, the ARN of the resource share you created
+export RAM_SHARE=$(aws ram get-resource-shares --resource-owner SELF --region us-east-1 \
+  --query "resourceShares[?name=='outer-nlb-og-share'].resourceShareArn | [0]" --output text)
+```
+
+Wait for the origin, then confirm the association:
+
+```bash
+aws cloudfront get-vpc-origin --id $VPC_ORIGIN_ID --query 'VpcOrigin.Status' --output text
+# proceed only when this prints Deployed
+
+aws ram get-resource-share-associations --association-type RESOURCE \
+  --resource-share-arns $RAM_SHARE --region us-east-1 \
+  --query 'resourceShareAssociations[].[associatedEntity,status]' --output text
+```
+
+If the resource association reports `FAILED`, re-associating it once the origin is `Deployed` cleared it without recreating the share:
+
+```bash
+aws ram associate-resource-share --resource-share-arn $RAM_SHARE \
+  --resource-arns $VPCO_ARN --region us-east-1
+```
+{{% /alert %}}
 
 ### 5.3: Accept the share and create the CloudFront distribution
 
@@ -538,6 +597,24 @@ Omitting it returns `EntityNotFound: The specified vpc origin does not exist`, e
 
 1. Go to your Route 53 hosted zone in  Account B. Click **Create record** button. Create a wildcard CNAME record (e.g. `*.cf.aws-amer.mobb.cloud`) and point it to the CloudFront distribution domain name you just created, and click **Save**. 
 
+{{% alert state="info" header="If adding the alternate domain name fails with CNAMEAlreadyExists" %}}
+CloudFront refuses an alternate domain name that already resolves, through DNS, to a different distribution. A pre-existing wildcard in the parent zone is enough to trigger this even though you have not created any record for your own hostname yet:
+
+```text
+CNAMEAlreadyExists: One or more aliases specified for the distribution includes
+an incorrectly configured DNS record that points to another CloudFront distribution.
+```
+
+If the zone already carries a wildcard owned by someone else, use a **specific** hostname rather than the wildcard, and add it in the order AWS documents for this conflict. The distribution already exists by this point, so no placeholder destination is needed:
+
+1. Keep the distribution as created, without the conflicting alternate domain name.
+1. In Route 53, create an explicit record for the specific application hostname, for example a `CNAME` for `hello.$DOMAIN` pointing at the distribution's `*.cloudfront.net` domain name. An explicit record takes precedence over the wildcard, so the hostname stops resolving to the other distribution.
+1. Request or amend an ACM certificate in **us-east-1** that covers that exact hostname.
+1. Add `hello.$DOMAIN` as the alternate domain name on the distribution and attach the certificate. The conflict check now passes because DNS resolves the hostname to this distribution.
+
+Use the same hostname here, in the certificate, and in the step 6.3 application route, or the request will reach the router with a name it has no route for.
+{{% /alert %}}
+
     ![r53-cf-cname-record](./images/r53-cf-cname-record.png)
 
 ## 6. Validate the Architecture
@@ -577,7 +654,47 @@ sudo certbot certonly \
   -d "$DOMAIN"   
 ```
 
-It will then ask you to deploy a DNS TXT record under the name `_acme-challenge.YOUR-DOMAIN` with certain value provided by certbot. To do that, go to Route 53 and create a new record type TXT and point to that new value. Wait for a couple of minutes until it fully propagates. 
+It will then ask you to deploy a DNS TXT record under the name `_acme-challenge.YOUR-DOMAIN` with certain value provided by certbot. To do that, go to Route 53 and create a new record type TXT and point to that new value. Wait for a couple of minutes until it fully propagates.
+
+{{% alert state="info" header="Create the TXT record in the zone the public internet actually reaches" %}}
+These Route 53 commands run in **Account B**, which owns the hosted zone. Section 5.3 switched the CLI to Account A, so export the Account B profile again first, or pass `--profile <account-b-profile>` on each command:
+
+```bash
+export AWS_PROFILE=<account-b-profile>
+aws sts get-caller-identity --query Account --output text
+```
+
+If `$DOMAIN` is a delegated subdomain, your account may hold several hosted zones that look plausible, and writing the record to the parent zone is silently useless: the parent has delegated that subtree, so the record is never served and Let's Encrypt reports `No TXT record found at _acme-challenge.<domain>` even though the record exists in your account.
+
+Start by asking the public internet which nameservers are authoritative, rather than assuming a hosted zone is:
+
+```bash
+dig +short NS $DOMAIN
+```
+
+If that returns nothing, `$DOMAIN` has no delegation of its own and is served by an authoritative **parent** zone. Walk up a label at a time (`dig +short NS aws-amer.mobb.cloud`, then `mobb.cloud`) until you get an answer, and create the record in the hosted zone matching that level.
+
+Then confirm one of your hosted zones actually serves those nameservers:
+
+```bash
+aws route53 list-hosted-zones \
+  --query "HostedZones[?Name=='${DOMAIN}.'].[Id,Name]" --output text
+
+aws route53 get-hosted-zone --id <zone-id> \
+  --query 'DelegationSet.NameServers' --output text
+```
+
+The nameservers from `dig` must appear in that delegation set. If they do not, the zone you found is not the one the internet resolves, and the record belongs elsewhere.
+
+Finally, after creating the record, query the delegated nameserver directly so a cached negative answer from your own resolver does not mislead you, then repeat without `@` to confirm public resolvers agree:
+
+```bash
+dig +short TXT _acme-challenge.$DOMAIN @$(dig +short NS $DOMAIN | head -1)
+dig +short TXT _acme-challenge.$DOMAIN
+```
+
+Read the answer carefully if the zone contains a wildcard. With no TXT record present, a wildcard such as `*.$DOMAIN` answers the query instead, so `dig TXT` returns something that looks like a result but is a `CNAME` from the wildcard. Only a quoted TXT value matching what certbot printed means the record is live.
+{{% /alert %}} 
 
 Open a new CLI tab and run either:
 
