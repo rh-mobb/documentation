@@ -5,6 +5,7 @@ tags: ["ROSA", "ROSA HCP"]
 authors:
   - Charlotte Fung
   - Diana Sari
+  - Kevin Collins
 validated_version: "4.22"
 ---
 
