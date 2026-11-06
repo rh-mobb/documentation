@@ -20,37 +20,48 @@ Router nodes run FRR and peer over BGP with a Cloud Router in the same VPC. The 
 Two Google Cloud specifics shape the steps below:
 
 - A VM can only peer with a Cloud Router once it belongs to a router appliance spoke on a Network Connectivity Center (NCC) hub. You create the hub; the Operator manages the spokes.
-- The Operator authenticates with Application Default Credentials only, so on a WIF cluster you wire up its identity yourself (section 5).
+- The Operator authenticates with Application Default Credentials only, so on a WIF cluster you wire up its identity yourself (section 4).
 
 ## Prerequisites
 
-- OSD Customer Cloud Subscription (CCS) quota for Google Cloud, including bare metal (see section 3)
-- A Google Cloud project where you can create VPCs, Cloud Routers, NCC hubs, service accounts, and IAM bindings
+- An OSD 4.22 cluster on Google Cloud using WIF, in a single zone that offers C3 bare metal, with quota for one bare metal node
+- `oc` logged in to the cluster as a member of `cluster-admins`
+- Permission in the cluster's Google Cloud project to create Cloud Routers, NCC hubs, service accounts, firewall rules, and IAM bindings
 - `gcloud`, `ocm`, `oc`, and `jq` installed and authenticated
 
-Set the values used throughout this guide. `LOCAL_ASN` (cluster) and `CLOUD_ROUTER_ASN` must differ:
+Set the cluster name and read the remaining values from the cluster:
 
 ```bash
-export GCP_PROJECT=<your-project>
-export REGION=<your-region>
-export ZONE=<zone-offering-your-bare-metal-type>
 export CLUSTER=<cluster-name>
-export WIF_NAME=${CLUSTER}-wif
 
-export NETWORK=osdbgp-vpc
-export CONTROL_SUBNET=osdbgp-control
-export WORKER_SUBNET=osdbgp-worker
-export CONTROL_CIDR=10.52.0.0/23
-export WORKER_CIDR=10.52.2.0/23
-export MACHINE_CIDR=10.52.0.0/16
+export CLUSTER_ID=$(ocm list clusters --parameter search="name = '$CLUSTER'" \
+  --columns id --no-headers | tr -d ' ')
+CLUSTER_JSON=$(ocm get /api/clusters_mgmt/v1/clusters/$CLUSTER_ID)
 
+export GCP_PROJECT=$(echo "$CLUSTER_JSON" | jq -r .gcp.project_id)
+export REGION=$(echo "$CLUSTER_JSON" | jq -r .region.id)
+export ZONE=$(echo "$CLUSTER_JSON" | jq -r '.nodes.availability_zones[0]')
+export WIF_ID=$(echo "$CLUSTER_JSON" | jq -r .gcp.authentication.id)
+export INFRA_ID=$(echo "$CLUSTER_JSON" | jq -r .infra_id)
+export NETWORK=$(echo "$CLUSTER_JSON" | jq -r '.gcp_network.vpc_name // (.infra_id + "-network")')
+export WORKER_SUBNET=$(echo "$CLUSTER_JSON" | jq -r '.gcp_network.compute_subnet // (.infra_id + "-worker-subnet")')
+export WORKER_CIDR=$(gcloud compute networks subnets describe $WORKER_SUBNET \
+  --project $GCP_PROJECT --region $REGION --format='value(ipCidrRange)')
+
+echo "project=$GCP_PROJECT region=$REGION zone=$ZONE network=$NETWORK worker_subnet=$WORKER_SUBNET ($WORKER_CIDR)"
+```
+
+Set the BGP values. `LOCAL_ASN` (cluster) and `CLOUD_ROUTER_ASN` must differ. `CUDN_CIDR` must not overlap the cluster's machine, pod, or service networks. `RS_IF_0` and `RS_IF_1` are two unused addresses in the worker subnet for the Cloud Router interfaces; addresses near the top of the range avoid those assigned to nodes:
+
+```bash
 export CUDN_CIDR=10.212.0.0/16
 export LOCAL_ASN=65001
 export CLOUD_ROUTER_ASN=65002
 export CLOUD_ROUTER=osdbgp-bgp-router
-export NAT_ROUTER=osdbgp-nat
 export NCC_HUB=osdbgp-hub
 export NCC_SPOKE_PREFIX=osdbgp-spoke
+export RS_IF_0=<unused-address-in-worker-subnet>
+export RS_IF_1=<another-unused-address-in-worker-subnet>
 ```
 
 Define a helper for the waits in this guide. It retries a command until it succeeds, and returns a failure status with a message if the time limit is reached:
@@ -67,54 +78,9 @@ wait_for() {  # usage: wait_for <seconds> <command...>
 }
 ```
 
-Run the blocks interactively, one at a time. When a step prints "Stop here", do not continue until you have resolved the cause. The snippets are written for a manual walkthrough and are not designed to run unattended as a script.
+## 1. Create the BGP Cloud Router and NCC hub
 
-{{% alert state="warning" header="Choose a region and zone that offer the bare metal type" %}}
-Bare metal types are not offered in every zone, and a single zone cluster can only add machine pools in its own zone. Confirm `ZONE` offers the type before creating anything:
-
-```bash
-gcloud compute machine-types list --project $GCP_PROJECT \
-  --filter="name=c3-highcpu-192-metal AND zone~^${REGION}-" --format="value(zone)"
-```
-
-If nothing is returned, choose another region, or another C3 bare metal type (`c3-standard-192-metal` or `c3-highmem-192-metal`).
-{{% /alert %}}
-
-{{% alert state="warning" header="Check quota before you start" %}}
-This guide needs 216 vCPU of the OSD `compute.node|cpu|byoc|osd` quota (3 × 8 for workers, 192 for the router node), plus 192 per additional router node. A machine pool request without enough quota fails with `CLUSTERS-MGMT-401: Unauthorized due to missing quota`. Google Cloud also enforces the regional `C3_CPUS` quota. Check both:
-
-```bash
-ocm get /api/accounts_mgmt/v1/organizations/$(ocm whoami | jq -r .organization.id)/quota_cost \
-  --parameter size=500 \
-  | jq -r '.items[] | select(.quota_id=="compute.node|cpu|byoc|osd") | "OSD \(.consumed)/\(.allowed) vCPU"'
-
-gcloud compute regions describe $REGION --project $GCP_PROJECT --format=json \
-  | jq -r '.quotas[] | select(.metric=="C3_CPUS") | "C3_CPUS \(.usage)/\(.limit)"'
-```
-{{% /alert %}}
-
-## 1. Create the VPC and Cloud NAT
-
-```bash
-gcloud compute networks create $NETWORK --project $GCP_PROJECT --subnet-mode=custom
-
-gcloud compute networks subnets create $CONTROL_SUBNET --project $GCP_PROJECT \
-  --network=$NETWORK --region=$REGION --range=$CONTROL_CIDR
-gcloud compute networks subnets create $WORKER_SUBNET --project $GCP_PROJECT \
-  --network=$NETWORK --region=$REGION --range=$WORKER_CIDR
-
-gcloud compute routers create $NAT_ROUTER --project $GCP_PROJECT \
-  --network=$NETWORK --region=$REGION
-gcloud compute routers nats create ${NAT_ROUTER}-cfg --project $GCP_PROJECT \
-  --router=$NAT_ROUTER --region=$REGION \
-  --auto-allocate-nat-external-ips --nat-all-subnet-ip-ranges
-```
-
-The NAT router has no interfaces, so it cannot be used for BGP. Section 2 creates a separate Cloud Router.
-
-## 2. Create the BGP Cloud Router and NCC hub
-
-Create the Cloud Router with two redundant interfaces in the worker subnet. These addresses become the BGP neighbors of every router node:
+Create a dedicated Cloud Router with two redundant interfaces in the worker subnet. The cluster's existing NAT router has no interfaces, so it cannot be used for BGP. The interface addresses become the BGP neighbors of every router node:
 
 ```bash
 gcloud compute routers create $CLOUD_ROUTER --project $GCP_PROJECT \
@@ -122,10 +88,10 @@ gcloud compute routers create $CLOUD_ROUTER --project $GCP_PROJECT \
 
 gcloud compute routers add-interface $CLOUD_ROUTER --project $GCP_PROJECT \
   --region=$REGION --subnetwork=$WORKER_SUBNET \
-  --ip-address=10.52.2.2 --interface-name=if-0
+  --ip-address=$RS_IF_0 --interface-name=if-0
 gcloud compute routers add-interface $CLOUD_ROUTER --project $GCP_PROJECT \
   --region=$REGION --subnetwork=$WORKER_SUBNET \
-  --ip-address=10.52.2.3 --interface-name=if-1 --redundant-interface=if-0
+  --ip-address=$RS_IF_1 --interface-name=if-1 --redundant-interface=if-0
 
 gcloud network-connectivity hubs create $NCC_HUB --project $GCP_PROJECT
 
@@ -133,60 +99,14 @@ gcloud compute routers describe $CLOUD_ROUTER --project $GCP_PROJECT --region=$R
   --format="value(bgp.asn,interfaces[].name,interfaces[].privateIpAddress)"
 ```
 
-Expect `65002  if-0;if-1  10.52.2.2;10.52.2.3`. Without interfaces the Operator discovers no neighbors.
+Expect the ASN, `if-0;if-1`, and your two interface addresses. Without interfaces the Operator discovers no neighbors.
 
-## 3. Create the cluster and the router node
+## 2. Add the bare metal router node
 
-Create the WIF configuration and note its ID, then create the cluster in your VPC and zone:
-
-```bash
-ocm gcp create wif-config --name $WIF_NAME --project $GCP_PROJECT --version 4.22
-
-export WIF_ID=<wif-config-id-from-the-output>
-
-ocm create cluster $CLUSTER \
-  --provider gcp --ccs --region $REGION --version 4.22.20 \
-  --wif-config $WIF_ID \
-  --vpc-name $NETWORK \
-  --control-plane-subnet $CONTROL_SUBNET \
-  --compute-subnet $WORKER_SUBNET \
-  --machine-cidr $MACHINE_CIDR \
-  --compute-nodes 3 --compute-machine-type n2-standard-8 \
-  --availability-zones $ZONE
-```
-
-Installation takes about 40 minutes. Wait for `ready`:
+The router node runs FRR and hosts the test VM, so it must be bare metal. The `bgp_router=true` label is what the Operator selects in section 5:
 
 ```bash
-cluster_ready() { [ "$(ocm describe cluster $CLUSTER --json | jq -r .state)" = ready ]; }
-wait_for 5400 cluster_ready && echo "Cluster ready"
-```
-
-### Log in as a cluster administrator
-
-OSD does not issue an admin kubeconfig. Add an htpasswd identity provider and a user in `cluster-admins`, then log in. Store the password safely:
-
-```bash
-export ADMIN_USER=bgpadmin
-export ADMIN_PASS=$(openssl rand -hex 12)Aa1!
-
-ocm create idp --cluster $CLUSTER --type htpasswd --name htpasswd \
-  --username $ADMIN_USER --password "$ADMIN_PASS"
-ocm create user $ADMIN_USER --cluster $CLUSTER --group cluster-admins
-
-export API_URL=$(ocm describe cluster $CLUSTER --json | jq -r .api.url)
-wait_for 600 oc login $API_URL -u $ADMIN_USER -p "$ADMIN_PASS" \
-  && oc auth can-i '*' '*' --all-namespaces
-```
-
-The identity provider takes a few minutes to roll out, so the first login attempts fail. Expect `yes` at the end.
-
-### Add the bare metal router node
-
-The router node runs FRR and hosts the test VM, so it must be bare metal. The `bgp_router=true` label is what the Operator selects in section 6:
-
-```bash
-ocm create machinepool -c $CLUSTER --replicas 1 \
+ocm create machinepool -c $CLUSTER_ID --replicas 1 \
   --instance-type c3-highcpu-192-metal --labels bgp_router=true bgp
 
 router_ready() { oc get nodes -l bgp_router=true --no-headers 2>/dev/null \
@@ -196,7 +116,7 @@ wait_for 1800 router_ready && oc get nodes -l bgp_router=true
 
 This example uses one router node, which is enough to demonstrate BGP and direct connectivity. Live migration needs at least two bare metal router nodes, so use `--replicas 2` or more if you need it.
 
-## 4. Install the Operator
+## 3. Install the Operator
 
 Enable the FRR routing provider and install the Operator from `redhat-operators`:
 
@@ -239,7 +159,7 @@ wait_for 600 csv_succeeded && oc get csv -n bgp-cloud-connector
 
 The validated run used channel `stable` (the catalog default), CSV `bgp-cloud-connector.v1.1.0`, on OSD 4.22.20. Check the channels your catalog offers with `oc get packagemanifest bgp-cloud-connector -n openshift-marketplace`.
 
-## 5. Grant the Operator access to Google Cloud
+## 4. Grant the Operator access to Google Cloud
 
 The Operator needs a Google Cloud service account, a workload identity binding to its Kubernetes ServiceAccount, and an `external_account` credentials file backed by a projected token.
 
@@ -334,7 +254,7 @@ else
 fi
 ```
 
-## 6. Configure BGP and the CUDN
+## 5. Configure BGP and the CUDN
 
 Create the `BGPCloudConfiguration` singleton. Peer addresses are discovered from the Cloud Router:
 
@@ -365,7 +285,7 @@ oc get bgpcloudconfiguration cluster \
   -o jsonpath='{range .status.conditions[*]}{.type}={.status}{"\n"}{end}{.status.peerGroups}{"\n"}'
 ```
 
-All six conditions should be `True`, and the peer group should list `10.52.2.2` and `10.52.2.3`. The Operator may restart router nodes during its first reconciliation, so wait for them to be `Ready` again, then for the BGP sessions:
+All six conditions should be `True`, and the peer group should list `$RS_IF_0` and `$RS_IF_1`. The Operator may restart router nodes during its first reconciliation, so wait for them to be `Ready` again, then for the BGP sessions:
 
 ```bash
 wait_for 1800 router_ready
@@ -409,7 +329,7 @@ route_learned() { gcloud compute routers get-status $CLOUD_ROUTER --project $GCP
 wait_for 300 route_learned && echo "Cloud Router learned $CUDN_CIDR"
 ```
 
-## 7. Test connectivity with a virtual machine
+## 6. Test connectivity with a virtual machine
 
 Install OpenShift Virtualization, if it is not already installed:
 
@@ -565,7 +485,6 @@ gcloud compute instances create osdbgp-client --project $GCP_PROJECT --zone $ZON
 gcloud compute firewall-rules create osdbgp-allow-iap --project $GCP_PROJECT \
   --network=$NETWORK --allow=tcp:22 --source-ranges=35.235.240.0/20
 
-export INFRA_ID=$(oc get infrastructure cluster -o jsonpath='{.status.infrastructureName}')
 gcloud compute firewall-rules create osdbgp-allow-vm-test --project $GCP_PROJECT \
   --network=$NETWORK --allow=tcp:8080,icmp \
   --source-ranges=$WORKER_CIDR --target-tags=${INFRA_ID}-worker
@@ -658,32 +577,21 @@ operator_cleanup_done() {
 wait_for 600 operator_cleanup_done && echo "Spokes, peers, and BGPCloudConfiguration removed"
 ```
 
-Do not delete the cluster until this succeeds, because router nodes linked to a spoke cannot be deleted.
+Do not remove the router machine pool until this succeeds, because router nodes linked to a spoke cannot be deleted.
 
-Delete the cluster and wait until it is confirmed gone:
-
-```bash
-ocm delete cluster $CLUSTER
-
-cluster_gone() { local out
-  out=$(ocm list clusters --parameter search="name = '$CLUSTER'" --no-headers) || return 1
-  [ -z "$out" ]; }
-wait_for 3600 cluster_gone && echo "Cluster deleted"
-```
-
-Only after that succeeds, delete the WIF configuration and the Google Cloud resources:
+Remove the router machine pool and the Google Cloud resources this guide created. The cluster, its network, and its WIF configuration are left in place:
 
 ```bash
-ocm gcp delete wif-config $WIF_ID
+ocm delete machinepool -c $CLUSTER_ID bgp
 
 gcloud compute instances delete osdbgp-client --project $GCP_PROJECT --zone $ZONE
 gcloud compute firewall-rules delete osdbgp-allow-vm-test osdbgp-allow-iap --project $GCP_PROJECT
 gcloud network-connectivity hubs delete $NCC_HUB --project $GCP_PROJECT
-gcloud compute routers delete $CLOUD_ROUTER $NAT_ROUTER --project $GCP_PROJECT --region $REGION
-gcloud compute networks subnets delete $CONTROL_SUBNET $WORKER_SUBNET --project $GCP_PROJECT --region $REGION
-gcloud compute networks delete $NETWORK --project $GCP_PROJECT
+gcloud compute routers delete $CLOUD_ROUTER --project $GCP_PROJECT --region $REGION
 gcloud iam service-accounts delete $SA_EMAIL --project $GCP_PROJECT
 ```
+
+The Operator and OpenShift Virtualization remain installed. Uninstall them from the console if you no longer need them.
 
 ## References
 
