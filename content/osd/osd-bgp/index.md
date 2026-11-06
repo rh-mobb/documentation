@@ -27,13 +27,16 @@ Two Google Cloud specifics shape the steps below:
 - An OSD 4.22 cluster on Google Cloud using WIF, in a single zone that offers C3 bare metal, with quota for one bare metal node
 - `oc` logged in to the cluster as a member of `cluster-admins`
 - Permission in the cluster's Google Cloud project to create Cloud Routers, NCC hubs, service accounts, firewall rules, and IAM bindings
-- `gcloud`, `ocm`, `oc`, and `jq` installed and authenticated
+- `gcloud`, `ocm`, `oc`, `jq`, and `python3` installed, with `gcloud`, `ocm`, and `oc` authenticated
 
-Set the cluster name and read the remaining values from the cluster:
+Set the cluster name
 
 ```bash
 export CLUSTER=<cluster-name>
+```
 
+Read the remaining values from the cluster:
+```bash
 export CLUSTER_ID=$(ocm list clusters --parameter search="name = '$CLUSTER'" \
   --columns id --no-headers | tr -d ' ')
 CLUSTER_JSON=$(ocm get /api/clusters_mgmt/v1/clusters/$CLUSTER_ID)
@@ -51,7 +54,7 @@ export WORKER_CIDR=$(gcloud compute networks subnets describe $WORKER_SUBNET \
 echo "project=$GCP_PROJECT region=$REGION zone=$ZONE network=$NETWORK worker_subnet=$WORKER_SUBNET ($WORKER_CIDR)"
 ```
 
-Set the BGP values. `LOCAL_ASN` (cluster) and `CLOUD_ROUTER_ASN` must differ. `CUDN_CIDR` must not overlap the cluster's machine, pod, or service networks. `RS_IF_0` and `RS_IF_1` are two unused addresses in the worker subnet for the Cloud Router interfaces; addresses near the top of the range avoid those assigned to nodes:
+Set the BGP values. `LOCAL_ASN` (cluster) and `CLOUD_ROUTER_ASN` must differ. `CUDN_CIDR` must not overlap the cluster's machine, pod, or service networks:
 
 ```bash
 export CUDN_CIDR=10.212.0.0/16
@@ -60,8 +63,20 @@ export CLOUD_ROUTER_ASN=65002
 export CLOUD_ROUTER=osdbgp-bgp-router
 export NCC_HUB=osdbgp-hub
 export NCC_SPOKE_PREFIX=osdbgp-spoke
-export RS_IF_0=<unused-address-in-worker-subnet>
-export RS_IF_1=<another-unused-address-in-worker-subnet>
+```
+
+The Cloud Router needs two unused addresses in the worker subnet for its interfaces. Google Cloud reserves the last two addresses in a subnet and nodes are assigned addresses from the bottom of the range, so take the two just below the reserved ones and confirm nothing uses them:
+
+```bash
+export RS_IF_0=$(python3 -c 'import ipaddress,sys; print(ipaddress.ip_network(sys.argv[1]).broadcast_address - 3)' $WORKER_CIDR)
+export RS_IF_1=$(python3 -c 'import ipaddress,sys; print(ipaddress.ip_network(sys.argv[1]).broadcast_address - 4)' $WORKER_CIDR)
+
+USED=$( { gcloud compute instances list --project $GCP_PROJECT --format='value(networkInterfaces[].networkIP)' \
+       && gcloud compute addresses list --project $GCP_PROJECT --format='value(address)'; } | tr ';' '\n' ) \
+  && if echo "$USED" | grep -qxF -e "$RS_IF_0" -e "$RS_IF_1"; then
+       echo "$RS_IF_0 or $RS_IF_1 is already in use. Set different addresses. Stop here."
+     else echo "RS_IF_0=$RS_IF_0 RS_IF_1=$RS_IF_1"; fi \
+  || echo "Could not list addresses in use. Stop here."
 ```
 
 Define a helper for the waits in this guide. It retries a command until it succeeds, and returns a failure status with a message if the time limit is reached:
