@@ -120,9 +120,12 @@ Expect the ASN, `if-0;if-1`, and your two interface addresses. Without interface
 
 The router node runs FRR and hosts the test VM, so it must be bare metal. The `bgp_router=true` label is what the Operator selects in section 5:
 
+
+Note: this can take 10-15 minutes to deploy a baremetal instance
+
 ```bash
 ocm create machinepool -c $CLUSTER_ID --replicas 1 \
-  --instance-type c3-highcpu-192-metal --labels bgp_router=true bgp
+  --instance-type c3-standard-192-metal --labels bgp_router=true bgp
 
 router_ready() { oc get nodes -l bgp_router=true --no-headers 2>/dev/null \
   | awk '$2=="Ready"{f=1} END{exit !f}'; }
