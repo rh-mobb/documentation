@@ -39,7 +39,6 @@ Read the remaining values from the cluster:
 ```bash
 export CLUSTER_ID=$(ocm list clusters --parameter search="name = '$CLUSTER'" \
   --columns id --no-headers | tr -d ' ')
-$CLUSTER_ID =~ ^[a-z0-9]{32}$ ]] || echo "No single active cluster named $CLUSTER. Stop here."
 [[ $CLUSTER_ID =~ ^[a-z0-9]{32}$ ]] || echo "No single active cluster named $CLUSTER. Stop here."
 CLUSTER_JSON=$(ocm get /api/clusters_mgmt/v1/clusters/$CLUSTER_ID)
 
@@ -55,6 +54,24 @@ export WORKER_CIDR=$(gcloud compute networks subnets describe $WORKER_SUBNET \
 [ -n "$WORKER_CIDR" ] || echo "Could not read the worker subnet CIDR. Stop here."
 echo "project=$GCP_PROJECT region=$REGION zone=$ZONE network=$NETWORK worker_subnet=$WORKER_SUBNET ($WORKER_CIDR)"
 ```
+Confirm the cluster's zone offers the bare metal type, and that you have quota for one router node (192 vCPU):
+
+```bash
+export ROUTER_TYPE=c3-standard-192-metal
+
+gcloud compute machine-types describe $ROUTER_TYPE --zone $ZONE --project $GCP_PROJECT \
+  --format='value(name)' >/dev/null \
+  && echo "$ZONE offers $ROUTER_TYPE" \
+  || echo "Could not confirm $ZONE offers $ROUTER_TYPE. Stop here."
+
+gcloud compute regions describe $REGION --project $GCP_PROJECT --format=json \
+  | jq -r '.quotas[] | select(.metric=="C3_CPUS") | "C3_CPUS \(.usage)/\(.limit) (the router node needs 192)"'
+ocm get /api/accounts_mgmt/v1/organizations/$(ocm whoami | jq -r .organization.id)/quota_cost \
+  --parameter size=500 \
+  | jq -r '.items[] | select(.quota_id=="compute.node|cpu|byoc|osd") | "OSD \(.consumed)/\(.allowed) vCPU (the router node needs 192)"'
+```
+
+Tested live: `us-west1-a` passes, and `us-west1-c` prints "Stop here".
 
 Set the BGP values. `LOCAL_ASN` (cluster) and `CLOUD_ROUTER_ASN` must differ. `CUDN_CIDR` must not overlap the cluster's machine, pod, or service networks:
 
@@ -131,7 +148,7 @@ Note: this can take 10-15 minutes to deploy a baremetal instance
 
 ```bash
 ocm create machinepool -c $CLUSTER_ID --replicas 1 \
-  --instance-type c3-standard-192-metal --labels bgp_router=true bgp
+  --instance-type $ROUTER_TYPE --labels bgp_router=true bgp
 
 router_ready() { oc get nodes -l bgp_router=true --no-headers 2>/dev/null \
   | awk '$2=="Ready"{f=1} END{exit !f}'; }
@@ -189,6 +206,7 @@ The Operator needs a Google Cloud service account, a workload identity binding t
 
 Create the service account and grant it permissions. IAM can take a short time to recognise a new service account, so each binding is retried for up to two minutes:
 
+Note: Service account IDs are limited to 30 characters; shorten `SA_NAME` if your cluster name is longer than 24.
 ```bash
 export SA_NAME=${CLUSTER}-bgpcc
 export SA_EMAIL=${SA_NAME}@${GCP_PROJECT}.iam.gserviceaccount.com
