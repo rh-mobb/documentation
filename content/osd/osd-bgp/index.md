@@ -39,6 +39,8 @@ Read the remaining values from the cluster:
 ```bash
 export CLUSTER_ID=$(ocm list clusters --parameter search="name = '$CLUSTER'" \
   --columns id --no-headers | tr -d ' ')
+$CLUSTER_ID =~ ^[a-z0-9]{32}$ ]] || echo "No single active cluster named $CLUSTER. Stop here."
+[[ $CLUSTER_ID =~ ^[a-z0-9]{32}$ ]] || echo "No single active cluster named $CLUSTER. Stop here."
 CLUSTER_JSON=$(ocm get /api/clusters_mgmt/v1/clusters/$CLUSTER_ID)
 
 export GCP_PROJECT=$(echo "$CLUSTER_JSON" | jq -r .gcp.project_id)
@@ -50,7 +52,7 @@ export NETWORK=$(echo "$CLUSTER_JSON" | jq -r '.gcp_network.vpc_name // (.infra_
 export WORKER_SUBNET=$(echo "$CLUSTER_JSON" | jq -r '.gcp_network.compute_subnet // (.infra_id + "-worker-subnet")')
 export WORKER_CIDR=$(gcloud compute networks subnets describe $WORKER_SUBNET \
   --project $GCP_PROJECT --region $REGION --format='value(ipCidrRange)')
-
+[ -n "$WORKER_CIDR" ] || echo "Could not read the worker subnet CIDR. Stop here."
 echo "project=$GCP_PROJECT region=$REGION zone=$ZONE network=$NETWORK worker_subnet=$WORKER_SUBNET ($WORKER_CIDR)"
 ```
 
@@ -60,9 +62,9 @@ Set the BGP values. `LOCAL_ASN` (cluster) and `CLOUD_ROUTER_ASN` must differ. `C
 export CUDN_CIDR=10.212.0.0/16
 export LOCAL_ASN=65001
 export CLOUD_ROUTER_ASN=65002
-export CLOUD_ROUTER=osdbgp-bgp-router
-export NCC_HUB=osdbgp-hub
-export NCC_SPOKE_PREFIX=osdbgp-spoke
+export CLOUD_ROUTER=${CLUSTER}-bgp-router
+export NCC_HUB=${CLUSTER}-hub
+export NCC_SPOKE_PREFIX=${CLUSTER}-spoke
 ```
 
 The Cloud Router needs two unused addresses in the worker subnet for its interfaces. Google Cloud reserves the last two addresses in a subnet and nodes are assigned addresses from the bottom of the range, so take the two just below the reserved ones and confirm nothing uses them:
@@ -71,18 +73,22 @@ The Cloud Router needs two unused addresses in the worker subnet for its interfa
 export RS_IF_0=$(python3 -c 'import ipaddress,sys; print(ipaddress.ip_network(sys.argv[1]).broadcast_address - 3)' $WORKER_CIDR)
 export RS_IF_1=$(python3 -c 'import ipaddress,sys; print(ipaddress.ip_network(sys.argv[1]).broadcast_address - 4)' $WORKER_CIDR)
 
-USED=$( { gcloud compute instances list --project $GCP_PROJECT --format='value(networkInterfaces[].networkIP)' \
-       && gcloud compute addresses list --project $GCP_PROJECT --format='value(address)'; } | tr ';' '\n' ) \
-  && if echo "$USED" | grep -qxF -e "$RS_IF_0" -e "$RS_IF_1"; then
-       echo "$RS_IF_0 or $RS_IF_1 is already in use. Set different addresses. Stop here."
-     else echo "RS_IF_0=$RS_IF_0 RS_IF_1=$RS_IF_1"; fi \
-  || echo "Could not list addresses in use. Stop here."
+if INSTANCE_IPS=$(gcloud compute instances list --project $GCP_PROJECT --format='value(networkInterfaces[].networkIP)') \
+   && RESERVED_IPS=$(gcloud compute addresses list --project $GCP_PROJECT --format='value(address)'); then
+  if printf '%s\n%s\n' "$INSTANCE_IPS" "$RESERVED_IPS" | tr ';' '\n' | grep -qxF -e "$RS_IF_0" -e "$RS_IF_1"; then
+    echo "$RS_IF_0 or $RS_IF_1 is already in use. Set different addresses. Stop here."
+  else
+    echo "RS_IF_0=$RS_IF_0 RS_IF_1=$RS_IF_1"
+  fi
+else
+  echo "Could not list addresses in use. Stop here."
+fi
 ```
 
 Define a helper for the waits in this guide. It retries a command until it succeeds, and returns a failure status with a message if the time limit is reached:
 
 ```bash
-wait_for() {  # usage: wait_for <seconds> <command...>
+wait_for() {
   local deadline=$((SECONDS + $1)); shift
   until "$@"; do
     if [ $SECONDS -ge $deadline ]; then
@@ -184,7 +190,7 @@ The Operator needs a Google Cloud service account, a workload identity binding t
 Create the service account and grant it permissions. IAM can take a short time to recognise a new service account, so each binding is retried for up to two minutes:
 
 ```bash
-export SA_NAME=bgp-cloud-connector
+export SA_NAME=${CLUSTER}-bgpcc
 export SA_EMAIL=${SA_NAME}@${GCP_PROJECT}.iam.gserviceaccount.com
 
 gcloud iam service-accounts create $SA_NAME --project $GCP_PROJECT \
@@ -496,30 +502,30 @@ Expect `BGP Cloud Connector VM endpoint`. If this fails, fix the guest before te
 Create a client VM in the VPC, allow IAP SSH to it, and allow it to reach the test VM. Traffic for the CUDN prefix is delivered to the router node, so the rule targets the cluster's worker tag:
 
 ```bash
-gcloud compute instances create osdbgp-client --project $GCP_PROJECT --zone $ZONE \
+gcloud compute instances create ${CLUSTER}-bgp-client --project $GCP_PROJECT --zone $ZONE \
   --machine-type=e2-medium --subnet=$WORKER_SUBNET --no-address \
-  --image-family=debian-12 --image-project=debian-cloud
+  --image-family=debian-12 --image-project=debian-cloud --tags=osdbgp-client
 
-gcloud compute firewall-rules create osdbgp-allow-iap --project $GCP_PROJECT \
-  --network=$NETWORK --allow=tcp:22 --source-ranges=35.235.240.0/20
+gcloud compute firewall-rules create ${CLUSTER}-allow-iap --project $GCP_PROJECT \
+  --network=$NETWORK --allow=tcp:22 --source-ranges=35.235.240.0/20 --target-tags=osdbgp-client
 
-gcloud compute firewall-rules create osdbgp-allow-vm-test --project $GCP_PROJECT \
+gcloud compute firewall-rules create ${CLUSTER}-allow-vm-test --project $GCP_PROJECT \
   --network=$NETWORK --allow=tcp:8080,icmp \
   --source-ranges=$WORKER_CIDR --target-tags=${INFRA_ID}-worker
 
-wait_for 300 gcloud compute ssh osdbgp-client --project $GCP_PROJECT --zone $ZONE \
+wait_for 300 gcloud compute ssh ${CLUSTER}-bgp-client --project $GCP_PROJECT --zone $ZONE \
   --tunnel-through-iap --quiet \
   --command "sudo apt-get update -qq && sudo apt-get install -y -qq traceroute"
 ```
 
 The client VM and the IAP rule take a minute or two to become reachable, so the install retries until SSH succeeds.
 
-These firewall rules are for a disposable lab VPC. In a shared VPC, scope rules to the exact sources, targets, and ports you need. Traffic initiated from the CUDN carries a source address in `$CUDN_CIDR`, so rules for that direction must list it explicitly.
+These rules are added to the cluster's VPC and removed in Cleanup. Scope any permanent rules to the exact sources, targets, and ports you need. In a shared VPC, scope rules to the exact sources, targets, and ports you need. Traffic initiated from the CUDN carries a source address in `$CUDN_CIDR`, so rules for that direction must list it explicitly.
 
 Reach the VM by its CUDN address from the client. The test stops at the first failed check:
 
 ```bash
-gcloud compute ssh osdbgp-client --project $GCP_PROJECT --zone $ZONE --tunnel-through-iap \
+gcloud compute ssh ${CLUSTER}-bgp-client --project $GCP_PROJECT --zone $ZONE --tunnel-through-iap \
   --command "set -e
 ping -c3 -W2 ${VM_IP} >/dev/null
 echo 'PING ok'
@@ -602,10 +608,15 @@ Remove the router machine pool and the Google Cloud resources this guide created
 ```bash
 ocm delete machinepool -c $CLUSTER_ID bgp
 
-gcloud compute instances delete osdbgp-client --project $GCP_PROJECT --zone $ZONE
-gcloud compute firewall-rules delete osdbgp-allow-vm-test osdbgp-allow-iap --project $GCP_PROJECT
+gcloud compute instances delete ${CLUSTER}-bgp-client --project $GCP_PROJECT --zone $ZONE
+gcloud compute firewall-rules delete ${CLUSTER}-allow-vm-test ${CLUSTER}-allow-iap --project $GCP_PROJECT
 gcloud network-connectivity hubs delete $NCC_HUB --project $GCP_PROJECT
 gcloud compute routers delete $CLOUD_ROUTER --project $GCP_PROJECT --region $REGION
+for ROLE in roles/compute.networkAdmin roles/compute.instanceAdmin.v1 \
+            roles/networkconnectivity.hubAdmin; do
+  gcloud projects remove-iam-policy-binding $GCP_PROJECT \
+    --member="serviceAccount:${SA_EMAIL}" --role="$ROLE" --condition=None --format=none
+done
 gcloud iam service-accounts delete $SA_EMAIL --project $GCP_PROJECT
 ```
 
