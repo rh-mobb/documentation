@@ -26,10 +26,13 @@ Two Google Cloud specifics shape the steps below:
 
 - An OSD 4.22 cluster on Google Cloud using WIF, in a single zone that offers C3 bare metal, with quota for one bare metal node
 - `oc` logged in to the cluster as a member of `cluster-admins`
-- Permission in the cluster's Google Cloud project to create Cloud Routers, NCC hubs, service accounts, firewall rules, and IAM bindings
+- Permission in the cluster's Google Cloud project to create VM instances, Cloud Routers, NCC hubs, service accounts, firewall rules, and IAM bindings
 - `gcloud`, `ocm`, `oc`, `jq`, and `python3` installed, with `gcloud`, `ocm`, and `oc` authenticated
+- Required `roles/compute.osAdminLogin` (for `sudo`) and `roles/iap.tunnelResourceAccessor`
 
-Set the cluster name
+Note: A zone that offers C3 bare metal can still be out of capacity. Bare metal stock is limited, so for anything beyond a lab, consider a Compute Engine reservation for the router node.
+
+Set the cluster name:
 
 ```bash
 export CLUSTER=<cluster-name>
@@ -54,6 +57,7 @@ export WORKER_CIDR=$(gcloud compute networks subnets describe $WORKER_SUBNET \
 [ -n "$WORKER_CIDR" ] || echo "Could not read the worker subnet CIDR. Stop here."
 echo "project=$GCP_PROJECT region=$REGION zone=$ZONE network=$NETWORK worker_subnet=$WORKER_SUBNET ($WORKER_CIDR)"
 ```
+
 Confirm the cluster's zone offers the bare metal type, and that you have quota for one router node (192 vCPU):
 
 ```bash
@@ -70,8 +74,7 @@ ocm get /api/accounts_mgmt/v1/organizations/$(ocm whoami | jq -r .organization.i
   --parameter size=500 \
   | jq -r '.items[] | select(.quota_id=="compute.node|cpu|byoc|osd") | "OSD \(.consumed)/\(.allowed) vCPU (the router node needs 192)"'
 ```
-
-Tested live: `us-west1-a` passes, and `us-west1-c` prints "Stop here".
+Note: This confirms the zone offers the type, not that capacity is available right now.
 
 Set the BGP values. `LOCAL_ASN` (cluster) and `CLOUD_ROUTER_ASN` must differ. `CUDN_CIDR` must not overlap the cluster's machine, pod, or service networks:
 
@@ -84,7 +87,7 @@ export NCC_HUB=${CLUSTER}-hub
 export NCC_SPOKE_PREFIX=${CLUSTER}-spoke
 ```
 
-The Cloud Router needs two unused addresses in the worker subnet for its interfaces. Google Cloud reserves the last two addresses in a subnet and nodes are assigned addresses from the bottom of the range, so take the two just below the reserved ones and confirm nothing uses them:
+The Cloud Router needs two unused addresses in the worker subnet for its interfaces. Google Cloud reserves the last two addresses in a subnet and nodes are assigned addresses from the bottom of the range, take two addresses near the top of the range and confirm nothing uses them:
 
 ```bash
 export RS_IF_0=$(python3 -c 'import ipaddress,sys; print(ipaddress.ip_network(sys.argv[1]).broadcast_address - 3)' $WORKER_CIDR)
@@ -105,15 +108,16 @@ fi
 Define a helper for the waits in this guide. It retries a command until it succeeds, and returns a failure status with a message if the time limit is reached:
 
 ```bash
-wait_for() {
-  local deadline=$((SECONDS + $1)); shift
-  until "$@"; do
-    if [ $SECONDS -ge $deadline ]; then
-      echo "Timed out waiting for: $*. Stop here and investigate." >&2; return 1
-    fi
-    sleep 15
-  done
-}
+  wait_for() {
+    local deadline=$((SECONDS + $1)); shift
+    until "$@"; do
+      [ $? -eq 127 ] && { echo "Command not found: $1. Re-run the block that defines it. Stop here." >&2; return 1; }
+      if [ $SECONDS -ge $deadline ]; then
+        echo "Timed out waiting for: $*. Stop here and investigate." >&2; return 1
+      fi
+      sleep 15
+    done
+  }
 ```
 
 ## 1. Create the BGP Cloud Router and NCC hub
@@ -142,7 +146,6 @@ Expect the ASN, `if-0;if-1`, and your two interface addresses. Without interface
 ## 2. Add the bare metal router node
 
 The router node runs FRR and hosts the test VM, so it must be bare metal. The `bgp_router=true` label is what the Operator selects in section 5:
-
 
 Note: this can take 10-15 minutes to deploy a baremetal instance
 
@@ -204,9 +207,8 @@ The validated run used channel `stable` (the catalog default), CSV `bgp-cloud-co
 
 The Operator needs a Google Cloud service account, a workload identity binding to its Kubernetes ServiceAccount, and an `external_account` credentials file backed by a projected token.
 
-Create the service account and grant it permissions. IAM can take a short time to recognise a new service account, so each binding is retried for up to two minutes:
+Create the service account and grant it permissions. The service account ID is limited to 30 characters, so shorten `SA_NAME` if your cluster name is longer than 24 characters. IAM can take a short time to recognise a new service account, so each binding is retried for up to two minutes:
 
-Note: Service account IDs are limited to 30 characters; shorten `SA_NAME` if your cluster name is longer than 24.
 ```bash
 export SA_NAME=${CLUSTER}-bgpcc
 export SA_EMAIL=${SA_NAME}@${GCP_PROJECT}.iam.gserviceaccount.com
@@ -327,7 +329,7 @@ oc get bgpcloudconfiguration cluster \
   -o jsonpath='{range .status.conditions[*]}{.type}={.status}{"\n"}{end}{.status.peerGroups}{"\n"}'
 ```
 
-All six conditions should be `True`, and the peer group should list `$RS_IF_0` and `$RS_IF_1`. The Operator may restart router nodes during its first reconciliation, so wait for them to be `Ready` again, then for the BGP sessions:
+All six conditions should be `True`, **`oc get nodes -l bgp_router=true` should list your router node**, and the peer group should list `$RS_IF_0` and `$RS_IF_1`. The Operator may restart router nodes during its first reconciliation, so wait for them to be `Ready` again, then for the BGP sessions:
 
 ```bash
 wait_for 1800 router_ready
@@ -522,10 +524,11 @@ Create a client VM in the VPC, allow IAP SSH to it, and allow it to reach the te
 ```bash
 gcloud compute instances create ${CLUSTER}-bgp-client --project $GCP_PROJECT --zone $ZONE \
   --machine-type=e2-medium --subnet=$WORKER_SUBNET --no-address \
-  --image-family=debian-12 --image-project=debian-cloud --tags=osdbgp-client
+  --image-family=debian-12 --image-project=debian-cloud --tags=${CLUSTER}-bgp-client \
+  --metadata=enable-oslogin=TRUE
 
 gcloud compute firewall-rules create ${CLUSTER}-allow-iap --project $GCP_PROJECT \
-  --network=$NETWORK --allow=tcp:22 --source-ranges=35.235.240.0/20 --target-tags=osdbgp-client
+  --network=$NETWORK --allow=tcp:22 --source-ranges=35.235.240.0/20 --tags=${CLUSTER}-bgp-client
 
 gcloud compute firewall-rules create ${CLUSTER}-allow-vm-test --project $GCP_PROJECT \
   --network=$NETWORK --allow=tcp:8080,icmp \
@@ -538,7 +541,7 @@ wait_for 300 gcloud compute ssh ${CLUSTER}-bgp-client --project $GCP_PROJECT --z
 
 The client VM and the IAP rule take a minute or two to become reachable, so the install retries until SSH succeeds.
 
-These rules are added to the cluster's VPC and removed in Cleanup. Scope any permanent rules to the exact sources, targets, and ports you need. In a shared VPC, scope rules to the exact sources, targets, and ports you need. Traffic initiated from the CUDN carries a source address in `$CUDN_CIDR`, so rules for that direction must list it explicitly.
+These rules are added to the cluster's VPC and removed in Cleanup. In a shared VPC, scope rules to the exact sources, targets, and ports you need. Traffic initiated from the CUDN carries a source address in `$CUDN_CIDR`, so rules for that direction must list it explicitly.
 
 Reach the VM by its CUDN address from the client. The test stops at the first failed check:
 
@@ -563,8 +566,8 @@ traceroute to 10.212.0.3 (10.212.0.3), 6 hops max, 60 byte packets
  2  100.88.0.20  3.579 ms  3.576 ms  3.572 ms
  3  10.212.0.3  2.138 ms  2.134 ms  2.130 ms
 ```
-
-The client reached the VM on the address the guest itself holds, through a route the cluster advertised over BGP. The first hop is the router node, which advertised the prefix.
+ 
+The client reached the VM on the address the guest itself holds, through a route the cluster advertised over BGP. The first hop is the router node (which will differ from above if BYO used), which advertised the prefix.
 
 ## Troubleshooting
 
@@ -584,12 +587,14 @@ gcloud compute routers get-status $CLOUD_ROUTER --project $GCP_PROJECT --region 
 
 | Symptom | Likely cause |
 |---|---|
+| Router node never appears; `router_ready` times out | Google Cloud has no capacity for `$ROUTER_TYPE` in `$ZONE`. Check the machine's error with `oc get machines -n openshift-machine-api -o jsonpath='{range .items[*]}{.metadata.name}{"  "}{.status.providerStatus.conditions[?(@.type=="MachineCreated")].message}{"\n"}{end}'`. `ZONE_RESOURCE_POOL_EXHAUSTED` means a stockout. Try another C3 bare metal type. A single zone cluster cannot add machine pools in another zone, so a different zone needs a new cluster. |
 | `CloudEndpointsDiscovered` is `False` | Credentials. Check the secret is mounted, `GOOGLE_APPLICATION_CREDENTIALS` is set, the token audience is `openshift`, and the `workloadIdentityUser` binding names the exact ServiceAccount and pool. |
 | `status.peerGroups` is empty | The Cloud Router has no interfaces, or `cloudRouterName` points at the NAT router. |
 | Sessions stay in `Connect` | The node is missing from the spoke, the spoke is not `ACTIVE`, or `localASN` equals the Cloud Router ASN. |
 | Some router nodes have no sessions | Every selected node must be `RUNNING`, in the spoke, have Cloud Router peers, and show `canIpForward` `True`. If one selected node cannot be configured, reconciliation for the others can stall while conditions still report `True`. |
 | Sessions up, no route learned | `BGPRouting` is not `RouteAdvertisementsCreated`, or the route advertisement is not `Accepted`. |
 | Route learned, traffic fails | Firewall rules, or the workload is not on a router node. |
+| oc get bgpcloudconfiguration, Conditions all `True` but no sessions and no spokes → no router node | `oc get nodes -l bgp_router=true` should list your router node, and the peer group should list `$RS_IF_0` and `$RS_IF_1`. | 
 
 ## Cleanup
 
