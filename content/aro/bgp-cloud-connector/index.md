@@ -1,190 +1,270 @@
 ---
-date: "2026-10-09"
+date: "2026-11-16"
 title: "Deploying BGP Cloud Connector on ARO Standard"
 tags: ["ARO", "Virtualization"]
 authors:
   - Diana Sari
   - Charlotte Fung
-validated_version: "4.21"
+  - Daniel Axelrod
+  - Kevin Collins
+validated_version: "4.22"
 ---
 
 ## Overview
 
-BGP Cloud Connector connects ClusterUserDefinedNetworks (CUDNs) on Azure Red Hat OpenShift (ARO) to routed Azure networks through Azure Route Server. The operator discovers Route Server addresses and ASN, creates Azure BGP peers for selected router workers, enables IP forwarding on those workers' network interfaces, and renders the required FRR configuration. A `BGPRouting` resource then creates and advertises a CUDN.
+BGP Cloud Connector provides direct Layer 3 connectivity between ClusterUserDefinedNetworks (CUDNs) on Azure Red Hat OpenShift (ARO) and routed Azure networks. It uses Azure Route Server to advertise CUDN prefixes and programs selected compute nodes to forward traffic.
 
-This guide covers the supported ARO Standard service principal configuration in BGP Cloud Connector 1.1.0. CCO passes the cluster service principal credential to the operator, and that principal performs both worker NIC and Azure Route Server operations.
+This guide configures an existing ARO Standard cluster running OpenShift Container Platform 4.22 or later with service principal authentication, installs BGP Cloud Connector 1.1.0 through Operator Lifecycle Manager (OLM), configures two BGP router nodes, and tests bidirectional connectivity with an OpenShift Virtualization VM.
 
-Test environment:
-
-- ARO Standard and OpenShift 4.21.22
-- BGP Cloud Connector 1.1.0 at commit [`77af5a3f22a49f843e2c29618ef8b8cbe6a2b54a`](https://github.com/openshift/bgp-cloud-connector/commit/77af5a3f22a49f843e2c29618ef8b8cbe6a2b54a)
-- Operator image `registry.redhat.io/bgpcc/bgp-cloud-connector-rhel9-operator@sha256:36bbbd780ff4933a9060422b52f3f35c41062181e161228276320aac13862632`
-- Two BGP router workers and one non-router worker
-
-ARO HCP has a different identity and infrastructure model and is not covered by this ARO Standard procedure.
-
-This guide does not validate production scale, production readiness, upgrade behavior, or every failure scenario.
+ARO clusters that use managed identities and ARO HCP have different identity and infrastructure models and are not covered.
 
 ## Architecture
 
-BGP Cloud Connector enables routed connectivity between workloads on a ClusterUserDefinedNetwork (CUDN) and external Azure networks through Azure Route Server. On ARO Standard clusters using service principal authentication, the operator uses the cluster's existing service principal to configure IP forwarding on selected worker nodes and manage BGP peerings, with Network Contributor scoped to the Azure Route Server resource.
-
-The architecture below was tested with BGP Cloud Connector 1.1.0 on ARO 4.21.22, including CUDN route advertisement, external workload connectivity, and automatic BGP reconciliation and recovery.
-
 ![BGP Cloud Connector architecture](images/bgp-standard-arch.png)
 
-## Identity model
+1. FRR on each router node establishes sessions with the two redundant BGP endpoint IPs provided by one Azure Route Server.
+1. BGP Cloud Connector advertises the CUDN prefix, which Route Server propagates to the virtual network.
+1. Azure sends CUDN traffic to a router node network interface.
+1. OVN-Kubernetes forwards the traffic between that node and the workload.
 
-BGP Cloud Connector 1.1.0 supports ARO Standard clusters created with a service principal. CCO passthrough copies the cluster service principal credential into the operator credential Secret. The operator uses that credential for both worker NIC IP forwarding and Route Server peering operations.
+Azure Route Server distributes routes. It is not in the application data path. Two router nodes connected to both Route Server endpoint IPs produce four BGP sessions.
 
-ARO already grants the cluster principal the managed-resource-group and VNet permissions needed for worker NIC and subnet operations. This guide adds a separate `Network Contributor` assignment scoped to the exact Route Server resource for peer lifecycle management.
+This guide was tested in West US 2 with ARO Standard 4.22.22, three `Standard_D8s_v5` compute nodes, BGP Cloud Connector 1.1.0 in the `bgp-cloud-connector` namespace, and OpenShift Virtualization 4.22.16.
 
 ## Prerequisites
 
-Prepare the ARO cluster and shared Azure networking. For this guide, the ARO control-plane subnet, worker subnet, Azure Route Server subnet, and connectivity-test VM subnet were separate subnets in the same customer VNet.
+You need:
 
-### ARO cluster prerequisites
+- an ARO Standard 4.22 or later cluster created with a service principal and `cluster-admin` access
+- a current global pull secret with valid `registry.redhat.io` credentials
+- a virtual network with space for a dedicated `/26` Route Server subnet and a test subnet
+- Azure permissions to manage networking, role assignments, and test resources
+- a CUDN prefix that does not overlap any connected network
+- Azure CLI, `jq`, `oc`, Python 3, and the `virtctl` client provided by the cluster
+- OpenShift Virtualization and supported compute capacity for the VM test
 
-- Use OpenShift 4.21 or newer.
-- Use an Azure subscription where you can create ARO clusters, networking, role assignments, and test resources.
-- Store the Red Hat pull secret outside source control.
-- Prepare empty control-plane and worker subnets for the ARO cluster.
-- Use the Microsoft [ARO Standard service principal deployment documentation](https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster) or our [quickstart guide](/experts/aro/quickstart/) as the baseline cluster-creation guidance.
+See [Deploying OpenShift Virtualization on ARO](/experts/aro/aro-virt/). Record the owner and provisioning method for every Azure resource. Route Server, compute instances, VMs, and disks incur charges.
 
-### Shared Azure networking prerequisites
-
-- Create or select one customer VNet with separate subnets for the ARO control plane, ARO workers, Azure Route Server, and the test VM.
-- Deploy Azure Route Server in the same customer VNet as the ARO cluster for the configuration/setup documented here. Follow the Microsoft [Azure Route Server creation guidance](https://learn.microsoft.com/en-us/azure/route-server/quickstart-create-route-server-cli).
-- Create a dedicated Route Server subnet named exactly `RouteServerSubnet`. Azure requires this exact subnet name, and current guidance requires a `/26` or larger prefix for new Route Server deployments.
-- Keep `RouteServerSubnet` dedicated to Azure Route Server. Do not place the ARO cluster or test VM in it.
-
-Do not manually configure Route Server peers. Peer lifecycle is part of the operator behavior being tested.
-
-### Test endpoint prerequisites
-
-- Create an Azure VM or another reachable endpoint for connectivity testing. For this guide, the Azure test VM was in the same customer VNet as ARO and Route Server, but in its own regular subnet.
-- A test endpoint in a different routed VNet can also be used when end-to-end routing is already configured, but that setup was not tested for this guide.
-- OpenShift Virtualization must be installed, configured, and available on supported worker SKUs if you want to use the optional VM example. See [Deploying OpenShift Virtualization on ARO](/experts/aro/aro-virt/) for installation guidance.
-
-The shared VNet, Azure Route Server, and test VM can be reused between test clusters. The ARO control-plane and worker subnets may be reused only after the previous ARO cluster has been fully deleted and the subnets are empty. Resource reuse is optional.
-
-### Required tools
-
-- `oc`
-- Azure CLI
-- `git`
-- `make`
-- `jq`
-- `envsubst`
-
-The values below are placeholders unless explicitly described as examples.
+The commands use Bash:
 
 ```bash
-export SUBSCRIPTION_ID="<subscription-id>"
+export SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+export RESOURCE_GROUP="<resource-group-containing-the-vnet>"
 export LOCATION="<azure-region>"
-export RESOURCE_GROUP="<aro-and-network-resource-group>"
-export CLUSTER_NAME="<aro-cluster-name>"
 export VNET_NAME="<vnet-name>"
-export MASTER_SUBNET="<control-plane-subnet-name>"
-export WORKER_SUBNET="<worker-subnet-name>"
 export ROUTE_SERVER_NAME="<route-server-name>"
-export AZURE_TEST_VM_IP="<azure-test-vm-private-ip>"
-export BGP_OPERATOR_NAMESPACE="openshift-bgp-cloud-connector"
+export ROUTE_SERVER_SUBNET_CIDR="<unused-/26-prefix>"
+export TEST_SUBNET_NAME="<test-subnet-name>"
+export TEST_SUBNET_CIDR="<unused-test-subnet-prefix>"
+export TEST_VM_NAME="<azure-test-vm-name>"
+export CUDN_CIDR="10.201.0.0/16"
+export LOCAL_ASN="65001"
 ```
 
-Confirm that both ARO subnets are empty and review any attached NSG, route table, or NAT gateway:
+The local ASN must differ from the Azure Route Server ASN, 65515.
 
-An empty subnet may return `ipConfigurations: null`; the query treats that as an empty array so the count returns `0`.
+### Optional: upgrade from 4.21 to 4.22
+
+Deploy 4.22 directly when your region offers it. Otherwise, create a supported 4.21 release and follow the OpenShift update graph. Do not force an update.
 
 ```bash
-az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "$VNET_NAME" \
-  --name "$MASTER_SUBNET" \
-  --query '{ipConfigurations:length(ipConfigurations || `[]`),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
-
-az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "$VNET_NAME" \
-  --name "$WORKER_SUBNET" \
-  --query '{ipConfigurations:length(ipConfigurations || `[]`),nsg:networkSecurityGroup.id,routeTable:routeTable.id,natGateway:natGateway.id}'
+oc adm upgrade channel stable-4.22
+oc adm upgrade
 ```
 
-## 1. Prepare ARO Standard with a service principal
-
-Create an ARO Standard service-principal cluster through your normal ARO deployment procedure, using the shared network prerequisites. CCO passthrough supplies the cluster service principal credential, and that principal performs both worker NIC and Route Server operations.
-
-Do not create a dedicated BGP workload identity or reuse an ARO platform workload identity. The 1.1.0 CRD does not contain `networkInterfaceClientID`.
-
-Clone the tested source so its Azure estate and RBAC helpers are available:
+If the graph requires the 4.22 boot-image acknowledgment, review [Acknowledging the boot image management change](https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/observability/updating_clusters/understanding-openshift-updates-1) before setting it:
 
 ```bash
-export BGP_CC_COMMIT="77af5a3f22a49f843e2c29618ef8b8cbe6a2b54a"
-git clone https://github.com/openshift/bgp-cloud-connector.git
-git -C bgp-cloud-connector checkout "$BGP_CC_COMMIT"
+oc -n openshift-config patch configmap admin-acks --type=merge \
+  --patch '{"data":{"ack-4.21-boot-image-opt-out-in-4.22":"true"}}'
+oc adm upgrade
 ```
 
-Create the Route Server with the upstream helper used by the 1.1.0 E2E workflow:
+Select only a recommended target returned by `oc adm upgrade`. In this guide, we followed the recommended path from 4.21.22 to 4.22.22.
+
+Start the recommended update and wait for it to complete:
 
 ```bash
-bgp-cloud-connector/hack/azure/create-route-server.sh
-export ROUTE_SERVER_NAME="$(oc get infrastructure cluster \
-  -o jsonpath='{.status.infrastructureName}')-rs"
+export TARGET_VERSION="<recommended-4.22-version>"
+oc adm upgrade --to="${TARGET_VERSION}"
+oc wait clusterversion/version \
+  --for=jsonpath='{.status.history[0].state}'=Completed --timeout=90m
+export ACTUAL_VERSION="$(oc get clusterversion version \
+  -o jsonpath='{.status.history[0].version}')"
+test "${ACTUAL_VERSION}" = "${TARGET_VERSION}"
+oc wait clusteroperator --all --for=condition=Available=True --timeout=20m
+oc wait clusteroperator --all --for=condition=Progressing=False --timeout=20m
+oc get clusterversion,clusteroperator
 ```
 
-Identify the cluster service principal without displaying its credential, then use the 1.1.0 helper to grant `Network Contributor` on the exact Route Server resource:
+## 1. Prepare FRR and RouteAdvertisements
+
+Enable and verify both capabilities before installing the Operator:
+
+```bash
+oc patch network.operator.openshift.io cluster --type=merge --patch '{
+  "spec": {
+    "additionalRoutingCapabilities": {"providers": ["FRR"]},
+    "defaultNetwork": {
+      "ovnKubernetesConfig": {"routeAdvertisements": "Enabled"}
+    }
+  }
+}'
+
+oc wait clusteroperator/network --for=condition=Available=True --timeout=10m
+oc wait clusteroperator/network --for=condition=Progressing=False --timeout=10m
+oc get network.operator.openshift.io cluster \
+  -o jsonpath='{.spec.additionalRoutingCapabilities.providers}{"\n"}{.spec.defaultNetwork.ovnKubernetesConfig.routeAdvertisements}{"\n"}'
+oc get crd routeadvertisements.k8s.ovn.org
+oc rollout status daemonset/frr-k8s -n openshift-frr-k8s --timeout=10m
+oc get daemonset/frr-k8s -n openshift-frr-k8s
+oc get pods -n openshift-frr-k8s
+```
+
+Continue only when the output includes `FRR`, RouteAdvertisements is `Enabled`, the CRD exists, and the FRR pods are Ready.
+
+## 2. Create Azure Route Server and scoped RBAC
+
+Azure requires a dedicated subnet named exactly `RouteServerSubnet`, sized `/26` or larger:
+
+```bash
+az network vnet subnet create -g "${RESOURCE_GROUP}" --vnet-name "${VNET_NAME}" \
+  -n RouteServerSubnet --address-prefixes "${ROUTE_SERVER_SUBNET_CIDR}"
+az network public-ip create -g "${RESOURCE_GROUP}" -n "${ROUTE_SERVER_NAME}-pip" \
+  --location "${LOCATION}" --sku Standard --version IPv4 --allocation-method Static
+
+export ROUTE_SERVER_SUBNET_ID="$(az network vnet subnet show \
+  -g "${RESOURCE_GROUP}" --vnet-name "${VNET_NAME}" -n RouteServerSubnet \
+  --query id -o tsv)"
+az network routeserver create -g "${RESOURCE_GROUP}" -n "${ROUTE_SERVER_NAME}" \
+  --hosted-subnet "${ROUTE_SERVER_SUBNET_ID}" \
+  --public-ip-address "${ROUTE_SERVER_NAME}-pip"
+```
+
+Creation can take approximately 30 minutes. Wait until both endpoint IPs appear:
+
+```bash
+az network routeserver show -g "${RESOURCE_GROUP}" -n "${ROUTE_SERVER_NAME}" \
+  --query '{asn:virtualRouterAsn,endpointIps:virtualRouterIps,state:provisioningState}'
+```
+
+Do not create peerings manually. The Operator owns their lifecycle.
+
+Read the cluster service principal client ID without displaying its credential, then grant `Network Contributor` on only the Route Server:
 
 ```bash
 export CLUSTER_CLIENT_ID="$(oc get secret azure-credentials -n kube-system \
   -o jsonpath='{.data.azure_client_id}' | base64 -d)"
-export CLUSTER_OBJECT_ID="$(az ad sp show --id "$CLUSTER_CLIENT_ID" --query id -o tsv)"
-ROUTE_SERVER_ASSIGNEE="$CLUSTER_OBJECT_ID" \
-  bgp-cloud-connector/hack/azure/grant-route-server-role.sh
+export CLUSTER_OBJECT_ID="$(az ad sp show --id "${CLUSTER_CLIENT_ID}" --query id -o tsv)"
+export ROUTE_SERVER_ID="$(az network routeserver show -g "${RESOURCE_GROUP}" \
+  -n "${ROUTE_SERVER_NAME}" --query id -o tsv)"
+export ROUTE_SERVER_ROLE_ASSIGNMENT_ID="$(az role assignment create \
+  --assignee-object-id "${CLUSTER_OBJECT_ID}" \
+  --assignee-principal-type ServicePrincipal --role "Network Contributor" \
+  --scope "${ROUTE_SERVER_ID}" --query id -o tsv)"
 ```
 
-The helper resolves the Route Server resource ID and creates the assignment at that scope. It does not grant access across the network resource group. Keep the ARO-created managed-resource-group and VNet permissions: the cluster principal needs those separate permissions for NIC writes and Azure linked-scope checks on the worker subnet and load balancer backend pool.
+Save the assignment ID with the resource inventory and allow time for RBAC propagation.
 
-Allow time for RBAC propagation. During 1.1.0 testing, the operator successfully reconciled worker NIC forwarding and Route Server peers with this scoped assignment.
-
-## 2. Install BGP Cloud Connector 1.1.0
-
-The procedure below pins the exact 1.1.0 source commit and release image used in this test. The source requires Go 1.26.0 and provides `make build-installer` to render the consolidated installer.
+An Azure deny assignment takes precedence over RBAC. Confirm that the ARO cluster service principal is excluded from any managed resource group deny assignment that would block worker NIC writes:
 
 ```bash
-export BGP_CC_IMAGE="registry.redhat.io/bgpcc/bgp-cloud-connector-rhel9-operator@sha256:36bbbd780ff4933a9060422b52f3f35c41062181e161228276320aac13862632"
-make -C bgp-cloud-connector build-installer IMG="$BGP_CC_IMAGE"
-oc apply -f bgp-cloud-connector/dist/install.yaml
+export MANAGED_RESOURCE_GROUP="$(oc get infrastructure cluster \
+  -o jsonpath='{.status.platformStatus.azure.resourceGroupName}')"
+az rest --method GET \
+  --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${MANAGED_RESOURCE_GROUP}/providers/Microsoft.Authorization/denyAssignments?api-version=2022-04-01" \
+  | jq --arg object_id "${CLUSTER_OBJECT_ID}" \
+    '[.value[] | {name: .properties.denyAssignmentName, servicePrincipalExcluded: any(.properties.excludePrincipals[]?; .id == $object_id)}]'
 ```
 
-Wait for the Deployment to become Available:
+For an applicable deny assignment, `servicePrincipalExcluded` must be `true`. Otherwise, the Operator cannot enable IP forwarding on the selected worker NICs, and an additional RBAC grant does not override the denial.
+
+## 3. Select router nodes
+
+Every node that can host a directly routed workload must match the Operator's selector. First confirm that the selected nodes belong to MachineSets intended only for routers:
 
 ```bash
-oc wait deployment/openshift-bgp-cloud-connector-controller-manager \
-  -n "$BGP_OPERATOR_NAMESPACE" --for=condition=Available --timeout=5m
+oc get machines -n openshift-machine-api \
+  -o custom-columns=NODE:.status.nodeRef.name,MACHINESET:.metadata.labels.machine\\.openshift\\.io/cluster-api-machineset
 ```
 
-Do not set `CLIENTID`, `TENANTID`, or `SUBSCRIPTIONID` on the Deployment for ARO Standard service principal clusters. CCO passthrough supplies the cluster service principal credential. The `CredentialsRequest` and credential Secret appear after `BGPCloudConfiguration` reconciliation begins.
+Patching a MachineSet template labels all future nodes created from that template. Do not patch a template that must continue creating non-router nodes. Use dedicated router MachineSets when router and non-router capacity must remain separate.
 
-## 3. Select router workers
-
-The 1.1.0 E2E profile selected two of three workers as BGP routers, leaving one non-router worker for dataplane coverage. Label the intended nodes and their owning MachineSet templates so replacement nodes inherit the role:
+Patch the router MachineSet templates and label the two existing router nodes:
 
 ```bash
-export ROUTER_NODES="<worker-node-1> <worker-node-2>"
-for node in $ROUTER_NODES; do
-  machine_name="$(oc get node "$node" \
+export ROUTER_NODES="<router-node-1> <router-node-2>"
+for node in ${ROUTER_NODES}; do
+  machine_ref="$(oc get node "${node}" \
     -o jsonpath='{.metadata.annotations.machine\.openshift\.io/machine}')"
-  machine_namespace="${machine_name%%/*}"
-  machine_name="${machine_name##*/}"
-  machineset_name="$(oc get machine "$machine_name" -n "$machine_namespace" \
+  machine_namespace="${machine_ref%%/*}"
+  machine_name="${machine_ref##*/}"
+  machineset_name="$(oc get machine "${machine_name}" -n "${machine_namespace}" \
     -o jsonpath='{.metadata.labels.machine\.openshift\.io/cluster-api-machineset}')"
-  oc patch machineset "$machineset_name" -n "$machine_namespace" --type merge \
+  oc patch machineset "${machineset_name}" -n "${machine_namespace}" \
+    --type=merge \
     --patch '{"spec":{"template":{"spec":{"metadata":{"labels":{"bgp_router":"true"}}}}}}'
-  oc label node "$node" bgp_router=true
+  oc label node "${node}" bgp_router=true --overwrite
 done
 oc get nodes -l bgp_router=true -o wide
 ```
 
-## 4. Configure `BGPCloudConfiguration`
+## 4. Install BGP Cloud Connector 1.1.0 with OLM
+
+If the global pull secret needs refreshing, merge the new registry entry into the existing secret. Do not replace ARO-created entries or print secret data.
 
 ```bash
-envsubst <<'EOF' | oc apply -f -
+oc get catalogsource redhat-operators -n openshift-marketplace
+```
+
+Create the namespace, OperatorGroup, and stable-channel Subscription. Manual approval prevents a newer channel head from replacing the tested version:
+
+```bash
+cat <<'EOF' | oc apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bgp-cloud-connector
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: bgp-cloud-connector
+  namespace: bgp-cloud-connector
+spec:
+  targetNamespaces: [bgp-cloud-connector]
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: bgp-cloud-connector
+  namespace: bgp-cloud-connector
+spec:
+  channel: stable
+  installPlanApproval: Manual
+  name: bgp-cloud-connector
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: bgp-cloud-connector.v1.1.0
+EOF
+
+export INSTALL_PLAN="$(oc get subscription bgp-cloud-connector \
+  -n bgp-cloud-connector -o jsonpath='{.status.installplan.name}')"
+oc get installplan "${INSTALL_PLAN}" -n bgp-cloud-connector -o yaml
+oc patch installplan "${INSTALL_PLAN}" -n bgp-cloud-connector \
+  --type=merge --patch '{"spec":{"approved":true}}'
+oc wait csv/bgp-cloud-connector.v1.1.0 -n bgp-cloud-connector \
+  --for=jsonpath='{.status.phase}'=Succeeded --timeout=10m
+```
+
+Approve the plan only if it contains `bgp-cloud-connector.v1.1.0`.
+
+## 5. Configure BGP Cloud Connector
+
+`resourceGroup` is the resource group containing Route Server, not the ARO managed resource group:
+
+```bash
+cat <<EOF | oc apply -f -
 apiVersion: networking.openshift.io/v1beta1
 kind: BGPCloudConfiguration
 metadata:
@@ -194,7 +274,7 @@ spec:
   routerNodeSelector:
     bgp_router: "true"
   bgp:
-    localASN: 65001
+    localASN: ${LOCAL_ASN}
     livenessDetection: bgp-keepalive
   azure:
     subscriptionID: ${SUBSCRIPTION_ID}
@@ -203,93 +283,110 @@ spec:
 EOF
 ```
 
-During reconciliation, the operator creates `CredentialsRequest/bgp-cloud-connector-azure`. CCO responds by creating `Secret/bgp-cloud-connector-azure-credentials` in `$BGP_OPERATOR_NAMESPACE`. Confirm the Secret uses the cluster service principal without displaying its secret value:
+The Cloud Credential Operator copies the cluster service principal credential into the Operator namespace. Compare only client IDs:
 
 ```bash
-oc get secret bgp-cloud-connector-azure-credentials \
-  -n "$BGP_OPERATOR_NAMESPACE" \
-  -o json | jq -r '.data | keys[]'
-oc get secret bgp-cloud-connector-azure-credentials \
-  -n "$BGP_OPERATOR_NAMESPACE" \
-  -o jsonpath='{.data.azure_client_id}' | base64 -d
-echo
-echo "$CLUSTER_CLIENT_ID"
+oc get credentialsrequest bgp-cloud-connector-azure \
+  -n openshift-cloud-credential-operator \
+  -o jsonpath='{.status.provisioned}{"\n"}'
+export OPERATOR_CLIENT_ID="$(oc get secret bgp-cloud-connector-azure-credentials \
+  -n bgp-cloud-connector -o jsonpath='{.data.azure_client_id}' | base64 -d)"
+test "${OPERATOR_CLIENT_ID}" = "${CLUSTER_CLIENT_ID}" \
+  && echo "Operator client ID matches the cluster service principal"
+oc get bgpcloudconfiguration cluster \
+  -o jsonpath='{range .status.conditions[*]}{.type}={.status} {.reason}{"\n"}{end}'
 ```
 
-The keys include `azure_client_id` and `azure_client_secret`, and the two displayed client IDs must match. Do not print or decode `azure_client_secret`.
+Wait for all conditions to become True.
 
-## 5. Configure `BGPRouting` and CUDN resources
+## 6. Create and advertise a CUDN
+
+Create the namespace with both labels present at creation time:
 
 ```bash
-export CUDN_NAMESPACE="<cudn-test-namespace>"
-export CUDN_NETWORK_NAME="<cudn-network-name>"
-export BGP_ROUTING_NAME="<bgp-routing-name>"
-export CUDN_SUBNET="10.100.0.0/16"
-envsubst <<'EOF' | oc apply -f -
+cat <<EOF | oc apply -f -
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ${CUDN_NAMESPACE}
+  name: bgp-test-vms
   labels:
+    cluster-udn: bgp-test-cudn
     k8s.ovn.org/primary-user-defined-network: ""
-    cluster-udn: ${CUDN_NETWORK_NAME}
 ---
 apiVersion: networking.openshift.io/v1beta1
 kind: BGPRouting
 metadata:
-  name: ${BGP_ROUTING_NAME}
+  name: bgp-test-cudn
 spec:
   network:
-    name: ${CUDN_NETWORK_NAME}
+    name: bgp-test-cudn
     subnets:
-      - ${CUDN_SUBNET}
+      - ${CUDN_CIDR}
 EOF
-oc get bgprouting "$BGP_ROUTING_NAME" -o yaml
-oc get clusteruserdefinednetwork "cluster-udn-${CUDN_NETWORK_NAME}" -o yaml
-oc get routeadvertisements bgp-cc-route-advertisements -o yaml
+oc get bgprouting bgp-test-cudn
+oc get clusteruserdefinednetwork cluster-udn-bgp-test-cudn
+oc get routeadvertisements
 ```
 
-Do not manually create or modify the generated CUDN or `RouteAdvertisements`.
+`BGPRouting` owns the generated Layer 2 CUDN and RouteAdvertisements resources. Do not create or edit them separately.
 
-## 6. OpenShift Virtualization VM example (optional)
+## 7. Create test endpoints
 
-You can skip this step if you already have a testing VM spun up. Make sure to use a supported worker SKU with sufficient capacity before installing OpenShift Virtualization or applying this example.
-
-This manifest below uses a pinned Fedora containerdisk and the required `l2bridge` binding.
+Create a dedicated Azure test endpoint:
 
 ```bash
-export CUDN_VM_NAME="cudn-connectivity-test"
-export SSH_PUBLIC_KEY="$(cat /path/to/test-public-key)"
-envsubst <<'EOF' | oc apply -f -
+az network vnet subnet create -g "${RESOURCE_GROUP}" --vnet-name "${VNET_NAME}" \
+  -n "${TEST_SUBNET_NAME}" --address-prefixes "${TEST_SUBNET_CIDR}"
+az vm create -g "${RESOURCE_GROUP}" -n "${TEST_VM_NAME}" \
+  --location "${LOCATION}" --image Ubuntu2204 --size Standard_D2s_v5 \
+  --vnet-name "${VNET_NAME}" --subnet "${TEST_SUBNET_NAME}" \
+  --public-ip-address "" --generate-ssh-keys \
+  --os-disk-delete-option Delete --nic-delete-option Delete
+export AZURE_TEST_VM_IP="$(az vm list-ip-addresses -g "${RESOURCE_GROUP}" \
+  -n "${TEST_VM_NAME}" \
+  --query '[0].virtualMachine.network.privateIpAddresses[0]' -o tsv)"
+export TEST_NIC_ID="$(az vm show -g "${RESOURCE_GROUP}" -n "${TEST_VM_NAME}" \
+  --query 'networkProfile.networkInterfaces[0].id' -o tsv)"
+az network nic show-effective-route-table --ids "${TEST_NIC_ID}" -o table
+az network nic list-effective-nsg --ids "${TEST_NIC_ID}" -o json
+```
+
+Review effective routes and every effective NSG. Configured CIDRs alone do not prove that Azure permits the complete path.
+
+The OpenShift Virtualization VM must use the CUDN as its primary network and run on a router node because its egress traffic uses the hosting node's Azure network interface, and the Operator enables IP forwarding only on selected router nodes. Set the public key used for the test, then apply the VM:
+
+```bash
+export SSH_PUBLIC_KEY="$(cat <path-to-test-public-key>)"
+cat <<EOF | oc apply -f -
 apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
-  name: ${CUDN_VM_NAME}
-  namespace: ${CUDN_NAMESPACE}
+  name: bgp-test-vm
+  namespace: bgp-test-vms
 spec:
   runStrategy: Always
   template:
     metadata:
       labels:
-        kubevirt.io/domain: cudn-connectivity-test
+        app: bgp-test-vm
     spec:
+      nodeSelector:
+        bgp_router: "true"
       domain:
         resources:
           requests:
-            memory: 1Gi
+            memory: 2Gi
         devices:
           disks:
             - name: rootdisk
               disk:
                 bus: virtio
-            - name: cloudinitdisk
+            - name: cloudinit
               disk:
                 bus: virtio
           interfaces:
             - name: default
-              model: virtio
-              binding:
-                name: l2bridge
+              bridge: {}
       networks:
         - name: default
           pod: {}
@@ -297,7 +394,7 @@ spec:
         - name: rootdisk
           containerDisk:
             image: quay.io/containerdisks/fedora@sha256:1571d49ee43106e9c7cc4e9f487f6f885ee7c156dc5834fad87ad1e38768b778
-        - name: cloudinitdisk
+        - name: cloudinit
           cloudInitNoCloud:
             userData: |-
               #cloud-config
@@ -305,155 +402,155 @@ spec:
               ssh_authorized_keys:
                 - ${SSH_PUBLIC_KEY}
 EOF
+
+oc wait virtualmachine/bgp-test-vm -n bgp-test-vms \
+  --for=condition=Ready --timeout=15m
+for attempt in {1..60}; do
+  export CUDN_VM_IP="$(oc get vmi bgp-test-vm -n bgp-test-vms \
+    -o jsonpath='{.status.interfaces[0].ipAddress}')"
+  [ -n "${CUDN_VM_IP}" ] && break
+  sleep 5
+done
+test -n "${CUDN_VM_IP}"
+python3 -c 'import ipaddress, sys; assert ipaddress.ip_address(sys.argv[1]) in ipaddress.ip_network(sys.argv[2])' \
+  "${CUDN_VM_IP}" "${CUDN_CIDR}"
+echo "CUDN VM IP: ${CUDN_VM_IP}"
+oc get vmi bgp-test-vm -n bgp-test-vms -o wide
 ```
 
-The guest username is `cloud-user`, and the manifest configures only the public key supplied through `SSH_PUBLIC_KEY`. It does not create a console password, so the OpenShift console may show **No credentials**, and a VNC or serial-console login prompt will not accept a password. Use SSH with the private key that corresponds to `SSH_PUBLIC_KEY`:
+## 8. Test routing and connectivity
+
+Confirm the generated routing resources, sessions, NIC forwarding, peerings, and learned routes:
 
 ```bash
-virtctl ssh \
-  --username cloud-user \
-  --identity-file <path-to-private-key> \
-  -n "$CUDN_NAMESPACE" \
-  vm/"$CUDN_VM_NAME"
-```
-
-If `virtctl ssh` fails with a WebSocket close 1006 error, see the separate OpenShift Virtualization observation under **Troubleshooting and gotchas**. That streaming failure is not by itself evidence of a BGP or CUDN failure.
-
-## 7. Validate the deployment
-
-```bash
-oc get bgpcloudconfiguration cluster \
-  -o jsonpath='{range .status.conditions[*]}{.type}{"="}{.status}{" reason="}{.reason}{"\n"}{end}'
-oc get frrconfiguration bgp-cc-1 -n openshift-frr-k8s -o yaml
-az network routeserver peering list -g "$RESOURCE_GROUP" \
-  --routeserver "$ROUTE_SERVER_NAME" \
-  --query '[].{name:name,peerIp:peerIp,peerAsn:peerAsn,provisioningState:provisioningState}' \
+oc get frrconfiguration -n openshift-frr-k8s
+oc get bgpsessionstate -n openshift-frr-k8s
+export MANAGED_RESOURCE_GROUP="$(oc get infrastructure cluster \
+  -o jsonpath='{.status.platformStatus.azure.resourceGroupName}')"
+az network nic list -g "${MANAGED_RESOURCE_GROUP}" \
+  --query "[?enableIPForwarding].{name:name,ipForwarding:enableIPForwarding,ip:ipConfigurations[0].privateIPAddress}" \
   -o table
+az network routeserver peering list -g "${RESOURCE_GROUP}" \
+  --routeserver "${ROUTE_SERVER_NAME}" \
+  --query '[].{name:name,peerIp:peerIp,peerAsn:peerAsn,state:provisioningState}' -o table
+
+for peering in $(az network routeserver peering list -g "${RESOURCE_GROUP}" \
+  --routeserver "${ROUTE_SERVER_NAME}" --query '[].name' -o tsv); do
+  az network routeserver peering list-learned-routes \
+    -g "${RESOURCE_GROUP}" --routeserver "${ROUTE_SERVER_NAME}" \
+    -n "${peering}" -o table
+done
 ```
 
-For the two-router setup used in our test, expect `BGPCloudConfiguration/cluster` Ready, two healthy Azure peers, IP forwarding on the two selected worker NICs, four Established BGP sessions across the two Route Server instances, and `10.100.0.0/16` learned from both peers.
-
-By the end of the test, we're able to confirm:
-
-- CCO passthrough authentication with the cluster service principal.
-- Automatic IP forwarding on both selected worker NICs.
-- Four of four BGP sessions Established.
-- CUDN and `RouteAdvertisements` reconciliation.
-- CUDN route advertisement and external-client connectivity.
-- Peer recovery, NIC IP forwarding recovery, and router label leave and rejoin reconciliation.
-- Azure Activity Log attribution of both NIC and Route Server operations to the cluster service principal.
-
-No dedicated BGP identity or ARO platform workload identity was used.
-
-### VM connectivity checks (optional)
-
-If you deployed the optional VM for testing, inspect its network state and test the Azure endpoint:
+Use normal SSH through `virtctl` for guest commands. Set the private key that matches `SSH_PUBLIC_KEY`:
 
 ```bash
-ip addr
-ip route
-ip rule
-ip neigh show
-ping -c 4 "$AZURE_TEST_VM_IP"
+export SSH_PRIVATE_KEY="<path-to-test-private-key>"
+virtctl ssh --namespace bgp-test-vms --username cloud-user \
+  --identity-file "${SSH_PRIVATE_KEY}" vm/bgp-test-vm \
+  --command 'nohup python3 -m http.server 8080 >/tmp/cudn-http.log 2>&1 &'
 ```
 
-From a Linux shell on the Azure test VM, test the reverse direction to the guest VM's CUDN address:
+Test Azure VM to OpenShift VM and inspect the VM server log:
 
 ```bash
-export CUDN_VM_IP="<guest-cudn-ip>"
-ping -c 4 "$CUDN_VM_IP"
+az vm run-command invoke -g "${RESOURCE_GROUP}" -n "${TEST_VM_NAME}" \
+  --command-id RunShellScript \
+  --scripts "curl --fail --show-error --max-time 10 http://${CUDN_VM_IP}:8080/"
+virtctl ssh --namespace bgp-test-vms --username cloud-user \
+  --identity-file "${SSH_PRIVATE_KEY}" vm/bgp-test-vm \
+  --command 'tail -n 5 /tmp/cudn-http.log'
 ```
 
-For a test endpoint where `ping -c` is not available, use the equivalent connectivity test for its operating system. A successful test demonstrates that the Azure test VM reaches the guest directly at its CUDN IP through Azure Route Server and the selected BGP router workers. No NAT, NodePort, OpenShift Route, LoadBalancer service, translated address, or service IP is involved. The observed source and destination addresses should remain the routed endpoint addresses.
-
-This same-VNet result does not establish universal or transitive reachability from every Azure-peered or on-premises network. Other connected networks require their own routing, peering, and route-propagation configuration for the CUDN prefix.
-
-## 8. Lifecycle validation (optional)
-
-Delete one router Machine through the OpenShift Machine API, never the Azure VM directly:
+Start an HTTP server on the Azure VM, then test OpenShift VM to Azure VM. The Azure log must show the VM's CUDN address as the source:
 
 ```bash
-export ROUTER_MACHINE_NAME="<router-machine-name>"
-oc delete machine "$ROUTER_MACHINE_NAME" -n openshift-machine-api
+az vm run-command invoke -g "${RESOURCE_GROUP}" -n "${TEST_VM_NAME}" \
+  --command-id RunShellScript \
+  --scripts 'sudo systemd-run --unit="bgp-test-http-$(date +%s)" --collect /usr/bin/python3 -m http.server 8080'
+virtctl ssh --namespace bgp-test-vms --username cloud-user \
+  --identity-file "${SSH_PRIVATE_KEY}" vm/bgp-test-vm \
+  --command "curl --fail --show-error --max-time 10 http://${AZURE_TEST_VM_IP}:8080/"
+az vm run-command invoke -g "${RESOURCE_GROUP}" -n "${TEST_VM_NAME}" \
+  --command-id RunShellScript \
+  --scripts 'sudo journalctl --unit="bgp-test-http-*" --no-pager -n 5'
 ```
 
-Verify automatic old peer cleanup, replacement creation and readiness, inherited `bgp_router=true`, replacement NIC forwarding, new peer creation, Established sessions, Ready BGP configuration, and learned CUDN routes.
+Packet captures on the router nodes and Azure VM are optional diagnostics for confirming source preservation and equal-cost multipath behavior.
 
-This step did not replace a worker Machine. If you run the optional replacement procedure, confirm the same reconciliation outcomes and retain evidence separately.
+Here's what we verified so far:
 
-## 9. Troubleshooting and gotchas
+- four Established BGP sessions for two router nodes and two Route Server endpoint IPs
+- IP forwarding on both selected Azure network interfaces
+- successful CUDN and RouteAdvertisements reconciliation
+- bidirectional HTTP requests between the Azure VM and OpenShift Virtualization VM
+- preservation of the OpenShift VM's CUDN source IP at the Azure VM
+- return traffic through the alternate router using ECMP
+- regular pod connectivity on the same CUDN with source IP preservation
 
-### 9.1 Reconciliation and dataplane observations
+Other peered or on-premises networks require separate route-propagation and security validation.
 
-#### 9.1.1 FRR webhook startup race
+## 9. Cleanup
 
-Initial reconciliation can report `FRRConfigurationApplied=False` while `frr-k8s-webhook-service` has no healthy endpoint. Earlier testing recovered through normal reconciliation without configuration changes.
-
-#### 9.1.2 `disableMP` warning
-
-In the commit used for this guide, the operator intentionally sets this deprecated field to satisfy OCP 4.21 RouteAdvertisements validation. Do not edit generated FRR resources.
-
-#### 9.1.3 Route Server learning and effective-route output
-
-The Azure test NIC effective-route API did not display an exact `10.100.0.0/16` entry even though Route Server learned it and dataplane connectivity succeeded. Evaluate Route Server, FRR, and guest evidence together.
-
-#### 9.1.4 `virtctl` WebSocket close 1006
-
-Matching `virtctl` v1.7.4 enabled the initial guest test, but the issue later recurred. The VM remained Running and Ready, and no evidence indicated a BGP or CUDN failure. Matching versions are a diagnostic step, not a guaranteed fix.
-
-### 9.2 ARO Standard service principal
-
-The operator uses CCO passthrough. For Route Server authorization failures, confirm that the principal from `kube-system/azure-credentials` has `Network Contributor` on the exact Route Server resource, then allow for RBAC propagation. Use `hack/azure/grant-route-server-role.sh` to apply the tested scope.
-
-The 1.1.0 source does not include `docs/azure-integration-test-plan.md`. The implementation, CRD schema, Azure E2E suite, and current authentication documentation were used as the source of truth.
-
-## 10. ARO Standard with Managed Identity/Workload Identity
-
-On separate testing, we managed to create a workaround for BGP Cloud Connector on an ARO Standard cluster configured with managed identities and workload identity. The workaround worked technically in that lab, but it is not officially supported by BGP Cloud Connector 1.1.0 and is not part of this guide/article.
-
-In essence, the workaround reused the ARO `machine-api` managed identity for worker NIC forwarding and used a dedicated BGP Cloud Connector identity for Route Server operations. It required an additive operator federated credential on `machine-api` and selected that identity through `spec.azure.networkInterfaceClientID`. That field was removed in BGP Cloud Connector 1.1.0.
-
-## 11. Cleanup
-
-### 11.1 Kubernetes and operator resources
+Remove only resources that this procedure owns:
 
 ```bash
-oc delete virtualmachine "$CUDN_VM_NAME" -n "$CUDN_NAMESPACE" --ignore-not-found
-oc delete bgprouting "$BGP_ROUTING_NAME"
-oc wait --for=delete clusteruserdefinednetwork/"cluster-udn-${CUDN_NETWORK_NAME}" \
-  --timeout=10m
-oc delete namespace "$CUDN_NAMESPACE"
-oc delete bgpcloudconfiguration cluster
+oc delete virtualmachine bgp-test-vm -n bgp-test-vms --ignore-not-found
+oc delete bgprouting bgp-test-cudn --ignore-not-found
+oc wait clusteruserdefinednetwork/cluster-udn-bgp-test-cudn \
+  --for=delete --timeout=10m
+oc delete namespace bgp-test-vms --ignore-not-found
+oc delete bgpcloudconfiguration cluster --ignore-not-found
 ```
 
-Wait for normal CUDN, `RouteAdvertisements`, FRR, and Azure peer cleanup, then remove the operator.
-
-### 11.2 Service principal RBAC
-
-Remove only the Route Server-scoped assignment added by this procedure. Preserve the ARO-managed VNet, subnet, managed-resource-group, and resource-provider permissions until the cluster is deleted.
+Wait for the Operator to remove generated CUDN, RouteAdvertisements, FRR, and Azure peering resources. Verify that no Operator-created Route Server peerings remain:
 
 ```bash
-export ROUTE_SERVER_ID="$(az network routeserver show \
-  --resource-group "$RESOURCE_GROUP" --name "$ROUTE_SERVER_NAME" \
-  --query id --output tsv)"
-az role assignment delete --assignee "$CLUSTER_OBJECT_ID" \
-  --role "Network Contributor" --scope "$ROUTE_SERVER_ID"
+for attempt in {1..40}; do
+  peer_count="$(az network routeserver peering list -g "${RESOURCE_GROUP}" \
+    --routeserver "${ROUTE_SERVER_NAME}" --query 'length(@)' -o tsv)"
+  [ "${peer_count}" -eq 0 ] && break
+  echo "Waiting for Route Server peer removal"
+  sleep 15
+done
+test "${peer_count}" -eq 0
 ```
 
-Remove the cluster service principal only if the cluster deployment owns it and it is not shared.
+If this procedure installed the Operator, remove its OLM resources:
 
-### 11.3 Azure resources
+```bash
+oc delete subscription bgp-cloud-connector -n bgp-cloud-connector --ignore-not-found
+oc delete csv bgp-cloud-connector.v1.1.0 -n bgp-cloud-connector --ignore-not-found
+oc delete operatorgroup bgp-cloud-connector -n bgp-cloud-connector --ignore-not-found
+oc delete namespace bgp-cloud-connector --ignore-not-found
+```
 
-The upstream `hack/ci-e2e-azure-teardown.sh` helper removes the lab-created Azure client and Route Server estate. Delete the ARO cluster, then remove remaining VNet resources and resource groups according to their ownership and dependencies. Inspect ownership before deletion and do not delete shared resources.
+Do not revert cluster-level routing capabilities if another workload uses them. Verify NIC IP forwarding separately because it can outlive the custom resource.
 
-## 12. References
+```bash
+az role assignment delete --ids "${ROUTE_SERVER_ROLE_ASSIGNMENT_ID}"
+az vm delete -g "${RESOURCE_GROUP}" -n "${TEST_VM_NAME}" --yes
+az network routeserver delete -g "${RESOURCE_GROUP}" -n "${ROUTE_SERVER_NAME}" --yes
+az network public-ip delete -g "${RESOURCE_GROUP}" -n "${ROUTE_SERVER_NAME}-pip"
+az network vnet subnet delete -g "${RESOURCE_GROUP}" \
+  --vnet-name "${VNET_NAME}" -n "${TEST_SUBNET_NAME}"
+az network vnet subnet delete -g "${RESOURCE_GROUP}" \
+  --vnet-name "${VNET_NAME}" -n RouteServerSubnet
+
+az vm list -g "${RESOURCE_GROUP}" --query "[?name=='${TEST_VM_NAME}'].name" -o tsv
+az network nic list -g "${RESOURCE_GROUP}" \
+  --query "[?starts_with(name, '${TEST_VM_NAME}')].name" -o tsv
+az disk list -g "${RESOURCE_GROUP}" \
+  --query "[?starts_with(name, '${TEST_VM_NAME}')].name" -o tsv
+```
+
+Do not delete a shared VNet or resource group. Confirm that no lab-owned disks, network interfaces, public IPs, or role assignments remain.
+
+## References
 
 - [BGP Cloud Connector repository](https://github.com/openshift/bgp-cloud-connector)
-- [BGP Cloud Connector 1.1.0 commit used for testing](https://github.com/openshift/bgp-cloud-connector/commit/77af5a3f22a49f843e2c29618ef8b8cbe6a2b54a)
-- [Azure authentication in BGP Cloud Connector 1.1.0](https://github.com/openshift/bgp-cloud-connector/blob/77af5a3f22a49f843e2c29618ef8b8cbe6a2b54a/docs/azure-authentication.md)
-- [BGP Cloud Connector custom resources](https://github.com/openshift/bgp-cloud-connector/blob/77af5a3f22a49f843e2c29618ef8b8cbe6a2b54a/docs/custom-resources.md)
-- [Route Server-scoped RBAC helper](https://github.com/openshift/bgp-cloud-connector/blob/77af5a3f22a49f843e2c29618ef8b8cbe6a2b54a/hack/azure/grant-route-server-role.sh)
-- [Create an ARO Standard cluster using the service-principal deployment](https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster)
-- [Azure Route Server overview](https://learn.microsoft.com/azure/route-server/overview)
-- [Create Azure Route Server using Azure CLI](https://learn.microsoft.com/en-us/azure/route-server/quickstart-create-route-server-cli)
-- [ARO Standard BGP Cloud Connector lab](https://github.com/diana-sari/aro-virt-bgp)
+- [BGP Cloud Connector Azure authentication](https://github.com/openshift/bgp-cloud-connector/blob/main/docs/azure-authentication.md)
+- [BGP Cloud Connector custom resources](https://github.com/openshift/bgp-cloud-connector/blob/main/docs/custom-resources.md)
+- [Create an ARO cluster using a service principal](https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster)
+- [Azure Route Server overview](https://learn.microsoft.com/en-us/azure/route-server/overview)
+- [Quickstart: Create an Azure Route Server using Azure CLI](https://learn.microsoft.com/en-us/azure/route-server/quickstart-create-route-server-cli)
