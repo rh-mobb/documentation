@@ -212,7 +212,7 @@ oc get nodes -l bgp_router=true -o wide
 ## 4. Install BGP Cloud Connector 1.1.0 with OLM
 
 If the global pull secret needs refreshing, merge the new registry entry into the existing secret. Do not replace ARO-created entries or print secret data.
-
+Create a `BGPCloudConfiguration` custom resource (CR) to define the cluster-wide BGP configuration: 
 ```bash
 oc get catalogsource redhat-operators -n openshift-marketplace
 ```
@@ -282,7 +282,13 @@ spec:
     routeServerName: ${ROUTE_SERVER_NAME}
 EOF
 ```
-
+where:
+* `metadata.name`: is always `cluster`. The resource is a cluster-scoped singleton.
+* ` spec.bgp.localASN.<local_asn>`: Specifies the Autonomous System Number (ASN) for the FRRouting (FRR) router of your cluster. The <local_asn> value must be different from the Route Server ASN that you configured with --amazon-side-asn, which the Operator discovers automatically. Ensure you note the ARN of the role from the output.
+* `spec.routerNodeSelector.bgp_router`:  Specifies the label key used in the routerNodeSelector to identify which compute nodes participate in BGP routing. Nodes that match this selector have the following characteristics:
+    * Establish BGP peering sessions with Route Server.
+    * Act as the next-hop for BGP-advertised routes for traffic that ingresses from the VNet to the primary Cluster User Default Network (CUDN) of the workload.
+    * Have IP Forwarding on their Azure Network Interfaces. Note that traffic always egresses from pods or VMs directly through their worker node Azure Network Interface. Therefore, you must apply this selector to any node where these workloads can be scheduled, not just the nodes intended to receive incoming traffic. 
 The Cloud Credential Operator copies the cluster service principal credential into the Operator namespace. Compare only client IDs:
 
 ```bash
@@ -322,7 +328,11 @@ spec:
     name: bgp-test-cudn
     subnets:
       - ${CUDN_CIDR}
-EOF
+where:
+* `Namespace.metadata.name`: provide your choice of name for the namespace where your workloads will run
+* `Namespace.metadata.labels.cluster-udn`: provide your choice of name for the network. The operator will add the prefix `cluster-udn-` when used as the name of the created `ClusterDefinedNetwork`.
+* `BGPRouting.metadata.name`: provide your choice of name for the `BGPRouting` CR.
+* `BGPRouting.spec.network.subnets[0]`: This value is set as the `spec.network.layer2.subnets` of the CUDN. The value must not overlap with any of the CIDRs in your VNet.
 oc get bgprouting bgp-test-cudn
 oc get clusteruserdefinednetwork cluster-udn-bgp-test-cudn
 oc get routeadvertisements
