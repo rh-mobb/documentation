@@ -8,12 +8,12 @@ skipMetadata: true
 # home_featured_paths:
 #   - quickstart-aro
 hero_blurb: |
-  A fully managed turnkey application platform that helps organizations increase operational efficiency, focus on innovation, and quickly build, deploy, and scale applications. Jointly engineered, managed, and supported by Red Hat and Microsoft. [Hosted control planes](/experts/tags/aro-hcp/) are the preferred deployment model for new clusters.
+  A fully managed turnkey application platform that helps organizations increase operational efficiency, focus on innovation, and quickly build, deploy, and scale applications. Jointly engineered, managed, and supported by Red Hat and Microsoft.
 hero_primary:
-  text: "Deploy with hosted control planes"
-  url: "/experts/aro/terraform-hcp/"
-hero_secondary:
-  text: "Classic quickstart"
+  text: "Quickstart guide"
   url: "/experts/aro/quickstart/"
+hero_secondary:
+  text: "Hosted Control Planes"
+  url: "/experts/tags/aro-hcp/"
 hero_background: openshift
 ---
