@@ -13,7 +13,7 @@ hero_primary:
   text: "Quickstart guide"
   url: "/experts/aro/quickstart/"
 hero_secondary:
-  text: "Hosted Control Planes (preview)"
+  text: "Hosted Control Planes"
   url: "/experts/tags/aro-hcp/"
 hero_background: openshift
 ---
