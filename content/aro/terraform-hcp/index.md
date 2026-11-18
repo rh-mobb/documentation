@@ -8,7 +8,7 @@ authors:
 validated_version: "4.22"
 ---
 
-**Azure Red Hat OpenShift with hosted control planes (ARO HCP)** runs the OpenShift control plane as a fully managed service in a Microsoft-managed subscription, separate from your worker nodes. ARO HCP is generally available. For an overview and benefits, read the **[Red Hat general availability announcement](https://www.redhat.com/en/blog/azure-red-hat-openshift-hosted-control-planes-now-generally-available)**. To compare deployment models, see [Compare architectures](https://learn.microsoft.com/en-us/azure/openshift/concepts-classic-hosted-control-planes-comparison).
+**Azure Red Hat OpenShift with hosted control planes (ARO HCP)** runs the OpenShift control plane as a fully managed service in a Microsoft-managed subscription, separate from your worker nodes. ARO HCP is generally available and is the preferred deployment model for new clusters. For an overview and benefits, read the **[Red Hat general availability announcement](https://www.redhat.com/en/blog/azure-red-hat-openshift-hosted-control-planes-now-generally-available)**. To compare deployment models, see [Compare architectures](https://learn.microsoft.com/en-us/azure/openshift/concepts-classic-hosted-control-planes-comparison).
 
 This guide covers a **public cluster** deployment (`clusters/public`): public API and ingress. For private API or ingress, use [`clusters/private`](https://github.com/rh-mobb/validated-pattern-aro-hcp/tree/main/clusters/private) and the [private cluster steps](https://rh-mobb.github.io/validated-pattern-aro-hcp/getting-started/quick-start/#private-cluster-profile) in the reference docs.
 
