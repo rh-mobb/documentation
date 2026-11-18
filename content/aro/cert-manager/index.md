@@ -9,6 +9,9 @@ authors:
 
 ARO guide to deploying an ARO cluster with custom domain and automating certificate management with cert-manager and letsencrypt certificates to manage the `*.apps` and `api` endpoints.
 
+> [!NOTE]
+> This is for installing the operator on clusters that were built with the legacy Service Principal based ARO deployment method, **not** Managed Identity. The procedure for installing on ARO Managed Identity clusters can be found [here](./index-miwi.md).
+
 ## Prerequisites
 
 * az cli (already installed in Azure Cloud Shell)
