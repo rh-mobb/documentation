@@ -6,7 +6,7 @@ archetype: chapter
 weight: 2
 skipMetadata: true
 hero_blurb: |
-  The classic Azure Red Hat OpenShift deployment model: control plane and worker nodes run in your Azure subscription. Microsoft and Red Hat jointly engineer, operate, and support the cluster. [Hosted control planes](/experts/tags/aro-hcp/) are also generally available as an alternative deployment model.
+  The classic Azure Red Hat OpenShift deployment model: control plane and worker nodes run in your Azure subscription. Microsoft and Red Hat jointly engineer, operate, and support the cluster. For new deployments, [hosted control planes](/experts/tags/aro-hcp/) are the preferred deployment model.
 hero_primary:
   text: "Quickstart guide"
   url: "/experts/aro/quickstart/"
