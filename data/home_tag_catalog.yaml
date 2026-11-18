@@ -9,7 +9,7 @@
   label: "Azure Red Hat OpenShift (ARO) Classic architecture"
   limit: 6
 - slug: aro-hcp
-  label: "Azure Red Hat OpenShift (ARO) Hosted Control Planes (public preview)"
+  label: "Azure Red Hat OpenShift (ARO) Hosted Control Planes"
 - slug: osd
   label: "OpenShift Dedicated"
 - slug: virtualization
