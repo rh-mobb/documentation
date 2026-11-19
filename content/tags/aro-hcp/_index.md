@@ -11,8 +11,8 @@ hero_primary:
   text: "Deploy with Terraform"
   url: "/experts/aro/terraform-hcp/"
 hero_secondary:
-  text: "Official documentation"
-  url: "https://learn.microsoft.com/en-us/azure/openshift/intro-openshift"
+  text: "Quick start with Azure CLI"
+  url: "/experts/aro/quickstart-hcp/"
 hero_background: openshift
 home_featured_paths:
   - aro/terraform-hcp
