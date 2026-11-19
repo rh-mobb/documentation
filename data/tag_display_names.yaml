@@ -1,0 +1,12 @@
+# Reader-facing tag labels, keyed by the existing front-matter tag values.
+# Product naming can change without changing tag membership or published URLs.
+# Keep these keys stable: Hugo still derives URL slugs from them, while values
+# provide the canonical short forms shown to readers.
+# Consumed by layouts/partials/tags.html, a site-level override of the theme's
+# tag partial. That partial looks up these labels but builds links from the keys;
+# unmapped tags retain their existing label. Update both files together if this
+# contract changes. This mapping does not migrate the ROSA taxonomy (issue #1024).
+"ROSA Classic": "ROSA (classic architecture)"
+"ROSA": "ROSA"
+"ARO Standard": "ARO (standard architecture)"
+"ARO HCP": "ARO (HCP)"

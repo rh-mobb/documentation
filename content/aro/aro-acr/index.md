@@ -1,7 +1,7 @@
 ---
 date: '2023-06-08T22:07:09.774151'
 title: Using Azure Container Registry in Private ARO clusters
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Roberto Carratalá
 ---

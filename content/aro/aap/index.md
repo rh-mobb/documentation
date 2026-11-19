@@ -1,7 +1,7 @@
 ---
 date: '2024-07-09'
 title: 'Ansible Automation Platform (AAP) on ARO'
-tags: ["ARO", "ARO Classic", "AAP"]
+tags: ["ARO", "ARO Standard", "AAP"]
 authors:
   - Dustin Scott
   - Kumudu Herath

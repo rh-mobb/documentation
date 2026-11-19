@@ -1,0 +1,19 @@
+{{- /*
+  Site-level override of themes/rhds/layouts/partials/tags.html.
+  The theme normally uses each front-matter tag value for both its visible label
+  and its URL. Product short forms now differ from those stable taxonomy keys.
+  data/tag_display_names.yaml supplies display labels without retagging guides
+  or changing existing URL slugs, avoiding redirects for label-only changes.
+  Only the link text uses the mapping; keep sorting and href generation based
+  on the original keys. Tags absent from the mapping retain their existing text.
+  ROSA taxonomy reassignment remains separate work in issue #1024.
+*/ -}}
+{{- if .Params.tags }}
+<div class="article-tags">
+<span>Tags:</span>
+{{- range sort .Params.tags }}
+  {{- $label := index site.Data.tag_display_names . | default . }}
+  <rh-tag><a class="tag-link" href="{{ "tags/" | relLangURL }}{{ . | urlize }}">{{ $label }}</a></rh-tag>
+{{- end }}
+</div>
+{{- end }}

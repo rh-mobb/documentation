@@ -1,7 +1,7 @@
 ---
 date: '2023-03-29'
 title: Azure Front Door with ARO (Azure Red Hat OpenShift)
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Kevin Collins
   - Diana Sari

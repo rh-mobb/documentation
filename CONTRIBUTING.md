@@ -187,7 +187,11 @@ Note: you can add a `weight` field to override the default alphabetical sorting 
 
 The strategy here is to keep our taxonomy simple and helpful for traversing the site and finding docs relevant to a product or topic. **Use tags from the list below** so pages appear on the right tag hubs and stay consistent. If you need a new tag, discuss with a maintainer before attempting to add it to a PR.
 
-Tag values are **case-sensitive** and must match exactly (including spaces in multi-word tags such as `ROSA HCP`).
+Tag values are **case-sensitive** keys and must match exactly. Keep capitalized keys such as `ARO Standard` and `ARO HCP` in front matter. The shared [tag display-name mapping](./data/tag_display_names.yaml) renders them as **ARO (standard architecture)** and **ARO (HCP)** while preserving the lowercase URL slugs `aro-standard` and `aro-hcp`. Changing a display label does not require renaming the key or adding redirects. Unmapped tags keep their existing label.
+
+For product names in titles, prose, navigation, and diagrams, follow the exact long and short forms in [product and architecture terminology](./AGENTS.md#product-and-architecture-terminology). For example, the ARO long forms are **Azure Red Hat OpenShift with standard architecture** and **Azure Red Hat OpenShift with hosted control plane** (singular); their short forms are **ARO (standard architecture)** and **ARO (HCP)**. Their architecture tag values are `ARO Standard` and `ARO HCP`, with URL slugs `aro-standard` and `aro-hcp`.
+
+The target ROSA forms are **Red Hat OpenShift Service on AWS with classic architecture** / **ROSA (classic architecture)** with tag `ROSA Classic` (slug `rosa-classic`), and **Red Hat OpenShift Service on AWS** / **ROSA** with tag `ROSA` (slug `rosa`). [Issue #1024](https://github.com/rh-mobb/documentation/issues/1024) tracks that separate content and tag migration. The current tags and older examples below still include legacy ROSA values until that work lands; do not fold the migration into an ARO-only change.
 
 ### Current tags
 
@@ -197,8 +201,8 @@ These are the tag strings currently in use:
 * ACM
 * ACS
 * ARO
-* ARO Classic
 * ARO HCP
+* ARO Standard
 * Best practices
 * DevSpaces
 * GitOps
