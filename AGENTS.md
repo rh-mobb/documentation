@@ -35,6 +35,25 @@ Use YAML front matter at the top of each article. Recommended fields (see CONTRI
 
 Draft content: `draft: true` in front matter; local preview uses `-D` in the Makefile so drafts are visible.
 
+## Product and architecture terminology
+
+Use these naming conventions in titles, prose, descriptions, navigation, homepage labels, and diagram text. Hosted control planes are the default architecture for both products. ARO names the architecture explicitly; the ROSA product name implies hosted control planes unless classic architecture is specified. This distinction is intentional, so do not make the two products' names mechanically identical.
+
+| Deployment model | Full name in written text | Short name in written text | Architecture tag |
+|------------------|---------------------------|----------------------------|------------------|
+| ARO, hosted control planes (default) | Azure Red Hat OpenShift with hosted control planes | ARO HCP | `ARO HCP` |
+| ARO, standard architecture | Azure Red Hat OpenShift with standard architecture | ARO with standard architecture | `ARO Standard` |
+| ROSA, hosted control planes (default) | Red Hat OpenShift Service on AWS | ROSA | `ROSA HCP` |
+| ROSA, classic architecture | Red Hat OpenShift Service on AWS classic architecture | ROSA classic architecture | `ROSA Classic` |
+
+**Pending ROSA tag migration:** The table records the current tag mapping. [Issue #1024](https://github.com/rh-mobb/documentation/issues/1024) tracks a separate PR to use `ROSA` for hosted control planes, move legacy classic guides to `ROSA Classic`, and retire the `ROSA HCP` tag. Keep the current mapping until that migration lands, then update this table and `CONTRIBUTING.md` and remove this transition note.
+
+- Use **with** in ARO's written architecture names. `ARO Standard` is acceptable for tags and metadata; written text uses **ARO with standard architecture**. Keep `ARO Classic` only where needed for historical identifiers or redirects.
+- Use **ROSA** for the default product name in written text. Explain hosted control planes when technically relevant, but do not use **ROSA HCP** as the product label. Write **ROSA classic architecture**, without **with**, for the other architecture.
+- Use sentence case for architecture descriptions in prose and title case in titles and menu labels, such as **Standard Architecture** or **Classic Architecture** when used as architecture labels under their product.
+- Preserve taxonomy identifiers and URL slugs such as `ARO Standard`, `ROSA HCP`, `ROSA Classic`, `aro-standard`, and `rosa-hcp`. A display-name correction does not require renaming tags, paths, commands, API fields, or resource identifiers.
+- Preserve the architecture that an existing guide describes or validates. Apply naming changes within the requested scope; an ARO edit does not imply a repository-wide ROSA terminology cleanup.
+
 ## Markdown and Hugo behavior
 
 - **Goldmark** is configured with `unsafe = true` in [`config.toml`](./config.toml), so raw HTML in Markdown is allowed; still prefer semantic Markdown unless the layout or design system requires HTML/web components.

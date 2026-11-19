@@ -189,6 +189,8 @@ The strategy here is to keep our taxonomy simple and helpful for traversing the 
 
 Tag values are **case-sensitive** and must match exactly (including spaces in multi-word tags such as `ROSA HCP`).
 
+For product names in titles, prose, navigation, and diagrams, follow the [product and architecture terminology](./AGENTS.md#product-and-architecture-terminology). Display names intentionally differ from some tag values: for example, write **ARO with standard architecture** while retaining the `ARO Standard` tag, and write **ROSA** while retaining the `ROSA HCP` tag.
+
 ### Current tags
 
 These are the tag strings currently in use:
