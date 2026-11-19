@@ -158,29 +158,34 @@ printf 'AZR_KEYVAULT_NAME=%s\n' "$AZR_KEYVAULT_NAME"
 
 Choose the Key Vault name independently of the cluster name so it fits the shorter [Key Vault naming limits](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftkeyvault).
 
-The Azure CLI requires explicit [cluster versions](https://learn.microsoft.com/en-us/cli/azure/aro/hcp/cluster#az-aro-hcp-cluster-create) and [node pool versions](https://learn.microsoft.com/en-us/cli/azure/aro/hcp/cluster/nodepool#az-aro-hcp-cluster-nodepool-create). Use [`az aro hcp get-versions`](https://learn.microsoft.com/en-us/cli/azure/aro/hcp#az-aro-hcp-get-versions) to check availability in your selected region. For example, these commands list the `stable` channel options for the `4.22` minor release:
+The Azure CLI requires explicit [cluster versions](https://learn.microsoft.com/en-us/cli/azure/aro/hcp/cluster#az-aro-hcp-cluster-create) and [node pool versions](https://learn.microsoft.com/en-us/cli/azure/aro/hcp/cluster/nodepool#az-aro-hcp-cluster-nodepool-create). Use [`az aro hcp get-versions`](https://learn.microsoft.com/en-us/cli/azure/aro/hcp#az-aro-hcp-get-versions) to list the available `stable` control plane versions in your selected region:
 
 ```bash
-# Cluster control plane: minor versions (X.Y)
 az aro hcp get-versions \
   --location "$AZR_RESOURCE_LOCATION" \
   --control-plane \
-  --query "[?Name=='4.22' && ChannelGroup=='stable']" \
-  --output table
-
-# Worker node pool: full patch versions (X.Y.Z)
-az aro hcp get-versions \
-  --location "$AZR_RESOURCE_LOCATION" \
-  --node-pools \
-  --query "[?starts_with(Name, '4.22.') && ChannelGroup=='stable']" \
+  --query "[?ChannelGroup=='stable']" \
   --output table
 ```
 
-If `4.22` is available, set the versions below. Replace `<major.minor.patch>` with the highest supported `4.22.z` patch returned. For another minor release, update both query filters and keep the cluster and node pool versions in the same minor stream.
+Choose a control plane minor version from the results. Replace `<major.minor>` with that version:
 
 ```bash
-export AZR_CLUSTER_VERSION=4.22
-export AZR_NODE_POOL_VERSION="<major.minor.patch>"
+export AZR_CLUSTER_VERSION="<major.minor>"
+```
+
+Look up the highest available stable node pool patch version in the same minor stream. The numeric sort ensures that patch versions with multiple digits are ordered correctly:
+
+```bash
+export AZR_NODE_POOL_VERSION=$(
+  az aro hcp get-versions \
+    --location "$AZR_RESOURCE_LOCATION" \
+    --node-pools \
+    --query "[?starts_with(Name, '${AZR_CLUSTER_VERSION}.') && ChannelGroup=='stable'].Name" \
+    --output tsv |
+    sort -t. -k3,3n |
+    tail -n 1
+)
 ```
 
 Print the selected versions:
@@ -189,6 +194,8 @@ Print the selected versions:
 printf 'AZR_CLUSTER_VERSION=%s\n' "$AZR_CLUSTER_VERSION"
 printf 'AZR_NODE_POOL_VERSION=%s\n' "$AZR_NODE_POOL_VERSION"
 ```
+
+Confirm that neither value is empty before continuing. If no node pool version is returned, check that the version query succeeded, then select an available control plane minor version and repeat the lookup.
 
 ### Create the resource group
 
