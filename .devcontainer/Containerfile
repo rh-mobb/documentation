@@ -1,0 +1,14 @@
+FROM mcr.microsoft.com/devcontainers/javascript-node:24-bookworm
+
+# Keep this aligned with HUGO_VERSION in amplify.yml.
+ARG HUGO_VERSION=0.157.0
+
+# Select the native binary for both ARM64 and x86-64 container hosts.
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    curl -fsSL --retry 3 \
+        "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-${arch}.tar.gz" \
+        -o /tmp/hugo.tar.gz; \
+    tar -xzf /tmp/hugo.tar.gz -C /usr/local/bin hugo; \
+    rm /tmp/hugo.tar.gz; \
+    hugo version
