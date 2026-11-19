@@ -1,6 +1,6 @@
 ---
 date: '2026-09-29'
-title: Deploying ARO HCP with Terraform
+title: Deploying ARO (HCP) with Terraform
 weight: 2
 tags: ["ARO", "ARO HCP", "Terraform", "Quickstarts"]
 authors:
@@ -8,15 +8,15 @@ authors:
 validated_version: "4.22"
 ---
 
-**Azure Red Hat OpenShift with hosted control planes (ARO HCP)** runs the OpenShift control plane as a fully managed service in a Microsoft-managed subscription, separate from your worker nodes. ARO HCP is generally available. For an overview and benefits, read the **[Red Hat general availability announcement](https://www.redhat.com/en/blog/azure-red-hat-openshift-hosted-control-planes-now-generally-available)**. To compare deployment models, see [Compare architectures](https://learn.microsoft.com/en-us/azure/openshift/concepts-classic-hosted-control-planes-comparison).
+**Azure Red Hat OpenShift with hosted control plane**, shortened to **ARO (HCP)**, runs the OpenShift control plane as a fully managed service in a Microsoft-managed subscription, separate from your worker nodes. ARO (HCP) is generally available. For an overview and benefits, read the **[Red Hat general availability announcement](https://www.redhat.com/en/blog/azure-red-hat-openshift-hosted-control-planes-now-generally-available)**. To compare deployment models, see [Compare architectures](https://learn.microsoft.com/en-us/azure/openshift/concepts-classic-hosted-control-planes-comparison).
 
 This guide covers a **public cluster** deployment (`clusters/public`): public API and ingress. For private API or ingress, use [`clusters/private`](https://github.com/rh-mobb/validated-pattern-aro-hcp/tree/main/clusters/private) and the [private cluster steps](https://rh-mobb.github.io/validated-pattern-aro-hcp/getting-started/quick-start/#private-cluster-profile) in the reference docs.
 
 {{% alert state="info" %}}
-Looking for a simple Azure CLI example rather than a hardened production deployment? Follow [Create an ARO with hosted control planes cluster (Azure CLI)](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster?pivots=aro-az-cli) on Microsoft Learn.
+Looking for a simple Azure CLI example rather than a hardened production deployment? Follow [Create an ARO (HCP) cluster (Azure CLI)](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster?pivots=aro-az-cli) on Microsoft Learn.
 {{% /alert %}}
 
-**ARO with standard architecture** (control plane in your subscription) remains fully supported. For that deployment model, see [ARO Quickstart](/experts/aro/quickstart/) or [Deploying ARO using Terraform](/experts/aro/terraform-install/).
+**ARO (standard architecture)** (control plane in your subscription) remains fully supported. For that deployment model, see [ARO Quickstart](/experts/aro/quickstart/) or [Deploying ARO using Terraform](/experts/aro/terraform-install/).
 
 **Technical reference (Microsoft Learn):** [Introduction](https://learn.microsoft.com/en-us/azure/openshift/intro-openshift) · [Quickstart](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster) · [Connect](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster)
 
@@ -24,7 +24,7 @@ Looking for a simple Azure CLI example rather than a hardened production deploym
 
 [validated-pattern-aro-hcp](https://github.com/rh-mobb/validated-pattern-aro-hcp) is a Terraform implementation maintained by [Red Hat Cloud Experts](https://cloud.redhat.com/experts/) for production-style deployments: least-privilege managed identities and RBAC, Entra external OIDC, optional OpenShift GitOps bootstrap, and Makefile wrappers for credentials and teardown. Reference docs: [rh-mobb.github.io/validated-pattern-aro-hcp](https://rh-mobb.github.io/validated-pattern-aro-hcp/).
 
-Microsoft's CLI and Bicep quickstarts remain the product source of truth for ARO HCP behavior and limits. Use this repo when you want a Terraform path you can fork and adapt.
+Microsoft's CLI and Bicep quickstarts remain the product source of truth for ARO (HCP) behavior and limits. Use this repo when you want a Terraform path you can fork and adapt.
 
 ## Guide overview
 
@@ -92,7 +92,7 @@ Meet Microsoft's prerequisites first. Source: [Prepare your environment](https:/
 | Requirement | Notes |
 |-------------|-------|
 | [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) | Version **2.67.0 or later** (`az --version`) |
-| [ARO HCP CLI extension](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#aro-hcp-cli-extension) | Required for `az aro hcp` commands (installed by `make setup` in the reference repo) |
+| [ARO (HCP) CLI extension](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#aro-hcp-cli-extension) | Required for `az aro hcp` commands (installed by `make setup` in the reference repo) |
 | **Contributor + User Access Administrator**, or **Owner** | On the resource group or subscription where you create the cluster ([Permissions](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#permissions)) |
 | **Resource providers registered** | `Microsoft.RedHatOpenShift`, `Microsoft.Compute`, `Microsoft.Storage`, `Microsoft.Authorization` ([Register resource providers](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#register-resource-providers)) |
 | **Compute quota** | Microsoft documents **at least 20 cores** in your subscription ([Resource quota](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#resource-quota)). Verify quota for your chosen [supported worker VM size](https://learn.microsoft.com/en-us/azure/openshift/support-policies-v4#worker-nodes) in your region |
@@ -121,7 +121,7 @@ Microsoft's **20-core** requirement is subscription quota, not the worker vCPU c
 
 ### External authentication (plan ahead)
 
-ARO HCP uses **external OIDC authentication**. Unlike ARO with standard architecture, the built-in OpenShift OAuth server is not available ([Authentication model](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#authentication-model)).
+ARO (HCP) uses **external OIDC authentication**. Unlike ARO (standard architecture), the built-in OpenShift OAuth server is not available ([Authentication model](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#authentication-model)).
 
 The reference repo creates the Entra app registration during Terraform apply when `enable_external_auth = true` (the default). The account running `apply` still needs Entra directory rights to create app registrations, not just Azure subscription RBAC. **After** the cluster is ready, apply the console OAuth secret in [Connect and configure](#connect-and-configure). See [External auth with Entra ID](https://rh-mobb.github.io/validated-pattern-aro-hcp/guides/external-auth-entra-id/) if that step fails.
 
@@ -153,7 +153,7 @@ make setup    # installs az aro hcp extension
 
 ## Plan your deployment
 
-Microsoft Learn organizes ARO HCP planning into three topics. Each maps to keys in `clusters/<name>/terraform.tfvars`. **Most settings are permanent:** changing them after create requires deleting and recreating the cluster.
+Microsoft Learn organizes ARO (HCP) planning into three topics. Each maps to keys in `clusters/<name>/terraform.tfvars`. **Most settings are permanent:** changing them after create requires deleting and recreating the cluster.
 
 {{% alert state="info" %}}
 Complete this section before you run `make cluster.<name>.apply`. Official Microsoft articles are the source of truth for trade-offs; the tables below show how those decisions appear in the Terraform reference.
@@ -266,7 +266,7 @@ Microsoft documents **13 user-assigned managed identities** and their role assig
 | External OIDC | Required for user authentication | `enable_external_auth = true`; console secret applied post-create |
 | etcd customer-managed key | Key Vault, KMS key, KMS identity ([encryption strategy](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#choose-the-cluster-encryption-strategy)) | `modules/network`; `vault_visibility` for Key Vault access |
 
-To customize beyond the reference module, fork [validated-pattern-aro-hcp](https://github.com/rh-mobb/validated-pattern-aro-hcp) or follow [Create an ARO with hosted control planes cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster).
+To customize beyond the reference module, fork [validated-pattern-aro-hcp](https://github.com/rh-mobb/validated-pattern-aro-hcp) or follow [Create an ARO (HCP) cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster).
 
 ## Deploy the cluster
 
@@ -393,10 +393,10 @@ Extended troubleshooting: [reference README](https://github.com/rh-mobb/validate
 | Permanent cluster settings | [Choose your permanent cluster settings](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration) |
 | Network planning | [Plan your cluster network](https://learn.microsoft.com/en-us/azure/openshift/howto-plan-cluster-network) |
 | Managed identities and RBAC | [Required managed identities and role assignments](https://learn.microsoft.com/en-us/azure/openshift/concepts-managed-identities) |
-| Create a cluster (CLI/Bicep) | [Create an ARO with hosted control planes cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster) |
+| Create a cluster (CLI/Bicep) | [Create an ARO (HCP) cluster](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster) |
 | Create a cluster (defaults quickstart) | [Quickstart: default hosted cluster](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster) |
-| Connect to a cluster | [Connect to an ARO with hosted control planes cluster](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster) |
-| Delete a cluster | [Delete an ARO with hosted control planes cluster](https://learn.microsoft.com/en-us/azure/openshift/delete-hosted-control-planes-cluster) |
+| Connect to a cluster | [Connect to an ARO (HCP) cluster](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster) |
+| Delete a cluster | [Delete an ARO (HCP) cluster](https://learn.microsoft.com/en-us/azure/openshift/delete-hosted-control-planes-cluster) |
 
 ### Red Hat Cloud Experts reference (Terraform)
 
@@ -407,6 +407,6 @@ Extended troubleshooting: [reference README](https://github.com/rh-mobb/validate
 | Account prerequisites and RBAC matrix | [Account prerequisites](https://rh-mobb.github.io/validated-pattern-aro-hcp/prerequisites/account/) |
 | External auth (Entra ID) | [External auth guide](https://rh-mobb.github.io/validated-pattern-aro-hcp/guides/external-auth-entra-id/) |
 | OpenShift Virtualization full stack | [Virt stack](https://rh-mobb.github.io/validated-pattern-aro-hcp/guides/virt-stack/) |
-| ARO with standard architecture quickstart | [ARO Quickstart](/experts/aro/quickstart/) |
-| ARO with standard architecture Terraform | [Deploying ARO using Terraform](/experts/aro/terraform-install/) |
+| ARO (standard architecture) quickstart | [ARO Quickstart](/experts/aro/quickstart/) |
+| ARO (standard architecture) Terraform | [Deploying ARO using Terraform](/experts/aro/terraform-install/) |
 | ROSA HCP Terraform (AWS) | [Deploying a ROSA HCP cluster with Terraform](/experts/rosa/terraform/hcp/) |

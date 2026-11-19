@@ -1,7 +1,7 @@
 ---
-title: "Azure Red Hat OpenShift with Hosted Control Planes"
+title: "Azure Red Hat OpenShift with hosted control plane"
 date: 2026-03-28
-description: Guides for Azure Red Hat OpenShift with hosted control planes (ARO HCP)
+description: Guides for Azure Red Hat OpenShift with hosted control plane
 archetype: chapter
 weight: 2
 skipMetadata: true

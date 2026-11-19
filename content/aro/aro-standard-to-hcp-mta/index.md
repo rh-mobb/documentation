@@ -1,6 +1,6 @@
 ---
 date: '2026-10-20'
-title: 'Migrating Applications from ARO with Standard Architecture to ARO HCP with Migration Toolkit for Applications (MTA)'
+title: 'Migrating Applications from ARO (standard architecture) to ARO (HCP) with Migration Toolkit for Applications (MTA)'
 tags: ["ARO", "ARO Standard", "ARO HCP"]
 authors:
   - Kevin Collins
@@ -9,7 +9,7 @@ authors:
 validated_version: "4.21"
 ---
 
-Azure Red Hat OpenShift with hosted control planes (ARO HCP) runs the control plane in a Microsoft managed Azure subscription rather than your own. Because that is a different architecture, **there is no in-place upgrade path from ARO with standard architecture to ARO HCP**. Moving to HCP means building a new cluster and migrating your workloads onto it.
+Azure Red Hat OpenShift with hosted control plane, shortened to ARO (HCP), runs the control plane in a Microsoft managed Azure subscription rather than your own. Because that is a different architecture, **there is no in-place upgrade path from ARO (standard architecture) to ARO (HCP)**. Moving to HCP means building a new cluster and migrating your workloads onto it.
 
 The Migration Toolkit for Applications (MTA) provides `mta-ops`, a standalone CLI that migrates workload manifests and persistent volume data between OpenShift clusters.
 
@@ -19,7 +19,7 @@ Advanced topics such as workload identity, custom networking, and air-gapped or 
 
 ## Prerequisites
 
-* An **ARO with standard architecture** cluster and an **ARO HCP** cluster
+* An **ARO (standard architecture)** cluster and an **ARO (HCP)** cluster
 * `oc`, with cluster-admin on both clusters
 * `git`, `python3`, and `curl`, used by commands in this guide
 * The `mta-ops` CLI, downloaded from the [Red Hat Developer portal](https://developers.redhat.com/products/mta/download) (select the **Ops CLI** archive for your operating system, not the analyzer CLI)
@@ -28,22 +28,22 @@ Advanced topics such as workload identity, custom networking, and air-gapped or 
 ### Registry Access
 * Both clusters able to pull from `registry.redhat.io`, which is where `mta-ops` runs its transfer pods from.
 
-  On ARO with standard architecture, this comes from the cluster-wide pull secret, added at creation or with [Add or update your Red Hat pull secret](https://learn.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret).
+  On ARO (standard architecture), this comes from the cluster-wide pull secret, added at creation or with [Add or update your Red Hat pull secret](https://learn.microsoft.com/en-us/azure/openshift/howto-add-update-pull-secret).
 
-  On ARO HCP that secret is service managed, so add a cluster-wide [additional pull secret](https://learn.microsoft.com/en-us/azure/openshift/how-to-add-pull-secrets) instead.
+  On ARO (HCP) that secret is service managed, so add a cluster-wide [additional pull secret](https://learn.microsoft.com/en-us/azure/openshift/how-to-add-pull-secrets) instead.
 
 
 ## 1. Connect to both clusters
 
 `mta-ops` talks to both clusters in one operation and identifies them by context name, so both must be in your kubeconfig at the same time.
 
-Log in to the ARO with standard architecture cluster, then record its context:
+Log in to the ARO (standard architecture) cluster, then record its context:
 
 ```bash
 STANDARD=$(oc config current-context)
 ```
 
-Log in to the ARO HCP cluster, then record its context:
+Log in to the ARO (HCP) cluster, then record its context:
 
 ```bash
 HCP=$(oc config current-context)
@@ -58,7 +58,7 @@ oc --context "$HCP" whoami --show-server
 
 From here every command names its cluster explicitly with `--context`.
 
-## 2. Deploy the sample applications on ARO with standard architecture {#2-deploy-the-sample-applications-on-aro-standard}
+## 2. Deploy the sample applications on ARO (standard architecture) {#2-deploy-the-sample-applications-on-aro-standard}
 
 Clone the repository and check out the tested commit:
 
@@ -160,7 +160,7 @@ mta-ops apply --transform-dir ./media-pipeline/transform --output-dir ./media-pi
 
 ## 4. Prepare the clusters for migration
 
-### Create the target namespaces in the ARO HCP Cluster
+### Create the target namespaces in the ARO (HCP) Cluster
 
 ```bash
 for ns in retail-orders docs-portal build-artifacts analytics-reports media-pipeline; do
@@ -303,7 +303,7 @@ oc --context "$HCP" get pvc -A \
 Transfer every volume before deploying workloads on the target. In testing, a claim already mounted by a running pod could not be written to, and the transfer failed with `destination PVC ... is in use by pod`.
 {{< /alert >}}
 
-## 8. Deploy the workloads on ARO HCP, writers last
+## 8. Deploy the workloads on ARO (HCP), writers last
 
 The transfers already created the claims, so drop those manifests, hold the three writers back so they cannot modify the migrated data before you have checked it, and apply the rest:
 

@@ -1,16 +1,16 @@
 ---
 date: '2026-11-18'
-title: ARO HCP Quickstart
+title: ARO (HCP) Quickstart
 weight: 1
 authors:
   - Nicholas Morey
 tags: ["ARO", "ARO HCP", "Quickstarts"]
 validated_version: "4.22"
 ---
-A quickstart guide to deploying an Azure Red Hat OpenShift cluster with hosted control planes using Azure CLI (`az`).
+A quickstart guide to deploying a cluster on Azure Red Hat OpenShift with hosted control plane using Azure CLI (`az`).
 
 {{% alert state="info" header="Prefer infrastructure as code" %}}
-For production environments and repeatable deployments, we recommend infrastructure as code (IaC). Keeping infrastructure definitions in version control makes changes reviewable and helps keep environments consistent. Follow [Deploying ARO HCP with Terraform](/experts/aro/terraform-hcp/) for a Terraform deployment workflow covering cluster infrastructure, managed identities, networking, and Microsoft Entra integration.
+For production environments and repeatable deployments, we recommend infrastructure as code (IaC). Keeping infrastructure definitions in version control makes changes reviewable and helps keep environments consistent. Follow [Deploying ARO (HCP) with Terraform](/experts/aro/terraform-hcp/) for a Terraform deployment workflow covering cluster infrastructure, managed identities, networking, and Microsoft Entra integration.
 {{% /alert %}}
 
 The deployment steps follow the [Microsoft Azure CLI quickstart](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster?pivots=aro-az-cli).
@@ -114,7 +114,7 @@ Client Version: 5.0.1
 
     If you only have resource group permissions, ask a subscription administrator to register the resource providers and create the resource group first. Then use that existing group and skip the registration and resource group creation commands in this guide. Resource group permissions do not grant subscription-level access. See [Azure role assignment scopes](https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-cli#step-3-identify-the-needed-scope).
 
-1. Check compute quota in your chosen [supported region](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#choose-the-cluster-region). ARO HCP requires at least **20 cores**. This guide uses `eastus2`; change both the quota query and `AZR_RESOURCE_LOCATION` if needed.
+1. Check compute quota in your chosen [supported region](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#choose-the-cluster-region). ARO (HCP) requires at least **20 cores**. This guide uses `eastus2`; change both the quota query and `AZR_RESOURCE_LOCATION` if needed.
 
     ```bash
     az vm list-usage --location eastus2 -o table
@@ -131,7 +131,7 @@ Client Version: 5.0.1
     az provider register -n Microsoft.Authorization --wait
     ```
 
-## Deploy ARO with hosted control planes
+## Deploy ARO (HCP) {#deploy-aro-with-hosted-control-planes}
 
 ### Define variables
 
@@ -202,7 +202,7 @@ Confirm that neither value is empty before continuing. If no node pool version i
 
 ### Create the resource group
 
-An Azure resource group is a logical container for related Azure resources. This guide creates the cluster resource, VNet, NSG, managed identities, and Key Vault in `$AZR_RESOURCE_GROUP` so you can manage and clean up these resources together. ARO HCP creates a separate managed resource group for its managed infrastructure.
+An Azure resource group is a logical container for related Azure resources. This guide creates the cluster resource, VNet, NSG, managed identities, and Key Vault in `$AZR_RESOURCE_GROUP` so you can manage and clean up these resources together. ARO (HCP) creates a separate managed resource group for its managed infrastructure.
 
 Create the resource group before continuing with the networking and identity steps. If a subscription administrator has already created it, set `AZR_RESOURCE_GROUP` to that group's name and skip this command.
 
@@ -686,9 +686,9 @@ Use the same shell and exported cluster variables from the deployment steps, wit
 
 ## Configure OIDC authentication for console access
 
-Unlike ARO with standard architecture, ARO HCP does not include the built-in OpenShift OAuth server. There is no built-in `kubeadmin` user or support for an `htpasswd` identity provider. Console sign-in requires an external identity provider; the temporary administrative kubeconfig from the previous section provides initial CLI access. See the [ARO HCP authentication model](https://www.redhat.com/architect/portfolio/detail/134-openshift-external-auth/03-aro.html).
+Unlike ARO (standard architecture), ARO (HCP) does not include the built-in OpenShift OAuth server. There is no built-in `kubeadmin` user or support for an `htpasswd` identity provider. Console sign-in requires an external identity provider; the temporary administrative kubeconfig from the previous section provides initial CLI access. See the [ARO (HCP) authentication model](https://www.redhat.com/architect/portfolio/detail/134-openshift-external-auth/03-aro.html).
 
-Integrating external OpenID Connect (OIDC) providers directly with ARO HCP supports machine-to-machine workflows, such as automated CLI access, and offers authentication capabilities unavailable through the built-in OAuth server. This guide configures Microsoft Entra ID for console and CLI sign-in, following [Configure an external authentication provider](https://learn.microsoft.com/en-us/azure/openshift/howto-configure-external-authentication).
+Integrating external OpenID Connect (OIDC) providers directly with ARO (HCP) supports machine-to-machine workflows, such as automated CLI access, and offers authentication capabilities unavailable through the built-in OAuth server. This guide configures Microsoft Entra ID for console and CLI sign-in, following [Configure an external authentication provider](https://learn.microsoft.com/en-us/azure/openshift/howto-configure-external-authentication).
 
 Continue in the same shell, using `AZR_CLUSTER`, `AZR_RESOURCE_GROUP`, and the temporary administrative kubeconfig from [Set up CLI access](#set-up-cli-access). You also need permission to register applications in your Microsoft Entra tenant. If users cannot register applications, ask your tenant administrator for the **Application Developer** or **Application Administrator** role.
 
@@ -903,7 +903,7 @@ Use the [OpenShift CLI](#openshift-cli) installed in the prerequisites. This wor
 
 ## Next steps
 
-See [Connect to an ARO HCP cluster](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster) for more connection details.
+See [Connect to an ARO (HCP) cluster](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster) for more connection details.
 
 ### Optional: additional registry credentials
 
@@ -938,7 +938,7 @@ If you completed the OIDC setup, also retain or restore `EXTERNAL_AUTH_NAME` (`e
       --resource-group "${AZR_RESOURCE_GROUP}"
     ```
 
-    Confirm the deletion when prompted. This also removes the node pools and managed resource group, but leaves the resources in your customer resource group. See [Delete an ARO HCP cluster](https://learn.microsoft.com/en-us/azure/openshift/delete-hosted-control-planes-cluster).
+    Confirm the deletion when prompted. This also removes the node pools and managed resource group, but leaves the resources in your customer resource group. See [Delete an ARO (HCP) cluster](https://learn.microsoft.com/en-us/azure/openshift/delete-hosted-control-planes-cluster).
 
     The console client secret in `openshift-config` and the `aro-admin` ClusterRoleBinding are removed with the cluster.
 

@@ -6,10 +6,10 @@
   label: "Red Hat OpenShift Service on AWS (ROSA) Classic architecture"
   limit: 6
 - slug: aro-standard
-  label: "Azure Red Hat OpenShift (ARO) with Standard Architecture"
+  label: "Azure Red Hat OpenShift with standard architecture"
   limit: 6
 - slug: aro-hcp
-  label: "Azure Red Hat OpenShift (ARO) Hosted Control Planes"
+  label: "Azure Red Hat OpenShift with hosted control plane"
 - slug: osd
   label: "OpenShift Dedicated"
 - slug: virtualization
