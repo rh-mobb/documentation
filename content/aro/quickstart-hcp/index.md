@@ -137,7 +137,11 @@ Client Version: 5.0.1
 
 Set the deployment location, resource group name, cluster name, and Key Vault name.
 
-{{% alert state="info" %}}Change the values to suit your environment. Resource names must comply with [Azure naming rules](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules) and length limits. Run all following commands in the same shell so the exported variables apply.{{% /alert %}}
+{{% alert state="info" %}}
+Change the values to suit your environment. Resource names must comply with [Azure naming rules](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules) and length limits. Choose the Key Vault name independently of the cluster name so it fits the shorter [Key Vault naming limits](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftkeyvault).
+
+Run all following commands in the same shell so the exported variables apply.
+{{% /alert %}}
 
 ```bash
 export AZR_RESOURCE_LOCATION=eastus2
@@ -156,8 +160,6 @@ printf 'AZR_RESOURCE_GROUP=%s\n' "$AZR_RESOURCE_GROUP"
 printf 'AZR_CLUSTER=%s\n' "$AZR_CLUSTER"
 printf 'AZR_KEYVAULT_NAME=%s\n' "$AZR_KEYVAULT_NAME"
 ```
-
-Choose the Key Vault name independently of the cluster name so it fits the shorter [Key Vault naming limits](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftkeyvault).
 
 The Azure CLI requires explicit [cluster versions](https://learn.microsoft.com/en-us/cli/azure/aro/hcp/cluster#az-aro-hcp-cluster-create) and [node pool versions](https://learn.microsoft.com/en-us/cli/azure/aro/hcp/cluster/nodepool#az-aro-hcp-cluster-nodepool-create). Use [`az aro hcp get-versions`](https://learn.microsoft.com/en-us/cli/azure/aro/hcp#az-aro-hcp-get-versions) to list the available `stable` control plane versions in your selected region:
 
