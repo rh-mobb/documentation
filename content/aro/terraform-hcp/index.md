@@ -8,7 +8,7 @@ authors:
 validated_version: "4.22"
 ---
 
-**Azure Red Hat OpenShift with hosted control planes (ARO HCP)** runs the OpenShift control plane as a fully managed service in a Microsoft-managed subscription, separate from your worker nodes. For product overview, comparison with classic ARO, and benefits, read **[Azure Red Hat OpenShift with hosted control planes now available in public preview](https://techcommunity.microsoft.com/blog/appsonazureblog/azure-red-hat-openshift-with-hosted-control-planes-now-available-in-public-previ/4555997)** (Microsoft).
+**Azure Red Hat OpenShift with hosted control planes (ARO HCP)** runs the OpenShift control plane as a fully managed service in a Microsoft-managed subscription, separate from your worker nodes. ARO HCP is generally available. For an overview and benefits, read the **[Red Hat general availability announcement](https://www.redhat.com/en/blog/azure-red-hat-openshift-hosted-control-planes-now-generally-available)**. To compare deployment models, see [Compare architectures](https://learn.microsoft.com/en-us/azure/openshift/concepts-classic-hosted-control-planes-comparison).
 
 This guide covers a **public cluster** deployment (`clusters/public`): public API and ingress. For private API or ingress, use [`clusters/private`](https://github.com/rh-mobb/validated-pattern-aro-hcp/tree/main/clusters/private) and the [private cluster steps](https://rh-mobb.github.io/validated-pattern-aro-hcp/getting-started/quick-start/#private-cluster-profile) in the reference docs.
 
@@ -16,13 +16,9 @@ This guide covers a **public cluster** deployment (`clusters/public`): public AP
 Looking for a simple Azure CLI example rather than a hardened production deployment? Follow [Create an ARO with hosted control planes cluster (Azure CLI)](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster?pivots=aro-az-cli) on Microsoft Learn.
 {{% /alert %}}
 
-{{% alert state="warning" header="Public preview" %}}
-ARO HCP is in [public preview](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster), not GA. APIs, regions, quotas, and supported features may change before GA.
+**Classic ARO** (control plane in your subscription) remains fully supported. For that deployment model, see [ARO Quickstart](/experts/aro/quickstart/) or [Deploying ARO using Terraform](/experts/aro/terraform-install/).
 
-**Classic ARO** (control plane in your subscription) remains fully supported and is the default GA path today: [ARO Quickstart](/experts/aro/quickstart/) or [Deploying ARO using Terraform](/experts/aro/terraform-install/).
-
-**Technical reference (Microsoft Learn):** [Introduction](https://learn.microsoft.com/en-us/azure/openshift/intro-openshift) · [Quickstart](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster) · [Connect](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster) · [Red Hat announcement](https://www.redhat.com/en/blog/azure-red-hat-openshift-hosted-control-planes-now-available-public-preview)
-{{% /alert %}}
+**Technical reference (Microsoft Learn):** [Introduction](https://learn.microsoft.com/en-us/azure/openshift/intro-openshift) · [Quickstart](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster) · [Connect](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster)
 
 ## Terraform reference
 
@@ -100,7 +96,7 @@ Meet Microsoft's prerequisites first. Source: [Prepare your environment](https:/
 | **Contributor + User Access Administrator**, or **Owner** | On the resource group or subscription where you create the cluster ([Permissions](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#permissions)) |
 | **Resource providers registered** | `Microsoft.RedHatOpenShift`, `Microsoft.Compute`, `Microsoft.Storage`, `Microsoft.Authorization` ([Register resource providers](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#register-resource-providers)) |
 | **Compute quota** | Microsoft documents **at least 20 cores** in your subscription ([Resource quota](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster#resource-quota)). Verify quota for your chosen [supported worker VM size](https://learn.microsoft.com/en-us/azure/openshift/support-policies-v4#worker-nodes) in your region |
-| **Supported region** | [Preview regions](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#choose-the-cluster-region): `australiaeast`, `brazilsouth`, `canadacentral`, `centralindia`, `eastus2`, `switzerlandnorth`, `uksouth`, `westeurope` |
+| **Supported region** | [Supported regions](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#choose-the-cluster-region): `australiaeast`, `brazilsouth`, `canadacentral`, `centralindia`, `eastus2`, `switzerlandnorth`, `uksouth`, `westeurope` |
 
 Register providers (if needed):
 
@@ -173,11 +169,11 @@ Full variable definitions: [`terraform/variables.tf`](https://github.com/rh-mobb
 
 ### Permanent cluster settings
 
-Official guide: [Choose your permanent cluster settings](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration) (preview).
+Official guide: [Choose your permanent cluster settings](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration).
 
 | Official decision | `terraform.tfvars` key | Default (reference) | Notes |
 |-------------------|----------------------|---------------------|-------|
-| Cluster region | `location` | `uksouth` | Must be a [preview region](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#choose-the-cluster-region) |
+| Cluster region | `location` | `uksouth` | Must be a [supported region](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#choose-the-cluster-region) |
 | Cluster name | `cluster_name` | (required) | Prefixes RG, VNet, identities, and subnets unless overridden |
 | OpenShift version stream | `cluster_version` | `4.22` | `X.Y` stream; `plan` fails if not enabled in `location` |
 | Update channel | `cluster_channel` | `stable` | e.g. `stable`, `fast` |
@@ -219,7 +215,7 @@ enable_external_auth = true
 
 ### Cluster network and node pools
 
-Official guide: [Plan your cluster network](https://learn.microsoft.com/en-us/azure/openshift/howto-plan-cluster-network) (preview).
+Official guide: [Plan your cluster network](https://learn.microsoft.com/en-us/azure/openshift/howto-plan-cluster-network).
 
 | Official topic | `terraform.tfvars` key | Default | Notes |
 |----------------|----------------------|---------|-------|
@@ -259,7 +255,7 @@ node_pools = {
 
 ### Managed identities and RBAC
 
-Official guide: [Required managed identities and role assignments](https://learn.microsoft.com/en-us/azure/openshift/concepts-managed-identities) (preview).
+Official guide: [Required managed identities and role assignments](https://learn.microsoft.com/en-us/azure/openshift/concepts-managed-identities).
 
 Microsoft documents **13 user-assigned managed identities** and their role assignments. You do not declare them in `terraform.tfvars`; the reference `modules/identities` creates them during apply.
 

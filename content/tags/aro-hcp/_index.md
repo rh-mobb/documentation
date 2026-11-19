@@ -6,7 +6,7 @@ archetype: chapter
 weight: 2
 skipMetadata: true
 hero_blurb: |
-  An alternate deployment model (public preview) where the OpenShift control plane runs as a fully managed service in a Microsoft-managed Azure account, separate from your worker nodes. Classic ARO remains the default for production workloads. See [official preview documentation](https://learn.microsoft.com/en-us/azure/openshift/intro-openshift) before deploying.
+  A generally available deployment model where the OpenShift control plane runs as a fully managed service in a Microsoft-managed Azure account, separate from your worker nodes. See the [general availability announcement](https://www.redhat.com/en/blog/azure-red-hat-openshift-hosted-control-planes-now-generally-available) and [official documentation](https://learn.microsoft.com/en-us/azure/openshift/intro-openshift) before deploying.
 hero_primary:
   text: "Deploy with Terraform"
   url: "/experts/aro/terraform-hcp/"
