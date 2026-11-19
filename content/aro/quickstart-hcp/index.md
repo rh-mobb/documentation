@@ -686,7 +686,7 @@ Use the same shell and exported cluster variables from the deployment steps, wit
 
 ## Configure OIDC authentication for console access
 
-Unlike ARO Standard, ARO HCP does not include the built-in OpenShift OAuth server. There is no built-in `kubeadmin` user or support for an `htpasswd` identity provider. Console sign-in requires an external identity provider; the temporary administrative kubeconfig from the previous section provides initial CLI access. See the [ARO HCP authentication model](https://www.redhat.com/architect/portfolio/detail/134-openshift-external-auth/03-aro.html).
+Unlike ARO with standard architecture, ARO HCP does not include the built-in OpenShift OAuth server. There is no built-in `kubeadmin` user or support for an `htpasswd` identity provider. Console sign-in requires an external identity provider; the temporary administrative kubeconfig from the previous section provides initial CLI access. See the [ARO HCP authentication model](https://www.redhat.com/architect/portfolio/detail/134-openshift-external-auth/03-aro.html).
 
 Integrating external OpenID Connect (OIDC) providers directly with ARO HCP supports machine-to-machine workflows, such as automated CLI access, and offers authentication capabilities unavailable through the built-in OAuth server. This guide configures Microsoft Entra ID for console and CLI sign-in, following [Configure an external authentication provider](https://learn.microsoft.com/en-us/azure/openshift/howto-configure-external-authentication).
 
