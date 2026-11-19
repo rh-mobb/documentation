@@ -4,7 +4,6 @@ title: ARO HCP Quickstart
 weight: 1
 authors:
   - Nicholas Morey
-  - Paul Czarkowski
 tags: ["ARO", "ARO HCP", "Quickstarts"]
 ---
 A quickstart guide to deploying an Azure Red Hat OpenShift cluster with hosted control planes using Azure CLI (`az`).
