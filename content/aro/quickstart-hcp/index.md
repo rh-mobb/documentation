@@ -476,11 +476,11 @@ The cluster needs 13 user-assigned identities. See [Microsoft's identity referen
 
 ### Key Vault and etcd encryption
 
-1. Create a Key Vault using Azure RBAC
+{{% alert state="info" header="Key Vault naming" %}}
+These commands use `AZR_KEYVAULT_NAME` from [Define variables](#define-variables). If the name is invalid or already taken, update that variable before retrying. All later vault references use the same variable; the cluster and resource group names can stay as they are.
+{{% /alert %}}
 
-    {{% alert state="info" header="Key Vault naming" %}}
-    These commands use `AZR_KEYVAULT_NAME` from [Define variables](#define-variables). If the name is invalid or already taken, update that variable before retrying. All later vault references use the same variable; the cluster and resource group names can stay as they are.
-    {{% /alert %}}
+1. Create a Key Vault using Azure RBAC
 
     ```bash
     az keyvault create \
