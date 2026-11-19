@@ -1,7 +1,7 @@
 ---
 date: '2022-06-19'
 title: ARO Custom domain with cert-manager and LetsEncrypt
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Byron Miller
   - Daniel Axelrod

@@ -1,7 +1,7 @@
 ---
 date: '2026-10-20'
 title: 'Migrating Applications from ARO Standard to ARO HCP with Migration Toolkit for Applications (MTA)'
-tags: ["ARO", "ARO Classic", "ARO HCP"]
+tags: ["ARO", "ARO Standard", "ARO HCP"]
 authors:
   - Kevin Collins
   - Diana Sari

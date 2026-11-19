@@ -16,7 +16,7 @@ This guide covers a **public cluster** deployment (`clusters/public`): public AP
 Looking for a simple Azure CLI example rather than a hardened production deployment? Follow [Create an ARO with hosted control planes cluster (Azure CLI)](https://learn.microsoft.com/en-us/azure/openshift/howto-create-custom-hosted-cluster?pivots=aro-az-cli) on Microsoft Learn.
 {{% /alert %}}
 
-**Classic ARO** (control plane in your subscription) remains fully supported. For that deployment model, see [ARO Quickstart](/experts/aro/quickstart/) or [Deploying ARO using Terraform](/experts/aro/terraform-install/).
+**ARO Standard** (control plane in your subscription) remains fully supported. For that deployment model, see [ARO Quickstart](/experts/aro/quickstart/) or [Deploying ARO using Terraform](/experts/aro/terraform-install/).
 
 **Technical reference (Microsoft Learn):** [Introduction](https://learn.microsoft.com/en-us/azure/openshift/intro-openshift) · [Quickstart](https://learn.microsoft.com/en-us/azure/openshift/quickstart-create-default-hosted-cluster) · [Connect](https://learn.microsoft.com/en-us/azure/openshift/connect-hosted-control-planes-cluster)
 
@@ -121,7 +121,7 @@ Microsoft's **20-core** requirement is subscription quota, not the worker vCPU c
 
 ### External authentication (plan ahead)
 
-ARO HCP uses **external OIDC authentication**. Unlike classic ARO, the built-in OpenShift OAuth server is not available ([Authentication model](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#authentication-model)).
+ARO HCP uses **external OIDC authentication**. Unlike ARO Standard, the built-in OpenShift OAuth server is not available ([Authentication model](https://learn.microsoft.com/en-us/azure/openshift/howto-choose-cluster-configuration#authentication-model)).
 
 The reference repo creates the Entra app registration during Terraform apply when `enable_external_auth = true` (the default). The account running `apply` still needs Entra directory rights to create app registrations, not just Azure subscription RBAC. **After** the cluster is ready, apply the console OAuth secret in [Connect and configure](#connect-and-configure). See [External auth with Entra ID](https://rh-mobb.github.io/validated-pattern-aro-hcp/guides/external-auth-entra-id/) if that step fails.
 
@@ -407,6 +407,6 @@ Extended troubleshooting: [reference README](https://github.com/rh-mobb/validate
 | Account prerequisites and RBAC matrix | [Account prerequisites](https://rh-mobb.github.io/validated-pattern-aro-hcp/prerequisites/account/) |
 | External auth (Entra ID) | [External auth guide](https://rh-mobb.github.io/validated-pattern-aro-hcp/guides/external-auth-entra-id/) |
 | OpenShift Virtualization full stack | [Virt stack](https://rh-mobb.github.io/validated-pattern-aro-hcp/guides/virt-stack/) |
-| Classic ARO quickstart | [ARO Quickstart](/experts/aro/quickstart/) |
-| Classic ARO Terraform | [Deploying ARO using Terraform](/experts/aro/terraform-install/) |
+| ARO Standard quickstart | [ARO Quickstart](/experts/aro/quickstart/) |
+| ARO Standard Terraform | [Deploying ARO using Terraform](/experts/aro/terraform-install/) |
 | ROSA HCP Terraform (AWS) | [Deploying a ROSA HCP cluster with Terraform](/experts/rosa/terraform/hcp/) |

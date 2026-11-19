@@ -1,7 +1,7 @@
 ---
 date: '2023-11-30'
 title: Prerequisites Checklist to Deploy ARO Cluster
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Ricardo Macedo Martins
   - Daniel Penagos

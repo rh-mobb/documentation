@@ -1,5 +1,5 @@
 ---
-title: "Azure Red Hat OpenShift Classic architecture"
+title: "Azure Red Hat OpenShift Standard architecture"
 date: 2026-03-28
 description: Guides for Azure Red Hat OpenShift with standard architecture (control plane in your subscription)
 archetype: chapter

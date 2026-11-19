@@ -197,8 +197,8 @@ These are the tag strings currently in use:
 * ACM
 * ACS
 * ARO
-* ARO Classic
 * ARO HCP
+* ARO Standard
 * Best practices
 * DevSpaces
 * GitOps
