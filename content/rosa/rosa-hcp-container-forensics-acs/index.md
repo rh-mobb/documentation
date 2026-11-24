@@ -1007,8 +1007,12 @@ aws iam delete-role --role-name forensics-victim-role
 aws iam delete-role-policy --role-name CustomerLogDistribution-$CLUSTER --policy-name logfwd
 aws iam delete-role --role-name CustomerLogDistribution-$CLUSTER
 aws logs delete-log-group --log-group-name ctllogfwd-$CLUSTER
-# After the Object Lock retention period expires:
-aws s3 rm s3://$BUCKET --recursive && aws s3api delete-bucket --bucket $BUCKET
+# After the Object Lock retention period expires. Object Lock buckets are versioned,
+# so delete every object version; `aws s3 rm` would only add delete markers.
+aws s3api delete-objects --bucket $BUCKET --delete "$(aws s3api list-object-versions --bucket $BUCKET \
+  --query '{Objects: Versions[].{Key: Key, VersionId: VersionId}}' --output json)"
+aws s3api list-object-versions --bucket $BUCKET --query 'length(DeleteMarkers || `[]`)'   # if > 0, delete them the same way
+aws s3api delete-bucket --bucket $BUCKET
 ```
 
 ## References
