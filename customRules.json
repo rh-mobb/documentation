@@ -40,6 +40,16 @@
     "target": "/experts/tags/virtualization/"
   },
   {
+    "source": "/experts/tags/aro-classic",
+    "status": "301",
+    "target": "/experts/tags/aro-standard/"
+  },
+  {
+    "source": "/experts/tags/aro-classic/",
+    "status": "301",
+    "target": "/experts/tags/aro-standard/"
+  },
+  {
     "source": "/experts/rosa/rosa-quickstart/",
     "status": "301",
     "target": "/experts/rosa/quickstart/"

@@ -1,15 +1,15 @@
 ---
 date: '2021-06-21'
-title: ARO Quickstart
+title: ARO (standard architecture) Quickstart
 weight: 1
 aliases: [/experts/quickstart-aro.md]
 authors: 
   - Paul Czarkowski
   - Nerav Doshi
-tags: ["ARO", "ARO Classic", "Quickstarts"]
+tags: ["ARO", "ARO Standard", "Quickstarts"]
 validated_version: "4.20"
 ---
-A Quickstart guide to deploying an Azure Red Hat OpenShift cluster.
+A quickstart guide to deploying a cluster on Azure Red Hat OpenShift with standard architecture.
 
 ## Video Walkthrough
 

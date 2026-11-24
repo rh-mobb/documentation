@@ -1,7 +1,7 @@
 ---
 date: '2023-03-06'
 title: Upgrade a disconnected ARO cluster
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Aaron Green
   - Kevin Collins

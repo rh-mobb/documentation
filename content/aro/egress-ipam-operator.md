@@ -1,7 +1,7 @@
 ---
 date: '2021-06-29'
 title: Using the Egressip Ipam Operator with a Private ARO Cluster
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 ---
 
 {{% notice style="note" %}}

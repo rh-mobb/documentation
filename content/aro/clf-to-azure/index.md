@@ -1,7 +1,7 @@
 ---
 date: '2023-03-26T22:07:09.774151'
 title: Using Cluster Logging Forwarder in ARO with Azure Monitor (>=4.13)
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Paul Czarkowski
   - Thatcher Hubbard

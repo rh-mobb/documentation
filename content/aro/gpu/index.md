@@ -1,7 +1,7 @@
 ---
 date: '2022-06-22'
 title: ARO with Nvidia GPU Workloads
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Byron Miller
   - Stuart Kirk

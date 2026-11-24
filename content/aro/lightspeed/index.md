@@ -1,7 +1,7 @@
 ---
 date: '2026-03-03'
 title: Using OpenShift Lightspeed with ARO
-tags: ["ARO", "ARO Classic", "Lightspeed"]
+tags: ["ARO", "ARO Standard", "Lightspeed"]
 authors:
   - Daniel Penagos
 validated_version: "4.20"

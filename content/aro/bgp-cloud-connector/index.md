@@ -1,6 +1,6 @@
 ---
 date: "2026-11-16"
-title: "Deploying BGP Cloud Connector on ARO Standard"
+title: "Deploying BGP Cloud Connector on ARO (standard architecture)"
 tags: ["ARO", "Virtualization"]
 authors:
   - Diana Sari
@@ -14,13 +14,13 @@ validated_version: "4.22"
 
 BGP Cloud Connector provides direct Layer 3 connectivity between ClusterUserDefinedNetworks (CUDNs) on Azure Red Hat OpenShift (ARO) and routed Azure networks. It uses Azure Route Server to advertise CUDN prefixes and programs selected compute nodes to forward traffic.
 
-This guide configures an existing ARO Standard cluster running OpenShift Container Platform 4.22 or later with service principal authentication, installs BGP Cloud Connector 1.1.0 through Operator Lifecycle Manager (OLM), configures two BGP router nodes, and tests bidirectional connectivity with an OpenShift Virtualization VM.
+This guide configures an existing ARO (standard architecture) cluster running OpenShift Container Platform 4.22 or later with service principal authentication, installs BGP Cloud Connector 1.1.0 through Operator Lifecycle Manager (OLM), configures two BGP router nodes, and tests bidirectional connectivity with an OpenShift Virtualization VM.
 
-ARO clusters that use managed identities and ARO HCP have different identity and infrastructure models and are not covered.
+ARO clusters that use managed identities and ARO (HCP) have different identity and infrastructure models and are not covered.
 
 ## Architecture
 
-![BGP Cloud Connector architecture](images/bgp-standard-arch.png)
+![BGP Cloud Connector architecture](images/bgp-standard-arch-v3.png)
 
 1. FRR on each router node establishes sessions with the two redundant BGP endpoint IPs provided by one Azure Route Server.
 1. BGP Cloud Connector advertises the CUDN prefix, which Route Server propagates to the virtual network.
@@ -29,13 +29,13 @@ ARO clusters that use managed identities and ARO HCP have different identity and
 
 Azure Route Server distributes routes. It is not in the application data path. Two router nodes connected to both Route Server endpoint IPs produce four BGP sessions.
 
-This guide was tested in West US 2 with ARO Standard 4.22.22, three `Standard_D8s_v5` compute nodes, BGP Cloud Connector 1.1.0 in the `bgp-cloud-connector` namespace, and OpenShift Virtualization 4.22.16.
+This guide was tested in West US 2 on ARO (standard architecture), using OpenShift 4.22.22, three `Standard_D8s_v5` compute nodes, BGP Cloud Connector 1.1.0 in the `bgp-cloud-connector` namespace, and OpenShift Virtualization 4.22.16.
 
 ## Prerequisites
 
 You need:
 
-- an ARO Standard 4.22 or later cluster created with a service principal and `cluster-admin` access
+- an ARO (standard architecture) cluster running OpenShift 4.22 or later, created with a service principal and `cluster-admin` access
 - a current global pull secret with valid `registry.redhat.io` credentials
 - a virtual network with space for a dedicated `/26` Route Server subnet and a test subnet
 - Azure permissions to manage networking, role assignments, and test resources

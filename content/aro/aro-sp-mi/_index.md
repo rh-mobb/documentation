@@ -1,7 +1,7 @@
 ---
 date: '2026-05-25'
 title: 'ARO Service Principal to Managed Identity: What Changes in Authentication and How to Move'
-tags: ["ARO", "ARO Classic"]
+tags: ["ARO", "ARO Standard"]
 authors:
   - Kevin Ye
 layout: single
