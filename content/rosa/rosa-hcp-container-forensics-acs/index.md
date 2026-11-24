@@ -1,7 +1,7 @@
 ---
 date: '2026-11-24'
 title: Container Forensics on ROSA HCP with Red Hat Advanced Cluster Security
-tags: ["ROSA", "ROSA HCP", "ACS", "Security"]
+tags: ["ROSA", "ROSA HCP", "ACS"]
 authors:
   - 'Kumudu Herath'
   - 'Shanna Chan'
@@ -50,9 +50,9 @@ mkdir -p forensics/{evidence,logs} && cd forensics
 
 ### 1.1 Forward control-plane logs to CloudWatch
 
-On ROSA HCP the API server runs in the Red Hat-managed control plane. **RHACS can't read Kubernetes audit logs on HCP**, so the audit trail has to come from [control-plane log forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/observability/logging). Enable it **before** an incident: logs from before forwarding was enabled can't be recovered.
+On ROSA HCP the API server runs in the Red Hat-managed control plane. **RHACS can't read Kubernetes audit logs on HCP**, so the audit trail has to come from [control-plane log forwarding](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#rosa-create-an-iam-role-policy_rosa-configuring-the-log-forwarder). Enable it **before** an incident: logs from before forwarding was enabled can't be recovered.
 
-> **Note:** Take the principal ARN for the trust policy from the current ROSA log-forwarding documentation for your region.
+> **Note:** Validate principal ARN for the trust policy from the current ROSA log-forwarding documentation. Current: "arn:aws:iam::859037107838:role/ROSA-CentralLogDistributionRole-241c1a86"
 
 ```bash
 aws logs create-log-group --log-group-name ctllogfwd-$CLUSTER
@@ -60,7 +60,7 @@ aws logs put-retention-policy --log-group-name ctllogfwd-$CLUSTER --retention-in
 
 cat > logfwd-trust.json <<'EOF'
 {"Version":"2012-10-17","Statement":[{"Effect":"Allow",
- "Principal":{"AWS":"<ROSA central log distribution role ARN from the docs>"},
+ "Principal":{"AWS":"arn:aws:iam::859037107838:role/ROSA-CentralLogDistributionRole-241c1a86"},
  "Action":"sts:AssumeRole"}]}
 EOF
 cat > logfwd-policy.json <<EOF
