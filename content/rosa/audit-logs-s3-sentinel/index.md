@@ -136,7 +136,7 @@ groups:
   - "authentication"
 EOF
 
-rosa create log-forwarder -c $CLUSTER_NAME --log-fwd-config="log-fwd-config.yaml" -o yaml
+rosa create log-forwarder -c ${CLUSTER_NAME} --log-fwd-config="log-fwd-config.yaml" -o yaml
 ```
   {{% alert state="info" %}}
   The example log forwarder above only specifies log groups. You can also specify one or more applications in addition to the log groups.  Please refer to [Log groups](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs#:~:text=Table%C2%A02.1.%C2%A0Log%20groups) to learn more about the different log group types and related applications. 
@@ -145,7 +145,7 @@ rosa create log-forwarder -c $CLUSTER_NAME --log-fwd-config="log-fwd-config.yaml
 Verify the created log-forwarder
 
   ```bash
-  rosa list log-forwarder -c $CLUSTER_NAME
+  rosa list log-forwarder -c ${CLUSTER_NAME}
   ```
 Verify logs are flowing to S3
 
@@ -157,7 +157,16 @@ Verify logs are flowing to S3
 
 Expected output
 ```bash
-
+2026-11-25 13:23:19       1611 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261125-202316-a2f2e594-b8e2-4d80-b86e-8657466ecb47.json.gz
+2026-11-25 14:11:26       1618 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261125-211123-b4913730-2ddf-4214-9419-d5e459b5e7ab.json.gz
+2026-11-25 14:59:23       1614 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261125-215920-e63d8565-038c-4c31-9f75-08bad86e9ce9.json.gz
+2026-11-25 15:47:21       1611 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261125-224718-2a06dc26-8f65-4c77-a322-bc0418a12a1f.json.gz
+2026-11-25 16:35:17       1613 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261125-233515-1ee4212e-eda4-4769-889d-756e1e20155b.json.gz
+2026-11-25 17:23:24       1617 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261126-002322-cb00ae01-5593-4ddf-9c6d-23b000199c7f.json.gz
+2026-11-25 18:11:21       1618 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261126-011119-96e03837-40a4-4093-bcdd-4348bfa08f51.json.gz
+2026-11-25 18:59:18       1618 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261126-015916-9d35ec4d-73a9-4ee0-855f-13468298e394.json.gz
+2026-11-25 19:47:26       1620 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261126-024723-ec859167-494b-4ea9-aa91-bcf234ae54b8.json.gz
+2026-11-25 20:35:23       1621 control-plane-logs/ocm-production-2uad3r2oer56k32o0p0girj071ov5rod-cfung/audit-webhook/audit-webhook-67b7c48569-dh65n/20261126-033520-25ccd9e7-89a5-4103-bbd0-6fa450628805.json.gz
 ```
 
 Please refer to [S3 Log Format](https://cloud.redhat.com/experts/rosa/audit-logs-filebeat/#:~:text=privilege%20escalation%20attempts%3F-,S3%20Log%20Format,-Before%20configuring%20ingestion) to understand the format produced by ROSA's log-forwarder
@@ -183,13 +192,24 @@ az rest --method put \
   --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.OperationalInsights/workspaces/${WORKSPACE_NAME}/providers/Microsoft.SecurityInsights/onboardingStates/default?api-version=2024-03-01" \
   --body '{"properties":{"customerManagedKey": false}}'
   ```
+Take note of the `id` value of the output of the workspace creation command, that is the WORKSPACE_RESOURCE_ID
+
+```bash
+export WORKSPACE_RESOURCE_ID=<value of `id` in above output>
+```
 
 ### Configure Data Collection Endpoint
 
 ```bash
 az monitor data-collection endpoint create -g ${RESOURCE_GROUP} -l ${LOCATION} --name rosa-cplf-dce --public-network-access Enabled
 ```
-Note the `logsIngestion.endpoint` value in the output — that's DCE_INGESTION_ENDPOINT for the Lambda.
+Note the `logsIngestion.endpoint` and `id` values in the output — that's DCE_INGESTION_ENDPOINT for the Lambda.
+
+Create some environment variables with the values noted from above
+```bash
+export DCE_INGESTION_ENDPOINT=<value of logsIngestion.endpoint above>
+export DCE_INGESTION_ENDPOINT_ID=<value of `id` in output above>
+```
 
 ### Create Custom table
 
@@ -209,14 +229,11 @@ az monitor log-analytics workspace table create \
 The DCR declares the incoming stream schema and maps it to the custom table's _CL output stream
 
 ```bash
-export DATA_COLLECTION_ENDPOINT_ID=<dce-resource-id>
-export WORKSPACE_RESOURCE_ID=<workspace-reosurce-id>
-
 cat > dcr.json << 'EOF'
 {
   "location": "${LOCATION}",
   "properties": {
-    "dataCollectionEndpointId": "${DATA_COLLECTION_ENDPOINT_ID}",
+    "dataCollectionEndpointId": "${DCE_INGESTION_ENDPOINT_ID}",
     "streamDeclarations": {
       "Custom-ROSAControlPlaneAudit": {
         "columns": [
@@ -257,8 +274,15 @@ az rest --method put \
   --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Insights/dataCollectionRules/rosa-cplf-dcr?api-version=2023-03-11" \
   --body @dcr.json
 ```
-Take note of the response's `properties.immutableId (dcr-...) —` 
-that's DCR_IMMUTABLE_ID for the Lambda.
+Take note of the response's `properties.immutableId (dcr-...) —` and `id`
+that's DCR_IMMUTABLE_ID for the Lambda. Also take note of the `id` output as that corresponds to the DCR_RESOURCE_ID needed for assigning permissions to the lambda app.  
+
+Create environment variables as below
+
+```bash
+export DCR_IMMUTABLE_ID=<value of `properties.immutableId (dcr-...) —`>
+export DCR_RESOURCE_ID=<value of `id`>
+```
 
 ### Register a new application in Azure AD for Lambda
 
@@ -272,7 +296,6 @@ Then, click on the "Overview" sub-blade and make note of the "Application (clien
 
 ### Grant the Lambda App Permissions to publish metrics
 
-
 ```bash
 APP_ID=yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy # Replace this with the Application (client) ID
 CLIENT_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx # Replace this with the Client Secret
@@ -281,7 +304,7 @@ TENANT_ID=zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz # Replace this with the Directory
 az role assignment create \
   --assignee ${APP_ID} \
   --role "Monitoring Metrics Publisher" \
-  --scope "<dcr-resource-id>"  # Replace this with the dcr-resource-id
+  --scope "${DCR_RESOURCE_ID}"
 ```  
 
 ## Create SQS Queue and Lambda
@@ -468,7 +491,7 @@ az role assignment create \
         AAD_CLIENT_ID=${APP_ID},
         AAD_CLIENT_SECRET=${CLIENT_SECRET},
         DCE_INGESTION_ENDPOINT=${DCE_INGESTION_ENDPOINT},
-        DCR_IMMUTABLE_ID=<your-dcr-immutable-id>, 
+        DCR_IMMUTABLE_ID=${DCR_IMMUTABLE_ID}, 
         DCR_STREAM_NAME=Custom-ROSAControlPlaneAudit
     }"
     ```
