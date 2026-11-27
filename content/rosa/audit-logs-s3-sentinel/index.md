@@ -87,9 +87,9 @@ This step is only required if you're forwarding to a CloudWatch log group. Per t
 
 1. Create the S3 bucket 
 
-    {{% alert state="warning" %}}
-    The S3 bucket **must be in the same AWS region as the ROSA HCP cluster**. ROSA's OCM API validates bucket accessibility by attempting to reach the bucket from the cluster's region. A bucket in a different region fails the pre-flight check with `Failed to reach bucket`, even if the bucket exists and the policy is correct.
-    {{% /alert %}}
+{{% alert state="warning" %}}
+The S3 bucket **must be in the same AWS region as the ROSA HCP cluster**. ROSA's OCM API validates bucket accessibility by attempting to reach the bucket from the cluster's region. A bucket in a different region fails the pre-flight check with `Failed to reach bucket`, even if the bucket exists and the policy is correct.
+{{% /alert %}}
 
     ```bash
     aws s3api create-bucket \
