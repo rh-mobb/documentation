@@ -33,7 +33,7 @@ Let's set some enviroment variables.
 ```bash
 export CLUSTER_NAME="my-hcp-cluster"
 export CLUSTER_REGION="ca-central-1"       # region where the ROSA HCP cluster runs
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 export BUCKET_NAME="${CLUSTER_NAME}-audit-logs"
 export SQS_QUEUE_NAME="${CLUSTER_NAME}-audit-s3-events"
 export LOG_PREFIX="${CLUSTER_NAME}"
@@ -93,7 +93,7 @@ It is required to create an IAM role and policy to give the cluster log forwarde
 2. Configure the policy for the S3 bucket 
 
     ```bash
-    cat > s3-bucket-policy.json << 'EOF'
+    cat > s3-bucket-policy.json << EOF
     {
         "Version": "2012-10-17",
         "Statement": [
@@ -127,15 +127,16 @@ It is required to create an IAM role and policy to give the cluster log forwarde
 ### Create the audit log forwarder
 
 ```bash
-cat > log-fwd-config.yaml << 'EOF'
+cat > log-fwd-config.yaml << EOF
 s3:
   s3_config_bucket_name: "${BUCKET_NAME}"
   s3_config_bucket_prefix: "${LOG_PREFIX}"
-groups:
-  - "api"
-  - "authentication"
+  groups:
+    - "api"
+    - "authentication"
 EOF
-
+```
+```bash
 rosa create log-forwarder -c ${CLUSTER_NAME} --log-fwd-config="log-fwd-config.yaml" -o yaml
 ```
   {{% alert state="info" %}}
@@ -177,17 +178,19 @@ Please refer to [S3 Log Format](https://cloud.redhat.com/experts/rosa/audit-logs
 ### Set environment variable 
 
 ```bash
-export RESOURCE_GROUP=example-rg 
-export WORKSPACE_NAME=example-workspace
+export RESOURCE_GROUP="example-rg" # replace with the name of your resource group
+export WORKSPACE_NAME="example-workspace"
 export LOCATION=canadacentral # replace with your desired region
-export SUBSCRIPTION_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" 
+export SUBSCRIPTION_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" # replace with your subscription id
 ``` 
 
 ### Configure Workspace and Sentinel
 
 ```bash
 az monitor log-analytics workspace create -g ${RESOURCE_GROUP} -n ${WORKSPACE_NAME} -l ${LOCATION} --sku PerGB2018
+```
 
+```bash
 az rest --method put \
   --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.OperationalInsights/workspaces/${WORKSPACE_NAME}/providers/Microsoft.SecurityInsights/onboardingStates/default?api-version=2024-03-01" \
   --body '{"properties":{"customerManagedKey": false}}'
@@ -195,7 +198,7 @@ az rest --method put \
 Take note of the `id` value of the output of the workspace creation command, that is the WORKSPACE_RESOURCE_ID
 
 ```bash
-export WORKSPACE_RESOURCE_ID=<value of `id` in above output>
+export WORKSPACE_RESOURCE_ID="<value of `id` in above output>"
 ```
 
 ### Configure Data Collection Endpoint
@@ -207,8 +210,8 @@ Note the `logsIngestion.endpoint` and `id` values in the output — that's DCE_I
 
 Create some environment variables with the values noted from above
 ```bash
-export DCE_INGESTION_ENDPOINT=<value of logsIngestion.endpoint above>
-export DCE_INGESTION_ENDPOINT_ID=<value of `id` in output above>
+export DCE_INGESTION_ENDPOINT="<value of logsIngestion.endpoint above>"
+export DCE_INGESTION_ENDPOINT_ID="<value of `id` in output above>"
 ```
 
 ### Create Custom table
@@ -229,7 +232,7 @@ az monitor log-analytics workspace table create \
 The DCR declares the incoming stream schema and maps it to the custom table's _CL output stream
 
 ```bash
-cat > dcr.json << 'EOF'
+cat > dcr.json << EOF
 {
   "location": "${LOCATION}",
   "properties": {
@@ -269,19 +272,21 @@ cat > dcr.json << 'EOF'
   }
 }
 EOF
+```
 
+```bash
 az rest --method put \
   --url "https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Insights/dataCollectionRules/rosa-cplf-dcr?api-version=2023-03-11" \
   --body @dcr.json
 ```
-Take note of the response's `properties.immutableId (dcr-...) —` and `id`
-that's DCR_IMMUTABLE_ID for the Lambda. Also take note of the `id` output as that corresponds to the DCR_RESOURCE_ID needed for assigning permissions to the lambda app.  
+
+Take note of the response's `properties.immutableId (dcr-...) —`, that's DCR_IMMUTABLE_ID for the Lambda. Also take note of the `id` output as that corresponds to the DCR_RESOURCE_ID needed for assigning permissions to the lambda app.  
 
 Create environment variables as below
 
 ```bash
-export DCR_IMMUTABLE_ID=<value of `properties.immutableId (dcr-...) —`>
-export DCR_RESOURCE_ID=<value of `id`>
+export DCR_IMMUTABLE_ID="<value of `properties.immutableId (dcr-...) —`>"
+export DCR_RESOURCE_ID="<value of `id`>"
 ```
 
 ### Register a new application in Azure AD for Lambda
@@ -296,11 +301,15 @@ Then, click on the "Overview" sub-blade and make note of the "Application (clien
 
 ### Grant the Lambda App Permissions to publish metrics
 
+Let's set some more environment variables
+
 ```bash
 APP_ID=yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy # Replace this with the Application (client) ID
 CLIENT_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx # Replace this with the Client Secret
 TENANT_ID=zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz # Replace this with the Directory (tenant) ID
+```
 
+```bash
 az role assignment create \
   --assignee ${APP_ID} \
   --role "Monitoring Metrics Publisher" \
@@ -311,197 +320,215 @@ az role assignment create \
 
 1. Create an SQS queue that is fed by an S3 event notification
 
-    ```bash
-    SQS_QUEUE_URL=$(aws sqs create-queue --queue-name "${SQS_QUEUE_NAME}" --region "${REGION}" --query QueueUrl --output text)
+```bash
+export SQS_QUEUE_URL=$(aws sqs create-queue --queue-name "${SQS_QUEUE_NAME}" --region "${CLUSTER_REGION}" --query QueueUrl --output text)
 
-    cat > sqs-attrs.json <<EOF
-    {
-    "Policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"AllowS3SendMessage\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"s3.amazonaws.com\"},\"Action\":\"SQS:SendMessage\",\"Resource\":\"arn:aws:sqs:${REGION}:${ACCOUNT_ID}:${SQS_QUEUE_NAME}\",\"Condition\":{\"ArnEquals\":{\"aws:SourceArn\":\"arn:aws:s3:::${BUCKET_NAME}\"}}}]}",
-    "VisibilityTimeout": "120"
-    }
-    EOF
-    aws sqs set-queue-attributes --queue-url "${SQS_QUEUE_URL}" --attributes file://sqs-attrs.json
-    ```
-    {{% alert state="info" %}}
-    The visibility timeout (120s) must exceed the Lambda's configured timeout, or Lambda will refuse to attach the event source mapping.
-    {{% /alert %}}
+cat > sqs-attrs.json <<EOF
+{
+  "Policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"AllowS3SendMessage\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"s3.amazonaws.com\"},\"Action\":\"SQS:SendMessage\",\"Resource\":\"arn:aws:sqs:${CLUSTER_REGION}:${AWS_ACCOUNT_ID}:${SQS_QUEUE_NAME}\",\"Condition\":{\"ArnEquals\":{\"aws:SourceArn\":\"arn:aws:s3:::${BUCKET_NAME}\"}}}]}",
+  "VisibilityTimeout": "120"
+}
+EOF
+
+aws sqs set-queue-attributes --queue-url "${SQS_QUEUE_URL}" --attributes file://sqs-attrs.json
+```
+{{% alert state="info" %}}
+The visibility timeout (120s) must exceed the Lambda's configured timeout, or Lambda will refuse to attach the event source mapping.
+{{% /alert %}}
 
 2. Create an S3 Event notification
 
-    ```bash
-    cat > notification.json <<EOF
-    {
-    "QueueConfigurations": [{
-        "Id": "rosa-cplf-to-sentinel-sqs",
-        "QueueArn": "arn:aws:sqs:${REGION}:${ACCOUNT_ID}:${SQS_QUEUE_NAME}",
-        "Events": ["s3:ObjectCreated:*"],
-        "Filter": { "Key": { "FilterRules": [{ "Name": "prefix", "Value": "control-plane-logs/" }] } }
-    }]
-    }
-    EOF
-    aws s3api put-bucket-notification-configuration --bucket "$BUCKET_NAME" --notification-configuration file://notification.json
-    ```
+```bash
+cat > notification.json <<EOF
+{
+  "QueueConfigurations": [{
+    "Id": "rosa-cplf-to-sentinel-sqs",
+    "QueueArn": "arn:aws:sqs:${CLUSTER_REGION}:${AWS_ACCOUNT_ID}:${SQS_QUEUE_NAME}",
+    "Events": ["s3:ObjectCreated:*"],
+    "Filter": { "Key": { "FilterRules": [{ "Name": "prefix", "Value": "${LOG_PREFIX}/" }]}}
+  }]
+}
+EOF
+
+aws s3api put-bucket-notification-configuration --bucket ${BUCKET_NAME} --notification-configuration file://notification.json
+```
+
 3. Create the Lambda Function
 
-    ```bash
-    cat > lambda_function.py << 'PYEOF'
-    """
-    ROSA control plane audit logs -> Microsoft Sentinel (custom table via Logs Ingestion API)
-    """
-    import os, gzip, json, time, urllib.request, urllib.error, urllib.parse
-    import boto3
+```bash
+cat > lambda_function.py << 'PYEOF'
+"""
+ROSA control plane audit logs -> Microsoft Sentinel (custom table via Logs Ingestion API)
+"""
+import os, gzip, json, time, urllib.request, urllib.error, urllib.parse
+import boto3
 
-    s3 = boto3.client("s3")
+s3 = boto3.client("s3")
 
-    AAD_TENANT_ID = os.environ["AAD_TENANT_ID"]
-    AAD_CLIENT_ID = os.environ["AAD_CLIENT_ID"]
-    AAD_CLIENT_SECRET = os.environ["AAD_CLIENT_SECRET"]
-    DCE_INGESTION_ENDPOINT = os.environ["DCE_INGESTION_ENDPOINT"]
-    DCR_IMMUTABLE_ID = os.environ["DCR_IMMUTABLE_ID"]
-    DCR_STREAM_NAME = os.environ.get("DCR_STREAM_NAME", "Custom-ROSAControlPlaneAudit")
+AAD_TENANT_ID = os.environ["AAD_TENANT_ID"]
+AAD_CLIENT_ID = os.environ["AAD_CLIENT_ID"]
+AAD_CLIENT_SECRET = os.environ["AAD_CLIENT_SECRET"]
+DCE_INGESTION_ENDPOINT = os.environ["DCE_INGESTION_ENDPOINT"]
+DCR_IMMUTABLE_ID = os.environ["DCR_IMMUTABLE_ID"]
+DCR_STREAM_NAME = os.environ.get("DCR_STREAM_NAME", "Custom-ROSAControlPlaneAudit")
 
-    _token_cache = {"value": None, "expires_at": 0}
+_token_cache = {"value": None, "expires_at": 0}
 
-    def _get_token():
-        if _token_cache["value"] and time.time() < _token_cache["expires_at"] - 60:
-            return _token_cache["value"]
-        url = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token"
-        body = urllib.parse.urlencode({
-            "client_id": APP_ID,
-            "client_secret": CLIENT_SECRET,
-            "scope": "https://monitor.azure.com/.default",
-            "grant_type": "client_credentials",
-        }).encode()
-        with urllib.request.urlopen(urllib.request.Request(url, data=body, method="POST"), timeout=10) as resp:
-            payload = json.loads(resp.read())
-        _token_cache["value"] = payload["access_token"]
-        _token_cache["expires_at"] = time.time() + int(payload.get("expires_in", 3600))
+def _get_token():
+    if _token_cache["value"] and time.time() < _token_cache["expires_at"] - 60:
         return _token_cache["value"]
+    url = f"https://login.microsoftonline.com/{AAD_TENANT_ID}/oauth2/v2.0/token"
+    body = urllib.parse.urlencode({
+        "client_id": AAD_CLIENT_ID,
+        "client_secret": AAD_CLIENT_SECRET,
+        "scope": "https://monitor.azure.com/.default",
+        "grant_type": "client_credentials",
+    }).encode()
+    with urllib.request.urlopen(urllib.request.Request(url, data=body, method="POST"), timeout=10) as resp:
+        payload = json.loads(resp.read())
+    _token_cache["value"] = payload["access_token"]
+    _token_cache["expires_at"] = time.time() + int(payload.get("expires_in", 3600))
+    return _token_cache["value"]
 
-    def _to_sentinel_record(wrapper_record, event):
-        user, ann = event.get("user", {}) or {}, event.get("annotations", {}) or {}
-        return {
-            "TimeGenerated": event.get("stageTimestamp") or event.get("requestReceivedTimestamp"),
-            "AuditID": event.get("auditID", ""),
-            "Stage": event.get("stage", ""),
-            "Verb": event.get("verb", ""),
-            "RequestURI": event.get("requestURI", ""),
-            "UserName": user.get("username", ""),
-            "UserGroups": user.get("groups", []),
-            "SourceIPs": event.get("sourceIPs", []),
-            "UserAgent": event.get("userAgent", ""),
-            "ResponseCode": (event.get("responseStatus") or {}).get("code", 0),
-            "ObjectRef": event.get("objectRef", {}),
-            "AuthorizationDecision": ann.get("authorization.k8s.io/decision", ""),
-            "AuthorizationReason": ann.get("authorization.k8s.io/reason", ""),
-            "SourceApplication": wrapper_record.get("application", ""),
-            "ClusterId": wrapper_record.get("mc_cluster_id", ""),
-            "RequestReceivedTime": event.get("requestReceivedTimestamp"),
-            "StageTime": event.get("stageTimestamp"),
-            "RawEvent": event,
-        }
+def _to_sentinel_record(wrapper_record, event):
+    user, ann = event.get("user", {}) or {}, event.get("annotations", {}) or {}
+    return {
+        "TimeGenerated": event.get("stageTimestamp") or event.get("requestReceivedTimestamp"),
+        "AuditID": event.get("auditID", ""),
+        "Stage": event.get("stage", ""),
+        "Verb": event.get("verb", ""),
+        "RequestURI": event.get("requestURI", ""),
+        "UserName": user.get("username", ""),
+        "UserGroups": user.get("groups", []),
+        "SourceIPs": event.get("sourceIPs", []),
+        "UserAgent": event.get("userAgent", ""),
+        "ResponseCode": (event.get("responseStatus") or {}).get("code", 0),
+        "ObjectRef": event.get("objectRef", {}),
+        "AuthorizationDecision": ann.get("authorization.k8s.io/decision", ""),
+        "AuthorizationReason": ann.get("authorization.k8s.io/reason", ""),
+        "SourceApplication": wrapper_record.get("application", ""),
+        "ClusterId": wrapper_record.get("mc_cluster_id", ""),
+        "RequestReceivedTime": event.get("requestReceivedTimestamp"),
+        "StageTime": event.get("stageTimestamp"),
+        "RawEvent": event,
+    }
 
-    def _extract_audit_records(body_bytes):
-        records = json.loads(gzip.decompress(body_bytes))
-        out = []
-        for r in records:
-            if r.get("container_name") != "audit-logs":
-                continue
-            try:
-                event = json.loads(r["message"])
-            except (KeyError, json.JSONDecodeError):
-                continue
-            if event.get("kind") != "Event":
-                continue
-            out.append(_to_sentinel_record(r, event))
-        return out
-
-    MAX_BATCH_BYTES = 800_000
-
-    def _chunk_by_size(records):
-        chunk, chunk_bytes = [], 0
-        for r in records:
-            size = len(json.dumps(r))
-            if chunk and chunk_bytes + size > MAX_BATCH_BYTES:
-                yield chunk
-                chunk, chunk_bytes = [], 0
-            chunk.append(r)
-            chunk_bytes += size
-        if chunk:
-            yield chunk
-
-    def _post_batch(token, batch):
-        url = f"{DCE_INGESTION_ENDPOINT}/dataCollectionRules/{DCR_IMMUTABLE_ID}/streams/{DCR_STREAM_NAME}?api-version=2023-01-01"
-        req = urllib.request.Request(
-            url, data=json.dumps(batch).encode(), method="POST",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-        )
+def _extract_audit_records(body_bytes):
+    records = json.loads(gzip.decompress(body_bytes))
+    out = []
+    for r in records:
+        if r.get("container_name") != "audit-logs":
+            continue
         try:
-            with urllib.request.urlopen(req, timeout=20) as resp:
-                return resp.status
-        except urllib.error.HTTPError as e:
-            raise RuntimeError(f"Sentinel ingestion failed: {e.code} {e.read().decode()[:500]}")
+            event = json.loads(r["message"])
+        except (KeyError, json.JSONDecodeError):
+            continue
+        if event.get("kind") != "Event":
+            continue
+        out.append(_to_sentinel_record(r, event))
+    return out
 
-    def handler(event, context):
-        token = _get_token()
-        processed = 0
-        for sqs_record in event["Records"]:
-            body = json.loads(sqs_record["body"])
-            for s3_event in body.get("Records", []):
-                bucket = s3_event["s3"]["bucket"]["name"]
-                key = urllib.parse.unquote_plus(s3_event["s3"]["object"]["key"])
-                obj = s3.get_object(Bucket=bucket, Key=key)
-                batch = _extract_audit_records(obj["Body"].read())
-                if not batch:
-                    continue
-                for chunk in _chunk_by_size(batch):
-                    _post_batch(token, chunk)
-                    processed += len(chunk)
-        return {"processed": processed}
-    PYEOF
+MAX_BATCH_BYTES = 800_000
 
-    zip lambda.zip lambda_function.py
-    ```
-    Next, create the lambda function role 
+def _chunk_by_size(records):
+    chunk, chunk_bytes = [], 0
+    for r in records:
+        size = len(json.dumps(r))
+        if chunk and chunk_bytes + size > MAX_BATCH_BYTES:
+            yield chunk
+            chunk, chunk_bytes = [], 0
+        chunk.append(r)
+        chunk_bytes += size
+    if chunk:
+        yield chunk
 
-    ```bash
-    aws iam create-role --role-name <lambda-role-name> \
-    --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
-    ```
-    Proceed to add required permissions. In this guide, we provide full SQS access, which can be scoped down further in production
+def _post_batch(token, batch):
+    url = f"{DCE_INGESTION_ENDPOINT}/dataCollectionRules/{DCR_IMMUTABLE_ID}/streams/{DCR_STREAM_NAME}?api-version=2023-01-01"
+    req = urllib.request.Request(
+        url, data=json.dumps(batch).encode(), method="POST",
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return resp.status
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"Sentinel ingestion failed: {e.code} {e.read().decode()[:500]}")
 
-    ```bash
-    aws iam attach-role-policy --role-name <lambda-role-name> --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-    aws iam attach-role-policy --role-name <lambda-role-name> --policy-arn arn:aws:iam::aws:policy/AmazonSQSFullAccess
-    aws iam attach-role-policy --role-name <lambda-role-name> --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-    ```
-    Finally, create the Lambda function
+def handler(event, context):
+    token = _get_token()
+    processed = 0
+    for sqs_record in event["Records"]:
+        body = json.loads(sqs_record["body"])
+        for s3_event in body.get("Records", []):
+            bucket = s3_event["s3"]["bucket"]["name"]
+            key = urllib.parse.unquote_plus(s3_event["s3"]["object"]["key"])
+            obj = s3.get_object(Bucket=bucket, Key=key)
+            batch = _extract_audit_records(obj["Body"].read())
+            if not batch:
+                continue
+            for chunk in _chunk_by_size(batch):
+                _post_batch(token, chunk)
+                processed += len(chunk)
+    return {"processed": processed}
+PYEOF
 
-    ```bash
-    aws lambda create-function \
-    --function-name <lambda-function-name> \
-    --runtime python3.12 \
-    --handler lambda_function.handler \
-    --role arn:aws:iam::${ACCOUNT_ID}:role/<lambda_role_name> \
-    --zip-file fileb://lambda.zip \
-    --timeout 60 \
-    --memory-size 256 \
-    --environment "Variables={
-        AAD_TENANT_ID=${TENANT_ID},
-        AAD_CLIENT_ID=${APP_ID},
-        AAD_CLIENT_SECRET=${CLIENT_SECRET},
-        DCE_INGESTION_ENDPOINT=${DCE_INGESTION_ENDPOINT},
-        DCR_IMMUTABLE_ID=${DCR_IMMUTABLE_ID}, 
-        DCR_STREAM_NAME=Custom-ROSAControlPlaneAudit
-    }"
-    ```
+zip lambda.zip lambda_function.py
+```
 
- ## Validate the Set-up
- In  your Log Analytics workspace, confirm data is flowing. Click on Logs menu in the left hand panel, then click on the Tables icon under New Query. Under Custom  Logs, select the custom table we created **ROSAControlPlaneAudit_CL**.You should see logs being shipped. You can also run custom queries to filter the logs. 
+Next, create the lambda function role 
+
+```bash
+export LAMBDA_ROLE_NAME="rosa-sentinel-lambda-role"
+    
+aws iam create-role --role-name ${LAMBDA_ROLE_NAME} \
+--assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+```
+Proceed to add required permissions. In this guide, we provide full SQS access, which can be scoped down further in production
+
+```bash
+aws iam attach-role-policy --role-name ${LAMBDA_ROLE_NAME} --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+aws iam attach-role-policy --role-name ${LAMBDA_ROLE_NAME} --policy-arn arn:aws:iam::aws:policy/AmazonSQSFullAccess
+aws iam attach-role-policy --role-name ${LAMBDA_ROLE_NAME} --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+```
+Finally, create the Lambda function
+
+```bash
+export LAMBDA_FUNCTION_NAME="rosa-sentinel-lambda"
+    
+aws lambda create-function \
+--function-name ${LAMBDA_FUNCTION_NAME} \
+--runtime python3.12 \
+--handler lambda_function.handler \
+--role arn:aws:iam::${AWS_ACCOUNT_ID}:role/${LAMBDA_ROLE_NAME} \
+--zip-file fileb://lambda.zip \
+--timeout 60 \
+--memory-size 256 \
+--environment "Variables={
+    AAD_TENANT_ID=${TENANT_ID},
+    AAD_CLIENT_ID=${APP_ID},
+    AAD_CLIENT_SECRET=${CLIENT_SECRET},
+    DCE_INGESTION_ENDPOINT=${DCE_INGESTION_ENDPOINT},
+    DCR_IMMUTABLE_ID=${DCR_IMMUTABLE_ID},
+    DCR_STREAM_NAME=Custom-ROSAControlPlaneAudit
+}"
+```
+
+Let's wire the SQS trigger
+
+```bash
+aws lambda create-event-source-mapping \
+--function-name ${LAMBDA_FUNCTION_NAME} \
+--event-source-arn "arn:aws:sqs:${CLUSTER_REGION}:${AWS_ACCOUNT_ID}:${SQS_QUEUE_NAME}" \
+--batch-size 5
+```
+    
+## Validate the Set-up
+
+In  your Log Analytics workspace, confirm data is flowing. Click on Logs menu in the left hand panel, then click on the Tables icon under New Query. Under Custom  Logs, select the custom table we created **ROSAControlPlaneAudit_CL**.You should see logs being shipped. You can also run custom queries to filter the logs. 
 
 ![Log Analytics Custom logs](images/log-analytics-logs.png)
 
- ## Some Useful Queries
+## Some Useful Queries
 
  ```bash
  # Failed/denied requests
@@ -510,12 +537,14 @@ ROSAControlPlaneAudit_CL
 | project TimeGenerated, UserName, Verb, RequestURI, ResponseCode, AuthorizationReason
 | order by TimeGenerated desc
 ```
+
 ```bash
 # Activity by source application and verb
 ROSAControlPlaneAudit_CL
 | summarize count() by SourceApplication, Verb
 | order by count_ desc
 ```
+
 ```bash
 # Who's creating/deleting/updating cluster-scoped objects
 ROSAControlPlaneAudit_CL
