@@ -26,6 +26,10 @@ This guide differs from [Forwarding and Monitoring ROSA HCP Control Plane Audit 
 * Microsoft EntraID Permissions to register an application
 * [AZ CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) configured with permissions to create a Sentinel workspace, Data Collection rules, and assign IAM roles
 
+{{% alert state="info" %}}
+Many enterprise tenants disable self-service app registration for regular users. If you see "You do not have access ... You don't have permission to register applications in this directory" when you reach [Register a new application in Azure AD for Lambda](#register-a-new-application-in-azure-ad-for-lambda), ask your Entra ID admin to either grant you the **Application Developer** role, enable self-service app registration tenant-wide, or create the app registration for you and share the client ID, tenant ID, and a client secret.
+{{% /alert %}}
+
 ## Set Environment Variables
 
 Let's set some enviroment variables.
@@ -44,6 +48,10 @@ export LOG_PREFIX="${CLUSTER_NAME}"
 ### Create an AssumeRole policy file and Required IAM Role
 
 It is required to create an IAM role and policy to give the cluster log forwarder permission to send logs to our S3 bucket.
+
+{{% alert state="info" %}}
+This step is only required if you're forwarding to a CloudWatch log group. Per the [Red Hat documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/logging/rosa-forwarding-control-plane-logs), "To use an S3 bucket, you do not need an IAM role and policy." We include it here because it's harmless to create and keeps this guide self-contained, but if you're only forwarding to S3 you can skip straight to [Create the S3 bucket and associated Policy](#create-the-s3-bucket-and-associated-policy).
+{{% /alert %}}
 
 1. To enable the log forwarder delivery capability, prepare the IAM policy by creating an `assume-role-policy.json` file. 
 
